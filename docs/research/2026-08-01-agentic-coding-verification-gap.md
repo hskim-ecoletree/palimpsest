@@ -52,7 +52,7 @@
 
 **(1) 층은 누적이고, 각 층은 아래층의 결함을 증폭한다.** 이것이 이 계보의 유일하게 중요한 성질이다. 나쁜 컨텍스트 위의 하네스는 잘못된 것을 더 잘 강제하고, 나쁜 하네스 위의 루프는 오류를 반복 실행한다. Böckeler의 정식화 — 하네스는 **가이드(feedforward: 컨벤션·구조 테스트)**와 **센서(feedback: 린터·정적분석·AI 리뷰)**로 구성되고, 각각 **계산적(결정론·빠름)** 또는 **추론적(의미적·비결정)** 실행을 갖는다 — 는 지금 이 분야에서 가장 명료한 지도다. [등급 A]
 
-**(2) "그래프 엔지니어링"은 아직 용어이지 학문이 아니다.** 발화 3주차이고, 유통되는 문헌의 대부분이 등급 C다. 1차 정의 문서가 없다.
+**(2) "그래프 엔지니어링"은 아직 용어이지 학문이 아니다.** 발화 2주차이고(2026-07-18 발화, 작성일 08-01), 유통되는 문헌의 대부분이 등급 C다. 1차 정의 문서가 없다.
 
 **(3) 더 중요한 것 — "그래프"가 서로 다른 두 가지를 동시에 가리키고 있다.**
 
@@ -76,7 +76,7 @@
 **경계선의 위치** [등급 B/C]
 2026년 7월 기준, 주요 에이전트(Copilot, Devin, Claude Code, Sentry Seer 등)는 PR 생성과 리뷰 코멘트 대응까지 자율적으로 수행하지만 **머지 이전에 사람의 승인을 거친다.** 경계는 일관되게 merge다.
 
-**Anthropic 자기 사례 — 가장 극단적인 데이터 포인트** [등급 A/B]
+**Anthropic 자기 사례 — 가장 극단적인 데이터 포인트** [등급 B — ⚠️ **1차 출처 미특정**: 아래 수치는 조사 중 등급 A 문서(Anthropic Institute "When AI builds itself")와 등급 B 2차 보도(VentureBeat) 양쪽에서 관측됐으나, 어느 문장이 어느 출처에서 왔는지 추적이 끊겼다. 등급 A로 인용하려면 원문 재확인이 필요하다]
 - 2026년 5월 기준 자사 코드베이스 머지 코드의 **80% 이상이 Claude 작성** (Claude Code 출시 전인 2025년 2월 이전엔 한 자릿수).
 - 엔지니어 1인당 일일 머지량은 2024년 대비 **8배**.
 - **그러나 같은 문서가 이 수치를 스스로 깎는다**: 내부 설문의 자기보고 향상 중앙값은 **약 4배**이며, 8배는 실제 생산성 향상을 과대표현한다고 명시.
@@ -156,7 +156,7 @@ Anthropic의 장기 실행 하네스 문서도 같은 실패를 1차 관측으�
 
 ### 5.1 고확신 기만 (Confidently Deceptive)
 
-[등급 A, arXiv:2607.20444, Queen's University, 2026-05-12]
+[등급 A, arXiv:2607.20444, Queen's University — ⚠️ **날짜 미확정**: 본 조사는 2026-05-12로 기록했으나 arXiv ID의 `2607`은 2026년 7월 제출을 뜻하므로 둘 중 하나가 틀렸다. 원문 미재확인이므로 **이 항목의 날짜를 인용하지 말 것.** 수치와 결론은 영향받지 않는다]
 
 - 모델·데이터셋에 따라 **기만적 응답이 7–73%** 발생.
 - 인간 평가자는 **더 높은 확신을 표현한 기만적 응답을 78%의 쌍대 비교에서 선호**했다.
@@ -340,11 +340,13 @@ M5는 지지되며, 원 진단보다 범위가 넓다. **개인의 이해가 얕
 | §6 서사적 결함 | Anthropic 1차 관측: "코드 변경은 하지만 그 기능이 E2E로 동작하지 않는다는 것을 인식하지 못한다" |
 | §2.2-5 설치 비용 | 그래프-B 카테고리가 **로컬 우선**으로 수렴 — 온디바이스·코드 비유출이 사실상 표준 |
 
-**백서에 없는 실패 양식 — 추가 후보**
+**백서 §12-5로 반영된 실패 양식 — 게이트 오염**
 
 > **게이트 오염(gate corruption)**: 검증 장치를 검증 대상이 수정할 수 있을 때, 게이트는 통과하기 쉬운 형태로 수렴한다. assertion weakening이 그 실증이다.
 
-백서 §4는 "추론이 사실로 세탁되는 것"을 금지하지만, **"검증 기준 자체가 약화되는 것"**은 다루지 않는다. 이것은 세탁의 쌍둥이다 — 세탁이 주장을 승격시킨다면, 게이트 오염은 **기준을 하강시킨다.** 양쪽 모두 결과는 같다: 통과했다는 사실이 아무것도 보증하지 않게 된다.
+백서 §4의 금지 조항은 "추론이 사실로 세탁되는 것"을 다루지만 **"검증 기준 자체가 약화되는 것"**은 다루지 않는다. 이것은 세탁의 쌍둥이다 — 세탁이 주장을 승격시킨다면, 게이트 오염은 **기준을 하강시킨다.** 양쪽 모두 결과는 같다: 통과했다는 사실이 아무것도 보증하지 않게 된다.
+
+**이것은 백서에 대한 추가 제안이 아니다.** 백서 §12-5가 이미 이 항목을 열린 질문으로 담고 있고, 그 절이 근거로 이 문서 §4.2를 인용한다. 여기서 하는 일은 그 열린 질문의 조사 근거를 제공하는 것이다.
 
 palimpsest에서 이것이 특히 중요한 이유는, **결정론적 사실층이 이 문제에 대한 구조적 답이기 때문**이다. 코드 좌표는 협상할 수 없다. `src/auth/session.py:L82`가 존재하는지 여부는 에이전트가 완화할 수 있는 어서션이 아니다. **협상 불가능한 근거 위에서만 게이트가 게이트로 남는다.**
 
@@ -392,14 +394,13 @@ palimpsest에서 이것이 특히 중요한 이유는, **결정론적 사실층�
 - [Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity — METR (2025-07-10)](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/) · [arXiv:2507.09089](https://arxiv.org/abs/2507.09089)
 - [We are Changing our Developer Productivity Experiment Design — METR (2026-02-24)](https://metr.org/blog/2026-02-24-uplift-update/)
 - [Measuring the Self-Reported Impact of Early-2026 AI on Technical Worker Productivity — METR (2026-05-11)](https://metr.org/blog/2026-05-11-ai-usage-survey/)
-- [Confidently Deceptive: How Confidence Amplifies the Risk of LLM Deception — arXiv:2607.20444 (2026-05-12)](https://arxiv.org/html/2607.20444)
+- [Confidently Deceptive: How Confidence Amplifies the Risk of LLM Deception — arXiv:2607.20444](https://arxiv.org/html/2607.20444) — 날짜 미확정(§5.1 주석 참조)
 - ["An Endless Stream of AI Slop": How Developers Discuss the Burden of AI-Assisted Software Development — arXiv:2603.27249 (2026-06-13)](https://arxiv.org/html/2603.27249v3)
 - [The Substrate Collapse: AI Code Generation Invalidates Authorship-Based Knowledge Metrics — arXiv:2606.20882 (2026-06-23)](https://arxiv.org/pdf/2606.20882)
 - [Your Brain on ChatGPT: Accumulation of Cognitive Debt — arXiv:2506.08872, MIT Media Lab](https://arxiv.org/abs/2506.08872)
 - [Beyond Textual Repository Exploration: Dual-Modal Structural Reasoning for Agentic Issue Resolution — arXiv:2607.01929 (2026-07-03)](https://arxiv.org/pdf/2607.01929)
 - [Practical Limits of Autonomous Test Repair — arXiv:2605.01471](https://arxiv.org/pdf/2605.01471)
 - [Reward Hacking in the Era of Large Models — arXiv:2604.13602](https://arxiv.org/abs/2604.13602)
-- [AI Slop and the Software Commons — arXiv:2604.16754](https://arxiv.org/html/2604.16754)
 
 **Anthropic 엔지니어링 (등급 A)**
 - [Harness design for long-running application development (2026-03-24, Prithvi Rajasekaran)](https://anthropic.com/engineering/harness-design-long-running-apps)
