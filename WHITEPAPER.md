@@ -145,7 +145,7 @@ palimpsest는 셋을 경쟁시키지 않고 자리를 나눈다.
 
 **가운데 자리가 이 분담을 성립시킨다.** 사람과 에이전트가 직접 맞물리면 사람은 에이전트가 쓴 산문을 읽어서만 판정할 수 있고, 그 산문은 에이전트의 자기 증언이다. 기계가 양쪽이 함께 가리킬 수 있는 기준을 들고 있을 때에만 **판정이 열람량에 비례하지 않게 된다.**
 
-이하에서 인용하는 외부 조사는 [`docs/research/2026-08-01-agentic-coding-verification-gap.md`](docs/research/2026-08-01-agentic-coding-verification-gap.md)이며 "조사 §x"로 표기한다.
+이하에서 인용하는 외부 조사는 [`docs/research/2026-08-01-agentic-coding-verification-gap.md`](docs/research/2026-08-01-agentic-coding-verification-gap.md)이며 "조사 §x"로 표기한다. 이 조사를 포함한 연구 문서 전체는 [`docs/research/README.md`](docs/research/README.md)에 단원·장으로 재편되어 있다 — **그 문서들은 이 백서의 증거이지 요구사항이 아니며, 백서의 범위·능력 계약을 정하는 입력으로 쓰지 않는다.**
 
 ### 4.1 사람의 자리 — 책임이 앵커다
 
