@@ -36,8 +36,11 @@ fn effect_sets(g: &Graph) -> Map<SymbolId, EffectSet> {
     let mut out = Map::new();
     for sym in reverse_topo(g) {                    // 순환은 SCC로 축약
         let mut e = local_effects(sym);             // 이 심볼이 직접 쓰는 것
-        for callee in g.callees(sym) {
-            e.union_with(&out[callee]);             // 피호출자의 효과를 흡수
+        for callee in g.callees_exact(sym) {
+            e.exact.union_with(&out[callee].exact); // 확정 엣지: exact 집합으로
+        }
+        for callee in g.callees_candidate(sym) {
+            e.via_candidate.union_with(&out[callee].all());  // 후보 경유: 별도 집합
         }
         out.insert(sym, e);
     }
@@ -45,7 +48,36 @@ fn effect_sets(g: &Graph) -> Map<SymbolId, EffectSet> {
 }
 ```
 
-판정 술어를 포함 관계로 잡은 것이 이 성질을 쓰기 위해서다.
+### 3.1.1 `candidate` 엣지를 어떻게 흡수하는가 — **집합을 둘로 유지한다**
+
+이것을 정하지 않으면 구현이 첫날 막힌다. 후보 경유를 **다 따라가면** 효과 집합이 남의 효과로 오염되어 `Finding`이 거짓이 되고, **안 따라가면** 하한이 더 낮아져 [F07](F07-reference-resolution.md)의 `candidate` 설계가 무의미해진다.
+
+```rust
+pub struct EffectSet {
+    exact: EffectBits,          // exact|scoped 엣지만 거쳐 도달한 쓰기
+    via_candidate: EffectBits,  // candidate 를 한 번이라도 거친 쓰기
+}
+```
+
+| 쓰임 | 어느 집합 |
+|---|---|
+| `writes(P1) ⊋ writes(P2)` 로 **`Finding`을 세울 때** | **`exact`만.** 후보 경유 경로는 실재를 보증하지 않으므로 존재 주장을 못 세운다([F15 §3.3](F15-judgment.md)) |
+| 두 경로가 `exact`에서는 같은데 `via_candidate`에서 갈릴 때 | **`Residual{사유=candidate 집합 과다}`** — "다를 수도 있는데 판정 못 했다" |
+| `touch`의 `writes` 표시 | 둘 다. 등급을 달아서 |
+
+**이것이 3분할이 효과 층에서 갖는 형태다.** `exact`만 쓰면 정직하지만 눈이 멀고, 합치면 거짓말이 된다. 가른 채로 둘 다 보여주는 것이 답이다.
+
+### 3.1.2 전역 배치 계산이다 — 3홉 예산과 다른 물건
+
+`effect_sets`는 **질의 시점의 탐색이 아니라 스티칭 시점의 배치 계산**이다. [F05](F05-projection-query.md)의 3홉·`B=10⁴` 예산은 질의 탐색에 걸리는 것이고 여기엔 걸리지 않는다. 대신 다른 비용이 생긴다:
+
+| 비용 | 대응 |
+|---|---|
+| 심볼 10⁶ × 효과 집합 저장 | 효과 항목 인터닝(u32) + 비트셋. 상위 심볼은 집합이 크지만 SCC 축약과 공유가 흡수 |
+| 증분 갱신 | 한 심볼의 효과가 바뀌면 **역방향으로** 호출자들만 다시 계산(`EDGE_IN`이 이미 있다) |
+| 상위 심볼이 전체를 삼킴 | 집합 크기 상한 + 초과 시 `elision`. **§6의 측정 항목** |
+
+판정 술어를 포함 관계로 잡은 것이 선형 계산을 쓰기 위해서다.
 
 ### 3.2 별칭 분석을 하지 않는다 — **선언된 효과 어휘**만 센다
 
@@ -107,11 +139,13 @@ fn effect_sets(g: &Graph) -> Map<SymbolId, EffectSet> {
 
 ## 7. 완료 체크리스트
 
-- [ ] 역위상 + SCC 축약 합집합 계산
+- [ ] 역위상 + SCC 축약 합집합 계산 (**배치**, §3.1.2)
+- [ ] **`EffectSet` 2집합 (`exact` / `via_candidate`) + 흡수 규칙**
 - [ ] 효과 인식 형태 5종 (§3.2)
 - [ ] 효과 정규화 + 등급 표시
 - [ ] 미인식 구간을 `UnresolvedRef`로 환원
-- [ ] `writes(P1) ⊋ writes(P2)` 비대칭 후보 산출
+- [ ] `writes(P1) ⊋ writes(P2)` 비대칭 후보 산출 — **`exact`에서만 `Finding`**
+- [ ] 증분 갱신(역방향 전파) + 집합 크기 상한·`elision`
 - [ ] `effects.writes` 질의
 - [ ] **과거 결함 재현 검출 시험** ← 이것이 게이트
-- [ ] 계산 비용 벤치
+- [ ] 계산 비용 + 저장 부피 벤치
