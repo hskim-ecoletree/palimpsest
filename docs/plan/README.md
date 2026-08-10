@@ -20,7 +20,14 @@
 
 **진행 상태는 이 표가 아니라 [GitHub 이슈](https://github.com/hskim-ecoletree/palimpsest/issues)가 센다.** 이 표는 무엇이 어디에 있고 무엇에 막혀 있는지를 보여주는 지형이고, 어디까지 왔는지는 이슈 하나에만 있다 — 같은 것을 두 곳에 적으면 그것이 곧 drift다([§7.4](#7-진행-규칙)).
 
-**지금 착수 가능한 것**은 열린 차단자가 없는 이슈다. blocking은 GitHub 네이티브 의존으로 걸려 있어 이슈 목록에서 그대로 보인다. 조회 방법은 [`docs/agents/issue-tracker.md`](../agents/issue-tracker.md)에 있다.
+**지금 어디에 서 있는지는 한 명령으로 나온다:**
+
+```bash
+./scripts/frontier.sh          # 착수 가능한 것
+./scripts/frontier.sh --all    # 막힌 것까지, 무엇에 막혀 있는지와 함께
+```
+
+착수 가능한 것 = 열려 있고 · 열린 차단자가 없고 · 아무도 잡지 않은 이슈. blocking은 GitHub 네이티브 의존으로 걸려 있고, 스크립트는 **상태를 복제하지 않고 매번 계산한다** — 그래서 낡을 수 없다. 착수는 `gh issue edit <번호> --add-assignee @me`가 세션의 첫 쓰기다.
 
 | 기능 | 이슈 | 우선순위 | 의존 | 규모 | 완성 화면의 어느 줄이 켜지나 |
 |---|---|---|---|---|---|

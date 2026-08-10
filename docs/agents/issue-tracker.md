@@ -41,18 +41,20 @@ gh api --method POST repos/hskim-ecoletree/palimpsest/issues/<자식번호>/depe
 
 ## 착수 가능한 것(frontier) 조회
 
-열려 있고, 열린 차단자가 없고, 담당자가 없는 이슈:
+**`./scripts/frontier.sh`를 쓴다.** 손으로 조합하지 말 것.
 
 ```bash
-gh issue list --state open --json number,title,assignees,labels \
-  --jq '[.[] | select(.assignees | length == 0)]'
+./scripts/frontier.sh          # 착수 가능한 것
+./scripts/frontier.sh --all    # 막힌 것까지
 ```
 
-열린 차단자 수는 이슈별로 `issue_dependencies_summary.blocked_by`가 보고한다:
+**GitHub 검색 문법에는 "차단자 없음" 필터가 없다.** `gh issue list`만으로는 frontier가 안 나오고, 열린 차단자 수는 이슈를 **하나씩** 조회해야 나온다:
 
 ```bash
 gh api repos/hskim-ecoletree/palimpsest/issues/<번호> --jq '.issue_dependencies_summary.blocked_by'
 ```
+
+스크립트가 하는 일이 그 조회를 병렬로 돌려 합치는 것이다(40건에 약 3초).
 
 **착수 표시(claim)는 세션의 첫 쓰기다**: `gh issue edit <번호> --add-assignee @me`.
 

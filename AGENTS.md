@@ -2,11 +2,19 @@
 
 환경에 종속되지 않는 코드 이해의 큐레이터. 아직 코드는 없다 — 이 저장소는 현재 설계와 계획 문서로만 이루어져 있다.
 
+## 지금 어디에 서 있는가
+
+```bash
+./scripts/frontier.sh
+```
+
+착수 가능한 이슈를 센다. **상태는 이슈에만 있고 문서는 그것을 복제하지 않는다** — 어디까지 왔는지 알고 싶으면 문서를 읽지 말고 이것을 실행할 것.
+
 ## 어디서부터 읽는가
 
 | 알고 싶은 것 | 문서 |
 |---|---|
-| 무엇을 어느 순서로 만들고 지금 어디까지 왔나 | [docs/plan/README.md](docs/plan/README.md) — **전체를 관장한다** |
+| 무엇을 어느 순서로 만드나 (지형) | [docs/plan/README.md](docs/plan/README.md) — **전체를 관장한다** |
 | 완성되면 실제로 어떻게 쓰이나 | [docs/how-it-works.md](docs/how-it-works.md) |
 | 왜 만드나 / 모든 기능의 채점 기준 | [docs/plan/00-goals.md](docs/plan/00-goals.md) |
 | 무슨 언어·라이브러리·구조로 만드나 | [docs/plan/00-stack.md](docs/plan/00-stack.md) |
