@@ -2,7 +2,9 @@
 
 | 우선순위 | 의존 | 규모 | 크레이트 |
 |---|---|---|---|
-| **P0** | — | M | `schema/graph.toml` · `pal-core::schema` · `xtask` |
+| **P0** | P0-preflight | M | `schema/graph.toml` · `pal-core::schema` · `xtask` |
+
+> **의존이 `—`에서 `P0-preflight`로 바뀐 이유 (2026-08-11)**: 이 기능은 `pal-core::schema`와 `xtask`를 요구하므로 코드다. [P0-preflight](P0-preflight.md)는 "**이것 전에 코드를 쓰지 않는다**"이고 그것은 전역 선행조건이다. 기능 간 의존이 없다는 것과 선행조건이 없다는 것은 다르다.
 
 > 근거: [DESIGN §1.1·§1.2](../../DESIGN.md) (D25·D26) · [§3.4](../../DESIGN.md) (D27) · [§6.4·§12.7](../../DESIGN.md) (D29) · [지시 U13~U15](../../instructions/2026-08-10-owner-direction.md)
 
