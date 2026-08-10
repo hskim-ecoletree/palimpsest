@@ -1,0 +1,103 @@
+# T4 — 손으로 쓴 규칙 팩과 그 파생 비율
+#
+# F18(선언 팩)이 라벨을 유의미하게 파생시키는가. 못 시키면 F18은 "있으면 좋은 것"으로 강등된다.
+#
+# **이 파일도 두 커밋으로 나뉜다.**
+#   1) `[[rule]]` 만 담은 커밋 — 규칙의 사전 등록. 매칭 건수를 보기 전이다.
+#   2) `[applied]` 를 채운 커밋 — 세어 본 결과.
+#
+# 나누는 이유: 건수를 보고 정규식을 조이면 파생 비율은 얼마든지 올라간다.
+# T4는 표본 선정이 없지만 **규칙 저작 자체가 결과를 만든다** — 그래서 여기에도 같은 규율을 쓴다.
+# (규약은 아니다. 작업마다 판단한다.)
+#
+# 판정 기록: docs/gates/preflight.md §T4
+
+schema_version = 1
+registered_at = "2026-08-11"
+
+[selection]
+corpus = "boxwood"
+local_path = "~/dev/projects/boxwood"
+scope = """
+`.kt` 파일. **`worktrees/` 제외** — 상위 저장소의 다른 브랜치라 내용이 중복된다
+([T1](../../docs/gates/preflight.md#t1--boxwood-작업본-복원)). 대상 1,122개.
+"""
+counting = """
+`rg`(정규식)로 센다. 파서를 쓰지 않는다 — [T4 이슈](https://github.com/hskim-ecoletree/palimpsest/issues/29)가
+정한 방법이고, 심볼 인덱스가 아직 없다.
+**`src/main/` 과 `src/test/` 를 나눠 센다** (결과를 보기 전에 정한다 — 테스트 코드가
+매칭을 부풀리면 파생 비율이 거짓으로 오른다).
+"""
+what_is_counted = """
+**'결박된 라벨'이 아니라 '라벨 후보 매칭'이다.** 좌표계가 없으므로 매칭이 실제 심볼
+하나에 대응하는지는 이 측정이 답하지 않는다. [T7](../../docs/gates/preflight.md#t7--kotlin-파싱-사전-측정)이
+잰 추출 가능률 94.30%가 그 상한이다.
+'줄어들 미해소 참조 수'는 재지 않는다 — 미해소 목록이 없다. F07 이후로 넘긴다.
+"""
+rule_authoring = """
+규칙은 boxwood의 실제 관용구에서 뽑았다 — 팩 저자가 하는 일이 그것이다.
+관용구 조사(어노테이션 빈도·가드성 함수명·패키지 구성)는 규칙 확정 **전에** 했고,
+**규칙당 매칭 건수는 규칙을 커밋한 뒤에 셌다.**
+"""
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 규칙 8개 — 라벨 종류 셋(가드 · 효과 · 진입점)을 덮는다
+# ═════════════════════════════════════════════════════════════════════════════
+
+[[rule]]
+id = "R1"
+label = "guard:authorization"
+statement = "`@RequiresIntegratedPermission` 이 붙은 함수는 인가 가드다."
+pattern = '@RequiresIntegratedPermission'
+why = "boxwood 자체 인가 어노테이션. 프로젝트 고유 관용구이며 프레임워크가 모른다 — 팩이 아니면 도구가 알 길이 없는 종류다"
+
+[[rule]]
+id = "R2"
+label = "guard:authorization"
+statement = "`@PreAuthorize` 또는 `@Secured` 가 붙은 함수는 인가 가드다."
+pattern = '@(PreAuthorize|Secured)\b'
+why = "Spring Security의 표준 관용구. R1과 같은 라벨을 다른 근거로 파생시킨다 — 한 라벨에 규칙이 여럿 붙는 경우의 검사"
+
+[[rule]]
+id = "R3"
+label = "effect:tenant-scoped-tx"
+statement = "`@TenantTransactional` 이 붙은 함수는 테넌트 범위의 쓰기 효과를 갖는다."
+pattern = '@TenantTransactional'
+why = "멀티테넌시 경계. 이 라벨이 없으면 '테넌트 밖으로 새는가'를 물을 수 없다"
+
+[[rule]]
+id = "R4"
+label = "effect:shared-tx"
+statement = "`@SharedTransactional` 이 붙은 함수는 테넌트 경계 **밖**의 공유 자원에 쓴다."
+pattern = '@SharedTransactional'
+why = "R3의 짝. 둘의 비율이 곧 '경계를 넘는 쓰기가 얼마나 되는가'다"
+
+[[rule]]
+id = "R5"
+label = "effect:audited"
+statement = "`@AuditLog` 가 붙은 함수는 감사 기록을 남긴다."
+pattern = '@AuditLog'
+why = "감사(F15)의 대상 집합을 코드에서 직접 얻는 경로"
+
+[[rule]]
+id = "R6"
+label = "entrypoint:http"
+statement = "HTTP 매핑 어노테이션이 붙은 함수는 HTTP 진입점이다."
+pattern = '@(Get|Post|Put|Delete|Patch|Request)Mapping\b'
+why = "진입점(C3, F14). T10ⓑ가 남긴 (c)의 '도달 하한'이 여기서 시작한다"
+
+[[rule]]
+id = "R7"
+label = "guard:permission-predicate"
+statement = "이름이 `has…Permission(s)` 인 함수는 권한 판정 술어다."
+pattern = 'fun +has[A-Za-z]*Permissions?\b'
+why = "어노테이션이 아니라 **이름 규약**으로 파생시키는 규칙. 규칙의 근거가 어노테이션에만 걸리면 팩의 표현력을 과소평가한다"
+
+[[rule]]
+id = "R8"
+label = "guard:request-filter"
+statement = "`OncePerRequestFilter` 를 상속한 클래스는 요청 경로의 가드다."
+pattern = ': *OncePerRequestFilter\b'
+why = "함수가 아니라 **클래스**에 붙는 라벨. 라벨의 부착 단위가 하나가 아님을 검사한다"
+
+falsified_if = "손으로 쓴 팩이 라벨을 유의미하게 파생시키지 못하면 F18(선언 팩)을 '있으면 좋은 것'으로 강등한다."
