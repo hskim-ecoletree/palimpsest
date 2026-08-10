@@ -1,0 +1,91 @@
+# T2 — 라벨 판정의 후보 목록
+#
+# **판단 성분만 잰다.** 후보 제시는 도구가 흡수하므로 측정 밖이다([R-23](../../docs/plan/00-risks.md#r-23)).
+# 그래서 이 파일(후보 고정)이 **시간 측정 밖**에 있고, 측정은 이 커밋 이후에만 성립한다.
+#
+# **이 파일도 두 커밋으로 나뉜다.**
+#   1) `[selection]` 만 담은 커밋 — 표집 규칙의 사전 등록
+#   2) `[[candidate]]` 를 채운 커밋 — 규칙을 돌린 결과. **이 커밋 시각이 측정 시작 이전이어야 한다**
+#
+# 판정 기록: docs/gates/preflight.md §T2
+
+schema_version = 1
+registered_at = "2026-08-11"
+
+[selection]
+corpus = "boxwood"
+local_path = "~/dev/projects/boxwood"
+scope = "`.kt` · `worktrees/` 제외 · **`src/main/` 만** (테스트는 제품 코드가 아니다) → 1,036개"
+
+# ── 층화 표집 ──
+#
+# 후보 풀은 세 층으로 나뉘고 크기가 극단적으로 다르다(①154 · ②17 · ③1,016).
+# **합집합에서 그냥 뽑으면 85%가 `@TenantTransactional` 한 종류로 찬다** — 판정이 반복
+# 작업이 되고 '판단 성분'을 재는 목적을 잃는다.
+#
+# 그래서 층마다 몫을 정해 뽑는다. 이 선택은 [R-23](../../docs/plan/00-risks.md#r-23)이 경고한
+# **과소추정 편향에 반대 방향으로 작용한다** — 층 ①·②에는 `validateSchema` 처럼
+# 인가와 무관한 것이 많이 섞여 있어 **애매한 후보를 일부러 남긴다.**
+stratified = true
+
+[[selection.stratum]]
+id = "①"
+name = "이름 규약"
+pattern = 'fun\s+(check|validate|assert|require|ensure|verify)[A-Za-z0-9_]*'
+pool = 154
+draw = 12
+
+[[selection.stratum]]
+id = "②"
+name = "인터셉터·필터 클래스"
+pattern = 'class\s+([A-Za-z0-9_]+)[^{]*:[^{]*(Interceptor|Filter)\b'
+pool = 17
+draw = 6
+
+[[selection.stratum]]
+id = "③"
+name = "가드성 어노테이션"
+pattern = '@([A-Za-z]*(Permission|Auth|Secure|Audit|Tenant)[A-Za-z]*)'
+pool = 1016
+draw = 12
+
+[selection.draw_rule]
+sort = "(경로, 줄번호) 오름차순"
+spacing = "층마다 g = floor(pool / draw), 인덱스 0·g·2g·… 로 draw 건 (T7이 쓴 등간격 규칙과 동형)"
+total_unique = 30
+
+[selection.duplicates]
+count = 3
+pick = "고유 30건을 순서대로 놓고 **인덱스 4 · 14 · 24** 를 고른다 (0부터)"
+place = "판정 시퀀스의 **11 · 22 · 33번째** 자리에 다시 넣는다 → 시퀀스 33건"
+why = "같은 후보를 다시 만났을 때 판정자가 **다시 물었는가**(재질문율)를 잰다. 분모는 3이다"
+blinding = """
+**판정자는 어느 것이 중복인지 모르는 상태로 판정해야 한다.**
+이 파일의 `[[sequence]]` 는 중복 표시 없이 33건을 순서대로만 담는다.
+중복의 정체는 `[answer_key]` 에 있고 **판정 전에 읽으면 재질문율이 무효가 된다.**
+"""
+
+[selection.question]
+asked = "이것이 **인가 가드**인가 · 근거 좌표는 어디인가"
+answer_form = "가드 예/아니오 + 근거 좌표(파일·심볼) 또는 '없음'"
+
+[selection.interpretation]
+note = """
+이슈는 '후보 목록 30건'과 '판정 30건'을 둘 다 적었다. 여기서는
+**고유 후보 30건 · 판정 시퀀스 33건(중복 3건 포함)** 으로 읽는다.
+'판정 30건'은 고유 30건을 가리키고, 재질문율의 분모 3은 그 위에 얹힌다.
+"""
+
+falsified_if = "라벨 판정이 감당 불가한 시간을 먹으면 감사(F15)·구조 평가(F20)를 산출 목록에서 내린다. 큐레이션·컨설팅만 남긴다."
+
+[bias_direction]
+statement = """
+**이 측정은 판단 성분만 잰 것이고 후보 제시 비용은 도구가 흡수한다고 가정했다.
+가정이 틀리면 F15·F18의 판정은 낙관적이다.**
+
+[R-23](../../docs/plan/00-risks.md#r-23)이 적은 두 편향 중:
+· **과대추정 방향**(손으로 후보를 찾는 시간이 더해짐)은 **제거했다** — 후보 고정이 측정 밖이다.
+· **과소추정 방향**(애매한 후보를 자연히 건너뜀)은 **줄였으나 없애지 못했다** — 층화로
+  인가와 무관한 후보를 일부러 남겼지만, 층 자체를 정규식으로 정의했으므로
+  **정규식에 걸리지 않는 가드는 애초에 후보가 되지 않는다.** 그 몫은 여전히 과소추정이다.
+"""
