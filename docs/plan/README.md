@@ -46,9 +46,9 @@
 | [F10 서술물 인입](features/F10-narrative-intake.md) | [#14](https://github.com/hskim-ecoletree/palimpsest/issues/14) | **P1** | F09 | L | `ADR-0042` 가 들어온다 |
 | [**F11 적시 제시 `touch`**](features/F11-touch.md) | [#15](https://github.com/hskim-ecoletree/palimpsest/issues/15) | **P1** | F09·F10 | M | **화면 전체 — 제품이 완성되는 지점** |
 | [F12 계획-구현 결박·이탈률](features/F12-plan-binding.md) | [#16](https://github.com/hskim-ecoletree/palimpsest/issues/16) | **P1** | F11 | M | `PLAN §4-2 … pending` |
-| [**F16 관측 수용 (O) — 외부 엔진 조달**](features/F16-observation-intake.md) | [#17](https://github.com/hskim-ecoletree/palimpsest/issues/17) | **P1 ← P2** | F08·F22 | L | `외부 엔진이 본 것` · `Finding` **without** F13·F15 |
-| [**F21 `provider` 포트**](features/F21-provider-ports.md) | [#18](https://github.com/hskim-ecoletree/palimpsest/issues/18) | **P1** | F16 | M | `provider 경로 2/7` |
+| [**F21 `provider` 포트**](features/F21-provider-ports.md) | [#18](https://github.com/hskim-ecoletree/palimpsest/issues/18) | **P1** ⚠ | F16 | M | `provider 경로 2/7` |
 | [**F23 git 결합**](features/F23-git-integration.md) | [#19](https://github.com/hskim-ecoletree/palimpsest/issues/19) | **P1** | F09·F22 | M | 결박이 팀에 공유된다 · `--base` 델타 |
+| [**F16 관측 수용 (O) — 외부 엔진 조달**](features/F16-observation-intake.md) | [#17](https://github.com/hskim-ecoletree/palimpsest/issues/17) | **P2 ← P1** (2026-08-11) | F08·F22 | L | `외부 엔진이 본 것` · `Finding` **without** F13·F15 |
 | [F13 효과 집합 (E)](features/F13-effects.md) | [#20](https://github.com/hskim-ecoletree/palimpsest/issues/20) | **P2** | F07·F12 | **XL** | `writes: order.status …` |
 | [F14 진입점·경계 (C3·C4)](features/F14-entrypoints-boundaries.md) | [#21](https://github.com/hskim-ecoletree/palimpsest/issues/21) | **P2** | F07·F16 | L | 여정의 시작점 |
 | [F15 지배관계·3분할 판정 (C5)](features/F15-judgment.md) | [#22](https://github.com/hskim-ecoletree/palimpsest/issues/22) | **P2** | F13·F14 | **XL** | `Finding 0 / Residual 2`(자체 산출) |
@@ -62,11 +62,22 @@
 | | 뜻 |
 |---|---|
 | **P0** | 없으면 아무것도 없다. 여기서 멈추면 라이브러리 하나 |
-| **P1** | **여기까지가 제품이다.** 목표 1(큐레이션)·2(컨설팅) + **감사의 조달 경로**(F16)가 성립하면 팔 수 있다 |
-| **P2** | 온보딩과 **감사의 자체 산출**로의 확장. 가장 비싼 베팅들이 여기 있다 |
+| **P1** | **여기까지가 제품이다.** 목표 1(큐레이션)·2(컨설팅) — 즉 [goals §0.1](00-goals.md)의 **(a)(d)**. ~~+ 감사의 조달 경로(F16)~~ **2026-08-11 빠졌다** |
+| **P2** | 온보딩 · **감사** — 조달 경로(F16)와 자체 산출(F13·F15) 둘 다. 가장 비싼 베팅들이 여기 있다 |
 | **P3** | 표현·평가·경계. 앞이 서야 값이 난다 |
 
 **2026-08-10 지시로 P1의 내용이 바뀌었다**([지시 문서](../instructions/2026-08-10-owner-direction.md) · [goals §0.1](00-goals.md)). 목적의 순위가 "역사를 알게 한다"에서 **"그 결과로 더 나은 코드가 나온다"**로 올라갔고, 그 결과의 네 형태 중 셋이 P2~P3에 있었다. 앞당기는 유일한 경로가 **직접 만들지 않고 조달하는 것**이어서 F16이 P1로 올라오고 F21·F22·F23이 신설됐다. **XL은 하나도 앞당기지 않았다** — 그것이 [R-17](00-risks.md#r-17) 아래에서 이 재편이 성립하는 조건이다.
+
+**그리고 2026-08-11, 그 재편의 절반이 실측으로 되돌아갔다.**
+[T9 게이트](../gates/preflight.md#t9--조달-가능성-실측)가 코퍼스 넷에서 **SAST 조달원 0/4**를 실측해
+[G8](00-goals.md#5-성공실패의-판정-형태)이 발동했다. **F16은 P2로 돌아가고 P1의 약속은 (a)(d)로 줄었다.**
+[goals §0.1](00-goals.md#01-무엇으로-채점되는가--산출이-아니라-결과-design-08)에 줄었다는 사실이 적혀 있다.
+**이것은 계획이 작동한 것이지 실패가 아니다** — 코드 한 줄 쓰기 전에 L 하나가 빈 능력이 될 뻔한 것을 막았다.
+
+> **⚠ 남은 모순 하나 — [F21](features/F21-provider-ports.md)이 P1인데 P2인 F16에 의존한다.**
+> F21의 몫은 조달만이 아니라 포트 일곱(언어 추출기·경계 선언 등)이므로 자동으로 강등되지 않는다.
+> **F16의 어느 부분이 F21의 P1 몫을 받치는지 갈라야 하고, 그것은 아직 하지 않았다.**
+> [에픽 #1](https://github.com/hskim-ecoletree/palimpsest/issues/1)에서 처리할 것 — 여기 적어 두어 조용히 지나가지 않게 한다.
 
 **P1에서 멈출 수 있게 설계했다** ([R-17](00-risks.md#r-17)). P2 이후는 각각 독립적으로 반증 가능하고, 반증되면 내린다.
 
@@ -78,16 +89,21 @@
 
 전부 [#1 P0-preflight](https://github.com/hskim-ecoletree/palimpsest/issues/1)의 하위 티켓이다. **무엇이 지금 착수 가능한지는 이슈의 blocking이 말한다** — 아래 순서는 의도이지 상태가 아니다.
 
+**세 건은 끝났다** — 판정은 [`docs/gates/preflight.md`](../gates/preflight.md)에 있다.
+
+| 이슈 | 무엇 | 판정 |
+|---|---|---|
+| [#2](https://github.com/hskim-ecoletree/palimpsest/issues/2) | T1 boxwood 작업본 복원 | **통과** — 저장소 12개 전부 이력 확인 |
+| [#32](https://github.com/hskim-ecoletree/palimpsest/issues/32) | T7 Kotlin 파싱 사전 측정 | **통과** — 파싱 95.01% · **선언 추출 가능률 94.30%** |
+| [#34](https://github.com/hskim-ecoletree/palimpsest/issues/34) | T9 조달 가능성 실측 | **반증** — SAST 조달원 0/4 → **F16 P2 강등** |
+
 | 이슈 | 무엇 | 왜 지금 |
 |---|---|---|
-| [#2](https://github.com/hskim-ecoletree/palimpsest/issues/2) | **T1 boxwood 작업본 복원** | 실패하면 P0-preflight 전체가 대체 코퍼스로 재설계된다. 그래서 첫 작업 |
 | [#33](https://github.com/hskim-ecoletree/palimpsest/issues/33) | **T8 재발 사례 5건 고정** | [F11](features/F11-touch.md)의 유일한 직접 효능 측정이 여기 걸려 있다 |
 | [#36](https://github.com/hskim-ecoletree/palimpsest/issues/36) | **T11 G7 대조 장치 등록** | "코드가 나아졌는가"를 무엇으로 잴 것인지. 사후에 고르면 [R-18](00-risks.md#r-18)의 오염이다 ([DESIGN §15-39](../DESIGN.md)) |
 | [#27](https://github.com/hskim-ecoletree/palimpsest/issues/27) · [#29](https://github.com/hskim-ecoletree/palimpsest/issues/29) · [#31](https://github.com/hskim-ecoletree/palimpsest/issues/31) | **T2·T4·T6 노동 단가 측정** — 라벨·팩·개념 | **판단 성분만 재고 편향 방향을 명시**한다 ([R-23](00-risks.md#r-23) · [DESIGN §15-34](../DESIGN.md)) |
 | [#35](https://github.com/hskim-ecoletree/palimpsest/issues/35) | **T10 여정·결함 저작** | 새 저작을 요구하지 않는 경로가 있는가 |
-| [#32](https://github.com/hskim-ecoletree/palimpsest/issues/32) | **T7 Kotlin 파싱 사전 측정** | `tree-sitter` CLI로 30분 |
-| [#34](https://github.com/hskim-ecoletree/palimpsest/issues/34) | **T9 조달 가능성 사전 확인** | **없으면 F16의 P1 승격 근거가 그 코퍼스에서 무너진다**([G8](00-goals.md) · [R-25](00-risks.md#r-25)) |
-| [#30](https://github.com/hskim-ecoletree/palimpsest/issues/30) | **T5 `corpus/` 사전 등록** | 과제·대조군·채점 절차는 **코드 첫 줄보다 먼저.** 수치 합격선은 각 기능 착수 직전([§5.1](features/P0-preflight.md)) |
+| [#30](https://github.com/hskim-ecoletree/palimpsest/issues/30) | **T5 `corpus/` 사전 등록** | 과제·대조군·채점 절차는 **코드 첫 줄보다 먼저.** 수치 합격선은 각 기능 착수 직전([§5.1](features/P0-preflight.md)). [`corpus/manifest.toml`](../../corpus/manifest.toml)은 T9가 만들었으나 **`[procurement]` 절만 채워져 있다** |
 | [#28](https://github.com/hskim-ecoletree/palimpsest/issues/28) | **T3 절감 장치 넷 분리 측정** | 넷 다 만들면 비싸다 |
 
 그리고 **`docs/gates/preflight.md` 커밋** — 그것이 [#1](https://github.com/hskim-ecoletree/palimpsest/issues/1)을 닫는 조건이고, 그 결과에 따라 위 표의 우선순위가 갱신된다.

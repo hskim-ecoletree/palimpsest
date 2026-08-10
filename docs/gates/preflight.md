@@ -379,19 +379,33 @@ CodeQL 산출이 아니다. code-scanning API는 `no analysis found`를 준다.
 
 **이것은 "때때로 있는 능력"이다 — [R-25](../plan/00-risks.md#r-25)가 경계한 바로 그 형태.**
 
-### 반증되면 무엇을 하기로 했나 — 아직 적용하지 않았다
+### 반증의 처분 — **적용됐다 (2026-08-11, 소유자 지시)**
 
 [P0-preflight §4](../plan/features/P0-preflight.md)와 이슈 [#34](https://github.com/hskim-ecoletree/palimpsest/issues/34)가 정한 처분:
 
 > **[F16](../plan/features/F16-observation-intake.md)을 P2로 되돌리고 P1의 약속을 (a)(d)로 줄인다.**
 > 줄었다는 사실을 [goals §0.1](../plan/00-goals.md)에 적는다.
 
-**이 처분은 아직 적용되지 않았다.** T9의 인수 기준은 "네 항목이 코퍼스별로
-`manifest.toml`의 `[procurement]` 절에 기록되어 커밋된다" 하나이고, F16 강등과
-goals·우선순위 표 수정은 [P0-preflight 완료 체크리스트](../plan/features/P0-preflight.md)의
-마지막 줄("반증된 항목이 있으면 우선순위 표를 갱신")에 속한다 — 에픽 [#1](https://github.com/hskim-ecoletree/palimpsest/issues/1)의 몫이다.
+T9의 인수 기준 자체는 `[procurement]` 기록 하나였고 이 처분은 그 밖이었다. 판정 커밋
+시점에는 빚으로 남겨 두었으나, **소유자가 적용을 지시해 같은 날 반영했다.**
 
-**숨기지 않기 위해 여기 적어 둔다: 이 강등은 지금 빚으로 남아 있다.**
+| 어디 | 무엇을 바꿨나 |
+|---|---|
+| [goals §0.1](../plan/00-goals.md) | (b) 행을 "P1 아님"으로. **P1의 약속이 (a)(d)로 줄었다는 사실을 명시** |
+| [goals §2](../plan/00-goals.md) | 목표 4(감사): "조달 경로 P1 / 자체 산출 P2" → **둘 다 P2** |
+| [goals §5](../plan/00-goals.md) | **G8을 발동으로 표시** |
+| [F16 머리](../plan/features/F16-observation-intake.md) | `P1 ← P2` → **`P2 ← P1 ← P2`** · 강등 근거와 실측 표 |
+| [F16 §1.1](../plan/features/F16-observation-intake.md) | P1 승격 논거는 **성질로서 유지**하고, 무너진 것이 *"받을 것이 있다"* 전제임을 갈라 적음 |
+| [계획 README](../plan/README.md) | 우선순위 표에서 F16을 P2 구역으로 · P1 정의에서 조달 삭제 · T1·T7·T9 판정 표 |
+| [DESIGN D24 · §7.5](../DESIGN.md) | **D24 결정 자체는 유지**하고 F16의 P1 자리가 무너졌음을 결정 자리에 기록 |
+
+**D24를 폐기하지 않은 이유**: 다섯 몫(결박·낡음·3분할·억제 이력·엔진 간 불일치)은
+반증된 것이 아니라 **적용될 데가 없다.** 성질이 틀린 것과 환경이 빈 것은 다르고,
+그 둘을 같게 적으면 환경이 바뀌었을 때 되돌릴 근거가 사라진다.
+
+**남은 모순 하나 — [F21](../plan/features/F21-provider-ports.md)이 P1인데 P2가 된 F16에 의존한다.**
+F21의 몫은 조달만이 아니라 포트 일곱이므로 자동으로 강등되지 않는다. F16의 어느 부분이
+F21의 P1 몫을 받치는지 갈라야 하고 **그것은 아직 하지 않았다** — 에픽 [#1](https://github.com/hskim-ecoletree/palimpsest/issues/1)의 몫으로 계획 README에도 적어 두었다.
 
 ### 뒤집을 수 있는 관측 셋 — 이 반증은 환경의 성질이지 영구 사실이 아니다
 
