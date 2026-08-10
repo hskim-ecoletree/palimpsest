@@ -11,6 +11,8 @@
 
 schema_version = 1
 registered_at = "2026-08-11"   # [selection] 을 커밋한 날. 사례는 이 뒤에 채워진다.
+registered_in = "10d0e37bbfbc457d4a4d59a58196bf6b4ce751ea"   # 규칙 사전 등록 커밋 — 등록 증거
+measured_at = "2026-08-11"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # [selection] — 선정 규칙. 사례를 하나도 보기 전에 고정한다.
@@ -69,3 +71,146 @@ rule_rule = """
 """
 
 falsified_if = "위 규칙으로 5건을 채우지 못하면 반증. F11의 직접 효능 측정이 성립하지 않고 대리 측정(F12 계획 이탈률)만 남는다 — 명시하고 진행한다."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# [applied] — 규칙을 돌린 결과. 판정: 통과 (5/5)
+# ─────────────────────────────────────────────────────────────────────────────
+
+[applied]
+universe_size = 149          # |U| — fix/revert 커밋, (docs)·비-코드 제외
+candidate_classes = 19       # |C(t)| >= 3 인 증상 토큰
+class_order = [
+  "handoff(5)", "verdict(5)", "completion(5)", "changed_files(4)", "autopilot(4)",
+  "unverified(4)", "supersede(4)", "gitignored(4)", "ablation(4)", "surface(3)",
+  "fail-open(3)", "false-green(3)", "memory(3)", "windows(3)", "config(3)",
+  "claude(3)", "complete(3)", "worktree-aware(3)", "untracked(3)",
+]
+examined = "handoff → verdict → completion → changed_files. 5건이 여기서 찼고, 뒤 15개 클래스는 검사하지 않았다."
+
+# 규칙이 정하지 않았던 것 하나 — 채택의 '단위'
+#
+# 하나의 불변식이 여러 토큰 클래스에 걸쳐 나타난다. 클래스는 시드일 뿐이고 무엇이
+# 같은 종류인지는 불변식이 정한다. 규칙 문언은 이 단위를 정하지 않았으므로 두 해석이 있다.
+#
+#   해석 B (채택) — 클래스는 검사 '순서'만 정하고, 채택 단위는 불변식.
+#                   불변식 구성원은 U 전체에서 모은다.
+#   해석 A         — 클래스 내부로 한정. 같은 불변식의 최초 발생이 클래스마다 반복 제외된다.
+#
+# **두 해석 모두 5건을 채우고, 5건 중 4건이 같다.** 해석이 결과를 만들지 않았다는 뜻이다.
+#   해석 A의 5건: 992dcd0e · 264c3371 · d2940f7f · 7a261606 · 9843bd91
+#   해석 B의 5건: 아래 [[case]] — A와 다른 것은 0aa73f5c(B) ↔ 7a261606(A) 하나뿐.
+interpretation = "B — 클래스는 검사 순서, 채택 단위는 불변식"
+interpretation_a_cases = ["992dcd0e", "264c3371", "d2940f7f", "7a261606", "9843bd91"]
+
+# ── 불변식 둘 ──
+
+[[invariant]]
+id = "I1"
+seed_class = "handoff"
+statement = "work item의 AC 판정은 `deriveAcVerdicts`(그래프 파생) 하나가 정본이다. 다른 완료 경로(handoff · autopilot complete · work done · work-item.json)는 같은 인자로 같은 함수를 부르거나 그 결과를 그대로 반영해야 하고, 각자 재판정하면 갈린다."
+first_occurrence = "4f8d9289"   # 2026-06-07 — 재발이 아니므로 사례에서 제외
+occurrences = ["4f8d9289", "0aa73f5c", "264c3371", "992dcd0e"]
+recurrences = 3
+evidence_at_coord = """
+4f8d9289가 `src/core/work-item-handoff.ts` 의 바로 그 호출 지점 위에 주석으로 남겼다:
+  "derive the per-AC verdicts from the graph (same evidence-gated source as
+   `ditto autopilot complete`) so the two completion paths AGREE — handoff cannot
+   clobber a graph-based pass with a stale work-item-AC partial."
+**같은 좌표에서 같은 규칙이 두 번 더 깨졌다.** 결정이 코드 옆에 글자로 있었는데도 그랬다.
+"""
+
+[[invariant]]
+id = "I2"
+seed_class = "changed_files"
+statement = "워킹트리 `git status --porcelain` 을 `changed_files`·tree-clean 판정의 소스로 쓰는 **모든** 경로는 그 work item 밖의 외래 변경(`started_untracked_baseline`)을 배제해야 한다. 한 경로라도 배제 집합을 참조하지 않으면 오염이 재발한다."
+first_occurrence = "6f04625e"   # 2026-06-20
+occurrences = ["6f04625e", "d2940f7f", "9843bd91", "150eb82a", "7a261606"]
+recurrences = 4
+unused_recurrences = ["150eb82a", "7a261606"]   # 5건이 이미 차서 쓰지 않았다. 클래스가 실재한다는 추가 증거
+evidence_at_coord = """
+9843bd91의 커밋 메시지가 스스로 재발이라고 적었다:
+  "근원: d2940f7(#22)이 changed_files 생산 3경로 중 autopilot-loop의 둘만
+   started_untracked_baseline에 배선하고, 이 terminal 재계산 경로는 놓쳤다.
+   캡처된 baseline은 정상 존재했으나 이 경로가 배제 집합을 참조하지 않아 재발."
+"""
+
+# ─────────────────────────────────────────────────────────────────────────────
+# [[case]] — 재발 사례 5건. 시각 오름차순.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[[case]]
+n = 1
+commit = "0aa73f5c"
+committed_at = "2026-06-24"
+invariant = "I1"
+file = "src/core/work-item-handoff.ts"
+symbol = "writeWorkItemHandoff"
+subject = "fix(handoff): deriveAcVerdicts에 AC oracle 전달 — handoff↔complete 판정 일치"
+what_broke = "`deriveAcVerdicts(graph, acIds)` 를 oracle 없이 호출해 oracle-gated AC에서 `autopilot complete` 와 verdict가 갈렸다 (gate↔score 갭)."
+rule_that_should_have_fired = "이 호출 지점의 인자는 `assembleCompletionFromGraph` 와 같아야 한다 — 두 완료 경로의 AC verdict는 일치해야 한다."
+rule_evidence = "4f8d9289 (2026-06-07) · 같은 파일 같은 호출 지점 위의 주석"
+
+[[case]]
+n = 2
+commit = "264c3371"
+committed_at = "2026-06-28"
+invariant = "I1"
+file = "src/core/completion-store.ts"
+symbol = "mirrorAcceptanceVerdicts"
+subject = "fix(completion): completion verdict를 work-item acceptance에 미러 — stale unverified 해소"
+what_broke = "`autopilot complete`/`work done` 이 completion.json에 per-AC pass를 쓰고도 work-item.json의 `acceptance_criteria[].verdict` 를 생성 당시 `unverified` 로 남겨, `work status`·push-ready가 검증된 WI를 미검증으로 오판했다."
+rule_that_should_have_fired = "AC 판정의 정본은 하나다. 같은 사실을 두 파일이 각자 들고 있으면 갱신되지 않는 쪽이 판정을 뒤집는다."
+rule_evidence = "4f8d9289 (2026-06-07)"
+
+[[case]]
+n = 3
+commit = "992dcd0e"
+committed_at = "2026-07-10"
+invariant = "I1"
+file = "src/core/work-item-handoff.ts"
+symbol = "writeWorkItemHandoff"
+subject = "fix(autopilot): direction-fork STOP producer 지침 + handoff deriveAcVerdicts parity"
+what_broke = "같은 호출 지점이 이번엔 4번째 인자 `criteria` 를 빠뜨려, fresh `ditto verify` pass가 stale 노드 verdict를 supersede하지 못하고 handoff 문서가 complete보다 낡은 판정을 노출했다."
+rule_that_should_have_fired = "케이스 1과 같은 문장. 3주 전 같은 좌표에서 같은 규칙이 깨졌고 그때 주석이 갱신됐는데도 다시 깨졌다."
+rule_evidence = "4f8d9289 (2026-06-07) · 0aa73f5c (2026-06-24) — 후자가 갱신한 주석은 ADR-0024 §3을 인용하고 있었다"
+
+[[case]]
+n = 4
+commit = "d2940f7f"
+committed_at = "2026-07-11"
+invariant = "I2"
+file = "src/core/git.ts"
+symbol = "dequotePorcelainPath"
+subject = "fix(autopilot): changed_files 외래 untracked dirt 과포함 오염 차단"
+what_broke = "다른 세션이 남긴 외래 untracked가 오너의 full-tree echo로 `changed_files` 에 섞여 외래 land·Stop 오탐을 냈다."
+rule_that_should_have_fired = "work item의 `changed_files` 는 그 work item이 실제로 바꾼 것만 담는다. 워킹트리 전체를 소스로 삼으면 형제 세션의 변경이 섞인다."
+rule_evidence = "6f04625e (2026-06-20) — intent-drift 비교를 whole-tree diff에서 노드별 changed_files 누적으로 바꾼 커밋"
+coord_caveat = """
+**좌표 규칙이 결함의 소재지를 빗나갔다.** 규칙은 '변경 줄 수가 가장 많은 src 파일'을 고르라고
+했고 그것이 `src/core/git.ts`(50줄, 새 헬퍼)다. 그러나 커밋 메시지가 지목하는 결함 위치는
+`src/core/autopilot-loop.ts:3263`(changed_files union)과 `:731`(collectChangeSurface)이다.
+가장 많이 바뀐 파일은 **수리의 소재지**이지 결함의 소재지가 아니다. 규칙대로 적고 이 어긋남을
+남긴다 — F11이 좌표를 무엇에 걸지 정할 때 이것이 근거가 된다.
+"""
+
+[[case]]
+n = 5
+commit = "9843bd91"
+committed_at = "2026-07-14"
+invariant = "I2"
+file = "src/core/work-item-handoff.ts"
+symbol = "collectChangedFiles"
+subject = "fix(work-done): collectChangedFiles가 started_untracked_baseline 외래 untracked 배제"
+what_broke = "`changed_files` 생산 3경로 중 terminal 재계산 경로만 배제 집합을 참조하지 않아, 사흘 전 고친 것과 같은 오염이 다시 났다. 배제 집합은 이미 캡처되어 있었다."
+rule_that_should_have_fired = "배제 집합을 도입하면 그 집합을 소비해야 하는 **모든** 경로에 배선해야 한다. 일부만 배선하면 남은 경로가 그대로 재발 지점이 된다."
+rule_evidence = "6f04625e (2026-06-20) · d2940f7f (2026-07-11) — 후자를 이 커밋이 스스로 '근원'으로 지목한다"
+
+# ── F11이 이 표에서 가져가야 할 것 ──
+#
+# 1. 재발 5건 중 3건(케이스 1·3·5)에서 **깨진 규칙이 그 좌표에 이미 글자로 있었다** —
+#    주석 또는 직전 커밋. `touch` 가 그것을 띄우기만 하면 되는 형태다. 반대로 말하면,
+#    글자가 코드 옆에 있어도 읽히지 않았다는 뜻이고 그것이 F11의 존재 이유다.
+# 2. 재발의 지배적 형태는 '몰랐다'가 아니라 **'경로 하나를 빠뜨렸다'** 이다 (I1·I2 둘 다).
+#    `touch(좌표)` 만으로는 부족하고 "이 규칙을 지켜야 하는 다른 좌표가 어디인가"라는
+#    역방향 질의가 필요하다. F05 BOUND_BY 역색인이 그 질의를 받는 자리다.
+# 3. 케이스 4의 `coord_caveat` — 결함 좌표를 '가장 많이 바뀐 파일'로 정하면 헬퍼를 가리킨다.
