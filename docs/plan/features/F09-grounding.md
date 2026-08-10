@@ -18,26 +18,53 @@
 
 ---
 
-## 2. 5상태
+## 2. 두 축 — 하나의 열거가 아니다
+
+초안은 다섯을 한 열거에 넣었고 그러면 **"대체됐고 코드도 변했다"를 표현할 수 없다.** 선행 구현이 두 축으로 나눠 둘 다 표면화했다([G §4](../../research/2026-08-11-legacy-freshness-anchor-observation.md) · [DESIGN §6.1](../../DESIGN.md)).
 
 ```rust
-pub enum BindingState {
+pub struct BindingStatus {
+    code: CodeFreshness,      // 축 1 — 기계가 계산한다
+    lineage: Lineage,         // 축 2 — 사람 또는 승인된 추론이 만든다
+}
+
+pub enum CodeFreshness {
     Live,        // 좌표 존재 + 감시 집합 전체의 digest 불변
     Stale { triggered_by: NonEmpty<SymbolId> },   // 무엇이 켰는지 함께
+    StaleDerived { via: NonEmpty<EntityId> },     // 자기는 그대로, 입력이 낡음 (F22)
     Pending,     // 좌표가 아직 없다 (신생 프로젝트 / 계획 항목)
     Orphaned,    // 좌표가 사라졌다 (심볼 삭제·이동)
-    Superseded { by: EntityId },   // 이 의도가 다른 의도로 대체됨
+    Undeterminable { reason: UndeterminableReason },   // ← 신설. §2.1
 }
+
+pub enum Lineage { Current, Superseded { by: EntityId } }
 ```
 
-| 왜 이 다섯인가 | |
+| 왜 이렇게 가르나 | |
 |---|---|
 | `Pending` ≠ `Stale` | **"아직 안 만들었다"와 "만든 뒤 어긋났다"는 다르다.** 뭉개면 신생 프로젝트에서 전부 낡음으로 보인다 |
 | `Orphaned` ≠ `Stale` | 구현 제거는 코드 변경과 다른 사건이다. 사람의 판단을 부른다 |
-| `Superseded` | **대체된 결정이 "살아 있음"으로 적극 보증되는 것이 낡음보다 강한 거짓 신호다** |
+| `Superseded`가 **별도 축** | 대체된 결정이 "살아 있음"으로 보증되는 것은 낡음보다 강한 거짓 신호다. 그런데 **대체된 뒤에도 코드 신선도는 계속 계산된다** — 한 열거에 넣으면 그것이 사라진다 |
 | `Stale`이 `triggered_by`를 갖는 이유 | "본체가 변해서"와 "호출자가 변해서"는 사람이 다르게 처리한다 |
 
-`Superseded`는 코드에서 나오지 않는다 — 계보 엣지에서 온다. 의도층의 사건이므로 사람 또는 승인된 추론이 만든다.
+**대체된 결박도 숨기지 않는다** — [F11](F11-touch.md)의 `touch`가 이미 "superseded된 이전 결정"을 반환한다. 두 축이어야 그 반환값에 코드 신선도가 함께 실린다.
+
+### 2.1 `Undeterminable` — 신설 ([R16](../../evidence-map.md))
+
+선행 구현은 앵커를 계산할 수 없을 때 **낡지 않은 것으로 접었다**(`stale=False`). 방향은 같다 — 모르는 것을 낡았다고 하지 않는다. 그러나 **`false`와 "판정 불가"를 구별하지 않은 것은 [목표 §3.1](../00-goals.md)의 정면 위반이고, 그 결과는 "이 결정은 유효합니다"와 "유효한지 알 수 없습니다"가 같은 화면이 되는 것**이다. `Judgment`에서 `clean`을 없앤 것과 정확히 같은 실패다.
+
+```rust
+pub enum UndeterminableReason {
+    IdentityGrade,      // L0 심볼 / ordinal 이라 digest 비교가 무의미
+    PartialParse,       // 감시 집합 원소가 partial 파일 안에 있다
+    WatchMemberGone,    // 감시 집합 원소가 사라졌다 (target 은 살아 있다)
+    ProjectionStale,    // 투영이 아직 그 Snapshot 을 안 봤다
+}
+```
+
+- **`Live`로 세지 않는다.** 판정 입력에서는 `Residual{사유=결박 판정 불가}`가 된다.
+- **밀도가 지도다** — 몰린 곳이 언어 능력 확장이나 [provider](F21-provider-ports.md) 저작의 우선순위다. `UnresolvedRef`(F08)가 하는 일과 같다.
+- **위험**: 이것이 지배하면 정직하지만 쓸모없다([DESIGN §15-42](../../DESIGN.md)). S2에서 비율을 잰다.
 
 ---
 
@@ -83,6 +110,16 @@ fn state_of(b: &Binding, proj: &Projection) -> Result<BindingState> {
 ```
 
 **`watch_snapshot`을 저장하는 이유**: 결박 시점의 digest를 기억해야 "그 이후 변했는가"를 답할 수 있다. 매번 커밋 이력을 거슬러 계산하면 비싸다. 저장 비용은 반경 크기에 비례하고, 그래서 반경에 예산이 걸린다.
+
+**그리고 `watch_snapshot`은 신고받지 않는다** ([DESIGN §6.5](../../DESIGN.md) D32). 결박을 만드는 주체가 *"이건 커밋 X 기준이야"*라고 말해도 그 값이 앵커가 되지 않는다 — **앵커는 결박 시점에 기계가 대상 좌표에서 읽은 digest다.**
+
+| 생산자가 주는 것 | 기계가 계산하는 것 |
+|---|---|
+| `evidence_refs`(무엇을 근거로) · 어느 `Snapshot`에서 만들었다는 신고 | **`watch_snapshot`** — 그 신고와 무관하게 대상 좌표의 현재 digest |
+
+신고를 **거부**하는 것이 아니라 신고에 **권한을 주지 않는 것**이다. 신고는 `produced_by`에 남고 계산값과 어긋나면 그 자체가 신호다. 이것이 가장 무겁게 걸리는 곳은 [F16](F16-observation-intake.md)의 조달이다 — 외부 엔진이 자기 alert의 유효기간을 정하게 두면 안 된다.
+
+**낡음은 탐지만 한다.** `Stale`이 재생성을 트리거하지 않는다 — 하면 ① 생산자 분리(F17)가 깨지고 ② 기록하되 통치하지 않는다는 경계가 무너지고 ③ 사람이 승인한 것이 승인 없이 교체된다. `Stale`이 하는 일은 재판정 큐에 올리고 [F11](F11-touch.md)로 사람 앞에 가져오는 것까지다.
 
 **증분 갱신**: 재추출 시 digest가 바뀐 심볼 집합을 알고 있으므로(F04), `WATCH` 테이블의 역방향 조회로 영향받는 결박만 재계산한다. 전체 재계산이 아니다.
 
@@ -142,6 +179,10 @@ pub struct EntityKind(KindId);        // 팩·코어가 등록하는 식별자
 | 대안 | 기각 이유 |
 |---|---|
 | **3상태(live/stale/pending)** | `orphaned`와 `superseded`가 뭉개진다. 특히 대체된 결정이 "유효"로 보이는 것은 낡음보다 나쁘다 |
+| **한 열거에 다섯**(초안) | `superseded ∧ stale`을 표현할 수 없다. 대체된 뒤에도 코드 신선도는 계속 계산되는데 그것이 사라진다 |
+| **판정 불가를 `live`로 접기**(선행 구현의 선택) | "유효하다"와 "유효한지 알 수 없다"가 같은 화면이 된다. `clean`을 없앤 것과 같은 이유로 안 된다 |
+| **커밋 시각을 앵커로**(선행 구현의 `code_bound_at`) | 포매팅 커밋에도 `stale`이 켜진다 — [R-07](../00-risks.md#r-07)이 치명이라 부른 실패를 그대로 맞는다. `body_digest`가 더 강하다. **다만 시각은 표시용으로 함께 싣는다**("3주 전 코드 기준"이 "12커밋 전"보다 읽힌다) |
+| **앵커 하나만 감시**(선행 구현의 `sorted(flags)[0]`) | 상수 비용을 얻고 나머지 대상의 변경을 잃는다. 반경(§3)이 같은 문제를 예산으로 다루며 더 정확하다 |
 | **반경 없이 심볼만** | 거짓 음성이 크고, 사용자가 그 사실을 모른다. **선언은 해결이 아니지만 은폐보다 낫다** |
 | **반경 무제한 허용** | 폐포 계산이 설치 비용 제약을 깬다. 저장 시점 거부가 런타임 지연보다 낫다 |
 | **커밋 이력을 매번 거슬러 계산** | 비싸고, 캐시가 없으면 계보 질의마다 전량 추출 |
@@ -158,6 +199,8 @@ pub struct EntityKind(KindId);        // 팩·코어가 등록하는 식별자
 | **실 이력 표본 20건의 거짓 양성률** | **여기서 합격선을 확정하고 `criteria.toml`에 등록한다**([F03 §6.2](F03-identity.md)에서 값을 재 왔다). 실 커밋에는 의미 변화가 섞이므로 0을 걸면 통과 불가능한 게이트가 된다 |
 | 의미 변경 커밋에서 `stale` 검출률 | 높을수록 좋음. 표본 검토 |
 | 대규모 이동에서 `orphaned` + 재결박 제안 정확도 | ≥ 90% |
+| **`Undeterminable` 비율** | 코퍼스에서 몇 %인가. **지배하면 정직하지만 쓸모없다**([DESIGN §15-42](../../DESIGN.md)) — 합격선을 `criteria.toml`에 등록 |
+| **두 축의 독립성** | `superseded ∧ stale` 조합이 실제로 산출되는가(픽스처) |
 | 상태 계산 비용 | 반경별 · 결박 수별 벤치 |
 | 증분 상태 갱신 정확도 | 전체 재계산과 일치 |
 | **의도 저장소 왕복** | 내보내기 → 저장소 삭제 → 읽기 → 결박 상태가 바이트 단위로 동일 |
@@ -168,7 +211,11 @@ pub struct EntityKind(KindId);        // 팩·코어가 등록하는 식별자
 
 ## 8. 완료 체크리스트
 
-- [ ] `BindingState` 5값 + `triggered_by`
+- [ ] **`BindingStatus` 두 축** — `CodeFreshness` 6값(`triggered_by` 포함) × `Lineage` 2값
+- [ ] **`Undeterminable` + 사유 4종** — `Live`로 새지 않는 경로 검사
+- [ ] **`watch_snapshot`은 신고받지 않는다** — 생성자 신고를 앵커로 쓰는 경로 부재를 CI로 검사
+- [ ] **자동 재생성 경로 부재** — `Stale`이 생성기를 부르지 않음(문자열 스캔)
+- [ ] 커밋 시각을 **표시용으로** 동반(앵커로는 쓰지 않는다)
 - [ ] `Radius` 4종 + `closure(k)` 저장 시점 예산 거부
 - [ ] `watch_snapshot` + 증분 상태 갱신
 - [ ] **`EntityId` 비코드 개체 식별 체계** (지금 확정) — `EntityKind`는 **등록형**
