@@ -101,3 +101,136 @@ pattern = ': *OncePerRequestFilter\b'
 why = "함수가 아니라 **클래스**에 붙는 라벨. 라벨의 부착 단위가 하나가 아님을 검사한다"
 
 falsified_if = "손으로 쓴 팩이 라벨을 유의미하게 파생시키지 못하면 F18(선언 팩)을 '있으면 좋은 것'으로 강등한다."
+
+# ═════════════════════════════════════════════════════════════════════════════
+# [applied] — 규칙을 커밋(6106cff)한 뒤에 셌다. 판정: 통과
+# ═════════════════════════════════════════════════════════════════════════════
+
+[applied]
+registered_in = "6106cff72c9f306075b131cbbd1606c3430e348d"
+measured_at = "2026-08-11"
+kt_files = 1122          # worktrees 제외
+kt_main = 1036
+kt_test = 86
+
+# 두 수를 다 적는다 — 하나만 적으면 과대보고다
+matches_raw = 1782       # src/main 전체 매칭
+matches_comment = 257    # 그중 주석 줄 (14.4%)
+matches_code = 1525      # 코드 줄 — **이것이 파생 라벨 후보 수다**
+per_rule_mean = 190.6    # 1525 / 8
+per_rule_median = 65.5
+file_coverage = "237 / 1036 = 22.9% (어노테이션 포함 기준, src/main .kt)"
+zero_rules = 0           # 매칭 0인 규칙은 없다
+
+[[applied.rule_result]]
+id = "R1"
+label = "guard:authorization"
+main_raw = 74
+comment = 40
+code = 34
+precision = "45.9%"
+files_main = 8
+[[applied.rule_result]]
+id = "R2"
+label = "guard:authorization"
+main_raw = 3
+comment = 1
+code = 2
+precision = "66.7%"
+files_main = 3
+[[applied.rule_result]]
+id = "R3"
+label = "effect:tenant-scoped-tx"
+main_raw = 694
+comment = 67
+code = 627
+precision = "90.3%"
+files_main = 100
+[[applied.rule_result]]
+id = "R4"
+label = "effect:shared-tx"
+main_raw = 144
+comment = 33
+code = 111
+precision = "77.1%"
+files_main = 32
+[[applied.rule_result]]
+id = "R5"
+label = "effect:audited"
+main_raw = 171
+comment = 74
+code = 97
+precision = "56.7%"
+files_main = 38
+[[applied.rule_result]]
+id = "R6"
+label = "entrypoint:http"
+main_raw = 654
+comment = 42
+code = 612
+precision = "93.6%"
+files_main = 81
+[[applied.rule_result]]
+id = "R7"
+label = "guard:permission-predicate"
+main_raw = 31
+comment = 0
+code = 31
+precision = "100%"
+files_main = 9
+[[applied.rule_result]]
+id = "R8"
+label = "guard:request-filter"
+main_raw = 11
+comment = 0
+code = 11
+precision = "100%"
+files_main = 11
+
+# ── F18이 이 표에서 가져가야 할 것 넷 ──
+
+[[applied.finding]]
+n = 1
+title = "정규식 팩은 주석에서 자기 이름을 다시 만난다"
+detail = """
+매칭 1,782건 중 **257건(14.4%)이 주석 줄**이다. 어노테이션 이름은 KDoc에도 쓰이기 때문이다.
+**그리고 정밀도가 규칙마다 45.9%~100%로 갈린다** — R1은 절반 이상이 주석이고 R7·R8은 0이다.
+**단일 상수로 보정할 수 없다는 뜻이다.** 팩 엔진이 주석·문자열을 빼는 장치를 갖지 않으면
+파생 수는 규칙마다 다른 크기로 부풀고, 그 부풀기는 규칙 저자에게 보이지 않는다.
+"""
+
+[[applied.finding]]
+n = 2
+title = "분포가 극단적으로 치우친다 — 평균은 규칙 하나를 대표하지 못한다"
+detail = """
+코드 줄 기준 규칙당 평균은 190.6이지만 **중앙값은 65.5**다. R3(627)과 R6(612) 둘이
+전체의 **81.2%** 를 만든다. 팩의 값을 '규칙당 평균'으로 말하면 규칙 여섯의 실제 몫이 가려진다.
+"""
+
+[[applied.finding]]
+n = 3
+title = "팩의 값은 프로젝트 고유 관용구에서 나온다"
+detail = """
+프레임워크 표준 관용구인 R2(`@PreAuthorize`/`@Secured`)는 **코드 줄 2건**이다.
+반면 프로젝트 고유 관용구인 R1(자체 어노테이션 34) · R7(이름 규약 31) · R8(상속 11)은
+합쳐서 76건이다.
+**도구가 기본으로 아는 것에는 팩이 필요 없고, 팩이 필요한 곳에는 도구가 모르는 것이 있다** —
+F18의 존재 근거가 이 대비다.
+"""
+
+[[applied.finding]]
+n = 4
+title = "라벨이 파생된다는 것과 코드가 덮인다는 것은 다르다"
+detail = """
+규칙 8개가 닿는 파일은 `src/main` 의 `.kt` 1,036개 중 **237개(22.9%)** 다.
+나머지 77%는 이 팩이 아무 말도 하지 않는다. 파생 수 1,525는 **덮인 22.9% 안에서** 나온 값이다.
+"""
+
+[applied.limits]
+statement = """
+**이 수치는 '결박된 라벨'이 아니라 '라벨 후보 매칭'이다.**
+정규식은 심볼 경계를 모른다 — 한 매칭이 실제 심볼 하나에 대응하는지, 클래스에 붙은 것인지
+메서드에 붙은 것인지 이 측정은 답하지 않는다.
+[T7](../../docs/gates/preflight.md#t7--kotlin-파싱-사전-측정)이 잰 **추출 가능률 94.30%가 그 상한**이다.
+'줄어들 미해소 참조 수'는 재지 않았다 — 미해소 목록이 없다(F07 이후).
+"""
