@@ -27,7 +27,7 @@
 | | 결과의 형태 | 어느 기능이 지는가 | P1에 있나 |
 |---|---|---|---|
 | **(a)** | 역사와 현재 방향성을 반영하는 코드 | [F09](features/F09-grounding.md)·[F11](features/F11-touch.md) — 이미 중심 | **예** |
-| **(b)** | 단편적으로 안 보이는 결함·취약점·잘못된 추상화를 거시적으로 | [F16](features/F16-observation-intake.md) 조달 + F13·F15(자체 산출) — **전부 P2** | **아니오 — 2026-08-11 내려갔다** |
+| **(b)** | 단편적으로 안 보이는 결함·취약점·잘못된 추상화를 거시적으로 | [F16b](features/F16b-engine-procurement.md) 조달 + F13·F15(자체 산출) — **전부 P2** | **아니오 — 2026-08-11 내려갔다** |
 | **(c)** | 여정·데이터 흐름의 사전 위험 | [F19](features/F19-briefing-view.md) 브리핑 + `Journey` 노드 | 아니오 (P3) |
 | **(d)** | 나비효과 방지 | [F07](features/F07-reference-resolution.md) 역방향 색인 + `Defect` 노드로 **재발을 센다** | **예** |
 
@@ -42,8 +42,10 @@
 > 그것도 SARIF·아티팩트 없이 CI 실행 로그뿐이다. 무엇보다 **(b)의 판정 대상인
 > boxwood Kotlin 백엔드에는 분석 CI가 하나도 없다.**
 >
-> 그래서 처분을 적용했다: **[F16을 P2로 되돌리고, P1의 약속을 (a)(d)로 줄인다.**
-> **(b)는 P1의 약속이 아니다.]** 조달이 성립하는 프로젝트에서는 F16이 여전히 값을 내지만,
+> 그래서 처분을 적용했다: **[조달을 P2로 되돌리고, P1의 약속을 (a)(d)로 줄인다.**
+> **(b)는 P1의 약속이 아니다.]** 그 강등이 F16을 둘로 쪼갰다 — 수용 API([F16](features/F16-observation-intake.md))는
+> P1로 남고 조달([F16b](features/F16b-engine-procurement.md))이 P2로 내려간다.
+> 조달이 성립하는 프로젝트에서는 F16b가 여전히 값을 내지만,
 > 그것은 **"때때로 있는 능력"** 이므로 P1의 약속에 넣지 않는다.
 >
 > **줄었다는 사실을 여기 적어 두는 것이 이 문단의 목적이다.** 조달 가능성이 뒤집히면
@@ -114,7 +116,8 @@ $ pal touch order-svc:OrderService.cancel
 | `writes` | [F13](features/F13-effects.md) |
 | (진입점·경계) | [F14](features/F14-entrypoints-boundaries.md) |
 | `Finding` · `Residual` | [F15](features/F15-judgment.md) |
-| `외부 엔진이 본 것` · 미해소를 실행으로 메우기 | [F16](features/F16-observation-intake.md) — **P2** (2026-08-11 강등: [T9](../gates/preflight.md#t9--조달-가능성-실측)). **P1에서는 이 줄이 뜨지 않는다** |
+| `외부 엔진이 본 것` | [F16b](features/F16b-engine-procurement.md) — **P2** (2026-08-11 강등: [T9](../gates/preflight.md#t9--조달-가능성-실측)). **P1에서는 이 줄이 뜨지 않는다** |
+| provider 산물이 `observed`로 들어오는 문 | [F16](features/F16-observation-intake.md) — P1 |
 | `provider 경로 2/7` | [F21](features/F21-provider-ports.md) |
 | **`여기서 났던 일`**(`Defect`) · `Change` · `Journey` · `Actor` | [F22](features/F22-graph-schema.md) |
 | 결박이 팀에 공유되는 것 · `--base` 델타 | [F23](features/F23-git-integration.md) |
@@ -175,7 +178,7 @@ $ pal touch order-svc:OrderService.cancel
 
 > **정적 분석은 필요하다. 다만 palimpsest가 만드는 것이 아니라 조달하고 결박하는 것이다.**
 
-조달만으로는 이 제품일 이유가 없으므로 이기는 자리를 다섯으로 못 박는다 — **결박 · 낡음 · 3분할 재분류 · 억제 이력 · 엔진 간 불일치**([DESIGN §7.5](../DESIGN.md)). 다섯 중 어느 것도 성립하지 않으면 그냥 SAST를 돌리는 편이 낫고, 그것이 F16의 반증 조건이다.
+조달만으로는 이 제품일 이유가 없으므로 이기는 자리를 다섯으로 못 박는다 — **결박 · 낡음 · 3분할 재분류 · 억제 이력 · 엔진 간 불일치**([DESIGN §7.5](../DESIGN.md)). 다섯 중 어느 것도 성립하지 않으면 그냥 SAST를 돌리는 편이 낫고, 그것이 [F16b](features/F16b-engine-procurement.md)의 반증 조건이다.
 
 ---
 

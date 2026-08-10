@@ -2,7 +2,11 @@
 
 | 우선순위 | 의존 | 규모 | 크레이트 |
 |---|---|---|---|
-| **P1** | F16 | M | `pal-intake::provider` · `schema/provider.toml` |
+| **P1** | F16 (수용 API) | M | `pal-intake::provider` · `schema/provider.toml` |
+
+> **의존은 [F16](F16-observation-intake.md)의 수용 API이지 조달([F16b](F16b-engine-procurement.md), P2)이 아니다.**
+> 포트 일곱 중 조달자는 6번 하나뿐이고, 나머지 여섯은 조달원이 없어도 성립한다.
+> 이 구분은 2026-08-11에 [T9](../../gates/preflight.md#t9--조달-가능성-실측)가 조달을 P2로 내리면서 명시됐다.
 
 > 근거: [DESIGN §7.4](../../DESIGN.md) (D28) · [지시 U16](../../instructions/2026-08-10-owner-direction.md) · [U1](../../instructions/2026-08-03-owner-direction.md)
 
@@ -27,7 +31,7 @@
 | 3 | **경계 계약 추출기** | 자기 IDL·스키마 위치와 방언 | 부분 | 위와 같음 |
 | 4 | **효과 어휘 매퍼** | 자기 ORM·큐·캐시 호출이 무엇을 쓰는가 | **대개 예** | 위와 같음 |
 | 5 | **모듈·경로 규약** | 모노레포 레이아웃·생성 디렉터리·별칭 | **예** | `asserted` |
-| 6 | **관측 조달자** | 자기 CI·테스트·SAST를 어떻게 돌리는가 | 아니오 | `observed` ([F16](F16-observation-intake.md)) |
+| 6 | **관측 조달자** | 자기 CI·테스트·SAST를 어떻게 돌리는가 | 아니오 | `observed` — **SAST·린터는 [F16b](F16b-engine-procurement.md)(P2)** |
 | 7 | **개념·규칙 팩** | 자기 도메인 어휘 | **예** | `asserted_via=rule` ([F18](F18-packs-concepts.md)) |
 
 > **확장점을 많이 여는 것이 목표가 아니다.** 확장점 하나는 저작 노동 하나이고 [사슬 A](../../DESIGN.md)의 뿌리 후보다. **코드가 필요한 자리를 최소로 유지하는 것**이 이 설계의 목표이며, 실제로 코드가 필요한 것은 1·6과 2·3의 잔여뿐이다.
@@ -76,7 +80,7 @@ provider   → palimpsest: stdout JSON  { schema_version, capability, facts[], u
 
 | 이슈 | 왜 | 대응 | 안 되면 |
 |---|---|---|---|
-| **provider가 저작되지 않는다** | 팩 저작과 같은 실패 양식 | 절반 이상이 선언으로 되게 설계한 것이 대응. P0-preflight T4가 1차 판정 | 포트 1·6만 남기고 나머지는 선언 전용으로 |
+| **provider가 저작되지 않는다** | 팩 저작과 같은 실패 양식 | 절반 이상이 선언으로 되게 설계한 것이 대응. P0-preflight T4가 1차 판정 | 포트 1·6만 남기고 나머지는 선언 전용으로. **다만 포트 6은 [T9](../../gates/preflight.md#t9--조달-가능성-실측) 이후 P2다** |
 | **임의 코드 실행의 안전** | 사용자 머신에서 남의 코드가 돈다 | 코어가 실행하지 않는 것이 방어. **그러나 책임을 호스트로 옮긴 것이지 없앤 것이 아니다**([DESIGN §15-37](../../DESIGN.md)) | 실행 경로에 명시적 승인 + 실행 범위 `asserted` |
 | **프로세스 기동 비용** | 파일마다 프로세스를 띄우면 10⁵에서 죽는다 | **배치 단위 호출**(파일 목록을 한 번에 넘기고 한 번에 받는다). 스트리밍 JSON Lines | 장기 프로세스 모드를 옵션으로 (기본 아님 — P12) |
 | **스키마 드리프트** | provider가 옛 스키마로 답한다 | `schema_version` 필수 + 불일치 시 거부 | 하위 호환 어댑터 |
@@ -114,7 +118,7 @@ provider   → palimpsest: stdout JSON  { schema_version, capability, facts[], u
 - [ ] `schema/provider.toml` — 요청·응답 스키마 + 포트 일곱의 `kind`
 - [ ] 배치 호출 규약(JSON Lines) + 예산·타임아웃 + `elision`
 - [ ] 능력 선언 · 적용 범위 · `deterministic` 플래그
-- [ ] 수용 경로 — [F16](F16-observation-intake.md)의 intake로 합류, 배정은 `observed` 고정
+- [ ] 수용 경로 — [F16](F16-observation-intake.md)의 intake로 합류(**수용 API, P1**), 배정은 `observed` 고정
 - [ ] 재조달 대조(불일치 보고, 덮어쓰지 않음)
 - [ ] 대장에 `(provider N · 미설정 포트 M)` 표시
 - [ ] 참조 provider 둘 + 계약 테스트
