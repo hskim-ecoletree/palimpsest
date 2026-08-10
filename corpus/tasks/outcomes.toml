@@ -14,6 +14,8 @@
 
 schema_version = 1
 registered_at = "2026-08-11"
+registered_in = "10d0e37bbfbc457d4a4d59a58196bf6b4ce751ea"   # 규칙 사전 등록 커밋 — 등록 증거
+measured_at = "2026-08-11"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ⓐ 결함 5건 — 도입 커밋과 발현 좌표를 지목할 수 있는가
@@ -69,3 +71,184 @@ grade = """
 """
 
 falsified_if = "소급 결박할 수 없으면 `Journey` 를 내리고 (c)를 '진입점에서 시작하는 도달 하한'으로 축소한다. `Defect` 는 자리만 두고 필수로 만들지 않는다. 축소했다는 사실을 goals §0.1에 적는다."
+
+# ═════════════════════════════════════════════════════════════════════════════
+# 결과
+# ═════════════════════════════════════════════════════════════════════════════
+
+[applied]
+verdict = "반증 — ⓑ 여정. ⓐ 결함은 통과."
+summary = """
+`Defect` 는 소급 결박된다 (발현 좌표 4/5 · 도입 커밋 4/5).
+`Journey` 는 소급 결박되지 않는다 (진입점 좌표 0/3).
+저작 뿌리는 셋으로 준다 — 넷도 둘도 아니다.
+"""
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⓐ 결함 5건
+# ─────────────────────────────────────────────────────────────────────────────
+
+[defect_result]
+universe_size = 149        # U — T8과 같은 모집단
+gap = 29                   # g = floor(149/5)
+sample_indices = [0, 29, 58, 87, 116]
+symptom_rate = "4/5 = 80%"       # 발현 좌표 지목 (전부 라인 수준)
+origin_rate = "4/5 = 80%"        # 도입 커밋 지목
+tracker_rate = "4/5 = 80%"       # 이슈/작업항목 결박
+
+# 임계값 민감도 — 이 수치를 그대로 믿으면 안 되는 이유
+sensitivity = """
+도입 커밋 성공 4건 중 **2건이 정확히 50%** 다 (`7f6b0a58` 는 삭제 줄 2개 중 1개,
+`9dc1af1e` 는 10개 중 5개). 등록한 임계가 '과반(>=50%)' 이라 성공이지만,
+임계를 `>50%` 로 바꾸면 **2/5 = 40%** 로 떨어진다.
+삭제 줄이 적을수록 과반 판정은 무의미해진다 — 2줄짜리 결함에서 '최빈 1줄'은 신호가 아니다.
+**80%는 상한이고 40%가 하한이다. 둘 다 적는다.**
+"""
+
+[[defect]]
+n = 1
+commit = "add91871"
+committed_at = "2026-05-24"
+subject = "fix(handoff,cli): close 3 review findings on pass handoff and outputs"
+symptom = "line"          # 라인 수준 성공
+symptom_detail = "src 파일 5개 · 수정 전 삭제 줄 45 (`src/core/work-item-handoff.ts` L13·L20·L30·… 외)"
+origin = "ok"
+origin_commit = "7d6451a5"
+origin_detail = "45줄 중 38줄 = 84%, 서로 다른 커밋 2개. `feat(cli): implement work/run/verify commands (P-6)` — 도입 당일"
+tracker = "ok"
+tracker_refs = ["wi_v01implement"]
+
+[[defect]]
+n = 2
+commit = "2550118a"
+committed_at = "2026-06-08"
+subject = "fix(setup): resolveResourcesDir 깊이 독립 탐색 — repo-root bin/ditto self-host 가드 복구"
+symptom = "line"
+symptom_detail = "`src/cli/commands/setup.ts` L11-12 · L15-18 (삭제 줄 6)"
+origin = "ok"
+origin_commit = "5616f46e"
+origin_detail = "6/6 = 100%, 단일 커밋. 가장 깨끗한 결박 — 도입도 같은 날"
+tracker = "fail"
+tracker_refs = []
+note = "표본 5건 중 유일하게 이슈·작업항목 참조가 없다. 트래커로만 결함을 모으면 이 건은 보이지 않는다."
+
+[[defect]]
+n = 3
+commit = "afcfefab"
+committed_at = "2026-06-20"
+subject = "fix(agents): reviewer/security-reviewer 출력 경로를 정본 .ditto/local/work-items로 교정"
+symptom = "fail"
+symptom_detail = "`src/**` 변경이 **0**. 바뀐 것은 `agents/reviewer.md` · `agents/security-reviewer.md` (에이전트 프롬프트)와 테스트 하나뿐"
+origin = "omission"
+origin_commit = ""
+origin_detail = "blame 대상 src 줄이 없다"
+tracker = "ok"
+tracker_refs = ["wi_260620njg"]
+note = """
+**결함이 코드가 아니라 프롬프트에 있다.** 표본 5건 중 1건이 이 형태다.
+`Defect` 를 코드 좌표에만 걸 수 있게 설계하면 이 종류는 통째로 담기지 않는다.
+에이전트 하네스에서는 프롬프트가 실행 가능한 산출물이므로 드문 경우가 아닐 수 있다.
+"""
+
+[[defect]]
+n = 4
+commit = "7f6b0a58"
+committed_at = "2026-06-28"
+subject = "fix(land): byproduct 흡수를 baseline 없는 .ditto/memory에도 적용 — porcelain -uall 일관"
+symptom = "line"
+symptom_detail = "`src/core/cleanup-archive.ts` L152 · `src/core/land-commit.ts` L73 (삭제 줄 2)"
+origin = "ok"
+origin_commit = "59fb3d8f"
+origin_detail = "**1/2 = 50% — 임계 경계.** 나머지 1줄은 `f742fbb0`. 사실상 두 커밋이 반씩이다"
+tracker = "ok"
+tracker_refs = ["wi_260627lus", "wi_260627sga"]
+
+[[defect]]
+n = 5
+commit = "9dc1af1e"
+committed_at = "2026-07-11"
+subject = "fix(autopilot): cap-model 증분-성공 처리 + over-cascade ordering + doomed-block 착지"
+symptom = "line"
+symptom_detail = "`src/core/autopilot-complete.ts` L238-240·L248-251·L287-288 · `src/core/autopilot-loop.ts` L1040 (삭제 줄 10)"
+origin = "ok"
+origin_commit = "760e4763"
+origin_detail = "**5/10 = 50% — 임계 경계.** 서로 다른 커밋 5개에 흩어져 있다 (`4f8d9289` 2, 나머지 각 1)"
+tracker = "ok"
+tracker_refs = ["#23", "wi_260710vzu"]
+note = "도입 커밋 `760e4763` 은 그 자체가 fix 커밋이다 — 결함이 결함 수정에서 태어났다. T8의 I1 계열과 같은 자리다."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ⓑ 여정 3건
+# ─────────────────────────────────────────────────────────────────────────────
+
+[journey_result]
+tier_used = "J1"           # |J1| = 3 이므로 J2로 내려가지 않았다
+j1_size = 3
+entry_point_rate = "0/3 = 0%"
+partial = 1
+note = """
+J1이 정확히 3건이라 규칙대로 J2로 내려가지 않았다. 결과가 나쁘다고 모집단을 바꾸면
+그것이 결과를 보고 고르는 것이다.
+**J1 3건 전부가 `.ditto/local/` 아래의 gitignored 런타임 산물이다** — 저장소에 커밋되지 않는다.
+T9가 조달에서 본 것과 같은 형태다: 있긴 한데 보존되지 않는다.
+"""
+
+[[journey]]
+n = 1
+path = ".ditto/local/codex-dogfood/tiny-digest.journey.md"
+id = "jrn-codex-dogfood-digest"
+surfaces = ["page:/dogfood"]
+grade = "fail"
+reason = "`/dogfood` 에 대응하는 제품 코드가 ditto 저장소에 없다. `src/` 의 'dogfood' 출현 5건은 전부 무관한 문맥(테스트 러너 주석·설치 힌트)이다. 이 파일은 digest 결정성을 검사하려고 만든 **합성 최소 여정**이지 제품의 여정이 아니다."
+
+[[journey]]
+n = 2
+path = ".ditto/local/e2e-proof/target-app/e2e/journeys/checkout-coupon.journey.md"
+id = "jrn-checkout-coupon"
+surfaces = ["page:/checkout", "component:app/checkout.html"]
+grade = "fail"
+grade_lenient = "partial"
+reason = """
+대상이 ditto가 아니라 `target-app` — `.git` 을 따로 가진 **별도 저장소**이고, e2e 기능을
+실증하려고 만든 장난감 앱이다. 등록한 등급의 실패 예시("외부 대상 앱")에 그대로 해당한다.
+관대하게 target-app 자신을 기준으로 봐도 **부분** 까지다: 진입점은 `app/checkout.html` 의
+인라인 `<script>` 안 익명 이벤트 핸들러이고, 명명된 최상위 선언은 `const COUPONS` 뿐이라
+`repo:path#name` 으로 진입점을 지목할 수 없다.
+"""
+
+[[journey]]
+n = 3
+path = ".ditto/local/e2e-proof/target-app/e2e/journeys/promo-banner.journey.md"
+id = "jrn-promo-banner"
+surfaces = ["page:/promo", "component:app/promo.html"]
+grade = "fail"
+reason = """
+같은 외부 target-app. 게다가 이 여정이 지목하는 대상은 **일부러 없다** —
+`app/promo.html` 에 주석이 있다: `의도적 실패 실증용: [data-testid=promo-banner] 요소를
+일부러 넣지 않았다`. 실패 경로를 실증하는 픽스처이지 여정의 소급 결박 대상이 아니다.
+"""
+
+# ── 규칙 밖 부가 관측 — 판정에 넣지 않는다 ──
+#
+# 표본이 아니고 지목 가능률에 세지 않는다. R-27의 **처분**을 정할 때 쓰라고 적는다.
+[journey_result.aside]
+scope = "규칙 밖 · 표본 아님 · 판정에 넣지 않음"
+observation = """
+J2(`docs/features/<name>.md` ↔ `src/cli/commands/<name>.ts`)는 **38쌍**이 성립하고,
+각 명령 파일이 `export const <name>Command` 라는 명명된 최상위 선언 하나를 갖는다
+(`acg-review` → `acgReviewCommand`, `architecture` → `architectureCommand`, `autopilot` → `autopilotCommand`).
+즉 **진입점 좌표 자체는 기계적으로 나온다.** 나오지 않는 것은 '이 진입점들이 한 여정이다'라는 선언이다.
+R-27 §4가 예상한 그대로이고, 처분이 (c)를 '진입점에서 시작하는 도달 하한'으로 축소하라고
+한 것과 방향이 맞는다.
+"""
+
+# ── R-27이 이 표에서 가져가야 할 것 ──
+#
+# 1. **저작 뿌리는 넷이 아니라 셋이다.** `Change`·`Actor`(git 결정론) + `Defect`(소급 결박 가능)
+#    는 저작을 요구하지 않고, `Journey` 하나만 남는다. 16분의 1이 아니라 8분의 1이다.
+# 2. **여정이 존재하는 곳에서도 그것은 새 저작의 산물이었다.** ditto가 가진 여정 3건은
+#    e2e 기능을 실증하려고 사람이 새로 쓴 것이지, 이미 있던 것에 올라탄 것이 아니다.
+#    "올라탈 곳이 있는가"의 답은 아니오다.
+# 3. **`Defect` 를 코드 좌표에만 걸면 5건 중 1건을 잃는다** (afcfefab — 프롬프트 결함).
+# 4. **도입 커밋 결박의 신뢰도는 삭제 줄 수에 걸린다.** 줄이 적으면 blame 과반은 신호가 아니다.
+
