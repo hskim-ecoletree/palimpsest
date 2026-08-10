@@ -10,6 +10,7 @@
 |---|---|---|
 | T1 boxwood 작업본 복원 | **통과** | [§T1](#t1--boxwood-작업본-복원) |
 | T7 Kotlin 파싱 사전 측정 | **통과** (단서 있음) | [§T7](#t7--kotlin-파싱-사전-측정) |
+| T9 조달 가능성 실측 | **반증** | [§T9](#t9--조달-가능성-실측) |
 
 ---
 
@@ -260,3 +261,148 @@ tree-sitter parse --quiet --stat --paths kt.txt
 
 `grep`으로 아카이브 목록·파싱 출력을 다룰 때 **`LC_ALL=C`와 `grep -a`가 필요하다** —
 경로에 비UTF-8 바이트가 섞여 있어 기본 설정에서는 grep이 바이너리로 판단하고 조용히 0을 낸다.
+
+---
+
+## T9 — 조달 가능성 실측
+
+**판정: 반증**
+
+이슈 [#34](https://github.com/hskim-ecoletree/palimpsest/issues/34) · 근거 [R-25](../plan/00-risks.md#r-25)
+
+산출: [`corpus/manifest.toml`](../../corpus/manifest.toml)의 `[procurement]` 절.
+
+### 무엇을 어떻게 쟀나
+
+코드를 쓰지 않았다. CI 설정 파일과 **GitHub Actions의 실제 실행 기록·로그·아티팩트**,
+그리고 code-scanning API를 읽었다.
+
+**①은 설정 파일의 존재가 아니라 실행 이력으로 판정했다.** 워크플로 파일이 있는 것과
+그것이 도는 것은 다르고, 조달은 남이 이미 하고 있어야 성립하는 것이기 때문이다([R-25](../plan/00-risks.md#r-25)).
+
+### 네 항목 — 코퍼스별
+
+| | ① CI가 도는가 | ② 무엇이 도는가 | ③ 산출 형식 | ④ 파일:라인 |
+|---|---|---|---|---|
+| **boxwood** | 부분 — 저장소 7개 중 분석 CI는 2개 | 린터·타입체커 (frontend만) · SAST 없음 · 테스트 없음 | 콘솔 텍스트(로그)뿐 · SARIF 0 · 아티팩트 0 | 로그에서만 |
+| **ditto** | **예** — CI 319회 · npx-smoke 103회 | biome lint · `tsc --noEmit` · 자체 게이트 2 · SAST 없음 · 테스트 없음 | 콘솔 텍스트(로그)뿐 · SARIF 0 · 아티팩트 0 | **예** (규칙 종류에 따라 다름) |
+| **palimpsest** | 아니오 — `.github/` 없음, 실행 0건 | 없음 | 해당 없음 | 해당 없음 |
+| **규모 코퍼스** | **대조 불가** | 미선정(T5) | | |
+
+| 집계 | 값 |
+|---|---|
+| SAST 조달원을 가진 코퍼스 | **0 / 4** |
+| 좌표 있는 진단을 실제로 내고 있는 코퍼스 | **1 / 4** (ditto) |
+| 진단을 아티팩트로 보존하는 코퍼스 | **0 / 4** |
+| SARIF를 내는 코퍼스 | **0 / 4** |
+
+### boxwood — 분석 CI는 사실상 없다
+
+저장소 7개 중 워크플로가 있는 것은 5개. 그중 **5개가 CD**(docker build + scp/ssh 배포)이고
+분석을 하는 것은 둘뿐이다.
+
+| 저장소 · 워크플로 | 실행 | 성공 | 실패 | 최근 |
+|---|---|---|---|---|
+| `boxwood-packages` · CI | 85 | 84 | 1 | 2026-05-19 |
+| `boxwood-portal-svelte` · **Automation CI** | **2** | **0** | 1 | 2026-06-11 |
+| `boxwood-portal-svelte` · CD 3종 | 98 | 93 | 3 | 2026-08-04 |
+| `boxwood-portal-kotlin` · CD 2종 | 51 | 41 | 9 | 2026-07-30 |
+| `boxwood-automation-engine` · CD 2종 | 22 | 20 | 1 | 2026-07-29 |
+| `hanwha-boxwood-external-client` | 0 | | | 워크플로 없음 |
+| `boxwood-external-task-client-teams` | 0 | | | 워크플로 없음 |
+| `boxwood-workspace` | 0 | | | 워크플로 없음 |
+
+세 가지가 걸린다.
+
+1. **`boxwood-packages`의 CI는 `mvn clean verify -DskipTests`다.** 빌드만 하고 테스트를
+   건너뛴다. 린터도 SAST도 없다. 85회 도는 것은 컴파일이 되는지 보는 것이다.
+2. **린터·타입체커가 실제로 도는 워크플로는 `Automation CI` 하나이고, 그것은 지금까지
+   2회 돌았으며 한 번도 성공한 적이 없다** — 1회 실패(Type check 단계), 1회 취소.
+3. **T7이 파싱한 Kotlin 1,122파일이 있는 `boxwood-portal-kotlin`에는 분석 CI가 없다.**
+   CD만 51회 돈다. 감사(F15)와 효과 집합(F13)의 판정 대상이 바로 이 저장소다.
+
+분석기 설정도 없다. `detekt` · `ktlint` · `sonar` · `spotbugs` · `checkstyle` · `pmd` ·
+`semgrep` · `snyk` · `trivy` — Gradle·Maven 빌드 파일 어디에도 언급이 없다. 있는 것은
+`.eslintrc` 둘과 `tsconfig.json` 여덟, 전부 frontend다.
+
+디스크에 남은 리포트도 없다. Gradle 바이너리 `test-results`, surefire `dumpstream` 1건,
+빈 `test-results` 디렉터리가 전부다. **파일:라인을 담은 리포트 파일은 0건이다.**
+
+**그럼에도 좌표는 존재한다 — 로그 안에.** Automation CI의 그 실패 실행 로그에
+`svelte-check found 495 errors and 958 warnings in 206 files`가 있고,
+좌표 있는 진단 행이 1,453개다 (예: `packages/ui/src/lib/basic/inputs/EcoletreeSlider.svelte:89:10`).
+**아티팩트가 아니라 실행 로그이고, 로그는 보존 기간에 걸린다.**
+
+### ditto — 조달원이 있다. 하나뿐이고, 로그뿐이다
+
+| 워크플로 | 실행 | 실패 | 최근 |
+|---|---|---|---|
+| CI | **319** | 23 | 2026-07-24 |
+| npx-smoke | 103 | 0 | 2026-07-24 |
+
+`push(main)`과 **모든 PR**에서 돈다. 도는 것: `biome check`(367파일) · `tsc --noEmit` ·
+`adr:guard` · `check:no-design-doc-refs`.
+
+**테스트는 게이트에 없다.** `ci.yml` 주석이 이유를 적어 두었다 — 환경의존 테스트가 CI에서
+깨져 아직 넣지 않았고, 테스트 CI 독립화는 별도 과제다.
+
+**SAST는 없다.** `reports/codeql/`이 있지만 그것은 CodeQL 도입 조사·계획 문서이지
+CodeQL 산출이 아니다. code-scanning API는 `no analysis found`를 준다.
+
+④ 파일:라인은 **도구와 규칙 종류에 따라 갈린다**:
+
+| 도구 | 형식 | 좌표 |
+|---|---|---|
+| `tsc --noEmit` | `file(line,col)` — `tests/schemas/ac-oracle.test.ts(139,30): error TS2532` | ○ |
+| biome — **lint** 규칙 | `file:line:col` — `tests/gate-coverage/drive/harness.test.ts:6:46 lint/correctness/noUnusedImports` | ○ |
+| biome — **format** 규칙 | `scripts/build-bin.mjs format` — 파일만, 행은 diff 거터에만 | ✗ |
+
+실패 20건을 표본으로 보면 **19건이 Lint(biome), 1건이 Typecheck(tsc)**다. 즉 실제로
+가장 자주 나오는 산출이 좌표가 가장 약한 쪽이다. biome은 `--reporter=json`/`github`로
+좌표를 낼 수 있으나 **현재 설정은 쓰지 않는다.**
+
+아티팩트는 0건이다. 여기서도 조달 경로는 로그뿐이다.
+
+### 왜 반증인가
+
+[F16을 P1로 올린 근거](../plan/features/F16-observation-intake.md)는
+*"외부 엔진의 산물을 받으면 XL 둘 없이 감사가 선다"* 였다. 실측은 그것을 받치지 못한다.
+
+1. **SAST 조달원이 0/4다.** 감사(F15)를 대신할 `Finding`을 낼 엔진이 어느 코퍼스에도 없다.
+   GitHub 코드 스캐닝도 4개 저장소 전부 비활성이다. F16이 P1로 올라온 근거는
+   *SAST 산물을 받는 것*이었고, 받을 것이 없다.
+2. **F16의 승격 근거가 걸린 boxwood에 조달원이 없다.** 감사·효과 집합의 판정 대상인
+   Kotlin 백엔드는 분석 CI가 0이다. 조달로 우회하려던 뿌리가 바로 그 대상에서 비어 있다.
+3. **하나 있는 조달원(ditto)도 `observed` 사실을 세우기엔 형태가 약하다.** SARIF도
+   아티팩트도 없고 경로는 실행 로그뿐이다. 그리고 실패의 95%(19/20)를 차지하는 biome
+   format 진단은 파일까지만 준다.
+
+**이것은 "때때로 있는 능력"이다 — [R-25](../plan/00-risks.md#r-25)가 경계한 바로 그 형태.**
+
+### 반증되면 무엇을 하기로 했나 — 아직 적용하지 않았다
+
+[P0-preflight §4](../plan/features/P0-preflight.md)와 이슈 [#34](https://github.com/hskim-ecoletree/palimpsest/issues/34)가 정한 처분:
+
+> **[F16](../plan/features/F16-observation-intake.md)을 P2로 되돌리고 P1의 약속을 (a)(d)로 줄인다.**
+> 줄었다는 사실을 [goals §0.1](../plan/00-goals.md)에 적는다.
+
+**이 처분은 아직 적용되지 않았다.** T9의 인수 기준은 "네 항목이 코퍼스별로
+`manifest.toml`의 `[procurement]` 절에 기록되어 커밋된다" 하나이고, F16 강등과
+goals·우선순위 표 수정은 [P0-preflight 완료 체크리스트](../plan/features/P0-preflight.md)의
+마지막 줄("반증된 항목이 있으면 우선순위 표를 갱신")에 속한다 — 에픽 [#1](https://github.com/hskim-ecoletree/palimpsest/issues/1)의 몫이다.
+
+**숨기지 않기 위해 여기 적어 둔다: 이 강등은 지금 빚으로 남아 있다.**
+
+### 뒤집을 수 있는 관측 셋 — 이 반증은 환경의 성질이지 영구 사실이 아니다
+
+이 판정은 "조달이 원리적으로 불가능하다"가 아니라 "지금 대상 환경에서 아무도 하고 있지
+않다"이다. 아래가 바뀌면 재측정 대상이다.
+
+1. **`boxwood-portal-kotlin`에 detekt를 붙이면** Kotlin 쪽 조달원이 0에서 1이 된다.
+   설정이 아예 없으므로 새로 만드는 비용이다 — 남이 이미 하고 있는 것을 받는 게 아니다.
+2. **biome에 `--reporter=json`을 주면** ditto의 가장 흔한 산출이 좌표를 갖는다. 한 줄이다.
+3. **아티팩트 업로드가 없다는 것이 공통 병목이다.** 셋 다 로그에만 있고, 로그는 보존
+   기간에 걸린다. 조달을 실제 경로로 쓰려면 이것부터 걸린다.
+
+**그리고 이 셋은 전부 "우리가 대상 저장소를 고쳐야 성립한다"에 해당한다.**
+조달의 전제가 *남이 이미 하고 있는 것을 받는다*였다는 점에서, 셋 다 전제를 무너뜨린다.

@@ -1,0 +1,245 @@
+# 평가 코퍼스 매니페스트
+#
+# 이 파일은 아직 완성되지 않았다. **T5(코퍼스·과제·합격선 사전 등록)는 수행되지 않았고**,
+# 지금 여기 있는 것은 T9(조달 가능성 실측)가 실제로 잰 것과, 그 측정에 필요했던
+# 코퍼스 식별 사실뿐이다.
+#
+# 과제(`tasks/`)·대조군(`arms.toml`)·합격선(`criteria.toml`)은 T5·T11의 산출이며
+# 여기에 미리 적지 않는다 — 적으면 그것이 곧 사전 등록을 가장한 사후 기입이다.
+#
+# 판정 기록: docs/gates/preflight.md
+# 레이아웃 규약: docs/plan/features/P0-preflight.md §5
+
+schema_version = 1
+measured_at = "2026-08-11"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 코퍼스 식별 — T1·T7이 실제로 다룬 대상
+# ─────────────────────────────────────────────────────────────────────────────
+
+[[corpus]]
+id = "boxwood"
+stack = "Kotlin/Spring/Exposed + Svelte"
+role = "효과 집합(F13)·감사(F15)·다언어의 판정 대상"
+restored_from = "boxwood-workspace_backup.zip (1.5GB, 2026-01-31)"
+local_path = "~/dev/projects/boxwood"
+note = "단일 저장소가 아니라 8개 저장소 + git worktree 4개의 작업본이다"
+# worktrees/ 넷은 아래 저장소들의 다른 브랜치이며 내용이 중복된다.
+files_total = 258521
+files_excluding_node_modules = 24261
+kt_files = 1734          # worktrees 포함
+kt_files_primary = 1122  # worktrees 제외
+
+  [[corpus.repos]]
+  name = "boxwood (최상위)"
+  remote = "https://github.com/hskim-ecoletree/boxwood-workspace.git"
+  head = "b4985d8fb93d"
+  branch = "main"
+  commits = 51
+
+  [[corpus.repos]]
+  name = "portal-backend"
+  remote = "https://github.com/ecoletree/boxwood-portal-kotlin.git"
+  head = "a29cad0bf6a8"
+  branch = "branch/dwp"
+  commits = 1174
+
+  [[corpus.repos]]
+  name = "portal-backend-aa-task"
+  remote = "https://github.com/ecoletree/boxwood-portal-kotlin.git"
+  head = "10185f804ad8"
+  branch = "feat/aa-task"
+  commits = 874
+
+  [[corpus.repos]]
+  name = "frontend"
+  remote = "https://github.com/ecoletree/boxwood-portal-svelte.git"
+  head = "19d709cebc07"
+  branch = "main"
+  commits = 1183
+
+  [[corpus.repos]]
+  name = "boxwood-packages"
+  remote = "https://github.com/ecoletree/boxwood-packages.git"
+  head = "2e9198716796"
+  branch = "main"
+  commits = 160
+
+  [[corpus.repos]]
+  name = "automation-engine"
+  remote = "https://github.com/ecoletree/boxwood-automation-engine.git"
+  head = "9e946c536935"
+  branch = "master"
+  commits = 129
+
+  [[corpus.repos]]
+  name = "external-client"
+  remote = "https://github.com/ecoletree/hanwha-boxwood-external-client.git"
+  head = "69aa11cbefc7"
+  branch = "mig/modern"
+  commits = 84
+
+  [[corpus.repos]]
+  name = "boxwood-external-task-client-teams"
+  remote = "https://github.com/ecoletree/boxwood-external-task-client-teams.git"
+  head = "d8d99c096e57"
+  branch = "main"
+  commits = 5
+
+[[corpus]]
+id = "ditto"
+stack = "TypeScript"
+role = "적시 제시(F11)·계획 결박(F12)·재발 사례(T8)의 판정 대상"
+remote = "https://github.com/incognito050924/ditto.git"
+local_path = "~/dev/projects/ditto"
+head = "aded7ce7f88f"
+branch = "rebuild/foundation"
+ts_files = 496  # node_modules·dist·.ditto 제외
+
+[[corpus]]
+id = "palimpsest"
+stack = "문서"
+role = "서술물 인입(F10)의 판정 대상"
+remote = "https://github.com/hskim-ecoletree/palimpsest.git"
+head = "0a314f940ba0"
+md_files = 49
+convenience_sample = true  # R-19 — 편의 표본임을 명시한다
+
+[[corpus]]
+id = "scale"
+stack = "TypeScript"
+role = "목표 G5 — P1 종료 시점의 게이트"
+selected = false
+note = "아직 선정되지 않았다. 선정은 T5의 몫이다."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# [procurement] — T9 조달 가능성 실측 (2026-08-11)
+#
+# 네 항목을 코퍼스별로 센다:
+#   ① CI가 도는가  ② 무엇이 도는가  ③ 산출 형식  ④ 그 산출이 파일:라인을 주는가
+#
+# 코드를 쓰지 않았다. CI 설정 파일과 GitHub Actions의 기존 실행 기록·로그를 읽었다.
+# ①은 설정 파일의 존재가 아니라 **실제 실행 이력**으로 판정했다.
+#
+# 판정 근거와 서술은 docs/gates/preflight.md §T9
+# ─────────────────────────────────────────────────────────────────────────────
+
+[procurement]
+measured_at = "2026-08-11"
+method = "CI 설정 파일 + GitHub Actions runs/jobs/logs/artifacts API + code-scanning API"
+verdict = "반증"
+sast_sources = 0        # 코퍼스 4개 중 SAST 조달원을 가진 것의 수
+usable_sources = 1      # 좌표 있는 진단을 실제로 내고 있는 코퍼스의 수 (ditto)
+artifact_sources = 0    # 진단을 아티팩트로 보존하는 코퍼스의 수
+sarif_sources = 0
+
+# ── boxwood ──────────────────────────────────────────────────────────────────
+[procurement.boxwood]
+# ① CI가 도는가
+ci_runs = true
+ci_note = """
+저장소 7개 중 워크플로가 있는 것은 5개, 그중 분석을 하는 것은 2개뿐이다.
+나머지는 전부 CD(docker build + scp/ssh 배포)다.
+"""
+runs_by_repo = [
+  { repo = "boxwood-packages",      workflow = "CI",           runs = 85, success = 84, failure = 1,  last = "2026-05-19" },
+  { repo = "boxwood-packages",      workflow = "Publish",      runs = 15, success = 10, failure = 5,  last = "2026-05-19" },
+  { repo = "boxwood-portal-svelte", workflow = "Automation CI", runs = 2, success = 0,  failure = 1,  last = "2026-06-11" },
+  { repo = "boxwood-portal-svelte", workflow = "CD 3종",       runs = 98, success = 93, failure = 3,  last = "2026-08-04" },
+  { repo = "boxwood-portal-kotlin", workflow = "CD 2종",       runs = 51, success = 41, failure = 9,  last = "2026-07-30" },
+  { repo = "boxwood-automation-engine", workflow = "CD 2종",   runs = 22, success = 20, failure = 1,  last = "2026-07-29" },
+  { repo = "hanwha-boxwood-external-client",       workflow = "없음", runs = 0 },
+  { repo = "boxwood-external-task-client-teams",   workflow = "없음", runs = 0 },
+  { repo = "boxwood-workspace",                    workflow = "없음", runs = 0 },
+]
+
+# ② 무엇이 도는가
+linter = "부분 — frontend만 (eslint via turbo). Kotlin 쪽은 없다"
+typechecker = "부분 — frontend만 (svelte-check + tsc)"
+sast = false
+tests = false  # boxwood-packages CI는 `mvn clean verify -DskipTests` — 테스트를 건너뛴다
+analyzer_configs_found = [".eslintrc.js", ".eslintrc.cjs", "tsconfig.json x8"]
+analyzer_configs_absent = ["detekt", "ktlint", "sonar", "spotbugs", "checkstyle", "pmd", "semgrep", "snyk", "trivy"]
+code_scanning_enabled = false  # GitHub API: "Code scanning is not enabled"
+
+# ③ 산출 형식
+output_format = "콘솔 텍스트 (CI 실행 로그) 뿐"
+artifacts = 0    # 분석 산출 아티팩트. CD의 dist 업로드는 진단이 아니다
+sarif = false
+on_disk_reports = "없음 — Gradle 바이너리 test-results, surefire dumpstream 1건, 빈 test-results 디렉터리"
+
+# ④ 파일:라인을 주는가
+file_line = "부분 — 로그에서만"
+file_line_evidence = """
+Automation CI 유일한 실패 실행(2026-06-11)의 로그에 svelte-check 진단이 남아 있다:
+  "svelte-check found 495 errors and 958 warnings in 206 files"
+  좌표 있는 진단 행 1,453개 (예: packages/ui/src/lib/basic/inputs/EcoletreeSlider.svelte:89:10)
+좌표는 나온다. 그러나 이것은 아티팩트가 아니라 실행 로그이고,
+그 워크플로는 지금까지 2회 돌았으며 한 번도 성공하지 못했다(실패 1 · 취소 1).
+"""
+kotlin_coverage = "없음"
+kotlin_note = """
+**T7이 파싱한 Kotlin 1,122파일이 있는 boxwood-portal-kotlin에는 분석 CI가 하나도 없다.**
+CD만 51회 돈다. 린터·타입체커·테스트·SAST 전부 없다.
+감사(F15)·효과 집합(F13)의 판정 대상이 바로 이 저장소다.
+"""
+
+# ── ditto ────────────────────────────────────────────────────────────────────
+[procurement.ditto]
+# ① CI가 도는가
+ci_runs = true
+runs_by_workflow = [
+  { workflow = "CI",        runs = 319, failure = 23, last = "2026-07-24" },
+  { workflow = "npx-smoke", runs = 103, failure = 0,  last = "2026-07-24" },
+]
+triggers = "push(main) + 모든 pull_request"
+
+# ② 무엇이 도는가
+linter = "biome check (src tests scripts) — 367파일"
+typechecker = "tsc --noEmit"
+sast = false
+tests = false
+tests_note = """
+ci.yml 주석이 이유를 명시한다 — 환경의존 테스트(citty help 출력이 bun 버전에 민감 등)가
+CI에서 깨져 아직 게이트에 넣지 않았다. 테스트 CI 독립화는 별도 과제로 남아 있다.
+"""
+custom_gates = ["adr:guard", "check:no-design-doc-refs"]
+code_scanning_enabled = false  # GitHub API: "no analysis found"
+codeql_note = "reports/codeql/ 은 CodeQL 도입 조사·계획 문서이지 CodeQL 산출이 아니다"
+
+# ③ 산출 형식
+output_format = "콘솔 텍스트 (CI 실행 로그) 뿐"
+artifacts = 0
+sarif = false
+
+# ④ 파일:라인을 주는가
+file_line = "예 — 단, 규칙 종류에 따라 다르다"
+file_line_by_tool = [
+  { tool = "tsc --noEmit",           format = "file(line,col)", example = "tests/schemas/ac-oracle.test.ts(139,30): error TS2532", coordinates = true },
+  { tool = "biome — lint 규칙",      format = "file:line:col",  example = "tests/gate-coverage/drive/harness.test.ts:6:46 lint/correctness/noUnusedImports", coordinates = true },
+  { tool = "biome — format 규칙",    format = "file 만",        example = "scripts/build-bin.mjs format", coordinates = false },
+]
+file_line_caveat = """
+biome의 format 진단은 헤더에 파일만 적고 행 번호는 diff 거터에만 나온다.
+실패 20건을 표본으로 보면 19건이 Lint(biome), 1건이 Typecheck(tsc)였다.
+biome은 --reporter=json/github 으로 좌표를 낼 수 있으나 현재 설정은 쓰지 않는다.
+"""
+
+# ── palimpsest ───────────────────────────────────────────────────────────────
+[procurement.palimpsest]
+ci_runs = false
+ci_note = ".github/ 가 없다. Actions 실행 이력 0건."
+linter = false
+typechecker = false
+sast = false
+tests = false
+code_scanning_enabled = false
+output_format = "해당 없음"
+file_line = "해당 없음"
+note = "코드가 없는 것이 정상 상태다(AGENTS.md). 조달 대상이 아니라는 사실 자체가 측정 결과다."
+
+# ── 규모 코퍼스 ───────────────────────────────────────────────────────────────
+[procurement.scale]
+verdict = "대조 불가"
+reason = "코퍼스가 아직 선정되지 않았다(T5). 존재하지 않는 대상의 CI는 잴 수 없다."
+note = "추정하지 않는다. 선정 후 이 절을 채운다."
