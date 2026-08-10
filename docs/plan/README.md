@@ -22,22 +22,26 @@
 | | 기능 | 우선순위 | 의존 | 규모 | 완성 화면의 어느 줄이 켜지나 |
 |---|---|---|---|---|---|
 | ☐ | [**P0-preflight** 코드 전 실측](features/P0-preflight.md) | **P0** | — | M | 없음 — 계획 절반의 생사 판정 |
-| ☐ | [F01 저장소 접근·관측 범위 대장](features/F01-repo-ledger.md) | **P0** | preflight | M | `Snapshot` · `대장` · `언어` |
+| ☐ | [**F22 그래프 스키마·무결성**](features/F22-graph-schema.md) | **P0** | — | M | 모든 줄의 형태를 정한다 |
+| ☐ | [F01 저장소 접근·관측 범위 대장](features/F01-repo-ledger.md) | **P0** | preflight · F22 | M | `Snapshot` · `대장` · `언어` |
 | ☐ | [F02 파싱·심볼 추출 + 파일 내 스코프 (C1·L2a)](features/F02-parse-extract.md) | **P0** | F01 | L | 심볼이 존재한다 |
 | ☐ | [F03 심볼 정체성·정규화](features/F03-identity.md) | **P0** | F02 | M | 좌표 `order-svc:OrderService.cancel` |
 | ☐ | [F04 추출 캐시 (1층)](features/F04-extract-cache.md) | **P0** | F02 | M | 응답이 즉시 온다 · 과거 커밋이 열린다 |
 | ☐ | [F05 질의 투영 (2층)·의도 저장소·실행기](features/F05-projection-query.md) | **P0** | F03·F04 | L | `Envelope` · 절단 기록 |
-| ☐ | [F06 표면 — 카탈로그·CLI·MCP](features/F06-surface.md) | **P0** | F05 | M | `pal touch` 가 존재한다 |
+| ☐ | [F06 표면 — 카탈로그·**CLI**](features/F06-surface.md) | **P0** | F05 | M | `pal touch` 가 존재한다 |
+| ☐ | [F06b 표면 어댑터 — MCP·플러그인](features/F06-surface.md#4b-p1--mcp-서버와-플러그인은-어댑터다) | **P1** | F06 | S | 질의 로그가 생긴다 |
 | ☐ | [F07 **파일 간** 참조 해소·등급 엣지 (C2)](features/F07-reference-resolution.md) | **P1** | F05 | **XL** | `호출자 7 (exact 5 · candidate 2)` |
 | ☐ | [F08 미해소 참조](features/F08-unresolved.md) | **P1** | F07 | M | `■ 내가 모르는 것` |
 | ☐ | [F09 결박과 낡음 (C6)](features/F09-grounding.md) | **P1** | F03·F05 | L | `live / stale / pending` |
 | ☐ | [F10 서술물 인입](features/F10-narrative-intake.md) | **P1** | F09 | L | `ADR-0042` 가 들어온다 |
 | ☐ | [**F11 적시 제시 `touch`**](features/F11-touch.md) | **P1** | F09·F10 | M | **화면 전체 — 제품이 완성되는 지점** |
 | ☐ | [F12 계획-구현 결박·이탈률](features/F12-plan-binding.md) | **P1** | F11 | M | `PLAN §4-2 … pending` |
+| ☐ | [**F16 관측 수용 (O) — 외부 엔진 조달**](features/F16-observation-intake.md) | **P1 ← P2** | F08·F22 | L | `외부 엔진이 본 것` · `Finding` **without** F13·F15 |
+| ☐ | [**F21 `provider` 포트**](features/F21-provider-ports.md) | **P1** | F16 | M | `provider 경로 2/7` |
+| ☐ | [**F23 git 결합**](features/F23-git-integration.md) | **P1** | F09·F22 | M | 결박이 팀에 공유된다 · `--base` 델타 |
 | ☐ | [F13 효과 집합 (E)](features/F13-effects.md) | **P2** | F07·F12 | **XL** | `writes: order.status …` |
 | ☐ | [F14 진입점·경계 (C3·C4)](features/F14-entrypoints-boundaries.md) | **P2** | F07·F16 | L | 여정의 시작점 |
-| ☐ | [F15 지배관계·3분할 판정 (C5)](features/F15-judgment.md) | **P2** | F13·F14 | **XL** | `Finding 0 / Residual 2` |
-| ☐ | [F16 관측 수용 (O)](features/F16-observation-intake.md) | **P2** | F08·F13 | L | 미해소를 실행으로 메운다 |
+| ☐ | [F15 지배관계·3분할 판정 (C5)](features/F15-judgment.md) | **P2** | F13·F14 | **XL** | `Finding 0 / Residual 2`(자체 산출) |
 | ☐ | [F17 합성물·커버리지](features/F17-synthesis-coverage.md) | **P3** | F11·F15 | L | 근거 없는 요약이 저장되지 않는다 |
 | ☐ | [F18 선언 팩·개념 층](features/F18-packs-concepts.md) | **P3** | F07·F11·F15 | L | 프로젝트 어휘·온톨로지 |
 | ☐ | [F19 사전 브리핑·뷰 모델](features/F19-briefing-view.md) | **P3** | F12·F15 | L | 변경 전 산출·시각화 |
@@ -48,9 +52,11 @@
 | | 뜻 |
 |---|---|
 | **P0** | 없으면 아무것도 없다. 여기서 멈추면 라이브러리 하나 |
-| **P1** | **여기까지가 제품이다.** 목표 1(큐레이션)·2(컨설팅)가 성립하면 팔 수 있다 |
-| **P2** | 감사·온보딩으로의 확장. 가장 비싼 베팅들이 여기 있다 |
+| **P1** | **여기까지가 제품이다.** 목표 1(큐레이션)·2(컨설팅) + **감사의 조달 경로**(F16)가 성립하면 팔 수 있다 |
+| **P2** | 온보딩과 **감사의 자체 산출**로의 확장. 가장 비싼 베팅들이 여기 있다 |
 | **P3** | 표현·평가·경계. 앞이 서야 값이 난다 |
+
+**2026-08-10 지시로 P1의 내용이 바뀌었다**([지시 문서](../instructions/2026-08-10-owner-direction.md) · [goals §0.1](00-goals.md)). 목적의 순위가 "역사를 알게 한다"에서 **"그 결과로 더 나은 코드가 나온다"**로 올라갔고, 그 결과의 네 형태 중 셋이 P2~P3에 있었다. 앞당기는 유일한 경로가 **직접 만들지 않고 조달하는 것**이어서 F16이 P1로 올라오고 F21·F22·F23이 신설됐다. **XL은 하나도 앞당기지 않았다** — 그것이 [R-17](00-risks.md#r-17) 아래에서 이 재편이 성립하는 조건이다.
 
 **P1에서 멈출 수 있게 설계했다** ([R-17](00-risks.md#r-17)). P2 이후는 각각 독립적으로 반증 가능하고, 반증되면 내린다.
 
@@ -63,9 +69,11 @@
 1. ☐ **boxwood 작업본 복원** — 실패하면 P0-preflight 전체가 대체 코퍼스로 재설계된다. 그래서 첫 작업 ([P0-preflight T1](features/P0-preflight.md))
 2. ☐ **`corpus/` 사전 등록** — 과제·대조군·채점 절차는 **코드 첫 줄보다 먼저.** 수치 합격선은 각 기능 착수 직전([T5 §5.1](features/P0-preflight.md))
 3. ☐ **재발 사례 5건 고정** — [F11](features/F11-touch.md)의 유일한 직접 효능 측정이 여기 걸려 있다 ([T8](features/P0-preflight.md))
-4. ☐ **노동 단가 측정** — 라벨·팩·개념. **판단 성분만 재고 편향 방향을 명시**한다 ([T2·T4·T6](features/P0-preflight.md) · [R-23](00-risks.md#r-23))
+4. ☐ **노동 단가 측정** — 라벨·팩·개념 **+ 여정·결함 저작**. **판단 성분만 재고 편향 방향을 명시**한다 ([T2·T4·T6](features/P0-preflight.md) · [R-23](00-risks.md#r-23) · [DESIGN §15-34](../DESIGN.md))
 5. ☐ **Kotlin 파싱 사전 측정** — `tree-sitter` CLI로 30분 ([T7](features/P0-preflight.md))
-6. ☐ **`docs/gates/preflight.md` 커밋** → 그 결과에 따라 위 표의 우선순위가 갱신된다
+6. ☐ **조달 가능성 사전 확인** — 코퍼스에 CI·SAST·린터 산출이 실제로 있는가, 있으면 어떤 형식인가. **없으면 F16의 P1 승격 근거가 그 코퍼스에서 무너진다**([G8](00-goals.md) · [R-25](00-risks.md#r-25))
+7. ☐ **G7 대조 장치 등록** — "코드가 나아졌는가"를 무엇으로 잴 것인지. 사후에 고르면 [R-18](00-risks.md#r-18)의 오염이다 ([DESIGN §15-39](../DESIGN.md))
+8. ☐ **`docs/gates/preflight.md` 커밋** → 그 결과에 따라 위 표의 우선순위가 갱신된다
 
 ---
 
@@ -103,6 +111,8 @@ F01~F06을 하나씩 완결시키면 **여섯 개가 다 끝나야 처음 뭔가
 
 | ☐ | 검사 | 켜는 곳 |
 |---|---|---|
+| ☐ | **스키마 정합** — 코드의 노드·엣지가 `schema/graph.toml`에 있고 속성 `producer`가 노드 `provenance`와 정합([DESIGN §3.4](../DESIGN.md)) | **F22** |
+| ☐ | **그래프 불변식 여덟**(`pal doctor` — [DESIGN §12.7](../DESIGN.md)) | **F22**(골격) · 각 기능이 자기 불변식을 등록 |
 | ☐ | **선택 필드 금지** — 도메인 타입의 `Option<T>`(범위 정의는 [stack §5.4](00-stack.md#54-타입으로-강제하는-여섯)) | F03 |
 | ☐ | **재구축 등가성** — 2층 삭제 후 **1층 + 의도 저장소**로 재구축 → `extracted`·`asserted`·`observed` 전부 복원 + **의도 파일 불변** | F05 |
 | ☐ | **캐시 폐기 격리** — `pal cache prune` 후 결박·승인 건수 불변 | F05 |
@@ -156,6 +166,8 @@ F01~F06을 하나씩 완결시키면 **여섯 개가 다 끝나야 처음 뭔가
 
 **이 계획은 설계를 고치지 않는다.** 아래는 계획을 세우며 관측된 갱신 대상이며 각각 별도 커밋으로 `DESIGN.md`에 반영되어야 한다.
 
+> **2026-08-10 지시로 설계가 먼저 갱신된 항목은 여기 없다.** D23~D31([DESIGN §1](../DESIGN.md))이 그것이며, 이 표는 **계획이 설계보다 앞서 관측한 것**만 담는다. 마지막 행(온톨로지 어휘)은 D25가 흡수했다.
+
 | ☐ | 대상 | 무엇이 바뀌나 | 근거 |
 |---|---|---|---|
 | ☐ | **§2.1 좌표** | **`commit_sha` → `TreeRef`(커밋 \| 워킹트리).** 워킹트리에 좌표가 없으면 1순위 사용 장면이 죽는다 | [R-06](00-risks.md#r-06) |
@@ -166,7 +178,8 @@ F01~F06을 하나씩 완결시키면 **여섯 개가 다 끝나야 처음 뭔가
 | ☐ | **불변식 목록** | **여섯째 신설 — 능력 부재를 값으로(`Capable<T>`).** 미구축 산출을 빈 컬렉션으로 표현하면 "위반 없음"과 "안 만듦"이 같은 화면이 된다 | [stack §5.3](00-stack.md#53-capablet--점진-구축이-정직함을-깨지-않게) |
 | ☐ | **§13 로드맵** | 슬라이스 S-1~S12 → 기능 F01~F20 + P0-preflight로 재편 | 이 폴더 |
 | ☐ | **§15.2 잔여 대장** | 설계 성격의 잔여 추가 — R-18(자기 판정) · R-06(워킹트리 공백) · **R-21(의도 유실)** · **R-22(정규화 등급 승급)** | [00-risks](00-risks.md) |
-| ☐ | **온톨로지 어휘 부재** | 백서가 "프로젝트 온톨로지"를 중심 어휘로 쓰는데 설계에 0회. 실질은 **개념 노드의 자리가 §1.1에 없다**는 것 | [F18](features/F18-packs-concepts.md) |
+| ☑ | **온톨로지 어휘 부재** | ~~개념 노드의 자리가 §1.1에 없다~~ → **D25(그래프 스키마 파일)가 흡수**. 실질은 어휘가 아니라 **스키마가 없다**는 것이었다 | [F22](features/F22-graph-schema.md) |
+| ☐ | **[how-it-works.md](../how-it-works.md) 개정** | 2026-08-10 지시 넷을 아직 안 담았다 — 결과 채점 · 조달 P1 · 노드 넷 · git 결합. **그 사실을 그 문서 머리에 적어 두었다** | 이 폴더 |
 
 ---
 

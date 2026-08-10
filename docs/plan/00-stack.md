@@ -70,8 +70,20 @@ git (코드의 진실 원본)                    사람의 승인 (의도의 진
 | 담는 출처 | `extracted` | 전부의 **색인** | `asserted` · `observed` · `inferred` |
 
 - 2층은 의도 저장소의 **색인**만 갖는다(`BOUND_BY` · `WATCH` 등). 실체는 의도 저장소에 있고 2층은 그것을 가리킨다.
-- 의도 저장소는 **항상 JSONL로 내보낼 수 있어야 한다**(`pal intent export|import`). 사용자가 원하면 자기 저장소에 커밋해 git으로 이력을 갖는다 — 의도층의 계보가 코드의 계보와 같은 도구로 관리된다.
 - `pal cache prune` · `pal reindex`는 의도 저장소를 **건드리지 않는다.** 지우는 경로가 존재하지 않는 것이 대응이고, 그것을 CI가 검사한다.
+
+#### 정본은 텍스트다 — 2026-08-10 정정 ([F23](features/F23-git-integration.md) · [DESIGN §12.8](../DESIGN.md))
+
+초안은 `intent.redb`를 원본으로 두고 JSONL을 **내보내기**로 두었다. 방향을 뒤집는다.
+
+| | 초안 | 지금 |
+|---|---|---|
+| 원본 | `intent.redb` | **`.palimpsest/intent/*.jsonl`** (git에 커밋) |
+| 파생 | JSONL 내보내기 | `intent.redb` (색인. 지워도 재구축) |
+
+**뒤집는 이유 셋** — ① [R-21](00-risks.md#r-21)의 남은 구멍(*"사용자가 `.palimpsest/`를 통째로 지우는 것은 막을 수 없다"*)이 닫힌다. clone만으로 돌아온다. ② **승인 노동이 팀에 공유된다** — 지금은 한 사람의 로컬 파일이다. ③ 결박이 **변경과 같은 리뷰를 받는다.**
+
+**성립 조건은 머지다** — 추가 전용 · 한 줄 한 레코드 · 결정론적 정렬 · 파일 분할. 바이너리를 정본으로 두면 이 넷 중 어느 것도 성립하지 않는다.
 
 ### 2.3 2층을 그래프 DB에 얹지 않는 이유 — 이 문서에서 가장 중요한 결정
 
@@ -191,14 +203,19 @@ palimpsest/
 │   ├── pal-query/                  # 명명된 질의 · 실행기 · 예산 절단 · 질의 로그
 │   │                               #   의존: pal-core, pal-store
 │   ├── pal-intake/                 # 관측 수용 API. 의존: pal-core, pal-store
-│   ├── pal-cli/                    # JSON in/out. 의존: 위 전부
-│   └── pal-mcp/                    # MCP 서버. 의존: 위 전부
+│   ├── pal-cli/                    # JSON in/out. 의존: 위 전부. **1급 표면**
+│   └── pal-mcp/                    # MCP 서버. 의존: 위 전부. **어댑터(P1)**
 ├── xtask/                          # CI 검사 구현
+├── schema/
+│   ├── graph.toml                  # 노드·엣지·속성·producer — 단일 진실 (F22)
+│   └── provider.toml               # provider 요청·응답 스키마 (F21)
 ├── surface/queries.toml            # 명명된 질의 카탈로그 — 단일 진실
 ├── packs/schema/                   # 선언 팩 스키마
 ├── corpus/                         # 평가 코퍼스·과제·성공 기준
 └── docs/                           # 백서·설계·근거·이 계획
 ```
+
+**단일 진실 파일이 셋이 됐다** — `schema/graph.toml`(무엇이 존재하는가) · `surface/queries.toml`(무엇을 물을 수 있는가) · `schema/provider.toml`(프로젝트가 무엇을 줄 수 있는가). **셋 다 코드가 아니라 데이터이고, 코드는 거기서 파생되거나 거기에 대조된다.**
 
 ### 4.1 의존 방향 규칙 — CI가 기계로 검사한다
 
@@ -334,7 +351,7 @@ pub trait Projection {                         // 2층
 
 "`Finding 0`"이라고 말하지 않는다. 그리고 `Envelope.capabilities`가 응답마다 그 목록을 실으므로 **소비자가 능력 유무를 질의 없이 안다.**
 
-### 5.4 타입으로 강제하는 **여섯**
+### 5.4 타입으로 강제하는 **일곱**
 
 | 규칙 | 구현 | 위반 시점 |
 |---|---|---|
@@ -342,6 +359,7 @@ pub trait Projection {                         // 2층
 | 선택 필드 금지 | **도메인 타입**에 `Option<T>` 금지(범위는 아래) | CI |
 | **능력 부재를 값으로** | 미구축 산출의 자리는 `Capable<T>`. 빈 컬렉션으로 대신하지 않는다 | CI + 리뷰 |
 | 출처 불변 | setter 없음. 승격은 새 노드 반환 | 컴파일 |
+| **속성 출처 동질성** | 한 노드의 모든 속성이 같은 출처. 스키마의 `producer`가 노드 `provenance`와 정합([DESIGN §3.4](../DESIGN.md)) | 스키마 로딩 + CI |
 | `clean` 없음 | `enum Judgment` 3변형 | 컴파일 |
 | 조용한 절단 금지 | `Envelope` 생성에 `Elision` 필수, 없으면 `Elision::none()`을 명시 | 컴파일 |
 
@@ -392,6 +410,6 @@ direction = "consume"          # observation.intake 만 "provide"
 |---|---|
 | MSRV | 최신 stable − 2 (edition 2024 요구) |
 | 타깃 | `aarch64-apple-darwin`(개발) · `x86_64-unknown-linux-musl`(배포) |
-| 바이너리 | `pal`(CLI) · `pal-mcp`(MCP 서버). 실제로는 하나의 바이너리 + 서브커맨드 |
-| 설치 데이터 위치 | 대상 저장소의 `.palimpsest/` — `cache/`·`index.redb`는 **gitignore 권장**(파생), `intent.redb`와 `intent/*.jsonl`은 **커밋 권장**(원본, §2.2) |
+| 바이너리 | `pal`(CLI, 1급) · `pal serve`(MCP 어댑터, P1). 실제로는 하나의 바이너리 + 서브커맨드 |
+| 설치 데이터 위치 | 대상 저장소의 `.palimpsest/` — `cache/`·`index.redb`·**`intent.redb`는 gitignore**(전부 파생), **`intent/*.jsonl`은 커밋**(정본, §2.2) |
 | 릴리스 | **P2까지 릴리스 아티팩트를 만들지 않는다.** 자기 저장소와 코퍼스에서만 돈다 |
