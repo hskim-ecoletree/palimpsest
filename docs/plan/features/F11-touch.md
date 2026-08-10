@@ -23,10 +23,11 @@
 ```rust
 pub struct TouchResult {
     target: Coord,
-    bindings: Vec<BoundItem>,      // 아래 일곱 종류
-    facts: SymbolFacts,            // 호출자/피호출자 요약 + 효과(F13이 있으면)
-    unresolved: Vec<UnresolvedRef>,// "내가 모르는 것"
-    judgments: JudgmentSummary,    // Finding/Residual (F15가 있으면)
+    bindings: Vec<BoundItem>,               // 아래 일곱 종류
+    facts: SymbolFacts,                     // 호출자/피호출자 요약
+    effects: Capable<EffectSet>,            // F13 — 없으면 NotBuilt{F13}
+    unresolved: Vec<UnresolvedRef>,         // "내가 모르는 것"
+    judgments: Capable<JudgmentSummary>,    // F15 — 없으면 NotBuilt{F15}
 }
 
 pub enum BoundItem {
@@ -41,6 +42,25 @@ pub enum BoundItem {
 ```
 
 **일곱 종류를 한 번에 반환하는 것이 요점이다.** 사람은 "이 코드에 관련된 게 뭐가 있지"를 종류별로 묻지 않는다.
+
+### 2.1 `Capable<T>` — **이 기능이 P1인데 P2·P3 산출을 자리로 갖기 때문에 필요하다**
+
+`judgments`(F15, P2) · `effects`(F13, P2) · `ScopeReduction`(F20, P3)은 이 기능이 완성될 때 **아직 존재하지 않는다.** 그런데:
+
+| 후보 | 왜 안 되나 |
+|---|---|
+| `Option<T>` | 선택 필드 금지 위반. `None`이 "없음"인지 "안 만듦"인지 구별 안 됨 |
+| 빈 `Vec` / `Finding 0` | **이 제품의 정면 위반.** "판정 결과 위반 없음"과 "감사 능력이 없음"이 같은 화면이 된다 |
+| 필드를 나중에 추가 | 표면 스키마가 기능마다 깨져 소비자가 못 따라온다 |
+
+`Capable<T>`([스택 §5.3](../00-stack.md#53-capablet--점진-구축이-정직함을-깨지-않게))가 답이다. 자리는 처음부터 있고 값이 `NotBuilt{capability}`다. 출력은 이렇게 된다:
+
+```
+■ 판정
+  (이 빌드에는 감사 능력이 없습니다 — F15 미구축)
+```
+
+**`Finding 0`이라고 말하지 않는다.** 그리고 `Envelope.capabilities`가 능력 목록을 매 응답에 실으므로 소비자는 질의 없이 안다. `BoundItem`의 `Residual`·`ScopeReduction` 변형은 **타입에는 처음부터 있고 값이 안 들어올 뿐**이며, 그 사실이 `capabilities`로 설명된다.
 
 **`ScopeReduction`이 `touch` 대상인 이유**: 기준이 완화되어 판정 대상에서 빠진 코드가 있으면, 그 사실이 **사람이 있는 곳으로 와야 한다.** 조용히 목록에서 사라지면 그것이 게이트 오염이다.
 
@@ -122,7 +142,7 @@ fn touch(coord: &Coord, ctx: &QueryCtx) -> Result<Envelope<TouchResult>> {
 
 | 측정 | 게이트 |
 |---|---|
-| **재발 사례 재현** — 과거 5회 재발 지점에서 `touch`가 관련 결정을 띄우는가 | 띄우지 못하면 **적시 제시가 목적이라는 판단 자체가 틀린 것** |
+| **재발 사례 재현** — [P0-preflight T8](P0-preflight.md)이 `corpus/tasks/recurrence.toml`에 **미리 고정해 둔** 5건에서 `touch`가 관련 결정을 띄우는가 | 띄우지 못하면 **적시 제시가 목적이라는 판단 자체가 틀린 것.** 사례를 지금 고르면 결과를 보고 고르는 것이 되어 게이트가 무효다 |
 | 응답 지연 | 대화 흐름을 끊지 않는가 (목표: p95 < 500ms) |
 | 응답 크기 | 실 MCP 세션 토큰 분포 |
 | 빈 답 비율 | 높으면 F10으로 되돌아간다 |
@@ -135,10 +155,11 @@ fn touch(coord: &Coord, ctx: &QueryCtx) -> Result<Envelope<TouchResult>> {
 ## 7. 완료 체크리스트
 
 - [ ] `TouchResult` + `BoundItem` 7종
-- [ ] `BOUND_BY` 역방향 조회 경로
+- [ ] **`Capable<T>` 자리 셋 + 미구축 능력의 출력 문구** (`Finding 0`으로 새지 않는지 테스트)
+- [ ] `BOUND_BY` 역방향 조회 경로 (실체는 의도 저장소, [R-21](../00-risks.md#r-21))
 - [ ] 점진 회상(요약 + 상위 N + `stale` 우선 보장)
 - [ ] 부분 매칭 좌표 입력 + 후보 제안
 - [ ] `touch` 질의 카탈로그 등록 (CLI + MCP)
-- [ ] **재발 사례 재현 장치 + 측정 기록**
+- [ ] **재발 사례 재현 — preflight T8의 고정 표본으로 측정**
 - [ ] p95 지연 측정
 - [ ] 자기 저장소에서 실사용
