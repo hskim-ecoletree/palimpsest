@@ -195,3 +195,150 @@ triple = [
 
 # 테넌트는 위 전부를 가로지른다 — 삼항으로 20줄을 반복하지 않고 여기 한 줄로 적는다.
 tenant_scope = "테넌트 — 범위를 정한다 → 위 모든 개념의 데이터"
+
+# ═════════════════════════════════════════════════════════════════════════════
+# [applied] — 개념을 커밋(7c2f1a7)한 뒤에 코드를 찾았다. 판정: 통과
+# ═════════════════════════════════════════════════════════════════════════════
+
+[applied]
+registered_in = "7c2f1a7"
+measured_at = "2026-08-11"
+success = 18
+partial = 2
+fail = 0
+rate_success_only = "18/20 = 90%"
+rate_including_partial = "20/20 = 100%"
+
+# 사전에 표시해 둔 편향이 실측으로 확인됐다
+rate_doc_named = "8/8 = 100%"          # 문서가 코드 이름을 함께 적어 준 개념
+rate_not_doc_named = "10/12 = 83.3%"   # 문서가 도와주지 않은 개념 (부분 2건 제외)
+bias_confirmed = """
+**16.7%p.** 문서가 클래스·경로 이름을 함께 적어 준 개념 8개는 **전부** 지목됐고,
+그렇지 않은 12개는 10개가 지목됐다. `[bias_direction]` 이 미리 경고한 방향이 그대로 나왔다.
+**'문서가 도와주지 않을 때'의 값은 83.3% 쪽이다.**
+"""
+
+authoring_time = "**못 쟀다** — 사람의 저작 시간이다. T2와 같은 규율([R-23](../../docs/plan/00-risks.md#r-23))이므로 에이전트 소요를 그 자리에 적지 않는다"
+
+[[applied.pointing]]
+n = 1
+concept = "테넌트"
+grade = "성공"
+coord = "portal-backend/src/main/kotlin/.../config/TenantContext.kt"
+[[applied.pointing]]
+n = 2
+concept = "테넌트별 스키마 분리"
+grade = "성공"
+coord = ".../config/MultiTenantDatabaseManager.kt · MultiTenantTransactionManager.kt"
+[[applied.pointing]]
+n = 3
+concept = "BPMN 프로세스"
+grade = "성공"
+coord = ".../automation/process/{controller,service}/Process*.kt"
+[[applied.pointing]]
+n = 4
+concept = "프로세스 버전"
+grade = "성공"
+coord = "boxwood-domain-model/.../automation/process/ProcessVersion.java"
+[[applied.pointing]]
+n = 5
+concept = "프로세스 인스턴스"
+grade = "성공"
+coord = "automation-engine/.../web/ProcessInstanceController.java"
+[[applied.pointing]]
+n = 6
+concept = "프로세스 변수"
+grade = "성공"
+coord = "boxwood-domain-model/.../automation/process/ProcessVariable.java"
+[[applied.pointing]]
+n = 7
+concept = "프로세스 트리거"
+grade = "성공"
+coord = ".../automation/process/repository/ProcessTriggerRepository.kt"
+[[applied.pointing]]
+n = 8
+concept = "서비스 태스크"
+grade = "성공"
+coord = "automation-engine/.../domain/servicetask/ · ServiceTask*"
+[[applied.pointing]]
+n = 9
+concept = "서비스 태스크 타입"
+grade = "부분"
+coord = "boxwood-domain-model/.../automation/operation/TaskType.java"
+note_9 = "`TaskType` 이 이 개념 전용인지 말할 수 없다 — `LlmTaskType` 이 따로 있고, CONTEXT.md가 적은 6종(API·Email·Chatbot·OData·OCR·RPA)과의 대응을 파일 이름만으로는 확인할 수 없다"
+[[applied.pointing]]
+n = 10
+concept = "서비스 인터페이스"
+grade = "성공"
+coord = ".../automation/serviceinf/ (전용 패키지)"
+[[applied.pointing]]
+n = 11
+concept = "커넥터"
+grade = "성공"
+coord = "automation-engine/.../domain/connector/Connector.java"
+[[applied.pointing]]
+n = 12
+concept = "커넥터 오퍼레이션"
+grade = "성공"
+coord = "boxwood-domain-model/.../automation/operation/IConnectorOperation.java"
+[[applied.pointing]]
+n = 13
+concept = "자격 증명"
+grade = "성공"
+coord = ".../automation/credentials/ (전용 패키지)"
+[[applied.pointing]]
+n = 14
+concept = "외부 태스크"
+grade = "성공"
+coord = "external-client/.../externaltask/ (전용 패키지)"
+[[applied.pointing]]
+n = 15
+concept = "시작 리스너"
+grade = "성공"
+coord = "automation-engine/.../bpmn/execution/listener/start/"
+[[applied.pointing]]
+n = 16
+concept = "종료 리스너"
+grade = "성공"
+coord = "automation-engine/.../bpmn/execution/listener/end/"
+[[applied.pointing]]
+n = 17
+concept = "인시던트"
+grade = "성공"
+coord = "automation-engine/.../bpmn/execution/handler/incident/ (전용 패키지)"
+[[applied.pointing]]
+n = 18
+concept = "실행 이력"
+grade = "부분"
+coord = ".../automation/monitoring/ProcessMonitoring*"
+note_18 = "'모니터링'은 지목되지만 '실행 이력' 전용 타입은 지목하지 못했다. 두 개념이 한 패키지에 섞여 있어 **개념과 코드가 1:1이 아니다**"
+[[applied.pointing]]
+n = 19
+concept = "권한"
+grade = "성공"
+coord = ".../permission/ (전용 패키지)"
+[[applied.pointing]]
+n = 20
+concept = "역할 그룹"
+grade = "성공"
+coord = ".../role/RoleGroup*"
+
+[[applied.finding]]
+n = 1
+title = "부분 2건은 둘 다 '개념과 코드가 1:1이 아니다'로 갈렸다"
+detail = """
+실패는 0건이고 **부분 2건의 성질이 같다** — 코드는 있는데 그 개념 **전용**이라고 말할 수 없다.
+9번은 한 타입 이름이 여러 개념을 겸하고, 18번은 한 패키지가 두 개념을 겸한다.
+**온톨로지 층의 어려움은 '코드가 없다'가 아니라 '경계가 개념과 다르게 그어져 있다'다.**
+"""
+
+[[applied.finding]]
+n = 2
+title = "패키지 이름이 개념을 담을 때 지목이 쉬웠다"
+detail = """
+성공 18건 중 6건(자격 증명·외부 태스크·인시던트·권한·서비스 인터페이스·리스너 둘)은
+**전용 패키지 디렉터리**가 곧 개념이었다. boxwood가 Screaming Architecture를 쓴다고
+CONTEXT.md가 적은 것과 어긋나지 않는다.
+**이 지목 가능률은 그 구조에 빚지고 있다** — 패키지가 기술 계층으로만 갈린 프로젝트에서는
+같은 값이 나오지 않을 수 있다.
+"""
