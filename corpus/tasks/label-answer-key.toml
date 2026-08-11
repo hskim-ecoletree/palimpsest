@@ -12,13 +12,20 @@ belongs_to = "label-candidates.toml (v2)"
 
 [key]
 seed = "171b8b7228fd41f73c18ddcebaf4d1a3"
-duplicate_unique_indices = [7, 10, 5]      # 얻어진 순서
-duplicate_sequence_positions = [16, 21, 25]  # 같은 순서로 짝지음
+
+# 짝을 **명시적으로** 적는다. 두 배열을 따로 두면 정렬 순서가 달라 짝이 어긋난다
+# (초안에서 실제로 그랬고, 재구성 단언이 그것을 잡았다).
+#   duplicate_pairs = [[고유 후보 인덱스, 시퀀스 자리], …]  — 자리 오름차순
+duplicate_pairs = [[5, 16], [7, 21], [10, 25]]
+
+targets_in_draw_order = [7, 10, 5]   # 규칙 1단계가 얻은 순서 (짝짓기 정본은 위 duplicate_pairs)
 k_used_for_targets = [0, 1, 2]
 k_used_for_positions = [3, 6, 7]
 
 [verify]
 how = """
-`[selection.duplicates].method` 를 seed 로 다시 돌리면 위 값이 그대로 나온다.
-판정이 끝난 뒤 재계산해 대조하면 에이전트가 사후에 자리를 옮기지 않았음이 확인된다.
+`[selection.duplicates].method` 를 seed 로 다시 돌리면 위 값이 그대로 나오고,
+`label-candidates.toml` 의 `[sequence].order` 33건이 정확히 재구성된다.
+판정이 끝난 뒤 재계산해 대조하면 **에이전트가 사후에 자리를 옮기지 않았음**이 확인된다.
+검증 스크립트: `scripts/verify-t2-key.py` (판정 전에 실행하지 말 것 — 자리가 화면에 뜬다)
 """
