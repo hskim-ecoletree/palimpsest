@@ -1,0 +1,6 @@
+n	소요초	가드	근거좌표	표시
+1	273.7	가드(인증)	GlobalExceptionHandler#handleDomainException	시간제외
+2	216.8	가드(인증)	DwpAuthServiceImpl#validateDwpTokenFromRequest	시간제외
+3	79.4	가드(인증)	자신	
+4	165.0	가드(인가)	getAvailableScopes	
+5	31.3	가드(인증)	AuthenticationServiceImpl#validateToken	
