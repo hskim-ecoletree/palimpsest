@@ -1,0 +1,118 @@
+# T11 M2 — 계획 이탈률의 D·A 쌍 (부분 구제)
+#
+# **이것은 측정 원본이 아니다.** T11이 등록한 M2의 arm A는 **17쌍**이었고,
+# 여기 담긴 것은 그 뒤 살아남은 **9쌍**이다. 8쌍은 이미 없다.
+#
+# 왜 잃었나: 선언 D(`change_surface`)는 ditto의 **gitignored** `.ditto/local/work-items/`
+# 아래에만 있다(`.gitignore:479`). 실제 A(`changed_files`)는 `.ditto/work-items/` 로
+# 커밋되지만 D는 안 된다. `criteria.toml` §M2 가 caveat에 적어 둔 취약함이 그대로 발동했다.
+# tracked 위치에서 `change_surface` 를 가진 파일은 **0건**이다(2026-08-11 확인).
+#
+# 그래서 지금이라도 뜬다. 남은 9쌍도 `.ditto/local/` 한 번 지우면 사라진다.
+#
+# **이 파일로 M2를 계산하면 안 된다.** 17쌍 중 9쌍은 무작위 표본이 아니라
+# '늦게 만들어져 아직 안 지워진 것' 쪽으로 치우쳐 있다(생존 편향).
+# 쓸 수 있는 것은 하나뿐이다 — **D·A 쌍이 실제로 어떻게 생겼는지의 실물**.
+#
+# 판정 기록: docs/gates/preflight.md §T11
+# 지표 정의: corpus/criteria.toml [outcome] M2
+
+schema_version = 1
+salvaged_at = "2026-08-11"
+corpus = "ditto"
+pin = "manifest.toml `[[corpus]] id=ditto` 의 `[corpus.pin]`"
+
+registered_n = 17          # T11이 등록한 M2 arm A 의 쌍 수
+salvaged_n = 9             # 지금 남아 있는 것
+lost_n = 8
+tracked_source_n = 0       # git 에 보존된 D 는 없다
+
+# ── 뜨자마자 눈에 걸린 것 하나 ──
+#
+# 9쌍 중 **3쌍이 D 와 A 가 완전히 같다.** 이탈률 0 일 수도 있고,
+# D 가 A 에서 사후 기입됐다는 뜻일 수도 있다. 후자면 **M2 는 아무것도 재지 않는다.**
+# T11 은 D 가 '승인 시점에 동결'된다고 적었으나 그 동결을 이 데이터로 확인하지는 못했다.
+# 관측만 적는다 — 9쌍은 판단하기에 얇고, 판정을 바꾸지 않는다.
+identical_pairs = 3
+identical_note = "F12(계획 결박)이 이탈률을 지표로 쓰기 전에 D 의 기입 시점을 먼저 확인해야 한다"
+
+[[pair]]
+wi = "wi_260709mqt"
+d_declared = ["src/cli/commands/deep-interview.ts", "src/core/interview-dissent.ts", "src/core/interview-driver.ts", "src/schemas/interview-state.ts", "tests/core/interview-dissent.test.ts", "tests/core/interview-driver.test.ts", "tests/integration/intent-coverage-drive.test.ts"]
+a_actual = ["src/cli/commands/deep-interview.ts", "src/core/interview-dissent.ts", "src/core/interview-driver.ts", "src/schemas/interview-state.ts", "tests/core/interview-dissent.test.ts", "tests/core/interview-driver.test.ts", "tests/integration/intent-coverage-drive.test.ts"]
+n_d = 7
+n_a = 7
+n_intersection = 7
+identical = true
+
+[[pair]]
+wi = "wi_260713nlg"
+d_declared = [".ditto/local/work-items/wi_260713nlg/completion.json", ".ditto/local/work-items/wi_260713nlg/work-item.json", ".ditto/work-items/wi_260713nlg/", "src/core/charter.ts", "src/core/interview-driver.ts", "src/core/mode-doctor.ts", "src/core/prism/store.ts", "src/core/question-context.ts", "src/core/question-round.ts", "tests/conformance/m1.conformance.test.ts", "tests/core/charter.test.ts", "tests/core/coverage-manager.test.ts", "tests/core/interview-driver.test.ts", "tests/core/mode-doctor.test.ts", "tests/core/question-context.test.ts", "tests/core/question-round.test.ts", "tests/hooks/user-prompt-submit.test.ts"]
+a_actual = [".ditto/local/work-items/wi_260713nlg/completion.json", ".ditto/local/work-items/wi_260713nlg/work-item.json", ".ditto/work-items/wi_260713nlg/", "src/core/charter.ts", "src/core/interview-driver.ts", "src/core/mode-doctor.ts", "src/core/prism/store.ts", "src/core/question-context.ts", "src/core/question-round.ts", "tests/conformance/m1.conformance.test.ts", "tests/core/charter.test.ts", "tests/core/coverage-manager.test.ts", "tests/core/interview-driver.test.ts", "tests/core/mode-doctor.test.ts", "tests/core/question-context.test.ts", "tests/core/question-round.test.ts", "tests/hooks/user-prompt-submit.test.ts"]
+n_d = 17
+n_a = 17
+n_intersection = 17
+identical = true
+
+[[pair]]
+wi = "wi_260713wxq"
+d_declared = ["src/cli/commands/autopilot.ts", "src/core/autopilot-complete.ts", "src/core/autopilot-dispatch.ts", "src/core/autopilot-graph.ts", "src/core/autopilot-loop.ts", "src/core/autopilot-store.ts", "src/hooks/pre-tool-use.ts", "src/schemas/autopilot.ts"]
+a_actual = ["src/cli/commands/autopilot.ts", "src/core/autopilot-dispatch.ts", "src/core/autopilot-loop.ts", "src/core/autopilot-store.ts", "src/hooks/pre-tool-use.ts", "tests/cli/autopilot-reopen-cli.test.ts", "tests/core/autopilot-reopen.test.ts", "tests/hooks/pre-tool-use.test.ts"]
+n_d = 8
+n_a = 8
+n_intersection = 5
+identical = false
+
+[[pair]]
+wi = "wi_260713ylm"
+d_declared = ["resources/managed/charter-manifest.json", "scripts/build-codex-plugin.mjs", "scripts/build-plugin.mjs", "src/cli/commands/setup.ts", "src/core/bridge-sync.ts", "src/core/charter-region.ts", "src/core/managed-resource.ts", "src/core/setup.ts", "src/core/teardown.ts"]
+a_actual = [".ditto/local/work-items/wi_260713ylm/completion.json", ".ditto/local/work-items/wi_260713ylm/work-item.json", ".ditto/work-items/wi_260713ylm/", "resources/managed/charter-manifest.json", "scripts/build-codex-plugin.mjs", "scripts/build-plugin.mjs", "src/cli/commands/setup.ts", "src/core/bridge-sync.ts", "src/core/charter-region.ts", "src/core/managed-resource.ts", "src/core/setup.ts", "src/core/teardown.ts", "tests/core/bridge-sync.test.ts", "tests/core/charter-region.test.ts", "tests/core/managed-resource.test.ts", "tests/core/setup.test.ts", "tests/core/teardown.test.ts"]
+n_d = 9
+n_a = 17
+n_intersection = 9
+identical = false
+
+[[pair]]
+wi = "wi_2607148yg"
+d_declared = ["CLAUDE.md", "src/cli/commands/autopilot.ts", "src/cli/commands/work.ts", "src/core/autopilot-complete.ts", "src/core/autopilot-converge.ts", "src/core/autopilot-loop.ts", "src/core/autopilot-store.ts", "src/core/charter.ts", "src/core/gates.ts", "src/core/handoff-store.ts", "src/core/work-item-handoff.ts", "src/schemas/autopilot.ts"]
+a_actual = [".ditto/knowledge/adr/ADR-20260627-autopilot-followup-autonomy-boundary.md", ".ditto/knowledge/adr/ADR-20260710-intent-single-unit-and-termination-completeness.md", ".ditto/knowledge/adr/ADR-20260714-autopilot-defect-class-drive-carveout.md", "CLAUDE.md", "src/cli/commands/autopilot.ts", "src/cli/commands/work.ts", "src/core/autopilot-complete.ts", "src/core/autopilot-converge.ts", "src/core/autopilot-loop.ts", "src/core/autopilot-store.ts", "src/core/charter.ts", "src/core/gates.ts", "src/core/handoff-store.ts", "src/schemas/completion-contract.ts", "src/schemas/handoff.ts", "tests/cli/decision-disclosure-cli.test.ts", "tests/cli/discovered-defect-close-cli.test.ts", "tests/core/autopilot-complete.test.ts", "tests/core/autopilot-converge.test.ts", "tests/core/autopilot-loop-discipline.test.ts", "tests/core/autopilot-store.test.ts", "tests/core/charter.test.ts", "tests/core/gates.test.ts", "tests/core/handoff-store.test.ts", "tests/core/work-item-handoff.test.ts"]
+n_d = 12
+n_a = 25
+n_intersection = 10
+identical = false
+
+[[pair]]
+wi = "wi_2607222uc"
+d_declared = ["agents/planner.md", "agents/reviewer.md", "skills/autopilot/SKILL.md", "src/cli/commands/decision-conflict.ts", "src/cli/commands/work.ts", "src/core/adr-status.test.ts", "src/core/autopilot-loop.decision-conflict.test.ts", "src/core/autopilot-loop.ts", "src/core/gates.ts", "src/core/knowledge-bridge.ts", "src/hooks/rebuilt/stop-gate.ts", "src/hooks/rebuilt/stop.ts", "src/hooks/stop.characterization.test.ts", "src/hooks/stop.ts", "src/schemas/decision-conflict-carrier.ts"]
+a_actual = ["agents/planner.md", "agents/reviewer.md", "skills/autopilot/SKILL.md", "src/cli/commands/decision-conflict.ts", "src/cli/commands/work.ts", "src/core/adr-status.test.ts", "src/core/autopilot-loop.decision-conflict.test.ts", "src/core/autopilot-loop.ts", "src/core/gates.ts", "src/core/knowledge-bridge.ts", "src/hooks/rebuilt/stop-gate.ts", "src/hooks/rebuilt/stop.ts", "src/hooks/stop.characterization.test.ts", "src/hooks/stop.ts", "src/schemas/decision-conflict-carrier.ts"]
+n_d = 15
+n_a = 15
+n_intersection = 15
+identical = true
+
+[[pair]]
+wi = "wi_260722g7h"
+d_declared = ["docs/features/handoff.md", "docs/features/work.md", "skills/handoff/SKILL.md", "src/cli/commands/handoff.ts", "src/cli/commands/work.ts", "src/core/autopilot-loop.ts", "src/core/handoff-ref-store.ts", "src/core/handoff-ref-sync.ts", "src/core/handoff-store.ts", "src/core/intent-quality-doctor.ts", "src/core/session-pointer.ts", "src/core/work-item-handoff.ts", "src/hooks/pre-compact.ts", "src/hooks/rebuilt/pre-compact.ts", "src/hooks/rebuilt/user-prompt-submit.ts", "src/hooks/user-prompt-submit.ts"]
+a_actual = [".ditto/handoff/session__sess-2026-07-19t17-35-06-602z-03acc1__t-t-test.md", ".ditto/handoff/session__sess-2026-07-19t18-20-25-478z-d36539__t-t-test.md", ".ditto/handoff/session__sess-2026-07-20t00-27-01-566z-3dba85__t-t-test.md", ".ditto/handoff/session__sess-2026-07-20t05-06-40-845z-38310d__hskim-ecoletree-com.md", ".ditto/handoff/session__sess-2026-07-22t12-00-09-542z-f5aace__hskim-ecoletree-com.md", ".ditto/handoff/session__sess-2026-07-22t14-02-25-007z-d528e6__hskim-ecoletree-com.md", ".ditto/knowledge/adr/ADR-20260706-work-item-record-run-split.md", ".ditto/knowledge/adr/ADR-20260714-handoff-remote-committed-tier.md", ".ditto/knowledge/adr/ADR-20260722-handoff-hidden-ref-baton.md", "CLAUDE.md", "docs/features/handoff.md", "docs/features/work.md", "skills/handoff/SKILL.md", "src/cli/commands/handoff.test.ts", "src/cli/commands/handoff.ts", "src/cli/commands/work.ts", "src/core/autopilot-loop.ts", "src/core/git.ts", "src/core/github-redaction.ts", "src/core/handoff-ref-store.test.ts", "src/core/handoff-ref-store.ts", "src/core/handoff-ref-sync.test.ts", "src/core/handoff-ref-sync.ts", "src/core/handoff-store.test.ts", "src/core/handoff-store.ts", "src/core/intent-quality-doctor.ts", "src/core/session-pointer.ts", "src/core/work-item-handoff.ts", "src/hooks/pre-compact.ts", "src/hooks/rebuilt/pre-compact.ts", "src/hooks/rebuilt/user-prompt-submit.ts", "src/hooks/user-prompt-submit.ts", "tests/hooks/pre-compact.test.ts"]
+n_d = 16
+n_a = 33
+n_intersection = 16
+identical = false
+
+[[pair]]
+wi = "wi_2607239vu"
+d_declared = [".ditto/knowledge/adr/", "src/cli/commands/handoff.ts", "src/core/ditto-config.ts", "src/core/handoff-ref-sync.ts"]
+a_actual = [".ditto/knowledge/adr/ADR-20260723-handoff-publication-object-gate.md", "CLAUDE.md", "bin/ditto", "src/cli/commands/handoff.test.ts", "src/cli/commands/handoff.ts", "src/core/ditto-config.test.ts", "src/core/ditto-config.ts", "src/core/handoff-ref-sync.test.ts", "src/core/handoff-ref-sync.ts"]
+n_d = 4
+n_a = 9
+n_intersection = 3
+identical = false
+
+[[pair]]
+wi = "wi_260723lny"
+d_declared = [".ditto/work-items/wi_260723lny/record.json", "agents/question-gate.md", "agents/question-generator.md", "skills/deep-interview/SKILL.md", "skills/deep-interview/references/question-epistemology.md", "src/cli/commands/deep-interview.ts", "src/core/gates.ts", "src/core/interview-driver.ts", "src/core/question-context.ts", "src/core/question-round.ts", "src/schemas/interview-state.ts", "src/schemas/question-round.ts"]
+a_actual = [".ditto/work-items/wi_260723lny/record.json", "agents/question-gate.md", "agents/question-generator.md", "skills/deep-interview/SKILL.md", "skills/deep-interview/references/question-epistemology.md", "src/cli/commands/deep-interview.ts", "src/core/gates.legacy-denominator.test.ts", "src/core/gates.ts", "src/core/interview-driver.test.ts", "src/core/interview-driver.ts", "src/core/prism/finalize.equivalence.test.ts", "src/core/question-context.test.ts", "src/core/question-context.ts", "src/core/question-round.whitelist.test.ts", "src/schemas/interview-state.test.ts", "src/schemas/interview-state.ts"]
+n_d = 12
+n_a = 16
+n_intersection = 10
+identical = false
