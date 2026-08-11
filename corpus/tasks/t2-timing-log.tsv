@@ -4,3 +4,7 @@ n	소요초	가드	근거좌표	표시
 3	79.4	가드(인증)	자신	
 4	165.0	가드(인가)	getAvailableScopes	
 5	31.3	가드(인증)	AuthenticationServiceImpl#validateToken	
+6	22.9	아니오	없음	
+7	18.7	아니오	없음	
+8	14.7	아니오	없음	
+9	30.1	아니오	없음	
