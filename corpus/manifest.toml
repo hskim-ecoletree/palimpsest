@@ -162,8 +162,63 @@ convenience_sample = true  # R-19 — 편의 표본임을 명시한다
 id = "scale"
 stack = "TypeScript"
 role = "목표 G5 — P1 종료 시점의 게이트"
-selected = false
-note = "아직 선정되지 않았다. 선정은 T5의 몫이다."
+selected = true                        # T5(2026-08-11)에서 선정
+selected_in_issue = 30
+
+# ── 구성 방식 ────────────────────────────────────────────────────────────────
+# R-24 §대응2가 준 셋 중 **② 여러 저장소 합산**을 골랐다.
+#   ① 모노레포        — 후보는 elastic/kibana 였으나 tree API 가 truncated 라
+#                        등록 시점에 파일 수를 정확히 셀 수 없었다. 세지 못한 수로
+#                        사전 등록을 하면 그것은 등록이 아니다
+#   ② 합산            — **채택.** goals §6이 이미 "멀티레포 합산"으로 적었고
+#                        매니페스트가 이미 집합이다
+#   ③ N배 복제        — 쓰지 않았다. 캐시 적중률과 이름 충돌 분포를 왜곡한다
+#
+# **왜곡 없음을 명시한다** — 복제가 아니므로 R-24가 경고한 합성 코퍼스 문제가 없고,
+# 다섯 저장소 전부 실제 구현 코드라 호출 그래프가 대표성을 가진다.
+construction = "② 여러 저장소 합산 (R-24 §대응2)"
+synthetic = false
+duplication_factor = 1
+distortion = "없음 — 복제가 아니다. 캐시 적중률·이름 충돌 분포를 왜곡하지 않는다"
+
+# ── 왜 DefinitelyTyped 를 넣지 않았나 ────────────────────────────────────────
+# 넣으면 두 저장소로 10⁵ 를 넘긴다(63,143 + 31,121 = 94,264). 넣지 않았다.
+# DT 는 거의 전부 `.d.ts` 선언이라 **함수 본문이 없다** — 호출 그래프·효과 집합·
+# 역방향 색인이 비어 있다. 파일 수는 채우지만 F07·F13 의 판정 대상이 못 된다.
+# **복제 코퍼스와 같은 종류의 왜곡**이므로, 왜곡을 안고 수를 채우는 대신 뺐다.
+excluded = [
+  { repo = "DefinitelyTyped/DefinitelyTyped", blobs = 63143, reason = "거의 전부 .d.ts — 함수 본문이 없어 호출 그래프가 비어 있다" },
+  { repo = "elastic/kibana", blobs = "43,308+", reason = "tree API truncated — 등록 시점에 정확히 셀 수 없었다" },
+  { repo = "microsoft/TypeScript", blobs = "53,309+", reason = "tree API truncated — 같은 이유" },
+]
+
+  # ── 재현 좌표 ────────────────────────────────────────────────────────────────
+  # 아래 수는 2026-08-11 GitHub tree API 로 **직접 센 값**이다(추정 아님).
+  # blobs = git 이 추적하는 파일. node_modules 는 트리에 없으므로 애초에 빠져 있다 —
+  # T1이 boxwood 에서 258,521 과 24,261 을 나눠 적어야 했던 문제가 여기서는 안 생긴다.
+  #
+  # **HEAD 를 쓰면 안 된다.** 이 표를 만드는 동안에도 네 저장소의 HEAD 가 움직였다.
+  # 코퍼스는 팁이 아니라 이 SHA다.
+  [corpus.pin]
+  verified_at = "2026-08-11"
+  method = "GitHub API `git/trees/<sha>?recursive=1` · truncated=false 인 것만 채택"
+  repos = [
+    { repo = "n8n-io/n8n",        sha = "72235d32f9b558326412016a4b93ec1369ed12e5", blobs = 26397, ts_tsx = 19064, js = 294 },
+    { repo = "vercel/next.js",    sha = "9ae95b884a53c28b26eb9ff278bb97ad57600a26", blobs = 31121, ts_tsx = 11811, js = 11525 },
+    { repo = "grafana/grafana",   sha = "62859f09341b2d0620dc3f74f7f0fba329eece2c", blobs = 22143, ts_tsx =  8860, js = 132 },
+    { repo = "microsoft/vscode",  sha = "efdf2c02386ec1a8e7c291a6866d4da99ba5b8cf", blobs = 17660, ts_tsx = 12422, js = 150 },
+    { repo = "supabase/supabase", sha = "b648db233b600146bc27aaa6cd9e578515d39f55", blobs = 16714, ts_tsx =  7512, js = 189 },
+  ]
+  blobs_total = 114035
+  ts_tsx_total = 59669
+  js_total = 12290
+  target = "goals §6 — 파일 10⁵ · 심볼 10⁶ · 엣지 10⁷ (멀티레포 합산)"
+  meets_file_target = true      # 114,035 > 10⁵
+  symbols_measured = false      # 심볼 10⁶·엣지 10⁷ 은 추출기가 있어야 센다. 추정하지 않는다
+
+judged_at = "P1 종료 시점 — **P0의 완료 조건이 아니다**(R-24 §대응1)"
+p0_scope = "P0에서는 10³~10⁴ 에서 재고 **선형성**만 본다. 규모 벤치는 P0 완료 조건에서 뺀다"
+task = "corpus/tasks/evaluation-tasks.toml E7"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # [procurement] — T9 조달 가능성 실측 (2026-08-11)
