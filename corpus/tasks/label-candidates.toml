@@ -121,12 +121,20 @@ method = """
 
   h(k) = int(SHA256(f"{seed}|{k}").hexdigest(), 16),  k = 0,1,2,…
 
-1. **중복 대상**: k 를 0 부터 올리며 `h(k) % 30` 을 취해 **서로 다른 3개**를 얻는다 → D
+1. **중복 대상**: k 를 0 부터 올리며 `h(k) % 25` 를 취해 **서로 다른 3개**를 얻는다 → D
+     *왜 30 이 아니라 25 인가 — 중복 대상 d 의 원본은 최종 33칸에서 최대 `d+4` 번째에 온다
+     (앞에 중복 3개가 다 끼는 최악). 3번 조건이 요구하는 `원본+5` 가 33 이내에 있으려면
+     `d + 4 + 5 ≤ 33`, 곧 **d ≤ 24** 여야 한다. 25 이상을 허용하면 만족하는 자리가
+     아예 없어 표집이 끝나지 않는다. **결과를 보고 정한 것이 아니라 33칸의 산술이다.***
 2. **재삽입 자리**: 이어지는 k 에서 `h(k) % 33 + 1` 을 취해 아래를 모두 만족하는 3개를 얻는다
      · 서로 다르고 **인접하지 않는다** (|p − p′| ≥ 2)
      · **8 이상** — 앞 7자리는 판정자가 손을 푸는 구간이라 비운다
      · 최종 시퀀스에서 **원본보다 최소 5 뒤**에 온다
-3. 자리를 오름차순으로 놓고, 나머지 30 칸을 고유 후보의 추첨 순서대로 채운다 → 33건
+       (셋을 다 모은 뒤 이 조건을 검사해 어긋나면 마지막 자리를 버리고 다음 k 로 간다)
+3. **짝짓기**: D 와 자리를 **각각 얻어진 순서대로** 1:1 로 묶는다(D의 첫째 ↔ 자리의 첫째).
+4. 묶음을 자리 오름차순으로 놓고, 나머지 30 칸을 고유 후보의 추첨 순서대로 채운다 → 33건
+
+*3번은 등록 당시 명세가 빠뜨린 것을 **추첨을 돌리기 전에** 보완한 것이다. 결과를 보고 정한 것이 아니다.*
 """
 why = "같은 후보를 다시 만났을 때 판정자가 **다시 물었는가**(재질문율)를 잰다. 분모는 3이다"
 presentation = """
@@ -166,3 +174,281 @@ residual = """
 ② boxwood 는 편의 표본이다([R-19](../../docs/plan/00-risks.md#r-19)). v2 도 이것을 고치지 않는다.
 ③ 범위를 좁혀 풀이 1,036 → 621 로 줄었다. **층 ③은 596건이 여전히 대부분 `@TenantTransactional` 이다.**
 """
+
+# ═════════════════════════════════════════════════════════════════════════════
+# [drawn] — 위 규칙을 그대로 돌린 결과. **이 커밋 시각이 측정 시작 이전이다.**
+# ═════════════════════════════════════════════════════════════════════════════
+
+[drawn]
+registered_in = "193bd6b"   # 표집 규칙 사전 등록 커밋 (v2)
+drawn_at = "2026-08-11"
+pool_verified = "① 89 · ② 10 · ③ 596 — 등록값과 일치(단언으로 검증)"
+unique = 30
+sequence_len = 33
+coords_verified = """
+**30/30 해소.** `[corpus.pin]` 의 고정 SHA(`portal-backend@a29cad0bf6a8` ·
+`boxwood-packages@2e9198716796`)에서 `git show <sha>:<path>` 로 (파일, 줄, 심볼)을 대조했다.
+**파일 없음 0 · 줄 불일치 0.**
+**판정표는 작업본이 아니라 이 SHA 위에 서 있다.**
+"""
+clone_free = """
+**클론 0 건.** worktree 를 제외했으므로 v1 을 죽인 바이트 동일 쌍이 존재하지 않는다.
+고유 30건은 좌표로도 내용으로도 서로 다르다(SHA-1 대조).
+"""
+duplicates_note = """
+중복 3건의 정체와 자리는 이 파일에 없다 — `label-answer-key.toml` 에만 있다.
+**판정을 마치기 전에 그 파일을 열면 재질문율(분모 3)이 무효가 된다.**
+"""
+
+# ── 고유 후보 30건 (판정 대상) ──
+
+[[candidate]]
+i = 0
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/model/dto/request/AdminLoginRequestDto.kt"
+line = 28
+symbol = "validate"
+
+[[candidate]]
+i = 1
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/DwpAuthService.kt"
+line = 21
+symbol = "validateDwpTokenFromRequest"
+
+[[candidate]]
+i = 2
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/DwpAuthServiceImpl.kt"
+line = 298
+symbol = "validateDwpTokenFromRequest"
+
+[[candidate]]
+i = 3
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/service/PersonalAccessTokenService.kt"
+line = 83
+symbol = "validateScopes"
+
+[[candidate]]
+i = 4
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/web/controller/AuthenticationController.kt"
+line = 477
+symbol = "validateToken"
+
+[[candidate]]
+i = 5
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ModernDateUtil.kt"
+line = 284
+symbol = "checkExcludeStartEndDate"
+
+[[candidate]]
+i = 6
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt"
+line = 140
+symbol = "requireNonNullValue"
+
+[[candidate]]
+i = 7
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt"
+line = 268
+symbol = "requireCollectionSize"
+
+[[candidate]]
+i = 8
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/config/MultiTenantTransactionManager.kt"
+line = 206
+symbol = "validateTenantState"
+
+[[candidate]]
+i = 9
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/form/ValidateFormTool.kt"
+line = 76
+symbol = "validateForm"
+
+[[candidate]]
+i = 10
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt"
+line = 185
+symbol = "checkResourcePermissions"
+
+[[candidate]]
+i = 11
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/PermissionCheckAspect.kt"
+line = 216
+symbol = "checkResourcePermissions"
+
+[[candidate]]
+i = 12
+stratum = "②"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/filter/RateLimitFilter.kt"
+line = 55
+symbol = "RateLimitFilter"
+
+[[candidate]]
+i = 13
+stratum = "②"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/jwt/filter/JwtAuthenticationFilter.kt"
+line = 50
+symbol = "JwtAuthenticationFilter"
+
+[[candidate]]
+i = 14
+stratum = "②"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/filter/SystemPatAuthenticationFilter.kt"
+line = 42
+symbol = "SystemPatAuthenticationFilter"
+
+[[candidate]]
+i = 15
+stratum = "②"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/model/dto/DashboardDto.kt"
+line = 22
+symbol = "ProcessSummaryDto"
+
+[[candidate]]
+i = 16
+stratum = "②"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/filter/LoginTenantFilter.kt"
+line = 53
+symbol = "LoginTenantFilter"
+
+[[candidate]]
+i = 17
+stratum = "②"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/filter/MDCLoggingFilter.kt"
+line = 16
+symbol = "MDCLoggingFilter"
+
+[[candidate]]
+i = 18
+stratum = "③"
+file = "boxwood-packages/boxwood-commons/src/main/kotlin/kr/co/ecoletree/boxwood/commons/audit/annotation/AuditLog.kt"
+line = 24
+symbol = "AuditLog"
+
+[[candidate]]
+i = 19
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/repository/ExposedPatTokenRepository.kt"
+line = 199
+symbol = "TenantTransactional"
+
+[[candidate]]
+i = 20
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/adaptive/cards/service/AdaptiveCardService.kt"
+line = 31
+symbol = "TenantTransactional"
+
+[[candidate]]
+i = 21
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/service/EmailTemplateService.kt"
+line = 109
+symbol = "TenantTransactional"
+
+[[candidate]]
+i = 22
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/controller/ProcessController.kt"
+line = 165
+symbol = "AuditLog"
+
+[[candidate]]
+i = 23
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/service/ServiceTaskService.kt"
+line = 32
+symbol = "TenantTransactional"
+
+[[candidate]]
+i = 24
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/controller/CodeController.kt"
+line = 288
+symbol = "TenantTransactional"
+
+[[candidate]]
+i = 25
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/tracking/CodeChangeTrackingProvider.kt"
+line = 64
+symbol = "TenantTransactional"
+
+[[candidate]]
+i = 26
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/dwp/statistics/service/DwpDailyUsageStatisticsService.kt"
+line = 52
+symbol = "TenantTransactional"
+
+[[candidate]]
+i = 27
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt"
+line = 55
+symbol = "RequiresIntegratedPermission"
+
+[[candidate]]
+i = 28
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/rbac/annotation/HasResourcePermission.kt"
+line = 22
+symbol = "HasResourcePermission"
+
+[[candidate]]
+i = 29
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/controller/I18nMessageController.kt"
+line = 130
+symbol = "AuthenticationPrincipal"
+
+# ── 판정 시퀀스 33건 — **중복 표시 없이 순서만** ──
+# 판정자는 이 순서대로 판정한다. 어느 것이 중복인지 알면 재질문율이 무효가 된다.
+# 실제 판정은 이 배열이 아니라 `t2-items/NN.md` 를 한 건씩 열어서 한다.
+
+[sequence]
+order = [
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/model/dto/request/AdminLoginRequestDto.kt:28 validate",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/DwpAuthService.kt:21 validateDwpTokenFromRequest",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/DwpAuthServiceImpl.kt:298 validateDwpTokenFromRequest",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/service/PersonalAccessTokenService.kt:83 validateScopes",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/web/controller/AuthenticationController.kt:477 validateToken",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ModernDateUtil.kt:284 checkExcludeStartEndDate",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt:140 requireNonNullValue",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt:268 requireCollectionSize",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/config/MultiTenantTransactionManager.kt:206 validateTenantState",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/form/ValidateFormTool.kt:76 validateForm",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt:185 checkResourcePermissions",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/PermissionCheckAspect.kt:216 checkResourcePermissions",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/filter/RateLimitFilter.kt:55 RateLimitFilter",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/jwt/filter/JwtAuthenticationFilter.kt:50 JwtAuthenticationFilter",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/filter/SystemPatAuthenticationFilter.kt:42 SystemPatAuthenticationFilter",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ModernDateUtil.kt:284 checkExcludeStartEndDate",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/model/dto/DashboardDto.kt:22 ProcessSummaryDto",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/filter/LoginTenantFilter.kt:53 LoginTenantFilter",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/filter/MDCLoggingFilter.kt:16 MDCLoggingFilter",
+  "boxwood-packages/boxwood-commons/src/main/kotlin/kr/co/ecoletree/boxwood/commons/audit/annotation/AuditLog.kt:24 AuditLog",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt:268 requireCollectionSize",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/repository/ExposedPatTokenRepository.kt:199 TenantTransactional",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/adaptive/cards/service/AdaptiveCardService.kt:31 TenantTransactional",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/service/EmailTemplateService.kt:109 TenantTransactional",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt:185 checkResourcePermissions",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/controller/ProcessController.kt:165 AuditLog",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/service/ServiceTaskService.kt:32 TenantTransactional",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/controller/CodeController.kt:288 TenantTransactional",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/tracking/CodeChangeTrackingProvider.kt:64 TenantTransactional",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/dwp/statistics/service/DwpDailyUsageStatisticsService.kt:52 TenantTransactional",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt:55 RequiresIntegratedPermission",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/rbac/annotation/HasResourcePermission.kt:22 HasResourcePermission",
+  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/controller/I18nMessageController.kt:130 AuthenticationPrincipal",
+]
