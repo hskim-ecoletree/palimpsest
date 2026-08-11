@@ -1,68 +1,137 @@
-# T2 — 라벨 판정의 후보 목록
+# T2 — 라벨 판정의 후보 목록 (v2)
 #
 # **판단 성분만 잰다.** 후보 제시는 도구가 흡수하므로 측정 밖이다([R-23](../../docs/plan/00-risks.md#r-23)).
 # 그래서 이 파일(후보 고정)이 **시간 측정 밖**에 있고, 측정은 이 커밋 이후에만 성립한다.
 #
 # **이 파일도 두 커밋으로 나뉜다.**
-#   1) `[selection]` 만 담은 커밋 — 표집 규칙의 사전 등록
+#   1) `[selection]` 만 담은 커밋 — 표집 규칙의 사전 등록  ← **지금 이 커밋**
 #   2) `[[candidate]]` 를 채운 커밋 — 규칙을 돌린 결과. **이 커밋 시각이 측정 시작 이전이어야 한다**
+#
+# v1 은 은퇴했다: `label-candidates-v1-retired.toml`. 사유는 아래 `[selection.scope_defect]`.
+# 정답 키는 이 파일에 없다 — `label-answer-key.toml` 로 분리했다.
 #
 # 판정 기록: docs/gates/preflight.md §T2
 
-schema_version = 1
+schema_version = 2
 registered_at = "2026-08-11"
+supersedes = "label-candidates-v1-retired.toml"
 
 [selection]
 corpus = "boxwood"
 pin = "manifest.toml `[[corpus]] id=boxwood` 의 `[corpus.pin]`"   # 좌표는 경로가 아니라 (remote, SHA)
-scope = "`.kt` · `worktrees/` 제외 · **`src/main/` 만** (테스트는 제품 코드가 아니다) → 1,036개"
+scope = "`.kt` · **git worktree 제외** · `src/main/` 만 (테스트는 제품 코드가 아니다) → 621개"
+
+[selection.scope_defect]
+# v1 을 죽인 결함. 재발을 막으려면 규칙이 무엇을 뜻했는지 적어 두어야 한다.
+found_at = "2026-08-11"
+statement = """
+**v1 의 등록 범위는 자기모순이었다.** 문구는 `worktrees/ 제외` 였는데 수치 1,036 은
+`portal-backend-aa-task/` 를 포함했다. 그 디렉터리는 별도 모듈이 아니라
+`portal-backend` 의 **git worktree** 다(브랜치 `feat/aa-task`,
+gitdir 이 `portal-backend/.git/worktrees/portal-backend-aa-task` 를 가리킨다).
+`worktrees/` 디렉터리 **밖**에 놓여 있어 경로 규칙을 빠져나갔다.
+"""
+measured = """
+· 범위 총계 1,036 = portal-backend 604 + portal-backend-aa-task 415 + boxwood-packages 17
+· 두 worktree 가 **상대 경로까지 같은** 파일 397 건
+· 그중 **바이트 단위로 동일** 289 건 → **풀의 27.9%가 클론**
+· aa-task 전용(진짜 신규) 18 건
+"""
+why_it_matters = """
+클론은 판정자에게 **구분 불가**하다. 두 번째로 만나는 것은 이미 읽은 코드라 판정이 빨리 끝난다 —
+[R-23](../../docs/plan/00-risks.md#r-23)이 위험하다고 적은 **과소추정 방향**으로 정확히 작용한다.
+그리고 한 브랜치가 이중 계산되어 표본의 대표성이 왜곡된다.
+"""
+resolution = """
+**소유자 판단 A — 문구를 따른다.** 수치가 규칙을 돌린 결과여야지 규칙이 수치를 따라가면
+그것이 사후 조정이다. worktree 를 제외하고 전면 재표집한다.
+기록: docs/instructions/2026-08-11-owner-direction.md §1
+**어느 쪽을 골라도 사후 선택이었다** — 그 사실을 지우지 않는다.
+"""
+exclusion_rule = """
+앞으로 범위는 **경로 이름이 아니라 git 사실**로 정의한다:
+`git -C <dir> rev-parse --show-toplevel` 이 자기 자신이 아니거나 `.git` 이 파일(gitdir 포인터)이면 worktree 다.
+"""
 
 # ── 층화 표집 ──
 #
-# 후보 풀은 세 층으로 나뉘고 크기가 극단적으로 다르다(①154 · ②17 · ③1,016).
-# **합집합에서 그냥 뽑으면 85%가 `@TenantTransactional` 한 종류로 찬다** — 판정이 반복
+# 후보 풀은 세 층으로 나뉘고 크기가 극단적으로 다르다(①89 · ②10 · ③596).
+# **합집합에서 그냥 뽑으면 대부분이 `@TenantTransactional` 한 종류로 찬다** — 판정이 반복
 # 작업이 되고 '판단 성분'을 재는 목적을 잃는다.
 #
 # 그래서 층마다 몫을 정해 뽑는다. 이 선택은 [R-23](../../docs/plan/00-risks.md#r-23)이 경고한
 # **과소추정 편향에 반대 방향으로 작용한다** — 층 ①·②에는 `validateSchema` 처럼
 # 인가와 무관한 것이 많이 섞여 있어 **애매한 후보를 일부러 남긴다.**
+#
+# **층 ②의 정규식은 v1 그대로 둔다.** `[^{]*` 가 줄을 넘어가 인터셉터·필터가 아닌 DTO 를 잡는다.
+# 뽑은 뒤에 패턴을 조이면 그것이 사후 조정이고, 이 오탐은 판정 작업에 **해롭지 않다**.
 stratified = true
 
 [[selection.stratum]]
 id = "①"
 name = "이름 규약"
 pattern = 'fun\s+(check|validate|assert|require|ensure|verify)[A-Za-z0-9_]*'
-pool = 154
+pool = 89     # v1: 154
 draw = 12
+spacing_g = 7
 
 [[selection.stratum]]
 id = "②"
 name = "인터셉터·필터 클래스"
 pattern = 'class\s+([A-Za-z0-9_]+)[^{]*:[^{]*(Interceptor|Filter)\b'
-pool = 17
+pool = 10     # v1: 17
 draw = 6
+spacing_g = 1
+degenerate = """
+**등간격 규칙이 여기서 퇴화한다.** g = floor(10/6) = 1 이라 인덱스 0·1·2·3·4·5,
+곧 **정렬 순서 앞에서 6개**를 자르는 것과 같다. 풀 10 이 전부 `portal-backend/` 한 모듈이라
+모듈 편중은 새로 생기지 않지만, **`config/` 와 `shared/` 아래가 통째로 빠진다**
+(`TenantInterceptor` · `WebSecurityConfig` · `MessageResourceDto` 가 후보에서 제외된다).
+**draw 를 5 로 줄이면 g=2 가 되어 퍼지지만 등록된 몫을 사후에 바꾸는 것이라 하지 않았다.**
+개입을 줄이는 쪽을 택하고 편향을 적는다.
+"""
 
 [[selection.stratum]]
 id = "③"
 name = "가드성 어노테이션"
 pattern = '@([A-Za-z]*(Permission|Auth|Secure|Audit|Tenant)[A-Za-z]*)'
-pool = 1016
+pool = 596    # v1: 1016
 draw = 12
+spacing_g = 49
 
 [selection.draw_rule]
-sort = "(경로, 줄번호) 오름차순"
+sort = "층마다 (경로, 줄번호) 오름차순. 후보 번호는 층 순서 ①→②→③ 로 이어 붙인 0..29"
 spacing = "층마다 g = floor(pool / draw), 인덱스 0·g·2g·… 로 draw 건 (T7이 쓴 등간격 규칙과 동형)"
 total_unique = 30
+implementation_verified = """
+**구현이 v1 의 추첨을 30/30 재현했다.** 같은 코드에 v1 의 범위(worktree 포함)를 주면
+은퇴한 후보 30건이 순서까지 정확히 나온다 — 그래서 이 구현은 등록 규칙의 충실한 집행이고,
+바뀐 것은 범위뿐이다.
+"""
 
 [selection.duplicates]
 count = 3
-pick = "고유 30건을 순서대로 놓고 **인덱스 4 · 14 · 24** 를 고른다 (0부터)"
-place = "판정 시퀀스의 **11 · 22 · 33번째** 자리에 다시 넣는다 → 시퀀스 33건"
-why = "같은 후보를 다시 만났을 때 판정자가 **다시 물었는가**(재질문율)를 잰다. 분모는 3이다"
 blinding = """
-**판정자는 어느 것이 중복인지 모르는 상태로 판정해야 한다.**
-이 파일의 `[[sequence]]` 는 중복 표시 없이 33건을 순서대로만 담는다.
-중복의 정체는 `[answer_key]` 에 있고 **판정 전에 읽으면 재질문율이 무효가 된다.**
+**v1 의 블라인드는 깨졌다 — 에이전트가 심은 자리(11·22·33)를 소유자에게 공개했다.**
+그래서 v2 는 자리를 **규칙의 형태로만** 사전 등록하고 **실례는 등록하지 않는다.**
+씨앗과 그 결과는 `label-answer-key.toml` 에만 있다.
+"""
+method = """
+씨앗 `seed` 로 결정되며, 판정이 끝난 뒤 누구나 다시 계산해 검증할 수 있다.
+
+  h(k) = int(SHA256(f"{seed}|{k}").hexdigest(), 16),  k = 0,1,2,…
+
+1. **중복 대상**: k 를 0 부터 올리며 `h(k) % 30` 을 취해 **서로 다른 3개**를 얻는다 → D
+2. **재삽입 자리**: 이어지는 k 에서 `h(k) % 33 + 1` 을 취해 아래를 모두 만족하는 3개를 얻는다
+     · 서로 다르고 **인접하지 않는다** (|p − p′| ≥ 2)
+     · **8 이상** — 앞 7자리는 판정자가 손을 푸는 구간이라 비운다
+     · 최종 시퀀스에서 **원본보다 최소 5 뒤**에 온다
+3. 자리를 오름차순으로 놓고, 나머지 30 칸을 고유 후보의 추첨 순서대로 채운다 → 33건
+"""
+why = "같은 후보를 다시 만났을 때 판정자가 **다시 물었는가**(재질문율)를 잰다. 분모는 3이다"
+presentation = """
+**판정표는 33건을 한 화면에 보여주지 않는다.** v1 의 실패 경로였다 — 눈으로 훑으면 중복이 그냥 보인다.
+v2 는 `corpus/tasks/t2-items/NN.md` 로 **한 건에 한 파일**이고, 판정표에는 후보의 정체가 없다.
 """
 
 [selection.question]
@@ -88,309 +157,12 @@ statement = """
 · **과소추정 방향**(애매한 후보를 자연히 건너뜀)은 **줄였으나 없애지 못했다** — 층화로
   인가와 무관한 후보를 일부러 남겼지만, 층 자체를 정규식으로 정의했으므로
   **정규식에 걸리지 않는 가드는 애초에 후보가 되지 않는다.** 그 몫은 여전히 과소추정이다.
+· **클론 방향은 v2 에서 제거했다** — v1 에서는 풀의 27.9%가 바이트 동일 클론이라
+  두 번째 판정이 부당하게 빨랐다. worktree 제외로 없앴다.
 """
-
-# ═════════════════════════════════════════════════════════════════════════════
-# [drawn] — a5157a0의 규칙을 그대로 돌린 결과. **이 커밋 시각이 측정 시작 이전이다.**
-# ═════════════════════════════════════════════════════════════════════════════
-
-[drawn]
-registered_in = "a5157a0"   # 표집 규칙 사전 등록 커밋
-drawn_at = "2026-08-11"
-pool_verified = "① 154 · ② 17 · ③ 1016 — 등록값과 일치(단언으로 검증)"
-unique = 30
-sequence_len = 33
-defect_found = """
-**2026-08-11 — 이 표집에 결함이 둘 있다. 판정 시작 전에 발견했다.**
-
-① **`unique = 30` 이 사실과 다르다. 고유 좌표는 28 이다.**
-   층화 표집이 층을 가로질러 같은 좌표를 두 번 뽑았다:
-     · `MultiTenantTransactionManager.kt:166#validateTenantRegistration` (시퀀스 4·12)
-     · `DashboardDto.kt:22#ProcessSummaryDto` (시퀀스 15·19)
-   뒤엣것은 이 파일이 이미 오탐이라고 적어 둔 그 건이다(층 ② 의 `[^{]*` 가 줄을 넘어 DTO 를 잡았다).
-   **오탐을 남긴 것은 의도였으나 같은 좌표를 두 번 뽑은 것은 의도가 아니다.**
-
-② **재질문율의 블라인드가 깨졌다.** 판정자가 마주치는 반복은 3회가 아니라 5회이고,
-   순서가 11(심은 것) → 12(사고) → 19(사고) → 22 → 33 이라 **22·33 은 이미 반복을
-   세 번 겪은 뒤**다. 프라이밍이 걸린다.
-   그리고 판정표가 33행을 한 화면에 보여주므로 눈으로 훑으면 중복이 그냥 보인다.
-
-③ **그리고 2026-08-11 세션에서 심은 중복의 자리(11·22·33)를 소유자에게 공개했다.**
-   결함을 보고하는 과정에서 났고, **이 판정표로 재질문율을 재는 길은 그 시점에 닫혔다.**
-   숨기지 않고 적는다 — 측정을 못 하게 된 사실 자체가 기록되어야 한다.
-
-**처분은 소유자 판단 대기.** docs/instructions/2026-08-11-pending-decisions.md §1
+residual = """
+**남은 것 셋을 적는다.**
+① 층 ②의 등간격 퇴화(위 `degenerate`) — `config/`·`shared/` 가 후보에서 빠진다.
+② boxwood 는 편의 표본이다([R-19](../../docs/plan/00-risks.md#r-19)). v2 도 이것을 고치지 않는다.
+③ 범위를 좁혀 풀이 1,036 → 621 로 줄었다. **층 ③은 596건이 여전히 대부분 `@TenantTransactional` 이다.**
 """
-
-coords_verified = """
-**2026-08-11 재확인 — 30/30 해소.** `[corpus.pin]` 의 고정 SHA에서 `git show <sha>:<path>` 로
-후보 30건의 (파일, 줄, 심볼)을 대조했다. 파일 없음 0 · 줄 불일치 0.
-측정 당시 작업본(`~/dev/projects/boxwood/`)이 사라진 뒤에 한 확인이다 —
-**판정표는 그 작업본이 아니라 SHA 위에 서 있다.**
-검증 스크립트는 `[answer_key]` 이전에서 파일을 잘라 읽었다(재질문율을 보호한다).
-"""
-note = """
-층 ②의 등록 패턴은 `[^{]*` 가 줄을 넘어가 **인터셉터·필터가 아닌 DTO를 잡는다**
-(`ProcessSummaryDto` · `MessageResourceDto`). 풀 17건에 그 오탐이 섞여 있다.
-**규칙을 고치지 않고 그대로 뽑았다** — 뽑은 뒤에 패턴을 조이면 그것이 사후 조정이다.
-그리고 이 오탐은 판정 작업에 **해롭지 않다**: 판정자가 \"가드 아님\"을 골라야 하는
-후보가 섞이는 것이 R-23의 과소추정 편향을 줄이는 쪽이다.
-"""
-
-# ── 고유 후보 30건 (판정 대상) ──
-
-[[candidate]]
-i = 0
-stratum = "①"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/auth/config/AccountSecurityProperties.kt"
-line = 102
-symbol = "validate"
-
-[[candidate]]
-i = 1
-stratum = "①"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/auth/web/dto/AuthenticationDto.kt"
-line = 267
-symbol = "validate"
-
-[[candidate]]
-i = 2
-stratum = "①"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt"
-line = 140
-symbol = "requireNonNullValue"
-
-[[candidate]]
-i = 3
-stratum = "①"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/config/MultiTenantTransactionManager.kt"
-line = 166
-symbol = "validateTenantRegistration"
-
-[[candidate]]
-i = 4
-stratum = "①"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/PermissionCheckAspect.kt"
-line = 71
-symbol = "checkResourcePermission"
-
-[[candidate]]
-i = 5
-stratum = "①"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/FlywayProvisioningService.kt"
-line = 136
-symbol = "validateSchema"
-
-[[candidate]]
-i = 6
-stratum = "①"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/DwpAuthService.kt"
-line = 21
-symbol = "validateDwpTokenFromRequest"
-
-[[candidate]]
-i = 7
-stratum = "①"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/jwt/filter/JwtAuthenticationFilter.kt"
-line = 342
-symbol = "validateDwpSession"
-
-[[candidate]]
-i = 8
-stratum = "①"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/service/OpenApiSchemaService.kt"
-line = 148
-symbol = "validateConnectorSpec"
-
-[[candidate]]
-i = 9
-stratum = "①"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt"
-line = 154
-symbol = "requireNoNullElements"
-
-[[candidate]]
-i = 10
-stratum = "①"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/config/MultiTenantTransactionManager.kt"
-line = 166
-symbol = "validateTenantRegistration"
-
-[[candidate]]
-i = 11
-stratum = "①"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt"
-line = 137
-symbol = "checkRbacFeaturePermissions"
-
-[[candidate]]
-i = 12
-stratum = "②"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/auth/filter/RateLimitFilter.kt"
-line = 53
-symbol = "RateLimitFilter"
-
-[[candidate]]
-i = 13
-stratum = "②"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/model/dto/DashboardDto.kt"
-line = 22
-symbol = "ProcessSummaryDto"
-
-[[candidate]]
-i = 14
-stratum = "②"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantInterceptor.kt"
-line = 25
-symbol = "TenantInterceptor"
-
-[[candidate]]
-i = 15
-stratum = "②"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/model/dto/MessageResourceDto.kt"
-line = 9
-symbol = "MessageResourceDto"
-
-[[candidate]]
-i = 16
-stratum = "②"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/jwt/filter/JwtAuthenticationFilter.kt"
-line = 50
-symbol = "JwtAuthenticationFilter"
-
-[[candidate]]
-i = 17
-stratum = "②"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/model/dto/DashboardDto.kt"
-line = 22
-symbol = "ProcessSummaryDto"
-
-[[candidate]]
-i = 18
-stratum = "③"
-file = "boxwood-packages/boxwood-commons/src/main/kotlin/kr/co/ecoletree/boxwood/commons/audit/annotation/AuditLog.kt"
-line = 24
-symbol = "AuditLog"
-
-[[candidate]]
-i = 19
-stratum = "③"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/service/ConnectorService.kt"
-line = 67
-symbol = "TenantTransactional"
-
-[[candidate]]
-i = 20
-stratum = "③"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/tracking/ProcessChangeTrackingProvider.kt"
-line = 25
-symbol = "TenantTransactional"
-
-[[candidate]]
-i = 21
-stratum = "③"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/code/service/CodeService.kt"
-line = 384
-symbol = "TenantTransactional"
-
-[[candidate]]
-i = 22
-stratum = "③"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/permission/service/impl/PermissionServiceImpl.kt"
-line = 264
-symbol = "TenantTransactional"
-
-[[candidate]]
-i = 23
-stratum = "③"
-file = "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/user/service/impl/TenantUserServiceImpl.kt"
-line = 42
-symbol = "TenantTransactional"
-
-[[candidate]]
-i = 24
-stratum = "③"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/web/controller/SystemPatController.kt"
-line = 83
-symbol = "AuthenticationPrincipal"
-
-[[candidate]]
-i = 25
-stratum = "③"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/service/McpToolConfigService.kt"
-line = 29
-symbol = "TenantTransactional"
-
-[[candidate]]
-i = 26
-stratum = "③"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/service/ServiceTaskService.kt"
-line = 176
-symbol = "TenantTransactional"
-
-[[candidate]]
-i = 27
-stratum = "③"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/tracking/CodeCategoryChangeTrackingProvider.kt"
-line = 43
-symbol = "AuditLog"
-
-[[candidate]]
-i = 28
-stratum = "③"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/notification/service/NotificationService.kt"
-line = 87
-symbol = "TenantTransactional"
-
-[[candidate]]
-i = 29
-stratum = "③"
-file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/role/controller/RoleGroupController.kt"
-line = 404
-symbol = "TenantTransactional"
-
-# ── 판정 시퀀스 33건 — **중복 표시 없이 순서만** ──
-# 판정자는 이 순서대로 판정한다. 어느 것이 중복인지 알면 재질문율이 무효가 된다.
-
-[sequence]
-order = [
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/auth/config/AccountSecurityProperties.kt:102 validate",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/auth/web/dto/AuthenticationDto.kt:267 validate",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt:140 requireNonNullValue",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/config/MultiTenantTransactionManager.kt:166 validateTenantRegistration",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/PermissionCheckAspect.kt:71 checkResourcePermission",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/FlywayProvisioningService.kt:136 validateSchema",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/DwpAuthService.kt:21 validateDwpTokenFromRequest",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/jwt/filter/JwtAuthenticationFilter.kt:342 validateDwpSession",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/service/OpenApiSchemaService.kt:148 validateConnectorSpec",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt:154 requireNoNullElements",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/PermissionCheckAspect.kt:71 checkResourcePermission",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/config/MultiTenantTransactionManager.kt:166 validateTenantRegistration",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt:137 checkRbacFeaturePermissions",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/auth/filter/RateLimitFilter.kt:53 RateLimitFilter",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/model/dto/DashboardDto.kt:22 ProcessSummaryDto",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantInterceptor.kt:25 TenantInterceptor",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/model/dto/MessageResourceDto.kt:9 MessageResourceDto",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/jwt/filter/JwtAuthenticationFilter.kt:50 JwtAuthenticationFilter",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/model/dto/DashboardDto.kt:22 ProcessSummaryDto",
-  "boxwood-packages/boxwood-commons/src/main/kotlin/kr/co/ecoletree/boxwood/commons/audit/annotation/AuditLog.kt:24 AuditLog",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/service/ConnectorService.kt:67 TenantTransactional",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantInterceptor.kt:25 TenantInterceptor",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/tracking/ProcessChangeTrackingProvider.kt:25 TenantTransactional",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/code/service/CodeService.kt:384 TenantTransactional",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/permission/service/impl/PermissionServiceImpl.kt:264 TenantTransactional",
-  "portal-backend-aa-task/src/main/kotlin/kr/co/ecoletree/boxwood/user/service/impl/TenantUserServiceImpl.kt:42 TenantTransactional",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/web/controller/SystemPatController.kt:83 AuthenticationPrincipal",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/service/McpToolConfigService.kt:29 TenantTransactional",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/service/ServiceTaskService.kt:176 TenantTransactional",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/tracking/CodeCategoryChangeTrackingProvider.kt:43 AuditLog",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/notification/service/NotificationService.kt:87 TenantTransactional",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/role/controller/RoleGroupController.kt:404 TenantTransactional",
-  "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/web/controller/SystemPatController.kt:83 AuthenticationPrincipal",
-]
-
-# ── 정답 키 — **판정 전에 읽지 말 것** ──
-[answer_key]
-warning = "판정을 마친 뒤에 연다. 먼저 읽으면 재질문율(분모 3)이 무효가 된다."
-duplicate_unique_indices = [4, 14, 24]
-duplicate_sequence_positions = [11, 22, 33]
