@@ -179,7 +179,30 @@ selected_in_issue = 30
 construction = "② 여러 저장소 합산 (R-24 §대응2)"
 synthetic = false
 duplication_factor = 1
-distortion = "없음 — 복제가 아니다. 캐시 적중률·이름 충돌 분포를 왜곡하지 않는다"
+
+# ── 왜곡 — **2026-08-11 정정.** 처음에 "없음"이라고 적었고 그것은 틀렸다 ──────
+#
+# 복제 왜곡은 없다(맞다). 그러나 **연결 왜곡이 있었다.**
+# 처음 고른 다섯(n8n·next.js·grafana·vscode·supabase)은 서로를 부르지 않는다.
+# 의존성을 실제로 훑어 보니 히트는 전부 자기 모노레포 내부 패키지였고
+# (`@grafana/data` 등) next.js 의 `next` 는 자기 자신이었다. **저장소 간 엣지 0.**
+#
+# goals §6의 목표는 `파일 10⁵ · 심볼 10⁶ · **엣지 10⁷** (멀티레포 합산)` 이다.
+# 저장소 간 엣지가 0이면 "합산"이 **다섯 번 따로 돌린 것과 같아진다** —
+# 파일 수만 채우고 멀티레포라는 성질은 하나도 재지 않는다.
+# 규모를 파일 수로만 읽은 것이 등록의 실수였다.
+distortion = """
+**연결 왜곡을 아래 [corpus.cross_repo] 로 교정했다.** 교정 후에도 남는 한계:
+
+· **정적 엣지만 있다.** 이 코퍼스의 저장소 간 연결은 전부 패키지 import 다.
+  **런타임 연결(HTTP 호출 · 이벤트 발행/구독)은 이 코퍼스에 없다** —
+  OSS TypeScript 에서 그 형태를 10⁵ 규모로 갖춘 집합을 찾지 못했다.
+  그 축은 boxwood 가 진다(아래 `runtime_link_corpus`).
+· **엣지 밀도가 낮다.** 위성 5개는 2,197 파일로 전체의 1.9% 다.
+  실제 멀티시스템(boxwood: 연결 코드 63파일 / 8저장소)보다 결합이 얕다.
+· 복제 왜곡은 없다 — 캐시 적중률·이름 충돌 분포를 왜곡하지 않는다.
+"""
+runtime_link_corpus = "boxwood — WebClient 127 · @Async 35 · ApplicationEventPublisher 6 · RestTemplate 5 · @EventListener 3 · @KafkaListener 1 (연결 코드 63파일). 과제 E8ⓑ 가 여기서 잰다"
 
 # ── 왜 DefinitelyTyped 를 넣지 않았나 ────────────────────────────────────────
 # 넣으면 두 저장소로 10⁵ 를 넘긴다(63,143 + 31,121 = 94,264). 넣지 않았다.
@@ -209,12 +232,52 @@ excluded = [
     { repo = "microsoft/vscode",  sha = "efdf2c02386ec1a8e7c291a6866d4da99ba5b8cf", blobs = 17660, ts_tsx = 12422, js = 150 },
     { repo = "supabase/supabase", sha = "b648db233b600146bc27aaa6cd9e578515d39f55", blobs = 16714, ts_tsx =  7512, js = 189 },
   ]
-  blobs_total = 114035
-  ts_tsx_total = 59669
+  # ── 위성 저장소 — **저장소 간 엣지를 만드는 자리** (2026-08-11 추가) ──────
+  # 위 다섯만으로는 저장소 간 엣지가 0이었다. 아래 다섯은 위 저장소들이
+  # **실제로 package.json 에서 의존하는 별도 저장소**다(모노레포 내부 패키지가 아니다).
+  # 파일은 2,197개(1.9%)뿐이라 규모는 거의 안 바뀌고 엣지만 생긴다.
+  satellites = [
+    { repo = "grafana/scenes",       sha = "7e8af71fb9f4e6318f30deaf1a27c5162c907e6f", blobs = 674, ts_tsx = 494 },
+    { repo = "grafana/faro-web-sdk", sha = "2550a9f79cb86353dab6bacbc194df95696d8861", blobs = 492, ts_tsx = 351 },
+    { repo = "grafana/plugin-ui",    sha = "9e051c982ab3ac9b28e39e0c153b584398beb51b", blobs = 345, ts_tsx = 289 },
+    { repo = "grafana/levitate",     sha = "8ef9cfb7bfcf34cddc6817f21e66879a5297e505", blobs = 113, ts_tsx =  77 },
+    { repo = "supabase/supabase-js", sha = "bbc167cbef7fb841d44c53fb3c45e1d19aa3ece3", blobs = 573, ts_tsx = 313 },
+  ]
+
+  blobs_total = 116232      # 본체 114,035 + 위성 2,197
+  ts_tsx_total = 61193
   js_total = 12290
   target = "goals §6 — 파일 10⁵ · 심볼 10⁶ · 엣지 10⁷ (멀티레포 합산)"
   meets_file_target = true      # 114,035 > 10⁵
   symbols_measured = false      # 심볼 10⁶·엣지 10⁷ 은 추출기가 있어야 센다. 추정하지 않는다
+
+  # ── 저장소 간 엣지 — 실제로 package.json 을 읽어 확인한 것만 적는다 ────────
+  # 추측한 엣지는 없다. 각 줄은 그 저장소의 매니페스트에서 직접 읽었다.
+  [corpus.cross_repo]
+  verified_at = "2026-08-11"
+  method = "각 저장소의 package.json `dependencies`/`devDependencies` 를 읽어 **별도 저장소로 실재하는 패키지만** 채택"
+  kind = "정적 — 패키지 경계를 넘는 import. F03(정체성)·F07(참조 해소)의 대상"
+  edges = [
+    { from = "grafana/grafana",  to = "grafana/scenes",       via = "@grafana/scenes @ 8.13.5" },
+    { from = "grafana/grafana",  to = "grafana/faro-web-sdk", via = "@grafana/faro-web-sdk @ ^2.8.2" },
+    { from = "grafana/grafana",  to = "grafana/plugin-ui",    via = "@grafana/plugin-ui @ ^0.17.3" },
+    { from = "grafana/grafana",  to = "grafana/levitate",     via = "@grafana/levitate @ 0.17.2" },
+    { from = "supabase/supabase", to = "supabase/supabase-js", via = "@supabase/supabase-js (apps/studio/package.json)" },
+  ]
+  excluded_edges = [
+    { pair = "supabase/{postgrest,storage,functions,auth,realtime}-js", reason = "supabase-js 가 `packages/core/` 아래로 흡수했다 — 별도 저장소로 세면 이중 계산이다" },
+    { pair = "@grafana/{data,ui,runtime,schema}", reason = "grafana/grafana 모노레포 내부 패키지 — 저장소 간 엣지가 아니다" },
+    { pair = "vercel/next.js → next", reason = "자기 자신" },
+  ]
+  not_covered = """
+**런타임 연결이 없다** — HTTP 호출·이벤트 발행/구독은 이 코퍼스에 없다.
+그리고 그것이 사용자 프로젝트의 실제 형태다(시스템이 시스템을 부르고 이벤트를
+발행·구독한다). 그 축은 boxwood 가 지고 과제 E8ⓑ 가 잰다.
+
+**이 구분이 중요하다** — 정적 엣지는 참조 해소로 풀리지만 런타임 연결은 풀리지 않는다.
+URL 은 문자열이고 토픽 이름도 문자열이다. E8ⓑ 의 정답은 "다 이었다"가 아니라
+"연결 지점을 좌표로 지목하고, 상대를 특정 못 하면 `UnresolvedRef` 로 정직하게 남긴다" 이다.
+"""
 
 judged_at = "P1 종료 시점 — **P0의 완료 조건이 아니다**(R-24 §대응1)"
 p0_scope = "P0에서는 10³~10⁴ 에서 재고 **선형성**만 본다. 규모 벤치는 P0 완료 조건에서 뺀다"
