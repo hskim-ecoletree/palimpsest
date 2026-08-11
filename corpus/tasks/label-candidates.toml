@@ -14,7 +14,7 @@ registered_at = "2026-08-11"
 
 [selection]
 corpus = "boxwood"
-local_path = "~/dev/projects/boxwood"
+pin = "manifest.toml `[[corpus]] id=boxwood` 의 `[corpus.pin]`"   # 좌표는 경로가 아니라 (remote, SHA)
 scope = "`.kt` · `worktrees/` 제외 · **`src/main/` 만** (테스트는 제품 코드가 아니다) → 1,036개"
 
 # ── 층화 표집 ──
@@ -100,6 +100,13 @@ drawn_at = "2026-08-11"
 pool_verified = "① 154 · ② 17 · ③ 1016 — 등록값과 일치(단언으로 검증)"
 unique = 30
 sequence_len = 33
+coords_verified = """
+**2026-08-11 재확인 — 30/30 해소.** `[corpus.pin]` 의 고정 SHA에서 `git show <sha>:<path>` 로
+후보 30건의 (파일, 줄, 심볼)을 대조했다. 파일 없음 0 · 줄 불일치 0.
+측정 당시 작업본(`~/dev/projects/boxwood/`)이 사라진 뒤에 한 확인이다 —
+**판정표는 그 작업본이 아니라 SHA 위에 서 있다.**
+검증 스크립트는 `[answer_key]` 이전에서 파일을 잘라 읽었다(재질문율을 보호한다).
+"""
 note = """
 층 ②의 등록 패턴은 `[^{]*` 가 줄을 넘어가 **인터셉터·필터가 아닌 DTO를 잡는다**
 (`ProcessSummaryDto` · `MessageResourceDto`). 풀 17건에 그 오탐이 섞여 있다.

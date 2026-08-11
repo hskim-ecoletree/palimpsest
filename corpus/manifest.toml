@@ -22,7 +22,7 @@ id = "boxwood"
 stack = "Kotlin/Spring/Exposed + Svelte"
 role = "효과 집합(F13)·감사(F15)·다언어의 판정 대상"
 restored_from = "boxwood-workspace_backup.zip (1.5GB, 2026-01-31)"
-local_path = "~/dev/projects/boxwood"
+measured_at_path = "~/dev/projects/boxwood"   # 측정 당시 위치. **재현 좌표가 아니다** — 아래 [corpus.pin] 참조
 note = "단일 저장소가 아니라 8개 저장소 + git worktree 4개의 작업본이다"
 # worktrees/ 넷은 아래 저장소들의 다른 브랜치이며 내용이 중복된다.
 files_total = 258521
@@ -86,15 +86,68 @@ kt_files_primary = 1122  # worktrees 제외
   branch = "main"
   commits = 5
 
+  # ── 재현 좌표 ────────────────────────────────────────────────────────────────
+  # **경로가 아니라 (remote, SHA)가 코퍼스의 정체다.**
+  #
+  # T1이 푼 `~/dev/projects/boxwood/` 는 더 이상 없고 원본 zip도 없다. 그런데도
+  # T4·T6·T7은 재현된다 — 셋 다 스코프에서 `worktrees/` 를 제외하기 때문이다.
+  # T1 §후속작업1이 경고한 절대경로 취약성은 `worktrees/` 넷의 성질이고,
+  # **측정에 쓴 부분과는 애초에 겹치지 않았다.** 기록이 자기 재현 가능성을 낮게 적어 뒀다.
+  #
+  # 아래 셋만 있으면 `.kt` 스코프가 정확히 복원된다. 작업본을 풀 필요도 없다 —
+  # `git ls-tree`/`git grep` 을 SHA에 직접 걸면 된다(비파괴).
+  [corpus.pin]
+  verified_at = "2026-08-11"
+  kt_bearing = [
+    { repo = "portal-backend",         remote = "https://github.com/ecoletree/boxwood-portal-kotlin.git", sha = "a29cad0bf6a8", kt = 671, main = 604, test = 67 },
+    { repo = "portal-backend-aa-task", remote = "https://github.com/ecoletree/boxwood-portal-kotlin.git", sha = "10185f804ad8", kt = 434, main = 415, test = 19 },
+    { repo = "boxwood-packages",       remote = "https://github.com/ecoletree/boxwood-packages.git",      sha = "2e9198716796", kt =  17, main =  17, test =  0 },
+  ]
+  kt_total = 1122   # = 671 + 434 + 17. T1·T4·T7이 적은 1,122와 일치
+  kt_main  = 1036
+  kt_test  = 86
+  context_md = "boxwood-workspace @ b4985d8fb93d:CONTEXT.md — 339행. T6의 출처"
+  remote_reachable = """
+2026-08-11 확인: 브랜치 팁은 움직였으나(`branch/dwp` → `d776ed8b5838`) 위 SHA들은
+여전히 도달 가능하다(`git merge-base --is-ancestor`). force-push 없었다.
+**팁을 쓰면 안 된다 — 코퍼스는 팁이 아니라 이 SHA다.**
+"""
+  procedure = """
+클론 없이 세는 법 (SHA를 가진 클론이 있을 때):
+  git -C <repo> ls-tree -r --name-only <sha> | grep '\\.kt$' | grep -c 'src/main/'
+  git -C <repo> grep -I -P -n '<pattern>' <sha> -- '*.kt' | grep 'src/main/'
+**`-P`(PCRE)가 필요하다** — 규칙 R2·R6·R7·R8의 `\\b` 는 POSIX ERE에서 조용히 0을 낸다.
+새 기계라면: git clone --no-single-branch <remote> && git checkout <sha>
+"""
+
 [[corpus]]
 id = "ditto"
 stack = "TypeScript"
 role = "적시 제시(F11)·계획 결박(F12)·재발 사례(T8)의 판정 대상"
 remote = "https://github.com/incognito050924/ditto.git"
-local_path = "~/dev/projects/ditto"
+measured_at_path = "~/dev/projects/ditto"   # 측정 당시 위치. 재현 좌표는 아래 sha
 head = "aded7ce7f88f"
 branch = "rebuild/foundation"
 ts_files = 496  # node_modules·dist·.ditto 제외
+
+  # ── 재현 좌표 ────────────────────────────────────────────────────────────────
+  # 커밋 이력에 걸린 것(T8·T10ⓐ)은 SHA만으로 재현된다. **워킹트리에 걸린 것은 아니다.**
+  [corpus.pin]
+  verified_at = "2026-08-11"
+  sha = "aded7ce7f88feb3c03238c5f9760f3a2ade4a6c1"
+  moved_to = "e168ccddcf51"   # 이후 작업본이 전진했다. 팁을 쓰면 안 된다
+  universe_U = 149
+  universe_reproduced = """
+2026-08-11 재현 확인. `recurrence.toml` 의 `[selection].universe` 규칙 그대로:
+  git log --no-merges <sha> --pretty=%s
+    | awk 'tolower($0) ~ /^(fix|revert)/'      # 152
+    | grep -vE '^[a-zA-Z]+\\(docs\\)'           # 149
+    | grep -v '비-코드'                         # 149
+**149건이 정확히 재현됐고**, 시각 오름차순 인덱스 0·29·58·87·116 이
+`add91871`·`2550118a`·`afcfefab`·`7f6b0a58`·`9dc1af1e` — 기록된 T10ⓐ 표본과 동일하다.
+사전 등록이 규칙 문장만으로 표본을 복원한다는 것의 실물 증거다.
+"""
+  not_reproducible = "T10ⓑ의 여정 3건 · T11 M2의 선언 D — gitignored 워킹트리 산물. §T10ⓑ·§T11 참조"
 
 [[corpus]]
 id = "palimpsest"

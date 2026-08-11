@@ -100,7 +100,16 @@
 
 ### 재현에 필요한 것
 
-zip 원본은 저장소에 커밋되지 않는다(1.5GB). 위 명령과 경로가 재현 절차의 전부다.
+zip 원본은 저장소에 커밋되지 않는다(1.5GB). 위 명령과 경로가 **이 복원의** 절차 전부다.
+
+**다만 후속 측정의 재현은 이 복원에 매여 있지 않다.** T4·T6·T7은 셋 다 `worktrees/`를
+스코프에서 제외하므로, 절대경로에 매인 부분(위 §후속작업 1)과 측정에 쓴 부분이 겹치지 않는다.
+재현 좌표는 경로가 아니라 **(remote, SHA)** 이고 [`corpus/manifest.toml`](../../corpus/manifest.toml)의
+`[corpus.pin]`에 있다 — 저장소 셋(`portal-backend` `a29cad0b` · `portal-backend-aa-task`
+`10185f80` · `boxwood-packages` `2e919871`)이면 `.kt` 1,122개가 정확히 복원된다.
+
+2026-08-11 확인: 복원 위치 `~/dev/projects/boxwood/`도 원본 zip도 지금은 없다.
+그런데도 위 셋에서 `git ls-tree`로 센 값이 **1,122 / main 1,036 / test 86** — 이 표와 일치한다.
 
 ---
 
@@ -287,8 +296,15 @@ F18의 존재 근거가 이 대비이며, 이번 측정이 그것을 실물로 �
 
 ```bash
 # 규칙·패턴·세는 범위는 corpus/tasks/rule-pack.toml 의 [selection]·[[rule]] 이 정본
-# 대상: ~/dev/projects/boxwood 의 .kt, worktrees/ 제외 1,122개
+# 대상: corpus/manifest.toml [corpus.pin] 의 저장소 셋 @ 고정 SHA, .kt src/main (1,036개)
+# 작업본을 풀 필요가 없다 — SHA에 직접 건다
+git -C <repo> grep -I -P -n '<pattern>' <sha> -- '*.kt' | grep 'src/main/'
+# -P(PCRE) 필수. R2·R6·R7·R8 의 \b 가 POSIX ERE 에서는 조용히 0을 낸다
 ```
+
+**2026-08-11 재현 확인 — 전 셀이 일치한다.** 위 절차로 다시 세니 규칙 8개의
+`매칭/주석/코드`가 표와 자릿수까지 같고(R1 74·40·34 … R8 11·0·11), 합계 **1,782 / 257 / 1,525**,
+닿는 파일 **237**이 그대로 나왔다. 주석 판정 기준(`//`·`*`·`/*` 로 시작하는 줄)까지 재현됐다.
 
 ---
 
@@ -316,7 +332,7 @@ F18의 존재 근거가 이 대비이며, 이번 측정이 그것을 실물로 �
 
 | | |
 |---|---|
-| 출처 | `~/dev/projects/boxwood/CONTEXT.md` (339행, 현행 문서) |
+| 출처 | `boxwood-workspace` `b4985d8f`**:**`CONTEXT.md` (339행) — 좌표는 [`[corpus.pin]`](../../corpus/manifest.toml) |
 | 쓰지 않은 것 | `[ARCHIVED]` 표시가 붙은 도메인 재설계 제안서 |
 | 개념명 규칙 | **코드 식별자로 적지 않는다** — `ProcessMeta`가 아니라 "프로세스 메타" |
 | 개념 등록 커밋 | `7c2f1a7` |
@@ -525,9 +541,14 @@ F18의 존재 근거가 이 대비이며, 이번 측정이 그것을 실물로 �
 brew install tree-sitter-cli
 git clone https://github.com/tree-sitter-grammars/tree-sitter-kotlin   # 3dea6df
 cd tree-sitter-kotlin && tree-sitter build          # parser-directories에 등록 후
-find ~/dev/projects/boxwood -name '*.kt' | grep -v /worktrees/ | sort > kt.txt
+# 대상 1,122개의 정본은 corpus/manifest.toml [corpus.pin] — 저장소 셋 @ 고정 SHA.
+# 작업본이 필요하다(파서가 파일을 읽는다). 각 저장소를 SHA로 체크아웃한 뒤:
+find <checkouts> -name '*.kt' | grep -v /worktrees/ | sort > kt.txt   # 1,122줄
 tree-sitter parse --quiet --stat --paths kt.txt
 ```
+
+파일 집합 자체는 작업본 없이도 확인된다 —
+`git ls-tree -r --name-only <sha> | grep '\.kt$'` 의 합이 1,122이다(2026-08-11 확인).
 
 `grep`으로 아카이브 목록·파싱 출력을 다룰 때 **`LC_ALL=C`와 `grep -a`가 필요하다** —
 경로에 비UTF-8 바이트가 섞여 있어 기본 설정에서는 grep이 바이너리로 판단하고 조용히 0을 낸다.
