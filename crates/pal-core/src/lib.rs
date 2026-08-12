@@ -24,6 +24,7 @@ mod graph;
 mod judgment;
 mod language;
 mod ledger;
+mod manifest;
 mod repo;
 mod schema;
 mod symbol;
@@ -54,10 +55,11 @@ pub use envelope::{
     CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness, RebuildState,
 };
 pub use judgment::{Residual, ResidualReason};
+pub use manifest::{ExclusionRule, Manifest, ManifestError, RepoDecl, ScopeSource};
 pub use language::Language;
 pub use ledger::{
-    Bucket, BinaryReason, ExclusionRuleId, ExtractGrade, FileState, GeneratedEvidence,
-    IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry,
+    Bucket, BinaryReason, DetectorFreshness, ExclusionRuleId, ExtractGrade, FileState,
+    GeneratedEvidence, IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry,
 };
 pub use schema::{
     AttrDecl, Cardinality, Carrier, EdgeDecl, EvidenceRule, GradeRule, GraphSchema, NodeDecl,

@@ -14,7 +14,8 @@ use std::num::NonZeroUsize;
 
 use serde::{Deserialize, Serialize};
 
-use crate::repo::{RepoPath, Snapshot};
+use crate::manifest::ScopeSource;
+use crate::repo::{ObjectName, RepoPath, Snapshot, TreeRef};
 
 /// 언어의 이름. **추출 대상 넷보다 넓다.**
 ///
@@ -270,6 +271,31 @@ pub struct LanguageCapability {
     pub files: usize,
 }
 
+/// 낡음을 재는 자의 낡음 — **감지기 자신이 낡을 수 있다** (DESIGN §6.3 · F01 §4).
+///
+/// 감지기가 3주 낡았으면 낡음 표시들도 3주 낡았다는 사실이 응답에 붙어야 한다.
+///
+/// # "이후 커밋 수" 를 싣지 않는다 — 그 자리에서 문서가 어긋나 있었다
+///
+/// F01 §4 는 *"마지막 재추출 `Snapshot` · 추출기 버전 · **이후 커밋 수**"* 를 적으면서
+/// 같은 문단에서 *"이 검사는 **상수 시간**(HEAD 비교)이므로 무한 후퇴하지 않는다"* 고
+/// 못 박았다. **커밋 수를 세는 것은 상수 시간이 아니다** — 이력 깊이에 비례하고, 그러면
+/// 예산이 필요하고, 예산은 §12.4 의 표에 값이 있어야 켜진다(D16).
+///
+/// 그래서 상수 시간에 답할 수 있는 것만 싣는다: **추출기 버전과 지금 HEAD.**
+/// 세어야 할 커밋 수가 필요해지면 예산과 함께 F05 가 낸다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DetectorFreshness {
+    /// 이 대장을 만든 문법의 고정 커밋.
+    pub grammar: String,
+    /// 이 대장을 만든 추출기 코드 버전.
+    pub extractor: String,
+    /// 이 대장을 계산할 때의 HEAD.
+    ///
+    /// 대장이 선 트리와 다르면 **대장이 그 사이의 커밋들을 보지 않았다**는 뜻이다.
+    pub head_now: ObjectName,
+}
+
 /// 관측 범위 대장.
 ///
 /// **저장 위치**: 최종적으로 2층 인덱스지만 2층은 F05 이고 이 기능이 그보다 앞선다.
@@ -284,6 +310,10 @@ pub struct Ledger {
     pub entries: Vec<LedgerEntry>,
     /// **`table` 이 아니라 `languages` 다** — 어휘 금지(stack §4.2)에 걸린다.
     pub languages: Vec<LanguageCapability>,
+    /// 이 범위가 **선언**에서 왔는가 추정에서 왔는가 (DESIGN §4.3).
+    pub scope: ScopeSource,
+    /// 낡음을 재는 자의 낡음.
+    pub detector: DetectorFreshness,
 }
 
 impl Ledger {
@@ -309,12 +339,20 @@ impl Ledger {
     /// # Panics
     /// 스냅샷이 비어 있으면. [`Snapshot::of`] 가 빈 것을 만들지 않으므로 일어나지 않는다.
     #[must_use]
-    pub fn snapshot_tree(&self) -> crate::repo::TreeRef {
+    pub fn snapshot_tree(&self) -> TreeRef {
         self.snapshot
             .entries()
             .next()
             .expect("스냅샷은 비어 있을 수 없다")
             .1
+    }
+
+    /// 대장이 선 뒤로 HEAD 가 움직였는가 — **상수 시간이다.**
+    ///
+    /// 참이면 이 대장은 지금 HEAD 의 것이 아니고, 그 사실이 산출에 실린다.
+    #[must_use]
+    pub fn head_moved(&self) -> bool {
+        self.snapshot_tree().base() != self.detector.head_now
     }
 
     /// 파일 총수.
@@ -348,7 +386,6 @@ impl Ledger {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repo::{ObjectName, TreeRef};
 
     fn 대장(states: Vec<FileState>) -> Ledger {
         Ledger {
@@ -363,6 +400,12 @@ mod tests {
                 .map(|(i, state)| LedgerEntry { path: RepoPath::new(format!("f{i}")), state })
                 .collect(),
             languages: vec![],
+            scope: ScopeSource::InferredFromPath,
+            detector: DetectorFreshness {
+                grammar: "g".to_owned(),
+                extractor: "e".to_owned(),
+                head_now: ObjectName::from_bytes([0; 20]),
+            },
         }
     }
 

@@ -15,8 +15,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use pal_core::{
-    Bucket, Discriminator, ExtractGrade, FileState, IdentityGrade, LanguageCapability, LanguageId,
-    Ledger, LedgerEntry, RepoId, RepoPath, Snapshot, SymbolId, SymbolNode, TreeRef,
+    Attributes, Bucket, DetectorFreshness, Discriminator, ExtractGrade, FileState, IdentityGrade,
+    LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath, ScopeSource,
+    Snapshot, SymbolId, SymbolNode, TreeRef,
 };
 use pal_extract::{FileOutcome, OVERSIZE_BYTES};
 use pal_git::{GitAccess, GixRepo, WorktreeState};
@@ -72,6 +73,13 @@ pub fn compute(
         None => worktree.tree_ref(),
     };
 
+    // **범위는 선언에서 온다** (DESIGN §4.3). 없으면 없다고 적는다 — 조용히 추정하면
+    // `asserted` 와 추정이 같아 보인다.
+    let manifest = load_manifest(repo_path)?;
+    // `.gitattributes` — 언어 인식 ③ 단계가 읽는다(F01 §3.3). blob 이름 계산에 쓰는
+    // 것과 **같은 파일이고 같은 파서**다(`pal-git` 이 clean 필터에 쓴다).
+    let attributes = read_attributes(&repo, &tree)?;
+
     let cache_root = cache_dir.unwrap_or_else(|| repo_path.join(".palimpsest/cache"));
     let cache = BlobCache::open(cache_root).context("캐시를 열지 못했다")?;
     let version = pal_extract::version();
@@ -80,13 +88,28 @@ pub fn compute(
     // **정렬은 여기서 한다.** 산출이 결정적이어야 두 회차를 바이트로 비교할 수 있다.
     files.sort_by(|a, b| a.0.cmp(&b.0));
 
-    let repo_id = RepoId::new(repo_name(repo_path));
+    // **저장소 식별자는 선언이 정본이다** ([R-08]). 경로에서 유도한 이름은 저장소를
+    // 옮기면 바뀌고, 그러면 결박이 가리키는 좌표가 통째로 흔들린다.
+    let repo_id = manifest
+        .as_ref()
+        .and_then(|m| m.repos.first())
+        .map_or_else(|| RepoId::new(repo_name(repo_path)), |r| r.id.clone());
     let mut stats = CacheStats::default();
     let mut entries = Vec::with_capacity(files.len());
     let mut symbols: Vec<SymbolNode> = Vec::new();
 
     for (path, blob) in files {
-        let key = CacheKey::new(blob, version);
+        // **제외는 파일을 읽기 전에 판정된다.** 규칙에 걸린 파일은 내용을 보지 않고,
+        // 그래서 캐시도 건드리지 않는다 — 범위 밖은 "보지 않음"이고 그것이 문자 그대로다.
+        if let Some(rule) = manifest.as_ref().and_then(|m| m.excluded_by(&repo_id, &path)) {
+            entries.push(LedgerEntry {
+                path,
+                state: FileState::Excluded { rule: rule.id.clone() },
+            });
+            continue;
+        }
+        let declared = attributes.of(&path).language;
+        let key = CacheKey::new(blob, version, &path, declared.as_deref());
         let outcome: FileOutcome = if let Some(hit) = cache.get::<FileOutcome>(&key)? {
             stats.hit();
             hit
@@ -99,7 +122,7 @@ pub fn compute(
             } else {
                 repo.read_worktree_file(&path).with_context(|| format!("{path}"))?
             };
-            let fresh = pal_extract::classify(&path, &source, OVERSIZE_BYTES)
+            let fresh = pal_extract::classify(&path, &source, OVERSIZE_BYTES, declared.as_deref())
                 .with_context(|| format!("분류 실패: {path}"))?;
             cache.put(&key, &fresh)?;
             fresh
@@ -111,10 +134,24 @@ pub fn compute(
     let languages = language_capabilities(&entries);
     let ledger = Ledger {
         snapshot: Snapshot::single(repo_id, tree),
-        // **선언된 저장소 수.** S1 은 언제나 1 이다 — 멀티레포는 F14.
-        repos_declared: NonZeroUsize::new(1).expect("1 은 0 이 아니다"),
+        // **선언된 저장소 수** — 매니페스트가 있으면 그것이 세고, 없으면 1 이다.
+        // 멀티레포 스티칭은 F14 이고, 여기서 2 이상이 되어도 **보는 것은 여전히 하나**다.
+        // 그 차이가 §4.3 이 말한 뿌리의 공백이고 대장이 두 수를 나란히 적는다.
+        repos_declared: manifest
+            .as_ref()
+            .and_then(|m| NonZeroUsize::new(m.repos.len()))
+            .unwrap_or_else(|| NonZeroUsize::new(1).expect("1 은 0 이 아니다")),
         entries,
         languages,
+        scope: manifest.as_ref().map_or(ScopeSource::InferredFromPath, |m| ScopeSource::Declared {
+            repos: m.repos.len(),
+            rules: m.rule_count(),
+        }),
+        detector: DetectorFreshness {
+            grammar: version.grammar.to_owned(),
+            extractor: version.extractor.to_owned(),
+            head_now: worktree.base,
+        },
     };
     Ok(LedgerReport { ledger, cache: stats, symbols, worktree })
 }
@@ -148,15 +185,52 @@ pub(crate) fn nodes_of(repo: &RepoId, path: &RepoPath, symbols: &[pal_core::Symb
     out
 }
 
+/// 매니페스트를 읽는다. **없는 것과 깨진 것은 다르다.**
+///
+/// 없으면 `None` 이고 대장이 [`ScopeSource::InferredFromPath`] 를 싣는다. **깨졌으면
+/// 오류다** — 잘못 쓴 매니페스트를 없는 것으로 삼키면 사용자가 선언한 제외 규칙이
+/// 조용히 안 걸리고, 대장은 그것을 *"제외 0 건"* 으로 낸다.
+fn load_manifest(repo_path: &Path) -> Result<Option<Manifest>> {
+    let file = repo_path.join(".palimpsest/manifest.toml");
+    let text = match std::fs::read_to_string(&file) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(anyhow::anyhow!("{}: {e}", file.display())),
+    };
+    Manifest::parse(&text)
+        .map(Some)
+        .map_err(|e| anyhow::anyhow!("{}: {e}", file.display()))
+}
+
+/// 이 트리의 `.gitattributes` 들.
+///
+/// **커밋을 보고 있으면 그 커밋의 것을 읽는다.** 워킹트리의 파일을 읽으면 과거 대장이
+/// 지금 설정으로 계산되고, 그러면 같은 커밋의 대장이 시점마다 달라진다.
+fn read_attributes(repo: &GixRepo, at: &TreeRef) -> Result<Attributes> {
+    let files = repo.list_tree(at).context("트리를 읽지 못했다")?;
+    let mut found = Vec::new();
+    for (path, blob) in files {
+        let Some(dir) = path.as_str().strip_suffix(".gitattributes") else { continue };
+        let dir = dir.trim_end_matches('/').to_owned();
+        let raw = if at.is_committed() {
+            repo.read_blob(blob).with_context(|| format!("{path}"))?
+        } else {
+            repo.read_worktree_file(&path).with_context(|| format!("{path}"))?
+        };
+        // 읽을 수 없는 바이트는 규칙이 아니다 — 손실 변환으로 넘긴다.
+        found.push((dir, String::from_utf8_lossy(&raw).into_owned()));
+    }
+    Ok(Attributes::parse(&found))
+}
+
 /// 디렉터리 이름을 저장소 식별자로 쓴다.
 ///
-/// **임시방편이다.** 정본은 매니페스트가 선언하는 안정 식별자이고(F01 §3.5, R-08).
-/// **경로에서 유도한 이름은 저장소를 옮기면 바뀐다** — 그것이 R-08 이 경고한 바로 그
-/// 형태이므로 F01 이 고친다.
+/// **매니페스트가 없을 때만 쓴다** (2026-08-13 · F01). 정본은 매니페스트가 선언하는
+/// 안정 식별자다(F01 §3.5 · [R-08]).
 ///
-/// (2026-08-12 정정: 이 주석은 *"TOML 파서가 의존 목록에 없어서"* 라고 적고 있었다.
-/// F22-1 이 `toml` 을 들였으므로 그 이유는 더 이상 사실이 아니다. 남은 이유는
-/// 매니페스트 형식과 다중 저장소 선언을 F01 이 정한다는 것 하나다.)
+/// **경로에서 유도한 이름은 저장소를 옮기면 바뀐다.** 그것이 R-08 이 경고한 형태이고,
+/// 그래서 이 경로로 왔다는 사실이 [`ScopeSource::InferredFromPath`] 로 산출에 실린다 —
+/// 임시방편을 쓰는 것보다 **임시방편을 쓴다고 말하지 않는 것**이 나쁘다.
 pub(crate) fn repo_name(path: &Path) -> String {
     path.canonicalize()
         .ok()
@@ -208,6 +282,8 @@ pub fn print_table(report: &LedgerReport) {
              if 전부_커밋 { "(커밋)" } else { "(워킹트리)" });
     // **선언된 것과 본 것을 나란히 적는다** — 그 차이가 §4.3 이 말한 뿌리의 공백이다.
     println!("저장소    선언 {} · 본 것 {}", l.repos_declared, l.snapshot.len());
+    // **범위가 어디서 왔는가.** 선언과 추정이 같아 보이면 `asserted` 가 뜻을 잃는다.
+    println!("범위      {}", l.scope.describe());
     println!();
     // **워킹트리를 언제나 적는다.** 커밋을 보고 있어도 *"지금 워킹트리가 그것과
     // 같은가"* 는 사용자가 알아야 하는 사실이다 — 다르면 지금 화면이 방금 고친 것을
@@ -275,6 +351,17 @@ pub fn print_table(report: &LedgerReport) {
     println!();
     println!("provider  (이 빌드에 provider 포트가 없습니다 — F21 미구축)");
     println!("조달      (이 빌드에 관측 수용이 없습니다 — F16 미구축)");
-    println!("감지기    (이 빌드에 낡음 감지가 없습니다 — F01 미구축)");
+    // **낡음을 재는 자의 낡음** — F01 이 이 줄을 값으로 바꿨다.
+    println!(
+        "감지기    추출기 {} · 문법 {} · HEAD {}",
+        &l.detector.extractor,
+        &l.detector.grammar[..7.min(l.detector.grammar.len())],
+        if l.head_moved() {
+            format!("{} 로 움직였습니다 — 이 대장은 그 뒤를 보지 않았습니다",
+                    &l.detector.head_now.to_hex()[..7])
+        } else {
+            "그대로".to_owned()
+        }
+    );
     println!();
 }

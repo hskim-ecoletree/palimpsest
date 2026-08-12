@@ -23,7 +23,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use pal_core::{ExtractorVersion, ObjectName};
+use pal_core::{ExtractorVersion, ObjectName, RepoPath};
 use serde::{Serialize, de::DeserializeOwned};
 
 #[derive(Debug, thiserror::Error)]
@@ -46,15 +46,45 @@ pub enum CacheError {
 pub struct CacheKey(String);
 
 impl CacheKey {
+    /// 캐시 키 — `(blob, 추출기 버전, **분류 맥락**)`.
+    ///
+    /// # 왜 blob 만으로는 안 되는가 (2026-08-13 · F01)
+    ///
+    /// 캐시가 담는 것은 [`FileOutcome`] 이고 그것은 **분류 결과**다. 그런데 분류는
+    /// 내용만 보지 않는다 — 언어를 확장자·파일 이름에서 얻고, 생성물 판정이 경로
+    /// 패턴을 보며, `.gitattributes` 의 `linguist-language` 가 그 전부를 이긴다.
+    ///
+    /// **키가 blob 뿐이면 내용이 같고 경로가 다른 두 파일이 한 칸을 쓴다.** 빈 파일이
+    /// 그 자리다 — 빈 `.kt` 와 `.gitkeep` 은 같은 blob(`e69de29`)이고, 먼저 온 쪽의
+    /// 분류가 뒤에 온 쪽에 그대로 나간다. 그러면 **대장이 파일의 언어를 틀리게 적고
+    /// 그 틀림이 캐시에 굳는다.**
+    ///
+    /// 그래서 경로와 선언된 언어를 키에 넣는다. **값을 치르는 자리**: 파일을 옮기면
+    /// 내용이 같아도 미스가 난다. 대장이 거짓말하지 않는 값으로 싼 편이다.
+    ///
+    /// [`FileOutcome`]: https://docs.rs/
     #[must_use]
-    pub fn new(blob: ObjectName, version: ExtractorVersion) -> Self {
+    pub fn new(
+        blob: ObjectName,
+        version: ExtractorVersion,
+        path: &RepoPath,
+        declared: Option<&str>,
+    ) -> Self {
         let mut hasher = blake3::Hasher::new();
-        hasher.update(b"pal1\0"); // 층 표시. 다른 층이 같은 키 공간을 쓰지 않게 한다
+        hasher.update(b"pal2\0"); // 층 표시 + 키 형태 버전. **형태가 바뀌면 올린다**
         hasher.update(blob.as_bytes());
         hasher.update(b"\0");
         hasher.update(version.grammar.as_bytes());
         hasher.update(b"\0");
         hasher.update(version.extractor.as_bytes());
+        hasher.update(b"\0");
+        // 길이 접두사 — 없으면 `("ab", None)` 과 `("a", Some("b"))` 가 같은 키가 된다.
+        let path = path.as_str().as_bytes();
+        hasher.update(&(path.len() as u64).to_le_bytes());
+        hasher.update(path);
+        let declared = declared.unwrap_or("").as_bytes();
+        hasher.update(&(declared.len() as u64).to_le_bytes());
+        hasher.update(declared);
         Self(hasher.finalize().to_hex().to_string())
     }
 
@@ -187,10 +217,14 @@ mod tests {
 
     const V: ExtractorVersion = ExtractorVersion { grammar: "g", extractor: "e" };
 
+    fn 키(blob: ObjectName, v: ExtractorVersion) -> CacheKey {
+        CacheKey::new(blob, v, &RepoPath::new("a/b.kt"), None)
+    }
+
     #[test]
     fn 넣은_것이_나온다() {
         let c = BlobCache::open(임시()).unwrap();
-        let k = CacheKey::new(ObjectName::from_bytes([1; 20]), V);
+        let k = 키(ObjectName::from_bytes([1; 20]), V);
         assert_eq!(c.get::<값>(&k).unwrap(), None);
         c.put(&k, &값 { n: 7, s: "가".into() }).unwrap();
         assert_eq!(c.get::<값>(&k).unwrap(), Some(값 { n: 7, s: "가".into() }));
@@ -201,15 +235,35 @@ mod tests {
     fn 추출기_버전이_바뀌면_다른_키다() {
         // **이것이 없으면 문법을 바꿔도 옛 값이 나온다** — stack §5.1.
         let blob = ObjectName::from_bytes([2; 20]);
-        let a = CacheKey::new(blob, V);
-        let b = CacheKey::new(blob, ExtractorVersion { grammar: "g2", extractor: "e" });
+        let a = 키(blob, V);
+        let b = 키(blob, ExtractorVersion { grammar: "g2", extractor: "e" });
         assert_ne!(a, b);
     }
 
     #[test]
     fn blob_이_바뀌면_다른_키다() {
-        let a = CacheKey::new(ObjectName::from_bytes([3; 20]), V);
-        let b = CacheKey::new(ObjectName::from_bytes([4; 20]), V);
+        let a = 키(ObjectName::from_bytes([3; 20]), V);
+        let b = 키(ObjectName::from_bytes([4; 20]), V);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn 같은_blob_이라도_경로가_다르면_다른_키다() {
+        // **빈 파일이 이 자리다.** 빈 `.kt` 와 `.gitkeep` 은 같은 blob 이고, 키가
+        // blob 뿐이면 먼저 온 쪽의 **분류**가 뒤에 온 쪽에 그대로 나간다.
+        let blob = ObjectName::from_bytes([5; 20]);
+        let a = CacheKey::new(blob, V, &RepoPath::new("a/x.kt"), None);
+        let b = CacheKey::new(blob, V, &RepoPath::new("a/.gitkeep"), None);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn 선언된_언어가_다르면_다른_키다() {
+        // `.gitattributes` 의 `linguist-language` 가 바뀌면 분류가 바뀐다.
+        let blob = ObjectName::from_bytes([6; 20]);
+        let path = RepoPath::new("a/x.txt");
+        let a = CacheKey::new(blob, V, &path, None);
+        let b = CacheKey::new(blob, V, &path, Some("Kotlin"));
         assert_ne!(a, b);
     }
 

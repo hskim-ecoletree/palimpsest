@@ -35,6 +35,16 @@ impl Language {
         }
     }
 
+    /// 이름으로 언어를 정한다 — `.gitattributes` 의 `linguist-language` 가 쓴다.
+    ///
+    /// **대소문자를 가리지 않는다.** `linguist-language=kotlin` 도 같은 것을 뜻한다.
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        [Self::Kotlin, Self::Java, Self::JavaScript, Self::TypeScript]
+            .into_iter()
+            .find(|l| l.name().eq_ignore_ascii_case(name))
+    }
+
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {

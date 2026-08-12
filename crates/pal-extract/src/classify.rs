@@ -9,7 +9,9 @@
 //! 1. **크기** — 상한을 넘으면 읽지 않는다. `Excluded{oversize}` 이고 **규칙 ID 가 붙는다**
 //! 2. **바이너리** — NUL 바이트. git 이 쓰는 것과 같은 판정이다
 //! 3. **생성물** — 경로 패턴과 파일 머리 표식이 **둘 다** 있을 때만
-//! 4. **언어 인식** — 모르면 `Unrecognized`, 알지만 추출기가 없으면 `Unsupported`
+//! 4. **언어 인식** — 모르면 `Unrecognized`, 알지만 추출기가 없으면 `Unsupported`.
+//!    `declared` 는 `.gitattributes` 의 `linguist-language` 이고 **확장자를 이긴다**
+//!    (`recognize` 의 머리 주석)
 //! 5. **추출** — 회복이 있었으면 `Partial`, 아니면 `Parsed`
 
 use pal_core::{
@@ -53,6 +55,7 @@ pub fn classify(
     path: &RepoPath,
     source: &[u8],
     oversize_bytes: usize,
+    declared: Option<&str>,
 ) -> Result<FileOutcome, ExtractError> {
     let plain = |state| Ok(FileOutcome { state, symbols: Vec::new() });
 
@@ -72,7 +75,7 @@ pub fn classify(
     }
 
     // ④ 언어
-    let language = match recognize(path.extension(), path.file_name()) {
+    let language = match recognize(path.extension(), path.file_name(), declared, source) {
         Recognition::Unknown => return plain(FileState::Unrecognized),
         Recognition::Known(id) => return plain(FileState::Unsupported { language: id }),
         Recognition::FirstClass(l) => l,
@@ -134,7 +137,7 @@ mod tests {
     use super::*;
 
     fn 분류(path: &str, src: &[u8]) -> FileState {
-        classify(&RepoPath::new(path), src, OVERSIZE_BYTES).unwrap().state
+        classify(&RepoPath::new(path), src, OVERSIZE_BYTES, None).unwrap().state
     }
 
     #[test]
@@ -146,7 +149,7 @@ mod tests {
     fn 크기_상한은_규칙_아이디와_함께_기록된다() {
         // **조용히 사라지지 않는다** — 나중에 "범위가 줄어서 사라진 것"과 구별되어야 한다.
         let big = vec![b'a'; 16];
-        let FileState::Excluded { rule } = classify(&RepoPath::new("big.kt"), &big, 8).unwrap().state
+        let FileState::Excluded { rule } = classify(&RepoPath::new("big.kt"), &big, 8, None).unwrap().state
         else {
             panic!("제외되지 않았다");
         };
@@ -192,7 +195,7 @@ mod tests {
     }
 
     fn 요약(src: &str) -> pal_core::BodyDigest {
-        let out = classify(&RepoPath::new("A.kt"), src.as_bytes(), OVERSIZE_BYTES).unwrap();
+        let out = classify(&RepoPath::new("A.kt"), src.as_bytes(), OVERSIZE_BYTES, None).unwrap();
         out.symbols[0].body
     }
 
@@ -238,7 +241,7 @@ mod tests {
     #[test]
     fn 심볼은_분류와_함께_나온다() {
         // 1층 캐시가 담을 값이다 — 분류만 캐시하면 두 번째 실행에서 심볼이 사라진다.
-        let out = classify(&RepoPath::new("A.kt"), b"class A\nclass B\n", OVERSIZE_BYTES).unwrap();
+        let out = classify(&RepoPath::new("A.kt"), b"class A\nclass B\n", OVERSIZE_BYTES, None).unwrap();
         assert_eq!(out.symbols.len(), 2);
     }
 }
