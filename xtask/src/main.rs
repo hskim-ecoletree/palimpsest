@@ -1,10 +1,12 @@
 //! CI 검사 — **단계 1**(stack §4.3). 전부 S 규모이고 외부 의존을 늘리지 않는다.
 //!
-//! 여기 있는 다섯 중 둘은 계획 §2 가 *"되돌릴 수 없는 것"* 으로 분류한 것이다.
+//! 여기 있는 여섯 중 둘은 계획 §2 가 *"되돌릴 수 없는 것"* 으로 분류한 것이다.
 //! **그 둘의 처분은 게이트가 아니라 빌드 실패다.**
 //!
-//! 다섯이 stack §4.3 **단계 1** 의 전부다 — F01 완료 체크리스트가 *"CI 1단계 켜기"* 로
-//! 세는 그 목록이고, 마지막 하나(`cargo-deny`)가 S0 이 남긴 빚이었다.
+//! 앞의 다섯이 stack §4.3 **단계 1** 의 전부다 — F01 완료 체크리스트가 *"CI 1단계 켜기"* 로
+//! 세는 그 목록이고, 다섯째(`cargo-deny`)가 S0 이 남긴 빚이었다.
+//! 여섯째(gix 격리)는 단계 1 이 아니라 **S1 의 합격선 ⑤** 다 — 산출이 아니라 구조를
+//! 재는 합격선이라 게이트가 아니라 여기 산다(`corpus/criteria.toml` `[s1.pass]`).
 //!
 //! ```text
 //! cargo xtask check
@@ -39,6 +41,7 @@ fn main() -> Result<()> {
         ("의도 저장소 폐기 경로 부재", check_intent_untouched(&root)),
         ("unsafe 금지", check_forbid_unsafe(&root)),
         ("의존 정책", check_deny(&root)),
+        ("gix 격리", check_gix_isolation(&root)),
     ];
     let total = checks.len();
 
@@ -216,6 +219,48 @@ fn check_forbid_unsafe(root: &Path) -> Result<String> {
         bail!("`#![forbid(unsafe_code)]` 가 없다:\n    {}", missing.join("\n    "));
     }
     Ok(format!("크레이트 루트 {checked}개"))
+}
+
+// ── 검사 6 — gix 격리 (R-15 · criteria [s1.pass].gix_direct_dependents) ─────
+
+/// `gix` 에 직접 의존하는 워크스페이스 크레이트는 **`pal-git` 하나뿐이어야 한다.**
+///
+/// `gix` 는 API 가 아직 진화 중이다(stack §3.1). 접촉면이 퍼지면 상류가 시그니처를 바꿀 때
+/// 고칠 자리가 한 곳이 아니게 되고, [R-15] 의 대응 *"깨지면 그 모듈만 고친다"* 가
+/// 성립하지 않는다. **이것은 산출이 아니라 구조의 합격선이고 그래서 기계가 센다.**
+fn check_gix_isolation(root: &Path) -> Result<String> {
+    const ALLOWED: &str = "pal-git";
+
+    let out = Command::new(env!("CARGO"))
+        .args(["metadata", "--format-version", "1", "--no-deps"])
+        .current_dir(root)
+        .output()
+        .context("cargo metadata 를 돌리지 못했다")?;
+    let meta: serde_json::Value = serde_json::from_slice(&out.stdout)?;
+    let packages = meta["packages"].as_array().context("packages 가 없다")?;
+
+    let mut leaked = Vec::new();
+    for p in packages {
+        let Some(name) = p["name"].as_str() else { continue };
+        if name == ALLOWED {
+            continue;
+        }
+        let deps = p["dependencies"].as_array().map_or(&[][..], Vec::as_slice);
+        for d in deps {
+            let Some(dep) = d["name"].as_str() else { continue };
+            // `gix` 와 그 하위 크레이트(`gix-*`) 전부. 우회 경로를 막는다.
+            if dep == "gix" || dep.starts_with("gix-") {
+                leaked.push(format!("{name} → {dep}"));
+            }
+        }
+    }
+    if !leaked.is_empty() {
+        bail!(
+            "gix 가 {ALLOWED} 밖으로 샜다 — R-15 의 대응이 성립하지 않는다:\n    {}",
+            leaked.join("\n    ")
+        );
+    }
+    Ok(format!("gix 직접 의존은 {ALLOWED} 하나"))
 }
 
 // ── 검사 5 — 의존 정책 (stack §3.4 · §4.3 단계 1) ────────────────────────────

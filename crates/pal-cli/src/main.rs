@@ -1,7 +1,7 @@
 //! `pal` — 1급 표면.
 //!
-//! S0 이 뚫는 것은 서브커맨드 하나다: `pal symbols <파일>`.
-//! blob 하나 → tree-sitter → 심볼 목록.
+//! S0 이 뚫은 것: `pal symbols <파일>` — blob 하나 → tree-sitter → 심볼 목록.
+//! S1 이 뚫는 것: `pal ledger` — 저장소 하나 → git 접근 · 분류 · 캐시 → 관측 범위 대장.
 
 #![forbid(unsafe_code)]
 
@@ -10,6 +10,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use pal_core::{Capable, Language};
+
+mod ledger;
 
 #[derive(Parser)]
 #[command(name = "pal", version, about = "환경에 종속되지 않는 코드 이해의 큐레이터")]
@@ -28,11 +30,35 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// 저장소 하나의 관측 범위 대장을 낸다 — **무엇을 보았고 무엇을 보지 않았는가**
+    Ledger {
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// 어느 커밋인가. 기본값은 HEAD
+        #[arg(long)]
+        at: Option<String>,
+        /// 1층 캐시 위치. 기본값은 `<저장소>/.palimpsest/cache`
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        /// 사람이 읽는 표 대신 JSON 으로 낸다
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Symbols { path, json } => symbols(&path, json),
+        Command::Ledger { path, at, cache_dir, json } => {
+            let report = ledger::compute(&path, at.as_deref(), cache_dir)?;
+            if json {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                ledger::print_table(&report);
+            }
+            Ok(())
+        }
     }
 }
 

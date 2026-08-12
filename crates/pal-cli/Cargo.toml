@@ -14,7 +14,10 @@ path = "src/main.rs"
 [dependencies]
 pal-core.workspace = true
 pal-extract.workspace = true
+pal-git.workspace = true
+pal-store.workspace = true
 clap.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 

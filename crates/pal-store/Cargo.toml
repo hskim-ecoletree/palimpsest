@@ -1,6 +1,6 @@
 [package]
 name = "pal-store"
-description = "파생 두 층(1층 캐시·2층 인덱스). 지우는 API 를 가진 유일한 크레이트 — 그래서 의도에 닿으면 안 된다"
+description = "파생 두 층. 1층 콘텐츠 주소 캐시 + 2층 인덱스. 의존: pal-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,8 +9,14 @@ publish.workspace = true
 
 [dependencies]
 pal-core.workspace = true
+serde.workspace = true
+blake3.workspace = true
+postcard.workspace = true
+zstd.workspace = true
+thiserror.workspace = true
 
-# **pal-intent 를 여기 적으면 안 된다.** R-21 · stack §4.1 · xtask 가 검사한다.
+[dev-dependencies]
+serde_json.workspace = true
 
 [lints]
 workspace = true

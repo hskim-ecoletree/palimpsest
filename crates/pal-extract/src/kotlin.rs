@@ -37,9 +37,24 @@ pub enum ExtractError {
 
 /// 최상위 선언을 소스 순서로 낸다.
 ///
+/// **S0 이 대조한 것이 이 함수의 산출이다.** 시그니처와 결과가 그대로 유지되어야
+/// `corpus/tasks/s0-reference-vector.tsv` 와의 대조가 계속 성립한다.
+///
 /// # Errors
 /// 문법·쿼리·파싱 중 하나가 실패하면 [`ExtractError`].
 pub fn extract(source: &[u8]) -> Result<Vec<Symbol>, ExtractError> {
+    extract_detailed(source).map(|e| e.symbols)
+}
+
+/// 선언 + **파싱이 성했는가**.
+///
+/// 대장은 `parsed` 와 `partial` 을 갈라야 하고(DESIGN §4.1) 그러려면 오류 회복이
+/// 일어났는지를 알아야 한다. S0 은 그것을 묻지 않았으므로 [`extract`] 가 버렸다.
+/// **버리던 정보를 되살릴 뿐 세는 방식은 같다** — 위 함수가 이 함수를 그대로 탄다.
+///
+/// # Errors
+/// 문법·쿼리·파싱 중 하나가 실패하면 [`ExtractError`].
+pub fn extract_detailed(source: &[u8]) -> Result<Extraction, ExtractError> {
     let language = tree_sitter::Language::new(tree_sitter_kotlin_ng::LANGUAGE);
 
     let mut parser = Parser::new();
@@ -85,5 +100,37 @@ pub fn extract(source: &[u8]) -> Result<Vec<Symbol>, ExtractError> {
             },
         });
     }
-    Ok(symbols)
+    Ok(Extraction { symbols, recovery_sites: count_error_nodes(tree.root_node()) })
+}
+
+/// 추출 결과와 파싱 건강 상태.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Extraction {
+    pub symbols: Vec<Symbol>,
+    /// tree-sitter 가 오류 회복한 지점의 수. **0 이면 `parsed`, 아니면 `partial`.**
+    pub recovery_sites: usize,
+}
+
+/// `ERROR` · `MISSING` 노드를 센다.
+///
+/// **회복 지점의 좌표(`Site`)는 F03 이후다** — 좌표에 `symbol` 성분이 필요하다.
+/// 여기서는 개수만 세고, 그 개수가 `partial` 의 근거가 된다.
+fn count_error_nodes(root: tree_sitter::Node<'_>) -> usize {
+    if !root.has_error() {
+        return 0; // 흔한 경우를 순회 없이 끝낸다
+    }
+    let mut n = 0;
+    let mut cursor = root.walk();
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        if node.is_error() || node.is_missing() {
+            n += 1;
+            // 오류 노드 **안쪽은 세지 않는다** — 하나의 회복 지점이다.
+            continue;
+        }
+        if node.has_error() {
+            stack.extend(node.children(&mut cursor));
+        }
+    }
+    n
 }

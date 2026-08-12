@@ -1,6 +1,6 @@
 //! 지원 언어. **넷이 전부 1급이다** — 소유자 지시 2026-08-12 §1.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// 1급 지원 언어.
 ///
@@ -9,7 +9,7 @@ use serde::Serialize;
 ///
 /// `.svelte` 는 다섯째 언어가 아니다. `<script>` 안의 js/ts 를 꺼내려면
 /// injection 이 필요하고 그것은 추출기 **구조**의 문제다. 소유 기능 미배정.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Language {
     Kotlin,

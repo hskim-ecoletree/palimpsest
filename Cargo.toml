@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "crates/pal-core",
     "crates/pal-extract",
+    "crates/pal-git",
     "crates/pal-intent",
     "crates/pal-store",
     "crates/pal-cli",
@@ -23,6 +24,8 @@ pedantic = { level = "warn", priority = -1 }
 [workspace.dependencies]
 pal-core = { path = "crates/pal-core" }
 pal-extract = { path = "crates/pal-extract" }
+pal-git = { path = "crates/pal-git" }
+pal-store = { path = "crates/pal-store" }
 pal-intent = { path = "crates/pal-intent" }
 
 serde = { version = "1", features = ["derive"] }
@@ -32,6 +35,19 @@ thiserror = "2"
 anyhow = "1"
 tree-sitter = "0.26"
 streaming-iterator = "0.1"
+
+# S1 에서 들어온 넷. stack §3.1 이 이미 고른 것들이고, 여기서 늘리지 않는다.
+#   gix      — git 접근. **`pal-git` 만 직접 의존한다**(R-15 · criteria [s1.pass].gix_direct_dependents)
+#   blake3   — 1층 캐시 키. `symbol_id`·`body_digest` 도 나중에 이것을 쓴다
+#   postcard — 1층 캐시 값. 컴팩트한 바이너리. 스키마 버전이 이미 키에 있으므로 호환성 부담이 없다
+#   zstd     — 캐시 압축. 레벨 3 고정
+gix = { version = "0.86", default-features = false, features = ["sha1", "revision"] }
+blake3 = "1"
+# `default-features = false` 가 필수다 — 기본 feature `heapless-cas` 가 heapless 를 끌고
+# 오고 그것이 유지보수 중단된 `atomic-polyfill` 에 닿는다(cargo-deny 가 잡았다).
+# 우리는 std 위에서 `alloc` 만 쓰므로 heapless 가 필요 없다.
+postcard = { version = "1", default-features = false, features = ["alloc"] }
+zstd = "0.13"
 
 # 판정용 문법을 커밋으로 고정한다 — corpus/criteria.toml [s0.grammar].judging
 # 이 커밋이 곧 v1.1.0 이고 upstream HEAD 다 (2026-08-12 실측).

@@ -1,6 +1,6 @@
 [package]
-name = "pal-extract"
-description = "tree-sitter 추출기. 의존: pal-core"
+name = "pal-git"
+description = "gix 격리. 접촉면 최소. 의존: pal-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,11 +9,8 @@ publish.workspace = true
 
 [dependencies]
 pal-core.workspace = true
-serde.workspace = true
+gix.workspace = true
 thiserror.workspace = true
-tree-sitter.workspace = true
-tree-sitter-kotlin-ng.workspace = true
-streaming-iterator.workspace = true
 
 [lints]
 workspace = true

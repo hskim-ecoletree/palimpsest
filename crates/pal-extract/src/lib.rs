@@ -6,11 +6,15 @@
 
 #![forbid(unsafe_code)]
 
+mod classify;
 mod kotlin;
+mod recognize;
 
 use pal_core::{Capable, CapabilityId, ExtractorVersion, Language, Symbol};
 
-pub use kotlin::ExtractError;
+pub use classify::{FileOutcome, OVERSIZE_BYTES, classify, grade_of};
+pub use kotlin::{ExtractError, Extraction, extract_detailed};
+pub use recognize::{Recognition, recognize};
 
 /// 판정용 문법의 고정 커밋 — `corpus/criteria.toml` `[s0.grammar].judging`.
 pub const GRAMMAR_REV: &str = "3dea6dfa9c0129deb7c4315afbda806c85c41667";
@@ -32,8 +36,20 @@ pub const fn version() -> ExtractorVersion {
 /// 언어가 빌드되어 있고 파싱·쿼리가 실패하면 [`ExtractError`].
 #[must_use]
 pub fn extract(language: Language, source: &[u8]) -> Capable<Result<Vec<Symbol>, ExtractError>> {
+    match capability(language) {
+        Capable::Present(()) => Capable::Present(kotlin::extract(source)),
+        Capable::NotBuilt { capability } => Capable::NotBuilt { capability },
+    }
+}
+
+/// 이 빌드가 그 언어를 추출할 수 있는가 — **소스 없이 묻는다.**
+///
+/// 대장은 파일을 읽기 전에 이것을 알아야 한다. [`extract`] 와 **같은 표를 본다** —
+/// 둘이 갈리면 `pal symbols` 가 답하는 언어와 대장이 `parsed` 로 세는 언어가 달라진다.
+#[must_use]
+pub const fn capability(language: Language) -> Capable<()> {
     match language {
-        Language::Kotlin => Capable::Present(kotlin::extract(source)),
+        Language::Kotlin => Capable::Present(()),
         Language::Java => Capable::not_built(CapabilityId::new("F02", "java-extraction")),
         Language::JavaScript => Capable::not_built(CapabilityId::new("F02", "javascript-extraction")),
         Language::TypeScript => Capable::not_built(CapabilityId::new("F02", "typescript-extraction")),
