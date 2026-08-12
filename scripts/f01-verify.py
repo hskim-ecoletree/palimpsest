@@ -84,6 +84,8 @@ def main() -> int:
     ap.add_argument("--at", default=AT)
     ap.add_argument("--bin", type=Path, default=root / "target/release/pal")
     ap.add_argument("--bless", action="store_true", help="골든을 지금 산출로 덮어쓴다")
+    ap.add_argument("--skip-rebuild", action="store_true",
+                    help="⑦ 의 음성 대조를 건너뛴다 (소스를 변이시키고 두 번 빌드한다)")
     ap.add_argument("--scale-repos", type=Path, default=None,
                     help="⑧ 선형성을 잴 저장소들의 부모 디렉터리")
     a = ap.parse_args()
@@ -326,6 +328,38 @@ def main() -> int:
                     print(f"    · {d}")
                 failures.append(f"⑦ 골든과 다르다 ({len(diffs)} 곳). "
                                 f"의도한 변화면 `--bless` 로 승인하라")
+
+        # **음성 대조 — 등급이 조용히 떨어져도 골든이 `✓` 를 내는가.**
+        #
+        # 골든은 *"추출 등급 하락 같은 조용한 회귀를 잡는 유일한 장치"* 다(F01 §7).
+        # 그 말이 참인지 보려면 실제로 등급을 떨어뜨려 봐야 한다 — 골든 JSON 을 손보는
+        # 것으로는 안 된다. 그것은 대조 함수가 diff 를 낸다는 것만 보이지 **등급 하락이
+        # 산출에 실린다**는 것을 보이지 않는다. 그래서 소스를 변이시키고 다시 빌드한다.
+        if golden_file.exists() and not a.bless and not a.skip_rebuild:
+            src = root / "crates/pal-extract/src/classify.rs"
+            saved = src.read_text(encoding="utf-8")
+            try:
+                mutate(src, "pal_core::Language::Kotlin => ExtractGrade::L1",
+                       "pal_core::Language::Kotlin => ExtractGrade::L0")
+                build = subprocess.run(["cargo", "build", "--release", "--quiet"],
+                                       cwd=root, capture_output=True, text=True, check=False)
+                if build.returncode != 0:
+                    failures.append("⑦ 음성 대조를 위한 빌드가 실패했다")
+                else:
+                    downgraded = ledger(pal, repo, tmp / "cache-neg", a.at)["ledger"]
+                    caught = json.dumps(downgraded, sort_keys=True, indent=1,
+                                        ensure_ascii=False) + "\n" != golden_file.read_text()
+                    n = len(diff_ledger(json.loads(golden_file.read_text()), downgraded))
+                    print(f"  음성     Kotlin 등급 L1→L0 → 골든이 "
+                          f"{'잡았다' if caught else '**놓쳤다**'} ({n} 곳)")
+                    if not caught:
+                        failures.append("⑦ 등급을 L1 에서 L0 으로 떨어뜨렸는데 골든이 통과했다 "
+                                        "— 골든은 검사가 아니라 장식이다")
+            finally:
+                src.write_text(saved, encoding="utf-8")
+                subprocess.run(["cargo", "build", "--release", "--quiet"],
+                               cwd=root, capture_output=True, text=True, check=False)
+
         shutil.rmtree(repo / ".palimpsest")
 
         print()
@@ -358,6 +392,17 @@ def main() -> int:
         return 1
     print("여덟 다 통과")
     return 0
+
+
+def mutate(path: Path, old: str, new: str) -> None:
+    """치환한다. **없으면 오류다** — 변이가 낡으면 조용히 넘어가는 대신 소리를 낸다."""
+    text = path.read_text(encoding="utf-8")
+    if old not in text:
+        raise SystemExit(
+            f"변이 대상을 찾지 못했다: {path.name}\n  찾은 것: {old!r}\n"
+            "  **소스가 바뀌어 변이가 낡았다.** 변이를 고치지 않으면 이 자리가 조용히 꺼진다."
+        )
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 
 def diff_ledger(old, new):
