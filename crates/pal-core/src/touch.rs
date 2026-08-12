@@ -29,6 +29,8 @@ use crate::repo::RepoPath;
 use crate::symbol::{Span, SymbolKind};
 
 /// 2층에 사는 심볼 하나.
+///
+/// **[graph-node] `Symbol`** — `schema/graph.toml`
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize)]
 pub struct SymbolNode {
     pub id: SymbolId,
@@ -67,6 +69,12 @@ pub struct SymbolFacts {
 }
 
 /// 내가 모르는 것 — **F08 이 채운다.**
+///
+/// **[graph-node] `UnresolvedRef`** — `schema/graph.toml` (`status = "not_built"`)
+///
+/// **변형이 없는 것이 스키마가 요구하는 상태다.** 자리만 만든 노드의 타입이 거주
+/// 가능하면 누군가 빈 값을 채워 넣을 수 있고, 그 순간 *"안 만들었음"* 과 *"없음"* 이
+/// 같은 출력이 된다. `xtask` 의 스키마 정합 검사가 이 거주 불가능성을 센다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum UnresolvedRef {}
 

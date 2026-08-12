@@ -243,6 +243,20 @@ impl fmt::Display for TreeRef {
 
 /// 무엇을 언제 보았는가. **모든 산출이 이것을 동반한다.**
 ///
+/// # 집합이다 — 쌍이 아니다 (F22 의 정본화 · 2026-08-12)
+///
+/// [DESIGN §1.1](../../../docs/DESIGN.md) 은 `Snapshot` 을 `{(repo_id, TreeRef)}` 로
+/// 적었다: **"멀티레포의 '지금'은 하나가 아니라 집합"**. S1 은 그것을 `{repo, tree}`
+/// 쌍으로 만들었고 저장소가 하나뿐이라 그 차이가 드러나지 않았다.
+///
+/// **그런데 코드가 이미 그 차이를 우회하고 있었다** — [`crate::Ledger`] 가
+/// `repos_declared` 를 따로 들고 있는 것이 그 흔적이다. 쌍으로는 두 저장소의 "지금"을
+/// 적을 수 없으니 개수만 세어 머리에 적은 것이다. F22 가 스키마를 세우면서 이 자리를
+/// 되돌렸다: **어긋난 것은 스키마가 아니라 코드였다.**
+///
+/// `repos_declared` 는 그대로 남는다. **선언된 것과 본 것은 다르고, 그 차이가 곧
+/// §4.3 이 말한 뿌리의 공백**이다 — 여기 없는 저장소를 지나는 경로는 조용히 사라진다.
+///
 /// # `Copy` 가 아니고 이름을 소유한다 — 그 이유가 R-01 의 관측이다
 ///
 /// 처음에는 `repo: &'static str` 로 두어 `Snapshot` 을 `Copy` 로 만들려 했다.
@@ -254,9 +268,70 @@ impl fmt::Display for TreeRef {
 /// 이라 되읽을 수 있어야 하고, `&'static str` 은 되읽을 수 없는 것을 타입으로 선언한
 /// 셈이었다. 편의를 위해 고른 수명이 산출물의 성질과 충돌한 자리다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Snapshot {
-    pub repo: RepoId,
-    pub tree: TreeRef,
+#[serde(transparent)]
+pub struct Snapshot(Vec<(RepoId, TreeRef)>);
+
+impl Snapshot {
+    /// 저장소 하나의 지금. **가장 흔한 경우이고, 그래도 집합이다.**
+    #[must_use]
+    pub fn single(repo: RepoId, tree: TreeRef) -> Self {
+        Self(vec![(repo, tree)])
+    }
+
+    /// 여럿의 지금. **비어 있으면 만들 수 없다** — 아무것도 보지 않은 산출에는
+    /// 좌표가 없고, 좌표 없는 산출은 나가면 안 된다.
+    ///
+    /// 저장소 이름으로 정렬한다. 같은 저장소가 두 번 오면 **뒤의 것이 이긴다** —
+    /// 한 저장소의 "지금"이 둘일 수는 없기 때문이다.
+    #[must_use]
+    pub fn of(pairs: impl IntoIterator<Item = (RepoId, TreeRef)>) -> Option<Self> {
+        let mut v: Vec<(RepoId, TreeRef)> = pairs.into_iter().collect();
+        if v.is_empty() {
+            return None;
+        }
+        v.sort_by(|a, b| a.0.cmp(&b.0));
+        v.dedup_by(|a, b| a.0 == b.0);
+        Some(Self(v))
+    }
+
+    /// 이 스냅샷이 덮는 (저장소, 트리) 전부. **정렬돼 있다.**
+    pub fn entries(&self) -> impl Iterator<Item = &(RepoId, TreeRef)> {
+        self.0.iter()
+    }
+
+    /// 그 저장소의 트리. **없으면 그 저장소를 보지 않은 것이다** — 조회 결과이지
+    /// 도메인 값이 아니므로 `Option` 이 여기 있는 것이 stack §5.4 에 맞는다.
+    #[must_use]
+    pub fn tree_of(&self, repo: &RepoId) -> Option<&TreeRef> {
+        self.0.iter().find(|(r, _)| r == repo).map(|(_, t)| t)
+    }
+
+    /// 덮는 저장소 수. 대장의 `repos_declared` 와 다르면 그 차이가 공백이다.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// **언제나 거짓이다.** [`Snapshot::of`] 가 빈 것을 만들지 않기 때문이고,
+    /// 그 사실을 타입 밖에서도 확인할 수 있게 남긴다.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl fmt::Display for Snapshot {
+    /// `repo@tree`. 여럿이면 첫 것과 **나머지 개수**를 함께 적는다 — 뒤를 감추지 않는다.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut it = self.0.iter();
+        let Some((r, t)) = it.next() else { return f.write_str("(빈 스냅샷)") };
+        write!(f, "{r}@{t}")?;
+        let rest = self.0.len() - 1;
+        if rest > 0 {
+            write!(f, " 외 {rest}개 저장소")?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -297,6 +372,40 @@ mod tests {
         // 짧은 것을 0 으로 채우면 서로 다른 이름이 같은 값이 된다.
         assert!(serde_json::from_str::<ObjectName>("\"abcd\"").is_err());
         assert!(from_hex::<20>("").is_none());
+    }
+
+    #[test]
+    fn 스냅샷은_집합이고_비어_있을_수_없다() {
+        // DESIGN §1.1 — 멀티레포의 "지금"은 하나가 아니라 집합이다.
+        let c = ObjectName::from_bytes([0xab; 20]);
+        let s = Snapshot::single(RepoId::new("a"), TreeRef::Committed(c));
+        assert_eq!(s.len(), 1);
+        assert!(!s.is_empty());
+        assert_eq!(s.tree_of(&RepoId::new("a")), Some(&TreeRef::Committed(c)));
+        assert_eq!(s.tree_of(&RepoId::new("b")), None);
+
+        assert!(Snapshot::of(Vec::new()).is_none());
+
+        let 둘 = Snapshot::of([
+            (RepoId::new("z"), TreeRef::Committed(c)),
+            (RepoId::new("a"), TreeRef::Committed(c)),
+        ])
+        .unwrap();
+        assert_eq!(둘.len(), 2);
+        // 정렬돼 있다 — 같은 스냅샷이 같은 순서를 내야 산출을 비교할 수 있다.
+        assert_eq!(둘.entries().next().unwrap().0, RepoId::new("a"));
+    }
+
+    #[test]
+    fn 한_저장소의_지금은_둘일_수_없다() {
+        let c1 = ObjectName::from_bytes([1; 20]);
+        let c2 = ObjectName::from_bytes([2; 20]);
+        let s = Snapshot::of([
+            (RepoId::new("a"), TreeRef::Committed(c1)),
+            (RepoId::new("a"), TreeRef::Committed(c2)),
+        ])
+        .unwrap();
+        assert_eq!(s.len(), 1);
     }
 
     #[test]

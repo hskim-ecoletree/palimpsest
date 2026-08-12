@@ -10,7 +10,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::coord::{BodyDigest, SymbolId};
-use crate::repo::TreeRef;
+use crate::repo::Snapshot;
 
 /// 결박 하나의 이름. 내용에서 유도하므로 같은 결박은 같은 이름을 갖는다.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -56,15 +56,31 @@ pub struct WatchEntry {
 /// 2층에 의도가 살면 *"지우고 재구축"* 이 **사람의 노동을 지우는 명령**이 되고,
 /// 재구축 등가성 검사는 그 상태에서도 통과하므로 **검사가 유실을 정상으로 승인한다.**
 /// 그래서 결박의 실체는 `pal-intent` 에 있고 파생층에는 색인만 둔다.
+///
+/// **[graph-node] `Binding`** — `schema/graph.toml`
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Binding {
     pub id: BindingId,
     /// 무엇에 걸었나.
+    ///
+    /// **[graph-edge] `BOUND_TO`** — `schema/graph.toml`. 이 엣지는 별도 자리가 아니라
+    /// 여기 실려 있고, 공통 넷은 등급 `exact`(구조상 하나뿐) · 출처 `asserted` ·
+    /// 근거 없음(`inferred` 로 설 수 없다) · 발생 `Snapshot`([`Binding::bound_at`])이다.
     pub target: SymbolId,
     /// 무엇을 걸었나. **S3 에서는 텍스트 조각 하나다** — 문서 인입은 F10.
     pub note: String,
     /// 언제 걸었나. 낡음은 이 시점 이후의 변화다.
-    pub bound_at: TreeRef,
+    ///
+    /// # `TreeRef` 가 아니라 `Snapshot` 이다 (F22 의 정본화 · 2026-08-12)
+    ///
+    /// 이 자리는 `BOUND_TO` 엣지가 지는 **발생 `Snapshot`** 이고, 그것은 모든 엣지가
+    /// 공통으로 지는 넷 중 하나다([DESIGN §1.2](../../../docs/DESIGN.md)).
+    /// S3 는 여기에 `TreeRef` 를 넣었다 — 저장소가 하나뿐이라 트리 하나가 곧 "지금"
+    /// 이었기 때문이다. **멀티레포에서는 그것이 성립하지 않는다**(§1.1).
+    ///
+    /// 결박은 여러 저장소에 걸친 감시 집합을 가질 수 있으므로(반경은 F09) 이 값이
+    /// 집합이 아니면 *"어느 저장소의 그때인가"* 를 적을 자리가 없다.
+    pub bound_at: Snapshot,
     /// 무엇을 지켜보나. **S3 에서는 대상 심볼 하나뿐이다** — 반경은 F09.
     pub watch: Vec<WatchEntry>,
 }
@@ -144,7 +160,7 @@ impl BindingStatus {
 mod tests {
     use super::*;
     use crate::coord::Discriminator;
-    use crate::repo::{ObjectName, RepoId, RepoPath};
+    use crate::repo::{ObjectName, RepoId, RepoPath, TreeRef};
     use crate::symbol::SymbolKind;
 
     fn 심볼(n: &str) -> SymbolId {
@@ -162,7 +178,10 @@ mod tests {
             id: BindingId::derive(target, "메모"),
             target,
             note: "메모".into(),
-            bound_at: TreeRef::Committed(ObjectName::from_bytes([0; 20])),
+            bound_at: Snapshot::single(
+                RepoId::new("r"),
+                TreeRef::Committed(ObjectName::from_bytes([0; 20])),
+            ),
             watch: vec![WatchEntry { symbol: target, digest }],
         }
     }

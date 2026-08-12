@@ -88,7 +88,7 @@ pub fn compute(
 
     let languages = language_capabilities(&entries);
     let ledger = Ledger {
-        snapshot: Snapshot { repo: repo_id, tree },
+        snapshot: Snapshot::single(repo_id, tree),
         // **선언된 저장소 수.** S1 은 언제나 1 이다 — 멀티레포는 F14.
         repos_declared: NonZeroUsize::new(1).expect("1 은 0 이 아니다"),
         entries,
@@ -176,9 +176,12 @@ pub fn print_table(report: &LedgerReport) {
     let counts = l.counts();
 
     println!();
-    println!("Snapshot  {}@{}  {}", l.snapshot.repo, l.snapshot.tree,
-             if l.snapshot.tree.is_committed() { "(커밋)" } else { "(워킹트리)" });
-    println!("저장소    {} (선언됨)", l.repos_declared);
+    // **집합의 모든 트리를 검사한다** — 하나만 보고 "(커밋)" 이라 적으면 나머지가 감춰진다.
+    let 전부_커밋 = l.snapshot.entries().all(|(_, t)| t.is_committed());
+    println!("Snapshot  {}  {}", l.snapshot,
+             if 전부_커밋 { "(커밋)" } else { "(워킹트리)" });
+    // **선언된 것과 본 것을 나란히 적는다** — 그 차이가 §4.3 이 말한 뿌리의 공백이다.
+    println!("저장소    선언 {} · 본 것 {}", l.repos_declared, l.snapshot.len());
     println!();
     println!("파일      {}", l.total());
 

@@ -335,10 +335,10 @@ mod tests {
 
     fn 대장(states: Vec<FileState>) -> Ledger {
         Ledger {
-            snapshot: Snapshot {
-                repo: crate::RepoId::new("t"),
-                tree: TreeRef::Committed(ObjectName::from_bytes([0; 20])),
-            },
+            snapshot: Snapshot::single(
+                crate::RepoId::new("t"),
+                TreeRef::Committed(ObjectName::from_bytes([0; 20])),
+            ),
             repos_declared: NonZeroUsize::new(1).unwrap(),
             entries: states
                 .into_iter()

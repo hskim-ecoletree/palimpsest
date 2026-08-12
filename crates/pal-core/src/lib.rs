@@ -14,9 +14,11 @@ mod binding;
 mod capable;
 mod coord;
 mod envelope;
+mod graph;
 mod language;
 mod ledger;
 mod repo;
+mod schema;
 mod symbol;
 mod touch;
 mod version;
@@ -26,6 +28,7 @@ pub use binding::{
 };
 pub use capable::{Capable, CapabilityId};
 pub use coord::{BodyDigest, Coord, Discriminator, SymbolId};
+pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};
 pub use envelope::{
     CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness,
 };
@@ -33,6 +36,10 @@ pub use language::Language;
 pub use ledger::{
     Bucket, BinaryReason, ExclusionRuleId, ExtractGrade, FileState, GeneratedEvidence,
     IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry,
+};
+pub use schema::{
+    AttrDecl, Cardinality, Carrier, EdgeDecl, EvidenceRule, GradeRule, GraphSchema, NodeDecl,
+    NodeStatus, Requirement, SchemaError,
 };
 pub use repo::{Digest, ObjectName, RepoId, RepoPath, Snapshot, TreeRef};
 pub use symbol::{Span, Symbol, SymbolKind};

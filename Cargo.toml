@@ -52,6 +52,15 @@ zstd = "0.13"
 # 2층 인덱스 — stack §2.3. **1층은 여기 넣지 않는다**(§2.4)
 redb = "4"
 
+# F22 가 들인 하나. stack §3.4 는 "P0 에서 외부 크레이트 신규 추가는 근거를 남긴다" 고
+# 적었고 그 근거는 이렇다: `schema/graph.toml` 이 노드·엣지의 **단일 진실**이고
+# (DESIGN §1.2 D25), §3.4 는 producer↔provenance 정합이 *"로딩 시점에 거부된다"* 고
+# 못 박았으며, §12.7 은 `doctor` 의 불변식 여덟이 *"schema/graph.toml 에서 파생되며
+# 손으로 세지 않는다"* 고 적었다. 즉 이 파일은 **실행 시점에 읽혀야 한다.**
+# xtask 가 `vocab.toml` 을 손으로 읽은 것(한 줄짜리 허용 목록)과 다른 판단이고,
+# 다른 이유는 대상이 한 줄이 아니라 스키마 전체이며 읽는 경로가 하나여야 하기 때문이다.
+toml = { version = "0.9", default-features = false, features = ["parse", "serde"] }
+
 # 판정용 문법을 커밋으로 고정한다 — corpus/criteria.toml [s0.grammar].judging
 # 이 커밋이 곧 v1.1.0 이고 upstream HEAD 다 (2026-08-12 실측).
 tree-sitter-kotlin-ng = { git = "https://github.com/tree-sitter-grammars/tree-sitter-kotlin", rev = "3dea6dfa9c0129deb7c4315afbda806c85c41667" }

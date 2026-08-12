@@ -56,7 +56,7 @@ pub fn run(
         id: BindingId::derive(symbol.id, note),
         target: symbol.id,
         note: note.to_owned(),
-        bound_at: report.ledger.snapshot.tree,
+        bound_at: report.ledger.snapshot.clone(),
         // **감시 집합은 대상 심볼 하나다.** 반경(무엇까지 지켜볼 것인가)은 F09 다.
         watch: vec![WatchEntry { symbol: symbol.id, digest: symbol.body }],
     };
@@ -68,7 +68,7 @@ pub fn run(
     println!();
     println!("결박했습니다.");
     println!("  대상    {} · {} · {}:{}", symbol.name, symbol.kind.name(), symbol.path, symbol.span.line_start);
-    println!("  좌표    {}@{}#{}", report.ledger.snapshot.repo, report.ledger.snapshot.tree, symbol.id.short());
+    println!("  좌표    {}#{}", report.ledger.snapshot, symbol.id.short());
     println!("  본문    {}  ← 이 값이 바뀌면 낡음이 표시됩니다", symbol.body.short());
     println!("  결박    [{}]", binding.id.as_str());
     println!();

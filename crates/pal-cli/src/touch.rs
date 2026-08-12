@@ -135,10 +135,20 @@ fn touch_result(
     symbol: SymbolNode,
     bound: Vec<BoundItem>,
 ) -> TouchResult {
+    // 좌표는 **저장소 하나**를 가리킨다. 스냅샷은 집합이므로 그중 하나를 골라야 하고,
+    // 이 빌드는 저장소를 하나만 본다(대장의 `repos_declared` 가 언제나 1 이다).
+    // **멀티레포에서는 심볼이 어느 저장소의 것인지를 `SymbolNode` 가 실어야 하고,
+    // 그것은 F14 다** — 여기서 조용히 첫 것을 고르는 대신 그 사실을 적어 둔다.
+    let (repo, tree) = report
+        .ledger
+        .snapshot
+        .entries()
+        .next()
+        .expect("스냅샷은 비어 있을 수 없다");
     TouchResult {
         target: Coord {
-            repo: report.ledger.snapshot.repo.clone(),
-            tree: report.ledger.snapshot.tree,
+            repo: repo.clone(),
+            tree: *tree,
             extractor: pal_extract::version(),
             symbol: symbol.id,
         },
@@ -185,7 +195,7 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
     let e = envelope;
     println!();
     println!("■ 이 답의 근거");
-    println!("  Snapshot  {}@{}", e.snapshot.repo, e.snapshot.tree);
+    println!("  Snapshot  {}", e.snapshot);
     println!("  대장      parsed {} · partial {} · unsupported {} · unrecognized {} / {} 파일",
              e.ledger.parsed, e.ledger.partial, e.ledger.unsupported, e.ledger.unrecognized,
              e.ledger.files_total);

@@ -10,6 +10,8 @@ publish.workspace = true
 [dependencies]
 serde.workspace = true
 blake3.workspace = true
+# `schema/graph.toml` 을 읽는다 — 읽는 경로가 하나여야 로딩 시점 거부가 성립한다.
+toml.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
