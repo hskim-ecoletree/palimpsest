@@ -52,11 +52,19 @@
 | [F13 효과 집합 (E)](features/F13-effects.md) | [#20](https://github.com/hskim-ecoletree/palimpsest/issues/20) | **P2** | F07·F12 | **XL** | `writes: order.status …` |
 | [F14 진입점·경계 (C3·C4)](features/F14-entrypoints-boundaries.md) | [#21](https://github.com/hskim-ecoletree/palimpsest/issues/21) | **P2** | F07·F16 | L | 여정의 시작점 |
 | [**F16b 외부 엔진 조달**](features/F16b-engine-procurement.md) | [#41](https://github.com/hskim-ecoletree/palimpsest/issues/41) | **P2 ← P1** (2026-08-11) | F16·F08 | M | `외부 엔진이 본 것` · `Finding` **without** F13·F15 |
-| [F15 지배관계·3분할 판정 (C5)](features/F15-judgment.md) | [#22](https://github.com/hskim-ecoletree/palimpsest/issues/22) | **P2** | F13·F14 | **XL** | `Finding 0 / Residual 2`(자체 산출) |
+| [F15 지배관계·3분할 판정 (C5)](features/F15-judgment.md) | [#22](https://github.com/hskim-ecoletree/palimpsest/issues/22) | **P2** ⚠ | F13·F14 | **XL** | `Finding 0 / Residual 2`(자체 산출) |
 | [F17 합성물·커버리지](features/F17-synthesis-coverage.md) | [#23](https://github.com/hskim-ecoletree/palimpsest/issues/23) | **P3** | F11·F15 | L | 근거 없는 요약이 저장되지 않는다 |
 | [F18 선언 팩·개념 층](features/F18-packs-concepts.md) | [#24](https://github.com/hskim-ecoletree/palimpsest/issues/24) | **P3** | F07·F11·F15 | L | 프로젝트 어휘·온톨로지 |
 | [F19 사전 브리핑·뷰 모델](features/F19-briefing-view.md) | [#25](https://github.com/hskim-ecoletree/palimpsest/issues/25) | **P3** | F12·F15 | L | 변경 전 산출·시각화 |
-| [F20 구조 평가 델타·거버넌스 경계](features/F20-conformance-governance.md) | [#26](https://github.com/hskim-ecoletree/palimpsest/issues/26) | **P3** | F15·F18 | M | 변경 후 평가 |
+| [F20 구조 평가 델타·거버넌스 경계](features/F20-conformance-governance.md) | [#26](https://github.com/hskim-ecoletree/palimpsest/issues/26) | **P3** ⚠ | F15·F18 | M | 변경 후 평가 |
+
+**⚠ F15·F20의 존속은 `미판정`이다 (2026-08-12).** 둘은 *"라벨 판정이 감당 불가하면 내린다"*는 처분에서
+[T2의 22.9초](../gates/preflight.md#t2--라벨-판정-30건) 덕에 살아남았는데, **그 수는 한 줄 분류의 단가지
+*"이 흐름에 구멍이 있나"*(F15)·*"구조가 적절한가"*(F20)의 단가가 아니다.** 내리지도 존속시키지도 않는다 —
+판정은 **F15 착수 시점**으로 미뤘고 그때 **과제를 리뷰로 다시 정의하지 않으면 재측정하지 않는다**
+([정정](../gates/preflight.md#t2의-값은-무엇의-단가인가--2026-08-12-정정)). 둘 다 XL·M이고 [R-17](00-risks.md#r-17)이
+*"게이트는 속도를 검사하지 않는다"*고 적어 둔 자리이므로, **XL 셋(F07·F13·F15) 중 무엇을 실제로 만들지는
+S3 이후에 정한다.**
 
 ### 우선순위의 뜻
 
@@ -105,16 +113,33 @@
 | [#32](https://github.com/hskim-ecoletree/palimpsest/issues/32) | T7 Kotlin 파싱 사전 측정 | **통과** — 파싱 95.01% · **선언 추출 가능률 94.30%** |
 | [#34](https://github.com/hskim-ecoletree/palimpsest/issues/34) | T9 조달 가능성 실측 | **반증** — SAST 조달원 0/4 → **F16 P2 강등** |
 
-| 이슈 | 무엇 | 왜 지금 |
-|---|---|---|
-| [#33](https://github.com/hskim-ecoletree/palimpsest/issues/33) | **T8 재발 사례 5건 고정** | [F11](features/F11-touch.md)의 유일한 직접 효능 측정이 여기 걸려 있다 |
-| [#36](https://github.com/hskim-ecoletree/palimpsest/issues/36) | **T11 G7 대조 장치 등록** | "코드가 나아졌는가"를 무엇으로 잴 것인지. 사후에 고르면 [R-18](00-risks.md#r-18)의 오염이다 ([DESIGN §15-39](../DESIGN.md)) |
-| [#27](https://github.com/hskim-ecoletree/palimpsest/issues/27) · [#29](https://github.com/hskim-ecoletree/palimpsest/issues/29) · [#31](https://github.com/hskim-ecoletree/palimpsest/issues/31) | **T2·T4·T6 노동 단가 측정** — 라벨·팩·개념 | **판단 성분만 재고 편향 방향을 명시**한다 ([R-23](00-risks.md#r-23) · [DESIGN §15-34](../DESIGN.md)) |
-| [#35](https://github.com/hskim-ecoletree/palimpsest/issues/35) | **T10 여정·결함 저작** | 새 저작을 요구하지 않는 경로가 있는가 |
-| [#30](https://github.com/hskim-ecoletree/palimpsest/issues/30) | **T5 `corpus/` 사전 등록** | 과제·대조군·채점 절차는 **코드 첫 줄보다 먼저.** 수치 합격선은 각 기능 착수 직전([§5.1](features/P0-preflight.md)). [`corpus/manifest.toml`](../../corpus/manifest.toml)은 T9가 만들었으나 **`[procurement]` 절만 채워져 있다** |
-| [#28](https://github.com/hskim-ecoletree/palimpsest/issues/28) | **T3 절감 장치 넷 분리 측정** | 넷 다 만들면 비싸다 |
+**preflight는 2026-08-12에 끝났다.** 남은 하나였던 [#28 T3](https://github.com/hskim-ecoletree/palimpsest/issues/28)은
+**대조 불가**로 닫혔고, 그 판정이 남긴 규칙이 이것이다:
 
-그리고 **`docs/gates/preflight.md` 커밋** — 그것이 [#1](https://github.com/hskim-ecoletree/palimpsest/issues/1)을 닫는 조건이고, 그 결과에 따라 위 표의 우선순위가 갱신된다.
+> **preflight가 답할 수 있었던 것은 "재료가 세상에 있나"까지다.**
+> T7(파싱)·T9(조달)·T10(결박)·T6(출처)·T4(팩)·T8(사례)이 그것이었고 **둘은 실제로 계획을 바꿨다.**
+> **"사람이 그걸 감당하나"는 물을 수 없는 질문이었다** — 물으려면 대조 재료가 있어야 하는데
+> 그게 곧 만들려는 물건이다([게이트 §T3](../gates/preflight.md#t3--단가-절감-장치-넷의-분리-측정)).
+
+### 그래서 다음 행동은 재는 일이 아니라 만드는 일이다
+
+**진짜 실험은 이미 등록돼 있고 실행된 적이 없다.** [`corpus/arms.toml`](../../corpus/arms.toml)에 대조군 다섯
+(**C1 문서 한 장** · C2 기성 코드그래프 · C3 정적 분석 · A0 도구 없음 · **A1 palimpsest 있음**)이 박혀 있고,
+지표는 [`criteria.toml`](../../corpus/criteria.toml), 사례는 [`recurrence.toml`](../../corpus/tasks/recurrence.toml) 7건이
+결과를 보기 전에 고정돼 있다. [DESIGN §15-17](../DESIGN.md)이 *"R8 대조 실험은 설계만 있고 실행된 적 없다"*고
+적어 둔 그것이며 — **없는 것은 A1 팔 하나뿐이다.**
+
+| 이슈 | 무엇 | 무엇을 판정하나 |
+|---|---|---|
+| [**#37 S0**](https://github.com/hskim-ecoletree/palimpsest/issues/37) | `pal symbols <파일>` | **[R-01](00-risks.md#r-01)·치명.** 대조값이 이미 있다 — T7의 선언 추출 **94.30%**(CLI)가 **라이브러리** 경로에서 재현되는가. **허용 편차와 기한은 착수 직전에 등록한다** |
+| [#38 S1](https://github.com/hskim-ecoletree/palimpsest/issues/38) | `pal ledger` | git 접근·분류·캐시가 붙는가 |
+| [#39 S2](https://github.com/hskim-ecoletree/palimpsest/issues/39) | `pal touch <coord>` | **빈 답이 정직한가** — 관측 0건에서 모든 질의가 공백을 포함해 답하는가 |
+| [**#40 S3**](https://github.com/hskim-ecoletree/palimpsest/issues/40) | 의도 한 건 결박 | **제품의 핵심 명제가 처음으로 반증 가능해진다.** `recurrence.toml` 7건의 좌표를 `touch` 해 **C1(문서 한 장)과 대조**한다. **지표는 시간이 아니라 적중과 다음 행동의 변화다.** 못 이기면 [DESIGN §15-29](../DESIGN.md)대로 P1의 핵심이 반증된다 |
+
+**되돌릴 수 없는 것 둘은 첫 커밋부터 집행한다** — 실험이 아니라 불변식이고, 처분은 게이트가 아니라 빌드 실패다:
+**의도 저장소를 파생층에서 분리**([R-21](00-risks.md#r-21)·치명)와 **`Capable<T>`**. 검사는 [§4 단계 1](#4-상시-검사--단계적으로-켠다)에 이미 등록돼 있다.
+
+**지금 재지 않는 것**: 리뷰 단가 · 인지비용 · 라벨 정확도. **셋 다 A1 팔이 선 뒤의 질문이다.**
 
 ---
 
