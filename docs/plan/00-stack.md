@@ -193,6 +193,7 @@ DB를 직접 만들 때 가장 비싼 것은 스키마 마이그레이션과 백
 - **P0에서 외부 크레이트 신규 추가는 커밋 메시지에 근거를 남긴다.** 크레이트 선택이 학습을 대체하는 것을 막는다.
 - `unsafe` 금지(`#![forbid(unsafe_code)]`), `clippy::pedantic` 상시.
 - 라이선스: MIT/Apache-2.0만. `cargo-deny`로 CI 검사.
+  - **예외 셋이 실제로 생겼다**(2026-08-12, S1). `Unicode-3.0`(`unicode-ident` — `AND` 조항이라 피할 수 없다) · `Zlib`(`foldhash` ← gix-pack) · `BSD-2-Clause`(`arrayref` ← **blake3**). 셋 다 permissive이고 copyleft가 아니다. **예외를 늘리기 전에 의존을 줄였다** — gix를 `features = ["sha1", "revision"]`로 좁혀 `uluru`(MPL-2.0 · copyleft)와 `encoding_rs`(BSD-3)를 트리에서 뺐다. 근거는 [`deny.toml`](../../deny.toml)의 예외 주석과 [S1 게이트](../gates/S1-ledger.md)에 있다.
 
 ---
 
