@@ -1,0 +1,35 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/pal-core",
+    "crates/pal-intent",
+    "crates/pal-store",
+    "xtask",
+]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+publish = false
+
+# 검사를 단계적으로 켠다 — stack §4.3. 단계 1 은 전부 S 규모다.
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+[workspace.dependencies]
+pal-core = { path = "crates/pal-core" }
+pal-intent = { path = "crates/pal-intent" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4", features = ["derive"] }
+thiserror = "2"
+anyhow = "1"
+tree-sitter = "0.26"
+streaming-iterator = "0.1"
+
+# 판정용 문법을 커밋으로 고정한다 — corpus/criteria.toml [s0.grammar].judging
+# 이 커밋이 곧 v1.1.0 이고 upstream HEAD 다 (2026-08-12 실측).
+tree-sitter-kotlin-ng = { git = "https://github.com/tree-sitter-grammars/tree-sitter-kotlin", rev = "3dea6dfa9c0129deb7c4315afbda806c85c41667" }

@@ -1,0 +1,15 @@
+[package]
+name = "pal-intent"
+description = "의도 저장소 — 결박·승인·관측의 원본. **지우는 API 가 없다** (R-21)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+pal-core.workspace = true
+serde.workspace = true
+
+[lints]
+workspace = true

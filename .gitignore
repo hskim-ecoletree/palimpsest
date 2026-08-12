@@ -7,3 +7,6 @@
 .t2-stamp.json
 .t6-stamp.json
 .t3-stamp.json
+
+# Rust
+/target/
