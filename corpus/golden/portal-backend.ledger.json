@@ -1,0 +1,8745 @@
+{
+ "detector": {
+  "extractor": "s2",
+  "grammar": "3dea6dfa9c0129deb7c4315afbda806c85c41667",
+  "head_now": "a29cad0bf6a873020edd8b97b13a6430d08c7f55"
+ },
+ "entries": [
+  {
+   "path": ".claude/API.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/agent-organizer.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/architect-review.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/architect-reviewer.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/backend-architect.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/code-reviewer.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/competitive-analyst.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/dx-optimizer.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/kotlin-specialist.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/legacy-modernizer.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/multi-agent-coordinator.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/research-analyst.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/search-specialist.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/agents/spring-boot-engineer.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/plans/wild-plotting-stallman.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": ".claude/settings.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": ".gitattributes",
+   "state": "unrecognized"
+  },
+  {
+   "path": ".github/workflows/deploy.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": ".gitignore",
+   "state": "unrecognized"
+  },
+  {
+   "path": "CHANGELOG.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "CLAUDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "Dockerfile",
+   "state": {
+    "unsupported": {
+     "language": "Dockerfile"
+    }
+   }
+  },
+  {
+   "path": "HELP.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "MCP_SDK_IMPLEMENTATION_PLAN.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "MCP_SERVER_DEVELOPMENT_GUIDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "SUSPEND_TO_SYNC_MIGRATION_PLAN.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "build.gradle",
+   "state": {
+    "unsupported": {
+     "language": "Gradle"
+    }
+   }
+  },
+  {
+   "path": "conversation-plan.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docker/.env.example",
+   "state": "unrecognized"
+  },
+  {
+   "path": "docker/GITHUB_CICD.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docker/deploy.sh",
+   "state": {
+    "unsupported": {
+     "language": "Shell"
+    }
+   }
+  },
+  {
+   "path": "docker/docker-compose.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "docs/AUDIT_LOG_AOP_IMPLEMENTATION_GUIDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/AUDIT_LOG_API_SPEC.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/AUDIT_LOG_ENTITY_DESIGN.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/AUDIT_LOG_PLANNING.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/CONTROLLER_DSL_MIGRATION_GUIDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/DAILY_USAGE_STATISTICS_GUIDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/DEPRECATED_PATTERNS_REPORT.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/DWP_DEV_BRANCH_SETUP_PLAN.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/DWP_DEV_PHASE4_PLAN.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/DWP_SEPARATION_PLAN.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/PERMISSION_CACHING_IMPLEMENTATION.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/PHASE2_COMPATIBILITY_ANALYSIS.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/PHASE2_TRANSACTION_INTEGRATION_SUMMARY.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/STANDALONE_VS_DWP_BRANCH_COMPARISON.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/TRANSACTION_DEVELOPMENT_GUIDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/TRANSACTION_ROLLBACK_IMPROVEMENT_PLAN.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/api/BOXWOOD_API_AUTH.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/api/BOXWOOD_PROCESS_TOOL_API_V1.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/api/dwp-daily-system-usage-api.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/audit/AUDIT_CHANGE_TRACKING_GUIDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/audit/AUDIT_SPEL_EXPRESSION_GUIDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/audit/AUDIT_SYSTEM_OVERVIEW.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/audit/issues/AOP_SUSPEND_FUNCTION_BOUNDARY_ISSUE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/audit/issues/ASYNC_THREADLOCAL_TENANT_CONTEXT_FIX.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/audit/issues/SERVICE_LAYER_AUDIT_MIGRATION.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/audit/issues/TOKEN_REFRESH_TENANT_CONTEXT_FIX.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/audit/worklog.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/i18n/worklog_2025_12_31.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "docs/img/auditlog_design_01_list.png",
+   "state": {
+    "binary": {
+     "reason": "nul_byte"
+    }
+   }
+  },
+  {
+   "path": "docs/img/auditlog_design_02_detail_basic_info.png",
+   "state": {
+    "binary": {
+     "reason": "nul_byte"
+    }
+   }
+  },
+  {
+   "path": "docs/img/auditlog_design_03_detail_summary.png",
+   "state": {
+    "binary": {
+     "reason": "nul_byte"
+    }
+   }
+  },
+  {
+   "path": "docs/img/auditlog_design_04_detail_actor.png",
+   "state": {
+    "binary": {
+     "reason": "nul_byte"
+    }
+   }
+  },
+  {
+   "path": "docs/img/auditlog_design_05_detail_target_info.png",
+   "state": {
+    "binary": {
+     "reason": "nul_byte"
+    }
+   }
+  },
+  {
+   "path": "docs/noti/notification-backend-context.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "gradle.properties",
+   "state": {
+    "unsupported": {
+     "language": "Java Properties"
+    }
+   }
+  },
+  {
+   "path": "gradle/wrapper/gradle-wrapper.jar",
+   "state": {
+    "binary": {
+     "reason": "nul_byte"
+    }
+   }
+  },
+  {
+   "path": "gradle/wrapper/gradle-wrapper.properties",
+   "state": {
+    "unsupported": {
+     "language": "Java Properties"
+    }
+   }
+  },
+  {
+   "path": "gradlew",
+   "state": {
+    "unsupported": {
+     "language": "Shell"
+    }
+   }
+  },
+  {
+   "path": "gradlew.bat",
+   "state": {
+    "unsupported": {
+     "language": "Batch"
+    }
+   }
+  },
+  {
+   "path": "http/http-client.env.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "lib/rest-client-spring6-kotlin-2.0.1-RELEASE.jar",
+   "state": {
+    "binary": {
+     "reason": "nul_byte"
+    }
+   }
+  },
+  {
+   "path": "mockAuthServer/STARTUP.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "mockAuthServer/arm64/docker-compose.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "mockAuthServer/x86_64/docker-compose-amd64.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/STARTUP.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-a/catalog.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/tools/basic-rest-echo.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/tools/list-type-1.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/tools/many-input-1.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/tools/mock-schema-1.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/toolset.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/catalog.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B01/tools/basic-rest-echo-B01.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B01/tools/list-type-1-B01.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B01/tools/mock-schema-1-B01.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B01/toolset.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B02/tools/basic-rest-echo-B02.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B02/tools/list-type-1-B02.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B02/tools/mock-schema-1-B02.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B02/toolset.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B03/tools/basic-rest-echo-B03.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B03/tools/list-type-1-B03.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B03/tools/mock-schema-1-B03.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B03/toolset.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B04/tools/basic-rest-echo-B04.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B04/tools/list-type-1-B04.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B04/tools/mock-schema-1-B04.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B04/toolset.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B05/tools/basic-rest-echo-B05.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B05/tools/list-type-1-B05.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B05/tools/mock-schema-1-B05.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-b/ts-B05/toolset.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-c/catalog.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-c/ts-C01/tools/ext-custom-C02.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-c/ts-C01/tools/ext-echo-C01.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/catalogs/catalog-c/ts-C01/toolset.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/data/data-root/mocks/list-1.json",
+   "state": {
+    "unsupported": {
+     "language": "JSON"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/docker-compose.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/dwp_tools_dev_server_0.2.0-0919.zip",
+   "state": {
+    "binary": {
+     "reason": "nul_byte"
+    }
+   }
+  },
+  {
+   "path": "mockToolsHub/run.sh",
+   "state": {
+    "unsupported": {
+     "language": "Shell"
+    }
+   }
+  },
+  {
+   "path": "plan.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "scripts/repair-flyway.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "settings.gradle",
+   "state": {
+    "unsupported": {
+     "language": "Gradle"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/BoxwoodPortalApplication.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/controller/AdminLoginController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/controller/TenantAdminAuthController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/model/dto/request/AdminLoginRequestDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/model/dto/response/AdminLoginResponseDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/model/dto/response/ForceLogoutResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/model/dto/response/SecurityEventListResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/service/AdminLoginService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/service/TenantAdminAuthService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/service/impl/AdminLoginServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/service/impl/TenantAdminAuthServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/service/impl/plan.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/config/AccountSecurityProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/config/RtrProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/domain/AuthUser.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/domain/DwpClaims.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/domain/Token.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/model/dto/Requests.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/model/dto/Responses.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/AuthenticationService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/CleanupSchedulerService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/DwpAuthService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/DwpTokenSessionService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/RtrService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/SessionManagementService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/TokenStorageService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/AuthenticationServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/DwpAuthServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/RtrSecurityEventLogger.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/RtrServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/TokenStorageServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/exception/DwpSessionMismatchException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/exception/RtrExceptions.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/filter/RateLimitFilter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/jwt/filter/JwtAuthenticationFilter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/jwt/service/JwtTokenService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/model/RefreshTokenFamily.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/model/TokenBlacklist.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/model/UserToken.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/model/db/RefreshTokenFamilyTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/model/db/TokenBlacklistTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/model/db/UserTokenTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/model/PersonalAccessToken.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/model/db/PersonalAccessTokenScopeTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/model/db/PersonalAccessTokenTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/repository/ExposedPatTokenRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/service/BoxwoodPatUserResolver.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/service/PersonalAccessTokenService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/service/impl/PersonalAccessTokenServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/web/controller/PersonalAccessTokenController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/web/dto/PersonalAccessTokenDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/RefreshTokenFamilyRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/TokenBlacklistRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/UserTokenRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/RefreshTokenFamilyDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/TokenBlacklistRepositoryImpl.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/UserTokenRepositoryImpl.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/service/DwpTokenHashService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/service/RateLimitService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/filter/SystemPatAuthenticationFilter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/model/SystemPatScope.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/model/SystemPersonalAccessToken.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/model/db/SystemPersonalAccessTokenScopeTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/model/db/SystemPersonalAccessTokenTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/repository/SystemPatTokenRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/service/SystemPatService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/service/SystemPatTokenValidator.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/service/SystemPatUserResolver.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/service/impl/SystemPatServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/web/controller/SystemPatController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/web/dto/SystemPatDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/util/JwtUtils.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/web/controller/AuthenticationController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/web/dto/AuthenticationDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/adaptive/cards/controller/AdaptiveCardController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/adaptive/cards/model/db/AdaptiveCardTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/adaptive/cards/model/dto/AdaptiveCardDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/adaptive/cards/repository/AdaptiveCardRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/adaptive/cards/repository/impl/AdaptiveCardDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/adaptive/cards/service/AdaptiveCardService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/controller/ConnectorController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/model/db/ConnectorTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/model/dto/ConnectorDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/repository/ConnectorRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/repository/impl/ConnectorDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/service/ConnectorConnectionTestService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/service/ConnectorService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/service/OpenApiImportService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/service/OpenApiSchemaService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/credentials/controller/CredentialController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/credentials/model/db/CredentialTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/credentials/model/dto/CredentialDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/credentials/repository/CredentialRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/credentials/repository/impl/CredentialDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/credentials/service/CredentialEncryptionService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/credentials/service/CredentialService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/controller/DashboardController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/model/dto/DashboardDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/repository/DashboardRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/repository/impl/DashboardDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/service/DashboardService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/controller/EmailTemplateController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/model/db/EmailTemplateVersionTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/model/dto/EmailTemplateDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/repository/EmailTemplateRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/repository/impl/EmailTemplateDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/service/EmailTemplateService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/controller/LlmPromptTemplateController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/controller/LlmTaskController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/controller/McpToolConfigController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/ClaudeClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/GeminiClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/LLMChatRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/LLMChatResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/LLMClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/LLMClientExceptions.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/LLMClientFactory.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/LLMProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/LLMProviderConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/LLMStreamChunk.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/infrastructure/StubLLMClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/model/db/LlmPromptTemplateTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/model/db/LlmTaskExecutionTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/model/db/LlmTaskTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/model/db/McpToolTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/model/domain/ChatMessage.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/model/dto/LlmPromptTemplateDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/model/dto/LlmTaskDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/model/dto/McpToolDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/LlmTaskRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmPromptTemplateDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmTaskExecutionDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmTaskMetaDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmTaskVersionDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/McpToolConfigDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/McpToolDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/service/LlmPromptTemplateService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/service/LlmTaskService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/service/McpToolConfigService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/monitoring/controller/ProcessMonitoringController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/monitoring/model/db/ProcessMonitoringTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/monitoring/model/dto/ProcessMonitoringDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/monitoring/repository/ProcessMonitoringRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/monitoring/repository/impl/ProcessMonitoringDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/monitoring/service/ProcessMonitoringService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/controller/ProcessController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/controller/ProcessTriggerEventController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/controller/ScheduleTriggerController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/model/db/ProcessGlobalVariableTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/model/db/ProcessTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/model/db/ProcessTriggerEventVariableTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/model/db/ProcessTriggerTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/model/dto/ProcessDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/model/dto/ProcessTriggerEventSearchCriteria.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/model/dto/ScheduleTriggerDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/BpmnRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/ProcessBpmnMappingRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/ProcessGlobalVariableRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/ProcessRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/ProcessTriggerEventRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/ProcessTriggerEventVariableRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/ProcessTriggerRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/ServiceTaskUsageRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/BpmnDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessBpmnMappingDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessGlobalVariableDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessTriggerDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessTriggerEventDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessTriggerEventVariableDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ServiceTaskUsageDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/scheduler/CronMatcher.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/scheduler/ProcessCronScheduler.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/scheduler/ProcessSchedulerRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/scheduler/QuartzScheduleJob.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/scheduler/README.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/service/BpmnService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/service/ProcessService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/service/ProcessTriggerEventService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/service/ScheduleTriggerService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/tracking/ProcessChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/tracking/ProcessVersionChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/controller/InlineServiceTaskController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/controller/ServiceTaskController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/model/db/HubTaskTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/model/db/ServiceTaskTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/model/dto/HttpExtensionDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/model/dto/InlineServiceTaskDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/model/dto/ServiceTaskDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/model/dto/ServiceTaskSearchDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/repository/ServiceTaskRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/repository/impl/ServiceTaskDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/service/InlineServiceTaskService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/service/ServiceTaskService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/tracking/ServiceTaskChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/tracking/ServiceTaskVersionChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/COMMON_CODE_SPEC.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/controller/CodeController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/model/db/CodeCategoryTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/model/db/CodeTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/model/db/CodeTypeTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/model/dto/CodeDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/repository/CodeRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/repository/impl/CodeCategoryDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/repository/impl/CodeDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/repository/impl/CodeTypeDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/service/CodeService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/tracking/CodeCategoryChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/tracking/CodeChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/tracking/CodeTypeChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/advice/GlobalExceptionHandler.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/annotation/SharedTransactional.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 2
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/annotation/TenantTransactional.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 2
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/AuditContextHolder.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/config/AuditConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/config/AuditMongoConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/controller/AuditLogController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/handler/DefaultAuditHandler.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/model/AuditLogDocument.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/model/dto/AuditLogMetaDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/model/dto/AuditLogSearchDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/publisher/ConsoleAuditPublisher.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/publisher/MariaDbAuditPublisher.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/publisher/MongoAuditPublisher.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/repository/AuditLogRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/service/AuditLogSearchService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/service/InternalAuditService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/service/impl/AuditLogSearchServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/task/AuditLogCleanupScheduler.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/tracking/ChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/audit/tracking/ChangeTrackingRegistry.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/base/BaseController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/constant/Entrypoint.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/error/DomainError.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/exception/ETAuthenticationException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/exception/ETAuthorizationException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/exception/ETException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/exception/ETNotFoundException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/exception/ETRuntimeException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/exception/ETServiceFailureException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/exception/ETTenantException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/exception/I18nMessageException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/filter/LoginTenantFilter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/filter/MDCLoggingFilter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/filter/RefreshTokenTenantFilter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/filter/TranslateFilter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/messages/CompositeMessageSource.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/messages/DatabaseMessageSource.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/messages/LocaleMapRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/messages/MessageResourceHistoryRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/messages/MessageResourceRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/db/BaseTables.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/db/TypeConverter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/dto/PageData.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/dto/msg/CommonResultCode.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/dto/msg/FreeMarkerDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/dto/msg/I18nCodeMessage.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/dto/msg/I18nServiceResultMessage.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/dto/request/RangeOption.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/dto/response/ResultType.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/model/dto/response/Results.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/serdes/jackson/deserializer/InstantDateDeserializer.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/serdes/jackson/serializer/InstantDateSerializer.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/DateUtil.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ExceptionExtensions.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ExceptionToResultConverter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ExposedUtil.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/FreeMarkerUtil.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/MessageResolver.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ModernDateUtil.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ObjectUtil.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/PagingExtensions.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ResponseHandler.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ResultsDsl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/StringUtil.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/TypeAliases.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValueUtil.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/AsyncConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/CacheConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/CookieSecurityProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/CorsProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/CspProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/DataSourceConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/DwpRedisConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/DwpRedisProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/DwpValidationProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/ExposedConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/FlywayConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/FreemarkerConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/HttpClientConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/JacksonConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/JwtProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/MessageConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/MongoConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/MultiTenantDatabaseManager.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/MultiTenantTransactionManager.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/PasswordEncoderConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/PatConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/PersistenceConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/PropertyEncryptionConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/QuartzConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/RateLimitProperties.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/SharedSchemaTransactionManager.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/SharedSpringTransactionManager.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/SpaController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantContext.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantInterceptor.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantReactorContextAccessor.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantSpringTransactionManager.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantStateValidationAspect.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/WebClientConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/config/WebSecurityConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/boxwoodtool/BoxwoodToolConst.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/boxwoodtool/controller/V1ProcessToolController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/boxwoodtool/model/dto/process/V1ProcessModelSearchCriteria.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/history/db/SyncBatchHistoryTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/history/model/dto/SyncBatchHistory.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/history/repository/SyncBatchHistoryRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/history/repository/impl/SyncBatchHistoryDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/history/service/SyncBatchHistoryService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/history/service/impl/SyncBatchHistoryServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/kafka/config/KafkaConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/kafka/listener/OrganizationMigrationListener.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/kafka/model/OrganizationMigrationEvent.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/rest/controller/DwpAuditLogController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/statistics/controller/SystemMonitoringController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/statistics/model/dto/DwpBoxwoodDailyUsageCriteria.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/statistics/model/dto/DwpBoxwoodDailyUsageStatistics.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/statistics/service/DwpDailyUsageStatisticsService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/controller/DwpTenantController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/dto/DwpTenantAdminInfo.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/dto/ErrorResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/dto/TenantAdminRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/dto/TenantAdminResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/dto/TenantProvisionRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/dto/TenantResetResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/dto/TenantResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/dto/TenantUpdateRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/exception/DwpTenantExceptionHandler.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/tenant/service/DwpTenantService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/toolshub/controller/ToolsHubController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/toolshub/service/impl/BoxwoodToolsHubServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/controller/DwpUserAndGroupSyncController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpDataVersionResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpGroupDeltaDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpGroupDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpPaginatedResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpUserAndGroupSyncRequestEvent.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpUserDeltaDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpUserDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpUserGroupDeltaDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/model/DwpUserGroupDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/service/DwpUserAndGroupService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/service/DwpUserAndGroupSyncService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/service/impl/DwpUserAndGroupServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/dwp/user/service/impl/DwpUserAndGroupSyncServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/controller/MembershipTypeController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/model/GroupType.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/model/MembershipType.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/model/MembershipTypeName.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/model/db/BaseGroupTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/model/db/BaseMembershipTypeTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/model/dto/MembershipTypeDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/repository/MembershipTypeRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/repository/impl/MembershipTypeDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/service/MembershipTypeService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/service/impl/MembershipTypeServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/internal/execution/controller/ProcessExecutionController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/config/LLMTaskConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/controller/LLMTaskController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/controller/LLMTaskSSEController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/engine/AutomationEngineClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/engine/StubAutomationEngineClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/ClaudeClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/GeminiClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMChatRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMChatResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMClientExceptions.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMClientFactory.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMProviderConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMStreamChunk.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/StubLLMClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/BoxwoodMcpTool.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPAuditLogger.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPToolContext.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPToolExecutor.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPToolRegistry.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPToolResult.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/ToolCategory.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/context/GetProcessInfoTool.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/context/GetProcessVariablesTool.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/form/FillFormFieldTool.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/form/ValidateFormTool.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/task/CompleteTaskTool.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/task/GetTaskHistoryTool.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/task/SaveDraftTool.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/db/LLMConversationTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/ChatMessage.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/FormSchema.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/LLMConversation.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/LLMTask.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/LLMTaskMetadata.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/request/ChatMessageRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/request/CompleteTaskRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/request/ExtendRetentionRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/request/LLMConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/request/SaveDraftRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/response/ChatMessageResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/response/ChatStreamEvent.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/response/ConversationResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/response/LLMTaskResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/repository/ConversationRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/repository/LLMTaskRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/repository/impl/ConversationDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/repository/impl/LLMTaskEngineRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/scheduler/ConversationCleanupJob.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/service/ConversationService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/service/LLMChatService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/service/LLMTaskService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/service/impl/ConversationServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/service/impl/LLMChatServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/service/impl/LLMChatServiceWithTools.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/service/impl/LLMTaskServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/controller/NotificationController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/model/db/NotificationTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/model/db/NotificationTemplateTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/model/dto/NotificationDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/repository/NotificationRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/repository/NotificationTemplateRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/repository/impl/NotificationDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/repository/impl/NotificationTemplateDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/scheduler/NotificationCleanupJob.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/notification/service/NotificationService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/openapi/OpenApiEntrypoint.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/openapi/i18n/controller/OpenApiI18nController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/openapi/i18n/model/dto/MessageDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/openapi/trusted/auth/controller/V1DelegateUserAuthController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/controller/OrganizationController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/model/IOrganization.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/model/OrganizationGroup.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/model/OrganizationMembership.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/model/db/OrganizationGroupTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/model/db/OrganizationMembershipTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/model/dto/OrganizationTreeResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/repository/OrganizationGroupRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/repository/OrganizationMembershipRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/repository/impl/OrganizationGroupDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/repository/impl/OrganizationMembershipDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/service/OrganizationGroupService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/service/OrganizationService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/service/impl/OrganizationGroupServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/service/impl/OrganizationServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/PERMISSION_GUIDE.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/WORKING_Add_Role_Permissions.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/annotation/RequiresIntegratedPermission.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/PermissionCheckAspect.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/cache/CaffeinePermissionCache.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/cache/PermissionCacheConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/cache/PermissionCacheController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/cache/PermissionCacheEventListener.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/cache/UserPermissionCacheService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/cache/dto/CacheHealthDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/cache/dto/CacheStatsDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/cache/dto/UserPermissionsDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/controller/PermissionController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/PermitResourceTarget.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/ResourcePermissionMapping.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/RolePermission.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/RolePermissionMapping.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/db/ResourcePermissionMappingTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/db/RolePermissionMappingTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/db/RolePermissionTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/dto/PermissionMapper.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/dto/PermissionRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/model/dto/PermissionResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/ResourcePermissionMappingRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/RolePermissionMappingRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/RolePermissionRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/impl/ResourcePermissionMappingDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/impl/RolePermissionDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/impl/RolePermissionMappingDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/service/PermissionCheckerService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/service/PermissionService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/service/impl/PermissionServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/util/SecurityContextHelper.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rbac/annotation/HasFeaturePermission.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rbac/annotation/HasResourcePermission.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rbac/annotation/RequiresPermissions.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 2
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rbac/exception/PermissionDeniedException.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rbac/model/SubjectType.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rbac/service/PermissionChecker.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/EngineApiClient.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/req/BxCmdProcessDefinition.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/req/FindLogFilterDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/ActivityInstanceInfoDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/ActivityLogResponseDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/ActivitySummaryResponseDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/ActivityVariableResponseDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/BoxwoodEngineResponseDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/DailyStatisticsDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/ProcessInstanceInfoResponseDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/ProcessStatisticsDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/ProcessingLogResponseDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/engine/dto/res/ServiceTaskStatisticsDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rest/client/util/RestClientResponseUtils.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/ROLE_AND_PERMISSION_SPEC.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/ROLE_IMPLEMENTATION_PLAN.md",
+   "state": {
+    "unsupported": {
+     "language": "Markdown"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/controller/RoleGroupController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/model/RoleGroup.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/model/RoleGroupMembership.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/model/db/RoleGroupMembershipTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/model/db/RoleGroupTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/model/dto/RoleGroupDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/model/dto/RoleGroupMapper.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/repository/RoleGroupMembershipRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/repository/RoleGroupRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/repository/impl/RoleGroupDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/repository/impl/RoleGroupMembershipDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/service/RoleGroupService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/service/impl/RoleGroupServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/tracking/RoleChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/cache/TenantDatabaseCache.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/config/TenantConfig.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/controller/SecurityEventController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/controller/TenantAdminController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/database/DatabaseDialect.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/database/DatabaseDialectFactory.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/domain/AdminRole.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/domain/SecurityEventResult.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/domain/SecurityEventType.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/domain/TenantState.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/domain/admin/model/data/TenantAdminData.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/domain/admin/model/data/TenantAdminRoleData.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/controller/I18nMessageController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/controller/LocaleMapController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/model/db/LocaleMapTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/model/db/MessageResourceHistoryTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/model/db/MessageResourceTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/model/dto/LocaleMapDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/model/dto/MessageResourceDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/repository/impl/LocaleMapDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/repository/impl/MessageResourceDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/repository/impl/MessageResourceHistoryDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/service/LocaleMapService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/service/MessageResourceService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/tracking/I18nMessageChangeTrackingProvider.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/util/ExcelMessageExporter.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/i18n/util/ExcelMessageParser.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/metrics/TenantConnectionMetrics.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/model/SecurityEventEntity.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/model/dto/request/ForceLogoutRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/model/dto/request/TenantStateChangeRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/model/dto/response/ForceLogoutResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/model/dto/response/TenantInfoResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/model/dto/response/TenantListResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/model/dto/response/TenantStateChangeResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/repository/AuditLogDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/repository/BoxwoodTenantRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/repository/SecurityEventRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/repository/TenantAdminRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/repository/TenantAdminRoleRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/repository/TenantConfigRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/repository/impl/SecurityEventDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/FlywayProvisioningService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/SecurityEventService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/TenantAdminService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/TenantBootstrapService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/TenantConfigService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/TenantProvisioningService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/TenantSchemaUpgrader.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/service/TenantStateService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/table/AuditLogTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/table/BoxwoodTenantTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/table/SecurityEventTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/table/TenantAdminRoleTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/table/TenantAdminTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/table/TenantConfigTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/shared/validator/TenantValidator.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/controller/DailyUsageStatisticsController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/model/db/DailyUsageStatisticsTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/model/dto/DailyBatchData.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/model/dto/DailyProcessDetail.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/model/dto/DailyServiceTaskSummary.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/model/dto/DailyTriggerDetail.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/model/dto/DailyUsageStatisticsDto.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/model/dto/DailyUsageStatisticsRow.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/repository/DailyUsageStatisticsRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/repository/impl/DailyUsageStatisticsDslRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/scheduler/DailyStatisticsJob.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/service/DailyUsageStatisticsBatchService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/service/DailyUsageStatisticsQueryService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/service/impl/DailyUsageStatisticsBatchServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/statistics/automation/service/impl/DailyUsageStatisticsQueryServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/controller/TenantUserController.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/model/TenantUser.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/model/db/TenantUserTable.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/model/dto/TenantUserDetailResponse.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/model/req/ResetPasswordRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/model/req/TenantUserFindParameters.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/model/req/UpdateUserProfileRequest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/repository/TenantUserRepository.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/repository/impl/TenantUserDslRepository.kt",
+   "state": {
+    "partial": {
+     "grade": "l1",
+     "language": "Kotlin",
+     "recovery_sites": 1
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/service/TenantUserService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/service/UserInitialPasswordPolicy.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/service/UserPasswordResetPolicy.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/service/impl/TenantUserServiceImpl.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/service/impl/UserPasswordPolicyService.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/META-INF/spring-devtools.properties",
+   "state": {
+    "unsupported": {
+     "language": "Java Properties"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V006__Insert_i18n_model_process.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V007__Insert_i18n_model_code.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V008__Insert_i18n_model_service_task.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V009__Insert_i18n_model_service_inf.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V010__Insert_i18n_model_connector.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V011__Insert_i18n_model_credentials.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V012__Insert_i18n_model_monitoring.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V013__Insert_i18n_model_user.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V014__Insert_i18n_model_organization.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V015__Insert_i18n_model_tenant.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V020__Insert_ui_commons_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/V021__Insert_ui_process_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-boxwood.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-docker.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-dwp.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-flyway.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-httpclient.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-kafka.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-monitoring.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-persistence.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application-security.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/application.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/banner.txt",
+   "state": "unrecognized"
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V001__Create_Shared_Schema.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V002__Create_Tenant_Management_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V003__Create_PKCE_Challenge_Table_In_Shared_Schema.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V004__Create_i18n_message_resource_tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V005__Insert_common_result_code_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V006__Insert_auth_endpoint_error_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V007__Insert_tenant_endpoint_error_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V008__Insert_code_endpoint_error_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V009__Insert_process_endpoint_error_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V010__Insert_general_endpoint_error_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V011__Create_i18n_locale_map_table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V012__Create_Quartz_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V013__Insert_endpoint_error_ui_nav_common_status_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V014__Insert_ui_page_dashboard_to_service_interface_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V015__Insert_ui_page_connector_to_adaptive_card_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V016__Insert_ui_breadcrumb_button_form_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V017__Insert_ui_table_dialog_validation_time_tooltip_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V018__Insert_ui_search_action_section_filter_filters_field_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V019__Insert_ui_misc_category_credential_type_label_message_error_toast_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V020__Insert_model_code_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V021__Insert_ui_frontend_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V022__Insert_ui_form_label_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V023__Insert_missing_ui_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V024__Delete_duplicate_ui_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V025__Insert_user_page_filter_sync_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V026__Insert_ui_page_process_detail_edit_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V027__Insert_ui_process_components_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V028__Insert_ui_form_components_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V029__Insert_ui_dashboard_components_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V030__Insert_ui_process_scheduler_components_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V031__Insert_ui_process_variables_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V032__Insert_service_task_interface_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V033__Insert_dashboard_widget_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V034__Insert_ui_common_status_service_task_http_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V035__Insert_ui_page_service_task_helper_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V036__Insert_missing_ui_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V037__Update_missing_ui_i18n_messages_ko.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V038__Update_data_type_ko.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V039__Insert_allow_mapping_i18n_message.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V040__Insert_connector_table_column_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V041__Insert_monitoring_task_activities_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V042__Insert_common_code_detail_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V043__Insert_go_to_process_action_i18n_message.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V044__Insert_ui_page_permissions_multi_lang_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V045__Insert_organization_page_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V046__Insert_shared_components_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V047__Insert_layout_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V048__Update_i18n_locale_map.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V049__Add_locale_language_region.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V050__Simplify_locale_map_table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V051__Insert_auth_session_logout_reason_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V052__Create_security_event_table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V053__Create_refresh_token_family_table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V054__Insert_rtr_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V055__Insert_email_template_message_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V056__Insert_email_template_extract_variables_i18n_message.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V057__Insert_tenant_management_page_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V058__Create_audit_log_table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V059__Simplify_audit_log_table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V060__Remove_error_reason_column.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V061__Insert_service_task_filter_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V062__Remove_request_headers_column.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V063__Insert_adaptive_card_detail_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V064__Refactor_Tenant_Admin_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V065__Update_adaptive_cards_menu_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V066__Insert_audit_log_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V067__Insert_audit_security_event_summary_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V068__Insert_audit_role_summary_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V069__Insert_audit_summary_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V070__Insert_admin_ui_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V071__Restore_request_payload_column.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V072__Insert_audit_auth_summary_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V073__Insert_internal_audit_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V074__Insert_admin_force_logout_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V075__Insert_permissions_filter_placeholder_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V076__Insert_permissions_user_id_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V077__Insert_user_search_modal_and_recipients_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V078__Insert_process_execution_deploy_modal_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V079__Insert_execution_history_tab_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V080__Insert_monitoring_action_modal_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V081__Insert_user_org_tenant_detail_page_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V082__Insert_permission_page_missing_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V083__Insert_process_permission_tab_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V084__Insert_role_modal_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V085__Insert_notification_page_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V086__Insert_process_tab_navigation_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V087__Insert_auth_tenant_not_active_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V088__Insert_task_list_menu_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V089__Insert_production_code_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V090__Insert_secondary_category_i18n_messages.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V091__Create_system_pat_tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/shared/V092__Seed_system_pat_tokens.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V001__Create_All_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V002__Change_Case_Sensitive_Columns.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V003__Insert_Initial_Data.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V004__Insert_Enum_Based_Codes.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V005__Create_Process_Trigger_Event_Variable_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V006__ALTER_TRIGGER_EVENT_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V007__Cleanup_Old_Code_Data.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V008__Alter_Code_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V009__Insert_Code_Data.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V010__Insert_Code_for_Service_Interface.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V011__Update_Service_Interface_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V012__Lost_Code_insert.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V013__Refactor_Code_Data_To_Standard_Format.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V014__Update_Service_Task_Category_Codes.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V015__Migrate_Process_Monitoring_Status_To_Code_Reference.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V016__Add_Foreign_Key_To_Process_Trigger_Manager.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V017__Drop_i18n_table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V018__Insert_Code_for_Service_Interface_Updated.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V019__Insert_DWP_Sync_Object_Type_Codes.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V020__Create_Sync_Batch_History_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V021__Update_Role_Group_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V022__Update_Service_Task_Category_Codes.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V023__Refactor_Sync_Batch_History_Status.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V024__Update_Role_Group_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V025__Add_Column_Role_Group_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V026__Insert_Service_Task_Category_Code.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V027__Create_Global_Process_Variable_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V028__Update_Role_Group_Membership.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V029__Add_Service_Task_Parameter_Type_Code_FK.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V030__Insert_Process_Variable_Type_Code.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V031__Add_Parent_Event_Id_And_Retry_Code.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V032__Create_Daily_Usage_Statistics_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V033__Alter_Managementkey_Length.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V034__St_Statistics_To_Task_Statistics.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V035__Insert_Codes_for_Connector.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V036__Add_Missing_Connector_Columns.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V037__Recreate_Daily_Task_Statistics_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V038__Fix_Daily_Task_Statistics_Columns.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V039__Add_Missing_Connector_Columns.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V040__Drop_Service_Inf_Version_Column.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V041__Rename_All_Version_Active_To_Deactivated.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V042__Migrate_Process_Global_Variable_Type_To_Code_Reference.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V043__Add_Service_Task_Usage_TaskType_And_CallActivityBpmnId.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V044__Alter_Service_Task_Usage_Nullable_Columns.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V045__Alter_Bpmn_Table_Add_Column_Label.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V046__Refactor_Process_Service_Task_Usage_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V047__Update_Data_Code_Table.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V048__Update_Service_Inf_LabelKey.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V049__Update_tbl_code_label_key_to_model_code_format.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V050__Update_Service_Interface_Label_code_format.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V051__Fix_MD31102001_Code_Type.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V052__Organization_Membership_Default_Type.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V056__Add_jti_column_to_user_token.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V057__Add_family_id_to_user_token.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V058__Create_Personal_Access_Token_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V059__Insert_RBAC_Permission_Data.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V060__Insert_Default_Roles_And_Permission_Mappings.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V061__Fix_Daily_Statistics_Table_Collation.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V062__Reinsert_Service_Interface_Codes.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V063__Create_Adaptive_Card_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V064__Create_Notification_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V065__Create_Domain_Model_V2_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V066__Migrate_Connector_V1_to_V2.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V067__Remove_Service_Task_Parameter_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V068__Remove_Service_Interface_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V069__Align_Connector_V2_Table_With_Kotlin_Code.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V070__Fix_Connector_V2_Created_By_Default.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V071__Add_OpenAPI_Spec_Column_To_Connector_Operation.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V072__Add_OpenAPI_Spec_Column_To_Connector.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V073__Create_Connector_Meta_Version_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V074__Create_LLM_Task_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V075__Create_Connector_Meta_Version_Tables.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V076__Alter_Connector_Category_Column_Length.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V077__Add_ServiceTask_HttpExtension.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V078__Change_OperationId_To_Varchar.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V079__Add_OperationSpec_Column.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V080__Alter_Connector_Version_Change_OpenApiSpec_To_LongText.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V081__Add_Secondary_Category_Codes.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/db/migration/tenant/V082__Alter_Bpmn_Xml_Column_Type.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/key.properties",
+   "state": {
+    "unsupported": {
+     "language": "Java Properties"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/logback-spring.xml",
+   "state": {
+    "unsupported": {
+     "language": "XML"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/messages.properties",
+   "state": {
+    "unsupported": {
+     "language": "Java Properties"
+    }
+   }
+  },
+  {
+   "path": "src/main/resources/messages_ko.properties",
+   "state": {
+    "unsupported": {
+     "language": "Java Properties"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/PasswordEncoderTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/admin/controller/TenantAdminAuthControllerTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/admin/service/impl/TenantAdminAuthServiceImplTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/core/service/RtrServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/jwt/JwtTokenServiceClaimsMinimizationTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/service/DwpTokenHashServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/service/RateLimitServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/service/SessionManagementServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/systempat/filter/SystemPatAuthenticationFilterTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/systempat/model/SystemPatScopeTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/systempat/model/SystemPersonalAccessTokenTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/systempat/service/SystemPatServiceImplTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/auth/systempat/service/SystemPatUserResolverTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/automation/connector/OpenApiSchemaServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/ServiceTaskFieldsTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/config/CorsPropertiesTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/config/DwpValidationPropertiesTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/config/JwtPropertiesTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/config/MongoConnectionTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/config/RateLimitPropertiesTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/config/TenantAllowedStatesTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/config/TenantSpringTransactionManagerTest.kt.bak",
+   "state": "unrecognized"
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/config/TransactionManagerIntegrationTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/controller/LLMTaskControllerTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/controller/LLMTaskSSEControllerTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/ClaudeClientTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMClientFactoryTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMClientTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMProviderConfigTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/llm/LLMProviderTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/BoxwoodMcpToolTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPAuditLoggerTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPToolContextTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPToolExecutorTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPToolRegistryTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/MCPToolResultTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/core/ToolCategoryTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/context/GetProcessInfoToolTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/context/GetProcessVariablesToolTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/form/FillFormFieldToolTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/form/ValidateFormToolTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/task/CompleteTaskToolTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/task/GetTaskHistoryToolTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/infrastructure/mcp/tools/task/SaveDraftToolTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/integration/LLMTaskIntegrationTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/integration/SSEStreamingIntegrationTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/ChatMessageTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/LLMConversationTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/LLMTaskMetadataTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/model/domain/LLMTaskTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/request/RequestDtoTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/model/dto/response/ResponseDtoTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/scheduler/ConversationCleanupJobTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/service/ConversationServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/service/LLMChatServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/service/LLMTaskServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/service/impl/LLMChatServiceImplTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/service/impl/LLMChatServiceToolUseTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/llmtask/service/impl/LLMTaskServiceImplTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/notification/service/NotificationServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspectTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionControllerIntegrationTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/portal/BoxwoodPortalKotlinApplicationTests.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/shared/domain/SecurityEventResultTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/shared/domain/SecurityEventTypeTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/shared/service/SecurityEventServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/shared/service/TenantStateServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/kotlin/kr/co/ecoletree/boxwood/statistics/automation/DailyUsageStatisticsBatchServiceTest.kt",
+   "state": {
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
+    }
+   }
+  },
+  {
+   "path": "src/test/resources/application-test.yml",
+   "state": {
+    "unsupported": {
+     "language": "YAML"
+    }
+   }
+  },
+  {
+   "path": "src/test/resources/logback-test.xml",
+   "state": {
+    "unsupported": {
+     "language": "XML"
+    }
+   }
+  },
+  {
+   "path": "temp.sql",
+   "state": {
+    "unsupported": {
+     "language": "SQL"
+    }
+   }
+  },
+  {
+   "path": "test.http",
+   "state": "unrecognized"
+  }
+ ],
+ "languages": [
+  {
+   "files": 671,
+   "grade": "l1",
+   "identity": "ordinal",
+   "language": "Kotlin"
+  },
+  {
+   "files": 186,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "SQL"
+  },
+  {
+   "files": 61,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "Markdown"
+  },
+  {
+   "files": 34,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "JSON"
+  },
+  {
+   "files": 16,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "YAML"
+  },
+  {
+   "files": 6,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "Java Properties"
+  },
+  {
+   "files": 3,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "Shell"
+  },
+  {
+   "files": 2,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "Gradle"
+  },
+  {
+   "files": 2,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "XML"
+  },
+  {
+   "files": 1,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "Batch"
+  },
+  {
+   "files": 1,
+   "grade": "l0",
+   "identity": "unavailable",
+   "language": "Dockerfile"
+  }
+ ],
+ "repos_declared": 1,
+ "scope": {
+  "declared": {
+   "repos": 1,
+   "rules": 0
+  }
+ },
+ "snapshot": [
+  [
+   "portal-backend",
+   {
+    "committed": "a29cad0bf6a873020edd8b97b13a6430d08c7f55"
+   }
+  ]
+ ]
+}
