@@ -1,0 +1,22 @@
+[package]
+name = "pal-cli"
+description = "1급 표면. JSON in/out"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "pal"
+path = "src/main.rs"
+
+[dependencies]
+pal-core.workspace = true
+pal-extract.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+
+[lints]
+workspace = true
