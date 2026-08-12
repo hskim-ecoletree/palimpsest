@@ -13,6 +13,7 @@ serde.workspace = true
 blake3.workspace = true
 postcard.workspace = true
 zstd.workspace = true
+redb.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]

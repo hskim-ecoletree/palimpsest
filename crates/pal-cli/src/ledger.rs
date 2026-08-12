@@ -15,8 +15,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use pal_core::{
-    Bucket, ExtractGrade, FileState, IdentityGrade, LanguageCapability, LanguageId, Ledger,
-    LedgerEntry, RepoId, Snapshot, TreeRef,
+    Bucket, Discriminator, ExtractGrade, FileState, IdentityGrade, LanguageCapability, LanguageId,
+    Ledger, LedgerEntry, RepoId, RepoPath, Snapshot, SymbolId, SymbolNode, TreeRef,
 };
 use pal_extract::{FileOutcome, OVERSIZE_BYTES};
 use pal_git::{GitAccess, GixRepo};
@@ -32,6 +32,9 @@ use serde::Serialize;
 pub struct LedgerReport {
     pub ledger: Ledger,
     pub cache: CacheStats,
+    /// 2층에 들어갈 심볼들. **표에는 안 나오고 `pal touch` 가 쓴다.**
+    #[serde(skip)]
+    pub symbols: Vec<SymbolNode>,
 }
 
 /// 대장을 계산한다.
@@ -61,8 +64,10 @@ pub fn compute(
     // **정렬은 여기서 한다.** 산출이 결정적이어야 두 회차를 바이트로 비교할 수 있다.
     files.sort_by(|a, b| a.0.cmp(&b.0));
 
+    let repo_id = RepoId::new(repo_name(repo_path));
     let mut stats = CacheStats::default();
     let mut entries = Vec::with_capacity(files.len());
+    let mut symbols: Vec<SymbolNode> = Vec::new();
 
     for (path, blob) in files {
         let key = CacheKey::new(blob, version);
@@ -77,18 +82,48 @@ pub fn compute(
             cache.put(&key, &fresh)?;
             fresh
         };
+        symbols.extend(nodes_of(&repo_id, &path, &outcome.symbols));
         entries.push(LedgerEntry { path, state: outcome.state });
     }
 
     let languages = language_capabilities(&entries);
     let ledger = Ledger {
-        snapshot: Snapshot { repo: RepoId::new(repo_name(repo_path)), tree },
+        snapshot: Snapshot { repo: repo_id, tree },
         // **선언된 저장소 수.** S1 은 언제나 1 이다 — 멀티레포는 F14.
         repos_declared: NonZeroUsize::new(1).expect("1 은 0 이 아니다"),
         entries,
         languages,
     };
-    Ok(LedgerReport { ledger, cache: stats })
+    Ok(LedgerReport { ledger, cache: stats, symbols })
+}
+
+/// 파일 하나의 심볼들에 좌표를 붙인다.
+///
+/// # `ordinal` 을 여기서 센다 ([R-16])
+///
+/// 같은 (이름, 종류)가 한 파일에 여럿이면 **선언 순서**로 가른다. 그러면 순서가 바뀌는
+/// 것만으로 정체성이 뒤바뀌므로, 그런 심볼은 정체성 등급이 `Ordinal` 로 묶인다 —
+/// [`Discriminator::identity_ceiling`] 이 그것을 강제한다.
+fn nodes_of(repo: &RepoId, path: &RepoPath, symbols: &[pal_core::Symbol]) -> Vec<SymbolNode> {
+    let mut seen: BTreeMap<(&str, &str), u32> = BTreeMap::new();
+    let mut out = Vec::with_capacity(symbols.len());
+    for s in symbols {
+        let slot = seen.entry((s.name.as_str(), s.kind.name())).or_insert(0);
+        let discriminator = Discriminator::new(s.kind, *slot);
+        *slot += 1;
+
+        out.push(SymbolNode {
+            id: SymbolId::compute(repo, path, &[], &s.name, &discriminator),
+            path: path.clone(),
+            name: s.name.clone(),
+            kind: s.kind,
+            body: s.body,
+            span: s.span,
+            // 언어 등급이 아니라 **심볼**의 것이다 — R-22. 둘 중 낮은 쪽을 쓴다.
+            identity: discriminator.identity_ceiling().min(ExtractGrade::L1.identity()),
+        });
+    }
+    out
 }
 
 /// 디렉터리 이름을 저장소 식별자로 쓴다.

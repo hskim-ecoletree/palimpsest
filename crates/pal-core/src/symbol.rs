@@ -40,11 +40,16 @@ pub struct Span {
 
 /// 추출된 심볼 하나.
 ///
-/// `Coord`(repo·tree·extractor·symbol) 는 아직 없다 — F01·F03 의 것이다.
-/// S0 은 파일 하나 안에서 닫히므로 좌표계를 미리 흉내 내지 않는다.
+/// `Coord` 는 여기 없다 — 좌표는 저장소·트리·추출기 버전을 알아야 하고 그것들은 파일
+/// 하나 바깥의 사실이다. 추출기는 **파일 안에서 아는 것만** 낸다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Symbol {
     pub name: String,
     pub kind: SymbolKind,
     pub span: Span,
+    /// **변했는가**에 답하는 값 — 주석·공백·포매팅을 지운 정규형의 요약.
+    ///
+    /// 정체성(`SymbolId`)과 다른 축이다. 파일을 옮기면 정체성은 끊기지만 이 값은
+    /// 그대로이고, 그 차이가 재결박 제안의 근거가 된다([R-08] · [F03 §2]).
+    pub body: crate::coord::BodyDigest,
 }

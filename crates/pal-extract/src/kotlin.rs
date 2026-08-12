@@ -3,7 +3,7 @@
 //! **한 쿼리 매치가 선언 하나다.** CLI 레퍼런스(`scripts/s0-reference.py`)가 세는 단위와
 //! 같아야 하고, 같은 쿼리 파일을 쓰므로 같다.
 
-use pal_core::{Span, Symbol, SymbolKind};
+use pal_core::{BodyDigest, Span, Symbol, SymbolKind};
 use streaming_iterator::StreamingIterator;
 use tree_sitter::{Parser, Query, QueryCursor};
 
@@ -92,6 +92,7 @@ pub fn extract_detailed(source: &[u8]) -> Result<Extraction, ExtractError> {
         symbols.push(Symbol {
             name: name.to_owned(),
             kind,
+            body: BodyDigest::of_normalized(&normalize(decl_node, source)),
             span: Span {
                 byte_start: decl_node.start_byte(),
                 byte_end: decl_node.end_byte(),
@@ -109,6 +110,49 @@ pub struct Extraction {
     pub symbols: Vec<Symbol>,
     /// tree-sitter 가 오류 회복한 지점의 수. **0 이면 `parsed`, 아니면 `partial`.**
     pub recovery_sites: usize,
+}
+
+/// 선언 하나의 **정규형** — 주석·공백·포매팅을 지운 바이트열.
+///
+/// # 무엇을 지우고 무엇을 남기는가 ([F03 §3.1](../../../docs/plan/features/F03-identity.md))
+///
+/// | 지운다 | 왜 |
+/// |---|---|
+/// | 공백·줄바꿈·들여쓰기 | 포매터가 매일 바꾼다. **리프 토큰만 모으므로 자동으로 사라진다** |
+/// | 주석 | 문서 수정이 코드 변경이 아니다 |
+/// | 선택적 세미콜론 | Kotlin 에서 스타일이다 |
+///
+/// **지역 변수명·파라미터명은 지우지 않는다.** [R-22] 가 경고한 자리다 — 그것을 지우려면
+/// 그 심볼의 스코프 해소가 성공해야 하는데 이 추출기는 L1(구조)이라 스코프가 없다.
+/// 등급이 못 미치는데 지우면 **서로 다른 코드가 같은 요약을 갖는다.**
+///
+/// 토큰 사이에 `` 를 넣는다. 넣지 않으면 `fun f` 와 `funf` 가 같은 바이트열이 된다.
+fn normalize(node: tree_sitter::Node<'_>, source: &[u8]) -> Vec<u8> {
+    let mut out = Vec::new();
+    normalize_into(&mut out, node, source);
+    out
+}
+
+/// **커서를 넘기지 않고 각 층에서 만든다.** 넘기면 커서의 수명이 자식 노드의 수명과
+/// 얽혀 재귀가 서지 않는다 — 빌림 하나를 아끼려다 타입이 막는 자리였다.
+fn normalize_into(out: &mut Vec<u8>, node: tree_sitter::Node<'_>, source: &[u8]) {
+    let kind = node.kind();
+    if kind.contains("comment") {
+        return;
+    }
+    if node.child_count() == 0 {
+        // 세미콜론은 Kotlin 에서 선택적이다 — 있고 없고가 의미를 바꾸지 않는다.
+        if kind == ";" {
+            return;
+        }
+        out.extend_from_slice(&source[node.byte_range()]);
+        out.push(0x1f);
+        return;
+    }
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        normalize_into(out, child, source);
+    }
 }
 
 /// `ERROR` · `MISSING` 노드를 센다.

@@ -175,6 +175,11 @@ impl<'de> Deserialize<'de> for Digest {
     }
 }
 
+/// 32바이트 16진. `coord` 의 요약 타입들이 쓴다.
+pub(crate) fn hex32(hex: &str) -> Option<[u8; 32]> {
+    from_hex::<32>(hex)
+}
+
 /// 16진 문자열을 고정 길이 바이트로. **길이가 정확히 맞아야 한다.**
 ///
 /// 짧은 것을 0 으로 채우면 서로 다른 이름이 같은 값이 된다 — 그것이 좌표를 뭉갠다.

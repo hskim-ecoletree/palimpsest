@@ -11,13 +11,20 @@
 #![forbid(unsafe_code)]
 
 mod capable;
+mod coord;
+mod envelope;
 mod language;
 mod ledger;
 mod repo;
 mod symbol;
+mod touch;
 mod version;
 
 pub use capable::{Capable, CapabilityId};
+pub use coord::{BodyDigest, Coord, Discriminator, SymbolId};
+pub use envelope::{
+    CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness,
+};
 pub use language::Language;
 pub use ledger::{
     Bucket, BinaryReason, ExclusionRuleId, ExtractGrade, FileState, GeneratedEvidence,
@@ -25,4 +32,8 @@ pub use ledger::{
 };
 pub use repo::{Digest, ObjectName, RepoId, RepoPath, Snapshot, TreeRef};
 pub use symbol::{Span, Symbol, SymbolKind};
+pub use touch::{
+    BoundItem, EffectSet, JudgmentSummary, SymbolFacts, SymbolNode, TouchAnswer, TouchResult,
+    UnresolvedRef,
+};
 pub use version::ExtractorVersion;

@@ -191,6 +191,50 @@ mod tests {
         assert!(recovery_sites > 0);
     }
 
+    fn 요약(src: &str) -> pal_core::BodyDigest {
+        let out = classify(&RepoPath::new("A.kt"), src.as_bytes(), OVERSIZE_BYTES).unwrap();
+        out.symbols[0].body
+    }
+
+    #[test]
+    fn 포매팅과_주석은_요약을_바꾸지_않는다() {
+        // **R-07 의 거짓 양성이 죽는 자리다.** 포매터 커밋 하나에 결박이 무더기로
+        // stale 이 되면 사람이 표시를 무시하고, 그러면 제품이 죽는다.
+        let 원본 = "fun greet(name: String): String {\n    return \"hi\"\n}\n";
+        let 포매팅만 = "fun   greet( name : String ) : String {\n\n\treturn \"hi\"\n\n}\n";
+        let 주석추가 = "// 인사한다\nfun greet(name: String): String {\n    /* 왜냐하면 */ return \"hi\"\n}\n";
+        let 세미콜론 = "fun greet(name: String): String {\n    return \"hi\";\n}\n";
+        assert_eq!(요약(원본), 요약(포매팅만), "공백·줄바꿈이 요약을 바꿨다");
+        assert_eq!(요약(원본), 요약(주석추가), "주석이 요약을 바꿨다");
+        assert_eq!(요약(원본), 요약(세미콜론), "선택적 세미콜론이 요약을 바꿨다");
+    }
+
+    #[test]
+    fn 의미가_바뀌면_요약이_바뀐다() {
+        // **양방향이어야 한다.** 앞의 시험만 통과하는 것은 상수를 돌려주는 요약이고,
+        // 그것은 아무것도 감지하지 못한다.
+        let 원본 = "fun greet(name: String): String {\n    return \"hi\"\n}\n";
+        assert_ne!(요약(원본), 요약("fun greet(name: String): String {\n    return \"bye\"\n}\n"),
+                   "반환값이 바뀌었는데 요약이 같다");
+        assert_ne!(요약(원본), 요약("fun greet(name: Int): String {\n    return \"hi\"\n}\n"),
+                   "파라미터 타입이 바뀌었는데 요약이 같다");
+        assert_ne!(요약(원본), 요약("fun greet(name: String): String {\n    log()\n    return \"hi\"\n}\n"),
+                   "본문에 호출이 늘었는데 요약이 같다");
+    }
+
+    #[test]
+    fn 토큰_경계가_지켜진다() {
+        // 구분자가 없으면 `fun f` 와 `funf` 가 같은 바이트열이 된다.
+        assert_ne!(요약("fun f() {}\n"), 요약("class funf\n"));
+    }
+
+    #[test]
+    fn 변수명은_지우지_않는다() {
+        // **R-22** — 스코프 해소(L2)가 없는데 지우면 서로 다른 코드가 같은 요약을 갖는다.
+        // 이 추출기는 L1 이므로 지우지 않는 것이 옳다.
+        assert_ne!(요약("fun f() {\n  val a = 1\n}\n"), 요약("fun f() {\n  val b = 1\n}\n"));
+    }
+
     #[test]
     fn 심볼은_분류와_함께_나온다() {
         // 1층 캐시가 담을 값이다 — 분류만 캐시하면 두 번째 실행에서 심볼이 사라진다.

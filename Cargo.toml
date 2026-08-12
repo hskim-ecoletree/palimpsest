@@ -49,6 +49,9 @@ blake3 = "1"
 postcard = { version = "1", default-features = false, features = ["alloc"] }
 zstd = "0.13"
 
+# 2층 인덱스 — stack §2.3. **1층은 여기 넣지 않는다**(§2.4)
+redb = "4"
+
 # 판정용 문법을 커밋으로 고정한다 — corpus/criteria.toml [s0.grammar].judging
 # 이 커밋이 곧 v1.1.0 이고 upstream HEAD 다 (2026-08-12 실측).
 tree-sitter-kotlin-ng = { git = "https://github.com/tree-sitter-grammars/tree-sitter-kotlin", rev = "3dea6dfa9c0129deb7c4315afbda806c85c41667" }

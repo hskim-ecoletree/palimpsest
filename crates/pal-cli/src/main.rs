@@ -12,6 +12,7 @@ use clap::{Parser, Subcommand};
 use pal_core::{Capable, Language};
 
 mod ledger;
+mod touch;
 
 #[derive(Parser)]
 #[command(name = "pal", version, about = "환경에 종속되지 않는 코드 이해의 큐레이터")]
@@ -27,6 +28,26 @@ enum Command {
         /// 대상 파일
         path: PathBuf,
         /// 사람이 읽는 표 대신 JSON 으로 낸다
+        #[arg(long)]
+        json: bool,
+    },
+    /// 좌표 하나를 만진다 — **빈 답도 정직하게 낸다**
+    Touch {
+        /// 심볼 이름
+        name: String,
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 어느 커밋인가. 기본값은 HEAD
+        #[arg(long)]
+        at: Option<String>,
+        /// 1층 캐시 위치
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        /// 2층 인덱스 위치. 기본값은 `<저장소>/.palimpsest/index.redb`
+        #[arg(long)]
+        index: Option<PathBuf>,
+        /// 사람이 읽는 화면 대신 JSON 으로 낸다
         #[arg(long)]
         json: bool,
     },
@@ -50,6 +71,9 @@ enum Command {
 fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Symbols { path, json } => symbols(&path, json),
+        Command::Touch { name, repo, at, cache_dir, index, json } => {
+            touch::run(&repo, at.as_deref(), cache_dir, index, &name, json)
+        }
         Command::Ledger { path, at, cache_dir, json } => {
             let report = ledger::compute(&path, at.as_deref(), cache_dir)?;
             if json {

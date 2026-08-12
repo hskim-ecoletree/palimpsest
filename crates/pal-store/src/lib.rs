@@ -12,7 +12,7 @@
 //!
 //! # S1 시점의 상태
 //!
-//! **1층이 섰다.** [`BlobCache`] 는 콘텐츠 주소 파일 저장이고 키는 `(blob, 추출기 버전)`
+//! **1층과 2층이 섰다.** [`BlobCache`] 는 콘텐츠 주소 파일 저장이고 키는 `(blob, 추출기 버전)`
 //! 이다. 2층 인덱스는 여전히 비어 있다 — F05 의 것이다.
 //!
 //! **지우는 API 는 아직 없다.** `pal cache prune` 은 F04 이고, 그것이 생길 때 R-21 의
@@ -21,8 +21,10 @@
 #![forbid(unsafe_code)]
 
 mod cache;
+mod projection;
 
 pub use cache::{BlobCache, CacheError, CacheKey, CacheStats};
+pub use projection::{Projection, ProjectionError};
 
 /// 이 크레이트가 지키는 계약.
 pub const CONTRACT: &str = "파생층은 의도 저장소를 지우지 않는다 — R-21";
