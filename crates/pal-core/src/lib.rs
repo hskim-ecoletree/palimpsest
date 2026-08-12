@@ -12,6 +12,7 @@
 
 mod binding;
 mod capable;
+mod chain;
 mod coord;
 mod derived;
 mod envelope;
@@ -28,6 +29,10 @@ pub use binding::{
     Binding, BindingId, BindingStatus, CodeFreshness, Lineage, WatchEntry,
 };
 pub use capable::{Capable, CapabilityId};
+pub use chain::{
+    Actor, ActorId, Change, ChangeId, ChangeKind, Confidence, Defect, Introduction, Journey,
+    NotFoundReason, Retrobinding, RetrobindingSummary, Uncapturable,
+};
 pub use coord::{BodyDigest, Coord, Discriminator, SymbolId};
 pub use derived::{DerivedId, NodeRef, ReproInput};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};

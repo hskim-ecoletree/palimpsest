@@ -104,7 +104,7 @@ pub fn compute(
 /// 같은 (이름, 종류)가 한 파일에 여럿이면 **선언 순서**로 가른다. 그러면 순서가 바뀌는
 /// 것만으로 정체성이 뒤바뀌므로, 그런 심볼은 정체성 등급이 `Ordinal` 로 묶인다 —
 /// [`Discriminator::identity_ceiling`] 이 그것을 강제한다.
-fn nodes_of(repo: &RepoId, path: &RepoPath, symbols: &[pal_core::Symbol]) -> Vec<SymbolNode> {
+pub(crate) fn nodes_of(repo: &RepoId, path: &RepoPath, symbols: &[pal_core::Symbol]) -> Vec<SymbolNode> {
     let mut seen: BTreeMap<(&str, &str), u32> = BTreeMap::new();
     let mut out = Vec::with_capacity(symbols.len());
     for s in symbols {
@@ -128,10 +128,14 @@ fn nodes_of(repo: &RepoId, path: &RepoPath, symbols: &[pal_core::Symbol]) -> Vec
 
 /// 디렉터리 이름을 저장소 식별자로 쓴다.
 ///
-/// **임시방편이다.** 정본은 매니페스트가 선언하는 안정 식별자이고(F01 §3.5, R-08),
-/// 그 로딩은 TOML 파서를 요구해 P0 의존 목록에 아직 없다. **경로에서 유도한 이름은
-/// 저장소를 옮기면 바뀐다** — 그것이 R-08 이 경고한 바로 그 형태이므로 F01 이 고친다.
-fn repo_name(path: &Path) -> String {
+/// **임시방편이다.** 정본은 매니페스트가 선언하는 안정 식별자이고(F01 §3.5, R-08).
+/// **경로에서 유도한 이름은 저장소를 옮기면 바뀐다** — 그것이 R-08 이 경고한 바로 그
+/// 형태이므로 F01 이 고친다.
+///
+/// (2026-08-12 정정: 이 주석은 *"TOML 파서가 의존 목록에 없어서"* 라고 적고 있었다.
+/// F22-1 이 `toml` 을 들였으므로 그 이유는 더 이상 사실이 아니다. 남은 이유는
+/// 매니페스트 형식과 다중 저장소 선언을 F01 이 정한다는 것 하나다.)
+pub(crate) fn repo_name(path: &Path) -> String {
     path.canonicalize()
         .ok()
         .as_deref()

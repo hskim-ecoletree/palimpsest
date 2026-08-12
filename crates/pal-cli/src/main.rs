@@ -12,6 +12,7 @@ use clap::{Parser, Subcommand};
 use pal_core::{Capable, Language};
 
 mod bind;
+mod defect;
 mod ledger;
 mod touch;
 
@@ -52,6 +53,20 @@ enum Command {
         /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
         #[arg(long)]
         intent: Option<PathBuf>,
+    },
+    /// 수정 커밋 하나에서 결함을 소급 결박한다 — **못 담은 것도 센다**
+    Defect {
+        /// 수정 커밋
+        rev: String,
+        /// 저장소 경로
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 이력을 얼마나 거슬러 올라가는가. 걸리면 그 사실이 산출에 남는다
+        #[arg(long)]
+        history_limit: Option<usize>,
+        /// 사람이 읽는 화면 대신 JSON 으로 낸다
+        #[arg(long)]
+        json: bool,
     },
     /// 좌표 하나를 만진다 — **빈 답도 정직하게 낸다**
     Touch {
@@ -98,6 +113,19 @@ fn main() -> Result<()> {
         Command::Symbols { path, json } => symbols(&path, json),
         Command::Bind { name, note, repo, at, cache_dir, index, intent } => {
             bind::run(&repo, at.as_deref(), cache_dir, index, intent, &name, &note)
+        }
+        Command::Defect { rev, repo, history_limit, json } => {
+            let report = defect::run(
+                &rev,
+                &repo,
+                history_limit.unwrap_or_else(defect::default_budget),
+            )?;
+            if json {
+                defect::print_json(&report)
+            } else {
+                defect::print(&report);
+                Ok(())
+            }
         }
         Command::Touch { name, repo, at, cache_dir, index, intent, json } => {
             touch::run(&repo, at.as_deref(), cache_dir, index, intent, &name, json)

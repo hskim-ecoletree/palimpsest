@@ -41,6 +41,12 @@ streaming-iterator = "0.1"
 #   blake3   — 1층 캐시 키. `symbol_id`·`body_digest` 도 나중에 이것을 쓴다
 #   postcard — 1층 캐시 값. 컴팩트한 바이너리. 스키마 버전이 이미 키에 있으므로 호환성 부담이 없다
 #   zstd     — 캐시 압축. 레벨 3 고정
+# `blame` 을 켜지 않는다 — F22-3 이 검토하고 기각했다(docs/gates/F22-3-chain-nodes.md).
+#   ① 켜면 gix-diff/blob → gix-filter → **encoding_rs(BSD-3-Clause)** 가 돌아온다.
+#      S1 이 정확히 그 크레이트를 features 를 좁혀 몰아냈고, deny.toml 은
+#      *"예외를 늘리기 전에 의존을 줄이는 것이 순서"* 라고 적었다.
+#   ② 그리고 애초에 **줄 단위 blame 은 이 좌표계가 아니다.** `Coord` 에 `span` 이 없고
+#      (§2.1) 줄은 포매팅으로 움직인다. 소급 결박은 `body_digest` 위에서 심볼 단위로 한다.
 gix = { version = "0.86", default-features = false, features = ["sha1", "revision"] }
 blake3 = "1"
 # `default-features = false` 가 필수다 — 기본 feature `heapless-cas` 가 heapless 를 끌고

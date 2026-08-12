@@ -51,6 +51,46 @@ pub trait GitAccess {
     /// # Errors
     /// 그 이름의 객체가 없거나 blob 이 아니면.
     fn read_blob(&self, name: ObjectName) -> Result<Vec<u8>, GitError>;
+
+    /// 커밋 하나의 메타 — **`Change` 노드가 여기서 나온다**(F22-3).
+    ///
+    /// # Errors
+    /// 그런 커밋이 없거나 읽지 못하면.
+    fn commit(&self, id: ObjectName) -> Result<CommitMeta, GitError>;
+
+    /// 트리 안의 경로 하나. **없으면 그 커밋에 그 파일이 없었다는 뜻이다.**
+    ///
+    /// `list_tree` 로 대신하지 않는 이유: 소급 결박은 파일 **하나**를 여러 조상에서
+    /// 되읽는다. 조상마다 트리 전체를 훑으면 그 비용이 이력 깊이에 곱해진다.
+    ///
+    /// # Errors
+    /// 트리를 읽지 못하면. **경로가 없는 것은 오류가 아니다.**
+    fn path_at(&self, at: &TreeRef, path: &RepoPath) -> Result<Option<ObjectName>, GitError>;
+
+    /// first-parent 조상들 — 자신을 포함하고 `limit` 에서 멈춘다.
+    ///
+    /// **first-parent 인 것이 결정론의 조건이다.** 병합 커밋에서 갈래를 다 따라가면
+    /// 순서가 구현에 의존하고, 같은 입력이 같은 답을 낸다는 배정 규칙 1 이 깨진다.
+    ///
+    /// # Errors
+    /// 커밋을 읽지 못하면.
+    fn first_parent_walk(
+        &self,
+        from: ObjectName,
+        limit: usize,
+    ) -> Result<Vec<ObjectName>, GitError>;
+}
+
+/// 커밋 하나에서 읽어낸 것. **판정이 아니라 사실이다.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CommitMeta {
+    pub id: ObjectName,
+    pub parents: Vec<ObjectName>,
+    /// 커밋 메시지 첫 줄.
+    pub summary: String,
+    /// 저자의 안정 식별자 — 이메일. **표시 이름이 아니다**(같은 사람이 여러 이름을 쓴다).
+    pub author_id: String,
+    pub author_display: String,
 }
 
 /// `gix` 구현. **이 타입 밖에서 `gix` 타입이 보이지 않는다.**
@@ -147,5 +187,69 @@ impl GitAccess for GixRepo {
             .find_object(id)
             .map_err(|e| GitError::Blob(format!("{name}: {e}")))?;
         Ok(object.data.clone())
+    }
+
+    fn commit(&self, id: ObjectName) -> Result<CommitMeta, GitError> {
+        let commit = self.commit_at(id)?;
+        let summary = commit
+            .message()
+            .map_err(|e| GitError::Resolve(e.to_string()))?
+            .summary()
+            .to_string();
+        let author = commit.author().map_err(|e| GitError::Resolve(e.to_string()))?;
+        Ok(CommitMeta {
+            id,
+            parents: commit.parent_ids().map(|p| to_name(p.detach())).collect(),
+            summary,
+            author_id: author.email.to_string(),
+            author_display: author.name.to_string(),
+        })
+    }
+
+    fn path_at(&self, at: &TreeRef, path: &RepoPath) -> Result<Option<ObjectName>, GitError> {
+        let base = to_oid(at.base())?;
+        let commit = self.commit_at_oid(base)?;
+        let tree = commit.tree().map_err(|e| GitError::Tree(e.to_string()))?;
+        let entry = tree
+            .lookup_entry_by_path(path.as_str())
+            .map_err(|e| GitError::Tree(e.to_string()))?;
+        Ok(entry.filter(|e| e.mode().is_blob_or_symlink()).map(|e| to_name(e.object_id())))
+    }
+
+    fn first_parent_walk(
+        &self,
+        from: ObjectName,
+        limit: usize,
+    ) -> Result<Vec<ObjectName>, GitError> {
+        let mut out = Vec::new();
+        let mut cursor = Some(from);
+        while let Some(id) = cursor {
+            out.push(id);
+            if out.len() >= limit {
+                break;
+            }
+            let commit = self.commit_at(id)?;
+            cursor = commit.parent_ids().next().map(|p| to_name(p.detach()));
+        }
+        Ok(out)
+    }
+}
+
+fn to_oid(name: ObjectName) -> Result<gix::ObjectId, GitError> {
+    gix::ObjectId::from_hex(name.to_hex().as_bytes())
+        .map_err(|e| GitError::Resolve(e.to_string()))
+}
+
+impl GixRepo {
+    fn commit_at(&self, id: ObjectName) -> Result<gix::Commit<'_>, GitError> {
+        self.commit_at_oid(to_oid(id)?)
+    }
+
+    fn commit_at_oid(&self, id: gix::ObjectId) -> Result<gix::Commit<'_>, GitError> {
+        self.inner
+            .find_object(id)
+            .map_err(|e| GitError::Resolve(e.to_string()))?
+            .try_into_commit()
+            .map_err(|e| GitError::Resolve(e.to_string()))
     }
 }
