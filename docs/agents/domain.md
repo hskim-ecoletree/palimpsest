@@ -5,9 +5,9 @@
 ## 탐색 전에 읽을 것
 
 - 저장소 루트의 **`CONTEXT.md`** — 용어집. 아직 없다.
-- **`docs/adr/`** — 착수할 영역에 걸리는 ADR. 아직 없다.
+- **`docs/adr/`** — 착수할 영역에 걸리는 ADR. **둘 있다**(F22 종료 시 발행).
 
-이 파일들이 없으면 **조용히 진행한다.** 부재를 지적하지 말고, 미리 만들자고 제안하지도 말 것. `/domain-modeling`(‌`/grill-with-docs`·`/improve-codebase-architecture`를 통해 도달)이 용어나 결정이 실제로 확정될 때 게으르게 만든다.
+`CONTEXT.md` 가 없으면 **조용히 진행한다.** 부재를 지적하지 말고, 미리 만들자고 제안하지도 말 것. `/domain-modeling`(‌`/grill-with-docs`·`/improve-codebase-architecture`를 통해 도달)이 용어나 결정이 실제로 확정될 때 게으르게 만든다.
 
 **이 저장소에서 ADR은 기능 착수가 아니라 종료 시점에 발행한다** ([docs/plan/README.md §7.6](../plan/README.md)). 착수 시점의 ADR은 결정이 아니라 계획의 복사본이다.
 
@@ -19,7 +19,7 @@
 /
 ├── CONTEXT.md        ← 용어집 (아직 없음)
 ├── docs/
-│   ├── adr/          ← 결정 기록 (아직 없음, 기능 종료 시 발행)
+│   ├── adr/          ← 결정 기록 (기능 종료 시 발행. 지금 0001·0002)
 │   ├── DESIGN.md     ← 설계 결정과 그 근거
 │   ├── evidence-map.md
 │   ├── plan/         ← 무엇을 어느 순서로 만드는가
