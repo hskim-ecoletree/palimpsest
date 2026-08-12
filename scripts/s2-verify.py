@@ -25,7 +25,12 @@ import tempfile
 from pathlib import Path
 
 ENVELOPE_FIELDS = ["answer", "snapshot", "projection", "coverage", "capabilities", "ledger", "elision"]
-NOT_BUILT_SLOTS = ["bindings", "facts", "unresolved", "effects", "judgments"]
+# **`bindings` 는 여기 없다.** S2 등록 시점에는 그 자리도 `NotBuilt` 였고 그것이
+# 합격선 ② 였는데, **S3 가 그 자리를 채웠다**(결박이 실제로 뜬다). 자리가 채워진 것은
+# 합격선의 위반이 아니라 이행이다 — S2 가 요구한 것은 *"빈 자리를 빈 배열로 내지 말 것"*
+# 이고, 값이 생기면 값이 나가는 것이 맞다. 나머지 넷은 여전히 `NotBuilt` 여야 한다.
+NOT_BUILT_SLOTS = ["facts", "unresolved", "effects", "judgments"]
+BUILT_SLOTS = ["bindings"]
 
 
 def run(cmd, cwd=None):
@@ -86,9 +91,14 @@ def main() -> int:
                 bad.append(f"{slot} 이 not_built 가 아니다: {v!r}")
             elif not v["not_built"].get("capability", {}).get("feature"):
                 bad.append(f"{slot} 에 기능 번호가 없다")
+        for slot in BUILT_SLOTS:
+            v = answer.get(slot)
+            if not (isinstance(v, dict) and "present" in v):
+                bad.append(f"{slot} 이 Present 가 아니다 (S3 가 채운 자리): {v!r}")
         shown = {s: answer[s]["not_built"]["capability"]["feature"] for s in NOT_BUILT_SLOTS
                  if isinstance(answer.get(s), dict) and "not_built" in answer[s]}
-        print(f"② 빈답  {len(shown)}/{len(NOT_BUILT_SLOTS)} 자리가 not_built · {shown}")
+        print(f"② 빈답  {len(shown)}/{len(NOT_BUILT_SLOTS)} 자리가 not_built · {shown}"
+              f"  ·  채워진 자리 {BUILT_SLOTS}")
         if bad:
             failures.extend(f"② {b}" for b in bad)
         # 워킹트리도 같은 규율을 받는다

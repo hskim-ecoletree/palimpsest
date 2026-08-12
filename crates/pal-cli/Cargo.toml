@@ -15,6 +15,7 @@ path = "src/main.rs"
 pal-core.workspace = true
 pal-extract.workspace = true
 pal-git.workspace = true
+pal-intent.workspace = true
 pal-store.workspace = true
 clap.workspace = true
 serde.workspace = true

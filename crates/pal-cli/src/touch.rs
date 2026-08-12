@@ -10,9 +10,11 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use pal_core::{
-    Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision, Envelope, ExtractGrade,
-    IdentityGrade, LedgerRef, ProjectionFreshness, SymbolNode, TouchAnswer, TouchResult,
+    BindingStatus, BoundItem, Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision,
+    Envelope, ExtractGrade, IdentityGrade, LedgerRef, ProjectionFreshness, SymbolNode,
+    TouchAnswer, TouchResult,
 };
+use pal_intent::IntentStore;
 use pal_store::Projection;
 
 use crate::ledger;
@@ -23,11 +25,11 @@ fn capabilities() -> CapabilitySet {
         vec![
             "ledger.snapshot".to_owned(),
             "symbol.resolve".to_owned(),
+            "binding.touch".to_owned(),
         ],
         vec![
             CapabilityId::new("F07", "reference-resolution"),
             CapabilityId::new("F08", "unresolved-refs"),
-            CapabilityId::new("F09", "binding"),
             CapabilityId::new("F13", "effects"),
             CapabilityId::new("F15", "judgment"),
         ],
@@ -43,6 +45,7 @@ pub fn run(
     rev: Option<&str>,
     cache_dir: Option<PathBuf>,
     index_path: Option<PathBuf>,
+    intent_path: Option<PathBuf>,
     name: &str,
     json: bool,
 ) -> Result<()> {
@@ -54,12 +57,17 @@ pub fn run(
     // **통째로 다시 만든다.** 2층은 캐시이고 증분 갱신은 F05 의 것이다.
     let indexed = projection.rebuild(&report.symbols).context("2층을 세우지 못했다")?;
 
+    // **의도 저장소는 파생층과 다른 파일이다** — R-21. 2층을 지워도 이쪽은 남는다.
+    let intent = IntentStore::open(&intent_file(repo_path, intent_path))
+        .context("의도 저장소를 열지 못했다")?;
+
     let found = projection.resolve_name(name).context("2층을 읽지 못했다")?;
     let answer = match found.len() {
         0 => TouchAnswer::Unknown { name: name.to_owned() },
         1 => {
             let symbol = found.into_iter().next().expect("길이가 1 이다");
-            TouchAnswer::Found(Box::new(touch_result(&report, symbol)))
+            let bound = bound_items(&intent, &projection, &symbol)?;
+            TouchAnswer::Found(Box::new(touch_result(&report, symbol, bound)))
         }
         _ => TouchAnswer::Ambiguous { name: name.to_owned(), candidates: found },
     };
@@ -97,7 +105,36 @@ pub fn run(
     Ok(())
 }
 
-fn touch_result(report: &ledger::LedgerReport, symbol: SymbolNode) -> TouchResult {
+/// 의도 저장소 위치. **기본값이 2층과 다른 파일이다**(stack §2.4).
+pub fn intent_file(repo_path: &Path, given: Option<PathBuf>) -> PathBuf {
+    given.unwrap_or_else(|| repo_path.join(".palimpsest/intent.redb"))
+}
+
+/// 이 심볼에 걸린 것들과 그 상태.
+///
+/// **낡음은 여기서 계산된다** — 결박 시점의 요약과 2층의 현재 요약을 댄다.
+/// 심볼이 사라졌으면 `Orphaned` 이고 그것은 `Stale` 과 다른 사건이다.
+fn bound_items(
+    intent: &IntentStore,
+    projection: &Projection,
+    symbol: &SymbolNode,
+) -> Result<Vec<BoundItem>> {
+    let bindings = intent.bound_to(symbol.id).context("결박을 읽지 못했다")?;
+    let mut out = Vec::with_capacity(bindings.len());
+    for b in bindings {
+        let status = BindingStatus::evaluate(&b, |id| {
+            projection.symbol(id).ok().flatten().map(|n| n.body)
+        });
+        out.push(BoundItem::Note { binding: b.id, note: b.note, status });
+    }
+    Ok(out)
+}
+
+fn touch_result(
+    report: &ledger::LedgerReport,
+    symbol: SymbolNode,
+    bound: Vec<BoundItem>,
+) -> TouchResult {
     TouchResult {
         target: Coord {
             repo: report.ledger.snapshot.repo.clone(),
@@ -106,7 +143,8 @@ fn touch_result(report: &ledger::LedgerReport, symbol: SymbolNode) -> TouchResul
             symbol: symbol.id,
         },
         symbol,
-        bindings: Capable::not_built(CapabilityId::new("F09", "binding")),
+        // **S2 에서는 여기가 NotBuilt 였다.** 채워지는 것이 S3 의 인수 기준 ② 다.
+        bindings: Capable::Present(bound),
         facts: Capable::not_built(CapabilityId::new("F07", "reference-resolution")),
         unresolved: Capable::not_built(CapabilityId::new("F08", "unresolved-refs")),
         effects: Capable::not_built(CapabilityId::new("F13", "effects")),
@@ -136,7 +174,7 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
                      r.symbol.kind.name(), r.symbol.path, r.symbol.span.line_start,
                      r.symbol.identity.name(), r.symbol.body.short());
             println!();
-            slot("이 좌표에 걸린 것", &r.bindings);
+            print_bindings(&r.bindings);
             slot("이 심볼이 하는 것", &r.facts);
             slot("내가 모르는 것", &r.unresolved);
             slot("효과", &r.effects);
@@ -166,6 +204,35 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
              e.capabilities.built.join(" · "),
              e.capabilities.not_built.iter().map(|c| c.feature).collect::<Vec<_>>().join(" · "));
     println!();
+}
+
+/// 결박을 띄운다 — **제품의 형태가 처음으로 보이는 자리다.**
+fn print_bindings(value: &Capable<Vec<BoundItem>>) {
+    let Capable::Present(items) = value else {
+        println!("■ 이 좌표에 걸린 것");
+        println!("  (이 빌드에는 binding 능력이 없습니다)");
+        return;
+    };
+    println!("■ 이 좌표에 걸린 것 ({})", items.len());
+    if items.is_empty() {
+        // **여기의 빈 목록은 정직하다** — 능력이 있고 값이 없는 것이다.
+        println!("  아직 없습니다.");
+        return;
+    }
+    for item in items {
+        let BoundItem::Note { binding, note, status } = item;
+        let mark = match &status.code {
+            pal_core::CodeFreshness::Live => "live".to_owned(),
+            pal_core::CodeFreshness::Stale { triggered_by } =>
+                format!("STALE ← {} 개가 변했습니다", triggered_by.len()),
+            pal_core::CodeFreshness::Orphaned { missing } =>
+                format!("ORPHANED ← 좌표 {} 개가 사라졌습니다", missing.len()),
+        };
+        println!("  [{}] {mark}", binding.as_str());
+        for line in note.lines() {
+            println!("      {line}");
+        }
+    }
 }
 
 /// 미구축 자리를 **빈 목록이 아니라 문장으로** 낸다.

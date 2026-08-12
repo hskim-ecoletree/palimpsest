@@ -11,6 +11,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use pal_core::{Capable, Language};
 
+mod bind;
 mod ledger;
 mod touch;
 
@@ -31,6 +32,27 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// 조각 하나를 좌표에 손으로 건다 — **사람이 넣는 자리**
+    Bind {
+        /// 심볼 이름
+        name: String,
+        /// 걸 조각
+        #[arg(long)]
+        note: String,
+        /// 저장소 경로
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 어느 커밋인가
+        #[arg(long)]
+        at: Option<String>,
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        #[arg(long)]
+        index: Option<PathBuf>,
+        /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
+        #[arg(long)]
+        intent: Option<PathBuf>,
+    },
     /// 좌표 하나를 만진다 — **빈 답도 정직하게 낸다**
     Touch {
         /// 심볼 이름
@@ -47,6 +69,9 @@ enum Command {
         /// 2층 인덱스 위치. 기본값은 `<저장소>/.palimpsest/index.redb`
         #[arg(long)]
         index: Option<PathBuf>,
+        /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
+        #[arg(long)]
+        intent: Option<PathBuf>,
         /// 사람이 읽는 화면 대신 JSON 으로 낸다
         #[arg(long)]
         json: bool,
@@ -71,8 +96,11 @@ enum Command {
 fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Symbols { path, json } => symbols(&path, json),
-        Command::Touch { name, repo, at, cache_dir, index, json } => {
-            touch::run(&repo, at.as_deref(), cache_dir, index, &name, json)
+        Command::Bind { name, note, repo, at, cache_dir, index, intent } => {
+            bind::run(&repo, at.as_deref(), cache_dir, index, intent, &name, &note)
+        }
+        Command::Touch { name, repo, at, cache_dir, index, intent, json } => {
+            touch::run(&repo, at.as_deref(), cache_dir, index, intent, &name, json)
         }
         Command::Ledger { path, at, cache_dir, json } => {
             let report = ledger::compute(&path, at.as_deref(), cache_dir)?;

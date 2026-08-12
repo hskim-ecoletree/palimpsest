@@ -42,11 +42,22 @@ pub struct SymbolNode {
     pub identity: IdentityGrade,
 }
 
-/// 이 좌표에 걸린 것 — **F09~F12 가 채운다.**
+/// 이 좌표에 걸린 것.
 ///
-/// 변형이 없다. 결박이 아직 존재하지 않으므로 값을 만들 수 없고, 그것이 정확한 상태다.
+/// F11 §2 는 일곱 종류를 적었다 — 결정 · 대체 이력 · 라벨 · 계획 항목 · 결함 계보 ·
+/// 잔여 · 범위 축소. **여기 하나뿐인 것은 나머지를 만들 기능이 아직 없어서다.**
+/// 만들 수 없는 변형을 미리 두면 그것이 곧 "있는데 안 나오는" 상태가 된다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub enum BoundItem {}
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum BoundItem {
+    /// 사람이 손으로 건 조각 — **S3 가 만드는 유일한 종류다.**
+    Note {
+        binding: crate::binding::BindingId,
+        note: String,
+        /// 두 축 — 코드 신선도와 계보.
+        status: crate::binding::BindingStatus,
+    },
+}
 
 /// 이 심볼이 하는 것 — **F07(참조 해소)이 채운다.**
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

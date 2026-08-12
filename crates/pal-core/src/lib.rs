@@ -10,6 +10,7 @@
 
 #![forbid(unsafe_code)]
 
+mod binding;
 mod capable;
 mod coord;
 mod envelope;
@@ -20,6 +21,9 @@ mod symbol;
 mod touch;
 mod version;
 
+pub use binding::{
+    Binding, BindingId, BindingStatus, CodeFreshness, Lineage, WatchEntry,
+};
 pub use capable::{Capable, CapabilityId};
 pub use coord::{BodyDigest, Coord, Discriminator, SymbolId};
 pub use envelope::{
