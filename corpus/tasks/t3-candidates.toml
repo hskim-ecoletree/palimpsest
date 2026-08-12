@@ -82,3 +82,318 @@ answer_form = "가드 예/아니오 + 근거 좌표(파일·심볼) 또는 '없�
 same_as_t2 = true
 
 falsified_if = "어떤 장치의 절감률이 0 이하면 그 장치는 만들지 않는다. F 에서 일괄 판정이 뒤집히면 ②를 채택하지 않는다."
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 추첨 결과 — 위 [selection] 규칙의 집행. scripts/t3-draw.py 가 생성했다
+# **이 커밋 시각이 측정 시작보다 앞선다.**
+# ═══════════════════════════════════════════════════════════════════════════
+
+[draw]
+executed_at = "2026-08-12"
+unique = 38
+sequence = 42   # 새 고유 38 + 재제시 4(E 2 · F 2). E·F 는 실행 중에 정해진다
+f_designated = "B1 의 3번째 · B2 의 3번째 — 결과와 무관하게 지금 지정된다"
+
+[[candidate]]
+seq = 1
+block = "A1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/controller/AdminLoginController.kt"
+line = 65
+symbol = "AuditLog"
+
+[[candidate]]
+seq = 2
+block = "A1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/service/BoxwoodPatUserResolver.kt"
+line = 62
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 3
+block = "A1"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/config/AccountSecurityProperties.kt"
+line = 102
+symbol = "validate"
+
+[[candidate]]
+seq = 4
+block = "A1"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/DwpAuthService.kt"
+line = 15
+symbol = "verify"
+
+[[candidate]]
+seq = 5
+block = "D"
+stratum = "③"
+file = "boxwood-packages/boxwood-commons/src/main/kotlin/kr/co/ecoletree/boxwood/commons/audit/aspect/AuditLogAspect.kt"
+line = 36
+symbol = "AuditLog"
+
+[[candidate]]
+seq = 6
+block = "D"
+stratum = "③"
+file = "boxwood-packages/boxwood-commons/src/main/kotlin/kr/co/ecoletree/boxwood/commons/audit/aspect/AuditLogAspect.kt"
+line = 118
+symbol = "AuditLog"
+
+[[candidate]]
+seq = 7
+block = "D"
+stratum = "③"
+file = "boxwood-packages/boxwood-commons/src/main/kotlin/kr/co/ecoletree/boxwood/commons/audit/aspect/AuditLogAspect.kt"
+line = 173
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 8
+block = "D"
+stratum = "③"
+file = "boxwood-packages/boxwood-commons/src/main/kotlin/kr/co/ecoletree/boxwood/commons/audit/aspect/AuditLogAspect.kt"
+line = 263
+symbol = "AuditLog"
+
+[[candidate]]
+seq = 9
+block = "D"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/controller/CodeController.kt"
+line = 28
+symbol = "RequiresIntegratedPermission"
+
+[[candidate]]
+seq = 10
+block = "D"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/controller/CodeController.kt"
+line = 36
+symbol = "RequiresIntegratedPermission"
+
+[[candidate]]
+seq = 11
+block = "D"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/controller/CodeController.kt"
+line = 42
+symbol = "RequiresIntegratedPermission"
+
+[[candidate]]
+seq = 12
+block = "D"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/controller/CodeController.kt"
+line = 45
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 13
+block = "B1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/controller/CodeController.kt"
+line = 279
+symbol = "RequiresIntegratedPermission"
+
+[[candidate]]
+seq = 14
+block = "B1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/code/service/CodeService.kt"
+line = 561
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 15
+block = "B1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/config/TenantStateValidationAspect.kt"
+line = 23
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 16
+block = "B1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/llmtask/repository/impl/ConversationDslRepository.kt"
+line = 27
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 17
+block = "B1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/controller/PermissionController.kt"
+line = 207
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 18
+block = "B1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/rbac/annotation/HasFeaturePermission.kt"
+line = 19
+symbol = "HasFeaturePermission"
+
+[[candidate]]
+seq = 19
+block = "B1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/role/service/impl/RoleGroupServiceImpl.kt"
+line = 479
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 20
+block = "B1"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/user/controller/TenantUserController.kt"
+line = 98
+symbol = "HasFeaturePermission"
+
+[[candidate]]
+seq = 21
+block = "B2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt"
+line = 85
+symbol = "require"
+
+[[candidate]]
+seq = 22
+block = "B2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ValidationUtil.kt"
+line = 223
+symbol = "require"
+
+[[candidate]]
+seq = 23
+block = "B2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/config/FlywayConfig.kt"
+line = 206
+symbol = "validate"
+
+[[candidate]]
+seq = 24
+block = "B2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/dwp/rest/controller/DwpAuditLogController.kt"
+line = 68
+symbol = "validate"
+
+[[candidate]]
+seq = 25
+block = "B2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt"
+line = 58
+symbol = "check"
+
+[[candidate]]
+seq = 26
+block = "B2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/IntegratedPermissionCheckAspect.kt"
+line = 205
+symbol = "check"
+
+[[candidate]]
+seq = 27
+block = "B2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/permission/aspect/PermissionCheckAspect.kt"
+line = 166
+symbol = "check"
+
+[[candidate]]
+seq = 28
+block = "B2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/role/service/impl/RoleGroupServiceImpl.kt"
+line = 403
+symbol = "validate"
+
+[[candidate]]
+seq = 29
+block = "C"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/service/McpToolConfigService.kt"
+line = 59
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 30
+block = "C"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/service/ProcessService.kt"
+line = 846
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 31
+block = "C"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/service/ServiceTaskService.kt"
+line = 165
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 32
+block = "C"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/service/SystemPatService.kt"
+line = 108
+symbol = "validate"
+
+[[candidate]]
+seq = 33
+block = "C"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/controller/ConnectorController.kt"
+line = 192
+symbol = "validate"
+
+[[candidate]]
+seq = 34
+block = "C"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/common/util/ResultsDsl.kt"
+line = 59
+symbol = "validate"
+
+[[candidate]]
+seq = 35
+block = "A2"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/web/controller/AuthenticationController.kt"
+line = 451
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 36
+block = "A2"
+stratum = "③"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/automation/dashboard/service/DashboardService.kt"
+line = 255
+symbol = "TenantTransactional"
+
+[[candidate]]
+seq = 37
+block = "A2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/DwpAuthServiceImpl.kt"
+line = 77
+symbol = "verify"
+
+[[candidate]]
+seq = 38
+block = "A2"
+stratum = "①"
+file = "portal-backend/src/main/kotlin/kr/co/ecoletree/boxwood/auth/core/service/impl/TokenStorageServiceImpl.kt"
+line = 191
+symbol = "validate"
