@@ -95,6 +95,8 @@ pub fn run(
         report.ledger.snapshot.clone(),
         ProjectionFreshness {
             matches_worktree: Capable::not_built(CapabilityId::new("F01", "worktree-state")),
+            // 재구축 중인지 이 빌드는 모른다 — 관측 경로가 F05 다. DESIGN §12.7 격리 3번.
+            rebuild: Capable::not_built(CapabilityId::new("F05", "rebuild-progress")),
             built_for_this_snapshot: true,
             symbols_indexed: indexed,
         },

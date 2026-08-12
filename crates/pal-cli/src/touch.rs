@@ -11,8 +11,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use pal_core::{
     BindingStatus, BoundItem, Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision,
-    Envelope, ExtractGrade, IdentityGrade, LedgerRef, ProjectionFreshness, SymbolNode,
-    TouchAnswer, TouchResult,
+    Envelope, ExtractGrade, IdentityGrade, LedgerRef, ProjectionFreshness, RebuildState,
+    SymbolNode, TouchAnswer, TouchResult,
 };
 use pal_intent::IntentStore;
 use pal_store::Projection;
@@ -78,6 +78,8 @@ pub fn run(
         ProjectionFreshness {
             // **모른다고 적는다.** 커밋 트리를 읽은 빌드는 워킹트리가 같은지 알 수 없다.
             matches_worktree: Capable::not_built(CapabilityId::new("F01", "worktree-state")),
+            // 재구축의 시작과 끝을 아는 것은 2층을 소유한 쪽이다 — F05.
+            rebuild: Capable::not_built(CapabilityId::new("F05", "rebuild-progress")),
             built_for_this_snapshot: true,
             symbols_indexed: indexed,
         },
@@ -208,6 +210,14 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
         Capable::Present(v) => println!("  워킹트리  {}", if *v { "일치" } else { "다름" }),
         Capable::NotBuilt { capability } => println!(
             "  워킹트리  (이 빌드는 워킹트리 상태를 모릅니다 — {} 미구축)", capability.feature),
+    }
+    // **모른다는 것도 화면에 선다.** 산출에만 있고 화면에 없으면 사람은 그 공백을 못 본다.
+    match &e.projection.rebuild {
+        Capable::Present(RebuildState::Rebuilding) =>
+            println!("  재구축    진행 중 — 이 답은 열린 스냅샷 위에 섰습니다"),
+        Capable::Present(RebuildState::Settled) => println!("  재구축    아님"),
+        Capable::NotBuilt { capability } => println!(
+            "  재구축    (이 빌드는 재구축 중인지 모릅니다 — {} 미구축)", capability.feature),
     }
     println!("  절단      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
     println!("  능력      {} · 미구축 {}",

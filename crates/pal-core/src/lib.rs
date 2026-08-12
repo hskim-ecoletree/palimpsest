@@ -47,7 +47,7 @@ pub use doctor::{
 pub use derived::{DerivedId, NodeRef, ReproInput};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};
 pub use envelope::{
-    CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness,
+    CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness, RebuildState,
 };
 pub use judgment::{Residual, ResidualReason};
 pub use language::Language;

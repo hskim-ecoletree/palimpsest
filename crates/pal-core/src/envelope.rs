@@ -11,6 +11,19 @@ use crate::capable::{Capable, CapabilityId};
 use crate::ledger::{Bucket, ExtractGrade, IdentityGrade};
 use crate::repo::Snapshot;
 
+/// 2층이 지금 다시 만들어지는 중인가 — DESIGN §12.7 의 스냅샷 격리 3번.
+///
+/// **답을 막지 않고 진행 중임을 싣는다**(§2.3 과 같은 규칙). 재구축은 질의를 거절할
+/// 사유가 아니라 답에 붙는 사실이다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RebuildState {
+    /// 재구축이 돌고 있지 않다 — 이 답은 가만히 선 2층 위에 있다.
+    Settled,
+    /// 재구축 중이다. 답은 열린 트랜잭션의 스냅샷 위에서 나왔고 섞이지 않았다(격리 1번).
+    Rebuilding,
+}
+
 /// 2층이 얼마나 신선한가.
 ///
 /// **낡음 감지기 자신이 낡을 수 있다**(DESIGN §12). 감지기가 3주 낡았으면 낡음 표시들도
@@ -23,6 +36,19 @@ pub struct ProjectionFreshness {
     /// 같은지 **모른다** — 알려면 워킹트리 머클이 필요하고 그것은 F01 §3.2 다.
     /// `false` 로 적으면 *"다르다"* 는 거짓말이 되고 `true` 로 적으면 더 나쁘다.
     pub matches_worktree: Capable<bool>,
+    /// 2층이 이 답을 내는 동안 재구축 중이었는가.
+    ///
+    /// **`RebuildState` 가 아니라 [`Capable`] 인 이유가 위와 같다.** DESIGN §12.7 격리
+    /// 3번은 재구축을 값으로 표시하라고 적었지만, 그것을 **관측할 경로가 이 빌드에 없다**
+    /// — 재구축의 시작과 끝을 아는 것은 2층을 소유한 쪽이고 그것은 F05 다.
+    ///
+    /// [`RebuildState::Settled`] 로 고정하면 죽은 필드이자 거짓말이다. *"재구축 중이
+    /// 아니다"* 는 관측이지 기본값이 아니고, 관측하지 않고 적으면 진짜로 재구축 중인
+    /// 경우와 구별되지 않는다. `NotBuilt` 는 **참인 선언**이다 — *"이 빌드는 모른다."*
+    ///
+    /// 이 자리가 아예 없던 동안 그 사실은 산출에서 빠져 있었고, 빠진 것은 소비자가
+    /// 셀 수 없다. 그것이 이 제품이 고발한 조용한 공백의 형태다(목표 §3.1).
+    pub rebuild: Capable<RebuildState>,
     /// 2층이 이 스냅샷에서 만들어졌는가. 아니면 그 사실이 실린다.
     pub built_for_this_snapshot: bool,
     /// 2층에 들어 있는 심볼 수. 0 이면 "인덱스가 비어 있다"가 답에 실린다.
@@ -184,6 +210,22 @@ mod tests {
         let e = Elision::dropped(7, "후보 상한 K=32");
         assert!(!e.is_none());
         assert_eq!(e.reasons.len(), 1);
+    }
+
+    #[test]
+    fn 재구축_자리는_settled_로_고정되지_않는다() {
+        // DESIGN §12.7 격리 3번의 자리다. 관측 경로가 없는 빌드가 `Settled` 를 적으면
+        // **재구축 중이 아니라고 말한 것**이 되고, 그것은 관측이 아니라 기본값이다.
+        // `NotBuilt` 만이 참이다 — 그리고 그 사실이 직렬화된 산출에 실려야 한다.
+        let p = ProjectionFreshness {
+            matches_worktree: Capable::not_built(CapabilityId::new("F01", "worktree-state")),
+            rebuild: Capable::not_built(CapabilityId::new("F05", "rebuild-progress")),
+            built_for_this_snapshot: true,
+            symbols_indexed: 3,
+        };
+        let json = serde_json::to_value(&p).unwrap();
+        assert_eq!(json["rebuild"]["not_built"]["capability"]["feature"], "F05");
+        assert!(!p.rebuild.is_present());
     }
 
     #[test]
