@@ -1,0 +1,66 @@
+# 의존 정책 — stack §3.4 · §4.3 단계 1
+#
+# **`cargo xtask check` 가 이것을 부른다.** 검사가 저장소 밖 도구에 기대는 유일한 자리이고,
+# 그래서 미설치일 때 조용히 건너뛰지 않고 실패한다 — 건너뛴 검사는 켜지지 않은 검사다.
+#
+# 정본은 stack §3.4 다: *"라이선스: MIT/Apache-2.0만. `cargo-deny` 로 CI 검사"*.
+# **이 파일에 줄이 느는 것 자체가 관측 대상이다** — `xtask/vocab.toml` 과 같은 규율이다.
+
+[graph]
+all-features = true
+
+# ── 라이선스 ────────────────────────────────────────────────────────────────
+[licenses]
+# 정본이 정한 둘.
+allow = [
+    "MIT",
+    "Apache-2.0",
+
+    # ── 예외 1 — 왜 필요한가 ──────────────────────────────────────────────
+    # `unicode-ident` 가 `(MIT OR Apache-2.0) AND Unicode-3.0` 이다. `AND` 이므로
+    # 위의 둘을 골라도 이것이 남는다. 이 크레이트는 `syn`·`proc-macro2` 의 전이 의존이고
+    # (serde·clap·thiserror 의 파생 매크로가 전부 그것을 쓴다) 유니코드 문자 분류표의
+    # 라이선스일 뿐이다. 배포에 제약을 더하지 않는다.
+    "Unicode-3.0",
+]
+confidence-threshold = 0.9
+
+# ── 보안 권고 ───────────────────────────────────────────────────────────────
+[advisories]
+# 기본이 `deny` 다. 알려진 취약점·유지보수 중단 크레이트가 들어오면 실패한다.
+# **무시 목록은 비어 있고, 비어 있는 것이 정상 상태다.** 항목을 넣을 때는 왜인지 적는다.
+ignore = []
+
+# ── 출처 ────────────────────────────────────────────────────────────────────
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+
+# ── 예외 2 — git 출처 하나. **이것이 이 파일에서 가장 중요한 줄이다** ──────────
+# `tree-sitter-kotlin-ng` 를 crates.io 판이 아니라 **git rev `3dea6df` 로 고정**한다.
+# 그 rev 가 S0 게이트의 판정 대상이고(`corpus/criteria.toml` `[s0.grammar]`),
+# crates.io 의 1.1.0 과 같은 커밋이지만 **같다는 사실이 잠기지 않는다** — 레지스트리
+# 판은 재게시될 수 있고 rev 는 그럴 수 없다. 문법이 바뀌면 1층 캐시가 전량 무효화되고
+# 좌표가 움직이므로(stack §5.1) 이 고정은 성능이 아니라 **정체성**의 문제다.
+#
+# upstream 이 19개월째 멈춰 있다는 것도 여기 적어 둔다(docs/gates/S0-symbols.md §정정).
+# 포크 채택 여부의 처분은 F02 가 지며, 그때 이 줄이 함께 움직인다.
+allow-git = ["https://github.com/tree-sitter-grammars/tree-sitter-kotlin"]
+
+# ── 중복·금지 ───────────────────────────────────────────────────────────────
+[bans]
+# 같은 크레이트의 버전이 여럿 들어오는 것은 빌드 크기와 진단을 흐린다. 지금은 경고다 —
+# 우리 것이 아닌 전이 의존에서 생기고, `deny` 로 올리면 상류가 정리될 때까지 막힌다.
+multiple-versions = "warn"
+wildcards = "deny"
+# 워크스페이스 내부 `path` 의존은 버전을 달지 않는다(`publish = false` 이므로 달 이유가 없다).
+# 그것을 와일드카드로 세면 우리 크레이트끼리의 의존이 전부 위반이 된다 — 검사가 잡으려는
+# 것은 **외부** 크레이트의 `"*"` 다.
+allow-wildcard-paths = true
+
+# stack §3.1 이 기각한 것들. **기각을 문서에만 적으면 다음 사람이 다시 넣는다.**
+deny = [
+    { crate = "git2", reason = "stack §3.1 — C 의존. git 접근은 gix 로 하고 pal-git 이 감싼다" },
+    { crate = "openssl", reason = "정적 링크 비용. 순수 Rust 경로를 유지한다" },
+]

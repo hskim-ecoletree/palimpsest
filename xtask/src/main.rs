@@ -1,7 +1,10 @@
 //! CI 검사 — **단계 1**(stack §4.3). 전부 S 규모이고 외부 의존을 늘리지 않는다.
 //!
-//! 여기 있는 넷 중 둘은 계획 §2 가 *"되돌릴 수 없는 것"* 으로 분류한 것이다.
+//! 여기 있는 다섯 중 둘은 계획 §2 가 *"되돌릴 수 없는 것"* 으로 분류한 것이다.
 //! **그 둘의 처분은 게이트가 아니라 빌드 실패다.**
+//!
+//! 다섯이 stack §4.3 **단계 1** 의 전부다 — F01 완료 체크리스트가 *"CI 1단계 켜기"* 로
+//! 세는 그 목록이고, 마지막 하나(`cargo-deny`)가 S0 이 남긴 빚이었다.
 //!
 //! ```text
 //! cargo xtask check
@@ -30,12 +33,16 @@ fn main() -> Result<()> {
     let root = repo_root()?;
     let mut failures = Vec::new();
 
-    for (name, result) in [
+    let checks = [
         ("의존 방향", check_dependency_direction(&root)),
         ("코어 어휘 금지", check_vocabulary(&root)),
         ("의도 저장소 폐기 경로 부재", check_intent_untouched(&root)),
         ("unsafe 금지", check_forbid_unsafe(&root)),
-    ] {
+        ("의존 정책", check_deny(&root)),
+    ];
+    let total = checks.len();
+
+    for (name, result) in checks {
         match result {
             Ok(note) => println!("  ok    {name}  — {note}"),
             Err(e) => {
@@ -46,7 +53,7 @@ fn main() -> Result<()> {
     }
 
     if failures.is_empty() {
-        println!("\n검사 4/4 통과");
+        println!("\n검사 {total}/{total} 통과");
         Ok(())
     } else {
         eprintln!();
@@ -209,6 +216,53 @@ fn check_forbid_unsafe(root: &Path) -> Result<String> {
         bail!("`#![forbid(unsafe_code)]` 가 없다:\n    {}", missing.join("\n    "));
     }
     Ok(format!("크레이트 루트 {checked}개"))
+}
+
+// ── 검사 5 — 의존 정책 (stack §3.4 · §4.3 단계 1) ────────────────────────────
+
+/// `cargo deny check` 를 부른다 — 라이선스 · 보안 권고 · 출처 · 금지 크레이트.
+///
+/// **미설치일 때 건너뛰지 않는다.** 건너뛴 검사는 켜지지 않은 검사이고, 이 검사는
+/// F01 완료 체크리스트가 *"CI 1단계 켜기"* 로 세는 다섯 중 하나다. 정책 정본은
+/// 저장소 루트의 `deny.toml` 이며 **거기에 줄이 느는 것 자체가 관측 대상이다.**
+///
+/// 여기가 검사가 저장소 밖 도구에 기대는 유일한 자리다. xtask 의 Cargo 의존은
+/// 늘지 않는다(stack §3.3) — 서브프로세스로 부른다.
+fn check_deny(root: &Path) -> Result<String> {
+    let policy = root.join("deny.toml");
+    if !policy.exists() {
+        bail!("deny.toml 이 없다 — 정책 없이 통과시키지 않는다");
+    }
+
+    let out = Command::new(env!("CARGO"))
+        .args(["deny", "--all-features", "check"])
+        .current_dir(root)
+        .output()
+        .context("cargo 를 실행하지 못했다")?;
+
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    if !out.status.success() {
+        // 미설치와 위반은 다른 사건이다. 뭉개면 "설치 안 됨"이 "정책 위반"으로 보고된다.
+        if stderr.contains("no such command") || stderr.contains("no such subcommand") {
+            bail!(
+                "cargo-deny 가 설치되어 있지 않다 — `cargo install --locked cargo-deny` \
+                 또는 `brew install cargo-deny`.\n    \
+                 이 검사는 stack §4.3 단계 1 에 등록돼 있으므로 건너뛰지 않는다"
+            );
+        }
+        bail!("{}", stderr.trim());
+    }
+
+    // 요약은 "advisories ok, bans ok, licenses ok, sources ok" 형태다.
+    // **어느 스트림으로 나오는지에 기대지 않는다** — 파이프로 잡으면 터미널일 때와 다르다.
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let summary = stderr
+        .lines()
+        .chain(stdout.lines())
+        .map(str::trim)
+        .rfind(|l| l.contains("advisories") && l.contains("licenses"))
+        .unwrap_or("");
+    Ok(if summary.is_empty() { "통과 (요약 없음)".to_owned() } else { summary.to_owned() })
 }
 
 fn rust_sources(dir: &Path) -> Result<Vec<PathBuf>> {
