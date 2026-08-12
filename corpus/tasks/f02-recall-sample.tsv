@@ -1,0 +1,262 @@
+# F02-1 심볼 리콜 표본 — **손으로 센 선언 목록**
+#
+# 합격선 정본: corpus/criteria.toml [f02.1.oracle] · [f02.1.pass] ①
+# 판정 기록:   docs/gates/F02-1-extractor.md
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 이 파일이 무엇인가 — **개수가 아니라 목록이다**
+# ─────────────────────────────────────────────────────────────────────────────
+# `s0-reference-vector.tsv` 는 파일당 선언 **수**다. F01 게이트가 그것으로는 범위
+# 반증을 못 한다고 적었다: *"'범위 안인데 그래프에 없는 심볼' 을 세려면 그래프 밖에서
+# 온 심볼 **목록**이 있어야 한다."*  이 파일이 그 목록이다.
+#
+# **개수만 맞추면 하나를 빠뜨리고 하나를 잘못 잡은 파일이 통과한다.** 그래서 대조는
+# 집합 비교이고, 빠뜨린 것 0 · 잘못 잡은 것 0 이 둘 다 합격선이다.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 순서 — **이 파일이 추출기 코드보다 먼저 커밋된다**
+# ─────────────────────────────────────────────────────────────────────────────
+# [f02.1.oracle] 이 등록한 규율: *"손 목록을 먼저 파일로 커밋하고 그 다음 대조한다.
+# **추출 결과를 보고 손 목록을 고치면 그것은 대조를 사후 조정하는 일이다.**"*
+#
+# 그러므로 이 파일이 커밋되는 시점에 TypeScript 추출기는 **한 줄도 없다.** 아래 목록은
+# 전부 사람이 소스를 읽어 센 것이고, 어떤 도구의 산출도 참조하지 않았다.
+#
+# 나중에 어긋난 것이 나오면 **어긋난 것을 게이트에 적는다.** 이 파일을 고쳐 맞추지
+# 않는다 — 그것이 이 합격선의 위반이다.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 코퍼스와 표본 선정
+# ─────────────────────────────────────────────────────────────────────────────
+# 코퍼스  ditto @ aded7ce7f88feb3c03238c5f9760f3a2ade4a6c1
+#         (corpus/manifest.toml [[corpus]] id="ditto" · remote incognito050924/ditto)
+#         **팁을 쓰면 안 된다** — 코퍼스는 팁이 아니라 이 SHA다.
+#
+# 모집단  `git ls-tree -r --name-only <sha> | grep '\.ts$'` → **496**
+#         (`.tsx`·`.mts`·`.cts` 는 안 걸린다. 496 은 manifest 의 ts_files 와 일치한다)
+#
+# 선정    경로 **LC_ALL=C 정렬** 후 등간격. T10 과 같은 규칙이다:
+#           g = floor(496 / 20) = 24 → 0-기반 인덱스 0·24·48·…·456 (20 개)
+#         재현:
+#           git -C <ditto> ls-tree -r --name-only <sha> | grep '\.ts$' \
+#             | LC_ALL=C sort | awk 'NR%24==1 && ++c<=20'
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 세는 단위 — F02 문서 §3.3 의 표. **여기서 정하고 코드가 따른다**
+# ─────────────────────────────────────────────────────────────────────────────
+# 세는 것
+#   function     `function_declaration` — `export` 여부 무관, `async` 무관
+#   method       `method_definition` — 클래스 본문의 메서드. **`constructor` 포함**
+#   class        `class_declaration`
+#   interface    `interface_declaration`
+#   type_alias   `type_alias_declaration`
+#   enum         `enum_declaration`
+#   variable     `variable_declarator` — **모듈 스코프만**
+#
+# 세지 않는 것 — **이 다섯이 이 표본에서 실제로 하중을 진다**
+#   ① **익명 함수는 독립 심볼이 아니다.** 가장 가까운 이름 있는 조상에 귀속된다.
+#      `describe(...)`·`test(...)`·`.map(...)`·`afterEach(...)` 에 넘긴 화살표 함수가
+#      전부 여기 걸린다. 01 번 파일이 **선언 0** 인 이유가 이것이다
+#   ② **함수 내부 지역 변수는 심볼이 아니다**(폭발). 14 번의 `rel`·`helperOf` 처럼
+#      함수 안에서 화살표를 이름에 묶은 것도 지역이므로 세지 않는다
+#   ③ **모듈 스코프 = 프로그램의 직계 자식.** `export` 는 벗겨서 본다. 그러나 블록
+#      안은 아니다 — 07 번의 `if (import.meta.main) { const violations … }` 는 블록
+#      스코프라 세지 않는다
+#   ④ **객체 리터럴의 속성은 `variable_declarator` 가 아니다.** 10 번의 `run:`,
+#      13 번 `COVERAGE_AXIS_MECHANISMS` 의 `enforce:` 가 화살표를 갖지만 심볼이 아니다
+#   ⑤ **인터페이스의 속성·메서드 시그니처는 심볼이 아니다.** §3.3 표에 없다.
+#      08 번 `EvaluatorProvider.evaluate` 가 그 형태다
+#   그리고 **`import` 는 이 파일의 선언이 아니다** — `ImportSet` 의 몫이다
+#
+# 이름이 없는 자리
+#   기본 내보내기(`export default function () {}`)처럼 이름이 없으면 심볼이 아니다.
+#   **이 표본 20 파일에는 그런 자리가 하나도 없다** — 없다는 사실을 적어 둔다.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 열
+# ─────────────────────────────────────────────────────────────────────────────
+#   path       ditto 저장소 루트 기준 경로
+#   ordinal    **소스 순서**, 파일마다 1 부터. 선언 시작 위치 오름차순
+#   container  포함 관계(C1). 최상위면 `-`, 아니면 조상 이름을 `.` 로 이은 것
+#   name       선언된 이름
+#   kind       위 일곱 중 하나
+#
+# 선언 0 인 파일은 **`ordinal` 이 0 인 한 줄**로 적는다. 빠뜨린 것과 구별되어야 한다.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 합계 — 20 파일 · 선언 172
+# ─────────────────────────────────────────────────────────────────────────────
+path	ordinal	container	name	kind
+rebuild/drive/backstop-turns.frozen.test.ts	0	-	-	none
+rebuild/hook/stop-gate.ts	1	-	StopGateInput	interface
+rebuild/hook/stop-gate.ts	2	-	StopGateDecision	interface
+rebuild/hook/stop-gate.ts	3	-	evaluateStopGate	function
+rebuild/memory/query.ts	1	-	queryMemory	function
+rebuild/schemas/completion-contract.test.ts	1	-	ref	variable
+rebuild/seam/hook-fire-smoke.ts	1	-	REPO	variable
+rebuild/seam/hook-fire-smoke.ts	2	-	STOP_HOOK	variable
+rebuild/seam/hook-fire-smoke.ts	3	-	BUN	variable
+rebuild/seam/hook-fire-smoke.ts	4	-	main	function
+rebuild/state/relock.ts	1	-	RelockCandidate	interface
+rebuild/state/relock.ts	2	-	RelockResult	interface
+rebuild/state/relock.ts	3	-	relockRoute	function
+scripts/adr-guard.ts	1	-	ForbiddenPattern	interface
+scripts/adr-guard.ts	2	-	AdrRule	interface
+scripts/adr-guard.ts	3	-	AdrViolation	interface
+scripts/adr-guard.ts	4	-	ADR_RULES	variable
+scripts/adr-guard.ts	5	-	scanText	function
+scripts/adr-guard.ts	6	-	walkTs	function
+scripts/adr-guard.ts	7	-	filesForTarget	function
+scripts/adr-guard.ts	8	-	countScannedFiles	function
+scripts/adr-guard.ts	9	-	scanAdrViolations	function
+src/acg/fitness/fitness-runner.ts	1	-	AcgSnapshotResult	type_alias
+src/acg/fitness/fitness-runner.ts	2	-	RawViolation	interface
+src/acg/fitness/fitness-runner.ts	3	-	FitnessContext	interface
+src/acg/fitness/fitness-runner.ts	4	-	EvaluatorProvider	interface
+src/acg/fitness/fitness-runner.ts	5	-	normalizeViolationIdentity	function
+src/acg/fitness/fitness-runner.ts	6	-	parseBaselineSet	function
+src/acg/fitness/fitness-runner.ts	7	-	ruleOf	function
+src/acg/fitness/fitness-runner.ts	8	-	relocationAwareNewIds	function
+src/acg/fitness/fitness-runner.ts	9	-	ScheduleDecision	interface
+src/acg/fitness/fitness-runner.ts	10	-	scheduleDecision	function
+src/acg/fitness/fitness-runner.ts	11	-	DeltaResult	interface
+src/acg/fitness/fitness-runner.ts	12	-	assessDelta	function
+src/acg/fitness/fitness-runner.ts	13	-	runFitness	function
+src/acg/tidy/subgraph.ts	1	-	TidySubgraphInput	interface
+src/acg/tidy/subgraph.ts	2	-	node	variable
+src/acg/tidy/subgraph.ts	3	-	buildTidySubgraph	function
+src/cli/commands/impact.ts	1	-	impactCommand	variable
+src/cli/wizard/prompt.ts	1	-	PromptIO	interface
+src/cli/wizard/prompt.ts	2	-	TuiPrompts	interface
+src/cli/wizard/prompt.ts	3	-	confirm	function
+src/cli/wizard/prompt.ts	4	-	Choice	interface
+src/cli/wizard/prompt.ts	5	-	Option	interface
+src/cli/wizard/prompt.ts	6	-	select	function
+src/cli/wizard/prompt.ts	7	-	multiSelect	function
+src/core/change-contract-store.ts	1	-	ChangeContractStore	class
+src/core/change-contract-store.ts	2	ChangeContractStore	constructor	method
+src/core/change-contract-store.ts	3	ChangeContractStore	dir	method
+src/core/change-contract-store.ts	4	ChangeContractStore	path	method
+src/core/change-contract-store.ts	5	ChangeContractStore	read	method
+src/core/change-contract-store.ts	6	ChangeContractStore	write	method
+src/core/coverage-manager.ts	1	-	CLOSED_STATES	variable
+src/core/coverage-manager.ts	2	-	DEFAULT_DRY_K	variable
+src/core/coverage-manager.ts	3	-	isClosed	function
+src/core/coverage-manager.ts	4	-	addNode	function
+src/core/coverage-manager.ts	5	-	closeNode	function
+src/core/coverage-manager.ts	6	-	selectReadyCoverageNodes	function
+src/core/coverage-manager.ts	7	-	coverageClosureGate	function
+src/core/coverage-manager.ts	8	-	recordDryRound	function
+src/core/coverage-manager.ts	9	-	isCoverageTerminated	function
+src/core/coverage-manager.ts	10	-	JudgeInput	interface
+src/core/coverage-manager.ts	11	-	buildJudgeInput	function
+src/core/coverage-manager.ts	12	-	PlanDialogUserQa	interface
+src/core/coverage-manager.ts	13	-	PlanDialogSelfAnswer	interface
+src/core/coverage-manager.ts	14	-	PlanDialogAssumption	interface
+src/core/coverage-manager.ts	15	-	PlanDialogItem	interface
+src/core/coverage-manager.ts	16	-	PlanDialogInput	interface
+src/core/coverage-manager.ts	17	-	serializePlanDialog	function
+src/core/coverage-manager.ts	18	-	COVERAGE_AXES	variable
+src/core/coverage-manager.ts	19	-	CoverageAxis	type_alias
+src/core/coverage-manager.ts	20	-	AxisMechanism	interface
+src/core/coverage-manager.ts	21	-	NeutralityState	interface
+src/core/coverage-manager.ts	22	-	BalanceState	interface
+src/core/coverage-manager.ts	23	-	PriorityState	interface
+src/core/coverage-manager.ts	24	-	COVERAGE_AXIS_MECHANISMS	variable
+src/core/coverage-manager.ts	25	-	COVERAGE_TIERS	variable
+src/core/coverage-manager.ts	26	-	CoverageTier	type_alias
+src/core/coverage-manager.ts	27	-	TierSelectionInput	interface
+src/core/coverage-manager.ts	28	-	FEW_FILES	variable
+src/core/coverage-manager.ts	29	-	selectCoverageTier	function
+src/core/coverage-manager.ts	30	-	tierBriefApproval	function
+src/core/coverage-manager.ts	31	-	PlanGateInput	interface
+src/core/coverage-manager.ts	32	-	PlanGatePatch	interface
+src/core/coverage-manager.ts	33	-	producePlanGate	function
+src/core/coverage-manager.ts	34	-	DOC_INTENT_PREFIX	variable
+src/core/coverage-manager.ts	35	-	ANCHOR_TOKEN	variable
+src/core/coverage-manager.ts	36	-	isReEvaluableAnchor	function
+src/core/coverage-manager.ts	37	-	validateAcOracle	function
+src/core/coverage-manager.ts	38	-	oraclesEqual	function
+src/core/coverage-manager.ts	39	-	assertOracleFrozen	function
+src/core/coverage-manager.ts	40	-	TierDepthBudget	interface
+src/core/coverage-manager.ts	41	-	TIER_DEPTH	variable
+src/core/coverage-manager.ts	42	-	tierDepthBudget	function
+src/core/coverage-manager.ts	43	-	coverageDryK	function
+src/core/coverage-manager.ts	44	-	CoverageCaps	interface
+src/core/coverage-manager.ts	45	-	CapUsage	interface
+src/core/coverage-manager.ts	46	-	CapStatus	interface
+src/core/coverage-manager.ts	47	-	capStatus	function
+src/core/e2e/lifecycle.ts	1	-	LifecycleRequest	interface
+src/core/e2e/lifecycle.ts	2	-	LifecycleResult	type_alias
+src/core/e2e/lifecycle.ts	3	-	lifecycleLedgerPath	function
+src/core/e2e/lifecycle.ts	4	-	appendDecision	function
+src/core/e2e/lifecycle.ts	5	-	toPosix	variable
+src/core/e2e/lifecycle.ts	6	-	readOrNull	function
+src/core/e2e/lifecycle.ts	7	-	runLifecycleAction	function
+src/core/handoff-store.test.ts	1	-	fixtures	variable
+src/core/handoff-store.test.ts	2	-	git	function
+src/core/handoff-store.test.ts	3	-	makeRepo	function
+src/core/handoff-store.test.ts	4	-	WI	variable
+src/core/handoff-store.test.ts	5	-	workItemHandoff	function
+src/core/land-commit.ts	1	-	RUN_ARTIFACT_PREFIX	variable
+src/core/land-commit.ts	2	-	BYPRODUCT_PREFIXES	variable
+src/core/land-commit.ts	3	-	isGitIgnoredInRepo	function
+src/core/land-commit.ts	4	-	dirtyByproducts	function
+src/core/land-commit.ts	5	-	LandStatus	type_alias
+src/core/land-commit.ts	6	-	LandResult	interface
+src/core/land-commit.ts	7	-	isDetachedHead	function
+src/core/land-commit.ts	8	-	landCommit	function
+src/core/prism/opponent.ts	1	-	ModelPolicy	type_alias
+src/core/prism/opponent.ts	2	-	DialecticHost	type_alias
+src/core/prism/opponent.ts	3	-	OpponentConcern	type_alias
+src/core/prism/opponent.ts	4	-	OpponentBrief	interface
+src/core/prism/opponent.ts	5	-	OpponentDelegate	type_alias
+src/core/prism/opponent.ts	6	-	OPPONENT_FANOUT_CAP	variable
+src/core/prism/opponent.ts	7	-	OpponentSeamConfig	interface
+src/core/prism/opponent.ts	8	-	OpponentSeamOutcome	interface
+src/core/prism/opponent.ts	9	-	OpponentOutcome	type_alias
+src/core/prism/opponent.ts	10	-	resolveOpponentSelection	function
+src/core/prism/opponent.ts	11	-	flaggedCriticalNodeIds	function
+src/core/prism/opponent.ts	12	-	labelOf	function
+src/core/prism/opponent.ts	13	-	upsertEvaluation	function
+src/core/prism/opponent.ts	14	-	recordOpponentCritique	function
+src/core/prism/opponent.ts	15	-	recordOpponentDissent	function
+src/core/prism/opponent.ts	16	-	engageDialecticCritique	function
+src/core/prism/opponent.ts	17	-	engageIndependentDissent	function
+src/core/prism/opponent.ts	18	-	semanticCriticTargets	function
+src/core/prism/opponent.ts	19	-	recordSemanticCritique	function
+src/core/prism/opponent.ts	20	-	SemanticCriticOutcome	interface
+src/core/prism/opponent.ts	21	-	engageSemanticCritique	function
+src/core/prism/opponent.ts	22	-	fragmentTextOf	function
+src/core/teardown.ts	1	-	TeardownOptions	interface
+src/core/teardown.ts	2	-	TeardownAction	type_alias
+src/core/teardown.ts	3	-	BACKUP_SUFFIX	variable
+src/core/teardown.ts	4	-	CANONICAL_CHARTER_FILENAME	variable
+src/core/teardown.ts	5	-	FileTeardownOutcome	interface
+src/core/teardown.ts	6	-	TeardownResult	interface
+src/core/teardown.ts	7	-	teardown	function
+src/core/teardown.ts	8	-	PushGateHookTeardownStatus	type_alias
+src/core/teardown.ts	9	-	UninstallPushGateHookResult	interface
+src/core/teardown.ts	10	-	uninstallPushGateHook	function
+src/core/teardown.ts	11	-	teardownFile	function
+src/core/teardown.ts	12	-	teardownCharterSource	function
+src/hooks/runtime.characterization.test.ts	1	-	preToolUseHandler	variable
+src/hooks/runtime.characterization.test.ts	2	-	roots	variable
+src/hooks/runtime.characterization.test.ts	3	-	input	function
+src/schemas/common.ts	1	-	isoDateTime	variable
+src/schemas/common.ts	2	-	workItemId	variable
+src/schemas/common.ts	3	-	runId	variable
+src/schemas/common.ts	4	-	reviewId	variable
+src/schemas/common.ts	5	-	autopilotId	variable
+src/schemas/common.ts	6	-	profileName	variable
+src/schemas/common.ts	7	-	declarerRole	variable
+src/schemas/common.ts	8	-	providerName	variable
+src/schemas/common.ts	9	-	verdict	variable
+src/schemas/common.ts	10	-	workItemStatus	variable
+src/schemas/common.ts	11	-	severity	variable
+src/schemas/common.ts	12	-	sha256	variable
+src/schemas/common.ts	13	-	relativePath	variable
+src/schemas/common.ts	14	-	evidenceRef	variable
+src/schemas/common.ts	15	-	evidenceRequiredKind	variable
+src/schemas/common.ts	16	-	uncertaintyItem	variable
+src/schemas/common.ts	17	-	schemaVersion	variable
