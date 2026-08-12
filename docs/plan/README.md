@@ -151,7 +151,7 @@ F01~F06을 하나씩 완결시키면 **여섯 개가 다 끝나야 처음 뭔가
 
 | 이슈 | 슬라이스 | 무엇이 도나 | 무엇을 판정하나 |
 |---|---|---|---|
-| [#41](https://github.com/hskim-ecoletree/palimpsest/issues/41) | **S0 — 관통** | `pal symbols <파일>` : blob 하나 → tree-sitter → 심볼 목록 출력 | **[R-01](00-risks.md#r-01).** 언어로 막히는지가 여기서 드러난다. 며칠 안이다 |
+| [#37](https://github.com/hskim-ecoletree/palimpsest/issues/37) | **S0 — 관통** | `pal symbols <파일>` : blob 하나 → tree-sitter → 심볼 목록 출력 | **[R-01](00-risks.md#r-01).** 언어로 막히는지가 여기서 드러난다. 며칠 안이다 |
 | [#38](https://github.com/hskim-ecoletree/palimpsest/issues/38) | **S1 — 저장소 전체** | `pal ledger` : 대장 + 캐시 적중 | git 접근·분류·캐시가 실제로 붙는가 |
 | [#39](https://github.com/hskim-ecoletree/palimpsest/issues/39) | **S2 — 좌표와 질의** | `pal touch <coord>` 가 **빈 답을 정직하게** 낸다 | `Envelope`·정규화·2층이 붙는가 |
 | [#40](https://github.com/hskim-ecoletree/palimpsest/issues/40) | **S3 — 의도 한 건** | 문서 조각 하나를 손으로 결박 → `touch`가 그것을 띄운다 | **제품의 형태가 처음으로 보인다** |
