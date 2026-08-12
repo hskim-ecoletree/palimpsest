@@ -33,8 +33,9 @@ use crate::ledger;
 
 /// 이력을 얼마나 거슬러 올라가는가. **예산이고, 걸리면 그 사실이 산출에 남는다.**
 ///
-/// 값은 자리표시다(stack §5.5) — 어느 측정도 이 숫자를 정하지 않았다. 걸린 것과
-/// 정말 없는 것을 [`NotFoundReason::HistoryBudget`] 이 구별한다.
+/// 값은 자리표시다(stack §5.5) — 어느 측정도 이 숫자를 정하지 않았고, DESIGN §12.4 의
+/// 예산 표에 `미측정` 으로 서 있다(2026-08-13). 재는 것은 **F05** 의 예산 회귀다.
+/// 걸린 것과 정말 없는 것을 [`NotFoundReason::HistoryBudget`] 이 구별한다.
 const PROVISIONAL_HISTORY_BUDGET: usize = 400;
 
 /// 한 커밋에서 뽑은 것 전부 — `Change` 와 소급 결박 결과.
