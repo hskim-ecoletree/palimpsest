@@ -111,9 +111,13 @@ PY
 must_fail "거주 불가 타입을 \`built\` 로 적음"
 
 # ⑧ 파생된 문서 표를 손으로 고친다
+# 스키마 규모에 묶인 변이를 쓰지 않는다 — 스키마가 자라면 그 변이가 조용히 무력화된다.
+# (2026-08-12: 실제로 그렇게 됐다. F22-3 이 노드를 넷 더하자 `노드 라벨 **3개**` 를
+#  바꾸는 변이가 아무것도 안 바꾸게 됐고, 이 자리가 세어지지 않게 됐다.)
 python3 - <<'PY'
-s=open('docs/graph-schema.md',encoding='utf-8').read()
-open('docs/graph-schema.md','w',encoding='utf-8').write(s.replace('노드 라벨 **3개**','노드 라벨 **9개**'))
+p = 'docs/graph-schema.md'
+s = open(p, encoding='utf-8').read()
+open(p, 'w', encoding='utf-8').write(s + '\n손으로 덧붙인 줄 — 파생과 어긋난다.\n')
 PY
 must_fail "파생된 문서 표를 손으로 고침"
 
