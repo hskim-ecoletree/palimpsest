@@ -47,6 +47,17 @@ pub enum Lineage { Current, Superseded { by: EntityId } }
 | `Superseded`가 **별도 축** | 대체된 결정이 "살아 있음"으로 보증되는 것은 낡음보다 강한 거짓 신호다. 그런데 **대체된 뒤에도 코드 신선도는 계속 계산된다** — 한 열거에 넣으면 그것이 사라진다 |
 | `Stale`이 `triggered_by`를 갖는 이유 | "본체가 변해서"와 "호출자가 변해서"는 사람이 다르게 처리한다 |
 
+> **`StaleDerived`가 이 열거에 들어오지 않았다 (2026-08-12 · [F22-4 게이트](../../gates/F22-4-doctor.md)).**
+> F22-4가 §6.4의 이어달리기를 세우면서 등급 셋(`live`/`stale`/`stale-derived{경유}`)을
+> **그래프 노드 위의 별 타입**(`pal_core::NodeFreshness`)으로 두었다. `CodeFreshness`에 변형을
+>더하지 않은 이유는 **결박의 입력이 낡는 경로가 그 빌드에 없어서**다 — 결박의 감시 집합은
+> *자기* 감시 집합이고 §6.4가 말하는 입력이 아니다. 아무도 만들지 못하는 변형을 열거에 더하면
+> 그것이 곧 "있는데 안 나오는" 자리가 된다.
+>
+> **둘을 합치는 것은 F09의 몫이다.** 합칠 때 결정할 것 하나: `NodeFreshness`에는 `Orphaned`가
+> 없고 `CodeFreshness`에는 있다. 파생 노드의 입력 좌표가 **사라진** 경우가 `stale-derived`인지
+> `orphaned`인지가 §6.4에 적혀 있지 않다.
+
 **대체된 결박도 숨기지 않는다** — [F11](F11-touch.md)의 `touch`가 이미 "superseded된 이전 결정"을 반환한다. 두 축이어야 그 반환값에 코드 신선도가 함께 실린다.
 
 ### 2.1 `Undeterminable` — 신설 ([R16](../../evidence-map.md))

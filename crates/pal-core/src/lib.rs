@@ -12,11 +12,14 @@
 
 mod binding;
 mod capable;
+mod cascade;
 mod chain;
 mod coord;
 mod derived;
+mod doctor;
 mod envelope;
 mod graph;
+mod judgment;
 mod language;
 mod ledger;
 mod repo;
@@ -24,21 +27,29 @@ mod schema;
 mod symbol;
 mod touch;
 mod version;
+mod view;
 
 pub use binding::{
     Binding, BindingId, BindingStatus, CodeFreshness, Lineage, WatchEntry,
 };
 pub use capable::{Capable, CapabilityId};
+pub use cascade::{Cascade, NodeFreshness, PROVISIONAL_CASCADE_DEPTH, cascade};
 pub use chain::{
     Actor, ActorId, Change, ChangeId, ChangeKind, Confidence, Defect, Introduction, Journey,
     NotFoundReason, Retrobinding, RetrobindingSummary, Uncapturable,
 };
 pub use coord::{BodyDigest, Coord, Discriminator, SymbolId};
+pub use doctor::{
+    Absence, BINDING_INDEX_KIND, CANDIDATE_LIMIT, DERIVED_KIND, Diagnosis, DoctorScope,
+    InvariantId, InvariantOutcome, InvariantReport, Outcome, PROVISIONAL_SAMPLE_MAX,
+    RESIDUAL_KIND, SCOPE_REDUCTION_KIND, Violation, run as doctor,
+};
 pub use derived::{DerivedId, NodeRef, ReproInput};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};
 pub use envelope::{
     CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness,
 };
+pub use judgment::{Residual, ResidualReason};
 pub use language::Language;
 pub use ledger::{
     Bucket, BinaryReason, ExclusionRuleId, ExtractGrade, FileState, GeneratedEvidence,
@@ -55,3 +66,7 @@ pub use touch::{
     UnresolvedRef,
 };
 pub use version::ExtractorVersion;
+pub use view::{
+    Anchor, BindingIndexEntry, EdgeInstance, EdgeTarget, GraphView, NodeInstance, NodeKey,
+    ViewCoverage,
+};

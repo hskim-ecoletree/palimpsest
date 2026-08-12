@@ -13,6 +13,7 @@ use pal_core::{Capable, Language};
 
 mod bind;
 mod defect;
+mod doctor;
 mod ledger;
 mod touch;
 
@@ -91,6 +92,30 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// 저장된 그래프가 자기 규칙을 지키는지 본다 — **기본은 표본이고 전수는 명시적이다**
+    Doctor {
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 어느 커밋인가. 기본값은 HEAD
+        #[arg(long)]
+        at: Option<String>,
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        #[arg(long)]
+        index: Option<PathBuf>,
+        #[arg(long)]
+        intent: Option<PathBuf>,
+        /// **전수로 본다.** 기본은 표본이고 그 사실이 산출에 잔여로 실린다
+        #[arg(long)]
+        full: bool,
+        /// 불변식마다 볼 단위 수의 상한. `--full` 과 함께 쓰면 `--full` 이 이긴다
+        #[arg(long)]
+        sample: Option<usize>,
+        /// 사람이 읽는 화면 대신 JSON 으로 낸다
+        #[arg(long)]
+        json: bool,
+    },
     /// 저장소 하나의 관측 범위 대장을 낸다 — **무엇을 보았고 무엇을 보지 않았는가**
     Ledger {
         /// 저장소 경로. 기본값은 현재 디렉터리
@@ -129,6 +154,16 @@ fn main() -> Result<()> {
         }
         Command::Touch { name, repo, at, cache_dir, index, intent, json } => {
             touch::run(&repo, at.as_deref(), cache_dir, index, intent, &name, json)
+        }
+        Command::Doctor { repo, at, cache_dir, index, intent, full, sample, json } => {
+            let scope = if full {
+                pal_core::DoctorScope::Full
+            } else {
+                pal_core::DoctorScope::Sample {
+                    max: sample.unwrap_or(pal_core::PROVISIONAL_SAMPLE_MAX),
+                }
+            };
+            doctor::run(&repo, at.as_deref(), cache_dir, index, intent, scope, json)
         }
         Command::Ledger { path, at, cache_dir, json } => {
             let report = ledger::compute(&path, at.as_deref(), cache_dir)?;

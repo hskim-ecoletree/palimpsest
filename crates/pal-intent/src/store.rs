@@ -17,7 +17,8 @@ use std::path::Path;
 
 use pal_core::{Binding, BindingId, SymbolId};
 use redb::{
-    Database, MultimapTableDefinition, ReadableDatabase, ReadableTableMetadata, TableDefinition,
+    Database, MultimapTableDefinition, ReadableDatabase, ReadableTable, ReadableTableMetadata,
+    TableDefinition,
 };
 
 /// 결박 실체.
@@ -125,6 +126,35 @@ impl IntentStore {
                 postcard::from_bytes(&v.value()).map_err(|e| IntentError::Decode(e.to_string()))?,
             )),
         }
+    }
+
+    /// 결박 전부. **`doctor` 가 그래프를 세우려면 하나가 아니라 전부가 필요하다.**
+    ///
+    /// # 지우는 API 가 아니다
+    ///
+    /// 이 파일에 지우는 함수가 없다는 것이 R-21 의 대응이고, 읽는 함수가 하나 느는 것은
+    /// 그 대응을 건드리지 않는다. **결박 id 순으로 정렬한다** — 같은 저장소에서 같은
+    /// 순서가 나와야 `doctor` 의 표본이 재현된다.
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 값을 풀지 못하면.
+    pub fn all(&self) -> Result<Vec<Binding>, IntentError> {
+        let read = self.db.begin_read().map_err(|e| IntentError::Transaction(e.to_string()))?;
+        let Ok(t) = read.open_table(BINDING) else {
+            return Ok(Vec::new());
+        };
+        let mut out = Vec::new();
+        let range = t.iter().map_err(|e| IntentError::Transaction(e.to_string()))?;
+        for row in range {
+            let (_, v) = row.map_err(|e: redb::StorageError| {
+                IntentError::Transaction(e.to_string())
+            })?;
+            let binding: Binding = postcard::from_bytes(&v.value())
+                .map_err(|e| IntentError::Decode(e.to_string()))?;
+            out.push(binding);
+        }
+        out.sort_by(|a: &Binding, b: &Binding| a.id.cmp(&b.id));
+        Ok(out)
     }
 
     /// 결박이 몇 건인가. **파생층을 지운 뒤 이 수가 그대로여야 한다**(S3 합격선 ①).
