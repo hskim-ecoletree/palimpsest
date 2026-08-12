@@ -13,6 +13,7 @@
 mod binding;
 mod capable;
 mod coord;
+mod derived;
 mod envelope;
 mod graph;
 mod language;
@@ -28,6 +29,7 @@ pub use binding::{
 };
 pub use capable::{Capable, CapabilityId};
 pub use coord::{BodyDigest, Coord, Discriminator, SymbolId};
+pub use derived::{DerivedId, NodeRef, ReproInput};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};
 pub use envelope::{
     CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness,
