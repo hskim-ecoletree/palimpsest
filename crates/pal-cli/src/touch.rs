@@ -76,8 +76,11 @@ pub fn run(
         answer,
         report.ledger.snapshot.clone(),
         ProjectionFreshness {
-            // **모른다고 적는다.** 커밋 트리를 읽은 빌드는 워킹트리가 같은지 알 수 없다.
-            matches_worktree: Capable::not_built(CapabilityId::new("F01", "worktree-state")),
+            // **F01 이 이 자리를 값으로 바꿨다.** 워킹트리를 재고 이 답이 선 트리와
+            // 대므로 이제 *"모른다"* 가 아니라 *"같다 / 다르다"* 를 적을 수 있다.
+            matches_worktree: Capable::Present(
+                report.worktree.matches(&report.ledger.snapshot_tree()),
+            ),
             // 재구축의 시작과 끝을 아는 것은 2층을 소유한 쪽이다 — F05.
             rebuild: Capable::not_built(CapabilityId::new("F05", "rebuild-progress")),
             built_for_this_snapshot: true,

@@ -300,6 +300,23 @@ impl Ledger {
         out
     }
 
+    /// 이 대장이 선 트리.
+    ///
+    /// **저장소가 하나일 때만 뜻이 있다.** 스냅샷은 집합이고(DESIGN §1.1) 멀티레포에서는
+    /// 저장소마다 트리가 다르다 — 그때 첫 것을 고르면 나머지가 조용히 감춰진다.
+    /// 이 빌드는 `repos_declared` 가 언제나 1 이고(멀티레포는 F14) 그 사실을 여기 적는다.
+    ///
+    /// # Panics
+    /// 스냅샷이 비어 있으면. [`Snapshot::of`] 가 빈 것을 만들지 않으므로 일어나지 않는다.
+    #[must_use]
+    pub fn snapshot_tree(&self) -> crate::repo::TreeRef {
+        self.snapshot
+            .entries()
+            .next()
+            .expect("스냅샷은 비어 있을 수 없다")
+            .1
+    }
+
     /// 파일 총수.
     #[must_use]
     pub fn total(&self) -> usize {

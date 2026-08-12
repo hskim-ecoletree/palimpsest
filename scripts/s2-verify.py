@@ -101,10 +101,23 @@ def main() -> int:
               f"  ·  채워진 자리 {BUILT_SLOTS}")
         if bad:
             failures.extend(f"② {b}" for b in bad)
-        # 워킹트리도 같은 규율을 받는다
+        # 워킹트리도 같은 규율을 받는다 — **다만 F01 이 그 자리를 채웠다 (2026-08-13).**
+        #
+        # `bindings` 와 정확히 같은 일이다(위 주석). S2 등록 시점에 `matches_worktree` 는
+        # `NotBuilt{F01}` 이었고 그것이 합격선이었는데, **F01 이 워킹트리 요약을 세우면서
+        # 값이 됐다.** 자리가 채워진 것은 위반이 아니라 이행이다 — S2 가 요구한 것은
+        # *"모르는 것을 안다고 하지 말 것"* 이고, 알게 되면 아는 것이 나가는 것이 맞다.
+        #
+        # 그래서 검사를 뒤집는다: 이제 **값이어야** 한다. 그리고 그 값이 참인지는
+        # `f01-verify` 가 git 에 대고 센다 — 여기서는 자리의 형태만 본다.
         mw = env["projection"]["matches_worktree"]
-        if not (isinstance(mw, dict) and "not_built" in mw):
-            failures.append(f"② matches_worktree 가 not_built 가 아니다: {mw!r}")
+        if not (isinstance(mw, dict) and "present" in mw):
+            failures.append(f"② matches_worktree 가 값이 아니다 (F01 이 채운 자리): {mw!r}")
+        # **재구축은 여전히 `NotBuilt` 다** — 관측 경로가 F05 이고, 그 자리가 조용히
+        # `Settled` 로 채워지면 "재구축 중이 아니다"가 관측 없이 단언된다.
+        rb = env["projection"]["rebuild"]
+        if not (isinstance(rb, dict) and "not_built" in rb):
+            failures.append(f"② rebuild 가 not_built 가 아니다: {rb!r}")
 
         # ⑤ 2층 재구축 등가성 — 통째로 지우고 다시
         before = json.dumps(env, sort_keys=True)

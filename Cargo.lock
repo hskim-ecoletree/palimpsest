@@ -1338,8 +1338,10 @@ dependencies = [
 name = "pal-git"
 version = "0.0.0"
 dependencies = [
+ "blake3",
  "gix",
  "pal-core",
+ "serde",
  "thiserror",
 ]
 

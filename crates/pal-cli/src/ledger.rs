@@ -19,7 +19,7 @@ use pal_core::{
     Ledger, LedgerEntry, RepoId, RepoPath, Snapshot, SymbolId, SymbolNode, TreeRef,
 };
 use pal_extract::{FileOutcome, OVERSIZE_BYTES};
-use pal_git::{GitAccess, GixRepo};
+use pal_git::{GitAccess, GixRepo, WorktreeState};
 use pal_store::{BlobCache, CacheKey, CacheStats};
 use serde::Serialize;
 
@@ -35,6 +35,14 @@ pub struct LedgerReport {
     /// 2층에 들어갈 심볼들. **표에는 안 나오고 `pal touch` 가 쓴다.**
     #[serde(skip)]
     pub symbols: Vec<SymbolNode>,
+    /// 지금 워킹트리 — **`--at` 으로 과거를 보더라도 잰다.**
+    ///
+    /// *"이 답이 선 트리가 지금 워킹트리와 같은가"* 는 어느 트리를 보든 답에 실려야
+    /// 하는 사실이고([`Envelope`] 의 `projection.matches_worktree`), 그것을 재려면
+    /// 워킹트리를 봐야 한다.
+    ///
+    /// [`Envelope`]: pal_core::Envelope
+    pub worktree: WorktreeState,
 }
 
 /// 대장을 계산한다.
@@ -49,12 +57,20 @@ pub fn compute(
     let repo = GixRepo::open(repo_path)
         .with_context(|| format!("git 저장소가 아니다: {}", repo_path.display()))?;
 
-    let commit = match rev {
-        Some(r) => repo.resolve_commit(r).with_context(|| format!("가리키는 것이 없다: {r}"))?,
-        None => repo.head().context("HEAD 를 읽지 못했다")?,
+    // **워킹트리를 언제나 잰다.** `--at` 으로 과거를 보더라도 *"지금 워킹트리가 그것과
+    // 같은가"* 는 답에 실려야 한다 — 그것이 `matches_worktree` 이고, 그 자리는 지금까지
+    // `NotBuilt{F01}` 로 비어 있었다.
+    let worktree = repo.worktree_state().context("워킹트리를 읽지 못했다")?;
+
+    let tree = match rev {
+        Some(r) => TreeRef::Committed(
+            repo.resolve_commit(r).with_context(|| format!("가리키는 것이 없다: {r}"))?,
+        ),
+        // **기본이 워킹트리다** (F01 §3.2 · [R-06]). 이 제품의 1순위 사용 장면(적시 제시)은
+        // 커밋 전 순간에 일어나고, 그 순간에 HEAD 를 보여주면 사용자가 방금 고친 것이
+        // 답에서 사라진다. **커밋 축은 `--at` 을 준 사람이 명시적으로 고르는 것이다.**
+        None => worktree.tree_ref(),
     };
-    // **S1 은 커밋 축만 돈다.** `TreeRef::Worktree` 는 타입으로 서 있고 F01 이 채운다.
-    let tree = TreeRef::Committed(commit);
 
     let cache_root = cache_dir.unwrap_or_else(|| repo_path.join(".palimpsest/cache"));
     let cache = BlobCache::open(cache_root).context("캐시를 열지 못했다")?;
@@ -76,7 +92,13 @@ pub fn compute(
             hit
         } else {
             stats.miss();
-            let source = repo.read_blob(blob).with_context(|| format!("{path}"))?;
+            // **워킹트리 파일은 객체 저장소에 없을 수 있다** — 아직 커밋되지 않았으면
+            // 그 blob 이름으로 조회가 실패한다. 읽는 곳이 트리에 따라 갈린다.
+            let source = if tree.is_committed() {
+                repo.read_blob(blob).with_context(|| format!("{path}"))?
+            } else {
+                repo.read_worktree_file(&path).with_context(|| format!("{path}"))?
+            };
             let fresh = pal_extract::classify(&path, &source, OVERSIZE_BYTES)
                 .with_context(|| format!("분류 실패: {path}"))?;
             cache.put(&key, &fresh)?;
@@ -94,7 +116,7 @@ pub fn compute(
         entries,
         languages,
     };
-    Ok(LedgerReport { ledger, cache: stats, symbols })
+    Ok(LedgerReport { ledger, cache: stats, symbols, worktree })
 }
 
 /// 파일 하나의 심볼들에 좌표를 붙인다.
@@ -186,6 +208,22 @@ pub fn print_table(report: &LedgerReport) {
              if 전부_커밋 { "(커밋)" } else { "(워킹트리)" });
     // **선언된 것과 본 것을 나란히 적는다** — 그 차이가 §4.3 이 말한 뿌리의 공백이다.
     println!("저장소    선언 {} · 본 것 {}", l.repos_declared, l.snapshot.len());
+    println!();
+    // **워킹트리를 언제나 적는다.** 커밋을 보고 있어도 *"지금 워킹트리가 그것과
+    // 같은가"* 는 사용자가 알아야 하는 사실이다 — 다르면 지금 화면이 방금 고친 것을
+    // 담고 있지 않다는 뜻이다.
+    let w = &report.worktree;
+    let dirty = w.dirty_paths.len();
+    println!(
+        "워킹트리  {}  ·  인덱스 신뢰 {} · 다시 잼 {}",
+        if dirty == 0 {
+            format!("{} 와 같음", &w.base.to_hex()[..7])
+        } else {
+            format!("{} 와 다른 파일 {dirty}개", &w.base.to_hex()[..7])
+        },
+        w.trusted_from_index,
+        w.rehashed
+    );
     println!();
     println!("파일      {}", l.total());
 

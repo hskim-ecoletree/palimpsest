@@ -94,7 +94,11 @@ pub fn run(
         diagnosis,
         report.ledger.snapshot.clone(),
         ProjectionFreshness {
-            matches_worktree: Capable::not_built(CapabilityId::new("F01", "worktree-state")),
+            // **F01 이 이 자리를 값으로 바꿨다.** 워킹트리를 재고 이 답이 선 트리와
+            // 대므로 이제 *"모른다"* 가 아니라 *"같다 / 다르다"* 를 적을 수 있다.
+            matches_worktree: Capable::Present(
+                report.worktree.matches(&report.ledger.snapshot_tree()),
+            ),
             // 재구축 중인지 이 빌드는 모른다 — 관측 경로가 F05 다. DESIGN §12.7 격리 3번.
             rebuild: Capable::not_built(CapabilityId::new("F05", "rebuild-progress")),
             built_for_this_snapshot: true,

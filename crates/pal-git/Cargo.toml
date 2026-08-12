@@ -10,7 +10,11 @@ publish.workspace = true
 [dependencies]
 pal-core.workspace = true
 gix.workspace = true
+# 워킹트리 요약 — F01 §3.2. **git 의 blob 이름(SHA-1)과 다른 축이다**: 하나는 git 이 정한
+# 정체성이고 이것은 우리가 만든 목록의 요약이다(pal-core::Digest).
+blake3.workspace = true
 thiserror.workspace = true
+serde.workspace = true
 
 [lints]
 workspace = true

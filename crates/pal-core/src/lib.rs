@@ -10,6 +10,7 @@
 
 #![forbid(unsafe_code)]
 
+mod attributes;
 mod binding;
 mod capable;
 mod cascade;
@@ -18,6 +19,7 @@ mod coord;
 mod derived;
 mod doctor;
 mod envelope;
+mod glob;
 mod graph;
 mod judgment;
 mod language;
@@ -45,6 +47,8 @@ pub use doctor::{
     RESIDUAL_KIND, SCOPE_REDUCTION_KIND, Violation, run as doctor,
 };
 pub use derived::{DerivedId, NodeRef, ReproInput};
+pub use attributes::{Attributes, FileAttributes};
+pub use glob::{Glob, GlobError};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};
 pub use envelope::{
     CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness, RebuildState,
