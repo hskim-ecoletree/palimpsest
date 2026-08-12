@@ -12,9 +12,15 @@ REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 ALL=${1:-}
 
 # 열린 이슈의 번호·제목·라벨·담당자를 한 번에 가져온다.
+#
+# **빈 필드를 내보내지 않는다.** 탭은 IFS 공백이라 `read` 가 연속된 구분자를 하나로
+# 접는다 — 라벨 없는 이슈에서 필드가 한 칸씩 밀려 담당자 칸에 제목이 들어가고,
+# 그러면 **아무도 잡지 않은 이슈가 "이미 잡힘" 으로 나온다.** 이 스크립트는
+# *"지금 어디에 서 있는가"* 에 답하는 자리이므로(AGENTS.md), 그 오보는 착수 가능한
+# 것을 0 건으로 보이게 한다. `-` 는 라벨 없음을 뜻하고 아래 `case` 와 겹치지 않는다.
 open=$(gh issue list --repo "$REPO" --state open --limit 200 \
   --json number,title,labels,assignees \
-  --jq '.[] | [.number, (.labels|map(.name)|join(",")), (.assignees|length), .title] | @tsv')
+  --jq '.[] | [.number, ((.labels|map(.name)|join(","))|if . == "" then "-" else . end), (.assignees|length), .title] | @tsv')
 
 # 이슈별 blocked_by 개수는 개별 조회만 가능하다. 병렬로 친다.
 deps=$(echo "$open" | cut -f1 | xargs -P 8 -I{} sh -c \
