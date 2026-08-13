@@ -19,6 +19,7 @@ mod coord;
 mod derived;
 mod doctor;
 mod envelope;
+mod file_graph;
 mod glob;
 mod graph;
 mod judgment;
@@ -49,6 +50,7 @@ pub use doctor::{
 };
 pub use derived::{DerivedId, NodeRef, ReproInput};
 pub use attributes::{Attributes, FileAttributes};
+pub use file_graph::{Containment, ExportSet, FileGraph, ImportSet, LocalIx};
 pub use glob::{Glob, GlobError};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};
 pub use envelope::{

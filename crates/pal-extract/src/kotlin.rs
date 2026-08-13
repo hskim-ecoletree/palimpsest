@@ -3,9 +3,40 @@
 //! **한 쿼리 매치가 선언 하나다.** CLI 레퍼런스(`scripts/s0-reference.py`)가 세는 단위와
 //! 같아야 하고, 같은 쿼리 파일을 쓰므로 같다.
 
-use pal_core::{BodyDigest, Span, Symbol, SymbolKind};
+use pal_core::{
+    BodyDigest, Capable, CapabilityId, ExtractGrade, FileGraph, Language, LanguageId, Span, Symbol,
+    SymbolKind,
+};
 use streaming_iterator::StreamingIterator;
 use tree_sitter::{Parser, Query, QueryCursor};
+
+use crate::extractor::LanguageExtractor;
+
+/// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
+pub(crate) static KOTLIN: KotlinExtractor = KotlinExtractor;
+
+/// S0 이 세운 최상위 쿼리 추출기.
+///
+/// **이 조각은 이것을 다시 짓지 않는다.** `queries/kotlin/top-level.scm` 을 CLI
+/// 레퍼런스와 공유해야 `corpus/tasks/s0-reference-vector.tsv`(1,126 줄) 대조가
+/// 성립하고, F01 의 골든 997 항목이 그 위에 선다. `FileGraph` 로 올리는 것은 그 둘을
+/// 동시에 흔드는 일이라 **빚으로 적고 넘긴다**(`[f02.1.pass]` ④).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct KotlinExtractor;
+
+impl LanguageExtractor for KotlinExtractor {
+    fn language(&self) -> Language {
+        Language::Kotlin
+    }
+
+    fn grade(&self) -> ExtractGrade {
+        crate::grade_of(Language::Kotlin)
+    }
+
+    fn extract(&self, source: &[u8]) -> Result<FileGraph, ExtractError> {
+        extract_detailed(source)
+    }
+}
 
 /// 쿼리 원문. **CLI 레퍼런스가 읽는 그 파일이다.**
 const TOP_LEVEL_QUERY: &str = include_str!("../queries/kotlin/top-level.scm");
@@ -35,26 +66,29 @@ pub enum ExtractError {
     NotUtf8,
 }
 
-/// 최상위 선언을 소스 순서로 낸다.
+/// 최상위 선언을 소스 순서로 + **파싱이 성했는가**.
 ///
-/// **S0 이 대조한 것이 이 함수의 산출이다.** 시그니처와 결과가 그대로 유지되어야
-/// `corpus/tasks/s0-reference-vector.tsv` 와의 대조가 계속 성립한다.
+/// **S0 이 대조한 것이 이 함수의 `symbols` 다.** 그 값이 그대로 유지되어야
+/// `corpus/tasks/s0-reference-vector.tsv`(1,126 줄)와의 대조가 계속 성립하고,
+/// F01 의 골든 997 항목이 그 위에 선다.
 ///
-/// # Errors
-/// 문법·쿼리·파싱 중 하나가 실패하면 [`ExtractError`].
-pub fn extract(source: &[u8]) -> Result<Vec<Symbol>, ExtractError> {
-    extract_detailed(source).map(|e| e.symbols)
-}
-
-/// 선언 + **파싱이 성했는가**.
+/// 옛 `kotlin::extract(source) -> Vec<Symbol>` 는 없앴다. 트레잇이 그 자리를 가졌고
+/// (`LanguageExtractor::extract`), **부르는 경로만 바뀌었지 세는 방식은 같다** —
+/// `pal_extract::extract` 가 레지스트리를 거쳐 이 함수에 그대로 닿는다.
 ///
 /// 대장은 `parsed` 와 `partial` 을 갈라야 하고(DESIGN §4.1) 그러려면 오류 회복이
-/// 일어났는지를 알아야 한다. S0 은 그것을 묻지 않았으므로 [`extract`] 가 버렸다.
-/// **버리던 정보를 되살릴 뿐 세는 방식은 같다** — 위 함수가 이 함수를 그대로 탄다.
+/// 일어났는지를 알아야 한다. S0 은 그것을 묻지 않았으므로 버렸던 값이다.
+///
+/// # 산출 타입이 `FileGraph` 로 바뀌었다 — **값은 그대로다**
+///
+/// 옛 `Extraction { symbols, recovery_sites }` 가 [`FileGraph`] 에 흡수됐다. 늘어난
+/// 것은 `language`·`grade`(둘 다 이 추출기의 상수)와 `contains` 뿐이고, **`contains`
+/// 는 빈다.** 이 추출기는 `source_file` 의 직계 자식만 보므로 담긴 심볼을 애초에
+/// 뽑지 않는다 — 담는 관계가 없는 것이 정확한 값이다.
 ///
 /// # Errors
 /// 문법·쿼리·파싱 중 하나가 실패하면 [`ExtractError`].
-pub fn extract_detailed(source: &[u8]) -> Result<Extraction, ExtractError> {
+pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
     let language = tree_sitter::Language::new(tree_sitter_kotlin_ng::LANGUAGE);
 
     let mut parser = Parser::new();
@@ -101,15 +135,17 @@ pub fn extract_detailed(source: &[u8]) -> Result<Extraction, ExtractError> {
             },
         });
     }
-    Ok(Extraction { symbols, recovery_sites: count_error_nodes(tree.root_node()) })
-}
-
-/// 추출 결과와 파싱 건강 상태.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Extraction {
-    pub symbols: Vec<Symbol>,
-    /// tree-sitter 가 오류 회복한 지점의 수. **0 이면 `parsed`, 아니면 `partial`.**
-    pub recovery_sites: usize,
+    Ok(FileGraph::flat(
+        LanguageId::new(Language::Kotlin.name()),
+        crate::grade_of(Language::Kotlin),
+        symbols,
+        count_error_nodes(tree.root_node()),
+        // **빈 집합이 아니라 안 만들었다고 적는다.** 이 추출기는 `source_file` 의 직계
+        // 자식만 보고 가시성·`import` 절을 아예 읽지 않는다. 빈 `ExportSet` 은
+        // *"아무것도 안 내보낸다"* 는 뜻이고 Kotlin 최상위 선언에 대해 그것은 거짓이다.
+        Capable::not_built(CapabilityId::new("F02", "kotlin-exports")),
+        Capable::not_built(CapabilityId::new("F02", "kotlin-imports")),
+    ))
 }
 
 /// 선언 하나의 **정규형** — 주석·공백·포매팅을 지운 바이트열.

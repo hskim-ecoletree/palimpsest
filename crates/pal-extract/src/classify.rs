@@ -19,8 +19,9 @@ use pal_core::{
     LanguageId, RepoPath, Symbol,
 };
 
+use crate::extractor::extractor_for;
 use crate::recognize::{Recognition, recognize};
-use crate::{ExtractError, extract_detailed};
+use crate::ExtractError;
 
 /// 파일 크기 상한의 기본값 — stack §5.5 의 자리표시 2MB.
 ///
@@ -83,19 +84,22 @@ pub fn classify(
     let id = LanguageId::new(language.name());
 
     // ⑤ 추출 — **빌드되지 않은 언어는 여기서 갈린다**
-    let Capable::Present(()) = crate::capability(language) else {
+    //
+    // 레지스트리 하나가 능력·추출·등급의 단일 진실이다(`extractor.rs`). 여기서 별도
+    // 표를 보면 `pal symbols` 가 답하는 언어와 대장이 `parsed` 로 세는 언어가 갈린다.
+    let Capable::Present(extractor) = extractor_for(language) else {
         // 1급 언어인데 이 빌드에 추출기가 없다. `unsupported` 가 정확히 그 뜻이다.
         return plain(FileState::Unsupported { language: id });
     };
 
-    let extraction = extract_detailed(source)?;
-    let grade = grade_of(language);
-    let state = if extraction.recovery_sites == 0 {
+    let graph = extractor.extract(source)?;
+    let grade = graph.grade;
+    let state = if graph.is_whole() {
         FileState::Parsed { language: id, grade }
     } else {
-        FileState::Partial { language: id, grade, recovery_sites: extraction.recovery_sites }
+        FileState::Partial { language: id, grade, recovery_sites: graph.recovery_sites }
     };
-    Ok(FileOutcome { state, symbols: extraction.symbols })
+    Ok(FileOutcome { state, symbols: graph.symbols })
 }
 
 /// 이 빌드가 그 언어에서 **실제로 도달한** 등급.
