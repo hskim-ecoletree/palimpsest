@@ -71,6 +71,84 @@ pub struct Coverage {
     pub identity: IdentityGrade,
 }
 
+/// 무엇 때문에 잘렸는가 — **사유가 값이다.**
+///
+/// 넷을 가르지 않으면 *"자르긴 했다"* 밖에 말할 수 없고, 그러면 사용자가 **무엇을 올려야
+/// 답이 완전해지는지** 모른다. 그것이 `LIMIT` 이 표현하지 못하는 바로 그것이다
+/// (stack §2.3 의 결정적 이유).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ElisionReason {
+    /// 후보 집합이 `K` 를 넘어 **그 가지를 버렸다.**
+    CandidateOverflow,
+    /// 경로 곱이 `B` 를 넘어 **탐색을 멈췄다.**
+    PathProductExceeded,
+    /// 깊이 상한 너머라 **가지 않았다.**
+    DepthExceeded,
+    /// 답이 담을 수 있는 노드 수를 넘었다.
+    NodeMaxExceeded,
+}
+
+impl ElisionReason {
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::CandidateOverflow => "candidate_overflow",
+            Self::PathProductExceeded => "path_product_exceeded",
+            Self::DepthExceeded => "depth_exceeded",
+            Self::NodeMaxExceeded => "node_max_exceeded",
+        }
+    }
+}
+
+/// 어느 상한인가 — [`crate::Budget`] 의 넷과 하나씩 짝이다.
+///
+/// **[`ElisionReason`] 과 다른 타입이다.** 사유는 *"무엇이 일어났나"* 이고 이것은
+/// *"어느 손잡이를 돌리면 되나"* 다. 하나로 합치면 답이 사용자에게 처방을 못 준다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BudgetName {
+    CandidateSetMax,
+    PathProductMax,
+    DepthMax,
+    NodeMax,
+}
+
+impl BudgetName {
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::CandidateSetMax => "candidate_set_max",
+            Self::PathProductMax => "path_product_max",
+            Self::DepthMax => "depth_max",
+            Self::NodeMax => "node_max",
+        }
+    }
+}
+
+/// 사유 하나와 그 건수.
+///
+/// # 왜 `(ElisionReason, usize)` 가 아닌가
+///
+/// F05 §5.2 는 벌거벗은 쌍으로 적었다. **이름을 붙여 가른다** — [`crate::Containment`]
+/// 와 같은 자리다. 벌거벗은 쌍은 읽는 쪽이 `.0` 이 무엇인지 기억해야 하고, 기억은
+/// 검사되지 않는다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct Truncation {
+    pub reason: ElisionReason,
+    /// **건수다.** *"잘렸다"* 가 아니라 *"몇 개가 잘렸다"* 여야 사용자가 크기를 안다.
+    pub count: usize,
+}
+
+/// 걸린 상한 하나와 그 값.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct LimitHit {
+    pub limit: BudgetName,
+    /// **그때 이 상한이 얼마였는가.** 값이 없으면 사용자가 얼마로 올려야 할지 모른다.
+    /// `usize::MAX` 를 넣어 사실상 끈 경우에도 **그 값이 여기 실린다.**
+    pub value: u64,
+}
+
 /// 예산에 걸려 잘린 것. **없어도 명시해야 한다.**
 ///
 /// # 조용한 절단 금지가 타입으로 서는 자리 (stack §5.4)
@@ -78,29 +156,58 @@ pub struct Coverage {
 /// [`Envelope`] 를 만들려면 이 값을 반드시 넘겨야 하고, 자를 것이 없으면
 /// [`Elision::none`] 을 **명시적으로** 부른다. 기본값을 두지 않는 것이 요점이다 —
 /// 기본값이 있으면 절단을 적는 것을 잊는 경로가 생긴다.
+///
+/// # 형태가 F05 §5.2 로 왔다
+///
+/// 옛 판은 `{dropped: usize, reasons: Vec<String>}` 이었다. **사유별 건수도 어느
+/// 상한에 걸렸는지도 담지 못한다** — 문자열 목록은 세어지지 않고, 상한의 값이 없으면
+/// 사용자가 무엇을 얼마로 올려야 하는지 모른다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Elision {
-    /// 잘린 항목 수.
-    pub dropped: usize,
-    /// 왜 잘렸는가. 비어 있으면 자른 것이 없다는 뜻이다.
-    pub reasons: Vec<String>,
+    /// 사유별 건수. **비어 있으면 자른 것이 없다.**
+    pub truncated: Vec<Truncation>,
+    /// 어느 상한에 얼마나. **비어 있으면 아무 상한에도 안 걸렸다.**
+    pub limits_hit: Vec<LimitHit>,
 }
 
 impl Elision {
     /// **자른 것이 없다고 명시한다.** 이 함수를 부르는 것 자체가 기록이다.
     #[must_use]
     pub const fn none() -> Self {
-        Self { dropped: 0, reasons: Vec::new() }
+        Self { truncated: Vec::new(), limits_hit: Vec::new() }
+    }
+
+    /// 사유 하나를 `n` 건 더한다. **같은 사유는 합쳐진다** — 목록이 아니라 계수기다.
+    pub fn push(&mut self, reason: ElisionReason, n: usize) {
+        if let Some(t) = self.truncated.iter_mut().find(|t| t.reason == reason) {
+            t.count += n;
+        } else {
+            self.truncated.push(Truncation { reason, count: n });
+        }
+    }
+
+    /// 상한 하나가 걸렸다고 적는다. **같은 상한을 두 번 적지 않는다.**
+    pub fn hit(&mut self, limit: BudgetName, value: u64) {
+        if !self.limits_hit.iter().any(|l| l.limit == limit) {
+            self.limits_hit.push(LimitHit { limit, value });
+        }
+    }
+
+    /// 잘린 것의 **총 건수.** 화면이 이것을 쓴다.
+    #[must_use]
+    pub fn dropped(&self) -> usize {
+        self.truncated.iter().map(|t| t.count).sum()
+    }
+
+    /// 사유 하나의 건수 — **없으면 0 이고, 그것이 정확한 값이다.**
+    #[must_use]
+    pub fn count_of(&self, reason: ElisionReason) -> usize {
+        self.truncated.iter().find(|t| t.reason == reason).map_or(0, |t| t.count)
     }
 
     #[must_use]
-    pub fn dropped(n: usize, reason: impl Into<String>) -> Self {
-        Self { dropped: n, reasons: vec![reason.into()] }
-    }
-
-    #[must_use]
-    pub const fn is_none(&self) -> bool {
-        self.dropped == 0
+    pub fn is_none(&self) -> bool {
+        self.truncated.is_empty() && self.limits_hit.is_empty()
     }
 }
 
@@ -201,15 +308,61 @@ mod tests {
     fn 자른_것이_없어도_명시된다() {
         let e = Elision::none();
         assert!(e.is_none());
-        assert_eq!(e.dropped, 0);
-        assert!(e.reasons.is_empty());
+        assert_eq!(e.dropped(), 0);
+        assert!(e.truncated.is_empty() && e.limits_hit.is_empty());
     }
 
     #[test]
-    fn 자른_것에는_사유가_붙는다() {
-        let e = Elision::dropped(7, "후보 상한 K=32");
+    fn 자른_것에는_사유와_건수가_붙는다() {
+        let mut e = Elision::none();
+        e.push(ElisionReason::CandidateOverflow, 7);
+        e.hit(BudgetName::CandidateSetMax, 32);
         assert!(!e.is_none());
-        assert_eq!(e.reasons.len(), 1);
+        assert_eq!(e.dropped(), 7);
+        assert_eq!(e.count_of(ElisionReason::CandidateOverflow), 7);
+        // **다른 사유는 0 이고 그것이 정확한 값이다** — 넷을 다 적는 구현은
+        // 아무것도 안 재고 있다(`[f05.1.pass]` ③).
+        assert_eq!(e.count_of(ElisionReason::DepthExceeded), 0);
+        assert_eq!(e.limits_hit.len(), 1, "다른 상한이 함께 섰다");
+    }
+
+    #[test]
+    fn 같은_사유는_합쳐지고_같은_상한은_두_번_안_선다() {
+        // 목록이 아니라 계수기다 — 목록이면 같은 사유가 여러 줄로 서고 건수가 안 세어진다.
+        let mut e = Elision::none();
+        e.push(ElisionReason::DepthExceeded, 2);
+        e.push(ElisionReason::DepthExceeded, 3);
+        e.hit(BudgetName::DepthMax, 3);
+        e.hit(BudgetName::DepthMax, 3);
+        assert_eq!(e.truncated.len(), 1);
+        assert_eq!(e.count_of(ElisionReason::DepthExceeded), 5);
+        assert_eq!(e.limits_hit.len(), 1);
+    }
+
+    #[test]
+    fn 사유_넷과_상한_넷이_서로_다른_값이다() {
+        // 뭉개면 `[f05.1.pass]` ③ 의 표가 전부 같은 값이 되고, 그 표는 아무것도 안 잰다.
+        use std::collections::BTreeSet;
+        let reasons: BTreeSet<&str> = [
+            ElisionReason::CandidateOverflow,
+            ElisionReason::PathProductExceeded,
+            ElisionReason::DepthExceeded,
+            ElisionReason::NodeMaxExceeded,
+        ]
+        .into_iter()
+        .map(ElisionReason::name)
+        .collect();
+        assert_eq!(reasons.len(), 4);
+        let limits: BTreeSet<&str> = [
+            BudgetName::CandidateSetMax,
+            BudgetName::PathProductMax,
+            BudgetName::DepthMax,
+            BudgetName::NodeMax,
+        ]
+        .into_iter()
+        .map(BudgetName::name)
+        .collect();
+        assert_eq!(limits.len(), 4);
     }
 
     #[test]

@@ -161,3 +161,86 @@ pub const EXTRACT_CHUNK: usize = 256;
 ///
 /// **옛 자리**: `pal_cli::ledger`.
 pub const CORRUPT_NOTES: usize = 5;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 질의 예산 — F05 §5.2. **이 실행기가 존재하는 이유가 이 셋이다.**
+//
+// `CANDIDATE_LIMIT`(K)은 위에 이미 있다 — `doctor` 가 같은 값을 불변식으로 쓰고,
+// **같은 값이어야 한다.** 저장된 후보 집합의 상한과 탐색이 버리는 상한이 다르면
+// *"저장은 됐는데 어떤 질의로도 안 닿는"* 자리가 생긴다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 경로 곱 상한 `B` — [DESIGN §12.4](../../../docs/DESIGN.md) 의 예산 표. 초기값 10⁴.
+///
+/// 후보 집합을 여럿 지나면 경로 수가 **곱으로** 자란다. 합으로 재면 폭발이 안 보인다.
+///
+/// **자리표시다** — 어느 측정도 이 값을 정하지 않았다.
+pub const PROVISIONAL_PATH_PRODUCT_MAX: u64 = 10_000;
+
+/// 탐색 깊이 상한 — 3 홉. **후보 경유는 1 홉으로 센다**(F05 §5.2).
+///
+/// [`PROVISIONAL_CASCADE_DEPTH`] 와 **다른 축이다.** 저쪽은 파생 사슬을 몇 마디까지
+/// 따라가는가이고 이쪽은 코드 그래프를 몇 홉까지 걷는가다. 값이 같은 것은 우연이고,
+/// 합치면 한쪽을 재서 다른 쪽을 정하게 된다.
+///
+/// **자리표시다.**
+pub const PROVISIONAL_TRAVERSAL_DEPTH: usize = 3;
+
+/// 한 뷰가 담는 노드 수 상한 — 500 (DESIGN §12.4).
+///
+/// **사람이 읽는 화면의 예산이다.** 넘으면 자르고, 자른 수가 답에 실린다.
+///
+/// **자리표시다.**
+pub const PROVISIONAL_VIEW_NODE_MAX: usize = 500;
+
+/// 질의 하나가 들고 다니는 예산 — F05 §5.2.
+///
+/// # `Default` 가 없다. **끄는 손잡이도 없다**
+///
+/// [`crate::cascade`] 의 모듈 주석이 이미 적었다 — *"끄는 손잡이를 두지 않는다.
+/// 끌 수 있으면 그것이 오염의 가장 값싼 경로가 된다."* F05 §6 도 *"**무한 탐색 API를
+/// 제공하지 않는다**"* 로 같은 것을 적었다.
+///
+/// 그래서 여기 없는 것이 셋이다 — `Default` · `unlimited()` · `unbounded()`.
+/// 만들려면 넷을 전부 손으로 넘겨야 하고, [`Self::provisional`] 조차 *"자리표시를
+/// 쓴다"* 고 이름으로 말한다. **그 부재를 `cargo xtask check` 가 센다**
+/// (「벗어나는 경로 부재」 · `[f05.1.pass]` ④).
+///
+/// **`usize::MAX` 를 넣는 것은 막지 않는다.** 막을 수 없고, 막으려 들면 상한의 상한이라는
+/// 새 자리표시가 생긴다. 대신 **그 값이 [`crate::Elision`] 에 실린다** — 끄는 것과
+/// **끄고 그렇게 말하는 것**의 차이가 이 제품의 전부다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub struct Budget {
+    /// `K` — 후보 집합 하나가 담을 수 있는 최대 후보 수. 넘으면 **그 가지를 버린다.**
+    pub candidate_set_max: usize,
+    /// `B` — 경로 곱의 상한. 넘으면 **탐색을 멈춘다.**
+    pub path_product_max: u64,
+    /// 몇 홉까지.
+    pub depth_max: usize,
+    /// 답이 담는 노드 수의 상한.
+    pub node_max: usize,
+}
+
+impl Budget {
+    /// 넷을 전부 손으로. **이것이 유일한 생성자다.**
+    #[must_use]
+    pub const fn new(
+        candidate_set_max: usize,
+        path_product_max: u64,
+        depth_max: usize,
+        node_max: usize,
+    ) -> Self {
+        Self { candidate_set_max, path_product_max, depth_max, node_max }
+    }
+
+    /// 자리표시 넷으로. **이름이 그 사실을 말한다** — `default()` 였으면 안 말한다.
+    #[must_use]
+    pub const fn provisional() -> Self {
+        Self::new(
+            CANDIDATE_LIMIT,
+            PROVISIONAL_PATH_PRODUCT_MAX,
+            PROVISIONAL_TRAVERSAL_DEPTH,
+            PROVISIONAL_VIEW_NODE_MAX,
+        )
+    }
+}

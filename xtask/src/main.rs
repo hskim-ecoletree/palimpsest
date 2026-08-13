@@ -62,6 +62,7 @@ fn check(root: &Path) -> Result<()> {
         ("스키마 정합", check_schema(root)),
         ("선택 필드 금지 (1단계)", check_optional_fields(root)),
         ("예산 상수 단일 위치", check_budget_constants(root)),
+        ("벗어나는 경로 부재", check_no_escape_hatch(root)),
     ];
     let total = checks.len();
 
@@ -781,6 +782,7 @@ const NOT_A_BUDGET: &[(&str, &str)] = &[
     // 규칙이 자기를 예외로 두려면 그 사실이 목록에 서야 한다.
     ("BUDGET_WORDS", "이 검사의 규칙 표 — 예산이 아니다"),
     ("NOT_A_BUDGET", "이 검사의 예외 표 — 예산이 아니다"),
+    ("BUDGET_ESCAPES", "「벗어나는 경로 부재」 검사의 낱말 표 — 예산이 아니다"),
 ];
 
 /// `budget.rs` 의 이름들과, 그 밖에서 태어난 예산 후보.
@@ -867,6 +869,88 @@ fn check_budget_constants(root: &Path) -> Result<String> {
         );
     }
     Ok(format!("예산 상수 {}개 · 다른 파일 {scanned}개에 0건", declared.len()))
+}
+
+// ── 검사 10 — 벗어나는 경로 부재 (F05 §5.1·§5.2) ─────────────────────────────
+//
+// 둘을 한 검사로 센다. **같은 형태이기 때문이다** — 둘 다 *"이 값을 안 지고 나갈 수
+// 있는 문"* 이고, 둘 다 **타입으로 100% 막히지 않는다.** F05 §5.1 이 그것을 인정했다:
+// *"타입으로 100% 막히지 않는다는 것을 인정하고, 대신 **빠지면 골든이 깨지는** 자리에
+// 검사를 둔다."* 여기가 그 검사의 정적인 절반이다.
+//
+// | | 무엇을 막나 | 합격선 |
+// |---|---|---|
+// | `Envelope` | 봉투를 버리고 `T` 만 들고 나가는 경로 | `[f05.3.pass]` ① |
+// | `Budget` | 예산을 끄는 손잡이 | `[f05.1.pass]` ④ |
+//
+// # 이 검사가 지금 재는 것은 **회귀 방지**다
+//
+// 셋 다 지금 **없다**(확인했다). 그러므로 이 검사는 *"세운다"* 가 아니라
+// *"없다는 것을 산출로 검사한다"* 이고, 생기는 순간 CI 가 걸린다.
+//
+// # 못 보는 것
+//
+//   · `answer` 만 담는 **생성자**는 이름이 자유로워 낱말로 못 잡는다. 그 자리는
+//     골든이 진다(`[f05].pass.everything_that_answers_carries_an_envelope`)
+//   · 다른 크레이트가 `Envelope` 를 감싸 벗기는 것 — `pal-core` 밖은 안 본다
+
+/// 봉투를 벗기는 문. **낱말이 코드에 나타나면 실패.**
+const ENVELOPE_ESCAPES: &[&str] = &["into_answer", "impl Deref", "Deref for Envelope", "into_inner"];
+
+/// 예산을 끄는 손잡이.
+const BUDGET_ESCAPES: &[&str] =
+    &["impl Default for Budget", "fn unlimited", "fn unbounded", "fn no_budget"];
+
+fn check_no_escape_hatch(root: &Path) -> Result<String> {
+    let mut problems = Vec::new();
+
+    let cases: [(&str, &str, &[&str]); 2] = [
+        ("crates/pal-core/src/envelope.rs", "pub struct Envelope<T>", ENVELOPE_ESCAPES),
+        ("crates/pal-core/src/budget.rs", "pub struct Budget", BUDGET_ESCAPES),
+    ];
+
+    for (rel, must_declare, escapes) in cases {
+        let path = root.join(rel);
+        let text = std::fs::read_to_string(&path)
+            .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+
+        // **하한이다.** 파일이 비었거나 타입이 옮겨 갔으면 아래가 공짜로 통과한다.
+        if !text.contains(must_declare) {
+            bail!("{rel} 에 `{must_declare}` 가 없다 — 이 검사는 아무것도 안 세고 있다");
+        }
+
+        for (n, line) in text.lines().enumerate() {
+            // 주석은 산문이다 — 어휘 검사와 같은 규율.
+            let code = line.split("//").next().unwrap_or("");
+            for e in escapes {
+                if code.contains(e) {
+                    problems.push(format!("{rel}:{} `{e}`", n + 1));
+                }
+            }
+        }
+
+        // `#[derive(..., Default, ...)]` 도 같은 문이다. 타입 선언 **바로 위**만 본다.
+        let lines: Vec<&str> = text.lines().collect();
+        if let Some(i) = lines.iter().position(|l| l.contains(must_declare)) {
+            for l in &lines[i.saturating_sub(4)..i] {
+                if l.contains("derive") && l.contains("Default") {
+                    problems.push(format!("{rel}: `{must_declare}` 에 `Default` 가 파생됐다"));
+                }
+            }
+        }
+    }
+
+    if !problems.is_empty() {
+        bail!(
+            "값을 안 지고 나가는 문이 생겼다 (F05 §5.1·§5.2):\n    {}",
+            problems.join("\n    ")
+        );
+    }
+    Ok(format!(
+        "봉투 {}개 · 예산 {}개 낱말에 0건",
+        ENVELOPE_ESCAPES.len(),
+        BUDGET_ESCAPES.len()
+    ))
 }
 
 #[cfg(test)]

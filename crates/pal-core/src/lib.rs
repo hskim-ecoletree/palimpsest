@@ -33,6 +33,7 @@ mod schema;
 mod scope;
 mod symbol;
 mod touch;
+mod traverse;
 mod version;
 mod view;
 
@@ -42,9 +43,10 @@ pub use binding::{
 // **예산 상수는 여기 하나에서 나간다** — stack §5.5 · `[f05.1.pass]` ①.
 // 다른 모듈이 같은 이름을 재수출하면 *"한 곳"* 이 두 곳이 된다.
 pub use budget::{
-    CANDIDATE_LIMIT, CORRUPT_NOTES, DEFAULT_CACHE_BUDGET_BYTES, EXTRACT_CHUNK, MARKER_SCAN_BYTES,
+    Budget, CANDIDATE_LIMIT, CORRUPT_NOTES, DEFAULT_CACHE_BUDGET_BYTES, EXTRACT_CHUNK, MARKER_SCAN_BYTES,
     OVERSIZE_BYTES, PROVISIONAL_CASCADE_DEPTH, PROVISIONAL_ERROR_RATIO_PERCENT,
-    PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_SAMPLE_MAX, SHEBANG_SCAN_BYTES,
+    PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_PATH_PRODUCT_MAX, PROVISIONAL_SAMPLE_MAX,
+    PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_VIEW_NODE_MAX, SHEBANG_SCAN_BYTES,
 };
 pub use capable::{Capable, CapabilityId, Declared};
 pub use cascade::{Cascade, NodeFreshness, cascade};
@@ -66,7 +68,8 @@ pub use file_graph::{
 pub use glob::{Glob, GlobError};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};
 pub use envelope::{
-    CapabilitySet, Coverage, Elision, Envelope, LedgerRef, ProjectionFreshness, RebuildState,
+    BudgetName, CapabilitySet, Coverage, Elision, ElisionReason, Envelope, LedgerRef, LimitHit,
+    ProjectionFreshness, RebuildState, Truncation,
 };
 pub use judgment::{Residual, ResidualReason};
 pub use manifest::{ExclusionRule, Manifest, ManifestError, RepoDecl, ScopeSource};
@@ -87,6 +90,7 @@ pub use scope::{
     ScopeKind, ScopeParent,
 };
 pub use symbol::{Span, Symbol, SymbolKind};
+pub use traverse::{Step, traverse};
 pub use touch::{
     BoundItem, EffectSet, JudgmentSummary, SymbolFacts, SymbolNode, TouchAnswer, TouchResult,
     UnresolvedRef,
