@@ -45,4 +45,4 @@
 
 ### Domain docs
 
-단일 컨텍스트 — 루트의 `CONTEXT.md` + `docs/adr/`. **`CONTEXT.md` 는 아직 없고 없는 것이 정상 상태다.** ADR 은 **여섯** 있다(F22·F01·F02 종료 시 발행). `docs/agents/domain.md` 참조.
+단일 컨텍스트 — 루트의 `CONTEXT.md` + `docs/adr/`. **`CONTEXT.md` 는 아직 없고 없는 것이 정상 상태다.** ADR 은 **여덟** 있다(F22·F01·F02·F03 종료 시 발행). `docs/agents/domain.md` 참조.
