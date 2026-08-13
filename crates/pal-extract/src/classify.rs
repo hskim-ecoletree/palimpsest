@@ -97,7 +97,7 @@ pub fn classify(
     let state = if graph.is_whole() {
         FileState::Parsed { language: id, grade }
     } else {
-        FileState::Partial { language: id, grade, recovery_sites: graph.recovery_sites }
+        FileState::Partial { language: id, grade, recovery_sites: graph.recovery_count() }
     };
     Ok(FileOutcome { state, symbols: graph.symbols })
 }

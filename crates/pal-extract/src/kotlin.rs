@@ -11,7 +11,7 @@ use streaming_iterator::StreamingIterator;
 use tree_sitter::{Parser, Query, QueryCursor};
 
 use crate::extractor::LanguageExtractor;
-use crate::parse::{ExtractError, count_error_nodes, normalize};
+use crate::parse::{ExtractError, normalize, recovery_sites};
 
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
 pub(crate) static KOTLIN: KotlinExtractor = KotlinExtractor;
@@ -125,7 +125,7 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
         LanguageId::new(Language::Kotlin.name()),
         crate::grade_of(Language::Kotlin),
         symbols,
-        count_error_nodes(tree.root_node()),
+        recovery_sites(tree.root_node()),
         // **빈 집합이 아니라 안 만들었다고 적는다.** 이 추출기는 `source_file` 의 직계
         // 자식만 보고 가시성·`import` 절을 아예 읽지 않는다. 빈 `ExportSet` 은
         // *"아무것도 안 내보낸다"* 는 뜻이고 Kotlin 최상위 선언에 대해 그것은 거짓이다.

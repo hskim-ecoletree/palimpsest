@@ -15,12 +15,12 @@
 
 use pal_core::{
     BodyDigest, Capable, Containment, ExportSet, ExtractGrade, FileGraph, ImportSet, Language,
-    LanguageId, LocalIx, Span, Symbol, SymbolKind,
+    LanguageId, LocalIx, RecoverySite, Span, Symbol, SymbolKind,
 };
 use tree_sitter::{Node, Parser};
 
 use crate::extractor::LanguageExtractor;
-use crate::parse::{ExtractError, count_error_nodes, normalize};
+use crate::parse::{ExtractError, normalize, recovery_sites};
 
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
 pub(crate) static TYPESCRIPT: TypeScriptExtractor = TypeScriptExtractor;
@@ -63,7 +63,7 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
     let mut walk = Walk::new(source);
     walk.children(tree.root_node(), Scope::Module, None)?;
 
-    Ok(walk.finish(count_error_nodes(tree.root_node())))
+    Ok(walk.finish(recovery_sites(tree.root_node())))
 }
 
 /// **모듈 스코프인가.** 이 하나가 *"함수 내부 지역 변수는 심볼이 아니다"* 를 진다.
@@ -102,7 +102,7 @@ impl<'a> Walk<'a> {
         }
     }
 
-    fn finish(mut self, recovery_sites: usize) -> FileGraph {
+    fn finish(mut self, recovery_sites: Vec<RecoverySite>) -> FileGraph {
         // **집합이므로 정렬·중복 제거한다.** 소스 순서에 의존하면 `export {a}` 와
         // `export {a}` 두 번이 다른 값을 내고, 그러면 포매터가 export 를 재배열할 때
         // 산출이 움직인다 — `[f02.1.pass]` ③ 의 반대 방향이 무너지는 자리다.
@@ -551,7 +551,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
     fn 깨진_소스도_건진다() {
         // 회복을 1급으로 다루는 것은 #47 이다. 여기서는 **버리지 않는다**는 것만 센다.
         let g = 그래프("export function ok() {}\nclass Broken { fun(\n");
-        assert!(g.recovery_sites > 0, "깨졌는데 성하다고 했다");
+        assert!(!g.is_whole(), "깨졌는데 성하다고 했다");
         assert!(g.symbols.iter().any(|s| s.name == "ok"), "성한 선언까지 버렸다");
     }
 

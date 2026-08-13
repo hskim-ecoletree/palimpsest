@@ -32,7 +32,7 @@ use serde::Serialize;
 
 use crate::capable::Capable;
 use crate::ledger::{ExtractGrade, LanguageId};
-use crate::symbol::Symbol;
+use crate::symbol::{Span, Symbol};
 
 /// [`FileGraph::symbols`] 안의 자리. **파일 안에서만 뜻이 있다.**
 ///
@@ -79,6 +79,51 @@ pub struct ImportSet {
     pub modules: Vec<String>,
 }
 
+/// 파서가 회복한 자리 하나가 **무엇이었나**.
+///
+/// 둘을 가르지 않으면 `MISSING` 이 구별되지 않는다 — 그것은 **너비가 0 인 자리**이고,
+/// span 만 보면 *"아무 데도 아닌 곳"* 과 같은 값이 된다. 사용자가 보아야 하는 것은
+/// *"여기에 무엇이 빠졌다"* 이지 빈 범위가 아니다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RecoveryKind {
+    /// `ERROR` — 문법에 맞지 않는 토큰이 있었다. 그 범위를 삼킨다.
+    Error,
+    /// `MISSING` — 문법이 요구하는 토큰이 없어 파서가 **지어 넣었다.** 너비가 0 이다.
+    Missing,
+}
+
+/// 파서가 회복한 자리 하나 — **개수가 아니라 자리다.**
+///
+/// # `Coord` 가 아니라 `Span` 인 이유
+///
+/// 옛 코드는 *"회복 지점의 좌표(`Site`)는 F03 이후다 — 좌표에 `symbol` 성분이 필요하다"*
+/// 라고 적고 개수만 셌다. **그 이유가 성립하지 않는다.** 파일 안의 바이트 범위는 파일
+/// 하나만 보면 알고, [`FileGraph`] 는 `Coord` 를 싣지 않는다(`[f02.1.pass]` ②).
+/// 여기서 필요한 것은 `span` 이지 `Coord` 가 아니다.
+///
+/// **개수만으로는 사용자가 어디를 못 읽었는지 모른다.** 그것이 *"공백이 순위를 갖는다"*
+/// (DESIGN §5.3)가 성립하는 조건이다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct RecoverySite {
+    pub kind: RecoveryKind,
+    pub span: Span,
+}
+
+impl RecoverySite {
+    /// 이 자리가 삼킨 바이트 수. **`MISSING` 은 0 이다.**
+    #[must_use]
+    pub const fn width(&self) -> usize {
+        self.span.byte_end.saturating_sub(self.span.byte_start)
+    }
+
+    /// `byte` 가 이 자리 **안**인가 — 끝은 포함하지 않는다.
+    #[must_use]
+    pub const fn contains_byte(&self, byte: usize) -> bool {
+        self.span.byte_start <= byte && byte < self.span.byte_end
+    }
+}
+
 /// 파일 하나의 추출 산출.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct FileGraph {
@@ -99,10 +144,11 @@ pub struct FileGraph {
     pub exports: Capable<ExportSet>,
     /// 참조하는 외부 모듈 — 위와 같은 이유로 [`Capable`].
     pub imports: Capable<ImportSet>,
-    /// tree-sitter 가 오류 회복한 지점의 수. **0 이면 `parsed`, 아니면 `partial`.**
+    /// tree-sitter 가 오류 회복한 **자리들**. 비면 `parsed`, 아니면 `partial`.
     ///
-    /// 회복 **지점**의 좌표(`Site`)와 그 회복을 1급으로 다루는 것은 **#47** 이다.
-    pub recovery_sites: usize,
+    /// **소스 순서다.** 정렬하지 않는다 — 순회가 소스 순서로 내는 것이 곧 사용자가 파일을
+    /// 읽는 순서이고, 그것을 바꾸면 *"첫 번째 공백"* 이 뜻을 잃는다.
+    pub recovery_sites: Vec<RecoverySite>,
 }
 
 impl FileGraph {
@@ -114,7 +160,7 @@ impl FileGraph {
         language: LanguageId,
         grade: ExtractGrade,
         symbols: Vec<Symbol>,
-        recovery_sites: usize,
+        recovery_sites: Vec<RecoverySite>,
         exports: Capable<ExportSet>,
         imports: Capable<ImportSet>,
     ) -> Self {
@@ -132,7 +178,34 @@ impl FileGraph {
     /// 이 파일이 성하게 파싱됐는가.
     #[must_use]
     pub const fn is_whole(&self) -> bool {
-        self.recovery_sites == 0
+        self.recovery_sites.is_empty()
+    }
+
+    /// 회복 지점의 **수**. 대장이 싣는 값이 이것이다.
+    ///
+    /// **대장은 자리를 싣지 않는다.** 자리는 파일 하나의 사실이고 대장은 저장소 하나의
+    /// 표다 — 997 줄에 span 을 실으면 대장이 읽히지 않는다. 자리를 보는 창은
+    /// `pal symbols --graph` 다. 그 판단의 근거는 `docs/gates/F02-2-partial.md`.
+    #[must_use]
+    pub const fn recovery_count(&self) -> usize {
+        self.recovery_sites.len()
+    }
+
+    /// 회복 자리가 삼킨 바이트의 합 ÷ 소스 길이 — **백분율, 내림.**
+    ///
+    /// 자리들은 서로 겹치지 않는다(순회가 `ERROR` 안쪽으로 내려가지 않는다). 그래서
+    /// 단순 합이 곧 덮인 넓이다 — 겹치면 이 값이 100 을 넘고, 그것이 곧 세는 단위가
+    /// 무너졌다는 신호다.
+    ///
+    /// 빈 소스는 0 이다. **`MISSING` 은 너비가 0 이라 이 비율을 올리지 않는다** —
+    /// 세미콜론 하나가 빠진 파일이 `Unsupported` 로 강등되면 그것이 거짓말이다.
+    #[must_use]
+    pub fn error_ratio_percent(&self, source_len: usize) -> usize {
+        if source_len == 0 {
+            return 0;
+        }
+        let covered: usize = self.recovery_sites.iter().map(RecoverySite::width).sum();
+        covered.saturating_mul(100) / source_len
     }
 
     /// `child` 를 직접 담는 심볼.
@@ -164,7 +237,14 @@ mod tests {
         Capable::not_built(crate::CapabilityId::new("F02", "kotlin-exports"))
     }
 
-    fn 평평한(symbols: Vec<Symbol>, recovery_sites: usize) -> FileGraph {
+    fn 자리(byte_start: usize, byte_end: usize) -> RecoverySite {
+        RecoverySite {
+            kind: RecoveryKind::Error,
+            span: Span { byte_start, byte_end, line_start: 1, line_end: 1 },
+        }
+    }
+
+    fn 평평한(symbols: Vec<Symbol>, recovery_sites: Vec<RecoverySite>) -> FileGraph {
         FileGraph::flat(
             LanguageId::new("Kotlin"),
             ExtractGrade::L1,
@@ -178,7 +258,7 @@ mod tests {
     #[test]
     fn 최상위만_뽑은_그래프는_포함_관계가_없다() {
         // **비어 있는 것이 정확한 값이다** — 담긴 심볼을 안 뽑았으므로 담는 관계도 없다.
-        let g = 평평한(vec![심볼("A")], 0);
+        let g = 평평한(vec![심볼("A")], vec![]);
         assert!(g.contains.is_empty());
         assert_eq!(g.parent_of(LocalIx(0)), None);
     }
@@ -187,21 +267,51 @@ mod tests {
     fn 안_만든_export_는_빈_집합이_아니라_notbuilt_다() {
         // **거짓 안전이 죽는 자리다.** 빈 `ExportSet` 은 *"아무것도 안 내보낸다"* 이고
         // Kotlin 최상위 선언에 대해 그것은 거짓이다(기본이 public).
-        let g = 평평한(vec![심볼("A")], 0);
+        let g = 평평한(vec![심볼("A")], vec![]);
         assert!(!g.exports.is_present(), "안 만든 능력이 값으로 위장했다");
         assert!(!g.imports.is_present());
     }
 
     #[test]
     fn 회복_지점이_없으면_성한_파일이다() {
-        assert!(평평한(vec![], 0).is_whole());
-        assert!(!평평한(vec![], 2).is_whole());
+        assert!(평평한(vec![], vec![]).is_whole());
+        assert!(!평평한(vec![], vec![자리(0, 1), 자리(4, 6)]).is_whole());
+        assert_eq!(평평한(vec![], vec![자리(0, 1), 자리(4, 6)]).recovery_count(), 2);
+    }
+
+    #[test]
+    fn 비율은_삼킨_넓이지_자리의_수가_아니다() {
+        // **자리 열 개보다 넓은 자리 하나가 더 나쁘다.** 수로 재면 그 둘이 뒤집힌다.
+        let 넓은 = 평평한(vec![], vec![자리(0, 40)]);
+        let 좁은_여럿 = 평평한(vec![], (0..10).map(|i| 자리(i * 2, i * 2 + 1)).collect());
+        assert_eq!(넓은.error_ratio_percent(100), 40);
+        assert_eq!(좁은_여럿.error_ratio_percent(100), 10);
+        assert!(좁은_여럿.recovery_count() > 넓은.recovery_count());
+    }
+
+    #[test]
+    fn missing_은_비율을_올리지_않는다() {
+        // 너비가 0 이다. 세미콜론 하나가 빠진 파일이 강등되면 그것이 거짓말이다.
+        let g = 평평한(
+            vec![],
+            vec![RecoverySite {
+                kind: RecoveryKind::Missing,
+                span: Span { byte_start: 7, byte_end: 7, line_start: 1, line_end: 1 },
+            }],
+        );
+        assert_eq!(g.error_ratio_percent(100), 0);
+        assert!(!g.is_whole(), "너비가 0 이라고 회복이 없었던 것은 아니다");
+    }
+
+    #[test]
+    fn 빈_소스는_비율이_0_이다() {
+        assert_eq!(평평한(vec![], vec![]).error_ratio_percent(0), 0);
     }
 
     #[test]
     fn 포함_관계는_부모를_가리킨다() {
         // 이름을 붙여 가른 이유가 이 시험이다 — 벌거벗은 쌍이면 뒤바뀌어도 통과한다.
-        let mut g = 평평한(vec![심볼("C"), 심볼("m")], 0);
+        let mut g = 평평한(vec![심볼("C"), 심볼("m")], vec![]);
         g.contains.push(Containment { parent: LocalIx(0), child: LocalIx(1) });
         assert_eq!(g.parent_of(LocalIx(1)), Some(LocalIx(0)));
         assert_eq!(g.parent_of(LocalIx(0)), None, "부모와 자식이 뒤바뀌었다");
