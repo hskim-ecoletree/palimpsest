@@ -1,7 +1,7 @@
 {
  "detector": {
   "extractor": "f03-2",
-  "grammar": "3dea6dfa9c0129deb7c4315afbda806c85c41667",
+  "grammar": "acb96307d816618bd60e1e4d2fa3eaa793e97a2e",
   "head_now": "a29cad0bf6a873020edd8b97b13a6430d08c7f55"
  },
  "entries": [
@@ -1425,14 +1425,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/repository/ExposedPatTokenRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -1511,42 +1506,27 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/RefreshTokenFamilyDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 79,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/TokenBlacklistRepositoryImpl.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 82,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/UserTokenRepositoryImpl.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -1616,14 +1596,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/repository/SystemPatTokenRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -1801,14 +1776,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/repository/impl/ConnectorDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -1995,14 +1965,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/repository/impl/EmailTemplateDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -2225,14 +2190,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmPromptTemplateDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -2248,56 +2208,36 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmTaskMetaDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmTaskVersionDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/McpToolConfigDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/McpToolDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 68,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -2547,14 +2487,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/BpmnDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -2570,42 +2505,27 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessGlobalVariableDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessTriggerDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -2621,14 +2541,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessTriggerEventVariableDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -2824,14 +2739,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/repository/impl/ServiceTaskDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -3009,20 +2919,18 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/annotation/SharedTransactional.kt",
    "state": {
-    "partial": {
+    "parsed": {
      "grade": "l1",
-     "language": "Kotlin",
-     "recovery_sites": 2
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/common/annotation/TenantTransactional.kt",
    "state": {
-    "partial": {
+    "parsed": {
      "grade": "l1",
-     "language": "Kotlin",
-     "recovery_sites": 2
+     "language": "Kotlin"
     }
    }
   },
@@ -4397,14 +4305,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/repository/impl/MembershipTypeDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -5158,28 +5061,18 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/repository/impl/OrganizationGroupDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/repository/impl/OrganizationMembershipDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -5240,14 +5133,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/annotation/RequiresIntegratedPermission.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 43,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -5470,14 +5358,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/impl/ResourcePermissionMappingDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -5493,14 +5376,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/impl/RolePermissionMappingDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -5561,10 +5439,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/rbac/annotation/RequiresPermissions.kt",
    "state": {
-    "partial": {
+    "parsed": {
      "grade": "l1",
-     "language": "Kotlin",
-     "recovery_sites": 2
+     "language": "Kotlin"
     }
    }
   },
@@ -5823,28 +5700,18 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/repository/impl/RoleGroupDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/repository/impl/RoleGroupMembershipDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
@@ -6598,14 +6465,9 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/repository/impl/TenantUserDslRepository.kt",
    "state": {
-    "unsupported": {
-     "language": "Kotlin",
-     "reason": {
-      "grammar_defeated": {
-       "error_ratio_percent": 100,
-       "recovery_sites": 1
-      }
-     }
+    "parsed": {
+     "grade": "l1",
+     "language": "Kotlin"
     }
    }
   },
