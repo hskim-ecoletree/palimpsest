@@ -271,8 +271,7 @@ fn is_plain_template(node: Node<'_>) -> bool {
         return false;
     }
     let mut cursor = node.walk();
-    let plain = !node.children(&mut cursor).any(|c| c.kind() == "template_substitution");
-    plain
+    !node.children(&mut cursor).any(|c| c.kind() == "template_substitution")
 }
 
 fn normalize_string(out: &mut Vec<u8>, node: Node<'_>, source: &[u8]) {
