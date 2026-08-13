@@ -19,17 +19,21 @@
 //! `pal-git`(워킹트리·트리)의 일이다 — `pal-core` 가 I/O 를 하면 그것이 곧
 //! 도메인이 환경에 종속되는 자리다.
 
+use crate::capable::Declared;
 use crate::glob::{Glob, GlobError};
 use crate::repo::RepoPath;
 
 /// 파일 하나에 걸린 속성 — **미지정과 꺼짐은 다르다.**
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct FileAttributes {
-    /// `text` · `-text` · `binary`. `None` 은 **미지정**이고 그때는 `core.autocrlf` 가
-    /// 정한다 — 그 설정을 보는 것은 `pal-git` 이다.
-    pub text: Option<bool>,
+    /// `text` · `-text` · `binary`. [`Declared::Unspecified`] 면 **아무도 말하지
+    /// 않은 것**이고 그때는 `core.autocrlf` 가 정한다 — 그 설정을 보는 것은 `pal-git` 이다.
+    ///
+    /// **`Option<bool>` 이 아니다** — 그러면 *"꺼져 있다"* 와 *"미지정"* 이 둘로 접히고,
+    /// 그것이 stack §5.4 가 금한 자리다(`cargo xtask check` 가 잡는다).
+    pub text: Declared<bool>,
     /// `linguist-language=<이름>`. 언어 인식 ③ 단계가 이것을 읽는다.
-    pub language: Option<String>,
+    pub language: Declared<String>,
 }
 
 impl FileAttributes {
@@ -37,10 +41,10 @@ impl FileAttributes {
     /// git 의 규칙이고, 그렇지 않으면 뒤에 오는 `*.kt diff` 같은 줄이 앞의 `text` 를
     /// 조용히 지운다.
     fn apply(&mut self, other: &Self) {
-        if other.text.is_some() {
+        if other.text.is_set() {
             self.text = other.text;
         }
-        if other.language.is_some() {
+        if other.language.is_set() {
             self.language.clone_from(&other.language);
         }
     }
@@ -149,13 +153,13 @@ fn parse_attrs<'a>(parts: impl Iterator<Item = &'a str>) -> FileAttributes {
     for token in parts {
         match token {
             // `binary` 는 `-text -diff -merge` 의 줄임이다.
-            "binary" | "-text" => out.text = Some(false),
+            "binary" | "-text" => out.text = Declared::Set(false),
             // `text=auto` 는 "바이너리가 아니면 텍스트" 인데, 바이너리 판정은 내용을
             // 봐야 한다. 여기서는 텍스트로 두고 NUL 검사가 뒤에서 가른다.
-            "text" | "text=auto" => out.text = Some(true),
+            "text" | "text=auto" => out.text = Declared::Set(true),
             other => {
                 if let Some(name) = other.strip_prefix("linguist-language=") {
-                    out.language = Some(name.to_owned());
+                    out.language = Declared::Set(name.to_owned());
                 }
             }
         }
@@ -175,24 +179,24 @@ mod tests {
     fn 코퍼스의_gitattributes_를_그대로_읽는다() {
         // `boxwood/portal-backend@a29cad0bf6a8` 의 실물 내용이다.
         let body = "/gradlew text eol=lf\n*.bat text eol=crlf\n*.jar binary\n";
-        assert_eq!(속성(body, "gradlew.bat").text, Some(true));
-        assert_eq!(속성(body, "gradlew").text, Some(true));
-        assert_eq!(속성(body, "gradle/wrapper/gradle-wrapper.jar").text, Some(false));
+        assert_eq!(속성(body, "gradlew.bat").text, Declared::Set(true));
+        assert_eq!(속성(body, "gradlew").text, Declared::Set(true));
+        assert_eq!(속성(body, "gradle/wrapper/gradle-wrapper.jar").text, Declared::Set(false));
         // 걸리지 않은 파일은 **미지정**이지 "텍스트 아님"이 아니다.
-        assert_eq!(속성(body, "src/main/kotlin/A.kt").text, None);
+        assert_eq!(속성(body, "src/main/kotlin/A.kt").text, Declared::Unspecified);
     }
 
     #[test]
     fn 뒤_규칙이_이긴다() {
         let body = "*.kt text\n*.kt -text\n";
-        assert_eq!(속성(body, "A.kt").text, Some(false));
+        assert_eq!(속성(body, "A.kt").text, Declared::Set(false));
     }
 
     #[test]
     fn 미지정_속성은_앞의_판정을_지우지_않는다() {
         // 뒤 줄이 `text` 를 말하지 않으므로 앞의 `text` 가 남아야 한다.
         let body = "*.kt text\n*.kt diff\n";
-        assert_eq!(속성(body, "A.kt").text, Some(true));
+        assert_eq!(속성(body, "A.kt").text, Declared::Set(true));
     }
 
     #[test]
@@ -201,14 +205,14 @@ mod tests {
             (String::new(), "*.kt text\n".to_owned()),
             ("src/gen".to_owned(), "*.kt -text\n".to_owned()),
         ]);
-        assert_eq!(attrs.of(&RepoPath::new("src/A.kt")).text, Some(true));
-        assert_eq!(attrs.of(&RepoPath::new("src/gen/A.kt")).text, Some(false));
+        assert_eq!(attrs.of(&RepoPath::new("src/A.kt")).text, Declared::Set(true));
+        assert_eq!(attrs.of(&RepoPath::new("src/gen/A.kt")).text, Declared::Set(false));
     }
 
     #[test]
     fn 하위_gitattributes_는_자기_아래에만_건다() {
         let attrs = Attributes::parse(&[("src/gen".to_owned(), "*.kt -text\n".to_owned())]);
-        assert_eq!(attrs.of(&RepoPath::new("other/A.kt")).text, None);
+        assert_eq!(attrs.of(&RepoPath::new("other/A.kt")).text, Declared::Unspecified);
     }
 
     #[test]

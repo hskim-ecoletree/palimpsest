@@ -60,3 +60,66 @@ impl CapabilityId {
         Self { feature, what }
     }
 }
+
+
+/// **선언되지 않은 것과 선언된 것.** `Option<T>` 의 자리에 이름을 붙인 것이다.
+///
+/// # 왜 `Option<T>` 이 아닌가 (stack §5.4 · [ADR-0005])
+///
+/// `None` 은 *"없다"* 만 말하고 **어떤 없음인지**는 말하지 않는다. 이 저장소는 그
+/// 구별을 [`Capable`](crate::Capable)(안 만들었다) · [`UnsupportedReason`] (못 읽었다) ·
+/// [`Uncapturable`] 로 일관되게 세웠고, 여기는 그 셋과 또 다른 없음이다 —
+/// **사람이 아무 말도 안 했다.**
+///
+/// `.gitattributes` 의 `text` 가 그 자리다: *"꺼져 있다"* 와 *"미지정이라 `core.autocrlf`
+/// 가 정한다"* 는 다른 사실이고, `Option<bool>` 은 그 셋을 둘로 접는다.
+///
+/// **`Option` 으로 바꿔 쓸 수 있는 것이 요점이 아니다** — 요점은 `Unspecified` 라는
+/// **이름이 산출과 코드에 남는 것**이다. `cargo xtask check` 의 「선택 필드 금지」가
+/// 그 이름을 강제한다.
+///
+/// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
+/// [`UnsupportedReason`]: crate::UnsupportedReason
+/// [`Uncapturable`]: crate::Uncapturable
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum Declared<T> {
+    /// 아무도 이 값을 말하지 않았다. **기본값이다** — 선언이 없는 것이 정상 상태다.
+    #[default]
+    Unspecified,
+    /// 선언됐다.
+    Set(T),
+}
+
+impl<T> Declared<T> {
+    /// 선언됐는가.
+    pub const fn is_set(&self) -> bool {
+        matches!(self, Self::Set(_))
+    }
+
+    /// 선언된 값, 없으면 기본값. **`unwrap_or` 와 달리 이름이 사실을 말한다.**
+    pub fn or_default(self, fallback: T) -> T {
+        match self {
+            Self::Set(v) => v,
+            Self::Unspecified => fallback,
+        }
+    }
+
+    /// 빌려서 본다.
+    pub const fn get(&self) -> Declared<&T> {
+        match self {
+            Self::Set(v) => Declared::Set(v),
+            Self::Unspecified => Declared::Unspecified,
+        }
+    }
+}
+
+impl Declared<String> {
+    /// 문자열로 빌린다 — 부르는 쪽이 `&str` 을 원할 때.
+    #[must_use]
+    pub fn as_deref(&self) -> Option<&str> {
+        match self {
+            Self::Set(s) => Some(s.as_str()),
+            Self::Unspecified => None,
+        }
+    }
+}

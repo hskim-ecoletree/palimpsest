@@ -60,6 +60,7 @@ fn check(root: &Path) -> Result<()> {
         ("의존 정책", check_deny(root)),
         ("gix 격리", check_gix_isolation(root)),
         ("스키마 정합", check_schema(root)),
+        ("선택 필드 금지 (1단계)", check_optional_fields(root)),
     ];
     let total = checks.len();
 
@@ -90,6 +91,76 @@ fn repo_root() -> Result<PathBuf> {
         .parent()
         .context("워크스페이스 루트를 찾지 못했다")?
         .to_path_buf())
+}
+
+// ── 검사 8 — 선택 필드 금지 · 1단계 (stack §4.3 · F03-3) ────────────────────
+//
+// [stack §4.3](../../docs/plan/00-stack.md) 의 표가 이 검사의 소유를 **F03** 으로,
+// 1 단계의 범위를 *"`pal-core` 의 `pub struct` 필드에 대한 문자열 스캔"* 으로 적었다.
+// 2 단계(`syn` AST 승급)는 여기가 아니다.
+//
+// # 왜 금지인가
+//
+// stack §5.4: *"`Option<T>` — 선택 필드 금지 위반. 그리고 `None` 이 **「없음」인지
+// 「안 만듦」인지 구별 안 됨**."* 이 저장소가 `Capable` · `UnresolvedReason` ·
+// `Uncapturable` 로 일관되게 내린 판단이고 [ADR-0005](../../docs/adr/0005-absence-carries-its-kind.md)
+// 가 *"부재는 종류를 싣는다"* 로 정본화했다.
+//
+// # 이 검사가 못 보는 것 — **적어 두지 않으면 1 단계가 2 단계인 척한다**
+//
+//   · `enum` 변형 안의 필드 (`Resolution::Candidates { demoted_to: Option<…> }`)
+//   · 여러 줄에 걸쳐 쓰인 필드 선언
+//   · 타입 별칭 뒤에 숨은 `Option`
+//   · `pub` 이 아닌 필드 — **일부러 안 본다.** stack §5.4 가 구현 내부 자료구조를
+//     허용 열에 두었다
+//
+// 허용되는 자리는 저장 포트 트레잇의 **반환값**인데, 그것은 `fn` 이라 이 스캔에
+// 애초에 안 걸린다.
+
+/// `pub struct` 안의 `pub` 필드에 `Option<` 이 있는가.
+fn check_optional_fields(root: &Path) -> Result<String> {
+    let src = root.join("crates/pal-core/src");
+    let mut hits = Vec::new();
+    let mut scanned = 0usize;
+    for file in rust_sources(&src)? {
+        let text = std::fs::read_to_string(&file)?;
+        let mut in_struct = false;
+        let mut depth = 0i32;
+        for (n, line) in text.lines().enumerate() {
+            let t = line.trim();
+            if !in_struct && t.starts_with("pub struct ") && t.ends_with('{') {
+                in_struct = true;
+                depth = 1;
+                scanned += 1;
+                continue;
+            }
+            if !in_struct {
+                continue;
+            }
+            depth += i32::try_from(t.matches('{').count()).unwrap_or(0);
+            depth -= i32::try_from(t.matches('}').count()).unwrap_or(0);
+            if depth <= 0 {
+                in_struct = false;
+                continue;
+            }
+            // 주석은 필드가 아니다 — 이 규칙을 설명하는 문장이 그 자리에 있다.
+            if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
+                continue;
+            }
+            if t.starts_with("pub ") && t.contains("Option<") {
+                let rel = file.strip_prefix(root).unwrap_or(&file);
+                hits.push(format!("{}:{}  {t}", rel.display(), n + 1));
+            }
+        }
+    }
+    if !hits.is_empty() {
+        bail!(
+            "`pal-core` 의 `pub struct` 에 선택 필드가 있다 — `None` 이 「없음」인지 \
+             「안 만듦」인지 구별되지 않는다 (stack §5.4 · ADR-0005):\n    {}",
+            hits.join("\n    ")
+        );
+    }
+    Ok(format!("`pub struct` {scanned}개 · 선택 필드 0"))
 }
 
 // ── 검사 1 — 의존 방향 (stack §4.1) ─────────────────────────────────────────
@@ -381,7 +452,7 @@ fn check_schema(root: &Path) -> Result<String> {
             Mark::Edge => schema
                 .edges
                 .get(label)
-                .and_then(|e| e.carried_by.as_ref().map(|c| c.rust_type.clone())),
+                .and_then(|e| e.carried_by.carrier().map(|c| c.rust_type.clone())),
         };
         match found {
             None => problems.push(format!(
@@ -649,7 +720,7 @@ fn render_schema_doc(s: &pal_core::GraphSchema) -> String {
         };
         let carrier = e
             .carried_by
-            .as_ref()
+            .carrier()
             .map_or_else(|| "—".to_owned(), |c| format!("`{}::{}`", c.rust_type, c.field));
         let _ = writeln!(
             o,

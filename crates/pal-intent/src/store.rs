@@ -170,3 +170,71 @@ impl IntentStore {
         Ok(usize::try_from(n).unwrap_or(usize::MAX))
     }
 }
+
+/// 저장소 별칭 — **사람이 선언한 재배치.** `RepoAlias::was` 가 열쇠다.
+const ALIAS: TableDefinition<&str, Vec<u8>> = TableDefinition::new("repo_alias");
+
+impl IntentStore {
+    /// 별칭 하나를 남긴다.
+    ///
+    /// # 왜 여기인가 ([R-21] · F03 §7)
+    ///
+    /// *"이 저장소가 저 저장소였다"* 는 **코드에서 유도되지 않는다.** 파생층에 두면
+    /// *"2층을 지우고 재구축"* 이 그 선언을 지우고, 재구축 등가성 검사는 그 상태에서도
+    /// 통과하므로 **검사가 유실을 정상으로 승인한다.** 결박과 같은 처지이고 같은 방에 산다.
+    ///
+    /// # Errors
+    /// 쓰기가 실패하면.
+    pub fn record_alias(&self, alias: &pal_core::RepoAlias) -> Result<(), IntentError> {
+        let raw = postcard::to_allocvec(alias).map_err(|e| IntentError::Decode(e.to_string()))?;
+        let write = self.db.begin_write().map_err(|e| IntentError::Transaction(e.to_string()))?;
+        {
+            let mut t =
+                write.open_table(ALIAS).map_err(|e| IntentError::Transaction(e.to_string()))?;
+            t.insert(alias.was.as_str(), raw)
+                .map_err(|e| IntentError::Transaction(e.to_string()))?;
+        }
+        write.commit().map_err(|e| IntentError::Transaction(e.to_string()))?;
+        Ok(())
+    }
+
+    /// 선언된 별칭 전부 — **옛 이름 순.**
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 값을 풀지 못하면.
+    pub fn aliases(&self) -> Result<Vec<pal_core::RepoAlias>, IntentError> {
+        let read = self.db.begin_read().map_err(|e| IntentError::Transaction(e.to_string()))?;
+        let Ok(t) = read.open_table(ALIAS) else {
+            return Ok(Vec::new());
+        };
+        let mut out = Vec::new();
+        for row in t.iter().map_err(|e| IntentError::Transaction(e.to_string()))? {
+            let (_, v) =
+                row.map_err(|e: redb::StorageError| IntentError::Transaction(e.to_string()))?;
+            out.push(
+                postcard::from_bytes(&v.value()).map_err(|e| IntentError::Decode(e.to_string()))?,
+            );
+        }
+        out.sort();
+        Ok(out)
+    }
+
+    /// 옛 이름을 지금 이름으로 — **선언된 것만 따라간다.**
+    ///
+    /// # 사슬을 따라가되 **한 바퀴 이상 돌지 않는다**
+    ///
+    /// `a → b → a` 같은 선언은 사람이 만들 수 있고, 여기서 고칠 수 없다. **좌표를
+    /// 만드는 쪽이 멈추지 않는 것**은 여기의 책임이다 — 선언 수만큼만 따라간다.
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn resolve_repo(&self, id: &pal_core::RepoId) -> Result<pal_core::RepoId, IntentError> {
+        let all = self.aliases()?;
+        let mut cursor = id.clone();
+        for _ in 0..all.len() {
+            let Some(next) = all.iter().find(|a| a.was == cursor) else { break };
+            cursor = next.now.clone();
+        }
+        Ok(cursor)
+    }
+}

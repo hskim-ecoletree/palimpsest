@@ -586,7 +586,7 @@ impl GixRepo {
         if meta.is_symlink() {
             return Ok(raw);
         }
-        let text = self.attributes().of(path).text.unwrap_or_else(|| self.autocrlf());
+        let text = self.attributes().of(path).text.or_default(self.autocrlf());
         if !text {
             return Ok(raw);
         }

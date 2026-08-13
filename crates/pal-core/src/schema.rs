@@ -108,9 +108,37 @@ pub struct EdgeDecl {
     /// ④ 발생 `Snapshot` 을 싣는 속성 이름.
     pub snapshot: String,
     // ─────────────────────────────────────────────────────────────────────────
-    /// 엣지가 별도 자리가 아니라 노드의 필드로 실려 있으면 그 자리.
-    pub carried_by: Option<Carrier>,
+    /// 이 엣지가 **어디에 사는가** — 별도 자리인가, 노드의 필드에 실려 있는가.
+    ///
+    /// **`Option<Carrier>` 가 아니다.** `None` 은 *"실린 자리가 없다"* 만 말하고
+    /// **그것이 「별도 자리다」인지 「아직 안 정했다」인지**를 말하지 않는다 —
+    /// stack §5.4 가 금한 자리이고 `cargo xtask check` 가 잡는다.
+    pub carried_by: Carried,
     pub attrs: Vec<AttrDecl>,
+}
+
+/// 엣지가 **어디에 사는가.**
+///
+/// [ADR-0005](../../../docs/adr/0005-absence-carries-its-kind.md) — 부재는 종류를
+/// 싣는다. *"실린 자리가 없다"* 는 곧 **「별도 자리다」** 라는 사실이지 빈칸이 아니다.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum Carried {
+    /// 엣지가 자기 자리로 선다. **기본값이다.**
+    #[default]
+    Standalone,
+    /// 노드의 필드에 실려 있다.
+    By(Carrier),
+}
+
+impl Carried {
+    /// 실려 있으면 그 자리.
+    #[must_use]
+    pub const fn carrier(&self) -> Option<&Carrier> {
+        match self {
+            Self::By(c) => Some(c),
+            Self::Standalone => None,
+        }
+    }
 }
 
 /// 등급이 엣지마다 다른가, 구조상 고정인가.
@@ -534,7 +562,9 @@ impl GraphSchema {
             provenance,
             evidence,
             snapshot,
-            carried_by: re.carried_by.map(|c| Carrier { rust_type: c.rust_type, field: c.field }),
+            carried_by: re.carried_by.map_or(Carried::Standalone, |c| {
+                Carried::By(Carrier { rust_type: c.rust_type, field: c.field })
+            }),
             attrs,
         })
     }
@@ -549,7 +579,7 @@ impl GraphSchema {
         out.extend(n.attrs.iter().map(|a| a.name.clone()));
         // 이 노드가 싣고 있는 엣지의 자리도 필드다.
         for e in self.edges.values() {
-            if let Some(c) = &e.carried_by {
+            if let Some(c) = e.carried_by.carrier() {
                 if c.rust_type == n.rust_type {
                     out.push(c.field.clone());
                 }

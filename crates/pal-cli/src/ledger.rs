@@ -130,7 +130,7 @@ pub fn compute(
     // 회차마다 움직이고 결박이 조용히 `orphaned` 가 된다.
     for chunk in files.chunks(EXTRACT_CHUNK) {
         // ① 직렬 — 캐시를 보고, 미스면 소스를 읽는다.
-        let mut pending: Vec<(usize, Vec<u8>, Option<String>)> = Vec::new();
+        let mut pending: Vec<(usize, Vec<u8>, pal_core::Declared<String>)> = Vec::new();
         let mut outcomes: Vec<Option<FileOutcome>> = Vec::with_capacity(chunk.len());
         for (i, (path, blob)) in chunk.iter().enumerate() {
             if let Some(rule) = manifest.as_ref().and_then(|m| m.excluded_by(&repo_id, path)) {

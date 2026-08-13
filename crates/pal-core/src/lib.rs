@@ -27,6 +27,7 @@ mod judgment;
 mod language;
 mod ledger;
 mod manifest;
+mod rebind;
 mod repo;
 mod schema;
 mod scope;
@@ -39,7 +40,7 @@ pub use binding::{
     Binding, BindingId, BindingStatus, CodeFreshness, Lineage, WatchEntry,
 };
 pub use budget::PROVISIONAL_ERROR_RATIO_PERCENT;
-pub use capable::{Capable, CapabilityId};
+pub use capable::{Capable, CapabilityId, Declared};
 pub use cascade::{Cascade, NodeFreshness, PROVISIONAL_CASCADE_DEPTH, cascade};
 pub use chain::{
     Actor, ActorId, Change, ChangeId, ChangeKind, Confidence, Defect, Introduction, Journey,
@@ -70,10 +71,11 @@ pub use ledger::{
     UnsupportedReason,
 };
 pub use schema::{
-    AttrDecl, Cardinality, Carrier, EdgeDecl, EvidenceRule, GradeRule, GraphSchema, NodeDecl,
+    AttrDecl, Cardinality, Carried, Carrier, EdgeDecl, EvidenceRule, GradeRule, GraphSchema, NodeDecl,
     NodeStatus, Requirement, SchemaError,
 };
-pub use repo::{Digest, ObjectName, RepoId, RepoPath, Snapshot, TreeRef};
+pub use rebind::{MatchSignals, RebindProposal, propose, propose_with_shape};
+pub use repo::{Digest, ObjectName, RepoAlias, RepoId, RepoPath, Snapshot, TreeRef};
 pub use scope::{
     BoundSymbol, LocalRef, Namespace, RefResolution, Scope, ScopeBinding, ScopeChain, ScopeIx,
     ScopeKind, ScopeParent,

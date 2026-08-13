@@ -418,3 +418,38 @@ mod tests {
         assert!(!w.is_committed());
     }
 }
+
+/// 저장소 하나가 **다른 이름으로도 불린 적이 있다**는 선언.
+///
+/// # 왜 필요한가 ([R-08](../../../docs/plan/00-risks.md#r-08) · F03 §4.2)
+///
+/// `repo_id` 가 `symbol_id` 의 해시 성분이라, 저장소를 나누거나 합치면 **전 심볼의
+/// 정체성이 한 번에 끊긴다.** 별칭이 그 재배치를 흡수한다.
+///
+/// # 이것은 **사람이 선언하는 것**이다 — 그래서 의도 저장소가 소유한다 ([R-21])
+///
+/// *"이 저장소가 저 저장소였다"* 는 코드에서 유도되지 않는다. 파생층에 두면
+/// *"지우고 재구축"* 이 그 선언을 지우고, **재구축 등가성 검사는 그 상태에서도
+/// 통과하므로 검사가 유실을 정상으로 승인한다.**
+///
+/// # 흡수되지 않은 재배치는 **관측 가능한 사건**이다
+///
+/// 별칭이 없으면 전 심볼이 `orphaned` 가 된다. F03 §4.2 가 그것을 *"조용한 정체성
+/// 유실보다 낫다"* 로 판단했고, 이 타입은 그 판단을 뒤집지 않는다 — **자동으로
+/// 흡수하지 않고 선언된 것만 흡수한다.**
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct RepoAlias {
+    /// 옛 이름.
+    pub was: RepoId,
+    /// 지금 이름.
+    pub now: RepoId,
+    /// 누가·왜 — **사람이 적는다.** 빈 문자열이 아니어야 한다는 강제는 F09 다.
+    pub note: String,
+}
+
+impl RepoAlias {
+    #[must_use]
+    pub fn new(was: RepoId, now: RepoId, note: impl Into<String>) -> Self {
+        Self { was, now, note: note.into() }
+    }
+}
