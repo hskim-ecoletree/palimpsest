@@ -5,8 +5,10 @@
 //! `body_digest` 가 서로 다른 규칙 위에 서게 되고**, 그러면 같은 리팩터가 한 언어에서만
 //! 결박을 `stale` 로 만든다.
 
+use std::cell::RefCell;
+
 use pal_core::{RecoveryKind, RecoverySite, Span};
-use tree_sitter::Node;
+use tree_sitter::{Node, Parser, Tree};
 
 /// 토큰 사이 구분자. 넣지 않으면 `fun f` 와 `funf` 가 같은 바이트열이 된다.
 const TOKEN_SEPARATOR: u8 = 0x1f;
@@ -29,6 +31,36 @@ pub enum ExtractError {
     PatternCount(usize, usize),
     #[error("소스가 UTF-8 이 아니다")]
     NotUtf8,
+}
+
+thread_local! {
+    /// **스레드당 파서 하나.** F02 §3.1 이 요구한 것이고 #46 이 빚으로 넘긴 자리다.
+    ///
+    /// `Parser::new()` 가 싸지 않고, rayon 워커마다 하나면 충분하다. 언어마다 문법을
+    /// 다시 붙이는 것도 비싸므로 **마지막에 붙인 문법을 기억해 같은 언어면 건너뛴다.**
+    ///
+    /// # 이것이 결정성을 깨지 않는 이유
+    ///
+    /// 파서는 파싱이 끝나면 상태를 남기지 않는다 — `parse(source, None)` 은 이전 트리를
+    /// 쓰지 않는다(증분 파싱은 둘째 인자를 준다). 그래서 **같은 소스는 파서를 재사용해도
+    /// 같은 트리를 낸다**. `[f02.4.pass]` ① 이 그것을 회차 다섯으로 되묻는다.
+    static PARSER: RefCell<(Parser, Option<tree_sitter::Language>)> =
+        RefCell::new((Parser::new(), None));
+}
+
+/// 이 스레드의 파서로 파싱한다.
+///
+/// # Errors
+/// 문법을 붙이지 못하거나 파싱이 중단되면 [`ExtractError`].
+pub fn parse_with(language: &tree_sitter::Language, source: &[u8]) -> Result<Tree, ExtractError> {
+    PARSER.with(|cell| {
+        let (parser, attached) = &mut *cell.borrow_mut();
+        if attached.as_ref() != Some(language) {
+            parser.set_language(language)?;
+            *attached = Some(language.clone());
+        }
+        parser.parse(source, None).ok_or(ExtractError::ParseAborted)
+    })
 }
 
 /// 선언 하나의 **정규형** — 주석·공백·포매팅을 지운 바이트열.

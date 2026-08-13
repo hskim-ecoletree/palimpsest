@@ -19,10 +19,10 @@ use pal_core::{
     BodyDigest, BoundSymbol, Capable, Containment, ExportSet, ExtractGrade, FileGraph, IdentityGrade,
     ImportSet, Language, LanguageId, LocalIx, RecoverySite, RefResolution, Span, Symbol, SymbolKind,
 };
-use tree_sitter::{Node, Parser};
+use tree_sitter::Node;
 
 use crate::extractor::LanguageExtractor;
-use crate::parse::{ExtractError, normalize, normalize_erasing, recovery_sites};
+use crate::parse::{ExtractError, normalize, normalize_erasing, parse_with, recovery_sites};
 use crate::scopes::{self, Scoped};
 
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
@@ -58,10 +58,8 @@ impl LanguageExtractor for TypeScriptExtractor {
 /// 아니다** — 부분 결과와 회복 지점 수가 함께 나온다.
 pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
     let language = tree_sitter::Language::new(tree_sitter_typescript::LANGUAGE_TYPESCRIPT);
-
-    let mut parser = Parser::new();
-    parser.set_language(&language)?;
-    let tree = parser.parse(source, None).ok_or(ExtractError::ParseAborted)?;
+    // **스레드당 파서를 재사용한다**(#49 · F02 §3.1). `Parser::new()` 는 싸지 않다.
+    let tree = parse_with(&language, source)?;
 
     let mut walk = Walk::new(source);
     walk.children(tree.root_node(), Scope::Module, None)?;

@@ -8,10 +8,10 @@ use pal_core::{
     SymbolKind,
 };
 use streaming_iterator::StreamingIterator;
-use tree_sitter::{Parser, Query, QueryCursor};
+use tree_sitter::{Query, QueryCursor};
 
 use crate::extractor::LanguageExtractor;
-use crate::parse::{ExtractError, normalize, recovery_sites};
+use crate::parse::{ExtractError, normalize, parse_with, recovery_sites};
 
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
 pub(crate) static KOTLIN: KotlinExtractor = KotlinExtractor;
@@ -76,10 +76,8 @@ const KIND_BY_PATTERN: [SymbolKind; 5] = [
 /// 문법·쿼리·파싱 중 하나가 실패하면 [`ExtractError`].
 pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
     let language = tree_sitter::Language::new(tree_sitter_kotlin_ng::LANGUAGE);
-
-    let mut parser = Parser::new();
-    parser.set_language(&language)?;
-    let tree = parser.parse(source, None).ok_or(ExtractError::ParseAborted)?;
+    // **스레드당 파서를 재사용한다**(#49 · F02 §3.1). `Parser::new()` 는 싸지 않다.
+    let tree = parse_with(&language, source)?;
 
     let query = Query::new(&language, TOP_LEVEL_QUERY)?;
     if query.pattern_count() != KIND_BY_PATTERN.len() {

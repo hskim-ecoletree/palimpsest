@@ -146,6 +146,16 @@ impl BlobCache {
     /// 중간에 죽으면 반쪽 파일이 남고, 그것을 다음 실행이 정상 캐시로 읽으면 조용한
     /// 오답이 된다. 병렬 쓰기가 락 없이 되는 것도 이 덕분이다.
     ///
+    /// # ⚠ 임시 이름이 **키마다 하나면 그 보장이 깨진다**
+    ///
+    /// 옛 코드는 `<키>.tmp` 하나를 썼다. 같은 키를 두 쓰는 이가 동시에 넣으면 **둘이 같은
+    /// 임시 파일에 겹쳐 쓰고**, 한쪽이 반쯤 쓴 것을 다른 쪽이 `rename` 한다 — 그 결과가
+    /// 정상 캐시 파일로 남는다. 락이 없어도 되는 이유가 *"각자 자기 임시 파일에 쓴다"*
+    /// 인데 그 전제가 없었던 것이다.
+    ///
+    /// 병렬 추출(#49)이 이 자리를 실제로 밟는다. 임시 이름에 **프로세스와 스레드**를
+    /// 넣어 쓰는 이마다 갈랐다.
+    ///
     /// # Errors
     /// 직렬화·쓰기·이동 중 하나가 실패하면.
     pub fn put<T: Serialize>(&self, key: &CacheKey, value: &T) -> Result<(), CacheError> {
@@ -159,7 +169,12 @@ impl BlobCache {
         let packed = zstd::encode_all(raw.as_slice(), ZSTD_LEVEL)
             .map_err(|e| CacheError::Write(format!("압축: {e}")))?;
 
-        let tmp = path.with_extension("tmp");
+        // **쓰는 이마다 다른 임시 이름.** 위 주석의 이유다.
+        let tmp = path.with_extension(format!(
+            "{}.{:?}.tmp",
+            std::process::id(),
+            std::thread::current().id()
+        ));
         fs::write(&tmp, &packed)
             .map_err(|e| CacheError::Write(format!("{}: {e}", tmp.display())))?;
         fs::rename(&tmp, &path)
