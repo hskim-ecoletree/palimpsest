@@ -29,13 +29,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use pal_store::{BlobCache, ExtractCache as _};
 
-/// 기본 예산 — F04 §3.4 의 **2GB**.
-///
-/// **자리표시다.** 어느 측정도 이 숫자를 정하지 않았다([DESIGN §5.5] 계열).
-/// 넘겨서 줄이는 것은 `--budget` 이고, 확정은 예산 회귀(F05)의 것이다.
-///
-/// [DESIGN §5.5]: ../../../docs/DESIGN.md
-pub const DEFAULT_BUDGET_BYTES: u64 = 2 * 1024 * 1024 * 1024;
+// **기본 예산은 여기 없다.** `pal-core::budget::DEFAULT_CACHE_BUDGET_BYTES` 한 곳이다
+// (stack §5.5 · `[f05.1.pass]` ①). 넘겨서 줄이는 것은 `--budget` 이다.
 
 /// 캐시 뿌리. **`<저장소>/.palimpsest/cache` 하나뿐이다.**
 fn root_of(repo: &Path, cache_dir: Option<PathBuf>) -> PathBuf {

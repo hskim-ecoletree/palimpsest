@@ -25,7 +25,7 @@
 //! 된다.** 아래가 이미 적고 있는 원칙 — *"틀리게 인식하는 것보다 모른다고 적는 것이
 //! 낫다"* — 이 그 자리에 그대로 걸린다. 근거는 `docs/gates/F01.md` 에 목록으로 있다.
 
-use pal_core::{Language, LanguageId};
+use pal_core::{Language, LanguageId, SHEBANG_SCAN_BYTES};
 
 /// 확장자로 아는 언어. **추출 가능 여부와 무관하다.**
 ///
@@ -105,8 +105,7 @@ const BY_INTERPRETER: &[(&str, &str)] = &[
     ("perl", "Perl"),
 ];
 
-/// 셔뱅을 볼 파일 머리의 길이. 첫 줄이면 충분하다.
-const SHEBANG_SCAN_BYTES: usize = 256;
+// **셔뱅 스캔 길이는 여기 없다** — `pal-core::budget` 한 곳이다(stack §5.5).
 
 /// 이 파일이 무슨 언어인가 — **선언 → 확장자·이름 → 셔뱅** 순서로 묻는다.
 ///

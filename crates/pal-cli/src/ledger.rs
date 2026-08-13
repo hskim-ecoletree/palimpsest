@@ -15,29 +15,19 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use pal_core::{
-    Attributes, Bucket, Containment, DetectorFreshness, Discriminator, ExtractGrade, FileState,
+    Attributes, Bucket, CORRUPT_NOTES, Containment, DetectorFreshness, Discriminator,
+    EXTRACT_CHUNK, ExtractGrade, FileState, OVERSIZE_BYTES,
     IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath,
     ScopeSource, Snapshot, SymbolId, SymbolNode, TreeRef, UnsupportedReason,
 };
-use pal_extract::{FileOutcome, OVERSIZE_BYTES};
+use pal_extract::FileOutcome;
 use pal_git::{GitAccess, GixRepo, WorktreeState};
 use pal_store::{BlobCache, CacheKey, CacheStats, ExtractCache as _, Lookup};
 use rayon::prelude::*;
 use serde::Serialize;
 
-/// 한 번에 손에 드는 파일 수 — **메모리가 파일 수에 비례하지 않게 하는 값이다.**
-///
-/// 전부 읽고 전부 병렬로 돌리면 소스 바이트를 파일 수만큼 동시에 든다. 10⁵ 에서 그것이
-/// 터진다(F02 §4). 이 값이 곧 동시 상주의 상한이고, **파일 수와 무관하다.**
-///
-/// **자리표시다** — 어느 측정도 이 숫자를 정하지 않았다. 확정은 예산 회귀(F05)의 것이다.
-const EXTRACT_CHUNK: usize = 256;
-
-/// 화면에 자리까지 적는 손상 엔트리의 수.
-///
-/// **수는 전부 세고 자리는 몇 개만 적는다.** 997 줄짜리 표 위에 손상 목록이 다 실리면
-/// 표가 안 읽히고, 하나도 안 실리면 사용자가 어디를 볼지 모른다.
-const CORRUPT_NOTES: usize = 5;
+// **덩어리 크기와 화면 예산은 여기 없다.** `pal-core::budget` 한 곳이다
+// (stack §5.5 · `[f05.1.pass]` ①).
 
 /// 대장 + 그것을 만드는 데 든 캐시 회계.
 ///

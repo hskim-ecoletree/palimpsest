@@ -38,15 +38,8 @@ use crate::coord::Coord;
 use crate::judgment::{Residual, ResidualReason};
 use crate::view::{GraphView, NodeKey};
 
-/// 파생 사슬을 몇 마디까지 따라가는가.
-///
-/// # 자리표시다 — **어느 측정도 이 값을 정하지 않았다**
-///
-/// [DESIGN §12.4](../../../docs/DESIGN.md) 의 예산 표에 **`미측정` 으로** 서 있다
-/// (2026-08-13). 같은 표의 *브리핑 도달 깊이 3홉* 에서 자릿수만 빌렸고 근거는 그것뿐이다.
-/// §15-40 이 이미 *"낡음 전파의 비용이 미측정"* 을 열린 채로 적어 두었다 — 그 값을
-/// 정하는 것은 **F11 · F17** 의 실측이고, 그 사실이 이제 예산 대장에도 적혀 있다.
-pub const PROVISIONAL_CASCADE_DEPTH: usize = 3;
+// **깊이 예산은 여기 없다.** `pal-core::budget` 한 곳이다(stack §5.5 · `[f05.1.pass]` ①).
+// 재수출도 남기지 않는다 — 남기면 *"한 곳"* 이 두 곳이 된다.
 
 /// 노드 하나의 낡음 등급 — §6.4 의 셋.
 ///
@@ -239,6 +232,7 @@ fn cut_residuals(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::budget::PROVISIONAL_CASCADE_DEPTH;
     use crate::coord::{Discriminator, SymbolId};
     use crate::graph::Provenance;
     use crate::repo::{ObjectName, RepoId, RepoPath, Snapshot, TreeRef};

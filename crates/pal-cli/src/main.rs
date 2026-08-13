@@ -222,7 +222,7 @@ fn main() -> Result<()> {
             CacheCommand::Prune { repo, cache_dir, budget, json } => cache::prune(
                 &repo,
                 cache_dir,
-                budget.unwrap_or(cache::DEFAULT_BUDGET_BYTES),
+                budget.unwrap_or(pal_core::DEFAULT_CACHE_BUDGET_BYTES),
                 json,
             ),
         },

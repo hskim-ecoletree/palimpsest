@@ -27,20 +27,15 @@ use serde::Serialize;
 
 use crate::cascade::{Cascade, NodeFreshness, cascade};
 use crate::coord::Coord;
+use crate::budget::{CANDIDATE_LIMIT, PROVISIONAL_CASCADE_DEPTH, PROVISIONAL_SAMPLE_MAX};
 use crate::graph::{Provenance, ResolutionGrade};
 use crate::judgment::{Residual, ResidualReason};
 use crate::schema::{EvidenceRule, GradeRule, GraphSchema, NodeStatus, Requirement};
 use crate::view::{Anchor, EdgeInstance, EdgeTarget, GraphView, NodeInstance, NodeKey};
 
-/// 후보 집합 상한 `K` — [DESIGN §12.4](../../../docs/DESIGN.md) 의 예산 표. 초기값 32.
-pub const CANDIDATE_LIMIT: usize = 32;
-
-/// 표본 한 검사가 보는 단위 수의 기본값.
-///
-/// **자리표시다** — §12.4 의 예산 표에 `미측정` 으로 서 있다(2026-08-13). 값을 정하는
-/// 것은 **F05** 의 예산 회귀이고, 여기서는 *"기본이 표본이고 전수가 명시적 호출"* 이라는
-/// §12.7 의 분기가 **존재하는가**까지만 선다(`[f22.4].does_not_prove.not_full_scan_cost`).
-pub const PROVISIONAL_SAMPLE_MAX: usize = 512;
+// **예산 둘(`K` · 표본 상한)은 여기 없다.** `pal-core::budget` 한 곳이다
+// (stack §5.5 · `[f05.1.pass]` ①). 여기서 지는 것은 *"기본이 표본이고 전수가 명시적
+// 호출"* 이라는 §12.7 의 분기가 **존재하는가**까지다.
 
 // ── 스키마 라벨이 아닌 모집단 넷 ─────────────────────────────────────────────
 //
@@ -260,7 +255,7 @@ pub fn run(schema: &GraphSchema, view: &GraphView, scope: DoctorScope) -> Diagno
     let mut residuals = Vec::new();
     let mut invariants = Vec::new();
 
-    let cascaded = cascade(view, crate::cascade::PROVISIONAL_CASCADE_DEPTH);
+    let cascaded = cascade(view, PROVISIONAL_CASCADE_DEPTH);
     residuals.extend(cascaded.residuals.clone());
 
     for id in InvariantId::ALL {

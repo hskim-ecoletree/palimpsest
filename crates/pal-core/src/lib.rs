@@ -39,18 +39,24 @@ mod view;
 pub use binding::{
     Binding, BindingId, BindingStatus, CodeFreshness, Lineage, WatchEntry,
 };
-pub use budget::PROVISIONAL_ERROR_RATIO_PERCENT;
+// **예산 상수는 여기 하나에서 나간다** — stack §5.5 · `[f05.1.pass]` ①.
+// 다른 모듈이 같은 이름을 재수출하면 *"한 곳"* 이 두 곳이 된다.
+pub use budget::{
+    CANDIDATE_LIMIT, CORRUPT_NOTES, DEFAULT_CACHE_BUDGET_BYTES, EXTRACT_CHUNK, MARKER_SCAN_BYTES,
+    OVERSIZE_BYTES, PROVISIONAL_CASCADE_DEPTH, PROVISIONAL_ERROR_RATIO_PERCENT,
+    PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_SAMPLE_MAX, SHEBANG_SCAN_BYTES,
+};
 pub use capable::{Capable, CapabilityId, Declared};
-pub use cascade::{Cascade, NodeFreshness, PROVISIONAL_CASCADE_DEPTH, cascade};
+pub use cascade::{Cascade, NodeFreshness, cascade};
 pub use chain::{
     Actor, ActorId, Change, ChangeId, ChangeKind, Confidence, Defect, Introduction, Journey,
     NotFoundReason, Retrobinding, RetrobindingSummary, Uncapturable,
 };
 pub use coord::{BodyDigest, Coord, Discriminator, ExportDigest, SymbolId, SymbolIdentity};
 pub use doctor::{
-    Absence, BINDING_INDEX_KIND, CANDIDATE_LIMIT, DERIVED_KIND, Diagnosis, DoctorScope,
-    InvariantId, InvariantOutcome, InvariantReport, Outcome, PROVISIONAL_SAMPLE_MAX,
-    RESIDUAL_KIND, SCOPE_REDUCTION_KIND, Violation, run as doctor,
+    Absence, BINDING_INDEX_KIND, DERIVED_KIND, Diagnosis, DoctorScope, InvariantId,
+    InvariantOutcome, InvariantReport, Outcome, RESIDUAL_KIND, SCOPE_REDUCTION_KIND, Violation,
+    run as doctor,
 };
 pub use derived::{DerivedId, NodeRef, ReproInput};
 pub use attributes::{Attributes, FileAttributes};
