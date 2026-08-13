@@ -22,6 +22,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -33,6 +35,19 @@ def kt_files(corpus: Path) -> list[Path]:
     return sorted(corpus.rglob("*.kt"))
 
 
+def isolated(grammar: Path) -> dict:
+    """**파서 캐시를 문법 클론마다 가른다.**
+
+    CLI 는 컴파일 결과를 `~/.cache/tree-sitter/lib/<문법이름>.dylib` 에 넣는데,
+    Kotlin 문법은 포크가 달라도 **이름이 전부 `kotlin`** 이다. 격리하지 않으면
+    다른 클론에서 만든 파서가 실린다 — G50 에서 실제로 그렇게 한 번 틀렸다
+    (`scripts/g50-fork-oracle.py` 머리말). **핀을 옮기는 회차에서 특히 위험하다.**
+    """
+    home = grammar / ".s0-home"
+    home.mkdir(exist_ok=True)
+    return {**os.environ, "HOME": str(home), "XDG_CACHE_HOME": str(home / ".cache")}
+
+
 def parse_failures(grammar: Path, files: list[Path]) -> set[Path]:
     """`tree-sitter parse --quiet` 는 **실패한 파일만** 한 줄씩 낸다."""
     listing = grammar / ".s0-paths.txt"
@@ -41,6 +56,7 @@ def parse_failures(grammar: Path, files: list[Path]) -> set[Path]:
         out = subprocess.run(
             ["tree-sitter", "parse", "--quiet", "--paths", str(listing)],
             cwd=grammar, capture_output=True, text=True, check=False,
+            env=isolated(grammar),
         ).stdout
     finally:
         listing.unlink(missing_ok=True)
@@ -61,6 +77,7 @@ def declaration_counts(grammar: Path, query: Path, files: list[Path]) -> dict[Pa
         out = subprocess.run(
             ["tree-sitter", "query", str(query), *[str(f) for f in batch]],
             cwd=grammar, capture_output=True, text=True, check=False,
+            env=isolated(grammar),
         ).stdout
         current: Path | None = None
         for line in out.splitlines():
@@ -101,10 +118,19 @@ def main() -> int:
         rel = f.relative_to(a.corpus).as_posix()
         rows.append((rel, "fail" if f in failed else "ok", counts[f]))
 
+    # **문법 rev 를 글자로 박지 않는다** — 클론에게 묻는다. 박아 두면 핀을 옮긴 회차에
+    # 머리말이 옛 값을 그대로 말하고, 그러면 산출이 자기 출처를 거짓으로 적는다.
+    rev = subprocess.run(["git", "rev-parse", "HEAD"], cwd=a.grammar,
+                         capture_output=True, text=True, check=False).stdout.strip()
+    # **쿼리는 경로가 아니라 내용으로 적는다.** 경로는 커밋마다 다른 것을 가리킬 수 있고,
+    # 이 벡터는 **핀 커밋보다 앞선 커밋**에 실리므로 그때의 저장소에는 이 쿼리가 없다
+    # (`[g50.pass]` ①). 해시는 그 순서를 지키면서도 출처를 검증 가능하게 남긴다.
+    qdigest = hashlib.blake2b(a.query.read_bytes(), digest_size=16).hexdigest()
+
     with a.out.open("w", encoding="utf-8") as fh:
         fh.write("# S0 CLI 레퍼런스 — 파일별 최상위 선언 수\n")
-        fh.write(f"# 문법 3dea6df · {tree_sitter_version()}\n")
-        fh.write(f"# 쿼리 {query_as_given}\n")
+        fh.write(f"# 문법 {rev[:7]} · {tree_sitter_version()}\n")
+        fh.write(f"# 쿼리 {query_as_given} · blake2b-128 {qdigest}\n")
         fh.write("path\tparse\tdeclarations\n")
         for rel, parse, n in rows:
             fh.write(f"{rel}\t{parse}\t{n}\n")
