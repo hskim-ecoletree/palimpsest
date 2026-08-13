@@ -34,6 +34,7 @@
 | `Journey` | `passes_through` | `coord[]` | `human` | 예 |
 | `Journey` | `expected_effects` | `effect[]` | `human` | 예 |
 | `Symbol` | `path` | `repo_path` | `extractor` | 예 |
+| `Symbol` | `container` | `string[]` | `extractor` | 예 |
 | `Symbol` | `name` | `string` | `extractor` | 예 |
 | `Symbol` | `kind` | `enum:SymbolKind` | `extractor` | 예 |
 | `Symbol` | `body` | `digest` | `extractor` | 예 |

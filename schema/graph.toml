@@ -49,6 +49,12 @@ rust_type  = "SymbolNode"
 key = ["id"]
 attrs = [
   { name = "path",     type = "repo_path",          producer = "extractor", required = true },
+  # 파일 → 클래스 → (중첩)클래스. **`symbol_id` 의 성분이다**(F03 §3.2) — 이 값이
+  # 비면 같은 파일의 `class A { m() {} }` 와 `class B { m() {} }` 가 선언 순서로만
+  # 갈리고, 순서를 바꾸는 것만으로 정체성이 맞바뀐다(R-16 의 조용한 재결박).
+  #
+  # 최상위 선언에서 빈 목록인 것이 **정확한 값이다** — 담는 것이 없다.
+  { name = "container", type = "string[]",          producer = "extractor", required = true },
   { name = "name",     type = "string",             producer = "extractor", required = true },
   { name = "kind",     type = "enum:SymbolKind",    producer = "extractor", required = true },
   # **변했는가**에 답하는 값. 정체성(`id`)과 다른 축이다 — 합치면 이동 감지와

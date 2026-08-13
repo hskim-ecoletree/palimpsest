@@ -313,11 +313,19 @@ fn digests_at(
     // **여기 도달할 때는 추출기가 있다** — 부르는 쪽이 `pal_extract::capability` 로 이미
     // 걸렀다. 여기서 `NotBuilt` 를 빈 표로 바꾸면 "안 만들었음"이 "없음"이 되고,
     // F22-3 의 첫 실행이 정확히 그 상태였다.
-    let Ok(symbols) = pal_extract::extract(language, &source).into_present() else {
+    //
+    // **`extract` 가 아니라 레지스트리를 직접 탄다** — 전자는 `Vec<Symbol>` 만 내고
+    // 포함 관계를 버린다. 버리면 여기서 계산하는 좌표가 **대장이 계산하는 좌표와
+    // 달라진다**(F03-1). 두 경로가 다른 `symbol_id` 를 내면 결함 계보는 조용히 아무것도
+    // 못 찾고, 그 침묵이 *"결함이 없다"* 처럼 보인다.
+    let pal_core::Capable::Present(extractor) = pal_extract::extractor_for(language) else {
         return Ok(BTreeMap::new());
     };
-    let Ok(symbols) = symbols else { return Ok(BTreeMap::new()) };
-    Ok(ledger::nodes_of(repo, path, &symbols).into_iter().map(|n| (n.id, n.body)).collect())
+    let Ok(graph) = extractor.extract(&source) else { return Ok(BTreeMap::new()) };
+    Ok(ledger::nodes_of(repo, path, &graph.symbols, &graph.contains)
+        .into_iter()
+        .map(|n| (n.id, n.body))
+        .collect())
 }
 
 fn hex20(hex: &str) -> Option<[u8; 20]> {

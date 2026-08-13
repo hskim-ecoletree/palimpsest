@@ -15,9 +15,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use pal_core::{
-    Attributes, Bucket, DetectorFreshness, Discriminator, ExtractGrade, FileState, IdentityGrade,
-    LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath, ScopeSource,
-    Snapshot, SymbolId, SymbolNode, TreeRef, UnsupportedReason,
+    Attributes, Bucket, Containment, DetectorFreshness, Discriminator, ExtractGrade, FileState,
+    IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath,
+    ScopeSource, Snapshot, SymbolId, SymbolNode, TreeRef, UnsupportedReason,
 };
 use pal_extract::{FileOutcome, OVERSIZE_BYTES};
 use pal_git::{GitAccess, GixRepo, WorktreeState};
@@ -185,7 +185,7 @@ pub fn compute(
                 entries.push(LedgerEntry { path: path.clone(), state: FileState::Excluded { rule } });
                 continue;
             };
-            symbols.extend(nodes_of(&repo_id, path, &outcome.symbols));
+            symbols.extend(nodes_of(&repo_id, path, &outcome.symbols, &outcome.contains));
             entries.push(LedgerEntry { path: path.clone(), state: outcome.state });
         }
     }
@@ -215,24 +215,70 @@ pub fn compute(
     Ok(LedgerReport { ledger, cache: stats, symbols, worktree })
 }
 
+/// 각 심볼의 **컨테이너 체인** — 바깥에서 안으로.
+///
+/// # 이것이 없으면 좌표가 `ordinal` 위에 선다
+///
+/// F03 §3.2 가 체인을 `symbol_id` 의 성분으로 적었다. 비워 두면 같은 파일의
+/// `class A { m() {} }` 와 `class B { m() {} }` 가 **컨테이너가 아니라 선언 순서로만**
+/// 갈리고, 클래스 순서를 바꾸는 것만으로 두 `m` 의 정체성이 맞바뀐다 —
+/// [R-16] 이 경고한 조용한 재결박이다.
+///
+/// **깊이를 심볼 수로 막는다.** `contains` 에 순환이 있으면 이 순회가 멈추지 않는다.
+/// 순환은 추출기의 결함이고 여기서 고칠 수 없지만, **좌표를 만드는 쪽이 멈추지 않는
+/// 것**은 여기의 책임이다.
+fn container_chains(symbols: &[pal_core::Symbol], contains: &[Containment]) -> Vec<Vec<String>> {
+    let parent: BTreeMap<u32, u32> = contains.iter().map(|c| (c.child.0, c.parent.0)).collect();
+    let mut out = Vec::with_capacity(symbols.len());
+    for i in 0..symbols.len() {
+        let mut chain = Vec::new();
+        let mut cursor = u32::try_from(i).unwrap_or(u32::MAX);
+        for _ in 0..symbols.len() {
+            let Some(p) = parent.get(&cursor) else { break };
+            let Some(s) = symbols.get(*p as usize) else { break };
+            chain.push(s.name.clone());
+            cursor = *p;
+        }
+        // 안에서 밖으로 걸었으므로 뒤집는다 — 체인은 **바깥에서 안으로**다.
+        chain.reverse();
+        out.push(chain);
+    }
+    out
+}
+
 /// 파일 하나의 심볼들에 좌표를 붙인다.
 ///
-/// # `ordinal` 을 여기서 센다 ([R-16])
+/// # `ordinal` 을 여기서 센다 — **그리고 컨테이너마다 따로 센다** ([R-16])
 ///
-/// 같은 (이름, 종류)가 한 파일에 여럿이면 **선언 순서**로 가른다. 그러면 순서가 바뀌는
-/// 것만으로 정체성이 뒤바뀌므로, 그런 심볼은 정체성 등급이 `Ordinal` 로 묶인다 —
+/// 같은 (컨테이너 체인, 이름, 종류)가 여럿이면 **선언 순서**로 가른다. 그러면 순서가
+/// 바뀌는 것만으로 정체성이 뒤바뀌므로, 그런 심볼은 정체성 등급이 `Ordinal` 로 묶인다 —
 /// [`Discriminator::identity_ceiling`] 이 그것을 강제한다.
-pub(crate) fn nodes_of(repo: &RepoId, path: &RepoPath, symbols: &[pal_core::Symbol]) -> Vec<SymbolNode> {
-    let mut seen: BTreeMap<(&str, &str), u32> = BTreeMap::new();
+///
+/// **체인을 열쇠에 넣지 않으면 컨테이너를 성분으로 넣은 뜻이 절반 사라진다.**
+/// `class A { m() {} } class B { m() {} }` 에서 둘째 `m` 이 `ordinal = 1` 을 받고,
+/// 그러면 체인이 갈라 놓은 두 심볼이 **다시 순서에 묶인다** — 등급이 `Ordinal` 로
+/// 떨어지므로 조용하지도 않다. 이 파일 안에서 그 이름이 유일하다는 사실이 좌표에
+/// 실려야 한다.
+pub(crate) fn nodes_of(
+    repo: &RepoId,
+    path: &RepoPath,
+    symbols: &[pal_core::Symbol],
+    contains: &[Containment],
+) -> Vec<SymbolNode> {
+    let chains = container_chains(symbols, contains);
+    let mut seen: BTreeMap<(&[String], &str, &str), u32> = BTreeMap::new();
     let mut out = Vec::with_capacity(symbols.len());
-    for s in symbols {
-        let slot = seen.entry((s.name.as_str(), s.kind.name())).or_insert(0);
+    for (i, s) in symbols.iter().enumerate() {
+        let chain = &chains[i];
+        let slot = seen.entry((chain.as_slice(), s.name.as_str(), s.kind.name())).or_insert(0);
         let discriminator = Discriminator::new(s.kind, *slot);
         *slot += 1;
 
+        let chain_refs: Vec<&str> = chain.iter().map(String::as_str).collect();
         out.push(SymbolNode {
-            id: SymbolId::compute(repo, path, &[], &s.name, &discriminator),
+            id: SymbolId::compute(repo, path, &chain_refs, &s.name, &discriminator),
             path: path.clone(),
+            container: chain.clone(),
             name: s.name.clone(),
             kind: s.kind,
             body: s.body,
@@ -483,4 +529,151 @@ pub fn print_table(report: &LedgerReport) {
         }
     );
     println!();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pal_core::{BodyDigest, LocalIx, Span, Symbol, SymbolKind};
+
+    fn 심볼(name: &str, kind: SymbolKind, at: usize) -> Symbol {
+        Symbol {
+            name: name.to_owned(),
+            kind,
+            span: Span { byte_start: at, byte_end: at + 1, line_start: 1, line_end: 1 },
+            body: BodyDigest::of_normalized(name.as_bytes()),
+            identity: IdentityGrade::Exact,
+        }
+    }
+
+    /// `class A { m() {} } class B { m() {} }` — 자리 0·1·2·3.
+    fn 두_클래스() -> (Vec<Symbol>, Vec<Containment>) {
+        (
+            vec![
+                심볼("A", SymbolKind::Class, 0),
+                심볼("m", SymbolKind::Method, 10),
+                심볼("B", SymbolKind::Class, 20),
+                심볼("m", SymbolKind::Method, 30),
+            ],
+            vec![
+                Containment { parent: LocalIx(0), child: LocalIx(1) },
+                Containment { parent: LocalIx(2), child: LocalIx(3) },
+            ],
+        )
+    }
+
+    fn 좌표(symbols: &[Symbol], contains: &[Containment]) -> Vec<SymbolNode> {
+        nodes_of(&RepoId::new("r"), &RepoPath::new("a.ts"), symbols, contains)
+    }
+
+    #[test]
+    fn 불변식_e_컨테이너가_같은_이름을_가른다() {
+        let (s, c) = 두_클래스();
+        let n = 좌표(&s, &c);
+        assert_eq!(n[1].container, vec!["A".to_owned()]);
+        assert_eq!(n[3].container, vec!["B".to_owned()]);
+        assert_ne!(n[1].id, n[3].id, "서로 다른 클래스의 같은 이름 메서드가 한 좌표다");
+    }
+
+    #[test]
+    fn 불변식_f_컨테이너_순서를_바꿔도_정체성이_그대로다() {
+        // **★ 반대 방향이고 이 조각에서 가장 무겁다.** E 만 보면 컨테이너 대신
+        // 선언 순서를 넣는 옛 코드도 통과한다 — 갈리는가만 물으면 **무엇으로**
+        // 갈리는지는 안 물어진다. 순서가 정체성을 흔드는 것이 R-16 의 조용한 재결박이다.
+        let (s, c) = 두_클래스();
+        let 원래 = 좌표(&s, &c);
+
+        // B 를 앞에, A 를 뒤에. 자리 번호가 통째로 바뀐다.
+        let 뒤바꾼 = vec![
+            심볼("B", SymbolKind::Class, 0),
+            심볼("m", SymbolKind::Method, 10),
+            심볼("A", SymbolKind::Class, 20),
+            심볼("m", SymbolKind::Method, 30),
+        ];
+        let 뒤바꾼_포함 = vec![
+            Containment { parent: LocalIx(0), child: LocalIx(1) },
+            Containment { parent: LocalIx(2), child: LocalIx(3) },
+        ];
+        let 지금 = 좌표(&뒤바꾼, &뒤바꾼_포함);
+
+        let 찾기 = |v: &[SymbolNode], 컨테이너: &str| {
+            v.iter()
+                .find(|n| n.name == "m" && n.container == vec![컨테이너.to_owned()])
+                .expect("메서드를 못 찾았다")
+                .id
+        };
+        assert_eq!(찾기(&원래, "A"), 찾기(&지금, "A"), "A.m 이 클래스 순서에 흔들렸다");
+        assert_eq!(찾기(&원래, "B"), 찾기(&지금, "B"), "B.m 이 클래스 순서에 흔들렸다");
+    }
+
+    #[test]
+    fn 체인이_없으면_순서가_정체성을_흔든다() {
+        // **이 검사가 고장 났다면 어떻게 드러나는가** — 불변식 F 의 음성 대조다.
+        // 포함 관계를 빼고 같은 심볼 목록을 넣으면 두 `m` 이 순서로만 갈리고,
+        // 클래스를 맞바꾸면 **정체성이 서로 맞바뀐다.** F 가 없애는 것이 이것이고,
+        // 이 시험이 통과하지 않으면 F 는 아무것도 안 재고 있는 것이다.
+        let (s, _) = 두_클래스();
+        let 원래 = 좌표(&s, &[]);
+        let 뒤바꾼 = vec![
+            심볼("B", SymbolKind::Class, 0),
+            심볼("m", SymbolKind::Method, 10),
+            심볼("A", SymbolKind::Class, 20),
+            심볼("m", SymbolKind::Method, 30),
+        ];
+        let 지금 = 좌표(&뒤바꾼, &[]);
+        // 자리 1 은 원래 `A.m`, 뒤바꾼 뒤에는 `B.m` 이다. **그런데 좌표가 같다.**
+        assert_eq!(원래[1].id, 지금[1].id, "체인 없이도 순서가 정체성을 안 흔들었다면 F 는 무의미하다");
+        assert_eq!(원래[3].id, 지금[3].id);
+    }
+
+    #[test]
+    fn 컨테이너가_다르면_ordinal_이_다시_0_이다() {
+        // 체인을 열쇠에 안 넣으면 둘째 `m` 이 `ordinal = 1` 을 받고, 체인이 갈라 놓은
+        // 두 심볼이 **다시 순서에 묶인다** — 등급까지 `Ordinal` 로 떨어진다.
+        let (s, c) = 두_클래스();
+        let n = 좌표(&s, &c);
+        assert_eq!(n[1].identity, IdentityGrade::Exact, "A.m 이 순서로 갈렸다");
+        assert_eq!(n[3].identity, IdentityGrade::Exact, "B.m 이 순서로 갈렸다");
+    }
+
+    #[test]
+    fn 같은_컨테이너의_오버로드는_여전히_순서로_갈린다() {
+        // **컨테이너를 넣었다고 R-16 이 닫히지 않는다.** 같은 자리의 같은 이름은
+        // 여전히 순서에 매이고, 등급이 그 사실을 싣는다.
+        let s = vec![심볼("f", SymbolKind::Function, 0), 심볼("f", SymbolKind::Function, 10)];
+        let n = 좌표(&s, &[]);
+        assert_ne!(n[0].id, n[1].id);
+        assert_eq!(n[0].identity, IdentityGrade::Exact);
+        assert_eq!(n[1].identity, IdentityGrade::Ordinal, "순서로 가른 심볼이 exact 다");
+    }
+
+    #[test]
+    fn 불변식_g_파일을_옮기면_정체성만_바뀐다() {
+        // 이동은 *변경*이 아니라 *정체성 사건*이다 — 그 분리가 재결박 제안의 근거다(R-08).
+        let (s, c) = 두_클래스();
+        let 여기 = nodes_of(&RepoId::new("r"), &RepoPath::new("a.ts"), &s, &c);
+        let 저기 = nodes_of(&RepoId::new("r"), &RepoPath::new("b/a.ts"), &s, &c);
+        assert_ne!(여기[1].id, 저기[1].id, "옮겼는데 정체성이 그대로다");
+        assert_eq!(여기[1].body, 저기[1].body, "옮겼는데 본문 요약이 움직였다");
+    }
+
+    #[test]
+    fn 최상위_선언은_체인이_빈다() {
+        // **빈 것이 정확한 값이다** — 담는 것이 없다.
+        let s = vec![심볼("f", SymbolKind::Function, 0)];
+        assert!(좌표(&s, &[])[0].container.is_empty());
+    }
+
+    #[test]
+    fn 포함_관계에_순환이_있어도_멈춘다() {
+        // 순환은 추출기의 결함이고 여기서 고칠 수 없다. **좌표를 만드는 쪽이 멈추지
+        // 않는 것**은 여기의 책임이다.
+        let s = vec![심볼("A", SymbolKind::Class, 0), 심볼("B", SymbolKind::Class, 10)];
+        let c = vec![
+            Containment { parent: LocalIx(0), child: LocalIx(1) },
+            Containment { parent: LocalIx(1), child: LocalIx(0) },
+        ];
+        let n = 좌표(&s, &c);
+        assert_eq!(n.len(), 2, "순환에서 좌표가 안 나왔다");
+    }
 }

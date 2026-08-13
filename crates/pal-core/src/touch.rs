@@ -35,6 +35,18 @@ use crate::symbol::{Span, SymbolKind};
 pub struct SymbolNode {
     pub id: SymbolId,
     pub path: RepoPath,
+    /// 파일 → 클래스 → (중첩)클래스. **[`id`] 의 성분이다**(F03 §3.2).
+    ///
+    /// # 왜 유도하지 않고 싣는가
+    ///
+    /// 체인은 [`crate::FileGraph::contains`] 에서 나오는데 **2 층에는 파일 그래프가
+    /// 없다.** 여기 없으면 `pal touch` 가 `OrderService.cancel` 을 낼 수 없고,
+    /// 그것이 F03 §1 이 이 기능의 목적으로 적은 좌표 그 자체다.
+    ///
+    /// 최상위 선언에서 **빈 목록인 것이 정확한 값이다** — 담는 것이 없다.
+    ///
+    /// [`id`]: SymbolNode::id
+    pub container: Vec<String>,
     pub name: String,
     pub kind: SymbolKind,
     /// **변했는가**에 답하는 값. 정체성(`id`)과 다른 축이다.
