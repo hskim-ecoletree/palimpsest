@@ -27,28 +27,44 @@
 
 ## 2. 키와 값
 
+> **⚠ 이 절은 2026-08-13 에 고쳐졌다.** 옛 판은 키를 `(blob_hash, extractor_version)` 둘로 적었는데 **실물은 다섯이고 실물 쪽이 옳다.** 그 판단은 [ADR-0004](../../adr/0004-cache-key-covers-every-input-that-decides-the-output.md)(캐시 키는 산출을 정하는 입력 전부를 담는다)가 F01 종료 시점에 정본화했고, 다섯째(능력 축)는 F04 가 더했다. **문서가 늦었던 것이고 코드를 문서에 맞추면 F01 이 고친 버그가 되살아난다.**
+
 ```
-키:  (blob_hash, extractor_version)      # extractor_version = (문법 버전, 추출기 코드 버전)
-값:  FileGraph  (F02)
+키:  (blob_hash, extractor_version, path, declared_language, capability_axis)
+값:  FileGraph  (F02) — 능력의 정체만 빼고 전부
 ```
+
+| 성분 | 왜 |
+|---|---|
+| `blob_hash` | 내용. 콘텐츠 주소의 본체 |
+| `extractor_version` | (문법 버전, 추출기 코드 버전). 바뀌면 1층 전량 무효 — [스택 §5.1](../00-stack.md) |
+| **`path`** | 캐시가 담는 것은 추출 결과가 아니라 **분류 결과**이고, 분류는 확장자·경로 패턴을 본다. 빈 `.kt` 와 `.gitkeep` 은 같은 blob(`e69de29`)이다 |
+| **`declared_language`** | `.gitattributes` 의 `linguist-language` 가 위 둘을 이긴다 |
+| **`capability_axis`** | **이 빌드가 무슨 자리를 만드는가.** `Capable` 은 역직렬화되지 않는다 — 안 만든 능력을 되읽으면 *"아무것도 없음"* 으로 위장한다(F22-3 이 고친 병). 축은 손으로 적지 않고 **빈 소스를 한 번 추출해 재현한다**(`pal-extract::capability_axis`) |
 
 **커밋이 키에 없다.** 그래서:
 - 브랜치 전환 → 바뀐 파일만 재파싱
 - 과거 커밋 조회 → 대부분 캐시 적중
 - **워킹트리 편집 → 그대로 적중**([R-06](../00-risks.md#r-06)) — 파이프라인이 커밋을 전혀 모르므로
 
+**그리고 치른 값 하나**: **파일을 옮기면 내용이 같아도 미스가 난다.** 옛 판의 세 줄 중 깨진 것은 이것 하나이고 나머지는 그대로 참이다(경로가 안 바뀐다). 실측: `portal-backend` 에서 `.kt` 다섯을 `git mv` 하면 **빗나감이 정확히 다섯**이다(`docs/gates/F04.md` ⑦라).
+
 **팩 지문도 키에 없다** ([스택 §5.1](../00-stack.md#51-버전-축-셋--하나로-합치면-캐시가-상시-전량-무효화된다)). 팩을 `extractor_version`에 합성하면 **규칙 한 줄을 고칠 때마다 전량 재파싱**이 걸린다 — 팩은 대개 심볼의 존재를 바꾸지 않고 그것에 붙는 라벨을 바꾸는데도. 팩 지문은 파생 라벨·판정의 버전 축이고, 그쪽은 이미 규칙 좌표 결박으로 `stale`을 관리한다(F18). 추출 자체를 바꾸는 팩(`affects = "extraction"`)만 예외적으로 이 키에 합성된다.
 
 ```rust
-pub struct BlobKey { blob: BlobHash, extractor: ExtractorVersion }
-
 pub trait ExtractCache: Send + Sync {
-    fn get(&self, k: BlobKey) -> Result<Option<FileGraph>>;
-    fn put(&self, k: BlobKey, g: &FileGraph) -> Result<()>;
-    fn stats(&self) -> CacheStats;      // 적중률·크기·엔트리 수
-    fn evict_to(&self, budget_bytes: u64) -> Result<EvictReport>;
+    fn lookup<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Lookup<T>, CacheError>;
+    fn put<T: Serialize>(&self, key: &CacheKey, value: &T) -> Result<(), CacheError>;
+    fn usage(&self) -> Result<CacheUsage, CacheError>;        // 엔트리 수·바이트·격리
+    fn evict_to(&self, budget_bytes: u64) -> Result<EvictReport, CacheError>;
 }
 ```
+
+**옛 판과 세 자리가 다르고 셋 다 근거가 있다** (`crates/pal-store/src/cache.rs` 의 주석이 정본):
+
+  · **값이 제네릭이다.** 실제로 실리는 것은 `FileOutcome`(분류 결과까지 담는다)이고 `pal-store` 는 `pal-extract` 에 의존하지 않는다([스택 §4.1](../00-stack.md))
+  · **`get` 이 아니라 `lookup` 이고 결과가 셋이다** — §4 의 「캐시 손상」 행
+  · **`stats` 가 `usage` 다.** 적중률은 **한 회차의 회계**(`CacheStats` · 대장이 싣는다)이고 크기는 **저장소의 상태**다. 한 이름에 담으면 *"이 캐시의 적중률"* 이라는 말이 생기는데 그것은 회차 없이는 뜻이 없다
 
 ---
 
@@ -60,7 +76,8 @@ pub trait ExtractCache: Send + Sync {
 .palimpsest/
 ├── cache/                              # 파생 — 지워도 됨
 │   ├── 3a/
-│   │   └── 3af21c9e....v7.pg.zst      # blob 해시 앞 2바이트로 샤딩 + 추출기 버전
+│   │   └── 3af21c9e….bin              # 키 앞 2바이트로 샤딩. 키가 다섯 성분의 요약이다
+│   ├── .corrupt/                       # 깨진 엔트리의 격리 방 — **축출이 안 건드린다**
 │   └── ...
 ├── worktree.state                      # 파생
 ├── index.redb                          # 2층 (F05) — 파생
@@ -130,7 +147,7 @@ A 의 export_digest 가 바뀜   →  역 import 색인으로 A 를 참조하는
 | **작은 파일 수백만 개** | 파일시스템 inode·디렉터리 엔트리 압박 | 2바이트 샤딩(256 디렉터리). 그래도 많으면 **팩 파일**(append-only + 오프셋 인덱스)로 전환 | 전환 지점을 실측으로 정함 |
 | **추출기 버전 올릴 때 전량 무효** | 버전이 키 성분 | 정상 동작이다. 다만 **점진 재추출**(질의된 것부터)로 사용자가 한 번에 10분을 기다리지 않게 | 백그라운드 워밍업 |
 | **동시 실행** (CLI와 MCP 서버가 동시에) | 같은 캐시 디렉터리 | 파일 단위 원자 rename이라 안전. 같은 키를 둘이 계산해도 결과가 같다(결정론) | — |
-| **캐시 손상** | 디스크 오류·중단 | 역직렬화 실패 시 그 엔트리만 버리고 재계산 + 경고 로그 | 전체 무효화는 하지 않는다 |
+| **캐시 손상** | 디스크 오류·중단 | **조회 결과를 셋으로 가른다** — `Hit` · `Miss`(없다 · **정상이다**) · `Corrupt`(깨졌다 · **사건이다**). 격리 방으로 옮기고 재계산하되 **수를 산출에 싣는다.** 깨진 바이트는 **지우지 않는다** | 전체 무효화는 하지 않는다 |
 | **적중률이 낮다** | 파일이 매번 바뀌는 프로젝트 | `stats`로 관측. 적중률이 낮으면 캐시가 손해이므로 끌 수 있게 | 플래그로 비활성 |
 
 ---
@@ -150,9 +167,10 @@ A 의 export_digest 가 바뀜   →  역 import 색인으로 A 를 참조하는
 
 ## 6. 검증
 
-- **재구축 등가성** — 2층을 통째로 지우고 **1층 + 의도 저장소**로 재구축했을 때 ① `extracted`가 전부 복원되고 ② `asserted`·`observed`가 **전부 복원되며** ③ **`intent.*` 파일의 바이트가 변하지 않는가.** **CI 상시.**
+- **재구축 등가성** — 2층을 통째로 지우고 **1층 + 의도 저장소**로 재구축했을 때 ① `extracted`가 전부 복원되고 ② `asserted`·`observed`가 **전부 복원되며** ③ 의도 저장소가 **변하지 않는가.** **CI 상시** — `crates/pal-cli/tests/rebuild_equivalence.rs`.
+  - **⚠ ③ 을 「바이트」로 재지 않는다. 잴 수 없다.** `redb` 의 `Database::create` 는 **열기만 해도 파일을 쓴다** — 같은 `pal touch` 를 두 번 돌리면 1,056,768 바이트 중 **110 바이트**가 달라지고 길이는 그대로다(2026-08-13 실측). 낱말을 그대로 박으면 **상시 실패하는 검사**가 되고 그것은 지워진다. 그래서 ③ 은 **값의 불변**으로 재고, **바이트 불변은 의도 저장소를 여는 일이 없는 명령**(`pal cache prune`)에서 잰다 — [R-21](../00-risks.md#r-21)의 진짜 하중이 그쪽이다
   - 이전 판(“그 외 출처는 복원되지 않는가”)은 **의도 유실을 정상으로 승인하는 검사**였다([R-21](../00-risks.md#r-21)). 캐시와 원본의 경계는 "복원되지 않음"이 아니라 **"어느 저장소에서 오는가"** 로 검사한다.
-- **캐시 폐기 격리** — `pal cache prune` 실행 후 결박·승인 건수가 불변인가. **CI 상시.**
+- **캐시 폐기 격리** — `pal cache prune` 실행 후 **`cache/` 밖의 모든 파일이 바이트로 같은가.** **CI 상시** — `crates/pal-cli/tests/prune_boundary.rs`. 이름으로 세지 않는다(그러면 다음에 생기는 파일이 빠진다). **승인 건수는 재지 않는다 — 그 축이 아직 없다**(F12).
 - **적중률 시나리오** — 브랜치 전환 / 3커밋 전으로 이동 / 워킹트리 편집 각각의 적중률 측정.
 - **팩 변경 무영향** — 팩 규칙을 바꿔도 1층 적중률이 떨어지지 않는가(`affects="extraction"` 팩 제외).
 - **크기** — 코퍼스별 파일당 평균 바이트(목표 2KB 이하).
@@ -163,14 +181,16 @@ A 의 export_digest 가 바뀜   →  역 import 색인으로 A 를 참조하는
 
 ## 7. 완료 체크리스트
 
-- [ ] `ExtractCache` 트레잇 + 파일시스템 구현
-- [ ] postcard + zstd 직렬화
-- [ ] 원자적 쓰기(임시 파일 + rename)
-- [ ] 2바이트 샤딩
-- [ ] LRU 축출 + 예산 + `pal cache stats|prune` (**`cache/`에만 닿음**)
-- [ ] 손상 엔트리 격리 복구
-- [ ] **재구축 등가성 검사 CI 등록** (1층 + 의도 저장소 → 2층)
-- [ ] **캐시 폐기 격리 검사 CI 등록**
-- [ ] 적중률·크기·벤치 실측 기록 + 팩 변경 무영향 확인
+판정: [docs/gates/F04.md](../../gates/F04.md) (2026-08-13).
+
+- [x] `ExtractCache` 트레잇 + 파일시스템 구현
+- [x] postcard + zstd 직렬화 (S1 에서 이미 섰다)
+- [x] 원자적 쓰기(임시 파일 + rename) — #49 가 쓰는 이마다 임시 이름을 갈랐다
+- [x] 2바이트 샤딩 (S1 에서 이미 섰다)
+- [x] LRU 축출 + 예산 + `pal cache stats|prune` (**`cache/`에만 닿음**)
+- [x] 손상 엔트리 격리 복구 — `Lookup::Corrupt` + `cache/.corrupt/`
+- [x] **재구축 등가성 검사 CI 등록** (1층 + 의도 저장소 → 2층)
+- [x] **캐시 폐기 격리 검사 CI 등록**
+- [x] 적중률·크기·벤치 실측 기록 — **팩 변경 무영향은 「대조 불가」다**(팩이 없다 · 모집단 0 · [ADR-0002](../../adr/0002-empty-population-is-not-zero-violations.md))
 
 > `export_digest` 기반 **무효화 계산은 [F07](F07-reference-resolution.md)이 소유한다.** 여기서는 `FileGraph`가 그 값을 담아 두는 것까지다 — 무효화는 파일 간 연산이고 2층의 일이다.
