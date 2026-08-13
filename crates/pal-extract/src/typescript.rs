@@ -83,15 +83,31 @@ enum Scope {
 /// 심볼을 내지 않는다** — 그 사실은 게이트에 적힌다.
 const UNNAMEABLE: [&str; 3] = ["computed_property_name", "array_pattern", "object_pattern"];
 
-struct Walk<'a> {
+/// 순회가 낸 선언 하나 — **아직 요약이 없다.**
+///
+/// # 왜 [`Symbol`] 을 바로 만들지 않는가
+///
+/// 요약(`body_digest`)은 **그 심볼의 등급에 의존한다**(#48 · R-22). `exact` 인 심볼에서는
+/// 지역 이름을 지우고 `ordinal` 에서는 지우지 않는데, 등급은 **파일 전체를 다 보아야**
+/// 정해진다 — 순회 도중에는 그 심볼 안에 아직 안 본 구조가 남아 있다.
+///
+/// 그래서 순회는 **자리만 잡고**, 요약은 순회가 끝난 뒤 [`Walk::finish`] 가 만든다.
+/// 이 커밋에서는 산출이 그대로다 — 계산 시점만 옮겼다.
+struct Pending<'t> {
+    name: String,
+    kind: SymbolKind,
+    node: Node<'t>,
+}
+
+struct Walk<'a, 't> {
     source: &'a [u8],
-    symbols: Vec<Symbol>,
+    symbols: Vec<Pending<'t>>,
     contains: Vec<Containment>,
     exports: ExportSet,
     imports: ImportSet,
 }
 
-impl<'a> Walk<'a> {
+impl<'a, 't> Walk<'a, 't> {
     fn new(source: &'a [u8]) -> Self {
         Self {
             source,
@@ -110,10 +126,22 @@ impl<'a> Walk<'a> {
             v.sort_unstable();
             v.dedup();
         }
+        let symbols = self
+            .symbols
+            .iter()
+            .map(|p| Symbol {
+                name: p.name.clone(),
+                kind: p.kind,
+                // **`export` 키워드는 선언 노드 밖이다** — 그래서 `export` 를 떼도 이 요약은
+                // 안 바뀌고, 바뀌는 것은 `ExportSet` 이다. 그 둘을 가르는 것이 음성 대조다.
+                body: BodyDigest::of_normalized(&normalize(p.node, self.source)),
+                span: span_of(p.node),
+            })
+            .collect();
         FileGraph {
             language: LanguageId::new(Language::TypeScript.name()),
             grade: crate::grade_of(Language::TypeScript),
-            symbols: self.symbols,
+            symbols,
             contains: self.contains,
             exports: Capable::Present(self.exports),
             imports: Capable::Present(self.imports),
@@ -125,12 +153,12 @@ impl<'a> Walk<'a> {
     /// `export` 가 무엇을 내보냈는지 알아야 하기 때문이고, 중첩된 것은 포함되지 않는다.
     fn children(
         &mut self,
-        node: Node<'_>,
+        node: Node<'t>,
         scope: Scope,
         container: Option<LocalIx>,
     ) -> Result<Vec<LocalIx>, ExtractError> {
         let mut cursor = node.walk();
-        let kids: Vec<Node<'_>> = node.named_children(&mut cursor).collect();
+        let kids: Vec<Node<'t>> = node.named_children(&mut cursor).collect();
         let mut emitted = Vec::new();
         for child in kids {
             emitted.extend(self.visit(child, scope, container)?);
@@ -140,7 +168,7 @@ impl<'a> Walk<'a> {
 
     fn visit(
         &mut self,
-        node: Node<'_>,
+        node: Node<'t>,
         scope: Scope,
         container: Option<LocalIx>,
     ) -> Result<Vec<LocalIx>, ExtractError> {
@@ -183,7 +211,7 @@ impl<'a> Walk<'a> {
     /// 선언 하나를 내고, 필요하면 그 아래로 내려간다(컨테이너를 자기로 바꿔서).
     fn declare(
         &mut self,
-        node: Node<'_>,
+        node: Node<'t>,
         kind: SymbolKind,
         container: Option<LocalIx>,
         descend: bool,
@@ -197,7 +225,7 @@ impl<'a> Walk<'a> {
 
     fn emit(
         &mut self,
-        node: Node<'_>,
+        node: Node<'t>,
         kind: SymbolKind,
         container: Option<LocalIx>,
     ) -> Result<Option<LocalIx>, ExtractError> {
@@ -215,19 +243,7 @@ impl<'a> Walk<'a> {
             return Ok(None);
         };
         let ix = LocalIx(ix);
-        self.symbols.push(Symbol {
-            name,
-            kind,
-            // **`export` 키워드는 선언 노드 밖이다** — 그래서 `export` 를 떼도 이 요약은
-            // 안 바뀌고, 바뀌는 것은 `ExportSet` 이다. 그 둘을 가르는 것이 음성 대조다.
-            body: BodyDigest::of_normalized(&normalize(node, self.source)),
-            span: Span {
-                byte_start: node.start_byte(),
-                byte_end: node.end_byte(),
-                line_start: u32::try_from(node.start_position().row).unwrap_or(u32::MAX) + 1,
-                line_end: u32::try_from(node.end_position().row).unwrap_or(u32::MAX) + 1,
-            },
-        });
+        self.symbols.push(Pending { name, kind, node });
         if let Some(parent) = container {
             self.contains.push(Containment { parent, child: ix });
         }
@@ -240,12 +256,12 @@ impl<'a> Walk<'a> {
     /// 와 중첩 선언이 거기 있을 수 있고, 그것들은 스코프와 무관하게 존재한다.
     fn visit_declarators(
         &mut self,
-        node: Node<'_>,
+        node: Node<'t>,
         scope: Scope,
         container: Option<LocalIx>,
     ) -> Result<Vec<LocalIx>, ExtractError> {
         let mut cursor = node.walk();
-        let declarators: Vec<Node<'_>> = node
+        let declarators: Vec<Node<'t>> = node
             .named_children(&mut cursor)
             .filter(|c| c.kind() == "variable_declarator")
             .collect();
@@ -268,14 +284,14 @@ impl<'a> Walk<'a> {
 
     fn visit_export(
         &mut self,
-        node: Node<'_>,
+        node: Node<'t>,
         scope: Scope,
         container: Option<LocalIx>,
     ) -> Result<Vec<LocalIx>, ExtractError> {
         let module = self.record_source_module(node);
 
         let mut cursor = node.walk();
-        let kids: Vec<Node<'_>> = node.children(&mut cursor).collect();
+        let kids: Vec<Node<'t>> = node.children(&mut cursor).collect();
         drop(cursor);
 
         let mut star = false;
@@ -373,6 +389,15 @@ impl<'a> Walk<'a> {
         if let Some(m) = first.first().and_then(|a| string_text(*a, self.source)) {
             self.imports.modules.push(m);
         }
+    }
+}
+
+fn span_of(node: Node<'_>) -> Span {
+    Span {
+        byte_start: node.start_byte(),
+        byte_end: node.end_byte(),
+        line_start: u32::try_from(node.start_position().row).unwrap_or(u32::MAX) + 1,
+        line_end: u32::try_from(node.end_position().row).unwrap_or(u32::MAX) + 1,
     }
 }
 
