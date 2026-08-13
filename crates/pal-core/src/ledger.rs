@@ -154,6 +154,20 @@ pub struct GeneratedEvidence {
     pub marker: String,
 }
 
+/// [`FileState::Unsupported`] 가 된 이유 — **둘은 서로 다른 자리를 가리킨다.**
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum UnsupportedReason {
+    /// 이 빌드에 그 언어의 추출기가 없다. **로드맵의 자리다.**
+    NoExtractor,
+    /// 추출기는 있는데 **문법이 이 파일을 읽지 못했다** — `ERROR` 가 삼킨 비율이
+    /// [`crate::PROVISIONAL_ERROR_RATIO_PERCENT`] 를 넘었다.
+    ///
+    /// **문법의 자리다. 로드맵이 아니다.** 처분은 문법을 바꾸는 것이고, 그러면
+    /// `ExtractorVersion` 의 문법 축이 움직여 1층 캐시가 전량 무효화된다.
+    GrammarDefeated { error_ratio_percent: usize, recovery_sites: usize },
+}
+
 /// 파일 하나의 상태 — **일곱이고, 정확히 하나다.**
 ///
 /// # 왜 `tag = "state"` 가 아닌가
@@ -173,10 +187,22 @@ pub enum FileState {
     Parsed { language: LanguageId, grade: ExtractGrade },
     /// 파싱은 됐으나 일부 구문에서 회복 — 회복 지점의 수.
     ///
-    /// 회복 **지점**(`Site`)은 좌표를 요구하므로 F03 이후다. 여기서는 개수만 센다.
+    /// **자리(`span`)는 대장에 싣지 않는다.** 자리는 파일 하나의 사실이고 대장은 저장소
+    /// 하나의 표다 — 997 줄에 범위를 실으면 대장이 읽히지 않는다. 자리를 보는 창은
+    /// `pal symbols --graph` 이고 값은 `FileGraph::recovery_sites` 다(#47).
     Partial { language: LanguageId, grade: ExtractGrade, recovery_sites: usize },
-    /// 언어는 인식됐고 추출기가 없다. **로드맵의 자리다.**
-    Unsupported { language: LanguageId },
+    /// 언어는 인식됐는데 이 빌드가 그 파일을 읽지 못했다 — **이유와 함께.**
+    ///
+    /// # 이유가 없으면 이 칸이 두 가지를 뭉갠다
+    ///
+    /// 한때 이 변형은 `{ language }` 뿐이었고 문서가 *"추출기가 없다. 로드맵의 자리다"*
+    /// 라고 적었다. 그 문장은 `.sql` 에 대해 참이고 **문법이 통째로 못 읽은 Kotlin 파일에
+    /// 대해 거짓이다** — 그 언어의 추출기는 있다. 뭉개면 대장 머리가 *"언어 인식됨,
+    /// 추출기 없음"* 이라고 적고, 사용자는 **고칠 자리를 로드맵에서 찾는다.**
+    ///
+    /// 이 저장소가 [`crate::Capable`] · [`crate::Residual`] · [`crate::Uncapturable`] 에서
+    /// 일관되게 내린 판단이 이것이다 — **없는 것의 종류를 값으로 남긴다.**
+    Unsupported { language: LanguageId, reason: UnsupportedReason },
     /// 언어를 모른다. **설정의 자리다.**
     Unrecognized,
     /// 설정으로 제외 — 규칙 ID 필수.
@@ -210,7 +236,7 @@ impl FileState {
         match self {
             Self::Parsed { language, .. }
             | Self::Partial { language, .. }
-            | Self::Unsupported { language } => Some(language),
+            | Self::Unsupported { language, .. } => Some(language),
             _ => None,
         }
     }

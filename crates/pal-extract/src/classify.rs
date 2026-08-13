@@ -9,14 +9,15 @@
 //! 1. **크기** — 상한을 넘으면 읽지 않는다. `Excluded{oversize}` 이고 **규칙 ID 가 붙는다**
 //! 2. **바이너리** — NUL 바이트. git 이 쓰는 것과 같은 판정이다
 //! 3. **생성물** — 경로 패턴과 파일 머리 표식이 **둘 다** 있을 때만
-//! 4. **언어 인식** — 모르면 `Unrecognized`, 알지만 추출기가 없으면 `Unsupported`.
-//!    `declared` 는 `.gitattributes` 의 `linguist-language` 이고 **확장자를 이긴다**
-//!    (`recognize` 의 머리 주석)
-//! 5. **추출** — 회복이 있었으면 `Partial`, 아니면 `Parsed`
+//! 4. **언어 인식** — 모르면 `Unrecognized`, 알지만 추출기가 없으면
+//!    `Unsupported{NoExtractor}`. `declared` 는 `.gitattributes` 의 `linguist-language`
+//!    이고 **확장자를 이긴다** (`recognize` 의 머리 주석)
+//! 5. **추출** — 회복이 없으면 `Parsed`. 있으면 `ERROR` 가 삼킨 비율을 본다:
+//!    임계를 넘으면 `Unsupported{GrammarDefeated}`, 아니면 `Partial`
 
 use pal_core::{
     BinaryReason, Capable, ExclusionRuleId, ExtractGrade, FileState, GeneratedEvidence,
-    LanguageId, RepoPath, Symbol,
+    LanguageId, RepoPath, Symbol, UnsupportedReason,
 };
 
 use crate::extractor::extractor_for;
@@ -78,7 +79,12 @@ pub fn classify(
     // ④ 언어
     let language = match recognize(path.extension(), path.file_name(), declared, source) {
         Recognition::Unknown => return plain(FileState::Unrecognized),
-        Recognition::Known(id) => return plain(FileState::Unsupported { language: id }),
+        Recognition::Known(id) => {
+            return plain(FileState::Unsupported {
+                language: id,
+                reason: UnsupportedReason::NoExtractor,
+            });
+        }
         Recognition::FirstClass(l) => l,
     };
     let id = LanguageId::new(language.name());
@@ -88,17 +94,41 @@ pub fn classify(
     // 레지스트리 하나가 능력·추출·등급의 단일 진실이다(`extractor.rs`). 여기서 별도
     // 표를 보면 `pal symbols` 가 답하는 언어와 대장이 `parsed` 로 세는 언어가 갈린다.
     let Capable::Present(extractor) = extractor_for(language) else {
-        // 1급 언어인데 이 빌드에 추출기가 없다. `unsupported` 가 정확히 그 뜻이다.
-        return plain(FileState::Unsupported { language: id });
+        // 1급 언어인데 이 빌드에 추출기가 없다. **로드맵의 자리다.**
+        return plain(FileState::Unsupported {
+            language: id,
+            reason: UnsupportedReason::NoExtractor,
+        });
     };
 
     let graph = extractor.extract(source)?;
     let grade = graph.grade;
-    let state = if graph.is_whole() {
-        FileState::Parsed { language: id, grade }
-    } else {
-        FileState::Partial { language: id, grade, recovery_sites: graph.recovery_count() }
-    };
+    if graph.is_whole() {
+        let state = FileState::Parsed { language: id, grade };
+        return Ok(FileOutcome { state, symbols: graph.symbols });
+    }
+
+    // ⑥ 임계 강등 — **`partial` 이 문법 부재를 가리지 않게** (F02 §3.4 · `[f02.2.pass]` ④)
+    //
+    // `partial` 은 *"일부는 읽었다"* 라는 뜻이다. `ERROR` 가 파일을 통째로 삼킨 경우
+    // 그 문장은 **거짓이다** — 읽은 것이 없다. 이 코퍼스에서 그 형태가 27 건이고
+    // 그중 26 이 선언을 하나도 못 낸다(`PROVISIONAL_ERROR_RATIO_PERCENT` 의 주석).
+    //
+    // **심볼을 버린다.** 강등된 파일은 *"이 빌드가 못 읽은 파일"* 이고, 그런 파일에서
+    // 건진 선언 한둘을 대장에 실으면 **범위가 그만큼 넓어 보인다.** 못 읽었다고 적는
+    // 것과 그 파일의 심볼을 싣는 것은 같이 설 수 없다.
+    let ratio = graph.error_ratio_percent(source.len());
+    if ratio > pal_core::PROVISIONAL_ERROR_RATIO_PERCENT {
+        return plain(FileState::Unsupported {
+            language: id,
+            reason: UnsupportedReason::GrammarDefeated {
+                error_ratio_percent: ratio,
+                recovery_sites: graph.recovery_count(),
+            },
+        });
+    }
+
+    let state = FileState::Partial { language: id, grade, recovery_sites: graph.recovery_count() };
     Ok(FileOutcome { state, symbols: graph.symbols })
 }
 
@@ -203,12 +233,49 @@ mod tests {
 
     #[test]
     fn 회복이_있으면_partial_이다() {
-        // 닫히지 않은 괄호 — tree-sitter 가 오류 회복한다.
-        let FileState::Partial { recovery_sites, .. } = 분류("A.kt", b"class A { fun b( {")
-        else {
+        // 성한 부분이 대부분이고 깨진 곳이 작다 — **부분 결과가 실제로 있는** 경우다.
+        let mut src = "class A\nfun b() {}\nclass C\nfun d() {}\n".repeat(20);
+        src.push_str("@@@\n");
+        let FileState::Partial { recovery_sites, .. } = 분류("A.kt", src.as_bytes()) else {
             panic!("partial 이 아니다");
         };
         assert!(recovery_sites > 0);
+    }
+
+    #[test]
+    fn error_가_파일을_삼키면_partial_이_아니라_강등이다() {
+        // **`partial` 은 *"일부는 읽었다"* 라는 뜻이고 여기서 그 문장은 거짓이다.**
+        // 실물에서 이 형태가 27 건이고 그중 26 이 선언을 하나도 못 낸다(`[f02.2.pass]` ④).
+        let out = classify(&RepoPath::new("A.kt"), b"@@@ !!! @@@ ??? &&&", OVERSIZE_BYTES, None)
+            .unwrap();
+        let FileState::Unsupported { language, reason } = out.state else {
+            panic!("강등되지 않았다");
+        };
+        assert_eq!(language.as_str(), "Kotlin");
+        let UnsupportedReason::GrammarDefeated { error_ratio_percent, recovery_sites } = reason
+        else {
+            panic!("이유가 `추출기 없음` 으로 뭉개졌다 — 그 언어의 추출기는 있다");
+        };
+        assert!(error_ratio_percent > pal_core::PROVISIONAL_ERROR_RATIO_PERCENT);
+        assert!(recovery_sites > 0, "강등의 근거가 산출에 안 남았다");
+        assert!(out.symbols.is_empty(), "못 읽었다고 적고 그 파일의 심볼을 실었다");
+    }
+
+    #[test]
+    fn 추출기가_없는_것과_문법이_못_읽은_것은_다른_이유다() {
+        // **뭉개면 대장 머리가 「추출기 없음」이라 적고 사용자가 로드맵에서 고칠 곳을 찾는다.**
+        let FileState::Unsupported { reason, .. } = 분류("V1.sql", b"select 1") else {
+            panic!("unsupported 가 아니다");
+        };
+        assert_eq!(reason, UnsupportedReason::NoExtractor);
+    }
+
+    #[test]
+    fn 강등은_비율이지_자리의_수가_아니다() {
+        // 자리가 여럿이어도 삼킨 넓이가 작으면 **부분 결과가 있다** — 강등하지 않는다.
+        let mut src = "class A\nfun b() {}\n".repeat(60);
+        src.push_str("@\n@\n@\n");
+        assert!(matches!(분류("A.kt", src.as_bytes()), FileState::Partial { .. }));
     }
 
     fn 요약(src: &str) -> pal_core::BodyDigest {

@@ -9,7 +9,8 @@
    "path": ".claude/API.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -17,7 +18,8 @@
    "path": ".claude/agents/agent-organizer.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -25,7 +27,8 @@
    "path": ".claude/agents/architect-review.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -33,7 +36,8 @@
    "path": ".claude/agents/architect-reviewer.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -41,7 +45,8 @@
    "path": ".claude/agents/backend-architect.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -49,7 +54,8 @@
    "path": ".claude/agents/code-reviewer.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -57,7 +63,8 @@
    "path": ".claude/agents/competitive-analyst.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -65,7 +72,8 @@
    "path": ".claude/agents/dx-optimizer.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -73,7 +81,8 @@
    "path": ".claude/agents/kotlin-specialist.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -81,7 +90,8 @@
    "path": ".claude/agents/legacy-modernizer.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -89,7 +99,8 @@
    "path": ".claude/agents/multi-agent-coordinator.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -97,7 +108,8 @@
    "path": ".claude/agents/research-analyst.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -105,7 +117,8 @@
    "path": ".claude/agents/search-specialist.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -113,7 +126,8 @@
    "path": ".claude/agents/spring-boot-engineer.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -121,7 +135,8 @@
    "path": ".claude/plans/wild-plotting-stallman.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -129,7 +144,8 @@
    "path": ".claude/settings.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -141,7 +157,8 @@
    "path": ".github/workflows/deploy.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -153,7 +170,8 @@
    "path": "CHANGELOG.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -161,7 +179,8 @@
    "path": "CLAUDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -169,7 +188,8 @@
    "path": "Dockerfile",
    "state": {
     "unsupported": {
-     "language": "Dockerfile"
+     "language": "Dockerfile",
+     "reason": "no_extractor"
     }
    }
   },
@@ -177,7 +197,8 @@
    "path": "HELP.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -185,7 +206,8 @@
    "path": "MCP_SDK_IMPLEMENTATION_PLAN.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -193,7 +215,8 @@
    "path": "MCP_SERVER_DEVELOPMENT_GUIDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -201,7 +224,8 @@
    "path": "SUSPEND_TO_SYNC_MIGRATION_PLAN.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -209,7 +233,8 @@
    "path": "build.gradle",
    "state": {
     "unsupported": {
-     "language": "Gradle"
+     "language": "Gradle",
+     "reason": "no_extractor"
     }
    }
   },
@@ -217,7 +242,8 @@
    "path": "conversation-plan.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -229,7 +255,8 @@
    "path": "docker/GITHUB_CICD.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -237,7 +264,8 @@
    "path": "docker/deploy.sh",
    "state": {
     "unsupported": {
-     "language": "Shell"
+     "language": "Shell",
+     "reason": "no_extractor"
     }
    }
   },
@@ -245,7 +273,8 @@
    "path": "docker/docker-compose.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -253,7 +282,8 @@
    "path": "docs/AUDIT_LOG_AOP_IMPLEMENTATION_GUIDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -261,7 +291,8 @@
    "path": "docs/AUDIT_LOG_API_SPEC.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -269,7 +300,8 @@
    "path": "docs/AUDIT_LOG_ENTITY_DESIGN.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -277,7 +309,8 @@
    "path": "docs/AUDIT_LOG_PLANNING.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -285,7 +318,8 @@
    "path": "docs/CONTROLLER_DSL_MIGRATION_GUIDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -293,7 +327,8 @@
    "path": "docs/DAILY_USAGE_STATISTICS_GUIDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -301,7 +336,8 @@
    "path": "docs/DEPRECATED_PATTERNS_REPORT.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -309,7 +345,8 @@
    "path": "docs/DWP_DEV_BRANCH_SETUP_PLAN.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -317,7 +354,8 @@
    "path": "docs/DWP_DEV_PHASE4_PLAN.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -325,7 +363,8 @@
    "path": "docs/DWP_SEPARATION_PLAN.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -333,7 +372,8 @@
    "path": "docs/PERMISSION_CACHING_IMPLEMENTATION.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -341,7 +381,8 @@
    "path": "docs/PHASE2_COMPATIBILITY_ANALYSIS.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -349,7 +390,8 @@
    "path": "docs/PHASE2_TRANSACTION_INTEGRATION_SUMMARY.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -357,7 +399,8 @@
    "path": "docs/STANDALONE_VS_DWP_BRANCH_COMPARISON.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -365,7 +408,8 @@
    "path": "docs/TRANSACTION_DEVELOPMENT_GUIDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -373,7 +417,8 @@
    "path": "docs/TRANSACTION_ROLLBACK_IMPROVEMENT_PLAN.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -381,7 +426,8 @@
    "path": "docs/api/BOXWOOD_API_AUTH.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -389,7 +435,8 @@
    "path": "docs/api/BOXWOOD_PROCESS_TOOL_API_V1.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -397,7 +444,8 @@
    "path": "docs/api/dwp-daily-system-usage-api.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -405,7 +453,8 @@
    "path": "docs/audit/AUDIT_CHANGE_TRACKING_GUIDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -413,7 +462,8 @@
    "path": "docs/audit/AUDIT_SPEL_EXPRESSION_GUIDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -421,7 +471,8 @@
    "path": "docs/audit/AUDIT_SYSTEM_OVERVIEW.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -429,7 +480,8 @@
    "path": "docs/audit/issues/AOP_SUSPEND_FUNCTION_BOUNDARY_ISSUE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -437,7 +489,8 @@
    "path": "docs/audit/issues/ASYNC_THREADLOCAL_TENANT_CONTEXT_FIX.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -445,7 +498,8 @@
    "path": "docs/audit/issues/SERVICE_LAYER_AUDIT_MIGRATION.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -453,7 +507,8 @@
    "path": "docs/audit/issues/TOKEN_REFRESH_TENANT_CONTEXT_FIX.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -461,7 +516,8 @@
    "path": "docs/audit/worklog.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -469,7 +525,8 @@
    "path": "docs/i18n/worklog_2025_12_31.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -517,7 +574,8 @@
    "path": "docs/noti/notification-backend-context.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -525,7 +583,8 @@
    "path": "gradle.properties",
    "state": {
     "unsupported": {
-     "language": "Java Properties"
+     "language": "Java Properties",
+     "reason": "no_extractor"
     }
    }
   },
@@ -541,7 +600,8 @@
    "path": "gradle/wrapper/gradle-wrapper.properties",
    "state": {
     "unsupported": {
-     "language": "Java Properties"
+     "language": "Java Properties",
+     "reason": "no_extractor"
     }
    }
   },
@@ -549,7 +609,8 @@
    "path": "gradlew",
    "state": {
     "unsupported": {
-     "language": "Shell"
+     "language": "Shell",
+     "reason": "no_extractor"
     }
    }
   },
@@ -557,7 +618,8 @@
    "path": "gradlew.bat",
    "state": {
     "unsupported": {
-     "language": "Batch"
+     "language": "Batch",
+     "reason": "no_extractor"
     }
    }
   },
@@ -565,7 +627,8 @@
    "path": "http/http-client.env.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -581,7 +644,8 @@
    "path": "mockAuthServer/STARTUP.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -589,7 +653,8 @@
    "path": "mockAuthServer/arm64/docker-compose.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -597,7 +662,8 @@
    "path": "mockAuthServer/x86_64/docker-compose-amd64.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -605,7 +671,8 @@
    "path": "mockToolsHub/STARTUP.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -613,7 +680,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-a/catalog.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -621,7 +689,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/tools/basic-rest-echo.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -629,7 +698,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/tools/list-type-1.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -637,7 +707,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/tools/many-input-1.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -645,7 +716,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/tools/mock-schema-1.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -653,7 +725,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-a/ts-A01/toolset.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -661,7 +734,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/catalog.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -669,7 +743,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B01/tools/basic-rest-echo-B01.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -677,7 +752,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B01/tools/list-type-1-B01.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -685,7 +761,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B01/tools/mock-schema-1-B01.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -693,7 +770,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B01/toolset.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -701,7 +779,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B02/tools/basic-rest-echo-B02.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -709,7 +788,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B02/tools/list-type-1-B02.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -717,7 +797,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B02/tools/mock-schema-1-B02.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -725,7 +806,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B02/toolset.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -733,7 +815,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B03/tools/basic-rest-echo-B03.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -741,7 +824,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B03/tools/list-type-1-B03.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -749,7 +833,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B03/tools/mock-schema-1-B03.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -757,7 +842,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B03/toolset.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -765,7 +851,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B04/tools/basic-rest-echo-B04.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -773,7 +860,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B04/tools/list-type-1-B04.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -781,7 +869,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B04/tools/mock-schema-1-B04.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -789,7 +878,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B04/toolset.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -797,7 +887,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B05/tools/basic-rest-echo-B05.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -805,7 +896,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B05/tools/list-type-1-B05.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -813,7 +905,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B05/tools/mock-schema-1-B05.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -821,7 +914,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-b/ts-B05/toolset.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -829,7 +923,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-c/catalog.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -837,7 +932,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-c/ts-C01/tools/ext-custom-C02.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -845,7 +941,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-c/ts-C01/tools/ext-echo-C01.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -853,7 +950,8 @@
    "path": "mockToolsHub/data/catalogs/catalog-c/ts-C01/toolset.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -861,7 +959,8 @@
    "path": "mockToolsHub/data/data-root/mocks/list-1.json",
    "state": {
     "unsupported": {
-     "language": "JSON"
+     "language": "JSON",
+     "reason": "no_extractor"
     }
    }
   },
@@ -869,7 +968,8 @@
    "path": "mockToolsHub/docker-compose.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -885,7 +985,8 @@
    "path": "mockToolsHub/run.sh",
    "state": {
     "unsupported": {
-     "language": "Shell"
+     "language": "Shell",
+     "reason": "no_extractor"
     }
    }
   },
@@ -893,7 +994,8 @@
    "path": "plan.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -901,7 +1003,8 @@
    "path": "scripts/repair-flyway.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -909,7 +1012,8 @@
    "path": "settings.gradle",
    "state": {
     "unsupported": {
-     "language": "Gradle"
+     "language": "Gradle",
+     "reason": "no_extractor"
     }
    }
   },
@@ -1016,7 +1120,8 @@
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/admin/service/impl/plan.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -1320,10 +1425,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/pat/repository/ExposedPatTokenRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -1402,30 +1511,42 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/RefreshTokenFamilyDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 79,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/TokenBlacklistRepositoryImpl.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 82,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/repository/impl/UserTokenRepositoryImpl.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -1495,10 +1616,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/auth/systempat/repository/SystemPatTokenRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -1676,10 +1801,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/connector/repository/impl/ConnectorDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -1866,10 +1995,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/email/templates/repository/impl/EmailTemplateDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -2092,10 +2225,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmPromptTemplateDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -2111,40 +2248,56 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmTaskMetaDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/LlmTaskVersionDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/McpToolConfigDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/llm/repository/impl/McpToolDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 68,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -2394,10 +2547,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/BpmnDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -2413,30 +2570,42 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessGlobalVariableDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessTriggerDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -2452,10 +2621,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/repository/impl/ProcessTriggerEventVariableDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -2508,7 +2681,8 @@
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/process/scheduler/README.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -2650,10 +2824,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/automation/servicetask/repository/impl/ServiceTaskDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -2697,7 +2875,8 @@
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/code/COMMON_CODE_SPEC.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -4218,10 +4397,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/group/base/repository/impl/MembershipTypeDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -4975,20 +5158,28 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/repository/impl/OrganizationGroupDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/organization/repository/impl/OrganizationMembershipDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -5032,7 +5223,8 @@
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/PERMISSION_GUIDE.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -5040,17 +5232,22 @@
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/WORKING_Add_Role_Permissions.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/annotation/RequiresIntegratedPermission.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 43,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -5273,10 +5470,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/impl/ResourcePermissionMappingDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -5292,10 +5493,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/permission/repository/impl/RolePermissionMappingDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -5520,7 +5725,8 @@
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/ROLE_AND_PERMISSION_SPEC.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -5528,7 +5734,8 @@
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/ROLE_IMPLEMENTATION_PLAN.md",
    "state": {
     "unsupported": {
-     "language": "Markdown"
+     "language": "Markdown",
+     "reason": "no_extractor"
     }
    }
   },
@@ -5616,20 +5823,28 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/repository/impl/RoleGroupDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/role/repository/impl/RoleGroupMembershipDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -6383,10 +6598,14 @@
   {
    "path": "src/main/kotlin/kr/co/ecoletree/boxwood/user/repository/impl/TenantUserDslRepository.kt",
    "state": {
-    "partial": {
-     "grade": "l1",
+    "unsupported": {
      "language": "Kotlin",
-     "recovery_sites": 1
+     "reason": {
+      "grammar_defeated": {
+       "error_ratio_percent": 100,
+       "recovery_sites": 1
+      }
+     }
     }
    }
   },
@@ -6439,7 +6658,8 @@
    "path": "src/main/resources/META-INF/spring-devtools.properties",
    "state": {
     "unsupported": {
-     "language": "Java Properties"
+     "language": "Java Properties",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6447,7 +6667,8 @@
    "path": "src/main/resources/V006__Insert_i18n_model_process.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6455,7 +6676,8 @@
    "path": "src/main/resources/V007__Insert_i18n_model_code.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6463,7 +6685,8 @@
    "path": "src/main/resources/V008__Insert_i18n_model_service_task.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6471,7 +6694,8 @@
    "path": "src/main/resources/V009__Insert_i18n_model_service_inf.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6479,7 +6703,8 @@
    "path": "src/main/resources/V010__Insert_i18n_model_connector.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6487,7 +6712,8 @@
    "path": "src/main/resources/V011__Insert_i18n_model_credentials.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6495,7 +6721,8 @@
    "path": "src/main/resources/V012__Insert_i18n_model_monitoring.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6503,7 +6730,8 @@
    "path": "src/main/resources/V013__Insert_i18n_model_user.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6511,7 +6739,8 @@
    "path": "src/main/resources/V014__Insert_i18n_model_organization.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6519,7 +6748,8 @@
    "path": "src/main/resources/V015__Insert_i18n_model_tenant.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6527,7 +6757,8 @@
    "path": "src/main/resources/V020__Insert_ui_commons_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6535,7 +6766,8 @@
    "path": "src/main/resources/V021__Insert_ui_process_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6543,7 +6775,8 @@
    "path": "src/main/resources/application-boxwood.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6551,7 +6784,8 @@
    "path": "src/main/resources/application-docker.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6559,7 +6793,8 @@
    "path": "src/main/resources/application-dwp.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6567,7 +6802,8 @@
    "path": "src/main/resources/application-flyway.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6575,7 +6811,8 @@
    "path": "src/main/resources/application-httpclient.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6583,7 +6820,8 @@
    "path": "src/main/resources/application-kafka.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6591,7 +6829,8 @@
    "path": "src/main/resources/application-monitoring.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6599,7 +6838,8 @@
    "path": "src/main/resources/application-persistence.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6607,7 +6847,8 @@
    "path": "src/main/resources/application-security.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6615,7 +6856,8 @@
    "path": "src/main/resources/application.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6627,7 +6869,8 @@
    "path": "src/main/resources/db/migration/shared/V001__Create_Shared_Schema.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6635,7 +6878,8 @@
    "path": "src/main/resources/db/migration/shared/V002__Create_Tenant_Management_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6643,7 +6887,8 @@
    "path": "src/main/resources/db/migration/shared/V003__Create_PKCE_Challenge_Table_In_Shared_Schema.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6651,7 +6896,8 @@
    "path": "src/main/resources/db/migration/shared/V004__Create_i18n_message_resource_tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6659,7 +6905,8 @@
    "path": "src/main/resources/db/migration/shared/V005__Insert_common_result_code_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6667,7 +6914,8 @@
    "path": "src/main/resources/db/migration/shared/V006__Insert_auth_endpoint_error_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6675,7 +6923,8 @@
    "path": "src/main/resources/db/migration/shared/V007__Insert_tenant_endpoint_error_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6683,7 +6932,8 @@
    "path": "src/main/resources/db/migration/shared/V008__Insert_code_endpoint_error_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6691,7 +6941,8 @@
    "path": "src/main/resources/db/migration/shared/V009__Insert_process_endpoint_error_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6699,7 +6950,8 @@
    "path": "src/main/resources/db/migration/shared/V010__Insert_general_endpoint_error_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6707,7 +6959,8 @@
    "path": "src/main/resources/db/migration/shared/V011__Create_i18n_locale_map_table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6715,7 +6968,8 @@
    "path": "src/main/resources/db/migration/shared/V012__Create_Quartz_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6723,7 +6977,8 @@
    "path": "src/main/resources/db/migration/shared/V013__Insert_endpoint_error_ui_nav_common_status_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6731,7 +6986,8 @@
    "path": "src/main/resources/db/migration/shared/V014__Insert_ui_page_dashboard_to_service_interface_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6739,7 +6995,8 @@
    "path": "src/main/resources/db/migration/shared/V015__Insert_ui_page_connector_to_adaptive_card_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6747,7 +7004,8 @@
    "path": "src/main/resources/db/migration/shared/V016__Insert_ui_breadcrumb_button_form_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6755,7 +7013,8 @@
    "path": "src/main/resources/db/migration/shared/V017__Insert_ui_table_dialog_validation_time_tooltip_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6763,7 +7022,8 @@
    "path": "src/main/resources/db/migration/shared/V018__Insert_ui_search_action_section_filter_filters_field_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6771,7 +7031,8 @@
    "path": "src/main/resources/db/migration/shared/V019__Insert_ui_misc_category_credential_type_label_message_error_toast_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6779,7 +7040,8 @@
    "path": "src/main/resources/db/migration/shared/V020__Insert_model_code_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6787,7 +7049,8 @@
    "path": "src/main/resources/db/migration/shared/V021__Insert_ui_frontend_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6795,7 +7058,8 @@
    "path": "src/main/resources/db/migration/shared/V022__Insert_ui_form_label_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6803,7 +7067,8 @@
    "path": "src/main/resources/db/migration/shared/V023__Insert_missing_ui_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6811,7 +7076,8 @@
    "path": "src/main/resources/db/migration/shared/V024__Delete_duplicate_ui_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6819,7 +7085,8 @@
    "path": "src/main/resources/db/migration/shared/V025__Insert_user_page_filter_sync_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6827,7 +7094,8 @@
    "path": "src/main/resources/db/migration/shared/V026__Insert_ui_page_process_detail_edit_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6835,7 +7103,8 @@
    "path": "src/main/resources/db/migration/shared/V027__Insert_ui_process_components_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6843,7 +7112,8 @@
    "path": "src/main/resources/db/migration/shared/V028__Insert_ui_form_components_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6851,7 +7121,8 @@
    "path": "src/main/resources/db/migration/shared/V029__Insert_ui_dashboard_components_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6859,7 +7130,8 @@
    "path": "src/main/resources/db/migration/shared/V030__Insert_ui_process_scheduler_components_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6867,7 +7139,8 @@
    "path": "src/main/resources/db/migration/shared/V031__Insert_ui_process_variables_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6875,7 +7148,8 @@
    "path": "src/main/resources/db/migration/shared/V032__Insert_service_task_interface_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6883,7 +7157,8 @@
    "path": "src/main/resources/db/migration/shared/V033__Insert_dashboard_widget_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6891,7 +7166,8 @@
    "path": "src/main/resources/db/migration/shared/V034__Insert_ui_common_status_service_task_http_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6899,7 +7175,8 @@
    "path": "src/main/resources/db/migration/shared/V035__Insert_ui_page_service_task_helper_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6907,7 +7184,8 @@
    "path": "src/main/resources/db/migration/shared/V036__Insert_missing_ui_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6915,7 +7193,8 @@
    "path": "src/main/resources/db/migration/shared/V037__Update_missing_ui_i18n_messages_ko.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6923,7 +7202,8 @@
    "path": "src/main/resources/db/migration/shared/V038__Update_data_type_ko.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6931,7 +7211,8 @@
    "path": "src/main/resources/db/migration/shared/V039__Insert_allow_mapping_i18n_message.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6939,7 +7220,8 @@
    "path": "src/main/resources/db/migration/shared/V040__Insert_connector_table_column_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6947,7 +7229,8 @@
    "path": "src/main/resources/db/migration/shared/V041__Insert_monitoring_task_activities_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6955,7 +7238,8 @@
    "path": "src/main/resources/db/migration/shared/V042__Insert_common_code_detail_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6963,7 +7247,8 @@
    "path": "src/main/resources/db/migration/shared/V043__Insert_go_to_process_action_i18n_message.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6971,7 +7256,8 @@
    "path": "src/main/resources/db/migration/shared/V044__Insert_ui_page_permissions_multi_lang_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6979,7 +7265,8 @@
    "path": "src/main/resources/db/migration/shared/V045__Insert_organization_page_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6987,7 +7274,8 @@
    "path": "src/main/resources/db/migration/shared/V046__Insert_shared_components_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -6995,7 +7283,8 @@
    "path": "src/main/resources/db/migration/shared/V047__Insert_layout_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7003,7 +7292,8 @@
    "path": "src/main/resources/db/migration/shared/V048__Update_i18n_locale_map.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7011,7 +7301,8 @@
    "path": "src/main/resources/db/migration/shared/V049__Add_locale_language_region.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7019,7 +7310,8 @@
    "path": "src/main/resources/db/migration/shared/V050__Simplify_locale_map_table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7027,7 +7319,8 @@
    "path": "src/main/resources/db/migration/shared/V051__Insert_auth_session_logout_reason_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7035,7 +7328,8 @@
    "path": "src/main/resources/db/migration/shared/V052__Create_security_event_table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7043,7 +7337,8 @@
    "path": "src/main/resources/db/migration/shared/V053__Create_refresh_token_family_table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7051,7 +7346,8 @@
    "path": "src/main/resources/db/migration/shared/V054__Insert_rtr_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7059,7 +7355,8 @@
    "path": "src/main/resources/db/migration/shared/V055__Insert_email_template_message_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7067,7 +7364,8 @@
    "path": "src/main/resources/db/migration/shared/V056__Insert_email_template_extract_variables_i18n_message.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7075,7 +7373,8 @@
    "path": "src/main/resources/db/migration/shared/V057__Insert_tenant_management_page_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7083,7 +7382,8 @@
    "path": "src/main/resources/db/migration/shared/V058__Create_audit_log_table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7091,7 +7391,8 @@
    "path": "src/main/resources/db/migration/shared/V059__Simplify_audit_log_table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7099,7 +7400,8 @@
    "path": "src/main/resources/db/migration/shared/V060__Remove_error_reason_column.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7107,7 +7409,8 @@
    "path": "src/main/resources/db/migration/shared/V061__Insert_service_task_filter_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7115,7 +7418,8 @@
    "path": "src/main/resources/db/migration/shared/V062__Remove_request_headers_column.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7123,7 +7427,8 @@
    "path": "src/main/resources/db/migration/shared/V063__Insert_adaptive_card_detail_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7131,7 +7436,8 @@
    "path": "src/main/resources/db/migration/shared/V064__Refactor_Tenant_Admin_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7139,7 +7445,8 @@
    "path": "src/main/resources/db/migration/shared/V065__Update_adaptive_cards_menu_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7147,7 +7454,8 @@
    "path": "src/main/resources/db/migration/shared/V066__Insert_audit_log_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7155,7 +7463,8 @@
    "path": "src/main/resources/db/migration/shared/V067__Insert_audit_security_event_summary_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7163,7 +7472,8 @@
    "path": "src/main/resources/db/migration/shared/V068__Insert_audit_role_summary_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7171,7 +7481,8 @@
    "path": "src/main/resources/db/migration/shared/V069__Insert_audit_summary_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7179,7 +7490,8 @@
    "path": "src/main/resources/db/migration/shared/V070__Insert_admin_ui_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7187,7 +7499,8 @@
    "path": "src/main/resources/db/migration/shared/V071__Restore_request_payload_column.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7195,7 +7508,8 @@
    "path": "src/main/resources/db/migration/shared/V072__Insert_audit_auth_summary_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7203,7 +7517,8 @@
    "path": "src/main/resources/db/migration/shared/V073__Insert_internal_audit_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7211,7 +7526,8 @@
    "path": "src/main/resources/db/migration/shared/V074__Insert_admin_force_logout_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7219,7 +7535,8 @@
    "path": "src/main/resources/db/migration/shared/V075__Insert_permissions_filter_placeholder_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7227,7 +7544,8 @@
    "path": "src/main/resources/db/migration/shared/V076__Insert_permissions_user_id_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7235,7 +7553,8 @@
    "path": "src/main/resources/db/migration/shared/V077__Insert_user_search_modal_and_recipients_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7243,7 +7562,8 @@
    "path": "src/main/resources/db/migration/shared/V078__Insert_process_execution_deploy_modal_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7251,7 +7571,8 @@
    "path": "src/main/resources/db/migration/shared/V079__Insert_execution_history_tab_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7259,7 +7580,8 @@
    "path": "src/main/resources/db/migration/shared/V080__Insert_monitoring_action_modal_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7267,7 +7589,8 @@
    "path": "src/main/resources/db/migration/shared/V081__Insert_user_org_tenant_detail_page_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7275,7 +7598,8 @@
    "path": "src/main/resources/db/migration/shared/V082__Insert_permission_page_missing_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7283,7 +7607,8 @@
    "path": "src/main/resources/db/migration/shared/V083__Insert_process_permission_tab_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7291,7 +7616,8 @@
    "path": "src/main/resources/db/migration/shared/V084__Insert_role_modal_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7299,7 +7625,8 @@
    "path": "src/main/resources/db/migration/shared/V085__Insert_notification_page_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7307,7 +7634,8 @@
    "path": "src/main/resources/db/migration/shared/V086__Insert_process_tab_navigation_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7315,7 +7643,8 @@
    "path": "src/main/resources/db/migration/shared/V087__Insert_auth_tenant_not_active_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7323,7 +7652,8 @@
    "path": "src/main/resources/db/migration/shared/V088__Insert_task_list_menu_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7331,7 +7661,8 @@
    "path": "src/main/resources/db/migration/shared/V089__Insert_production_code_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7339,7 +7670,8 @@
    "path": "src/main/resources/db/migration/shared/V090__Insert_secondary_category_i18n_messages.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7347,7 +7679,8 @@
    "path": "src/main/resources/db/migration/shared/V091__Create_system_pat_tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7355,7 +7688,8 @@
    "path": "src/main/resources/db/migration/shared/V092__Seed_system_pat_tokens.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7363,7 +7697,8 @@
    "path": "src/main/resources/db/migration/tenant/V001__Create_All_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7371,7 +7706,8 @@
    "path": "src/main/resources/db/migration/tenant/V002__Change_Case_Sensitive_Columns.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7379,7 +7715,8 @@
    "path": "src/main/resources/db/migration/tenant/V003__Insert_Initial_Data.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7387,7 +7724,8 @@
    "path": "src/main/resources/db/migration/tenant/V004__Insert_Enum_Based_Codes.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7395,7 +7733,8 @@
    "path": "src/main/resources/db/migration/tenant/V005__Create_Process_Trigger_Event_Variable_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7403,7 +7742,8 @@
    "path": "src/main/resources/db/migration/tenant/V006__ALTER_TRIGGER_EVENT_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7411,7 +7751,8 @@
    "path": "src/main/resources/db/migration/tenant/V007__Cleanup_Old_Code_Data.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7419,7 +7760,8 @@
    "path": "src/main/resources/db/migration/tenant/V008__Alter_Code_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7427,7 +7769,8 @@
    "path": "src/main/resources/db/migration/tenant/V009__Insert_Code_Data.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7435,7 +7778,8 @@
    "path": "src/main/resources/db/migration/tenant/V010__Insert_Code_for_Service_Interface.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7443,7 +7787,8 @@
    "path": "src/main/resources/db/migration/tenant/V011__Update_Service_Interface_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7451,7 +7796,8 @@
    "path": "src/main/resources/db/migration/tenant/V012__Lost_Code_insert.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7459,7 +7805,8 @@
    "path": "src/main/resources/db/migration/tenant/V013__Refactor_Code_Data_To_Standard_Format.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7467,7 +7814,8 @@
    "path": "src/main/resources/db/migration/tenant/V014__Update_Service_Task_Category_Codes.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7475,7 +7823,8 @@
    "path": "src/main/resources/db/migration/tenant/V015__Migrate_Process_Monitoring_Status_To_Code_Reference.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7483,7 +7832,8 @@
    "path": "src/main/resources/db/migration/tenant/V016__Add_Foreign_Key_To_Process_Trigger_Manager.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7491,7 +7841,8 @@
    "path": "src/main/resources/db/migration/tenant/V017__Drop_i18n_table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7499,7 +7850,8 @@
    "path": "src/main/resources/db/migration/tenant/V018__Insert_Code_for_Service_Interface_Updated.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7507,7 +7859,8 @@
    "path": "src/main/resources/db/migration/tenant/V019__Insert_DWP_Sync_Object_Type_Codes.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7515,7 +7868,8 @@
    "path": "src/main/resources/db/migration/tenant/V020__Create_Sync_Batch_History_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7523,7 +7877,8 @@
    "path": "src/main/resources/db/migration/tenant/V021__Update_Role_Group_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7531,7 +7886,8 @@
    "path": "src/main/resources/db/migration/tenant/V022__Update_Service_Task_Category_Codes.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7539,7 +7895,8 @@
    "path": "src/main/resources/db/migration/tenant/V023__Refactor_Sync_Batch_History_Status.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7547,7 +7904,8 @@
    "path": "src/main/resources/db/migration/tenant/V024__Update_Role_Group_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7555,7 +7913,8 @@
    "path": "src/main/resources/db/migration/tenant/V025__Add_Column_Role_Group_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7563,7 +7922,8 @@
    "path": "src/main/resources/db/migration/tenant/V026__Insert_Service_Task_Category_Code.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7571,7 +7931,8 @@
    "path": "src/main/resources/db/migration/tenant/V027__Create_Global_Process_Variable_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7579,7 +7940,8 @@
    "path": "src/main/resources/db/migration/tenant/V028__Update_Role_Group_Membership.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7587,7 +7949,8 @@
    "path": "src/main/resources/db/migration/tenant/V029__Add_Service_Task_Parameter_Type_Code_FK.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7595,7 +7958,8 @@
    "path": "src/main/resources/db/migration/tenant/V030__Insert_Process_Variable_Type_Code.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7603,7 +7967,8 @@
    "path": "src/main/resources/db/migration/tenant/V031__Add_Parent_Event_Id_And_Retry_Code.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7611,7 +7976,8 @@
    "path": "src/main/resources/db/migration/tenant/V032__Create_Daily_Usage_Statistics_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7619,7 +7985,8 @@
    "path": "src/main/resources/db/migration/tenant/V033__Alter_Managementkey_Length.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7627,7 +7994,8 @@
    "path": "src/main/resources/db/migration/tenant/V034__St_Statistics_To_Task_Statistics.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7635,7 +8003,8 @@
    "path": "src/main/resources/db/migration/tenant/V035__Insert_Codes_for_Connector.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7643,7 +8012,8 @@
    "path": "src/main/resources/db/migration/tenant/V036__Add_Missing_Connector_Columns.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7651,7 +8021,8 @@
    "path": "src/main/resources/db/migration/tenant/V037__Recreate_Daily_Task_Statistics_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7659,7 +8030,8 @@
    "path": "src/main/resources/db/migration/tenant/V038__Fix_Daily_Task_Statistics_Columns.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7667,7 +8039,8 @@
    "path": "src/main/resources/db/migration/tenant/V039__Add_Missing_Connector_Columns.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7675,7 +8048,8 @@
    "path": "src/main/resources/db/migration/tenant/V040__Drop_Service_Inf_Version_Column.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7683,7 +8057,8 @@
    "path": "src/main/resources/db/migration/tenant/V041__Rename_All_Version_Active_To_Deactivated.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7691,7 +8066,8 @@
    "path": "src/main/resources/db/migration/tenant/V042__Migrate_Process_Global_Variable_Type_To_Code_Reference.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7699,7 +8075,8 @@
    "path": "src/main/resources/db/migration/tenant/V043__Add_Service_Task_Usage_TaskType_And_CallActivityBpmnId.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7707,7 +8084,8 @@
    "path": "src/main/resources/db/migration/tenant/V044__Alter_Service_Task_Usage_Nullable_Columns.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7715,7 +8093,8 @@
    "path": "src/main/resources/db/migration/tenant/V045__Alter_Bpmn_Table_Add_Column_Label.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7723,7 +8102,8 @@
    "path": "src/main/resources/db/migration/tenant/V046__Refactor_Process_Service_Task_Usage_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7731,7 +8111,8 @@
    "path": "src/main/resources/db/migration/tenant/V047__Update_Data_Code_Table.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7739,7 +8120,8 @@
    "path": "src/main/resources/db/migration/tenant/V048__Update_Service_Inf_LabelKey.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7747,7 +8129,8 @@
    "path": "src/main/resources/db/migration/tenant/V049__Update_tbl_code_label_key_to_model_code_format.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7755,7 +8138,8 @@
    "path": "src/main/resources/db/migration/tenant/V050__Update_Service_Interface_Label_code_format.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7763,7 +8147,8 @@
    "path": "src/main/resources/db/migration/tenant/V051__Fix_MD31102001_Code_Type.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7771,7 +8156,8 @@
    "path": "src/main/resources/db/migration/tenant/V052__Organization_Membership_Default_Type.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7779,7 +8165,8 @@
    "path": "src/main/resources/db/migration/tenant/V056__Add_jti_column_to_user_token.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7787,7 +8174,8 @@
    "path": "src/main/resources/db/migration/tenant/V057__Add_family_id_to_user_token.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7795,7 +8183,8 @@
    "path": "src/main/resources/db/migration/tenant/V058__Create_Personal_Access_Token_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7803,7 +8192,8 @@
    "path": "src/main/resources/db/migration/tenant/V059__Insert_RBAC_Permission_Data.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7811,7 +8201,8 @@
    "path": "src/main/resources/db/migration/tenant/V060__Insert_Default_Roles_And_Permission_Mappings.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7819,7 +8210,8 @@
    "path": "src/main/resources/db/migration/tenant/V061__Fix_Daily_Statistics_Table_Collation.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7827,7 +8219,8 @@
    "path": "src/main/resources/db/migration/tenant/V062__Reinsert_Service_Interface_Codes.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7835,7 +8228,8 @@
    "path": "src/main/resources/db/migration/tenant/V063__Create_Adaptive_Card_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7843,7 +8237,8 @@
    "path": "src/main/resources/db/migration/tenant/V064__Create_Notification_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7851,7 +8246,8 @@
    "path": "src/main/resources/db/migration/tenant/V065__Create_Domain_Model_V2_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7859,7 +8255,8 @@
    "path": "src/main/resources/db/migration/tenant/V066__Migrate_Connector_V1_to_V2.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7867,7 +8264,8 @@
    "path": "src/main/resources/db/migration/tenant/V067__Remove_Service_Task_Parameter_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7875,7 +8273,8 @@
    "path": "src/main/resources/db/migration/tenant/V068__Remove_Service_Interface_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7883,7 +8282,8 @@
    "path": "src/main/resources/db/migration/tenant/V069__Align_Connector_V2_Table_With_Kotlin_Code.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7891,7 +8291,8 @@
    "path": "src/main/resources/db/migration/tenant/V070__Fix_Connector_V2_Created_By_Default.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7899,7 +8300,8 @@
    "path": "src/main/resources/db/migration/tenant/V071__Add_OpenAPI_Spec_Column_To_Connector_Operation.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7907,7 +8309,8 @@
    "path": "src/main/resources/db/migration/tenant/V072__Add_OpenAPI_Spec_Column_To_Connector.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7915,7 +8318,8 @@
    "path": "src/main/resources/db/migration/tenant/V073__Create_Connector_Meta_Version_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7923,7 +8327,8 @@
    "path": "src/main/resources/db/migration/tenant/V074__Create_LLM_Task_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7931,7 +8336,8 @@
    "path": "src/main/resources/db/migration/tenant/V075__Create_Connector_Meta_Version_Tables.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7939,7 +8345,8 @@
    "path": "src/main/resources/db/migration/tenant/V076__Alter_Connector_Category_Column_Length.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7947,7 +8354,8 @@
    "path": "src/main/resources/db/migration/tenant/V077__Add_ServiceTask_HttpExtension.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7955,7 +8363,8 @@
    "path": "src/main/resources/db/migration/tenant/V078__Change_OperationId_To_Varchar.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7963,7 +8372,8 @@
    "path": "src/main/resources/db/migration/tenant/V079__Add_OperationSpec_Column.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7971,7 +8381,8 @@
    "path": "src/main/resources/db/migration/tenant/V080__Alter_Connector_Version_Change_OpenApiSpec_To_LongText.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7979,7 +8390,8 @@
    "path": "src/main/resources/db/migration/tenant/V081__Add_Secondary_Category_Codes.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7987,7 +8399,8 @@
    "path": "src/main/resources/db/migration/tenant/V082__Alter_Bpmn_Xml_Column_Type.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },
@@ -7995,7 +8408,8 @@
    "path": "src/main/resources/key.properties",
    "state": {
     "unsupported": {
-     "language": "Java Properties"
+     "language": "Java Properties",
+     "reason": "no_extractor"
     }
    }
   },
@@ -8003,7 +8417,8 @@
    "path": "src/main/resources/logback-spring.xml",
    "state": {
     "unsupported": {
-     "language": "XML"
+     "language": "XML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -8011,7 +8426,8 @@
    "path": "src/main/resources/messages.properties",
    "state": {
     "unsupported": {
-     "language": "Java Properties"
+     "language": "Java Properties",
+     "reason": "no_extractor"
     }
    }
   },
@@ -8019,7 +8435,8 @@
    "path": "src/main/resources/messages_ko.properties",
    "state": {
     "unsupported": {
-     "language": "Java Properties"
+     "language": "Java Properties",
+     "reason": "no_extractor"
     }
    }
   },
@@ -8634,7 +9051,8 @@
    "path": "src/test/resources/application-test.yml",
    "state": {
     "unsupported": {
-     "language": "YAML"
+     "language": "YAML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -8642,7 +9060,8 @@
    "path": "src/test/resources/logback-test.xml",
    "state": {
     "unsupported": {
-     "language": "XML"
+     "language": "XML",
+     "reason": "no_extractor"
     }
    }
   },
@@ -8650,7 +9069,8 @@
    "path": "temp.sql",
    "state": {
     "unsupported": {
-     "language": "SQL"
+     "language": "SQL",
+     "reason": "no_extractor"
     }
    }
   },

@@ -177,7 +177,9 @@ impl FileGraph {
 
     /// 이 파일이 성하게 파싱됐는가.
     #[must_use]
-    pub const fn is_whole(&self) -> bool {
+    // **`const` 가 아니다** — `Vec::is_empty` 는 1.87 부터 const 이고 MSRV 는 1.85 다
+    // (stack §7 의 *"최신 stable − 2"*). 붙이면 `clippy::incompatible_msrv` 가 잡는다.
+    pub fn is_whole(&self) -> bool {
         self.recovery_sites.is_empty()
     }
 
@@ -187,7 +189,7 @@ impl FileGraph {
     /// 표다 — 997 줄에 span 을 실으면 대장이 읽히지 않는다. 자리를 보는 창은
     /// `pal symbols --graph` 다. 그 판단의 근거는 `docs/gates/F02-2-partial.md`.
     #[must_use]
-    pub const fn recovery_count(&self) -> usize {
+    pub fn recovery_count(&self) -> usize {
         self.recovery_sites.len()
     }
 

@@ -12,6 +12,7 @@
 
 mod attributes;
 mod binding;
+mod budget;
 mod capable;
 mod cascade;
 mod chain;
@@ -36,6 +37,7 @@ mod view;
 pub use binding::{
     Binding, BindingId, BindingStatus, CodeFreshness, Lineage, WatchEntry,
 };
+pub use budget::PROVISIONAL_ERROR_RATIO_PERCENT;
 pub use capable::{Capable, CapabilityId};
 pub use cascade::{Cascade, NodeFreshness, PROVISIONAL_CASCADE_DEPTH, cascade};
 pub use chain::{
@@ -64,6 +66,7 @@ pub use language::Language;
 pub use ledger::{
     Bucket, BinaryReason, DetectorFreshness, ExclusionRuleId, ExtractGrade, FileState,
     GeneratedEvidence, IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry,
+    UnsupportedReason,
 };
 pub use schema::{
     AttrDecl, Cardinality, Carrier, EdgeDecl, EvidenceRule, GradeRule, GraphSchema, NodeDecl,

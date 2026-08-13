@@ -17,7 +17,7 @@ use anyhow::{Context, Result};
 use pal_core::{
     Attributes, Bucket, DetectorFreshness, Discriminator, ExtractGrade, FileState, IdentityGrade,
     LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath, ScopeSource,
-    Snapshot, SymbolId, SymbolNode, TreeRef,
+    Snapshot, SymbolId, SymbolNode, TreeRef, UnsupportedReason,
 };
 use pal_extract::{FileOutcome, OVERSIZE_BYTES};
 use pal_git::{GitAccess, GixRepo, WorktreeState};
@@ -247,9 +247,12 @@ fn language_capabilities(entries: &[LedgerEntry]) -> Vec<LanguageCapability> {
             FileState::Parsed { language, grade } | FileState::Partial { language, grade, .. } => {
                 (language.clone(), *grade)
             }
-            // **추출기가 없는 언어의 등급은 L0 이다.** 그 언어에서 아무것도 못 뽑으므로
+            // **읽지 못한 파일의 등급은 L0 이다.** 그 파일에서 아무것도 못 뽑으므로
             // 심볼 정체성이 없고, 대장 머리에 "결박 불가"로 선다(DESIGN §4.1).
-            FileState::Unsupported { language } => (language.clone(), ExtractGrade::L0),
+            //
+            // 이유 둘을 여기서 가르지 않는다 — 등급은 **그 파일에서 무엇을 뽑았는가**의
+            // 함수이고 둘 다 0 이다. 이유가 갈리는 곳은 아래 `bucket_note` 다.
+            FileState::Unsupported { language, .. } => (language.clone(), ExtractGrade::L0),
             _ => continue,
         };
         let slot = by_language.entry(language).or_insert((grade, 0));
@@ -307,7 +310,32 @@ pub fn print_table(report: &LedgerReport) {
     for b in Bucket::ALL {
         let n = counts.get(&b).copied().unwrap_or(0);
         let note = match b {
-            Bucket::Unsupported if n > 0 => "  언어 인식됨, 추출기 없음".to_owned(),
+            // **이유를 뭉개지 않는다.** *"추출기 없음"* 은 로드맵의 자리이고
+            // *"문법이 못 읽음"* 은 문법의 자리다. 한 줄로 적으면 사용자가 고칠 곳을
+            // 로드맵에서 찾는다 — `UnsupportedReason` 이 존재하는 이유다(#47).
+            Bucket::Unsupported if n > 0 => {
+                let defeated = l
+                    .entries
+                    .iter()
+                    .filter(|e| {
+                        matches!(
+                            &e.state,
+                            FileState::Unsupported {
+                                reason: UnsupportedReason::GrammarDefeated { .. },
+                                ..
+                            }
+                        )
+                    })
+                    .count();
+                if defeated == 0 {
+                    "  추출기 없음(로드맵)".to_owned()
+                } else {
+                    format!(
+                        "  추출기 없음(로드맵) {} · 문법이 못 읽음 {defeated}",
+                        n - defeated
+                    )
+                }
+            }
             Bucket::Unrecognized if n > 0 => "  언어 미인식".to_owned(),
             Bucket::Partial if n > 0 => "  회복 지점 기록됨".to_owned(),
             Bucket::Excluded if n > 0 => {
