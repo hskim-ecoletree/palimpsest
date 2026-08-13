@@ -9,13 +9,15 @@
 mod classify;
 mod extractor;
 mod kotlin;
+mod parse;
 mod recognize;
 
 use pal_core::{Capable, ExtractorVersion, Language, Symbol};
 
 pub use classify::{FileOutcome, OVERSIZE_BYTES, classify, grade_of};
 pub use extractor::{LanguageExtractor, extractor_for};
-pub use kotlin::{ExtractError, KotlinExtractor, extract_detailed};
+pub use kotlin::KotlinExtractor;
+pub use parse::ExtractError;
 pub use recognize::{Recognition, recognize};
 
 /// 판정용 문법의 고정 커밋 — `corpus/criteria.toml` `[s0.grammar].judging`.
