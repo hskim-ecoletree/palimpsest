@@ -28,7 +28,7 @@
 //! 그래서 1층 캐시가 이 타입을 값으로 가질 때(F04) 능력 축은 키로 가야 하고,
 //! 그 판단은 **이 조각이 하지 않는다.** 지금은 쓰기만 한다.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::capable::Capable;
 use crate::coord::ExportDigest;
@@ -39,7 +39,16 @@ use crate::symbol::{Span, Symbol};
 /// [`FileGraph::symbols`] 안의 자리. **파일 안에서만 뜻이 있다.**
 ///
 /// 파일 밖에서 심볼을 가리키는 것은 `SymbolId` 이고 그것은 좌표를 요구한다(F03).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+///
+/// # 되읽을 수 있다 — 그리고 그것이 [`Coord`] 와 다른 점이다
+///
+/// [`Coord`] 는 `Deserialize` 가 없다. 추출기 버전이 이 빌드에 박힌 상수라 밖에서 온
+/// 좌표를 되읽으면 서로 다른 추출기의 산출이 같은 좌표계에 있는 것처럼 보이기 때문이다.
+/// **이 값에는 그 문제가 없다** — 파일 하나 안의 자리이고, 1층 캐시의 키가 이미
+/// `ExtractorVersion` 을 성분으로 갖는다(F03-1 · [`Containment`] 가 캐시에 실린다).
+///
+/// [`Coord`]: crate::Coord
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct LocalIx(pub u32);
 
 /// 포함 관계 하나 — F02 의 **C1**.
@@ -49,7 +58,7 @@ pub struct LocalIx(pub u32);
 /// F02 §2 는 `contains: Vec<(LocalIx, LocalIx)>` 로 적었다. **이름을 붙여 갈랐다** —
 /// 벌거벗은 쌍은 인자가 뒤바뀌어도 타입이 잡지 못하고, 뒤바뀌면 *"메서드가 클래스를
 /// 담는다"* 가 조용히 참이 된다. 이 저장소가 막으려는 것이 정확히 그 형태다.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Containment {
     /// 담는 쪽 — 예: 클래스.
     pub parent: LocalIx,

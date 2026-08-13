@@ -44,7 +44,20 @@ pub const GRAMMAR_REV: &str = "3dea6dfa9c0129deb7c4315afbda806c85c41667";
 /// `Symbol` 에 `identity` 가 붙었고 TypeScript 의 `body_digest` 가 지역 이름을 지우기
 /// 시작했다. 올리지 않으면 **옛 캐시가 옛 요약을 새 스키마로 되돌려 준다** — 그러면
 /// 같은 커밋이 캐시 상태에 따라 다른 답을 낸다.
-pub const EXTRACTOR_REV: &str = "f02-3";
+///
+/// # `f02-3` → `f03-1` (2026-08-13 · #51)
+///
+/// 세 번째로 올린다. **이번에는 산출이 아니라 캐시에 담기는 값의 모양이 먼저 바뀌었다** —
+/// [`FileOutcome`] 이 포함 관계를 싣기 시작했다. 올리지 않으면 옛 항목을 새 스키마로
+/// 읽으려다 실패한다(첫 승급 때 실제로 관측된 형태다).
+///
+/// **그리고 같은 값이 뒤이은 좌표 이동까지 덮는다.** 이 슬라이스의 동작 커밋이
+/// `symbol_id` 에 컨테이너 체인을 넣어 좌표를 움직이는데, 두 커밋이 인접하고 그 사이
+/// 상태는 배포되지 않는다. **슬라이스 하나가 좌표 이동 하나다** — 커밋마다 올리면
+/// 승급이 관측되는 사건이 아니라 잡음이 된다(stack §5.1).
+///
+/// [`FileOutcome`]: crate::FileOutcome
+pub const EXTRACTOR_REV: &str = "f03-1";
 
 #[must_use]
 pub const fn version() -> ExtractorVersion {

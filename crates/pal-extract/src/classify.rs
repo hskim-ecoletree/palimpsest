@@ -16,8 +16,8 @@
 //!    임계를 넘으면 `Unsupported{GrammarDefeated}`, 아니면 `Partial`
 
 use pal_core::{
-    BinaryReason, Capable, ExclusionRuleId, ExtractGrade, FileState, GeneratedEvidence,
-    LanguageId, RepoPath, Symbol, UnsupportedReason,
+    BinaryReason, Capable, Containment, ExclusionRuleId, ExtractGrade, FileState,
+    GeneratedEvidence, LanguageId, RepoPath, Symbol, UnsupportedReason,
 };
 
 use crate::extractor::extractor_for;
@@ -41,10 +41,28 @@ const GENERATED_MARKERS: &[&str] =
 const MARKER_SCAN_BYTES: usize = 2048;
 
 /// 분류 결과. **1층 캐시가 담는 값이 이것이다** — 그래서 직렬화된다.
+///
+/// # 왜 포함 관계가 여기 실리는가 (F03-1 · #51)
+///
+/// `symbol_id` 의 성분 다섯 중 하나가 **컨테이너 체인**이고(F03 §3.2), 그 체인은
+/// [`pal_core::FileGraph::contains`] 에서만 나온다. 이 값이 여기 없으면 좌표를 만드는
+/// 쪽(`pal-cli::ledger::nodes_of`)이 **캐시 적중일 때 체인을 잃는다** — 그러면 같은
+/// 커밋이 캐시 상태에 따라 다른 좌표를 낸다.
+///
+/// **`FileGraph` 를 통째로 싣지 않는다.** 스코프 체인과 회복 자리는 값이 크고 좌표를
+/// 만드는 데 필요하지 않다 — 그 자리는 F02 지붕이 **F04** 로 배정했고 여기서 갚지
+/// 않는다. 필요한 것만 싣는 것이 이 값의 규율이다.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct FileOutcome {
     pub state: FileState,
     pub symbols: Vec<Symbol>,
+    /// 포함 관계(C1) — [`symbols`] 안의 자리끼리다.
+    ///
+    /// 최상위만 보는 추출기(Kotlin)에서는 비고 **그것이 정확한 값이다** — 담긴 심볼을
+    /// 아예 안 뽑았으므로 담는 관계도 없다.
+    ///
+    /// [`symbols`]: FileOutcome::symbols
+    pub contains: Vec<Containment>,
 }
 
 /// 파일 하나를 분류한다.
@@ -59,7 +77,7 @@ pub fn classify(
     oversize_bytes: usize,
     declared: Option<&str>,
 ) -> Result<FileOutcome, ExtractError> {
-    let plain = |state| Ok(FileOutcome { state, symbols: Vec::new() });
+    let plain = |state| Ok(FileOutcome { state, symbols: Vec::new(), contains: Vec::new() });
 
     // ① 크기
     if source.len() > oversize_bytes {
@@ -101,11 +119,15 @@ pub fn classify(
         });
     };
 
-    let graph = extractor.extract(source)?;
+    let mut graph = extractor.extract(source)?;
     let grade = graph.grade;
     if graph.is_whole() {
         let state = FileState::Parsed { language: id, grade };
-        return Ok(FileOutcome { state, symbols: graph.symbols });
+        return Ok(FileOutcome {
+            state,
+            symbols: std::mem::take(&mut graph.symbols),
+            contains: graph.contains,
+        });
     }
 
     // ⑥ 임계 강등 — **`partial` 이 문법 부재를 가리지 않게** (F02 §3.4 · `[f02.2.pass]` ④)
@@ -129,7 +151,7 @@ pub fn classify(
     }
 
     let state = FileState::Partial { language: id, grade, recovery_sites: graph.recovery_count() };
-    Ok(FileOutcome { state, symbols: graph.symbols })
+    Ok(FileOutcome { state, symbols: std::mem::take(&mut graph.symbols), contains: graph.contains })
 }
 
 /// 이 빌드가 그 언어에서 **실제로 도달한** 등급.
@@ -323,6 +345,33 @@ mod tests {
         // **R-22** — 스코프 해소(L2)가 없는데 지우면 서로 다른 코드가 같은 요약을 갖는다.
         // 이 추출기는 L1 이므로 지우지 않는 것이 옳다.
         assert_ne!(요약("fun f() {\n  val a = 1\n}\n"), 요약("fun f() {\n  val b = 1\n}\n"));
+    }
+
+    #[test]
+    fn 포함_관계가_분류와_함께_나온다() {
+        // **캐시가 담는 값이다** — 없으면 좌표를 만드는 쪽이 캐시 적중일 때 컨테이너
+        // 체인을 잃고, 그러면 같은 커밋이 캐시 상태에 따라 다른 좌표를 낸다(#51).
+        let out =
+            classify(&RepoPath::new("a.ts"), b"class C { m() {} }", OVERSIZE_BYTES, None).unwrap();
+        assert_eq!(out.symbols.len(), 2, "클래스와 메서드가 나와야 한다");
+        assert_eq!(out.contains.len(), 1, "메서드가 클래스에 담긴 관계가 안 실렸다");
+    }
+
+    #[test]
+    fn 최상위만_보는_추출기는_포함_관계가_빈다() {
+        // **빈 것이 정확한 값이다** — 담긴 심볼을 아예 안 뽑았으므로 담는 관계도 없다.
+        let out = classify(&RepoPath::new("A.kt"), b"class A\nfun b() {}\n", OVERSIZE_BYTES, None)
+            .unwrap();
+        assert!(out.contains.is_empty());
+    }
+
+    #[test]
+    fn 강등된_파일은_포함_관계도_버린다() {
+        // 심볼을 버리는데 관계를 남기면 그 관계가 **없는 자리**를 가리킨다.
+        let out = classify(&RepoPath::new("A.kt"), b"@@@ !!! @@@ ??? &&&", OVERSIZE_BYTES, None)
+            .unwrap();
+        assert!(out.symbols.is_empty());
+        assert!(out.contains.is_empty(), "심볼은 버리고 관계는 남겼다 — 자리가 어긋난다");
     }
 
     #[test]
