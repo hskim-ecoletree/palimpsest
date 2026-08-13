@@ -22,7 +22,16 @@ use pal_core::{
 use pal_extract::{FileOutcome, OVERSIZE_BYTES};
 use pal_git::{GitAccess, GixRepo, WorktreeState};
 use pal_store::{BlobCache, CacheKey, CacheStats};
+use rayon::prelude::*;
 use serde::Serialize;
+
+/// 한 번에 손에 드는 파일 수 — **메모리가 파일 수에 비례하지 않게 하는 값이다.**
+///
+/// 전부 읽고 전부 병렬로 돌리면 소스 바이트를 파일 수만큼 동시에 든다. 10⁵ 에서 그것이
+/// 터진다(F02 §4). 이 값이 곧 동시 상주의 상한이고, **파일 수와 무관하다.**
+///
+/// **자리표시다** — 어느 측정도 이 숫자를 정하지 않았다. 확정은 예산 회귀(F05)의 것이다.
+const EXTRACT_CHUNK: usize = 256;
 
 /// 대장 + 그것을 만드는 데 든 캐시 회계.
 ///
@@ -84,6 +93,7 @@ pub fn compute(
     let cache = BlobCache::open(cache_root).context("캐시를 열지 못했다")?;
     let version = pal_extract::version();
 
+    let mut excluded: BTreeMap<RepoPath, pal_core::ExclusionRuleId> = BTreeMap::new();
     let mut files = repo.list_tree(&tree).context("트리를 읽지 못했다")?;
     // **정렬은 여기서 한다.** 산출이 결정적이어야 두 회차를 바이트로 비교할 수 있다.
     files.sort_by(|a, b| a.0.cmp(&b.0));
@@ -98,37 +108,86 @@ pub fn compute(
     let mut entries = Vec::with_capacity(files.len());
     let mut symbols: Vec<SymbolNode> = Vec::new();
 
-    for (path, blob) in files {
-        // **제외는 파일을 읽기 전에 판정된다.** 규칙에 걸린 파일은 내용을 보지 않고,
-        // 그래서 캐시도 건드리지 않는다 — 범위 밖은 "보지 않음"이고 그것이 문자 그대로다.
-        if let Some(rule) = manifest.as_ref().and_then(|m| m.excluded_by(&repo_id, &path)) {
-            entries.push(LedgerEntry {
-                path,
-                state: FileState::Excluded { rule: rule.id.clone() },
-            });
-            continue;
-        }
-        let declared = attributes.of(&path).language;
-        let key = CacheKey::new(blob, version, &path, declared.as_deref());
-        let outcome: FileOutcome = if let Some(hit) = cache.get::<FileOutcome>(&key)? {
-            stats.hit();
-            hit
-        } else {
+    // **덩어리 하나씩 — 읽기는 직렬, 추출은 병렬**(F02 §3.6 · `[f02.4]`).
+    //
+    // # 왜 통째로 병렬이 아닌가
+    //
+    // git 객체 읽기가 직렬로 남는다. `gix::Repository` 는 `!Sync` 이고(객체 캐시에 내부
+    // 가변성이 있다) 그것을 스레드마다 여는 것은 `pal-git` 의 표면을 바꾸는 일이라
+    // [R-15](저장 기술이 밖으로 새지 않는다)를 건드린다. **비싼 쪽은 파싱이다** —
+    // 그것을 병렬로 돌린다.
+    //
+    // # 왜 덩어리인가 — **이것이 `[f02.4.pass]` ⑤ 다**
+    //
+    // 전부 읽고 전부 병렬로 돌리면 소스 바이트를 파일 수만큼 동시에 든다. 10⁵ 에서
+    // 그것이 터진다(F02 §4). 덩어리로 끊으면 **동시 상주가 덩어리 크기에 비례하고
+    // 파일 수와 무관하다** — 트리도 마찬가지로 `FileGraph` 로 바뀌는 즉시 버려진다.
+    //
+    // # 순서가 결정적이다
+    //
+    // 덩어리 안에서 `par_iter` 가 어떤 순서로 끝나든 결과를 **입력 순서 그대로** 모은다
+    // (rayon 의 `map`+`collect` 가 그것을 보장한다). 완료 순서로 모으면 `symbol_id` 가
+    // 회차마다 움직이고 결박이 조용히 `orphaned` 가 된다.
+    for chunk in files.chunks(EXTRACT_CHUNK) {
+        // ① 직렬 — 캐시를 보고, 미스면 소스를 읽는다.
+        let mut pending: Vec<(usize, Vec<u8>, Option<String>)> = Vec::new();
+        let mut outcomes: Vec<Option<FileOutcome>> = Vec::with_capacity(chunk.len());
+        for (i, (path, blob)) in chunk.iter().enumerate() {
+            if let Some(rule) = manifest.as_ref().and_then(|m| m.excluded_by(&repo_id, path)) {
+                excluded.insert(path.clone(), rule.id.clone());
+                outcomes.push(None);
+                continue;
+            }
+            let declared = attributes.of(path).language;
+            let key = CacheKey::new(*blob, version, path, declared.as_deref());
+            if let Some(hit) = cache.get::<FileOutcome>(&key)? {
+                stats.hit();
+                outcomes.push(Some(hit));
+                continue;
+            }
             stats.miss();
             // **워킹트리 파일은 객체 저장소에 없을 수 있다** — 아직 커밋되지 않았으면
             // 그 blob 이름으로 조회가 실패한다. 읽는 곳이 트리에 따라 갈린다.
             let source = if tree.is_committed() {
-                repo.read_blob(blob).with_context(|| format!("{path}"))?
+                repo.read_blob(*blob).with_context(|| format!("{path}"))?
             } else {
-                repo.read_worktree_file(&path).with_context(|| format!("{path}"))?
+                repo.read_worktree_file(path).with_context(|| format!("{path}"))?
             };
-            let fresh = pal_extract::classify(&path, &source, OVERSIZE_BYTES, declared.as_deref())
-                .with_context(|| format!("분류 실패: {path}"))?;
-            cache.put(&key, &fresh)?;
-            fresh
-        };
-        symbols.extend(nodes_of(&repo_id, &path, &outcome.symbols));
-        entries.push(LedgerEntry { path, state: outcome.state });
+            pending.push((i, source, declared));
+            outcomes.push(None);
+        }
+
+        // ② 병렬 — 분류·추출. **파일 간 의존이 없으므로 완전 병렬이다.**
+        let fresh: Vec<Result<FileOutcome>> = pending
+            .par_iter()
+            .map(|(i, source, declared)| {
+                let path = &chunk[*i].0;
+                pal_extract::classify(path, source, OVERSIZE_BYTES, declared.as_deref())
+                    .with_context(|| format!("분류 실패: {path}"))
+            })
+            .collect();
+
+        // ③ 직렬 — 캐시에 넣고 입력 순서로 되꽂는다.
+        for ((i, source, declared), outcome) in pending.into_iter().zip(fresh) {
+            let outcome = outcome?;
+            let (path, blob) = &chunk[i];
+            let key = CacheKey::new(*blob, version, path, declared.as_deref());
+            cache.put(&key, &outcome)?;
+            drop(source); // 소스도 트리와 함께 버린다 — 덩어리 밖으로 들고 가지 않는다
+            outcomes[i] = Some(outcome);
+        }
+
+        for ((path, _), outcome) in chunk.iter().zip(outcomes) {
+            let Some(outcome) = outcome else {
+                // **제외는 파일을 읽기 전에 판정된다.** 규칙에 걸린 파일은 내용을 보지
+                // 않고, 그래서 캐시도 건드리지 않는다 — 범위 밖은 "보지 않음"이다.
+                let rule = excluded.remove(path).expect("제외되지 않았는데 산출이 없다");
+                entries.push(LedgerEntry { path: path.clone(), state: FileState::Excluded { rule } });
+                continue;
+            };
+            symbols.extend(nodes_of(&repo_id, path, &outcome.symbols));
+            entries.push(LedgerEntry { path: path.clone(), state: outcome.state });
+        }
     }
 
     let languages = language_capabilities(&entries);
