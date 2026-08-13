@@ -63,6 +63,8 @@ fn 세대(mark: &str) -> Vec<SymbolNode> {
             SymbolNode {
                 id,
                 path,
+                // 최상위 선언이라 **빈 것이 정확한 값이다** — 담는 것이 없다.
+                container: Vec::new(),
                 name: SAME.to_owned(),
                 kind: SymbolKind::Function,
                 body,
