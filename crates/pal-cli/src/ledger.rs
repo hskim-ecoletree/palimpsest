@@ -21,7 +21,7 @@ use pal_core::{
 };
 use pal_extract::{FileOutcome, OVERSIZE_BYTES};
 use pal_git::{GitAccess, GixRepo, WorktreeState};
-use pal_store::{BlobCache, CacheKey, CacheStats, ExtractCache as _};
+use pal_store::{BlobCache, CacheKey, CacheStats, ExtractCache as _, Lookup};
 use rayon::prelude::*;
 use serde::Serialize;
 
@@ -32,6 +32,12 @@ use serde::Serialize;
 ///
 /// **자리표시다** — 어느 측정도 이 숫자를 정하지 않았다. 확정은 예산 회귀(F05)의 것이다.
 const EXTRACT_CHUNK: usize = 256;
+
+/// 화면에 자리까지 적는 손상 엔트리의 수.
+///
+/// **수는 전부 세고 자리는 몇 개만 적는다.** 997 줄짜리 표 위에 손상 목록이 다 실리면
+/// 표가 안 읽히고, 하나도 안 실리면 사용자가 어디를 볼지 모른다.
+const CORRUPT_NOTES: usize = 5;
 
 /// 대장 + 그것을 만드는 데 든 캐시 회계.
 ///
@@ -45,6 +51,10 @@ pub struct LedgerReport {
     /// 2층에 들어갈 심볼들. **표에는 안 나오고 `pal touch` 가 쓴다.**
     #[serde(skip)]
     pub symbols: Vec<SymbolNode>,
+    /// 깨져서 격리된 엔트리의 자리 몇 — **수는 `cache.corrupt` 가 전부 센다.**
+    ///
+    /// 비어 있는 것이 정상 상태다. 비어 있지 않으면 화면에 뜬다.
+    pub corrupt: Vec<String>,
     /// 지금 워킹트리 — **`--at` 으로 과거를 보더라도 잰다.**
     ///
     /// *"이 답이 선 트리가 지금 워킹트리와 같은가"* 는 어느 트리를 보든 답에 실려야
@@ -108,6 +118,7 @@ pub fn compute(
         .and_then(|m| m.repos.first())
         .map_or_else(|| RepoId::new(repo_name(repo_path)), |r| r.id.clone());
     let mut stats = CacheStats::default();
+    let mut corrupt: Vec<String> = Vec::new();
     let mut entries = Vec::with_capacity(files.len());
     let mut symbols: Vec<SymbolNode> = Vec::new();
 
@@ -143,12 +154,22 @@ pub fn compute(
             }
             let declared = attributes.of(path).language;
             let key = CacheKey::new(*blob, version, path, declared.as_deref(), capabilities);
-            if let Some(hit) = cache.get::<FileOutcome>(&key)? {
-                stats.hit();
-                outcomes.push(Some(hit));
-                continue;
+            match cache.lookup::<FileOutcome>(&key)? {
+                Lookup::Hit(hit) => {
+                    stats.hit();
+                    outcomes.push(Some(hit));
+                    continue;
+                }
+                Lookup::Miss => stats.miss(),
+                // **깨진 것은 미스가 아니다.** 진행하되(재계산) 조용하지 않다 —
+                // 수가 산출에 실리고, 첫 건은 자리까지 적는다. 격리된 바이트는 남는다.
+                Lookup::Corrupt { quarantined, cause } => {
+                    stats.corrupt();
+                    if corrupt.len() < CORRUPT_NOTES {
+                        corrupt.push(format!("{path} — {cause} (격리: {})", quarantined.display()));
+                    }
+                }
             }
-            stats.miss();
             // **워킹트리 파일은 객체 저장소에 없을 수 있다** — 아직 커밋되지 않았으면
             // 그 blob 이름으로 조회가 실패한다. 읽는 곳이 트리에 따라 갈린다.
             let source = if tree.is_committed() {
@@ -193,29 +214,40 @@ pub fn compute(
         }
     }
 
+    let ledger = assemble(repo_id, tree, manifest.as_ref(), entries, version, worktree.base);
+    Ok(LedgerReport { ledger, cache: stats, corrupt, symbols, worktree })
+}
+
+/// 센 것을 대장으로 조립한다. **정책이 없다** — 세는 일은 위에서 끝났다.
+fn assemble(
+    repo_id: RepoId,
+    tree: TreeRef,
+    manifest: Option<&Manifest>,
+    entries: Vec<LedgerEntry>,
+    version: pal_core::ExtractorVersion,
+    head_now: pal_core::ObjectName,
+) -> Ledger {
     let languages = language_capabilities(&entries);
-    let ledger = Ledger {
+    Ledger {
         snapshot: Snapshot::single(repo_id, tree),
         // **선언된 저장소 수** — 매니페스트가 있으면 그것이 세고, 없으면 1 이다.
         // 멀티레포 스티칭은 F14 이고, 여기서 2 이상이 되어도 **보는 것은 여전히 하나**다.
         // 그 차이가 §4.3 이 말한 뿌리의 공백이고 대장이 두 수를 나란히 적는다.
         repos_declared: manifest
-            .as_ref()
             .and_then(|m| NonZeroUsize::new(m.repos.len()))
             .unwrap_or_else(|| NonZeroUsize::new(1).expect("1 은 0 이 아니다")),
         entries,
         languages,
-        scope: manifest.as_ref().map_or(ScopeSource::InferredFromPath, |m| ScopeSource::Declared {
+        scope: manifest.map_or(ScopeSource::InferredFromPath, |m| ScopeSource::Declared {
             repos: m.repos.len(),
             rules: m.rule_count(),
         }),
         detector: DetectorFreshness {
             grammar: version.grammar.to_owned(),
             extractor: version.extractor.to_owned(),
-            head_now: worktree.base,
+            head_now,
         },
-    };
-    Ok(LedgerReport { ledger, cache: stats, symbols, worktree })
+    }
 }
 
 /// 각 심볼의 **컨테이너 체인** — 바깥에서 안으로.
@@ -414,6 +446,29 @@ pub fn print_symbols(report: &LedgerReport) -> Result<()> {
     Ok(())
 }
 
+/// 캐시 회계 — 적중·빗나감, 그리고 **사건이 있으면** 그것.
+fn print_cache(report: &LedgerReport) {
+    println!("캐시      적중 {} · 빗나감 {}", report.cache.hits, report.cache.misses);
+    print_corrupt(report);
+}
+
+/// 깨져서 격리된 것 — **0 이면 한 줄도 안 적는다.**
+///
+/// 손상은 사건이고 사건이 없는 것이 정상 상태다. 늘 적으면 `Finding 0` 이 되고,
+/// 그것이 이 도구가 고발하는 형태다.
+fn print_corrupt(report: &LedgerReport) {
+    if report.cache.corrupt == 0 {
+        return;
+    }
+    println!("          ⚠ 깨져서 격리 {} 건", report.cache.corrupt);
+    for note in &report.corrupt {
+        println!("            {note}");
+    }
+    if report.cache.corrupt > report.corrupt.len() {
+        println!("            … 그 밖 {} 건", report.cache.corrupt - report.corrupt.len());
+    }
+}
+
 pub fn print_table(report: &LedgerReport) {
     let l = &report.ledger;
     let counts = l.counts();
@@ -513,7 +568,7 @@ pub fn print_table(report: &LedgerReport) {
     }
 
     println!();
-    println!("캐시      적중 {} · 빗나감 {}", report.cache.hits, report.cache.misses);
+    print_cache(report);
 
     // **아직 만들지 않은 것을 빈 값으로 내지 않는다** — stack §5.3.
     println!();

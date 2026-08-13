@@ -152,17 +152,31 @@ impl CacheKey {
 /// [ADR-0004]: ../../../docs/adr/0004-cache-key-covers-every-input-that-decides-the-output.md
 /// [`pal_extract::FileOutcome`]: https://docs.rs/
 pub trait ExtractCache: Send + Sync {
-    /// 있으면 값을, 없으면 `None`.
+    /// 조회 — **결과가 셋이다.** [`Lookup`] 의 주석이 그 이유다.
     ///
     /// # Errors
-    /// 파일은 있는데 읽지 못하거나 풀지 못하면.
-    fn get<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Option<T>, CacheError>;
+    /// 파일시스템이 실패하면. **깨진 값은 오류가 아니다** — [`Lookup::Corrupt`] 다.
+    fn lookup<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Lookup<T>, CacheError>;
 
     /// 값을 넣는다. **원자적이다.**
     ///
     /// # Errors
     /// 직렬화·쓰기·이동 중 하나가 실패하면.
     fn put<T: Serialize>(&self, key: &CacheKey, value: &T) -> Result<(), CacheError>;
+
+    /// 지금 얼마나 차 있는가 — `pal cache stats` 가 내는 값.
+    ///
+    /// # Errors
+    /// 디렉터리를 훑지 못하면.
+    fn usage(&self) -> Result<CacheUsage, CacheError>;
+
+    /// 예산까지 줄인다. **닿는 곳은 이 캐시의 뿌리 아래뿐이다** ([R-21]).
+    ///
+    /// # Errors
+    /// 훑거나 지우지 못하면.
+    ///
+    /// [R-21]: ../../../docs/plan/00-risks.md#r-21
+    fn evict_to(&self, budget_bytes: u64) -> Result<EvictReport, CacheError>;
 }
 
 /// 콘텐츠 주소 캐시.
@@ -172,6 +186,32 @@ pub struct BlobCache {
 
 /// 압축 레벨 — stack §3.1 이 3 으로 고정했다.
 const ZSTD_LEVEL: i32 = 3;
+
+/// 깨진 엔트리가 옮겨 가는 방. **캐시 안이고, 축출이 건드리지 않는다.**
+const QUARANTINE: &str = ".corrupt";
+
+/// 캐시 엔트리 하나를 훑은 결과 — `(자리, 바이트, 마지막 손댄 때)`.
+type Scanned = (PathBuf, u64, std::time::SystemTime);
+
+/// 조회 결과 — **셋이다.**
+///
+/// `Option` 이 아닌 이유는 [ADR-0005] 그대로다: *"없다"* 와 *"깨졌다"* 는 다른 부재이고,
+/// **축출이 생기면서 앞엣것이 정상이 되었다.** 둘을 접으면 축출 뒤의 미스가 사건처럼
+/// 보이거나(과잉 경보) 손상이 성능 저하로만 보인다(과소 경보).
+///
+/// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Lookup<T> {
+    Hit(T),
+    /// 이 키의 엔트리가 없다. **정상이다** — 첫 회차이거나 축출됐다.
+    Miss,
+    /// 있었는데 풀리지 않았다. **사건이다.** 바이트는 격리 방에 남아 있다.
+    Corrupt {
+        /// 격리된 바이트가 지금 있는 곳. **지워지지 않았다.**
+        quarantined: PathBuf,
+        cause: String,
+    },
+}
 
 impl BlobCache {
     /// 캐시 디렉터리를 연다. 없으면 만든다.
@@ -194,29 +234,116 @@ impl BlobCache {
     pub fn root(&self) -> &Path {
         &self.root
     }
+
+    /// 격리 방 — 캐시 **안**이다.
+    ///
+    /// 밖에 두면 [R-21] 의 경계를 이 크레이트가 스스로 넘는다. `.` 으로 시작하므로
+    /// 16진 두 글자인 샤드 디렉터리와 절대 섞이지 않는다.
+    #[must_use]
+    pub fn quarantine_dir(&self) -> PathBuf {
+        self.root.join(QUARANTINE)
+    }
+
+    /// 캐시 안의 엔트리 전부 — `(자리, 바이트, 마지막 접근)`.
+    ///
+    /// # 무엇을 세지 **않는가**
+    ///
+    ///   · **격리 방**(`.corrupt/`) — 축출의 대상이 아니다. 깨진 바이트를 예산 때문에
+    ///     지우면 격리가 유예된 삭제가 된다
+    ///   · **임시 파일**(`.tmp`) — **쓰는 이가 지금 들고 있을 수 있다.** 지우면
+    ///     그 쓰기의 `rename` 이 깨진다. 세기는 하고([`CacheUsage::stray_bytes`])
+    ///     지우지 않는다
+    fn entries(&self) -> Result<(Vec<Scanned>, u64), CacheError> {
+        let mut out = Vec::new();
+        let mut stray = 0u64;
+        let shards = match fs::read_dir(&self.root) {
+            Ok(d) => d,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok((out, 0)),
+            Err(e) => return Err(CacheError::Read(format!("{}: {e}", self.root.display()))),
+        };
+        for shard in shards {
+            let shard = shard.map_err(|e| CacheError::Read(e.to_string()))?.path();
+            // **깊이 둘의 고정 구조다** — 그래서 `walkdir` 을 안 들인다.
+            if !shard.is_dir() || shard.file_name().is_some_and(|n| n == QUARANTINE) {
+                continue;
+            }
+            for file in fs::read_dir(&shard)
+                .map_err(|e| CacheError::Read(format!("{}: {e}", shard.display())))?
+            {
+                let file = file.map_err(|e| CacheError::Read(e.to_string()))?;
+                let path = file.path();
+                let meta = file.metadata().map_err(|e| CacheError::Read(e.to_string()))?;
+                if !meta.is_file() {
+                    continue;
+                }
+                if path.extension().is_some_and(|e| e == "tmp") {
+                    stray += meta.len();
+                    continue;
+                }
+                // **접근 시각을 mtime 으로 근사한다**(F04 §3.4) — `noatime` 마운트에서도
+                // 값이 있고 별도 메타데이터가 필요 없다. 적중은 mtime 을 안 올리므로
+                // 이것은 *"언제 채워졌는가"* 에 가깝다. **그 사실을 적어 둔다.**
+                let when = meta.modified().unwrap_or(std::time::UNIX_EPOCH);
+                out.push((path, meta.len(), when));
+            }
+        }
+        Ok((out, stray))
+    }
+
+    /// 깨진 엔트리를 격리 방으로 옮긴다. **지우지 않는다.**
+    fn quarantine(&self, key: &CacheKey, path: &Path) -> Result<PathBuf, CacheError> {
+        let dir = self.quarantine_dir();
+        fs::create_dir_all(&dir)
+            .map_err(|e| CacheError::Create(format!("{}: {e}", dir.display())))?;
+        let to = dir.join(format!("{}.bin", key.as_str()));
+        // 같은 키가 두 번 깨지면 뒤엣것이 앞엣것을 덮는다. **키가 같으면 같은 사건**이고,
+        // 회차마다 파일을 늘리면 격리 방이 캐시보다 커진다.
+        fs::rename(path, &to)
+            .map_err(|e| CacheError::Write(format!("격리 실패 {}: {e}", to.display())))?;
+        Ok(to)
+    }
 }
 
 impl ExtractCache for BlobCache {
-    /// 있으면 값을, 없으면 `None`.
+    /// 적중 · 부재 · **손상** 셋으로 답한다.
     ///
-    /// **`None` 은 "캐시에 없다"이지 "값이 없다"가 아니다** — 조회 결과이므로
-    /// `Option` 이 맞다(stack §5.4 의 허용 자리).
+    /// # 왜 셋인가 — 문서와 옛 코드가 반대였다 (F04 · #7)
+    ///
+    /// F04 문서 §4 는 *"역직렬화 실패 시 그 엔트리만 버리고 재계산 + 경고 로그"* 라
+    /// 적었고, 옛 코드는 반대로 `Err` 를 냈다 — *"깨진 캐시를 조용히 미스로 만들지
+    /// 않는다. 그러면 손상이 성능 저하로만 보이고 영원히 발견되지 않는다."*
+    /// **둘 다 근거가 있다.** 문서는 *진행해야 한다*(1층은 순수 캐시다 · §3.1)를,
+    /// 코드는 *조용하면 안 된다*를 지킨다.
+    ///
+    /// 그리고 **축출이 생기면서 문제가 한 겹 깊어졌다** — 축출 뒤에는 **없는 엔트리가
+    /// 정상**이다. 그러면 *"없다"* 와 *"깨졌다"* 를 한 값으로 접을 수 없다. 접으면
+    /// 적중률 숫자가 무엇을 세는지 알 수 없게 된다.
+    ///
+    /// 그래서 [ADR-0005](부재는 종류를 싣는다)를 조회에 그대로 적용했다. 진행하고
+    /// (재계산), 조용하지 않고(수가 산출에 실린다), **깨진 바이트를 지우지 않는다**
+    /// (격리는 삭제가 아니다 — 지우면 사후에 무엇이 깨졌는지 아무도 못 본다).
     ///
     /// # Errors
-    /// 파일은 있는데 읽지 못하거나 풀지 못하면. **깨진 캐시를 조용히 미스로 만들지
-    /// 않는다** — 그러면 손상이 성능 저하로만 보이고 영원히 발견되지 않는다.
-    fn get<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Option<T>, CacheError> {
+    /// 파일시스템이 실패하면 — 읽기 권한·격리 이동. **깨진 값은 오류가 아니다.**
+    ///
+    /// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
+    fn lookup<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Lookup<T>, CacheError> {
         let path = self.path_of(key);
         let packed = match fs::read(&path) {
             Ok(b) => b,
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Lookup::Miss),
             Err(e) => return Err(CacheError::Read(format!("{}: {e}", path.display()))),
         };
-        let raw = zstd::decode_all(packed.as_slice())
-            .map_err(|e| CacheError::Decode(format!("{}: {e}", path.display())))?;
-        let value = postcard::from_bytes(&raw)
-            .map_err(|e| CacheError::Decode(format!("{}: {e}", path.display())))?;
-        Ok(Some(value))
+        let value = zstd::decode_all(packed.as_slice())
+            .map_err(|e| e.to_string())
+            .and_then(|raw| postcard::from_bytes::<T>(&raw).map_err(|e| e.to_string()));
+        match value {
+            Ok(v) => Ok(Lookup::Hit(v)),
+            Err(cause) => {
+                let quarantined = self.quarantine(key, &path)?;
+                Ok(Lookup::Corrupt { quarantined, cause })
+            }
+        }
     }
 
     /// 값을 넣는다. **원자적이다** — 임시 파일에 쓰고 옮긴다.
@@ -259,6 +386,100 @@ impl ExtractCache for BlobCache {
             .map_err(|e| CacheError::Write(format!("{}: {e}", path.display())))?;
         Ok(())
     }
+
+    fn usage(&self) -> Result<CacheUsage, CacheError> {
+        let (entries, stray_bytes) = self.entries()?;
+        let dir = self.quarantine_dir();
+        let mut quarantined = (0usize, 0u64);
+        if let Ok(read) = fs::read_dir(&dir) {
+            for f in read {
+                let f = f.map_err(|e| CacheError::Read(e.to_string()))?;
+                let meta = f.metadata().map_err(|e| CacheError::Read(e.to_string()))?;
+                if meta.is_file() {
+                    quarantined.0 += 1;
+                    quarantined.1 += meta.len();
+                }
+            }
+        }
+        Ok(CacheUsage {
+            entries: entries.len(),
+            bytes: entries.iter().map(|(_, n, _)| n).sum(),
+            quarantined_entries: quarantined.0,
+            quarantined_bytes: quarantined.1,
+            stray_bytes,
+        })
+    }
+
+    /// LRU 축출 — 예산을 넘은 만큼 **오래된 것부터** 지운다.
+    ///
+    /// # 왜 정책이 이렇게 단순해도 되는가
+    ///
+    /// F04 §3.4: *"축출은 정확성에 영향이 없다 — 재파싱될 뿐이다."* 틀린 것을 지울
+    /// 위험이 없으므로 정교할 이유가 없다. **위험한 것은 지우는 범위이지 지우는
+    /// 순서가 아니다.**
+    ///
+    /// # 보고가 「센 것」과 「지운 것」을 따로 적는다
+    ///
+    /// 숫자만 내고 안 지우는 구현이 [`EvictReport`] 하나만 보면 통과한다
+    /// (`corpus/criteria.toml` `[f04.pass]` ④). 그래서 지운 뒤의 **남은 수**를 함께
+    /// 낸다 — 부르는 쪽이 실제 파일 수와 댈 수 있다.
+    fn evict_to(&self, budget_bytes: u64) -> Result<EvictReport, CacheError> {
+        let (mut entries, _) = self.entries()?;
+        let scanned = entries.len();
+        let total: u64 = entries.iter().map(|(_, n, _)| n).sum();
+
+        // **오래된 것부터.** 같은 시각이면 자리 순 — 정렬이 결정적이어야 두 회차가
+        // 같은 것을 지운다.
+        entries.sort_by(|a, b| a.2.cmp(&b.2).then_with(|| a.0.cmp(&b.0)));
+
+        let mut live = total;
+        let mut removed = 0usize;
+        let mut freed = 0u64;
+        for (path, size, _) in entries {
+            if live <= budget_bytes {
+                break;
+            }
+            fs::remove_file(&path)
+                .map_err(|e| CacheError::Write(format!("{}: {e}", path.display())))?;
+            live -= size;
+            freed += size;
+            removed += 1;
+        }
+        Ok(EvictReport {
+            scanned,
+            removed,
+            freed_bytes: freed,
+            kept_entries: scanned - removed,
+            kept_bytes: live,
+            budget_bytes,
+        })
+    }
+}
+
+/// 캐시가 지금 얼마나 차 있는가 — `pal cache stats`.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct CacheUsage {
+    pub entries: usize,
+    pub bytes: u64,
+    /// 깨져서 격리된 것 — **축출이 안 건드린다.** 0 이 정상 상태다.
+    pub quarantined_entries: usize,
+    pub quarantined_bytes: u64,
+    /// 남은 임시 파일의 바이트. **죽은 쓰기의 흔적이거나 지금 도는 쓰기다.**
+    ///
+    /// 지우지 않는다 — 둘을 값싸게 구별할 수 없고, 도는 쓰기의 것을 지우면 그 쓰기의
+    /// `rename` 이 깨진다. **보이게 두는 것이 지금의 처분이다.**
+    pub stray_bytes: u64,
+}
+
+/// 축출 한 번의 보고. **센 것과 지운 것과 남은 것을 따로 적는다.**
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct EvictReport {
+    pub scanned: usize,
+    pub removed: usize,
+    pub freed_bytes: u64,
+    pub kept_entries: usize,
+    pub kept_bytes: u64,
+    pub budget_bytes: u64,
 }
 
 /// 한 회차의 적중·빗나감. **대장이 이것을 보고한다.**
@@ -269,6 +490,11 @@ impl ExtractCache for BlobCache {
 pub struct CacheStats {
     pub hits: usize,
     pub misses: usize,
+    /// 깨져서 격리된 엔트리 수. **`misses` 에 섞지 않는다.**
+    ///
+    /// 축출이 생긴 뒤로 미스는 **정상**이다. 손상을 미스로 세면 *"캐시가 좀 덜
+    /// 맞았다"* 와 *"디스크가 썩고 있다"* 가 같은 숫자가 된다.
+    pub corrupt: usize,
 }
 
 impl CacheStats {
@@ -277,6 +503,13 @@ impl CacheStats {
     }
 
     pub const fn miss(&mut self) {
+        self.misses += 1;
+    }
+
+    /// 깨진 것을 센다. **미스도 함께 센다** — 값을 못 얻었으므로 재계산이 일어나고,
+    /// 그러면 `hits + misses` 가 본 파일 수와 같다는 성질이 유지된다.
+    pub const fn corrupt(&mut self) {
+        self.corrupt += 1;
         self.misses += 1;
     }
 
@@ -297,8 +530,10 @@ mod tests {
         s: String,
     }
 
-    fn 임시() -> PathBuf {
-        let p = std::env::temp_dir().join(format!("pal-cache-test-{}", std::process::id()));
+    /// **시험마다 다른 방.** 같은 디렉터리를 돌려 쓰면 한 시험이 다른 시험의 캐시를
+    /// 보고, 그것이 F02-4 에서 병렬 대조를 통째로 꺼뜨린 형태다(`[f04].self_judged` ③).
+    fn 임시(tag: &str) -> PathBuf {
+        let p = std::env::temp_dir().join(format!("pal-cache-test-{tag}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&p);
         p
     }
@@ -314,12 +549,121 @@ mod tests {
 
     #[test]
     fn 넣은_것이_나온다() {
-        let c = BlobCache::open(임시()).unwrap();
+        let c = BlobCache::open(임시("기본")).unwrap();
         let k = 키(ObjectName::from_bytes([1; 20]), V);
-        assert_eq!(c.get::<값>(&k).unwrap(), None);
+        assert_eq!(c.lookup::<값>(&k).unwrap(), Lookup::Miss);
         c.put(&k, &값 { n: 7, s: "가".into() }).unwrap();
-        assert_eq!(c.get::<값>(&k).unwrap(), Some(값 { n: 7, s: "가".into() }));
+        assert_eq!(c.lookup::<값>(&k).unwrap(), Lookup::Hit(값 { n: 7, s: "가".into() }));
         let _ = fs::remove_dir_all(c.root());
+    }
+
+    #[test]
+    fn 깨진_것은_미스가_아니라_사건이고_바이트가_남는다() {
+        // **문서(§4)와 옛 코드가 반대였던 자리다.** 진행하되(재계산은 부르는 쪽이),
+        // 조용하지 않고(`Corrupt`), **격리는 삭제가 아니다.**
+        let c = BlobCache::open(임시("손상")).unwrap();
+        let k = 키(ObjectName::from_bytes([9; 20]), V);
+        c.put(&k, &값 { n: 1, s: "나".into() }).unwrap();
+        let 자리 = c.path_of(&k);
+        fs::write(&자리, "zstd 가 아니다").unwrap();
+
+        let Lookup::Corrupt { quarantined, .. } = c.lookup::<값>(&k).unwrap() else {
+            panic!("깨진 것을 미스나 적중으로 냈다");
+        };
+        assert!(quarantined.exists(), "격리한다며 지웠다");
+        assert_eq!(fs::read(&quarantined).unwrap(), "zstd 가 아니다".as_bytes());
+        assert!(!자리.exists(), "깨진 것이 캐시에 그대로 남았다");
+        assert!(quarantined.starts_with(c.quarantine_dir()));
+
+        // **★ 반대 방향** — 격리한 뒤의 조회는 **손상이 아니라 미스**다. 축출 뒤의
+        // 미스와 같은 값이어야 한다. 아니면 한 번 깨진 키가 영원히 사건으로 남는다.
+        assert_eq!(c.lookup::<값>(&k).unwrap(), Lookup::Miss);
+        let _ = fs::remove_dir_all(c.root());
+    }
+
+    #[test]
+    fn 없는_것은_손상이_아니다() {
+        // ★ 반대 방향. 손상 계수기가 아무거나 세면 이 시험이 걸린다.
+        let c = BlobCache::open(임시("부재")).unwrap();
+        let k = 키(ObjectName::from_bytes([10; 20]), V);
+        assert_eq!(c.lookup::<값>(&k).unwrap(), Lookup::Miss);
+        assert!(!c.quarantine_dir().exists(), "아무것도 안 깨졌는데 격리 방이 생겼다");
+        let _ = fs::remove_dir_all(c.root());
+    }
+
+    /// 엔트리 `n` 개를 채운다.
+    fn 채움(c: &BlobCache, n: usize) {
+        for i in 0..n {
+            let mut b = [0u8; 20];
+            b[0] = u8::try_from(i % 251).unwrap_or(0);
+            b[1] = u8::try_from(i / 251).unwrap_or(0);
+            c.put(&키(ObjectName::from_bytes(b), V), &값 { n: i, s: "가".repeat(64) }).unwrap();
+        }
+    }
+
+    #[test]
+    fn 예산이_넉넉하면_한_건도_안_지운다() {
+        // **★ 반대 방향이다.** 늘 지우는 `prune` 은 아래 시험의 앞 절을 통과한다.
+        let c = BlobCache::open(임시("넉넉")).unwrap();
+        채움(&c, 20);
+        let 전 = c.usage().unwrap();
+        let r = c.evict_to(u64::MAX).unwrap();
+        assert_eq!((r.removed, r.freed_bytes), (0, 0));
+        assert_eq!(c.usage().unwrap(), 전, "안 지운다면서 무언가 움직였다");
+        let _ = fs::remove_dir_all(c.root());
+    }
+
+    #[test]
+    fn 축출은_실제로_파일을_줄이고_보고가_실물과_맞는다() {
+        let c = BlobCache::open(임시("축출")).unwrap();
+        채움(&c, 40);
+        let 전 = c.usage().unwrap();
+        assert_eq!(전.entries, 40, "채우기가 안 됐으면 이 시험은 아무것도 재지 않는다");
+
+        let 예산 = 전.bytes / 4;
+        let r = c.evict_to(예산).unwrap();
+        let 후 = c.usage().unwrap();
+
+        assert!(r.removed > 0, "예산을 1/4 로 줬는데 한 건도 안 지웠다");
+        assert_eq!(후.entries, 전.entries - r.removed, "보고와 실제 파일 수가 다르다");
+        assert_eq!(후.entries, r.kept_entries);
+        assert_eq!(후.bytes, r.kept_bytes);
+        assert!(후.bytes <= 예산, "지우고도 예산을 넘는다 — {} > {예산}", 후.bytes);
+        let _ = fs::remove_dir_all(c.root());
+    }
+
+    #[test]
+    fn 축출은_격리_방과_임시_파일을_건드리지_않는다() {
+        // 격리를 예산 때문에 지우면 그것은 **유예된 삭제**이고, 도는 쓰기의 임시 파일을
+        // 지우면 그 쓰기의 `rename` 이 깨진다.
+        let c = BlobCache::open(임시("경계")).unwrap();
+        채움(&c, 10);
+        let k = 키(ObjectName::from_bytes([200; 20]), V);
+        c.put(&k, &값 { n: 1, s: "나".into() }).unwrap();
+        fs::write(c.path_of(&k), "깨진 바이트").unwrap();
+        let Lookup::Corrupt { quarantined, .. } = c.lookup::<값>(&k).unwrap() else {
+            panic!("격리가 안 일어났다");
+        };
+        let tmp = c.root().join("aa");
+        fs::create_dir_all(&tmp).unwrap();
+        let tmp = tmp.join("도는-쓰기.tmp");
+        fs::write(&tmp, "쓰는 중").unwrap();
+
+        // **0 예산이다.** 지울 수 있는 것은 전부 지우라는 뜻이다.
+        let r = c.evict_to(0).unwrap();
+        assert_eq!(c.usage().unwrap().entries, 0, "0 예산인데 엔트리가 남았다");
+        assert!(r.removed >= 10);
+        assert!(quarantined.exists(), "축출이 격리 방을 지웠다");
+        assert!(tmp.exists(), "축출이 도는 쓰기의 임시 파일을 지웠다");
+        let _ = fs::remove_dir_all(c.root());
+    }
+
+    #[test]
+    fn 손상은_빗나감과_따로_세되_총계에는_들어간다() {
+        let mut s = CacheStats::default();
+        s.hit();
+        s.corrupt();
+        assert_eq!((s.hits, s.misses, s.corrupt, s.total()), (1, 1, 1, 2));
     }
 
     #[test]

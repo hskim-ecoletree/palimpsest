@@ -12,6 +12,7 @@ use clap::{Parser, Subcommand};
 use pal_core::{Capable, Language};
 
 mod bind;
+mod cache;
 mod defect;
 mod doctor;
 mod ledger;
@@ -123,6 +124,11 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// 1층 캐시를 본다 — **`prune` 이 닿는 곳은 `cache/` 뿐이다**(R-21)
+    Cache {
+        #[command(subcommand)]
+        what: CacheCommand,
+    },
     /// 저장소 하나의 관측 범위 대장을 낸다 — **무엇을 보았고 무엇을 보지 않았는가**
     Ledger {
         /// 저장소 경로. 기본값은 현재 디렉터리
@@ -147,6 +153,35 @@ enum Command {
         /// **`--json` 의 형태를 건드리지 않는다** — `s0-compare.py` 가 그것을 파싱한다.
         #[arg(long)]
         symbols: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum CacheCommand {
+    /// 얼마나 차 있는가
+    Stats {
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 1층 캐시 위치. 기본값은 `<저장소>/.palimpsest/cache`
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// 예산까지 줄인다 — **되돌릴 수 없다.** 닿는 곳은 캐시 디렉터리뿐이다
+    Prune {
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 1층 캐시 위치. 기본값은 `<저장소>/.palimpsest/cache`
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        /// 남길 바이트. 기본값은 2GiB (F04 §3.4 · **자리표시다**)
+        #[arg(long)]
+        budget: Option<u64>,
+        #[arg(long)]
+        json: bool,
     },
 }
 
@@ -182,6 +217,15 @@ fn main() -> Result<()> {
             };
             doctor::run(&repo, at.as_deref(), cache_dir, index, intent, scope, json)
         }
+        Command::Cache { what } => match what {
+            CacheCommand::Stats { repo, cache_dir, json } => cache::stats(&repo, cache_dir, json),
+            CacheCommand::Prune { repo, cache_dir, budget, json } => cache::prune(
+                &repo,
+                cache_dir,
+                budget.unwrap_or(cache::DEFAULT_BUDGET_BYTES),
+                json,
+            ),
+        },
         Command::Ledger { path, at, cache_dir, json, symbols } => {
             let report = ledger::compute(&path, at.as_deref(), cache_dir)?;
             if symbols {
