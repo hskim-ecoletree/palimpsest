@@ -22,7 +22,7 @@
 //!
 //! [R-22]: ../../../docs/plan/00-risks.md#r-22
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use pal_core::{
     BoundSymbol, LocalIx, LocalRef, Namespace, ScopeBinding, ScopeChain, ScopeIx, ScopeKind,
@@ -60,6 +60,21 @@ pub(crate) struct Scoped {
     pub unnameable: Vec<usize>,
     /// 참조가 일어난 바이트 → [`ScopeChain::refs`] 의 자리. 정규화가 쓴다.
     pub ref_at: HashMap<usize, usize>,
+    /// **지우면 안 되는 참조 자리** — 객체 리터럴의 축약 속성(`{ a }` 의 `a`).
+    ///
+    /// # 참조로 세는 것은 옳다. 지우는 것이 틀리다
+    ///
+    /// `{ a }` 의 `a` 는 값 참조가 맞고 해소도 되어야 한다. 그런데 그 자리는 **동시에
+    /// 밖에서 보이는 키 이름**이다(F03 §4.2). 지우면
+    ///
+    /// ```text
+    /// function f() { const alpha = 1; return { alpha }; }
+    /// function f() { const beta  = 1; return { beta  }; }
+    /// ```
+    ///
+    /// 둘이 **같은 요약**을 갖는다 — 만들어 내는 객체의 키가 다른데도.
+    /// [R-22] 가 경고한 *"서로 다른 코드가 같은 digest"* 의 정확한 형태다.
+    pub protected: HashSet<usize>,
 }
 
 /// 파일 하나의 스코프를 세우고 모든 이름 참조를 해소한다.
@@ -75,6 +90,7 @@ pub(crate) fn build(root: Node<'_>, source: &[u8], symbol_at: &HashMap<usize, Lo
         unnameable: Vec::new(),
         refs: Vec::new(),
         scope_at: HashMap::new(),
+        protected: HashSet::new(),
     };
     // **선언을 먼저 전부 모으고 그다음 참조를 푼다.** 한 번에 하면 뒤에 선언된 이름을
     // 참조하는 자리(호이스팅)가 아직 없는 바인딩을 찾게 되고, 그러면 호이스팅이 성립하지
@@ -90,7 +106,7 @@ pub(crate) fn build(root: Node<'_>, source: &[u8], symbol_at: &HashMap<usize, Lo
         ref_at.insert(at, chain.refs.len());
         chain.refs.push(LocalRef { name, namespace, at, resolved });
     }
-    Scoped { chain, unnameable: b.unnameable, ref_at }
+    Scoped { chain, unnameable: b.unnameable, ref_at, protected: b.protected }
 }
 
 struct Builder<'a, 'm> {
@@ -100,6 +116,8 @@ struct Builder<'a, 'm> {
     unnameable: Vec<usize>,
     /// (바이트, 이름, 이름 공간, 그 자리의 스코프) — 해소는 선언을 다 모은 뒤에 한다.
     refs: Vec<(usize, String, Namespace, ScopeIx)>,
+    /// 객체 리터럴 축약 속성의 바이트 — **정규화가 이 자리를 지우면 안 된다.**
+    protected: HashSet<usize>,
     /// 1 차가 연 스코프 — **노드 신원으로 잡는다.**
     ///
     /// 방문 순서로 맞추면 두 순회가 한 자리만 어긋나도 해소가 통째로 틀리고, **틀린 채로
@@ -255,11 +273,22 @@ impl Builder<'_, '_> {
         }
     }
 
+    /// **주석은 파라미터가 아니다** (F03-2 · #52).
+    ///
+    /// tree-sitter 에서 주석은 **이름 있는 노드**라 `named_children` 에 섞여 나온다.
+    /// 거르지 않으면 `pattern` 필드가 없는 그 노드가 아래 `None` 팔로 떨어지고,
+    /// **주석 한 줄이 통째로 「선언된 이름」이 된다.**
+    ///
+    /// ditto 실측에서 그런 바인딩이 **32 개**(파일 5)였다. 스코프 표가 오염되는 것만이
+    /// 아니라, 그 「이름」이 참조와 우연히 맞으면 **해소가 조용히 틀린다.**
     fn declare_parameters(&mut self, params: Node<'_>, scope: ScopeIx) {
         let mut cursor = params.walk();
         let kids: Vec<Node<'_>> = params.named_children(&mut cursor).collect();
         drop(cursor);
         for p in kids {
+            if p.kind().contains("comment") {
+                continue;
+            }
             // **파라미터는 본문 전체에서 보인다** — 호이스팅과 같은 취급이다.
             match p.child_by_field_name("pattern") {
                 Some(pattern) => self.bind(scope, pattern, Namespace::Value, true),
@@ -273,6 +302,9 @@ impl Builder<'_, '_> {
         let kids: Vec<Node<'_>> = params.named_children(&mut cursor).collect();
         drop(cursor);
         for p in kids {
+            if p.kind().contains("comment") {
+                continue;
+            }
             self.bind_named(scope, p, Namespace::Type, true);
         }
     }
@@ -353,6 +385,10 @@ impl Builder<'_, '_> {
         if let Some(namespace) = reference_namespace(node)
             && !in_module_clause(node)
         {
+            // **참조로 세되 지우지는 않는다** — 위 `Scoped::protected` 의 이유.
+            if node.kind() == "shorthand_property_identifier" {
+                self.protected.insert(node.start_byte());
+            }
             self.refs.push((node.start_byte(), self.text(node), namespace, here));
         }
         let mut cursor = node.walk();

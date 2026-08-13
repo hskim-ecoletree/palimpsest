@@ -455,40 +455,76 @@ fn grade_of_symbol(scoped: &Scoped, start: usize, end: usize) -> IdentityGrade {
 /// 참조 순서로 매기면 본문에서 쓰는 순서만 바꿔도 요약이 바뀐다. 선언 순서로 매기면
 /// 이름만 바꾼 두 소스가 같은 값을 내고(불변식 A), 선언 순서를 바꾸면 다른 값을 낸다.
 fn digest_of(scoped: &Scoped, node: Node<'_>, source: &[u8], identity: IdentityGrade) -> BodyDigest {
+    BodyDigest::of_normalized(&normalized_of(scoped, node, source, identity))
+}
+
+/// 그 심볼의 **정규형 바이트열.** [`digest_of`] 가 이것을 해싱한다.
+///
+/// **갈라 둔 이유는 시험이다** — 요약만 내면 *"두 소스가 같은 값을 갖는가"* 밖에 못
+/// 묻고, F03 §3.1 이 적어 둔 **정규형 자체**(`function add(#0: number, …)`)가
+/// 실물과 같은지는 물을 수 없다. 그것이 [`f03.2.pass`] ③ 의 판정 대상이다.
+fn normalized_of(
+    scoped: &Scoped,
+    node: Node<'_>,
+    source: &[u8],
+    identity: IdentityGrade,
+) -> Vec<u8> {
     if identity != IdentityGrade::Exact {
-        return BodyDigest::of_normalized(&normalize(node, source));
+        return normalize(node, source);
     }
     let (start, end) = (node.start_byte(), node.end_byte());
 
-    // 이 심볼 안에서 선언된 **심볼 아닌** 바인딩들 — 선언 순서로 자리 번호를 준다.
-    let mut local: Vec<(u32, u32)> = Vec::new(); // (scope, binding)
-    let mut order: Vec<usize> = Vec::new();
-    for (si, scope) in scoped.chain.scopes.iter().enumerate() {
-        for (bi, b) in scope.bindings.iter().enumerate() {
-            if b.symbol == BoundSymbol::NotASymbol && (start..end).contains(&b.declared_at) {
-                local.push((
-                    u32::try_from(si).unwrap_or(u32::MAX),
-                    u32::try_from(bi).unwrap_or(u32::MAX),
-                ));
-                order.push(b.declared_at);
-            }
+    // 이 심볼이 **실제로 가리키는, 심볼이 아닌** 바인딩들 — 선언 순서로 자리 번호를 준다.
+    //
+    // # 「이 심볼 안에서 선언된」이 아니라 「이 심볼이 가리키는」이다
+    //
+    // 처음에는 선언 자리가 심볼 안인 것만 모았다. 그러면 **중첩된 심볼이 바깥 함수의
+    // 지역을 가리킬 때 그 이름이 안 지워진다** — `function outer(){ const out=[];
+    // function walk(){ out.push(1) } }` 에서 `walk` 의 요약에 `out` 이 이름 그대로
+    // 남고, 바깥의 `out` 을 리네임하면 `walk` 가 `stale` 로 켜진다. 의미는 안 변했는데.
+    //
+    // ditto 실측에서 그 형태가 **10 건**이었고 전부 중첩 함수였다(`scanLocalJars.walk` ·
+    // `walkFiles.walk` · `reduceEvents.effective` …).
+    //
+    // **선언 순서로 번호를 매기되 가리키는 것만 센다.** 파일 어딘가의 무관한 지역이
+    // 늘어도 번호가 밀리지 않는다 — 밀리면 이유 없는 `stale` 이 된다.
+    let mut order: Vec<(u32, u32, usize)> = Vec::new(); // (scope, binding, declared_at)
+    for r in &scoped.chain.refs {
+        if !(start..end).contains(&r.at) {
+            continue;
+        }
+        let RefResolution::Bound { scope, binding } = r.resolved else { continue };
+        let Some(b) = scoped
+            .chain
+            .scopes
+            .get(scope.0 as usize)
+            .and_then(|s| s.bindings.get(binding as usize))
+        else {
+            continue;
+        };
+        if b.symbol != BoundSymbol::NotASymbol {
+            continue;
+        }
+        if !order.iter().any(|(s, i, _)| *s == scope.0 && *i == binding) {
+            order.push((scope.0, binding, b.declared_at));
         }
     }
-    let mut slot: Vec<usize> = (0..local.len()).collect();
-    slot.sort_by_key(|i| order[*i]);
-    let mut number: HashMap<(u32, u32), usize> = HashMap::with_capacity(local.len());
-    for (n, i) in slot.into_iter().enumerate() {
-        number.insert(local[i], n);
-    }
+    order.sort_by_key(|(_, _, at)| *at);
+    let number: HashMap<(u32, u32), usize> =
+        order.iter().enumerate().map(|(n, (s, b, _))| ((*s, *b), n)).collect();
 
     let erase = |at: usize| -> Option<usize> {
+        // **객체 리터럴의 키는 계약이다** (F03 §4.2). 해소는 그대로 두고 여기서만 막는다.
+        if scoped.protected.contains(&at) {
+            return None;
+        }
         let ix = scoped.ref_at.get(&at)?;
         let RefResolution::Bound { scope, binding } = scoped.chain.refs.get(*ix)?.resolved else {
             return None;
         };
         number.get(&(scope.0, binding)).copied()
     };
-    BodyDigest::of_normalized(&normalize_erasing(node, source, &erase))
+    normalize_erasing(node, source, &erase)
 }
 
 fn span_of(node: Node<'_>) -> Span {
@@ -700,6 +736,96 @@ describe('a', () => { test('b', () => { const x = 1; }); });
         그래프(src).symbols[0].identity
     }
 
+    /// 첫 심볼의 **정규형** — 사람이 읽는 꼴로.
+    fn 정규형(src: &str) -> String {
+        let language = tree_sitter::Language::new(tree_sitter_typescript::LANGUAGE_TYPESCRIPT);
+        let tree = crate::parse::parse_with(&language, src.as_bytes()).expect("파싱");
+        let walk_symbols = 그래프(src).symbols;
+        let symbol_at: HashMap<usize, LocalIx> = walk_symbols
+            .iter()
+            .enumerate()
+            .map(|(i, s)| (s.span.byte_start, LocalIx(u32::try_from(i).unwrap_or(u32::MAX))))
+            .collect();
+        let scoped = scopes::build(tree.root_node(), src.as_bytes(), &symbol_at);
+        let first = walk_symbols.first().expect("심볼이 없다");
+        let node = node_at(tree.root_node(), first.span.byte_start, first.span.byte_end)
+            .expect("선언 노드를 못 찾았다");
+        let bytes = normalized_of(&scoped, node, src.as_bytes(), first.identity);
+        // 마디 표식은 **구조**이지 글자가 아니다 — 사람이 읽는 꼴에서는 지운다.
+        // 그것이 있다는 사실은 아래 `그룹_괄호는...` 시험이 따로 붙든다.
+        String::from_utf8_lossy(&bytes)
+            .chars()
+            .filter_map(|c| match c {
+                '\u{1f}' => Some(' '),
+                '\u{1e}' => Some('#'),
+                '\u{1d}' => Some('@'),
+                '\u{1c}' | '\u{1a}' => None,
+                other => Some(other),
+            })
+            .collect::<String>()
+            .trim_end()
+            .to_owned()
+    }
+
+    fn node_at<'t>(node: Node<'t>, start: usize, end: usize) -> Option<Node<'t>> {
+        if node.start_byte() == start && node.end_byte() == end {
+            return Some(node);
+        }
+        let mut cursor = node.walk();
+        let kids: Vec<Node<'t>> = node.children(&mut cursor).collect();
+        drop(cursor);
+        kids.into_iter().find_map(|c| node_at(c, start, end))
+    }
+
+    #[test]
+    fn 정규형이_문서에_적힌_그대로다() {
+        // **F03 §3.1 이 예시를 적어 두었다** — 그 문장이 이 시험의 오라클이다:
+        //
+        // ```
+        // 원본:   function add(a: number, b: number) { const s = a + b; return s }
+        // 정규형: function add(#0: number, #1: number){const #2=#0+#1 return #2}
+        // ```
+        //
+        // 자리 번호가 **선언 순서**이고 **심볼 안에서 하나로 이어진다**는 것이
+        // 여기서 처음 눈에 보인다. `[f03.2.pass]` ③ 의 판정 근거다.
+        //
+        // **문서의 예시에는 `;` 가 남아 있었고 그것이 §3.1 의 표와 어긋났다** —
+        // 같은 표가 *"선택적 세미콜론은 지운다"* 라고 적는다. 예시를 정정했다.
+        let n = 정규형("function add(a: number, b: number) { const s = a + b; return s }");
+        let 토큰: Vec<&str> = n.split_whitespace().collect();
+        assert_eq!(
+            토큰.join(""),
+            "functionadd(#0:number,#1:number){const#2=#0+#1return#2}",
+            "정규형이 문서의 예시와 다르다"
+        );
+    }
+
+    #[test]
+    fn 그룹_괄호는_지워지고_트리_모양은_남는다() {
+        // **`prettier` 가 괄호를 지운다.** ditto 에서 심볼 58 개가 그것 하나로
+        // 움직였다 — `(a, b) => (cond ? x : y)` → `(a, b) => cond ? x : y`.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_eq!(
+            요약("const f = (a: N, b: N) => (a < b ? -1 : 1);"),
+            요약("const f = (a: N, b: N) => a < b ? -1 : 1;"),
+            "그룹 괄호가 요약에 남았다 — 포매터 한 번에 결박이 켜진다"
+        );
+
+        // **★ 반대 방향.** 평평한 토큰 열에서 괄호만 지우면 서로 다른 코드가
+        // 같아진다 — R-22 가 경고한 충돌 그대로다. 트리 모양이 그것을 막는다.
+        assert_ne!(
+            요약("const g = (a: N, b: N, c: N) => (a + b) * c;"),
+            요약("const g = (a: N, b: N, c: N) => a + b * c;"),
+            "괄호를 지우면서 우선순위까지 지웠다"
+        );
+    }
+
+    #[test]
+    fn 자리_번호는_선언_순서이고_참조_순서가_아니다() {
+        // 참조 순서로 매기면 **본문에서 쓰는 순서만 바꿔도 요약이 바뀐다.**
+        assert!(정규형("function f(a: N, b: N) { return b + a; }").contains("#1 + #0"));
+    }
+
     #[test]
     fn 불변식_a_exact_는_지역_이름을_지운다() {
         // **R-22 의 앞쪽 절반.** 지역 이름을 바꾸는 것은 의미 변경이 아니다 —
@@ -760,6 +886,73 @@ describe('a', () => { test('b', () => { const x = 1; }); });
     }
 
     #[test]
+    fn 객체_리터럴의_키는_지우지_않는다() {
+        // **★ 반대 방향.** F03 §4.2 — *"객체 리터럴 키·구조분해 이름은 지우지 않는다
+        // (외부에서 보이는 형태)"*. 축약 속성의 이름은 **동시에 지역 참조이고 키**다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        let a = "function f() { const alpha = 1; return { alpha }; }";
+        let b = "function f() { const beta = 1; return { beta }; }";
+        assert_eq!(등급(a), IdentityGrade::Exact, "해소되는 심볼인데 exact 가 아니다");
+        assert_ne!(요약(a), 요약(b), "축약 속성의 키를 지웠다 — 밖에서 보이는 형태가 사라졌다");
+    }
+
+    #[test]
+    fn 축약이_아닌_자리의_같은_이름은_여전히_지워진다() {
+        // 보호가 **자리 단위**여야 한다. 이름 단위로 막으면 그 이름의 모든 쓰임이
+        // 살아남고, 그러면 지역 리네임에서 요약이 움직인다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_eq!(
+            요약("function f() { const alpha = 1; return alpha + 1; }"),
+            요약("function f() { const beta = 1; return beta + 1; }")
+        );
+    }
+
+    #[test]
+    fn 후행_쉼표는_요약을_바꾸지_않는다() {
+        // F03 §3.1 — 스타일이다. `prettier` 가 매일 붙였다 뗀다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_eq!(요약("function f(a: N, b: N) {}"), 요약("function f(a: N, b: N,) {}"));
+        assert_eq!(요약("const x = [1, 2];"), 요약("const x = [1, 2,];"));
+        assert_eq!(요약("const o = { a: 1, b: 2 };"), 요약("const o = { a: 1, b: 2, };"));
+    }
+
+    #[test]
+    fn 희소_배열의_자리는_후행_쉼표가_아니다() {
+        // `[a,]` 는 길이 1 이고 `[a,,]` 는 2 다. 마지막 쉼표만 지워야 둘이 갈린다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_ne!(요약("const x = [1,];"), 요약("const x = [1,,];"));
+    }
+
+    #[test]
+    fn 따옴표_종류는_요약을_바꾸지_않는다() {
+        // F03 §3.1 — 스타일이다. **`prettier` 가 가장 자주 바꾸는 것이고**,
+        // 이스케이프까지 풀지 않으면 따옴표를 뒤집는 변형에서 요약이 움직인다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_eq!(요약("const x = 'hi';"), 요약("const x = \"hi\";"));
+        assert_eq!(요약("const x = 'a\"b';"), 요약("const x = \"a\\\"b\";"));
+        assert_eq!(요약("const x = '\\u0041';"), 요약("const x = \"A\";"));
+    }
+
+    #[test]
+    fn 문자열_내용은_여전히_요약을_바꾼다() {
+        // **★ 반대 방향.** 따옴표를 벗기면서 내용까지 뭉개면 그것은 의미 손실이다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_ne!(요약("const x = 'a';"), 요약("const x = 'b';"));
+        // **리터럴과 식별자가 같아지면 안 된다** — 표식이 그것을 막는다.
+        assert_ne!(요약("const x = 'y';"), 요약("const x = y;"));
+        // 이어 붙인 둘과 하나짜리도 갈려야 한다.
+        assert_ne!(요약("const x = ['a', 'b'];"), 요약("const x = ['ab'];"));
+    }
+
+    #[test]
+    fn 템플릿_리터럴은_벗기지_않는다() {
+        // 백틱은 스타일이 아니라 **보간을 여는 문법**이다. 벗기면 뒤에 오는 표현식이
+        // 문자열과 뭉개진다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_ne!(요약("const x = `a${b}c`;"), 요약("const x = 'a';"));
+    }
+
+    #[test]
     fn 심볼인_이름은_지우지_않는다() {
         // `class C { m() {} }` 의 `m` 은 C 안에서 선언되지만 **그 자체가 심볼이다.**
         // 지우면 메서드 이름을 바꿔도 클래스 요약이 안 바뀐다.
@@ -780,6 +973,33 @@ describe('a', () => { test('b', () => { const x = 1; }); });
         let tdz = chain("function outer() { const a = b; const b = 1; return a; }");
         let first = tdz.refs.iter().find(|r| r.name == "b").expect("참조가 없다");
         assert_eq!(first.resolved, RefResolution::BeforeDeclaration, "선언 전 참조가 해소됐다");
+    }
+
+    #[test]
+    fn 파라미터_목록의_주석은_선언이_아니다() {
+        // **tree-sitter 에서 주석은 이름 있는 노드다** — 안 거르면 주석 한 줄이
+        // 통째로 「선언된 이름」이 되고 스코프 표가 오염된다. ditto 에서 32 개였다.
+        let g = 그래프("function f(\n  a: string,\n  // 왜 이 값이 여기 있는가\n  b: string,\n) { return a + b; }");
+        let chain = g.scopes.into_present().expect("스코프");
+        let names: Vec<&str> =
+            chain.scopes.iter().flat_map(|s| &s.bindings).map(|b| b.name.as_str()).collect();
+        assert!(
+            !names.iter().any(|n| n.contains("//")),
+            "주석이 선언으로 잡혔다: {names:?}"
+        );
+        assert!(names.contains(&"a") && names.contains(&"b"), "파라미터가 사라졌다");
+    }
+
+    #[test]
+    fn 중첩된_심볼도_바깥_지역을_지운다() {
+        // **처음에는 「이 심볼 안에서 선언된」 것만 지웠다.** 그러면 중첩 함수가
+        // 바깥 함수의 지역을 이름 그대로 싣고, 바깥을 리네임하면 안쪽이 `stale` 로
+        // 켜진다 — 의미는 안 변했는데. ditto 에서 10 건이 그 형태였다.
+        let 요약 = |s: &str, i: usize| 그래프(s).symbols[i].body;
+        let a = "export function outer() { const out: N[] = []; function walk() { out.push(1); } walk(); }";
+        let b = "export function outer() { const kept: N[] = []; function walk() { kept.push(1); } walk(); }";
+        assert_eq!(그래프(a).symbols[1].name, "walk", "중첩 함수가 심볼이 아니다");
+        assert_eq!(요약(a, 1), 요약(b, 1), "바깥 지역을 리네임했더니 안쪽 심볼이 움직였다");
     }
 
     #[test]

@@ -17,6 +17,53 @@ const TOKEN_SEPARATOR: u8 = 0x1f;
 /// 이름이 `\x1e0` 인 변수가 첫째 지역과 같은 바이트열이 된다.
 const LOCAL_MARKER: u8 = 0x1e;
 
+/// 구문 트리의 마디를 여닫는 표식 — **정규형이 토큰 열이 아니라 트리라는 것.**
+///
+/// # 왜 필요한가 — `prettier` 가 괄호를 지운다
+///
+/// 포매터는 **불필요한 그룹 괄호**를 자유롭게 넣고 뺀다. ditto 실측에서 `prettier`
+/// 한 번에 심볼 **58** 개(파일 40)가 움직였고 **원인이 그것 하나였다** —
+/// `(a, b) => (cond ? x : y)` 를 `(a, b) => cond ? x : y` 로 만든다.
+///
+/// **그런데 평평한 토큰 열에서 괄호만 지우면 서로 다른 코드가 같아진다** —
+/// `(a+b)*c` 와 `a+b*c` 가 한 바이트열이 되고, 그것이 [R-22] 가 경고한 충돌 그
+/// 자체다. 괄호가 지우던 일을 **트리 모양**이 대신해야 지울 수 있다.
+///
+/// 그래서 마디마다 여닫는 표식을 싣고 [`parenthesized_expression`] 은 통째로 벗긴다:
+///
+/// ```text
+/// (a+b)*c  →  ⟨ ⟨a+b⟩ * c ⟩
+/// a+b*c    →  ⟨ a + ⟨b*c⟩ ⟩      ← 다르다
+/// ```
+///
+/// [`parenthesized_expression`]: https://github.com/tree-sitter/tree-sitter-typescript
+/// [R-22]: ../../../docs/plan/00-risks.md#r-22
+const NODE_OPEN: u8 = 0x1c;
+const NODE_CLOSE: u8 = 0x1a;
+
+/// 그룹 괄호만 있는 마디 — **벗긴다.** 위 [`NODE_OPEN`] 의 주석이 그 근거다.
+///
+/// Kotlin 의 같은 자리는 `parenthesized_expression` 으로 이름이 같다.
+/// **언어마다 따로 쓰지 않는다** — 두 언어의 `body_digest` 가 서로 다른 규칙 위에
+/// 서면 같은 리팩터가 한 언어에서만 결박을 `stale` 로 만든다(모듈 주석).
+const TRANSPARENT: [&str; 1] = ["parenthesized_expression"];
+
+/// **자식이 하나뿐이면** 벗기는 마디.
+///
+/// 선행 `|` 를 지우는 것만으로는 부족하다 — `| A | B` 는 트리에서
+/// `union(union(|, A), |, B)` 이고 `A | B` 는 `union(A, |, B)` 다. **마디 하나가
+/// 더 있다.** 표식이 트리 모양을 싣게 된 뒤로는 그 차이가 그대로 요약에 남는다.
+///
+/// 자식이 하나인 합집합·교집합은 **그 자식과 같은 타입이므로** 벗겨도 잃는 것이 없다.
+const TRANSPARENT_IF_SINGLE: [&str; 2] = ["union_type", "intersection_type"];
+
+/// 따옴표를 벗긴 문자열 리터럴의 표식.
+///
+/// **표식 없이 내용만 흘리면 리터럴과 식별자가 같아진다** — `'x'` 와 `x` 가 한
+/// 바이트열이 되고, 그러면 `f('x')` 와 `f(x)` 가 같은 요약을 갖는다. 그것은
+/// 정규화가 아니라 의미 손실이다.
+const STRING_MARKER: u8 = 0x1d;
+
 #[derive(Debug, thiserror::Error)]
 pub enum ExtractError {
     #[error("문법을 붙이지 못했다: {0}")]
@@ -124,6 +171,12 @@ fn normalize_into(
     if kind.contains("comment") {
         return;
     }
+    // **따옴표 종류는 스타일이다** (F03 §3.1). `prettier` 가 가장 자주 바꾸는 것이고,
+    // 안 지우면 포매터 한 번에 문자열을 가진 모든 심볼이 `stale` 로 켜진다.
+    if kind == "string" {
+        normalize_string(out, node, source);
+        return;
+    }
     if node.child_count() == 0 {
         if kind == ";" {
             return;
@@ -139,8 +192,131 @@ fn normalize_into(
         return;
     }
     let mut cursor = node.walk();
+    let kids: Vec<Node<'_>> = node.children(&mut cursor).collect();
+    drop(cursor);
+
+    // **그룹 괄호는 마디째 벗긴다.** 표식도 괄호 토큰도 안 남긴다 — 표식만 지우면
+    // `(` 와 `)` 가 잎으로 그대로 흘러 아무것도 안 지운 것이 된다.
+    let named = kids.iter().filter(|n| n.is_named()).count();
+    let transparent =
+        TRANSPARENT.contains(&kind) || (named == 1 && TRANSPARENT_IF_SINGLE.contains(&kind));
+    if !transparent {
+        out.push(NODE_OPEN);
+    }
+    for (i, child) in kids.iter().enumerate() {
+        if is_trailing_comma(&kids, i) {
+            continue;
+        }
+        // 투명한 마디에서는 **이름 있는 자식만** 본다 — 나머지는 괄호뿐이다.
+        if transparent && !child.is_named() {
+            continue;
+        }
+        if is_leading_separator(&kids, i) {
+            continue;
+        }
+        normalize_into(out, *child, source, erase);
+    }
+    if !transparent {
+        out.push(NODE_CLOSE);
+    }
+}
+
+/// `i` 번째 자식이 **후행 쉼표**인가 — 뒤에 내용도 다른 쉼표도 없는 `,`.
+///
+/// # 왜 「다른 쉼표도 없는」이 붙는가
+///
+/// `[a,]` 는 길이 1 이고 `[a,,]` 는 길이 2 다(희소 배열). 마지막 쉼표만 지우면 둘이
+/// 각각 `[a]` 와 `[a,]` 가 되어 **여전히 갈린다.** 뒤에 쉼표가 있으면 그 쉼표는
+/// 후행이 아니라 **자리를 만드는 것**이다.
+fn is_trailing_comma(kids: &[Node<'_>], i: usize) -> bool {
+    if kids[i].kind() != "," || kids[i].child_count() != 0 {
+        return false;
+    }
+    !kids[i + 1..].iter().any(|n| n.is_named() || n.kind() == ",")
+}
+
+/// `i` 번째 자식이 **선행 구분자**인가 — 맨 앞에 온 `|` · `&`.
+///
+/// # 포매터가 이것을 넣었다 뺐다 한다
+///
+/// `type X = | A | B` 와 `type X = A | B` 는 **같은 타입**이다. `prettier` 는 줄 폭에
+/// 따라 앞의 `|` 를 붙이기도 하고 떼기도 한다 — ditto 실측에서 그것이 마지막 남은
+/// 16 건이었다(파일 12).
+///
+/// **왼쪽 피연산자가 없는 `|` 는 타입 구분자뿐이다** — 비트 연산자는 언제나 왼쪽을
+/// 갖는다. 그래서 「맨 앞」 하나로 가른다.
+fn is_leading_separator(kids: &[Node<'_>], i: usize) -> bool {
+    i == 0 && kids[i].child_count() == 0 && matches!(kids[i].kind(), "|" | "&")
+}
+
+/// 문자열 리터럴 하나 — **따옴표를 벗기고 이스케이프를 푼다.**
+///
+/// `prettier` 는 `"a\"b"` 를 `'a"b'` 로 바꾼다. 따옴표만 통일하고 이스케이프를 안
+/// 풀면 그 변형에서 요약이 움직이고, 그러면 `[f03.2.pass]` ① 의 불변율이 100 이 안 된다.
+///
+/// **템플릿 리터럴은 여기 오지 않는다** — 그 노드는 `template_string` 이고 백틱은
+/// 스타일이 아니라 보간을 여는 문법이다. 뒤에 오는 것이 표현식일 수 있으므로 벗기면
+/// 그것이 의미 손실이다.
+fn normalize_string(out: &mut Vec<u8>, node: Node<'_>, source: &[u8]) {
+    out.push(STRING_MARKER);
+    let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        normalize_into(out, child, source, erase);
+        match child.kind() {
+            "string_fragment" => out.extend_from_slice(&source[child.byte_range()]),
+            "escape_sequence" => decode_escape(out, &source[child.byte_range()]),
+            // 따옴표 토큰 — 버린다. 그것이 이 규칙의 전부다.
+            _ => {}
+        }
+    }
+    out.push(TOKEN_SEPARATOR);
+}
+
+/// `\n` · `\x41` · `\u{1F600}` … 를 그 값으로.
+///
+/// **모르는 이스케이프는 다음 글자를 그대로 낸다** — JavaScript 의 규칙이고
+/// (`\q` 는 `q` 다), 지어내지 않는 쪽이기도 하다.
+fn decode_escape(out: &mut Vec<u8>, raw: &[u8]) {
+    let Some(&b'\\') = raw.first() else {
+        out.extend_from_slice(raw);
+        return;
+    };
+    let rest = &raw[1..];
+    let Some(&head) = rest.first() else { return };
+    match head {
+        b'n' => out.push(b'\n'),
+        b't' => out.push(b'\t'),
+        b'r' => out.push(b'\r'),
+        b'b' => out.push(0x08),
+        b'f' => out.push(0x0c),
+        b'v' => out.push(0x0b),
+        b'0' if rest.len() == 1 => out.push(0),
+        // 줄 이음 — 아무것도 내지 않는다.
+        b'\n' | b'\r' => {}
+        b'x' | b'u' => push_code_point(out, rest),
+        // `\\` · `\'` · `\"` · 그 밖 — 다음 글자 그대로.
+        _ => out.extend_from_slice(rest),
+    }
+}
+
+fn push_code_point(out: &mut Vec<u8>, rest: &[u8]) {
+    let digits = rest[1..]
+        .iter()
+        .copied()
+        .filter(u8::is_ascii_hexdigit)
+        .map(char::from)
+        .collect::<String>();
+    let Ok(n) = u32::from_str_radix(&digits, 16) else {
+        out.extend_from_slice(rest);
+        return;
+    };
+    // **대리 쌍의 반쪽은 문자가 아니다.** 그런 자리는 원문 그대로 둔다 — 지어내면
+    // 서로 다른 리터럴이 같은 바이트열이 될 수 있다.
+    match char::from_u32(n) {
+        Some(c) => {
+            let mut buf = [0u8; 4];
+            out.extend_from_slice(c.encode_utf8(&mut buf).as_bytes());
+        }
+        None => out.extend_from_slice(rest),
     }
 }
 
