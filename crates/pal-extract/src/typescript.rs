@@ -17,7 +17,8 @@ use std::collections::HashMap;
 
 use pal_core::{
     BodyDigest, BoundSymbol, Capable, Containment, ExportSet, ExtractGrade, FileGraph, IdentityGrade,
-    ImportSet, Language, LanguageId, LocalIx, RecoverySite, RefResolution, Span, Symbol, SymbolKind,
+    ImportSet, Language, LanguageId, LocalIx, RecoverySite, RefResolution, ScopeIx, Span, Symbol,
+    SymbolKind,
 };
 use tree_sitter::Node;
 
@@ -505,6 +506,20 @@ fn normalized_of(
         if b.symbol != BoundSymbol::NotASymbol {
             continue;
         }
+        // **모듈 스코프의 이름은 지우지 않는다** — 거기 있는 「심볼 아닌」 바인딩은
+        // 사실상 `import` 뿐이고, **import 이름은 밖에서 온 계약이다.**
+        //
+        // 지우면 `f(readFile)` 과 `f(readdir)` 이 같은 요약을 갖는다 — 호출 대상
+        // 이름을 지우지 않는다는 §3.1 의 줄이 그대로 무너진다. 그리고 import 를
+        // **재정렬하는 것만으로** 자리 번호가 뒤바뀌어 요약이 움직인다:
+        // ditto 의 `7b571cb3`(*"import 정렬 (구조적)"*)이 실제로 그렇게 켰다.
+        //
+        // **①(합성 포매팅)은 이것을 못 잡았다** — 리네임 변형이 `exact` 심볼 **안**의
+        // 바인딩만 건드리므로 import 를 건드릴 일이 없었다. 잡은 것은 ②(실 이력)의
+        // 손 검토다. 두 측정을 가른 F03 §6.2 의 판단이 여기서 값을 냈다.
+        if scope == ScopeIx(0) {
+            continue;
+        }
         if !order.iter().any(|(s, i, _)| *s == scope.0 && *i == binding) {
             order.push((scope.0, binding, b.declared_at));
         }
@@ -945,11 +960,23 @@ describe('a', () => { test('b', () => { const x = 1; }); });
     }
 
     #[test]
-    fn 템플릿_리터럴은_벗기지_않는다() {
-        // 백틱은 스타일이 아니라 **보간을 여는 문법**이다. 벗기면 뒤에 오는 표현식이
+    fn 보간이_있는_템플릿은_벗기지_않는다() {
+        // 백틱은 그 자리에서 **보간을 여는 문법**이다. 벗기면 뒤에 오는 표현식이
         // 문자열과 뭉개진다.
         let 요약 = |s: &str| 그래프(s).symbols[0].body;
         assert_ne!(요약("const x = `a${b}c`;"), 요약("const x = 'a';"));
+        assert_ne!(요약("const x = `a${b}c`;"), 요약("const x = `a${d}c`;"));
+    }
+
+    #[test]
+    fn 보간이_없는_템플릿은_문자열과_같다() {
+        // `` `x` `` 와 `'x'` 는 값이 같고 린터가 둘을 서로 바꾼다.
+        // **ditto 의 `0d0f4aab` 이 실제로 그렇게 결박을 켰다** — ①(합성)이 아니라
+        // ②(실 이력)의 손 검토가 잡은 자리다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_eq!(요약("const x = `hi`;"), 요약("const x = 'hi';"));
+        assert_eq!(요약("const x = `hi`;"), 요약("const x = \"hi\";"));
+        assert_ne!(요약("const x = `hi`;"), 요약("const x = 'bye';"));
     }
 
     #[test]
@@ -973,6 +1000,22 @@ describe('a', () => { test('b', () => { const x = 1; }); });
         let tdz = chain("function outer() { const a = b; const b = 1; return a; }");
         let first = tdz.refs.iter().find(|r| r.name == "b").expect("참조가 없다");
         assert_eq!(first.resolved, RefResolution::BeforeDeclaration, "선언 전 참조가 해소됐다");
+    }
+
+    #[test]
+    fn import_이름은_지우지_않는다() {
+        // **★ 반대 방향.** import 는 밖에서 온 계약이다 — 지우면 `f(readFile)` 과
+        // `f(readdir)` 이 같은 요약을 갖는다. 그리고 **재정렬만으로** 요약이 움직인다.
+        //
+        // ditto 의 `7b571cb3`(*"import 정렬 (구조적)"*)이 실제로 그것을 켰고,
+        // **①(합성 포매팅)은 그것을 못 잡았다** — ②(실 이력)의 손 검토가 잡았다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        let a = "import { readFile, readdir } from 'fs';\nexport function f() { return readFile; }\n";
+        let b = "import { readdir, readFile } from 'fs';\nexport function f() { return readFile; }\n";
+        assert_eq!(요약(a), 요약(b), "import 를 재정렬했는데 요약이 움직였다");
+
+        let c = "import { readFile, readdir } from 'fs';\nexport function f() { return readdir; }\n";
+        assert_ne!(요약(a), 요약(c), "다른 import 를 가리키는데 요약이 같다");
     }
 
     #[test]

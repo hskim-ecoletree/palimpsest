@@ -173,7 +173,7 @@ fn normalize_into(
     }
     // **따옴표 종류는 스타일이다** (F03 §3.1). `prettier` 가 가장 자주 바꾸는 것이고,
     // 안 지우면 포매터 한 번에 문자열을 가진 모든 심볼이 `stale` 로 켜진다.
-    if kind == "string" {
+    if kind == "string" || is_plain_template(node) {
         normalize_string(out, node, source);
         return;
     }
@@ -254,9 +254,27 @@ fn is_leading_separator(kids: &[Node<'_>], i: usize) -> bool {
 /// `prettier` 는 `"a\"b"` 를 `'a"b'` 로 바꾼다. 따옴표만 통일하고 이스케이프를 안
 /// 풀면 그 변형에서 요약이 움직이고, 그러면 `[f03.2.pass]` ① 의 불변율이 100 이 안 된다.
 ///
-/// **템플릿 리터럴은 여기 오지 않는다** — 그 노드는 `template_string` 이고 백틱은
-/// 스타일이 아니라 보간을 여는 문법이다. 뒤에 오는 것이 표현식일 수 있으므로 벗기면
-/// 그것이 의미 손실이다.
+/// **보간이 있는 템플릿은 여기 오지 않는다** — 백틱이 스타일이 아니라 표현식을 여는
+/// 문법이기 때문이다. 보간이 **없는** 템플릿은 문자열과 같은 값이고, 실제로 린터가
+/// 둘을 서로 바꾼다([`is_plain_template`]).
+/// 보간이 **없는** 템플릿 리터럴인가 — 그렇다면 문자열과 같은 값이다.
+///
+/// # 린터가 둘을 서로 바꾼다
+///
+/// `` `x` `` 와 `'x'` 는 값이 같고, biome·eslint 의 `prefer-template` / 그 반대 규칙이
+/// 코드베이스마다 한쪽으로 몰아 넣는다. 갈라 두면 그 정리 커밋 하나에 결박이 켜진다.
+///
+/// **ditto 의 `0d0f4aab`(*"biome lint:fix template literals"*)이 실제로 그렇게 켰다** —
+/// ①(합성 포매팅)이 아니라 **②(실 이력)의 손 검토가 잡은 자리다.**
+fn is_plain_template(node: Node<'_>) -> bool {
+    if node.kind() != "template_string" {
+        return false;
+    }
+    let mut cursor = node.walk();
+    let plain = !node.children(&mut cursor).any(|c| c.kind() == "template_substitution");
+    plain
+}
+
 fn normalize_string(out: &mut Vec<u8>, node: Node<'_>, source: &[u8]) {
     out.push(STRING_MARKER);
     let mut cursor = node.walk();
