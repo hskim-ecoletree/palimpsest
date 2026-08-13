@@ -92,6 +92,9 @@ pub fn compute(
     let cache_root = cache_dir.unwrap_or_else(|| repo_path.join(".palimpsest/cache"));
     let cache = BlobCache::open(cache_root).context("캐시를 열지 못했다")?;
     let version = pal_extract::version();
+    // **이 빌드가 무슨 능력을 만드는가** — 키의 다섯째 성분(F04 · ADR-0004).
+    // 한 번 재고 파일마다 다시 재지 않는다.
+    let capabilities = pal_extract::capability_axis();
 
     let mut excluded: BTreeMap<RepoPath, pal_core::ExclusionRuleId> = BTreeMap::new();
     let mut files = repo.list_tree(&tree).context("트리를 읽지 못했다")?;
@@ -139,7 +142,7 @@ pub fn compute(
                 continue;
             }
             let declared = attributes.of(path).language;
-            let key = CacheKey::new(*blob, version, path, declared.as_deref());
+            let key = CacheKey::new(*blob, version, path, declared.as_deref(), capabilities);
             if let Some(hit) = cache.get::<FileOutcome>(&key)? {
                 stats.hit();
                 outcomes.push(Some(hit));
@@ -171,7 +174,7 @@ pub fn compute(
         for ((i, source, declared), outcome) in pending.into_iter().zip(fresh) {
             let outcome = outcome?;
             let (path, blob) = &chunk[i];
-            let key = CacheKey::new(*blob, version, path, declared.as_deref());
+            let key = CacheKey::new(*blob, version, path, declared.as_deref(), capabilities);
             cache.put(&key, &outcome)?;
             drop(source); // 소스도 트리와 함께 버린다 — 덩어리 밖으로 들고 가지 않는다
             outcomes[i] = Some(outcome);
@@ -185,7 +188,7 @@ pub fn compute(
                 entries.push(LedgerEntry { path: path.clone(), state: FileState::Excluded { rule } });
                 continue;
             };
-            symbols.extend(nodes_of(&repo_id, path, &outcome.symbols, &outcome.contains));
+            symbols.extend(nodes_of(&repo_id, path, outcome.graph.symbols(), outcome.graph.contains()));
             entries.push(LedgerEntry { path: path.clone(), state: outcome.state });
         }
     }

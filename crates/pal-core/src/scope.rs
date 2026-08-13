@@ -26,16 +26,16 @@
 //! 이 이름이 선언되어 있다"* 는 언어의 사실이다. 영어 낱말이 겹칠 뿐 다른 것이라 접두어로
 //! 갈라 둔다.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::file_graph::LocalIx;
 
 /// [`ScopeChain::scopes`] 안의 자리.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ScopeIx(pub u32);
 
 /// 스코프가 무엇으로 열렸나 — **무엇을 담을 수 있는지가 여기서 갈린다.**
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ScopeKind {
     /// 파일 하나 = 모듈 하나. 최상위 선언이 여기 산다.
@@ -55,7 +55,7 @@ pub enum ScopeKind {
 /// `interface Foo` 와 `const Foo` 는 공존한다(F02 §3.5). 한 공간으로 뭉개면 둘 중 하나가
 /// 다른 하나를 가리고, 그러면 `Foo` 를 타입 자리에서 쓴 참조가 **값 선언으로 해소된다.**
 /// 틀린 해소는 틀린 정규화이고 틀린 정규화는 **서로 다른 코드가 같은 digest** 다(R-22).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Namespace {
     /// 값 자리 — 함수 · 클래스 · enum · 변수 · 파라미터.
@@ -67,7 +67,7 @@ pub enum Namespace {
 /// 이 스코프에 선언된 이름 하나.
 ///
 /// **[`crate::Binding`](결박)이 아니다** — 모듈 주석.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScopeBinding {
     pub name: String,
     pub namespace: Namespace,
@@ -88,7 +88,7 @@ pub struct ScopeBinding {
 ///
 /// `Option` 을 쓰지 않는다 — stack §5.4 는 직렬화되는 도메인 값에서 `Option` 을 금한다.
 /// *"심볼이 아니다"* 는 조회 실패가 아니라 **사실**이다.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BoundSymbol {
     /// 이 이름은 심볼이다 — [`crate::FileGraph::symbols`] 의 자리.
@@ -98,7 +98,7 @@ pub enum BoundSymbol {
 }
 
 /// 스코프 하나.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Scope {
     pub kind: ScopeKind,
     pub parent: ScopeParent,
@@ -111,7 +111,7 @@ pub struct Scope {
 }
 
 /// 스코프의 바깥.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ScopeParent {
     /// 모듈 스코프. 이 위는 파일 밖이다.
@@ -120,7 +120,7 @@ pub enum ScopeParent {
 }
 
 /// 파일 안에서 일어난 이름 참조 하나 — **해소 결과와 함께.**
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LocalRef {
     pub name: String,
     pub namespace: Namespace,
@@ -133,7 +133,7 @@ pub struct LocalRef {
 ///
 /// **셋을 가르는 것이 이 타입의 전부다.** 뭉개면 *"파일 밖의 이름"*(정상)과
 /// *"선언 전 참조"*(TDZ)가 같은 출력이 되고, 그러면 해소율이 무엇을 세는지 알 수 없다.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RefResolution {
     /// 이 파일 안의 선언으로 해소됐다.
@@ -153,7 +153,7 @@ pub enum RefResolution {
 ///
 /// **`scopes[0]` 이 모듈 스코프다.** 비어 있는 체인은 만들지 않는다 — 파일이 있으면
 /// 모듈 스코프는 있다.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScopeChain {
     pub scopes: Vec<Scope>,
     /// 이 파일 안에서 일어난 이름 참조 — **소스 순서.**

@@ -6,21 +6,25 @@
 
 #![forbid(unsafe_code)]
 
+mod cached;
 mod classify;
 mod extractor;
 mod kotlin;
 mod parse;
 mod recognize;
 mod scopes;
+mod shell;
 mod typescript;
 
 use pal_core::{Capable, ExtractorVersion, Language, Symbol};
 
-pub use classify::{FileOutcome, OVERSIZE_BYTES, classify, grade_of};
+pub use cached::{CachedGraph, RestoreError, ShellMismatch, Slot};
+pub use classify::{Extraction, FileOutcome, OVERSIZE_BYTES, classify, grade_of};
 pub use extractor::{LanguageExtractor, extractor_for};
 pub use kotlin::KotlinExtractor;
 pub use parse::ExtractError;
 pub use recognize::{Recognition, recognize};
+pub use shell::{FIRST_CLASS, GraphShell, capability_axis, shell_of};
 pub use typescript::TypeScriptExtractor;
 
 /// 판정용 문법의 고정 커밋 — `corpus/criteria.toml` `[g50]`.

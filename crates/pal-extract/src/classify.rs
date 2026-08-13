@@ -20,6 +20,7 @@ use pal_core::{
     GeneratedEvidence, LanguageId, RepoPath, Symbol, UnsupportedReason,
 };
 
+use crate::cached::CachedGraph;
 use crate::extractor::extractor_for;
 use crate::recognize::{Recognition, recognize};
 use crate::ExtractError;
@@ -42,27 +43,59 @@ const MARKER_SCAN_BYTES: usize = 2048;
 
 /// 분류 결과. **1층 캐시가 담는 값이 이것이다** — 그래서 직렬화된다.
 ///
-/// # 왜 포함 관계가 여기 실리는가 (F03-1 · #51)
+/// # 그래프를 통째로 싣는다 (F04 · #7)
 ///
-/// `symbol_id` 의 성분 다섯 중 하나가 **컨테이너 체인**이고(F03 §3.2), 그 체인은
-/// [`pal_core::FileGraph::contains`] 에서만 나온다. 이 값이 여기 없으면 좌표를 만드는
-/// 쪽(`pal-cli::ledger::nodes_of`)이 **캐시 적중일 때 체인을 잃는다** — 그러면 같은
-/// 커밋이 캐시 상태에 따라 다른 좌표를 낸다.
+/// 옛 형태는 `symbols` 와 `contains` 만 담았고, F02 의 게이트 셋이 그 자리를 **F04 로
+/// 넘겼다** — *"회복 자리가 안 실린다"*(F02-2) · *"스코프 체인이 안 실린다"*(F02-3) ·
+/// *"`FileGraph` 에 `Deserialize` 가 없다"*(F02-1). **셋이 한 문제였고**, 능력 축을
+/// 캐시 키로 보내면서(`shell.rs`) 한꺼번에 풀린다.
 ///
-/// **`FileGraph` 를 통째로 싣지 않는다.** 스코프 체인과 회복 자리는 값이 크고 좌표를
-/// 만드는 데 필요하지 않다 — 그 자리는 F02 지붕이 **F04** 로 배정했고 여기서 갚지
-/// 않는다. 필요한 것만 싣는 것이 이 값의 규율이다.
+/// 그래서 이제 **캐시 적중은 재추출과 같다** — 그것이 재구축 등가성이 뜻을 갖는 조건이다.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct FileOutcome {
     pub state: FileState,
-    pub symbols: Vec<Symbol>,
-    /// 포함 관계(C1) — [`symbols`] 안의 자리끼리다.
+    pub graph: Extraction,
+}
+
+/// 이 파일에 그래프가 있는가.
+///
+/// **`Capable` 이 아니다.** 이진·생성물·제외·미인식·미지원은 추출의 **대상이 아니고**,
+/// 강등된 파일은 산출을 **버린 것**이다(그 이유는 `state` 에 실린다). 둘 다 능력의
+/// 부재가 아니다 — 안 만든 능력을 적는 자리는 [`Capable`] 이고 그것은 그래프 **안**에
+/// 있다([ADR-0005] 의 *"부재는 종류를 싣는다"*).
+///
+/// [`Capable`]: pal_core::Capable
+/// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Extraction {
+    /// 그래프가 없다 — 추출의 대상이 아니었거나, 강등되어 산출을 버렸다.
+    NoGraph,
+    /// **`Box` 인 이유**: 그래프가 크고 `NoGraph` 가 그 크기를 함께 지면 이진 파일
+    /// 하나가 그래프만 한 자리를 든다(`clippy::large_enum_variant`).
+    Graph(Box<CachedGraph>),
+}
+
+impl Extraction {
+    /// 이 파일이 정의하는 것 — **없으면 빈 조각이고 그것이 정확한 값이다.**
     ///
-    /// 최상위만 보는 추출기(Kotlin)에서는 비고 **그것이 정확한 값이다** — 담긴 심볼을
-    /// 아예 안 뽑았으므로 담는 관계도 없다.
-    ///
-    /// [`symbols`]: FileOutcome::symbols
-    pub contains: Vec<Containment>,
+    /// 그래프가 없는 파일에 심볼이 없는 것은 *"안 만든 능력"* 이 아니라 사실이다.
+    #[must_use]
+    pub fn symbols(&self) -> &[Symbol] {
+        match self {
+            Self::NoGraph => &[],
+            Self::Graph(g) => &g.symbols,
+        }
+    }
+
+    /// 포함 관계(C1) — [`symbols`](Self::symbols) 안의 자리끼리다.
+    #[must_use]
+    pub fn contains(&self) -> &[Containment] {
+        match self {
+            Self::NoGraph => &[],
+            Self::Graph(g) => &g.contains,
+        }
+    }
 }
 
 /// 파일 하나를 분류한다.
@@ -77,7 +110,7 @@ pub fn classify(
     oversize_bytes: usize,
     declared: Option<&str>,
 ) -> Result<FileOutcome, ExtractError> {
-    let plain = |state| Ok(FileOutcome { state, symbols: Vec::new(), contains: Vec::new() });
+    let plain = |state| Ok(FileOutcome { state, graph: Extraction::NoGraph });
 
     // ① 크기
     if source.len() > oversize_bytes {
@@ -119,15 +152,11 @@ pub fn classify(
         });
     };
 
-    let mut graph = extractor.extract(source)?;
+    let graph = extractor.extract(source)?;
     let grade = graph.grade;
     if graph.is_whole() {
         let state = FileState::Parsed { language: id, grade };
-        return Ok(FileOutcome {
-            state,
-            symbols: std::mem::take(&mut graph.symbols),
-            contains: graph.contains,
-        });
+        return Ok(FileOutcome { state, graph: Extraction::Graph(Box::new(CachedGraph::of(graph))) });
     }
 
     // ⑥ 임계 강등 — **`partial` 이 문법 부재를 가리지 않게** (F02 §3.4 · `[f02.2.pass]` ④)
@@ -151,7 +180,7 @@ pub fn classify(
     }
 
     let state = FileState::Partial { language: id, grade, recovery_sites: graph.recovery_count() };
-    Ok(FileOutcome { state, symbols: std::mem::take(&mut graph.symbols), contains: graph.contains })
+    Ok(FileOutcome { state, graph: Extraction::Graph(Box::new(CachedGraph::of(graph))) })
 }
 
 /// 이 빌드가 그 언어에서 **실제로 도달한** 등급.
@@ -283,7 +312,7 @@ mod tests {
         };
         assert!(error_ratio_percent > pal_core::PROVISIONAL_ERROR_RATIO_PERCENT);
         assert!(recovery_sites > 0, "강등의 근거가 산출에 안 남았다");
-        assert!(out.symbols.is_empty(), "못 읽었다고 적고 그 파일의 심볼을 실었다");
+        assert!(out.graph.symbols().is_empty(), "못 읽었다고 적고 그 파일의 심볼을 실었다");
     }
 
     #[test]
@@ -305,7 +334,7 @@ mod tests {
 
     fn 요약(src: &str) -> pal_core::BodyDigest {
         let out = classify(&RepoPath::new("A.kt"), src.as_bytes(), OVERSIZE_BYTES, None).unwrap();
-        out.symbols[0].body
+        out.graph.symbols()[0].body
     }
 
     #[test]
@@ -353,8 +382,8 @@ mod tests {
         // 체인을 잃고, 그러면 같은 커밋이 캐시 상태에 따라 다른 좌표를 낸다(#51).
         let out =
             classify(&RepoPath::new("a.ts"), b"class C { m() {} }", OVERSIZE_BYTES, None).unwrap();
-        assert_eq!(out.symbols.len(), 2, "클래스와 메서드가 나와야 한다");
-        assert_eq!(out.contains.len(), 1, "메서드가 클래스에 담긴 관계가 안 실렸다");
+        assert_eq!(out.graph.symbols().len(), 2, "클래스와 메서드가 나와야 한다");
+        assert_eq!(out.graph.contains().len(), 1, "메서드가 클래스에 담긴 관계가 안 실렸다");
     }
 
     #[test]
@@ -362,7 +391,7 @@ mod tests {
         // **빈 것이 정확한 값이다** — 담긴 심볼을 아예 안 뽑았으므로 담는 관계도 없다.
         let out = classify(&RepoPath::new("A.kt"), b"class A\nfun b() {}\n", OVERSIZE_BYTES, None)
             .unwrap();
-        assert!(out.contains.is_empty());
+        assert!(out.graph.contains().is_empty());
     }
 
     #[test]
@@ -370,14 +399,14 @@ mod tests {
         // 심볼을 버리는데 관계를 남기면 그 관계가 **없는 자리**를 가리킨다.
         let out = classify(&RepoPath::new("A.kt"), b"@@@ !!! @@@ ??? &&&", OVERSIZE_BYTES, None)
             .unwrap();
-        assert!(out.symbols.is_empty());
-        assert!(out.contains.is_empty(), "심볼은 버리고 관계는 남겼다 — 자리가 어긋난다");
+        assert!(out.graph.symbols().is_empty());
+        assert!(out.graph.contains().is_empty(), "심볼은 버리고 관계는 남겼다 — 자리가 어긋난다");
     }
 
     #[test]
     fn 심볼은_분류와_함께_나온다() {
         // 1층 캐시가 담을 값이다 — 분류만 캐시하면 두 번째 실행에서 심볼이 사라진다.
         let out = classify(&RepoPath::new("A.kt"), b"class A\nclass B\n", OVERSIZE_BYTES, None).unwrap();
-        assert_eq!(out.symbols.len(), 2);
+        assert_eq!(out.graph.symbols().len(), 2);
     }
 }

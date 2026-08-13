@@ -71,7 +71,7 @@ pub struct Containment {
 /// **파일 하나만 보고 알 수 있는 데까지다.** `export * from '…'` 이 무슨 이름을
 /// 내보내는지는 그 모듈을 읽어야 알고, 그것은 F07(스티칭)이다. 그래서 별 재수출은
 /// **이름이 아니라 대상 모듈로** 남는다 — 모르는 것을 안다고 하지 않는다.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ExportSet {
     /// 이름으로 내보내는 것. **정렬·중복 제거** — 소스 순서에 의존하지 않는 집합이다.
     pub names: Vec<String>,
@@ -108,7 +108,7 @@ impl ExportSet {
 /// 이 파일이 참조하는 외부 모듈.
 ///
 /// **지정자만이다. 그것이 어느 파일인지는 이 조각이 답하지 않는다**(F07).
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportSet {
     /// 모듈 지정자. 정렬·중복 제거. 동적 `import()` 는 **리터럴 인자만** 담는다.
     pub modules: Vec<String>,
@@ -119,7 +119,7 @@ pub struct ImportSet {
 /// 둘을 가르지 않으면 `MISSING` 이 구별되지 않는다 — 그것은 **너비가 0 인 자리**이고,
 /// span 만 보면 *"아무 데도 아닌 곳"* 과 같은 값이 된다. 사용자가 보아야 하는 것은
 /// *"여기에 무엇이 빠졌다"* 이지 빈 범위가 아니다.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RecoveryKind {
     /// `ERROR` — 문법에 맞지 않는 토큰이 있었다. 그 범위를 삼킨다.
@@ -139,7 +139,7 @@ pub enum RecoveryKind {
 ///
 /// **개수만으로는 사용자가 어디를 못 읽었는지 모른다.** 그것이 *"공백이 순위를 갖는다"*
 /// (DESIGN §5.3)가 성립하는 조건이다.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RecoverySite {
     pub kind: RecoveryKind,
     pub span: Span,

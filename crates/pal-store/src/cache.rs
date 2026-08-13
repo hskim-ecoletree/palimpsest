@@ -6,18 +6,23 @@
 //! 그대로 값을 내며, **부분 손상이 그 파일 하나로 격리된다.** 2층 인덱스는 다른 파일이고
 //! 다른 기능(F05)의 것이다.
 //!
-//! # 키가 커밋이 아니라 blob 인 것이 이 설계의 전부다
+//! # 키가 커밋이 아닌 것이 이 설계의 전부다
 //!
-//! `(blob 이름, 추출기 버전)` 이다. 커밋이 키에 없으므로 **워킹트리 파일도 같은 캐시를
-//! 쓴다** — [`pal_core::TreeRef::Worktree`] 가 공짜로 성립하는 이유가 이것이다(R-06).
-//! 3년 전 커밋으로 체크아웃해도 내용이 같은 파일은 이미 캐시에 있다.
+//! **성분은 다섯이고 커밋은 그중에 없다** — `(blob 이름, 추출기 버전, 경로, 선언된
+//! 언어, 능력 축)`. 커밋이 키에 없으므로 **워킹트리 파일도 같은 캐시를 쓴다** —
+//! [`pal_core::TreeRef::Worktree`] 가 공짜로 성립하는 이유가 이것이다(R-06).
+//! 3년 전 커밋으로 체크아웃해도 내용이 같고 **경로가 같은** 파일은 이미 캐시에 있다.
 //!
 //! 추출기 버전이 키에 들어가는 이유는 stack §5.1 이다 — 문법이나 추출기 코드가 바뀌면
 //! **1층 전량이 무효화되어야** 하고, 키에 있으면 그것이 삭제 없이 일어난다.
+//! 나머지 셋의 근거는 [`CacheKey::new`] 에 있고, 규칙 하나는 [ADR-0004] 다 —
+//! **산출을 정하는 입력을 전부 담는다.**
+//!
+//! [ADR-0004]: ../../../docs/adr/0004-cache-key-covers-every-input-that-decides-the-output.md
 //!
 //! # 이 크레이트는 의도 저장소에 닿지 않는다
 //!
-//! 지우는 API 가 여기 살기 때문이다(R-21). 아래에 그런 API 는 아직 없지만 — `prune` 은
+//! 지우는 API 가 여기 살기 때문이다(R-21). 아직 그런 API 는 없지만 — `prune` 은
 //! F04 다 — 경계는 내용보다 먼저 선다.
 
 use std::fs;
@@ -38,15 +43,20 @@ pub enum CacheError {
     Decode(String),
 }
 
-/// 1층 캐시의 키 — **`(blob 이름, 추출기 버전)`**.
+/// 1층 캐시의 키 — **`(blob 이름, 추출기 버전, 경로, 선언된 언어, 능력 축)`**.
 ///
-/// 값은 blake3 32바이트의 16진이다. blob 이름을 그대로 쓰지 않는 이유는 추출기 버전을
+/// 값은 blake3 32바이트의 16진이다. blob 이름을 그대로 쓰지 않는 이유는 나머지 넷을
 /// 섞어야 하기 때문이고, 섞은 결과가 다시 콘텐츠 주소이므로 디렉터리 분산이 고르다.
+///
+/// **성분이 다섯인 근거는 [ADR-0004] 하나다** — *"캐시 키는 내용이 아니라 산출을 정하는
+/// 입력 전부를 담는다."* 성분이 왜 그것들인지는 [`CacheKey::new`] 에 하나씩 적혀 있다.
+///
+/// [ADR-0004]: ../../../docs/adr/0004-cache-key-covers-every-input-that-decides-the-output.md
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CacheKey(String);
 
 impl CacheKey {
-    /// 캐시 키 — `(blob, 추출기 버전, **분류 맥락**)`.
+    /// 캐시 키 — `(blob, 추출기 버전, **분류 맥락**, **능력 축**)`.
     ///
     /// # 왜 blob 만으로는 안 되는가 (2026-08-13 · F01)
     ///
@@ -62,16 +72,36 @@ impl CacheKey {
     /// 그래서 경로와 선언된 언어를 키에 넣는다. **값을 치르는 자리**: 파일을 옮기면
     /// 내용이 같아도 미스가 난다. 대장이 거짓말하지 않는 값으로 싼 편이다.
     ///
+    /// # 왜 **능력 축**이 다섯째인가 (2026-08-13 · F04)
+    ///
+    /// 캐시가 담는 것이 그래프 전부가 되면서 [`pal_core::Capable`] 자리 넷이 함께
+    /// 실린다. **능력은 빌드의 사실이지 저장된 사실이 아니다** — 안 만든 능력을 되읽으면
+    /// *"아무것도 없음"* 으로 위장하고, 그것이 F22-3 이 고친 병이다.
+    ///
+    /// 그것을 막는 방법이 둘이었다: `Capable` 을 직렬화 가능하게 만들거나, **능력을
+    /// 키의 성분으로 보내거나.** 후자를 골랐다 — [ADR-0004] 가 요구하는 것이
+    /// *"산출을 정하는 입력 전부"* 이고 **이 빌드가 무슨 능력을 만드는가는 그 입력이기
+    /// 때문**이다. 축은 `pal_extract::capability_axis()` 가 **빌드에서 재현**한다
+    /// (손으로 적은 목록이 아니다 — [ADR-0004] 가 경고한 자리다).
+    ///
+    /// **문자열을 그대로 넣는다.** 미리 요약하면 성분이 하나 줄지 않고 읽을 수 없어질
+    /// 뿐이다 — 어차피 여기서 다시 요약된다.
+    ///
     /// [`FileOutcome`]: https://docs.rs/
+    /// [ADR-0004]: ../../../docs/adr/0004-cache-key-covers-every-input-that-decides-the-output.md
     #[must_use]
     pub fn new(
         blob: ObjectName,
         version: ExtractorVersion,
         path: &RepoPath,
         declared: Option<&str>,
+        capabilities: &str,
     ) -> Self {
         let mut hasher = blake3::Hasher::new();
-        hasher.update(b"pal2\0"); // 층 표시 + 키 형태 버전. **형태가 바뀌면 올린다**
+        // 층 표시 + 키 형태 버전. **형태가 바뀌면 올린다** — 지금이 그 자리다
+        // (성분이 넷에서 다섯으로 늘었다). 값이 바뀌는 것과는 다른 사건이고,
+        // 그 구별을 [ADR-0004] 가 정했다.
+        hasher.update(b"pal3\0");
         hasher.update(blob.as_bytes());
         hasher.update(b"\0");
         hasher.update(version.grammar.as_bytes());
@@ -85,6 +115,9 @@ impl CacheKey {
         let declared = declared.unwrap_or("").as_bytes();
         hasher.update(&(declared.len() as u64).to_le_bytes());
         hasher.update(declared);
+        let capabilities = capabilities.as_bytes();
+        hasher.update(&(capabilities.len() as u64).to_le_bytes());
+        hasher.update(capabilities);
         Self(hasher.finalize().to_hex().to_string())
     }
 
@@ -272,8 +305,11 @@ mod tests {
 
     const V: ExtractorVersion = ExtractorVersion { grammar: "g", extractor: "e" };
 
+    /// 시험용 능력 축 — 실물은 `pal_extract::capability_axis()` 가 낸다.
+    const 능력: &str = "Kotlin|exports=not-built:F02/kotlin-exports";
+
     fn 키(blob: ObjectName, v: ExtractorVersion) -> CacheKey {
-        CacheKey::new(blob, v, &RepoPath::new("a/b.kt"), None)
+        CacheKey::new(blob, v, &RepoPath::new("a/b.kt"), None, 능력)
     }
 
     #[test]
@@ -307,8 +343,8 @@ mod tests {
         // **빈 파일이 이 자리다.** 빈 `.kt` 와 `.gitkeep` 은 같은 blob 이고, 키가
         // blob 뿐이면 먼저 온 쪽의 **분류**가 뒤에 온 쪽에 그대로 나간다.
         let blob = ObjectName::from_bytes([5; 20]);
-        let a = CacheKey::new(blob, V, &RepoPath::new("a/x.kt"), None);
-        let b = CacheKey::new(blob, V, &RepoPath::new("a/.gitkeep"), None);
+        let a = CacheKey::new(blob, V, &RepoPath::new("a/x.kt"), None, 능력);
+        let b = CacheKey::new(blob, V, &RepoPath::new("a/.gitkeep"), None, 능력);
         assert_ne!(a, b);
     }
 
@@ -317,8 +353,19 @@ mod tests {
         // `.gitattributes` 의 `linguist-language` 가 바뀌면 분류가 바뀐다.
         let blob = ObjectName::from_bytes([6; 20]);
         let path = RepoPath::new("a/x.txt");
-        let a = CacheKey::new(blob, V, &path, None);
-        let b = CacheKey::new(blob, V, &path, Some("Kotlin"));
+        let a = CacheKey::new(blob, V, &path, None, 능력);
+        let b = CacheKey::new(blob, V, &path, Some("Kotlin"), 능력);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn 능력_축이_바뀌면_다른_키다() {
+        // **이것이 없으면 스코프 체인을 만들기 시작한 빌드가 옛 항목을 그대로 읽는다** —
+        // 안 만든 능력이 빈 값으로 위장하는 F22-3 의 병이 캐시를 통해 돌아온다.
+        let blob = ObjectName::from_bytes([7; 20]);
+        let path = RepoPath::new("a/x.ts");
+        let a = CacheKey::new(blob, V, &path, None, "TypeScript|scopes=built");
+        let b = CacheKey::new(blob, V, &path, None, "TypeScript|scopes=not-built:F02/x");
         assert_ne!(a, b);
     }
 
