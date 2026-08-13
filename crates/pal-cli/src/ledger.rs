@@ -21,7 +21,7 @@ use pal_core::{
 };
 use pal_extract::{FileOutcome, OVERSIZE_BYTES};
 use pal_git::{GitAccess, GixRepo, WorktreeState};
-use pal_store::{BlobCache, CacheKey, CacheStats};
+use pal_store::{BlobCache, CacheKey, CacheStats, ExtractCache as _};
 use rayon::prelude::*;
 use serde::Serialize;
 

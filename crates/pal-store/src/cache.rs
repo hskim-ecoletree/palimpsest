@@ -94,6 +94,44 @@ impl CacheKey {
     }
 }
 
+/// 1층 캐시의 **포트** — stack §5.2 · F04 §2.
+///
+/// # 왜 구체 타입 하나로 두지 않는가
+///
+/// F04 §5 가 `rkyv` 를 기각하면서 *"postcard 로 시작하고 병목이 확인되면 교체 —
+/// **트레잇 뒤라 교체 비용이 낮다**"* 라고 적었다. **그 트레잇이 없으면 그 문장이
+/// 근거가 아니라 소원이다.** 교체 자리를 만드는 것이 여기까지이고, 바꾸는 것은
+/// 여기가 아니다(`[f04.does_not_prove]`).
+///
+/// # 문서의 시그니처와 다른 두 자리
+///
+///   · **값이 `FileGraph` 로 고정되지 않고 제네릭이다.** 실제로 실리는 것은
+///     [`pal_extract::FileOutcome`] 이고(분류 결과까지 담아야 한다 — [ADR-0004]),
+///     이 크레이트는 `pal-extract` 에 의존하지 않는다(의존 방향 · stack §4.1).
+///     그래서 값의 타입을 아는 것은 **부르는 쪽**이다
+///   · **오류 타입이 [`CacheError`] 로 고정이다.** 저장 기술이 바뀌어도 부르는 쪽이
+///     보는 것은 *"읽지 못했다 · 풀지 못했다"* 셋이고, 그것을 연관 타입으로 열면
+///     [R-15](저장 기술이 밖으로 새지 않는다)가 트레잇 자신에서 깨진다
+///
+/// 제네릭 메서드가 있어 `dyn` 이 되지 않는다. **되지 않아야 한다** — 1층은 실행
+/// 중에 갈아 끼우는 것이 아니라 빌드에서 고르는 것이다.
+///
+/// [ADR-0004]: ../../../docs/adr/0004-cache-key-covers-every-input-that-decides-the-output.md
+/// [`pal_extract::FileOutcome`]: https://docs.rs/
+pub trait ExtractCache: Send + Sync {
+    /// 있으면 값을, 없으면 `None`.
+    ///
+    /// # Errors
+    /// 파일은 있는데 읽지 못하거나 풀지 못하면.
+    fn get<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Option<T>, CacheError>;
+
+    /// 값을 넣는다. **원자적이다.**
+    ///
+    /// # Errors
+    /// 직렬화·쓰기·이동 중 하나가 실패하면.
+    fn put<T: Serialize>(&self, key: &CacheKey, value: &T) -> Result<(), CacheError>;
+}
+
 /// 콘텐츠 주소 캐시.
 pub struct BlobCache {
     root: PathBuf,
@@ -119,6 +157,13 @@ impl BlobCache {
         self.root.join(&key.0[..2]).join(format!("{}.bin", &key.0[2..]))
     }
 
+    #[must_use]
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+}
+
+impl ExtractCache for BlobCache {
     /// 있으면 값을, 없으면 `None`.
     ///
     /// **`None` 은 "캐시에 없다"이지 "값이 없다"가 아니다** — 조회 결과이므로
@@ -127,7 +172,7 @@ impl BlobCache {
     /// # Errors
     /// 파일은 있는데 읽지 못하거나 풀지 못하면. **깨진 캐시를 조용히 미스로 만들지
     /// 않는다** — 그러면 손상이 성능 저하로만 보이고 영원히 발견되지 않는다.
-    pub fn get<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Option<T>, CacheError> {
+    fn get<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Option<T>, CacheError> {
         let path = self.path_of(key);
         let packed = match fs::read(&path) {
             Ok(b) => b,
@@ -158,7 +203,7 @@ impl BlobCache {
     ///
     /// # Errors
     /// 직렬화·쓰기·이동 중 하나가 실패하면.
-    pub fn put<T: Serialize>(&self, key: &CacheKey, value: &T) -> Result<(), CacheError> {
+    fn put<T: Serialize>(&self, key: &CacheKey, value: &T) -> Result<(), CacheError> {
         let path = self.path_of(key);
         let dir = path.parent().unwrap_or(&self.root);
         fs::create_dir_all(dir)
@@ -180,11 +225,6 @@ impl BlobCache {
         fs::rename(&tmp, &path)
             .map_err(|e| CacheError::Write(format!("{}: {e}", path.display())))?;
         Ok(())
-    }
-
-    #[must_use]
-    pub fn root(&self) -> &Path {
-        &self.root
     }
 }
 

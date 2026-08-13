@@ -23,7 +23,7 @@
 mod cache;
 mod projection;
 
-pub use cache::{BlobCache, CacheError, CacheKey, CacheStats};
+pub use cache::{BlobCache, CacheError, CacheKey, CacheStats, ExtractCache};
 pub use projection::{Projection, ProjectionError};
 
 /// 이 크레이트가 지키는 계약.
