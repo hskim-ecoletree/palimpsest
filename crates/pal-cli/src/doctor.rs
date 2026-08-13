@@ -150,6 +150,10 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
                 Anchor::At(coord(s.id)),
             )
             .with_attr("path", Producer::Extractor)
+            // **`symbol_id` 의 성분이므로 스키마가 필수로 적는다**(F03-1). 빠뜨리면
+            // `pal doctor` 의 불변식 2 가 심볼 전부를 위반으로 센다 — 코퍼스에서
+            // 1,296 건이 그렇게 나왔다.
+            .with_attr("container", Producer::Extractor)
             .with_attr("name", Producer::Extractor)
             .with_attr("kind", Producer::Extractor)
             .with_attr("body", Producer::Extractor)
