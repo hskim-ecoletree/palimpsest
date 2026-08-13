@@ -18,7 +18,7 @@ mod typescript;
 
 use pal_core::{Capable, ExtractorVersion, Language, Symbol};
 
-pub use cached::{CachedGraph, RestoreError, ShellMismatch, Slot};
+pub use cached::{CachedGraph, RestoreError};
 pub use classify::{Extraction, FileOutcome, classify, grade_of};
 pub use extractor::{LanguageExtractor, extractor_for};
 pub use kotlin::KotlinExtractor;

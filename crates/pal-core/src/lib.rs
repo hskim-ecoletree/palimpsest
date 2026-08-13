@@ -31,6 +31,7 @@ mod rebind;
 mod repo;
 mod schema;
 mod scope;
+mod slot;
 mod symbol;
 mod touch;
 mod traverse;
@@ -89,6 +90,7 @@ pub use scope::{
     BoundSymbol, LocalRef, Namespace, RefResolution, Scope, ScopeBinding, ScopeChain, ScopeIx,
     ScopeKind, ScopeParent,
 };
+pub use slot::{ShellMismatch, Slot};
 pub use symbol::{Span, Symbol, SymbolKind};
 pub use traverse::{Step, traverse};
 pub use touch::{

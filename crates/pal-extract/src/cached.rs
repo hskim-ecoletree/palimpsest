@@ -17,49 +17,11 @@
 
 use pal_core::{
     Capable, Containment, ExportDigest, ExportSet, ExtractGrade, FileGraph, ImportSet, Language,
-    LanguageId, RecoverySite, ScopeChain, Symbol,
+    LanguageId, RecoverySite, ScopeChain, ShellMismatch, Slot, Symbol,
 };
 use serde::{Deserialize, Serialize};
 
 use crate::shell::{GraphShell, shell_of};
-
-/// 캐시 안의 자리 하나. **[`Capable`] 이 아니다 — 능력의 정체를 담지 않는다.**
-///
-/// 담지 않는 것이 이 타입의 전부다. `Capable` 을 그대로 실으면 옛 빌드의
-/// `CapabilityId` 가 새 빌드의 산출에 나가고, 그러면 *"F02 가 안 만들었다"* 가
-/// F02 가 이미 만든 빌드에서도 그대로 보인다.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Slot<T> {
-    /// 이 빌드가 안 만든 자리였다. **어느 능력인지는 여기 없다.**
-    NotBuilt,
-    Built(T),
-}
-
-impl<T> Slot<T> {
-    fn of(c: Capable<T>) -> Self {
-        match c {
-            Capable::Present(v) => Self::Built(v),
-            Capable::NotBuilt { .. } => Self::NotBuilt,
-        }
-    }
-
-    /// 이 빌드의 껍데기에서 정체를 가져와 씌운다.
-    fn restore(self, shell: &Capable<()>, slot: &'static str) -> Result<Capable<T>, ShellMismatch> {
-        match (self, shell) {
-            (Self::Built(v), Capable::Present(())) => Ok(Capable::Present(v)),
-            (Self::NotBuilt, Capable::NotBuilt { capability }) => {
-                Ok(Capable::NotBuilt { capability: *capability })
-            }
-            (Self::Built(_), Capable::NotBuilt { .. }) => {
-                Err(ShellMismatch { slot, cached_built: true })
-            }
-            (Self::NotBuilt, Capable::Present(())) => {
-                Err(ShellMismatch { slot, cached_built: false })
-            }
-        }
-    }
-}
 
 /// 캐시의 자리와 이 빌드의 능력이 어긋났다.
 ///
@@ -79,13 +41,6 @@ pub enum RestoreError {
         if .0.cached_built { "안 만듦" } else { "만듦" }
     )]
     Shell(ShellMismatch),
-}
-
-/// 어긋난 자리 하나.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ShellMismatch {
-    pub slot: &'static str,
-    pub cached_built: bool,
 }
 
 /// 파일 하나의 추출 산출 — **캐시에 실리는 형태.**
