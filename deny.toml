@@ -63,7 +63,25 @@ allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 #
 # upstream 이 19개월째 멈춰 있다는 것도 여기 적어 둔다(docs/gates/S0-symbols.md §정정).
 # 포크 채택 여부의 처분은 F02 가 지며, 그때 이 줄이 함께 움직인다.
-allow-git = ["https://github.com/tree-sitter-grammars/tree-sitter-kotlin"]
+#
+# ── 예외 5 — git 출처 둘째. **2026-08-13 · F02-1(#46)** ──────────────────────
+# `tree-sitter-typescript` 를 rev `75b3874` 로 고정한다. 같은 이유다 — 핀이 곧
+# `ExtractorVersion` 의 문법 축이고, 움직이면 1층 캐시가 전량 무효화되며 좌표가
+# 이동한다(stack §5.1). 그 rev 는 `corpus/criteria.toml` `[f02.1.grammar]` 에
+# `[s0.grammar].judging` 과 **같은 자격으로** 적혀 있다.
+#
+# **예외를 늘리기 전에 의존을 줄이는 것이 순서다**(아래 licenses 절). 여기서는 줄일
+# 것이 없었다 — 이 크레이트의 의존은 `tree-sitter-language`(빌드 시 `cc`) 하나이고,
+# 라이선스는 MIT 라 licenses 예외를 **하나도 늘리지 않았다.**
+#
+# crates.io 에 0.23.2 가 있는데도 git 인 이유는 Kotlin 과 같다: 레지스트리 판은
+# 재게시될 수 있고 rev 는 그럴 수 없다. 태그(v0.23.2)가 아니라 커밋인 이유도 같다 —
+# 태그는 옮길 수 있다. 태그 이후 다섯 커밋에 **문법 변경이 없고**(LICENSE·FUNDING·
+# docs·CI) 그중 하나가 LICENSE 파일을 더한 것이라 그쪽을 골랐다.
+allow-git = [
+    "https://github.com/tree-sitter-grammars/tree-sitter-kotlin",
+    "https://github.com/tree-sitter/tree-sitter-typescript",
+]
 
 # ── 중복·금지 ───────────────────────────────────────────────────────────────
 [bans]

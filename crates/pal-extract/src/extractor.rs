@@ -60,9 +60,7 @@ pub fn extractor_for(language: Language) -> Capable<&'static dyn LanguageExtract
         Language::JavaScript => {
             Capable::not_built(CapabilityId::new("F02", "javascript-extraction"))
         }
-        Language::TypeScript => {
-            Capable::not_built(CapabilityId::new("F02", "typescript-extraction"))
-        }
+        Language::TypeScript => Capable::Present(&crate::typescript::TYPESCRIPT),
     }
 }
 

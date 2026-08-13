@@ -2062,6 +2062,46 @@ why_not_golden_alone = """
 **`f02-recall-sample.tsv` 가 그 목록이다.** 그러므로 이 조각이 그 빚을 닫는다.
 """
 
+[f02.1.grammar]
+# **이 절은 합격선이 아니라 사실의 등록이다.** 위 `[f02.1.pass]` 의 항목들은 코드 이전에
+# 등록됐고(`f22017e` · `a5a5b13`) 이 절은 착수 **이후**에 붙었다 — 어느 커밋을 고를지는
+# 문법을 실제로 붙여 봐야 정해지기 때문이다. **판정 기준을 늘리지 않는다.**
+registered_at = "2026-08-13 — 착수 이후. 합격선이 아니라 핀의 기록이다"
+decided_by = "에이전트"
+
+judging = "tree-sitter/tree-sitter-typescript @ 75b3874edb2dc714fb1fd77a32013d0f8699989f"
+judging_why = """
+**핀이 곧 `ExtractorVersion` 의 문법 축이다**(stack §5.1). 움직이면 1층 캐시가 전량
+무효화되고 좌표가 이동하므로, 이것은 성능이 아니라 **정체성**의 문제다 —
+`[s0.grammar].judging` 이 Kotlin 에 대해 적은 것과 같은 자격이다.
+
+**crates.io 판이 아니라 git rev 인 이유**: 레지스트리 판은 재게시될 수 있고 rev 는
+그럴 수 없다. **태그(v0.23.2 · f975a62)가 아니라 커밋인 이유**: 태그는 옮길 수 있다.
+
+**왜 태그가 아니라 그 뒤의 커밋인가** — 태그 이후 다섯 커밋을 읽었고 **문법 변경이 하나도
+없다**(LICENSE 추가 · FUNDING · docs · CI). 그중 `75b3874` 가 `LICENSE` 파일을 더한
+커밋이라 그쪽을 골랐다. 라이선스는 **MIT** 이고 `cargo deny` 의 licenses 예외를 **하나도
+늘리지 않았다** — `deny.toml` 의 *"예외를 늘리기 전에 의존을 줄이는 것이 순서"* 에 걸리는
+자리가 없었다. 이 크레이트의 의존은 `tree-sitter-language` 하나다.
+
+git 출처 예외는 `deny.toml` `[sources].allow-git` 에 **둘째 줄**로 적혔다.
+"""
+
+observing = "**없다 — 관측 회차가 성립하지 않는다.** 판정용과 관측용이 같은 문법이다"
+
+covers = "`.ts` 만이다 — `LANGUAGE_TYPESCRIPT`"
+consequence = """
+**`.tsx` 는 이 문법이 아니다.** 이 크레이트는 `LANGUAGE_TSX` 를 따로 내고, `.tsx` 를
+TypeScript 문법으로 읽으면 JSX 가 통째로 `ERROR` 가 된다 — 그러면 **`partial` 이 문법
+부재를 가린다.** *"깨진 파일"* 과 *"이 빌드가 그 방언을 모른다"* 가 같은 출력이 되는 것은
+`Capable` 이 막으려는 바로 그 형태다.
+
+`Language::from_extension` 은 `tsx` 를 `TypeScript` 로 접는다(`language.rs`). 그래서
+**지금 `.tsx` 파일은 조용히 잘못 읽힌다.** 이 코퍼스(ditto @ aded7ce7)에는 `.tsx` 가
+없어 이 조각의 판정에는 닿지 않았고, **닿지 않았다는 사실이 게이트에 적혔다.**
+처분은 열려 있다 — 방언 축을 `LanguageId` 에 둘지, 확장자를 갈라 다섯째 언어로 셀지.
+"""
+
 [f02.1.pass]
 
 # ① 심볼 리콜 — **개수가 아니라 목록**

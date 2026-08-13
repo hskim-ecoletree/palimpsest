@@ -107,13 +107,26 @@ pub fn classify(
 /// **선언 상한이 아니라 실측이다.** stack 이 TypeScript 의 P0 상한을 L2 로 적었지만
 /// 그것은 도달 목표이고, 지금 Kotlin 추출기가 뽑는 것은 최상위 선언뿐이라 **L1(구조)**
 /// 이다. 상한을 적으면 대장이 없는 능력을 광고한다.
+// **팔을 합치지 않는다.** 둘이 같은 값이지 같은 사실이 아니다 — 아래 주석이 그것이고,
+// `f01-verify.py` 의 음성 대조가 Kotlin 팔 하나만 L0 으로 떨어뜨려 골든이 잡는지 본다.
+// 합치면 그 변이가 두 언어를 한꺼번에 움직여 무엇이 잡혔는지 알 수 없게 된다.
+#[allow(clippy::match_same_arms, reason = "언어마다 등급의 근거가 다르고 변이가 하나씩 걸린다")]
 #[must_use]
 pub const fn grade_of(language: pal_core::Language) -> ExtractGrade {
     match language {
         // S0 의 추출기 — `source_file` 의 직계 자식만 본다. 참조 해소는 없다.
         pal_core::Language::Kotlin => ExtractGrade::L1,
-        // 나머지 셋은 추출기가 없으므로 이 함수에 도달하지 않는다.
-        _ => ExtractGrade::L0,
+        // F02-1 의 추출기 — 포함 관계와 export/import 까지 본다. **스코프는 아직 없다**
+        // (#48). 스코프가 없으면 `identity_grade` 가 언어 단위에 머물고 정규화가
+        // 변수명을 지울 수 없다(R-22). 그래서 L2 가 아니라 **L1** 이다 —
+        // stack 이 적은 P0 상한 L2 는 도달 목표이고 이 값은 실측이다.
+        //
+        // **Kotlin 과 값이 같지만 같은 이유가 아니다.** 팔은 최상위만 보아 L1 이고
+        // 이쪽은 스코프가 없어 L1 이다. 한 팔로 합치면 #48 이 이쪽만 L2 로 올릴 때
+        // Kotlin 이 딸려 올라간다.
+        pal_core::Language::TypeScript => ExtractGrade::L1,
+        // 남은 둘(Java · JavaScript)은 추출기가 없으므로 이 함수에 도달하지 않는다.
+        pal_core::Language::Java | pal_core::Language::JavaScript => ExtractGrade::L0,
     }
 }
 

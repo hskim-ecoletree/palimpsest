@@ -11,6 +11,7 @@ mod extractor;
 mod kotlin;
 mod parse;
 mod recognize;
+mod typescript;
 
 use pal_core::{Capable, ExtractorVersion, Language, Symbol};
 
@@ -19,6 +20,7 @@ pub use extractor::{LanguageExtractor, extractor_for};
 pub use kotlin::KotlinExtractor;
 pub use parse::ExtractError;
 pub use recognize::{Recognition, recognize};
+pub use typescript::TypeScriptExtractor;
 
 /// 판정용 문법의 고정 커밋 — `corpus/criteria.toml` `[s0.grammar].judging`.
 pub const GRAMMAR_REV: &str = "3dea6dfa9c0129deb7c4315afbda806c85c41667";

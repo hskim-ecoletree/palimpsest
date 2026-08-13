@@ -70,3 +70,12 @@ toml = { version = "0.9", default-features = false, features = ["parse", "serde"
 # 판정용 문법을 커밋으로 고정한다 — corpus/criteria.toml [s0.grammar].judging
 # 이 커밋이 곧 v1.1.0 이고 upstream HEAD 다 (2026-08-12 실측).
 tree-sitter-kotlin-ng = { git = "https://github.com/tree-sitter-grammars/tree-sitter-kotlin", rev = "3dea6dfa9c0129deb7c4315afbda806c85c41667" }
+# **문법은 커밋으로 핀한다** — 위 Kotlin 과 같은 형태다. 핀이 곧 `ExtractorVersion` 의
+# 문법 축이고, 움직이면 1층 캐시가 전량 무효화되며 좌표가 이동한다(stack §5.1).
+# 그래서 이 rev 는 `corpus/criteria.toml` `[f02.1.grammar]` 에 `[s0.grammar]` 와 같은
+# 자격으로 적혀 있다. **태그가 아니라 커밋인 이유**: 태그는 옮길 수 있다.
+#
+# 왜 v0.23.2(f975a62)가 아니라 75b3874 인가 — 그 사이 다섯 커밋에 **문법 변경이 하나도
+# 없다**(LICENSE 추가·FUNDING·docs·CI). 그리고 75b3874 가 더한 것이 `LICENSE` 파일이다.
+# 라이선스는 MIT 이고 `cargo deny` 의 licenses 를 그대로 통과한다 — **예외를 늘리지 않았다**.
+tree-sitter-typescript = { git = "https://github.com/tree-sitter/tree-sitter-typescript", rev = "75b3874edb2dc714fb1fd77a32013d0f8699989f" }

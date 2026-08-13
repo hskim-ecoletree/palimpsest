@@ -33,6 +33,13 @@ enum Command {
         /// 사람이 읽는 표 대신 JSON 으로 낸다
         #[arg(long)]
         json: bool,
+        /// 심볼 목록이 아니라 **파일 그래프 전부**를 JSON 으로 낸다.
+        ///
+        /// `--json` 의 형태를 건드리지 않는 이유: `scripts/s0-compare.py` 가 그것을
+        /// **JSON 배열**로 파싱하고, 배열의 길이가 S0 대조의 선언 수다. 형태를 바꾸면
+        /// 1,122 파일 대조가 깨진다.
+        #[arg(long)]
+        graph: bool,
     },
     /// 조각 하나를 좌표에 손으로 건다 — **사람이 넣는 자리**
     Bind {
@@ -135,7 +142,7 @@ enum Command {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
-        Command::Symbols { path, json } => symbols(&path, json),
+        Command::Symbols { path, json, graph } => symbols(&path, json, graph),
         Command::Bind { name, note, repo, at, cache_dir, index, intent } => {
             bind::run(&repo, at.as_deref(), cache_dir, index, intent, &name, &note)
         }
@@ -177,7 +184,7 @@ fn main() -> Result<()> {
     }
 }
 
-fn symbols(path: &Path, json: bool) -> Result<()> {
+fn symbols(path: &Path, json: bool, graph: bool) -> Result<()> {
     let source = std::fs::read(path).with_context(|| format!("읽지 못했다: {}", path.display()))?;
 
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
@@ -187,6 +194,10 @@ fn symbols(path: &Path, json: bool) -> Result<()> {
             "확장자 `.{ext}` 를 언어로 알지 못한다 — 아는 것은 Kotlin · Java · JavaScript · TypeScript 넷이다"
         );
     };
+
+    if graph {
+        return file_graph(&source, language);
+    }
 
     match pal_extract::extract(language, &source) {
         Capable::Present(result) => {
@@ -210,6 +221,26 @@ fn symbols(path: &Path, json: bool) -> Result<()> {
                     capability.feature
                 );
             }
+        }
+    }
+    Ok(())
+}
+
+/// 파일 그래프 전부를 JSON 으로.
+///
+/// **이것이 `[f02.1.pass]` ② 가 밖에서 잴 수 있는 유일한 창이다** — 같은 blob 을 다른
+/// 저장소·다른 경로에 두고 이 산출이 바이트 단위로 같은지 본다. 그러려면 경로가 산출에
+/// **실리면 안 되고**, 그래서 여기서 `path` 를 찍지 않는다.
+fn file_graph(source: &[u8], language: Language) -> Result<()> {
+    match pal_extract::extractor_for(language) {
+        Capable::Present(extractor) => {
+            let graph = extractor.extract(source).context("추출 실패")?;
+            println!("{}", serde_json::to_string_pretty(&graph)?);
+        }
+        Capable::NotBuilt { capability } => {
+            // **빈 그래프를 내지 않는다.** 선언이 없는 파일과 같은 출력이 된다.
+            let not_built: Capable<pal_core::FileGraph> = Capable::NotBuilt { capability };
+            println!("{}", serde_json::to_string_pretty(&not_built)?);
         }
     }
     Ok(())
