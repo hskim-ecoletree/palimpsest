@@ -142,6 +142,82 @@ impl BodyDigest {
     }
 }
 
+/// 심볼 하나의 좌표 — **그리고 그것이 없을 수 있다는 사실.**
+///
+/// # 왜 `(SymbolId, IdentityGrade)` 쌍이 아닌가 ([F03 §3.3])
+///
+/// [`IdentityGrade`] 에는 [`Unavailable`] 이 있는데 `SymbolId` 에는 그런 값이 없다.
+/// 둘을 나란히 두면 **`Unavailable` 인데 `SymbolId` 가 있는 상태**를 타입이 허용하고,
+/// 그 조합은 뜻이 없다 — 좌표가 성립하지 않는 심볼에 좌표가 있다는 말이기 때문이다.
+///
+/// 그래서 등급을 값의 **바깥**이 아니라 **변형**으로 둔다. `Unavailable` 에는 실을
+/// 자리가 없고, 그러므로 **거기서 `SymbolId` 를 꺼낼 수 없다.**
+///
+/// # 그것이 「타입으로 강제」의 전부다
+///
+/// [`crate::Binding::new`] 는 `SymbolIdentity` 가 아니라 `SymbolId` 를 요구한다.
+/// L0 에서 결박을 시도하는 코드는 **컴파일되지 않는다**:
+///
+/// ```compile_fail
+/// # use pal_core::{Binding, SymbolIdentity, Snapshot, RepoId, TreeRef, ObjectName};
+/// let snapshot = Snapshot::single(RepoId::new("r"), TreeRef::Committed(ObjectName::from_bytes([0; 20])));
+/// // `SymbolIdentity` 는 `SymbolId` 가 아니다 — 그리고 `Unavailable` 에서 꺼낼 수도 없다.
+/// let _ = Binding::new(SymbolIdentity::Unavailable, "메모", snapshot, Vec::new());
+/// ```
+///
+/// 같은 코드가 좌표를 **꺼내고 나면** 컴파일된다 — 꺼내는 길이 `Exact` 와 `Ordinal`
+/// 둘뿐이기 때문이다:
+///
+/// ```
+/// # use pal_core::{Binding, SymbolId, SymbolIdentity, Snapshot, RepoId, TreeRef, ObjectName, Discriminator, SymbolKind, RepoPath};
+/// # let id = SymbolId::compute(&RepoId::new("r"), &RepoPath::new("a.ts"), &[], "f",
+/// #     &Discriminator::new(SymbolKind::Function, 0));
+/// # let snapshot = Snapshot::single(RepoId::new("r"), TreeRef::Committed(ObjectName::from_bytes([0; 20])));
+/// let target = match SymbolIdentity::Exact(id) {
+///     SymbolIdentity::Exact(id) | SymbolIdentity::Ordinal(id) => id,
+///     // **이 팔에서 낼 수 있는 값이 없다.** 그래서 여기서 결박이 끝난다.
+///     SymbolIdentity::Unavailable => return,
+/// };
+/// let _ = Binding::new(target, "메모", snapshot, Vec::new());
+/// ```
+///
+/// [F03 §3.3]: ../../../docs/plan/features/F03-identity.md
+/// [`Unavailable`]: IdentityGrade::Unavailable
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case", tag = "grade", content = "id")]
+pub enum SymbolIdentity {
+    /// 스코프 해소로 유일하다.
+    Exact(SymbolId),
+    /// 선언 순서에 의존한다. **좌표는 있고**, 덜 믿을 만하다는 사실이 답에 실린다.
+    Ordinal(SymbolId),
+    /// 좌표가 없다 — L0. **결박도 적시 제시도 성립하지 않는다.**
+    Unavailable,
+}
+
+impl SymbolIdentity {
+    /// 등급과 좌표에서 만든다. **`Unavailable` 이면 좌표를 버린다.**
+    ///
+    /// 버리는 것이 요점이다 — 남겨 두면 *"좌표가 없다"* 고 적으면서 좌표를 들고 있게 된다.
+    #[must_use]
+    pub const fn new(grade: IdentityGrade, id: SymbolId) -> Self {
+        match grade {
+            IdentityGrade::Exact => Self::Exact(id),
+            IdentityGrade::Ordinal => Self::Ordinal(id),
+            IdentityGrade::Unavailable => Self::Unavailable,
+        }
+    }
+
+    /// 이 좌표의 등급. **값을 꺼내는 길이 아니다.**
+    #[must_use]
+    pub const fn grade(&self) -> IdentityGrade {
+        match self {
+            Self::Exact(_) => IdentityGrade::Exact,
+            Self::Ordinal(_) => IdentityGrade::Ordinal,
+            Self::Unavailable => IdentityGrade::Unavailable,
+        }
+    }
+}
+
 /// 이름이 같은 선언을 가르는 것.
 ///
 /// # `ordinal` 이 실린 것 자체가 위험의 표시다 ([R-16])

@@ -11,7 +11,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
-use pal_core::{Binding, BindingId, WatchEntry};
+use pal_core::{Binding, SymbolIdentity, WatchEntry};
 use pal_intent::IntentStore;
 use pal_store::Projection;
 
@@ -52,14 +52,22 @@ pub fn run(
         }
     };
 
-    let binding = Binding {
-        id: BindingId::derive(symbol.id, note),
-        target: symbol.id,
-        note: note.to_owned(),
-        bound_at: report.ledger.snapshot.clone(),
-        // **감시 집합은 대상 심볼 하나다.** 반경(무엇까지 지켜볼 것인가)은 F09 다.
-        watch: vec![WatchEntry { symbol: symbol.id, digest: symbol.body }],
+    // **좌표를 꺼내는 길이 둘뿐이다** (F03 §3.3). `Unavailable` 에는 실린 좌표가
+    // 없으므로 여기서 결박이 끝난다 — 그 판정이 `if` 가 아니라 **타입**이다.
+    let target = match SymbolIdentity::new(symbol.identity, symbol.id) {
+        SymbolIdentity::Exact(id) | SymbolIdentity::Ordinal(id) => id,
+        SymbolIdentity::Unavailable => bail!(
+            "`{name}` 은 좌표가 없다 — 이 언어의 추출 등급이 L0 이라 결박이 성립하지 않는다"
+        ),
     };
+
+    // **감시 집합은 대상 심볼 하나다.** 반경(무엇까지 지켜볼 것인가)은 F09 다.
+    let binding = Binding::new(
+        target,
+        note,
+        report.ledger.snapshot.clone(),
+        vec![WatchEntry { symbol: target, digest: symbol.body }],
+    );
 
     let intent = IntentStore::open(&touch::intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;

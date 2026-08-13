@@ -573,6 +573,37 @@ describe('a', () => { test('b', () => { const x = 1; }); });
     }
 
     #[test]
+    fn 익명은_가장_가까운_조상의_요약에_포함된다() {
+        // **정체성 규칙 ②의 뒤쪽 절반이다** (F03 §3.4). 익명이 독립 심볼이 아니라는
+        // 것만으로는 부족하다 — 그 본문의 변경이 **어딘가에는** 실려야 하고, 안 실리면
+        // 익명 안의 코드가 통째로 감시 밖으로 사라진다(F02 가 넘긴 「입자 부재」).
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        let a = "export function outer() { const cb = () => { return 1; }; return cb; }";
+        let b = "export function outer() { const cb = () => { return 2; }; return cb; }";
+        assert_eq!(이름들(a).len(), 1, "익명이 심볼로 샜다");
+        assert_ne!(요약(a), 요약(b), "익명 본문이 바뀌었는데 조상의 요약이 그대로다");
+    }
+
+    #[test]
+    fn 제네릭은_선언_하나가_심볼_하나고_인스턴스화는_심볼이_아니다() {
+        // **정체성 규칙 ③** (F03 §3.4).
+        let g = 그래프("export function pick<T>(x: T): T { return x; }\nconst a = pick<number>(1);\nconst b = pick<string>('s');\n");
+        let names: Vec<&str> = g.symbols.iter().map(|s| s.name.as_str()).collect();
+        assert_eq!(names, vec!["pick", "a", "b"], "인스턴스화가 심볼로 샜다");
+    }
+
+    #[test]
+    fn 타입_파라미터_이름은_exact_에서_지워진다() {
+        // 타입 파라미터도 **그 심볼 안에서 선언된 심볼 아닌 이름**이다 — 지우지 않으면
+        // `<T>` 를 `<U>` 로 바꾸는 리팩터가 결박을 `stale` 로 켠다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_eq!(
+            요약("function pick<T>(x: T): T { return x; }"),
+            요약("function pick<U>(x: U): U { return x; }")
+        );
+    }
+
+    #[test]
     fn 함수_안의_지역_변수는_심볼이_아니다() {
         let src = "export function f() { const local = 1; let other = 2; }";
         assert_eq!(이름들(src), vec![("f".to_owned(), SymbolKind::Function)]);

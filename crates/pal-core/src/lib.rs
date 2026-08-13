@@ -45,7 +45,7 @@ pub use chain::{
     Actor, ActorId, Change, ChangeId, ChangeKind, Confidence, Defect, Introduction, Journey,
     NotFoundReason, Retrobinding, RetrobindingSummary, Uncapturable,
 };
-pub use coord::{BodyDigest, Coord, Discriminator, ExportDigest, SymbolId};
+pub use coord::{BodyDigest, Coord, Discriminator, ExportDigest, SymbolId, SymbolIdentity};
 pub use doctor::{
     Absence, BINDING_INDEX_KIND, CANDIDATE_LIMIT, DERIVED_KIND, Diagnosis, DoctorScope,
     InvariantId, InvariantOutcome, InvariantReport, Outcome, PROVISIONAL_SAMPLE_MAX,

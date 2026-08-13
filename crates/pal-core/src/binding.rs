@@ -57,8 +57,31 @@ pub struct WatchEntry {
 /// 재구축 등가성 검사는 그 상태에서도 통과하므로 **검사가 유실을 정상으로 승인한다.**
 /// 그래서 결박의 실체는 `pal-intent` 에 있고 파생층에는 색인만 둔다.
 ///
+/// # 밖에서는 [`Binding::new`] 로만 만든다 ([F03 §3.3])
+///
+/// `#[non_exhaustive]` 가 크레이트 밖의 구조체 리터럴을 막는다. 그것이 *"L0 에서
+/// 결박을 만들 수 없다"* 를 **타입으로** 세우는 자리다 — 생성자가 [`SymbolId`] 를
+/// 요구하고, [`crate::SymbolIdentity::Unavailable`] 에서는 그 값을 꺼낼 수 없다.
+///
+/// 리터럴을 열어 두면 그 강제는 문장일 뿐이다. **읽는 것은 그대로 열려 있다** —
+/// 막으려는 것은 *"없는 좌표로 결박을 만드는 것"* 이지 *"결박을 읽는 것"* 이 아니다.
+///
+/// ```compile_fail
+/// # use pal_core::{Binding, BindingId, SymbolId, Snapshot, RepoId, TreeRef, ObjectName};
+/// # let id = SymbolId::from_bytes([0; 32]);
+/// // 크레이트 밖에서는 리터럴로 만들 수 없다 — 그래야 생성자를 지나간다.
+/// let _ = Binding {
+///     id: BindingId::derive(id, "메모"),
+///     target: id,
+///     note: "메모".to_owned(),
+///     bound_at: Snapshot::single(RepoId::new("r"), TreeRef::Committed(ObjectName::from_bytes([0; 20]))),
+///     watch: Vec::new(),
+/// };
+/// ```
+///
 /// **[graph-node] `Binding`** — `schema/graph.toml`
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct Binding {
     pub id: BindingId,
     /// 무엇에 걸었나.
@@ -83,6 +106,26 @@ pub struct Binding {
     pub bound_at: Snapshot,
     /// 무엇을 지켜보나. **S3 에서는 대상 심볼 하나뿐이다** — 반경은 F09.
     pub watch: Vec<WatchEntry>,
+}
+
+impl Binding {
+    /// 결박 하나를 만든다. **[`SymbolId`] 를 요구한다 — 그것이 이 생성자의 전부다.**
+    ///
+    /// [`crate::SymbolIdentity`] 를 받지 않는 이유가 F03 §3.3 이다: `Unavailable` 에는
+    /// 실린 좌표가 없으므로, `SymbolId` 를 요구하면 **L0 에서 결박을 시도하는 코드가
+    /// 컴파일되지 않는다.** 런타임 검사로 대신하면 그것은 규율이고, 규율은 잊힌다.
+    ///
+    /// `id` 는 `(대상, 조각)` 에서 유도한다 — 같은 것을 두 번 걸어도 하나다.
+    #[must_use]
+    pub fn new(target: SymbolId, note: &str, bound_at: Snapshot, watch: Vec<WatchEntry>) -> Self {
+        Self {
+            id: BindingId::derive(target, note),
+            target,
+            note: note.to_owned(),
+            bound_at,
+            watch,
+        }
+    }
 }
 
 /// 코드가 변했는가 — **기계가 계산한다.**
@@ -174,16 +217,12 @@ mod tests {
     }
 
     fn 결박(target: SymbolId, digest: BodyDigest) -> Binding {
-        Binding {
-            id: BindingId::derive(target, "메모"),
+        Binding::new(
             target,
-            note: "메모".into(),
-            bound_at: Snapshot::single(
-                RepoId::new("r"),
-                TreeRef::Committed(ObjectName::from_bytes([0; 20])),
-            ),
-            watch: vec![WatchEntry { symbol: target, digest }],
-        }
+            "메모",
+            Snapshot::single(RepoId::new("r"), TreeRef::Committed(ObjectName::from_bytes([0; 20]))),
+            vec![WatchEntry { symbol: target, digest }],
+        )
     }
 
     #[test]
