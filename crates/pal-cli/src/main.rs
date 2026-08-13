@@ -137,6 +137,16 @@ enum Command {
         /// 사람이 읽는 표 대신 JSON 으로 낸다
         #[arg(long)]
         json: bool,
+        /// 대장이 아니라 **좌표를 붙인 심볼 전부**를 한 줄에 하나씩 JSON 으로 낸다.
+        ///
+        /// F03 §6.3 의 골든(`(symbol_id, body_digest)` 스냅샷)이 읽는 표면이다.
+        /// **줄 단위인 이유**: 골든의 일은 *"얼마나 움직였는가"* 를 보이는 것이고,
+        /// 한 덩어리 JSON 은 한 심볼이 움직여도 전체가 달라 보인다. 줄로 내면
+        /// `diff` 가 곧 움직인 것의 목록이다.
+        ///
+        /// **`--json` 의 형태를 건드리지 않는다** — `s0-compare.py` 가 그것을 파싱한다.
+        #[arg(long)]
+        symbols: bool,
     },
 }
 
@@ -172,9 +182,11 @@ fn main() -> Result<()> {
             };
             doctor::run(&repo, at.as_deref(), cache_dir, index, intent, scope, json)
         }
-        Command::Ledger { path, at, cache_dir, json } => {
+        Command::Ledger { path, at, cache_dir, json, symbols } => {
             let report = ledger::compute(&path, at.as_deref(), cache_dir)?;
-            if json {
+            if symbols {
+                ledger::print_symbols(&report)?;
+            } else if json {
                 println!("{}", serde_json::to_string_pretty(&report)?);
             } else {
                 ledger::print_table(&report);

@@ -341,6 +341,30 @@ fn language_capabilities(entries: &[LedgerEntry]) -> Vec<LanguageCapability> {
 }
 
 /// how-it-works §2.2 의 화면.
+/// 좌표를 붙인 심볼을 **한 줄에 하나씩** 낸다 — F03 §6.3 의 골든이 읽는 표면.
+///
+/// # 왜 줄 단위인가
+///
+/// 골든의 일은 *"추출기 버전을 올릴 때 얼마나 움직이는지가 보이는 것"* 이다(F03 §6.3).
+/// 한 덩어리 JSON 으로 내면 심볼 하나가 움직여도 전체가 달라 보이고, 그러면 골든이
+/// 답하는 것은 *"움직였는가"* 이지 *"무엇이 움직였는가"* 가 아니다. **줄로 내면 `diff`
+/// 가 곧 움직인 것의 목록이고**, `[f03.1.pass].on_failure` 이 요구하는 것이 그 목록이다.
+///
+/// **순서는 대장이 정한 순서 그대로다** — 경로 정렬 후 파일 안 선언 순서. 다시 정렬하지
+/// 않는다. 정렬을 여기서 또 하면 대장의 순서가 결정적이라는 사실이 이 표면에서 안 보인다.
+///
+/// # Errors
+/// 직렬화가 실패하면.
+pub fn print_symbols(report: &LedgerReport) -> Result<()> {
+    let mut out = String::new();
+    for s in &report.symbols {
+        out.push_str(&serde_json::to_string(s)?);
+        out.push('\n');
+    }
+    print!("{out}");
+    Ok(())
+}
+
 pub fn print_table(report: &LedgerReport) {
     let l = &report.ledger;
     let counts = l.counts();
