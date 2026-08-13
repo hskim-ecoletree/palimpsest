@@ -3,8 +3,12 @@
 
 **이것이 대조의 나머지 한쪽이다.** 다른 쪽은 `corpus/tasks/s0-reference-vector.tsv`
 이고 `scripts/s0-reference.py` 가 만들었다. 둘은 같은 쿼리 파일
-(`crates/pal-extract/queries/kotlin/top-level.scm`)과 같은 문법(3dea6df)을 쓴다.
+(`crates/pal-extract/queries/kotlin/top-level.scm`)과 **같은 문법**을 쓴다.
 그래서 차이가 나면 그 차이는 **코드 경로의 것**이다 — 그것이 R-01 의 관측이다.
+
+**여기에 문법 rev 를 글자로 적지 않는다** — 핀은 움직이고(#50 이 한 번 옮겼다) 적어
+두면 이 문서가 옛 값을 그대로 말한다. 정본은 둘이고 서로를 확인한다:
+`crates/pal-extract::GRAMMAR_REV` 와 위 벡터의 **머리말**(문법 rev · 쿼리 해시).
 
 합격선은 `corpus/criteria.toml` `[s0]` 에 있다 — 불일치 **0건**.
 
