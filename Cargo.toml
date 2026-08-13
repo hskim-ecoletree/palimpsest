@@ -90,9 +90,22 @@ rayon = "1"
 # 다른 이유는 대상이 한 줄이 아니라 스키마 전체이며 읽는 경로가 하나여야 하기 때문이다.
 toml = { version = "0.9", default-features = false, features = ["parse", "serde"] }
 
-# 판정용 문법을 커밋으로 고정한다 — corpus/criteria.toml [s0.grammar].judging
-# 이 커밋이 곧 v1.1.0 이고 upstream HEAD 다 (2026-08-12 실측).
-tree-sitter-kotlin-ng = { git = "https://github.com/tree-sitter-grammars/tree-sitter-kotlin", rev = "3dea6dfa9c0129deb7c4315afbda806c85c41667" }
+# 판정용 문법을 커밋으로 고정한다 — corpus/criteria.toml [g50]
+#
+# **2026-08-13 · #50 — 문법을 갈았다.** 옛 핀은 `tree-sitter-kotlin-ng @ 3dea6df`
+# (= v1.1.0 = 그 저장소의 HEAD · 2025-01-16 이후 정지)였고, 그것이 S0 코퍼스 1,122 중
+# **56 파일을 못 읽었다.** 새 핀은 1,122 을 **전부** 읽는다(전수 실측 · `dda5bb5`).
+#
+# **어느 포크인가는 실측 표로 정하지 못했다.** `sg` 와 `brokk` 는 1,122 파일에서
+# 파싱 성패·선언 수·**트리 S-표현식이 바이트로 같다.** 축 C(상류 추종)가 갈랐다 —
+# `brokk` 는 upstream(fwcd)보다 뒤진 커밋이 **0** 이고 `sg` 는 **5**(그중 문법 3).
+# 판정 전문: docs/gates/G50-kotlin-grammar-pin.md
+#
+# ⚠ **계보가 바뀌었다.** ng 는 amaanq 의 다시 쓰기이고 brokk 는 fwcd 계열이라
+# **노드 이름이 통째로 다르다**(`identifier` → `simple_identifier`/`type_identifier`,
+# `name:` 필드 없음). ADR-0007 이 정규형을 트리 직렬화로 바꿨으므로
+# **Kotlin 의 `body_digest` 가 전부 이동한다.** 그것이 설계된 산출이다.
+brokk-tree-sitter-kotlin = { git = "https://github.com/BrokkAi/tree-sitter-kotlin", rev = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e" }
 # **문법은 커밋으로 핀한다** — 위 Kotlin 과 같은 형태다. 핀이 곧 `ExtractorVersion` 의
 # 문법 축이고, 움직이면 1층 캐시가 전량 무효화되며 좌표가 이동한다(stack §5.1).
 # 그래서 이 rev 는 `corpus/criteria.toml` `[f02.1.grammar]` 에 `[s0.grammar]` 와 같은

@@ -75,7 +75,7 @@ const KIND_BY_PATTERN: [SymbolKind; 5] = [
 /// # Errors
 /// 문법·쿼리·파싱 중 하나가 실패하면 [`ExtractError`].
 pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
-    let language = tree_sitter::Language::new(tree_sitter_kotlin_ng::LANGUAGE);
+    let language = tree_sitter::Language::new(brokk_tree_sitter_kotlin::LANGUAGE);
     // **스레드당 파서를 재사용한다**(#49 · F02 §3.1). `Parser::new()` 는 싸지 않다.
     let tree = parse_with(&language, source)?;
 

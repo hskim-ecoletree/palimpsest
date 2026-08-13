@@ -23,8 +23,38 @@ pub use parse::ExtractError;
 pub use recognize::{Recognition, recognize};
 pub use typescript::TypeScriptExtractor;
 
-/// 판정용 문법의 고정 커밋 — `corpus/criteria.toml` `[s0.grammar].judging`.
-pub const GRAMMAR_REV: &str = "3dea6dfa9c0129deb7c4315afbda806c85c41667";
+/// 판정용 문법의 고정 커밋 — `corpus/criteria.toml` `[g50]`.
+///
+/// # 축이 하나인데 언어가 둘이다 — `[g50.pass]` ⑥ 의 판단을 여기 적는다
+///
+/// 이 상수는 **Kotlin 문법의 rev 하나**인데 [`ExtractorVersion`] 의 `grammar` 축은
+/// 두 언어가 함께 탄다. Kotlin 문법을 올리면:
+///
+///   · **1층 캐시가 두 언어 모두 전량 무효화된다**
+///   · **`Coord.extractor` 가 두 언어 모두 움직인다** — 좌표의 성분이므로
+///   · **그런데 TypeScript 의 `symbol_id`·`body_digest` 는 안 움직인다** —
+///     그 값들은 Kotlin 문법에 의존하지 않는다
+///
+/// **축을 언어별로 가르지 않는다.** 셋을 재고 판단했다:
+///
+/// 1. **[ADR-0004] 가 요구하는 것은 「산출을 정하는 모든 입력이 키에 있다」이고,
+///    지금 형태는 그것을 어기지 않는다.** 어기는 방향은 **덜 무효화하는 쪽**이고
+///    지금은 **더** 무효화한다. 과잉 무효화는 느릴 뿐 틀리지 않는다
+/// 2. **가르려면 캐시 키가 「이 블롭이 무슨 언어인가」를 알아야 한다.** 그런데 그것은
+///    우리 코드가 내리는 **판정**이다(`recognize`). 판정을 키의 성분으로 쓰면
+///    **판정이 틀린 파일이 틀린 키를 갖고, 그 틀림이 캐시 뒤로 숨는다.**
+///    F03 이 실코드인 `.ts` 다섯을 `binary{nul_byte}` 로 잘못 읽은 것을 발견했는데,
+///    축을 갈랐다면 그 다섯은 **재분류돼도 옛 항목을 그대로 돌려받았을 것이다**
+/// 3. **비용이 일회성이고 F04 의 것이다.** 지금 무효화되는 것은 1층 캐시뿐이고
+///    다시 채우는 값은 이미 재고 있다. 상시 비용이 아니다
+///
+/// **비대칭은 남고, 남는다는 사실을 적는 것이 여기서 지는 몫이다** —
+/// `ditto` 골든(4,578 줄)이 **안 움직이는 것**이 그 비대칭의 관측 장치다
+/// (`[g50.pass]` ④ · `scripts/f03-3-verify.py`).
+///
+/// [ADR-0004]: ../../../docs/adr/0004-cache-key-covers-every-input-that-decides-the-output.md
+/// [`ExtractorVersion`]: pal_core::ExtractorVersion
+pub const GRAMMAR_REV: &str = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e";
 
 /// 추출기 코드 버전. 문법과 **다른 축이다**(stack §5.1).
 ///

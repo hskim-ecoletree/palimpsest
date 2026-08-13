@@ -55,14 +55,21 @@ unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 
 # ── 예외 4 — git 출처 하나. **이것이 이 파일에서 가장 중요한 줄이다** ──────────
-# `tree-sitter-kotlin-ng` 를 crates.io 판이 아니라 **git rev `3dea6df` 로 고정**한다.
-# 그 rev 가 S0 게이트의 판정 대상이고(`corpus/criteria.toml` `[s0.grammar]`),
-# crates.io 의 1.1.0 과 같은 커밋이지만 **같다는 사실이 잠기지 않는다** — 레지스트리
-# 판은 재게시될 수 있고 rev 는 그럴 수 없다. 문법이 바뀌면 1층 캐시가 전량 무효화되고
+# Kotlin 문법을 crates.io 판이 아니라 **git rev 로 고정**한다. 레지스트리 판은
+# 재게시될 수 있고 rev 는 그럴 수 없다. 문법이 바뀌면 1층 캐시가 전량 무효화되고
 # 좌표가 움직이므로(stack §5.1) 이 고정은 성능이 아니라 **정체성**의 문제다.
 #
-# upstream 이 19개월째 멈춰 있다는 것도 여기 적어 둔다(docs/gates/S0-symbols.md §정정).
-# 포크 채택 여부의 처분은 F02 가 지며, 그때 이 줄이 함께 움직인다.
+# ⚠ **2026-08-13 · #50 — 이 줄이 옮겨졌다.**
+#   옛것: `tree-sitter-grammars/tree-sitter-kotlin` @ `3dea6df` (`tree-sitter-kotlin-ng`)
+#   새것: `BrokkAi/tree-sitter-kotlin` @ `acb9630` (`brokk-tree-sitter-kotlin`)
+#
+# 위 문단이 *"포크 채택 여부의 처분은 F02 가 지며, 그때 이 줄이 함께 움직인다"* 라고
+# 적었고 **여기가 그 자리다.** 옛 핀은 S0 코퍼스 1,122 중 **56 파일을 못 읽었고**
+# upstream 이 2025-01-16 이후 멈춰 있었다. 새 핀은 1,122 을 **전부** 읽는다.
+#
+# **예외 수가 늘지 않았다** — 출처 하나를 다른 하나로 바꿨다. 라이선스도 **MIT** 라
+# `licenses` 예외를 **하나도 늘리지 않았다**(예외를 늘리기 전에 의존을 줄이는 것이
+# 순서라는 아래 규율이 여기서는 걸리지 않는다). 판정: docs/gates/G50-kotlin-grammar-pin.md
 #
 # ── 예외 5 — git 출처 둘째. **2026-08-13 · F02-1(#46)** ──────────────────────
 # `tree-sitter-typescript` 를 rev `75b3874` 로 고정한다. 같은 이유다 — 핀이 곧
@@ -79,7 +86,7 @@ allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 # 태그는 옮길 수 있다. 태그 이후 다섯 커밋에 **문법 변경이 없고**(LICENSE·FUNDING·
 # docs·CI) 그중 하나가 LICENSE 파일을 더한 것이라 그쪽을 골랐다.
 allow-git = [
-    "https://github.com/tree-sitter-grammars/tree-sitter-kotlin",
+    "https://github.com/BrokkAi/tree-sitter-kotlin",
     "https://github.com/tree-sitter/tree-sitter-typescript",
 ]
 
