@@ -146,15 +146,18 @@ pub const fn grade_of(language: pal_core::Language) -> ExtractGrade {
     match language {
         // S0 의 추출기 — `source_file` 의 직계 자식만 본다. 참조 해소는 없다.
         pal_core::Language::Kotlin => ExtractGrade::L1,
-        // F02-1 의 추출기 — 포함 관계와 export/import 까지 본다. **스코프는 아직 없다**
-        // (#48). 스코프가 없으면 `identity_grade` 가 언어 단위에 머물고 정규화가
-        // 변수명을 지울 수 없다(R-22). 그래서 L2 가 아니라 **L1** 이다 —
-        // stack 이 적은 P0 상한 L2 는 도달 목표이고 이 값은 실측이다.
+        // F02-3 의 추출기 — 포함 관계 · export/import · **파일 내 스코프 체인(L2a)**.
+        // 이름이 어느 선언을 가리키는지 알므로 `body_digest` 가 지역 이름을 지울 수 있고,
+        // 그것이 L2 의 뜻이다(R-22).
         //
-        // **Kotlin 과 값이 같지만 같은 이유가 아니다.** 팔은 최상위만 보아 L1 이고
-        // 이쪽은 스코프가 없어 L1 이다. 한 팔로 합치면 #48 이 이쪽만 L2 로 올릴 때
-        // Kotlin 이 딸려 올라간다.
-        pal_core::Language::TypeScript => ExtractGrade::L1,
+        // **이것은 여전히 선언 상한이다.** 실제 등급은 심볼에 실린다
+        // (`Symbol::identity`) — 구조 분해나 TDZ 가 있는 심볼은 `ordinal` 로 내려앉는다.
+        // 언어 표만 남기면 그 심볼들이 성공한 것처럼 보인다.
+        //
+        // **Kotlin 팔은 L1 그대로다.** 갈라 둔 이유가 이 커밋에서 실현됐다 — 한 팔로
+        // 합쳤으면 여기서 Kotlin 이 딸려 올라가 `f01-verify` 의 등급 음성 대조가
+        // 무의미해졌을 것이다.
+        pal_core::Language::TypeScript => ExtractGrade::L2,
         // 남은 둘(Java · JavaScript)은 추출기가 없으므로 이 함수에 도달하지 않는다.
         pal_core::Language::Java | pal_core::Language::JavaScript => ExtractGrade::L0,
     }

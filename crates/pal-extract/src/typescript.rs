@@ -13,14 +13,17 @@
 //! 이 코드보다 먼저 커밋됐다(`[f02.1.oracle]`). 여기 있는 것은 그 규칙의 구현이다 —
 //! **반대 방향이 아니다.** 어긋나면 게이트에 목록으로 적고 손 목록을 고치지 않는다.
 
+use std::collections::HashMap;
+
 use pal_core::{
-    BodyDigest, Capable, Containment, ExportSet, ExtractGrade, FileGraph, ImportSet, Language,
-    LanguageId, LocalIx, RecoverySite, Span, Symbol, SymbolKind,
+    BodyDigest, BoundSymbol, Capable, Containment, ExportSet, ExtractGrade, FileGraph, IdentityGrade,
+    ImportSet, Language, LanguageId, LocalIx, RecoverySite, RefResolution, Span, Symbol, SymbolKind,
 };
 use tree_sitter::{Node, Parser};
 
 use crate::extractor::LanguageExtractor;
-use crate::parse::{ExtractError, normalize, recovery_sites};
+use crate::parse::{ExtractError, normalize, normalize_erasing, recovery_sites};
+use crate::scopes::{self, Scoped};
 
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
 pub(crate) static TYPESCRIPT: TypeScriptExtractor = TypeScriptExtractor;
@@ -63,7 +66,18 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
     let mut walk = Walk::new(source);
     walk.children(tree.root_node(), Scope::Module, None)?;
 
-    Ok(walk.finish(recovery_sites(tree.root_node())))
+    // **선언 순회가 끝난 뒤에 스코프를 세운다.** 순서가 규율이다 — 스코프가 심볼 목록을
+    // 건드리면 #46 의 리콜 172 개가 움직인다. 여기서 늘어나는 것은 각 심볼의 `identity`
+    // 와 그것이 정하는 `body_digest` 뿐이다.
+    let symbol_at: HashMap<usize, LocalIx> = walk
+        .symbols
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (p.node.start_byte(), LocalIx(u32::try_from(i).unwrap_or(u32::MAX))))
+        .collect();
+    let scoped = scopes::build(tree.root_node(), source, &symbol_at);
+
+    Ok(walk.finish(recovery_sites(tree.root_node()), scoped))
 }
 
 /// **모듈 스코프인가.** 이 하나가 *"함수 내부 지역 변수는 심볼이 아니다"* 를 진다.
@@ -118,7 +132,7 @@ impl<'a, 't> Walk<'a, 't> {
         }
     }
 
-    fn finish(mut self, recovery_sites: Vec<RecoverySite>) -> FileGraph {
+    fn finish(mut self, recovery_sites: Vec<RecoverySite>, scoped: Scoped) -> FileGraph {
         // **집합이므로 정렬·중복 제거한다.** 소스 순서에 의존하면 `export {a}` 와
         // `export {a}` 두 번이 다른 값을 내고, 그러면 포매터가 export 를 재배열할 때
         // 산출이 움직인다 — `[f02.1.pass]` ③ 의 반대 방향이 무너지는 자리다.
@@ -126,18 +140,26 @@ impl<'a, 't> Walk<'a, 't> {
             v.sort_unstable();
             v.dedup();
         }
+
         let symbols = self
             .symbols
             .iter()
-            .map(|p| Symbol {
-                name: p.name.clone(),
-                kind: p.kind,
-                // **`export` 키워드는 선언 노드 밖이다** — 그래서 `export` 를 떼도 이 요약은
-                // 안 바뀌고, 바뀌는 것은 `ExportSet` 이다. 그 둘을 가르는 것이 음성 대조다.
-                body: BodyDigest::of_normalized(&normalize(p.node, self.source)),
-                span: span_of(p.node),
+            .map(|p| {
+                let span = span_of(p.node);
+                let identity = grade_of_symbol(&scoped, span.byte_start, span.byte_end);
+                Symbol {
+                    name: p.name.clone(),
+                    kind: p.kind,
+                    body: digest_of(&scoped, p.node, self.source, identity),
+                    span,
+                    identity,
+                }
             })
             .collect();
+
+        // **정렬·중복 제거가 끝난 뒤에 잰다.** 소스 순서 위에서 재면 포매터가 export 를
+        // 재배열하는 것만으로 의존 파일 전체가 무효화된다(R-05).
+        let export_digest = Capable::Present(self.exports.digest());
         FileGraph {
             language: LanguageId::new(Language::TypeScript.name()),
             grade: crate::grade_of(Language::TypeScript),
@@ -145,6 +167,8 @@ impl<'a, 't> Walk<'a, 't> {
             contains: self.contains,
             exports: Capable::Present(self.exports),
             imports: Capable::Present(self.imports),
+            export_digest,
+            scopes: Capable::Present(scoped.chain),
             recovery_sites,
         }
     }
@@ -392,6 +416,83 @@ impl<'a, 't> Walk<'a, 't> {
     }
 }
 
+/// **이 심볼에서 실제로 도달한 등급** — `[f02.3.pass]` ② 가 판정하는 자리.
+///
+/// # `Exact` 의 조건 둘 — 그리고 **`OutsideFile` 은 실패가 아니다**
+///
+/// 1. 이 심볼 안에서 **이름을 못 잡은 바인딩이 없다.** 구조 분해(`const {a,b} = x`)가
+///    하나라도 있으면 본문의 어떤 이름이 그것을 가리키는지 알 수 없고, **모르면 지우면
+///    안 된다**(R-22 가 경고한 *"서로 다른 코드가 같은 digest"*).
+/// 2. 이 심볼 안에 **선언 전 참조(TDZ)가 없다.** 그것은 우리가 해소에 실패한 자리다.
+///
+/// `import` 와 전역을 가리키는 참조([`RefResolution::OutsideFile`])는 **실패가 아니다.**
+/// 그것을 실패로 세면 import 를 쓰는 거의 모든 심볼이 `ordinal` 로 떨어지고, 그러면 이
+/// 등급이 *"이 심볼이 얼마나 자족적인가"* 를 재게 된다 — 지우기의 안전성과 무관한 값이다.
+fn grade_of_symbol(scoped: &Scoped, start: usize, end: usize) -> IdentityGrade {
+    let unnameable = scoped.unnameable.iter().any(|b| (start..end).contains(b));
+    let tdz = scoped
+        .chain
+        .refs
+        .iter()
+        .any(|r| (start..end).contains(&r.at) && r.resolved == RefResolution::BeforeDeclaration);
+    let measured =
+        if unnameable || tdz { IdentityGrade::Ordinal } else { IdentityGrade::Exact };
+    // **언어 등급이 선언 상한이다**(`[f02.3.pass]` ②). 실측이 그것을 넘지 못한다 —
+    // 넘으면 대장 머리의 언어 표가 심볼이 실제로 가진 것보다 낮은 값을 광고하게 된다.
+    measured.min(crate::grade_of(Language::TypeScript).identity())
+}
+
+/// 그 심볼의 요약 — **등급이 정규형을 정한다.**
+///
+/// `Exact` 면 **이 심볼 안에서 선언된, 심볼이 아닌 이름**(지역 변수 · 파라미터 · 타입
+/// 파라미터)을 자리 번호로 지운다. `Ordinal` 이면 지우지 않는다.
+///
+/// # 심볼인 이름은 지우지 않는다
+///
+/// `class C { m() {} }` 의 `m` 은 `C` 안에서 선언되지만 **그 자체가 심볼이다.** 지우면
+/// 메서드 이름을 바꿔도 클래스의 요약이 안 바뀌고, 그것은 정규화가 아니라 정보 손실이다.
+///
+/// # 자리 번호는 **선언 순서**다
+///
+/// 참조 순서로 매기면 본문에서 쓰는 순서만 바꿔도 요약이 바뀐다. 선언 순서로 매기면
+/// 이름만 바꾼 두 소스가 같은 값을 내고(불변식 A), 선언 순서를 바꾸면 다른 값을 낸다.
+fn digest_of(scoped: &Scoped, node: Node<'_>, source: &[u8], identity: IdentityGrade) -> BodyDigest {
+    if identity != IdentityGrade::Exact {
+        return BodyDigest::of_normalized(&normalize(node, source));
+    }
+    let (start, end) = (node.start_byte(), node.end_byte());
+
+    // 이 심볼 안에서 선언된 **심볼 아닌** 바인딩들 — 선언 순서로 자리 번호를 준다.
+    let mut local: Vec<(u32, u32)> = Vec::new(); // (scope, binding)
+    let mut order: Vec<usize> = Vec::new();
+    for (si, scope) in scoped.chain.scopes.iter().enumerate() {
+        for (bi, b) in scope.bindings.iter().enumerate() {
+            if b.symbol == BoundSymbol::NotASymbol && (start..end).contains(&b.declared_at) {
+                local.push((
+                    u32::try_from(si).unwrap_or(u32::MAX),
+                    u32::try_from(bi).unwrap_or(u32::MAX),
+                ));
+                order.push(b.declared_at);
+            }
+        }
+    }
+    let mut slot: Vec<usize> = (0..local.len()).collect();
+    slot.sort_by_key(|i| order[*i]);
+    let mut number: HashMap<(u32, u32), usize> = HashMap::with_capacity(local.len());
+    for (n, i) in slot.into_iter().enumerate() {
+        number.insert(local[i], n);
+    }
+
+    let erase = |at: usize| -> Option<usize> {
+        let ix = scoped.ref_at.get(&at)?;
+        let RefResolution::Bound { scope, binding } = scoped.chain.refs.get(*ix)?.resolved else {
+            return None;
+        };
+        number.get(&(scope.0, binding)).copied()
+    };
+    BodyDigest::of_normalized(&normalize_erasing(node, source, &erase))
+}
+
 fn span_of(node: Node<'_>) -> Span {
     Span {
         byte_start: node.start_byte(),
@@ -422,6 +523,7 @@ fn string_text(node: Node<'_>, source: &[u8]) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pal_core::Namespace;
 
     fn 그래프(src: &str) -> FileGraph {
         extract_detailed(src.as_bytes()).expect("추출이 실패했다")
@@ -565,11 +667,115 @@ describe('a', () => { test('b', () => { const x = 1; }); });
         assert_ne!(요약(원본), 요약("function greet(name: number): string { return 'hi'; }"));
     }
 
+    fn 등급(src: &str) -> IdentityGrade {
+        그래프(src).symbols[0].identity
+    }
+
     #[test]
-    fn 변수명은_지우지_않는다() {
-        // **R-22** — 스코프 해소(#48)가 없는데 지우면 서로 다른 코드가 같은 요약을 갖는다.
+    fn 불변식_a_exact_는_지역_이름을_지운다() {
+        // **R-22 의 앞쪽 절반.** 지역 이름을 바꾸는 것은 의미 변경이 아니다 —
+        // 안 지우면 `rename` 한 번에 결박이 무더기로 `stale` 이 된다(R-07).
         let 요약 = |s: &str| 그래프(s).symbols[0].body;
-        assert_ne!(요약("function f() { const a = 1; }"), 요약("function f() { const b = 1; }"));
+        let a = "function f(name: string) { const local = name; return local; }";
+        let b = "function f(other: string) { const kept = other; return kept; }";
+        assert_eq!(등급(a), IdentityGrade::Exact, "해소할 수 있는 심볼인데 exact 가 아니다");
+        assert_eq!(요약(a), 요약(b), "exact 인데 지역 이름이 요약에 남았다");
+    }
+
+    #[test]
+    fn 불변식_b_ordinal_은_지역_이름을_지우지_않는다() {
+        // **R-22 의 뒤쪽 절반이고 이 조각의 다섯째다.** A 만 보면 *"항상 지운다"* 가
+        // 만점을 받고, 그것이 곧 **서로 다른 코드가 같은 digest** 다.
+        //
+        // 구조 분해가 있으면 무슨 이름이 묶였는지 모른다 → `ordinal` → 지우지 않는다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        let a = "function f(src: Src) { const { alpha } = src; return alpha; }";
+        let b = "function f(src: Src) { const { beta } = src; return beta; }";
+        assert_eq!(등급(a), IdentityGrade::Ordinal, "이름을 못 잡은 바인딩이 있는데 exact 다");
+        assert_ne!(요약(a), 요약(b), "ordinal 인데 이름을 지웠다 — R-22 의 충돌 그대로다");
+    }
+
+    #[test]
+    fn 불변식_c_섀도잉은_다른_선언으로_해소된다() {
+        // 안쪽 `x` 와 바깥쪽 `x` 가 **같은 선언으로 해소되면** 둘을 맞바꿔도 요약이 같다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        let 안쪽이_이김 = "function f() { const x = 1; { const x = 2; return x; } }";
+        let 바깥이_이김 = "function f() { const x = 1; { const y = 2; return x; } }";
+        assert_ne!(요약(안쪽이_이김), 요약(바깥이_이김), "섀도잉이 한 선언으로 뭉개졌다");
+    }
+
+    #[test]
+    fn 불변식_d_의미가_바뀌면_두_등급_모두에서_요약이_바뀐다() {
+        // **A·B 를 동시에 붙든다** — 의미가 변했는데 digest 가 같으면 그것은 정규화가
+        // 아니라 정보 손실이다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        let e = "function f(n: string) { const a = n; return a; }";
+        assert_eq!(등급(e), IdentityGrade::Exact);
+        assert_ne!(요약(e), 요약("function f(n: string) { const a = n; return a + a; }"));
+        assert_ne!(요약(e), 요약("function f(n: number) { const a = n; return a; }"));
+
+        let o = "function f(s: S) { const { a } = s; return a; }";
+        assert_eq!(등급(o), IdentityGrade::Ordinal);
+        assert_ne!(요약(o), 요약("function f(s: S) { const { a } = s; return a + a; }"));
+    }
+
+    #[test]
+    fn 지역의_자리는_구별된다() {
+        // 전부 같은 바이트로 지우면 `f(a, b)` 와 `f(a, a)` 가 같아진다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_ne!(
+            요약("function f(a: N, b: N) { return a + b; }"),
+            요약("function f(a: N, b: N) { return a + a; }"),
+            "지역을 한 가지로 뭉개 지웠다"
+        );
+    }
+
+    #[test]
+    fn 심볼인_이름은_지우지_않는다() {
+        // `class C { m() {} }` 의 `m` 은 C 안에서 선언되지만 **그 자체가 심볼이다.**
+        // 지우면 메서드 이름을 바꿔도 클래스 요약이 안 바뀐다.
+        let 요약 = |s: &str| 그래프(s).symbols[0].body;
+        assert_ne!(요약("class C { alpha() {} }"), 요약("class C { beta() {} }"));
+    }
+
+    #[test]
+    fn 호이스팅과_tdz_가_갈린다() {
+        // 함수 선언은 뒤에 있어도 해소되고 `let` 은 아니다. **TDZ 가 이 조각에서 가장
+        // 반증 가능한 자리다** — 선언 전 참조를 해소해 버리면 스코프 체인이 아니라 이름 표다.
+        let chain = |s: &str| 그래프(s).scopes.into_present().expect("TypeScript 는 스코프를 만든다");
+
+        let 호이스팅 = chain("function outer() { return later(); }\nfunction later() { return 1; }\n");
+        let l = 호이스팅.refs.iter().find(|r| r.name == "later").expect("참조가 없다");
+        assert!(matches!(l.resolved, RefResolution::Bound { .. }), "함수 선언이 호이스팅되지 않았다");
+
+        let tdz = chain("function outer() { const a = b; const b = 1; return a; }");
+        let first = tdz.refs.iter().find(|r| r.name == "b").expect("참조가 없다");
+        assert_eq!(first.resolved, RefResolution::BeforeDeclaration, "선언 전 참조가 해소됐다");
+    }
+
+    #[test]
+    fn 값과_타입_이름_공간이_갈린다() {
+        // `interface Foo` 와 `const Foo` 는 공존한다. 뭉개면 해소가 **조용히** 틀린다.
+        let g = 그래프("interface Foo { a: string }\nconst Foo = 1;\nconst x: Foo = null;\nconst y = Foo;\n");
+        let chain = g.scopes.into_present().unwrap();
+        let 타입_자리 = chain.refs.iter().find(|r| r.name == "Foo" && r.namespace == Namespace::Type);
+        let 값_자리 = chain.refs.iter().rev().find(|r| r.name == "Foo" && r.namespace == Namespace::Value);
+        let (Some(t), Some(v)) = (타입_자리, 값_자리) else { panic!("두 자리가 다 안 잡혔다") };
+        let (RefResolution::Bound { binding: tb, .. }, RefResolution::Bound { binding: vb, .. }) =
+            (t.resolved, v.resolved)
+        else {
+            panic!("해소되지 않았다")
+        };
+        assert_ne!(tb, vb, "타입 자리와 값 자리가 같은 선언으로 해소됐다");
+    }
+
+    #[test]
+    fn 스코프는_kotlin_이_아니라_typescript_에만_선다() {
+        // `[f02.3.does_not_prove].not_kotlin_scope` — Kotlin 은 L1 로 남는다.
+        assert!(그래프("const a = 1;").scopes.is_present());
+        let kt = crate::kotlin::extract_detailed(b"class A\n").unwrap();
+        assert!(!kt.scopes.is_present(), "Kotlin 에 스코프가 딸려 올라갔다");
+        assert_eq!(kt.symbols[0].identity, IdentityGrade::Ordinal);
     }
 
     #[test]

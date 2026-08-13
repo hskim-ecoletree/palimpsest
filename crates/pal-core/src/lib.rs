@@ -29,6 +29,7 @@ mod ledger;
 mod manifest;
 mod repo;
 mod schema;
+mod scope;
 mod symbol;
 mod touch;
 mod version;
@@ -44,7 +45,7 @@ pub use chain::{
     Actor, ActorId, Change, ChangeId, ChangeKind, Confidence, Defect, Introduction, Journey,
     NotFoundReason, Retrobinding, RetrobindingSummary, Uncapturable,
 };
-pub use coord::{BodyDigest, Coord, Discriminator, SymbolId};
+pub use coord::{BodyDigest, Coord, Discriminator, ExportDigest, SymbolId};
 pub use doctor::{
     Absence, BINDING_INDEX_KIND, CANDIDATE_LIMIT, DERIVED_KIND, Diagnosis, DoctorScope,
     InvariantId, InvariantOutcome, InvariantReport, Outcome, PROVISIONAL_SAMPLE_MAX,
@@ -73,6 +74,10 @@ pub use schema::{
     NodeStatus, Requirement, SchemaError,
 };
 pub use repo::{Digest, ObjectName, RepoId, RepoPath, Snapshot, TreeRef};
+pub use scope::{
+    BoundSymbol, LocalRef, Namespace, RefResolution, Scope, ScopeBinding, ScopeChain, ScopeIx,
+    ScopeKind, ScopeParent,
+};
 pub use symbol::{Span, Symbol, SymbolKind};
 pub use touch::{
     BoundItem, EffectSet, JudgmentSummary, SymbolFacts, SymbolNode, TouchAnswer, TouchResult,

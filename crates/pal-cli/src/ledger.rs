@@ -179,7 +179,15 @@ pub(crate) fn nodes_of(repo: &RepoId, path: &RepoPath, symbols: &[pal_core::Symb
             body: s.body,
             span: s.span,
             // 언어 등급이 아니라 **심볼**의 것이다 — R-22. 둘 중 낮은 쪽을 쓴다.
-            identity: discriminator.identity_ceiling().min(ExtractGrade::L1.identity()),
+            //
+            // **상한이 둘이다.** `Discriminator` 의 것(같은 이름·종류가 여럿이면 순서로
+            // 가르므로 `ordinal`)과 추출기가 잰 것(`Symbol::identity` — 스코프 해소가
+            // 실패하면 `ordinal`). 어느 하나라도 못 미치면 못 미친다.
+            //
+            // 옛 코드는 뒤쪽을 `ExtractGrade::L1` 로 **박아 두었다.** 그러면 추출기가
+            // 무엇을 재든 대장은 언제나 `ordinal` 이고, 심볼 단위 실측이 대장에 닿지
+            // 못한다(#48 · `[f02.3.pass]` ②).
+            identity: discriminator.identity_ceiling().min(s.identity),
         });
     }
     out

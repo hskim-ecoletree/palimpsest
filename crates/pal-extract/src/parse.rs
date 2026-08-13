@@ -11,6 +11,10 @@ use tree_sitter::Node;
 /// 토큰 사이 구분자. 넣지 않으면 `fun f` 와 `funf` 가 같은 바이트열이 된다.
 const TOKEN_SEPARATOR: u8 = 0x1f;
 
+/// 지워진 지역 이름의 표식. **소스에 나타날 수 없는 바이트여야 한다** — 나타나면
+/// 이름이 `\x1e0` 인 변수가 첫째 지역과 같은 바이트열이 된다.
+const LOCAL_MARKER: u8 = 0x1e;
+
 #[derive(Debug, thiserror::Error)]
 pub enum ExtractError {
     #[error("문법을 붙이지 못했다: {0}")]
@@ -42,14 +46,48 @@ pub enum ExtractError {
 /// 등급이 못 미치는데 지우면 **서로 다른 코드가 같은 요약을 갖는다.** 지우는 것은 **#48**.
 #[must_use]
 pub fn normalize(node: Node<'_>, source: &[u8]) -> Vec<u8> {
+    normalize_erasing(node, source, &|_| None)
+}
+
+/// 지역 이름을 **자리 번호로 지운** 정규형 — `identity_grade == exact` 인 심볼의 것.
+///
+/// # 왜 지우는가, 그리고 왜 아무 때나 지우면 안 되는가
+///
+/// 지역 변수 이름을 바꾸는 것은 의미 변경이 아니다. 안 지우면 `rename` 한 번에 결박이
+/// `stale` 로 켜지고, 사람이 표시를 무시하기 시작하면 제품이 죽는다([R-07]).
+///
+/// **그런데 어느 이름이 지역인지 모르면 지울 수 없다.** 모르는 채로 지우면 서로 다른
+/// 코드가 같은 요약을 갖는다 — [R-22] 가 경고한 정확히 그 형태다. 그래서 이 함수는
+/// 호출자가 **스코프 해소로** 정한 자리 번호만 받는다.
+///
+/// `erase(byte)` 는 그 자리의 토큰이 지워야 할 지역이면 자리 번호를 낸다.
+///
+/// # 자리 번호가 이름을 대신한다 — 그리고 **번호끼리는 구별된다**
+///
+/// 전부 같은 바이트로 지우면 `f(a, b)` 와 `f(a, a)` 가 같아진다. 번호를 실어 **어느
+/// 지역인지**는 남기고 **그것의 이름**만 지운다.
+///
+/// [R-07]: ../../../docs/plan/00-risks.md#r-07
+/// [R-22]: ../../../docs/plan/00-risks.md#r-22
+#[must_use]
+pub fn normalize_erasing(
+    node: Node<'_>,
+    source: &[u8],
+    erase: &dyn Fn(usize) -> Option<usize>,
+) -> Vec<u8> {
     let mut out = Vec::new();
-    normalize_into(&mut out, node, source);
+    normalize_into(&mut out, node, source, erase);
     out
 }
 
 /// **커서를 넘기지 않고 각 층에서 만든다.** 넘기면 커서의 수명이 자식 노드의 수명과
 /// 얽혀 재귀가 서지 않는다 — 빌림 하나를 아끼려다 타입이 막는 자리였다.
-fn normalize_into(out: &mut Vec<u8>, node: Node<'_>, source: &[u8]) {
+fn normalize_into(
+    out: &mut Vec<u8>,
+    node: Node<'_>,
+    source: &[u8],
+    erase: &dyn Fn(usize) -> Option<usize>,
+) {
     let kind = node.kind();
     if kind.contains("comment") {
         return;
@@ -58,13 +96,19 @@ fn normalize_into(out: &mut Vec<u8>, node: Node<'_>, source: &[u8]) {
         if kind == ";" {
             return;
         }
-        out.extend_from_slice(&source[node.byte_range()]);
+        match erase(node.start_byte()) {
+            Some(slot) => {
+                out.push(LOCAL_MARKER);
+                out.extend_from_slice(slot.to_string().as_bytes());
+            }
+            None => out.extend_from_slice(&source[node.byte_range()]),
+        }
         out.push(TOKEN_SEPARATOR);
         return;
     }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        normalize_into(out, child, source);
+        normalize_into(out, child, source, erase);
     }
 }
 

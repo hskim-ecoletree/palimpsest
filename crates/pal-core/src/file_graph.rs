@@ -31,7 +31,9 @@
 use serde::Serialize;
 
 use crate::capable::Capable;
+use crate::coord::ExportDigest;
 use crate::ledger::{ExtractGrade, LanguageId};
+use crate::scope::ScopeChain;
 use crate::symbol::{Span, Symbol};
 
 /// [`FileGraph::symbols`] 안의 자리. **파일 안에서만 뜻이 있다.**
@@ -68,6 +70,30 @@ pub struct ExportSet {
     pub star_from: Vec<String>,
     /// 기본 내보내기가 있는가.
     pub has_default: bool,
+}
+
+impl ExportSet {
+    /// 이 집합의 요약. **정렬·중복 제거된 뒤에 불러야 한다.**
+    ///
+    /// 성분 사이에 `\0` 을 넣는다 — 넣지 않으면 `["ab","c"]` 와 `["a","bc"]` 가 같은
+    /// 값이 되고, 그것이 **서로 다른 표면을 하나로 만드는** 형태다(`SymbolId::compute`
+    /// 와 같은 자리).
+    #[must_use]
+    pub fn digest(&self) -> ExportDigest {
+        let mut h = blake3::Hasher::new();
+        h.update(b"pal-exports-v1\0");
+        h.update(if self.has_default { b"default\0" } else { b"\0" });
+        for n in &self.names {
+            h.update(n.as_bytes());
+            h.update(b"\0");
+        }
+        h.update(b"star\0");
+        for m in &self.star_from {
+            h.update(m.as_bytes());
+            h.update(b"\0");
+        }
+        ExportDigest::from_bytes(*h.finalize().as_bytes())
+    }
 }
 
 /// 이 파일이 참조하는 외부 모듈.
@@ -144,6 +170,28 @@ pub struct FileGraph {
     pub exports: Capable<ExportSet>,
     /// 참조하는 외부 모듈 — 위와 같은 이유로 [`Capable`].
     pub imports: Capable<ImportSet>,
+    /// [`exports`] 의 요약 — **[R-05] 의 무효화 전파용.**
+    ///
+    /// # 왜 `exports` 가 있는데 따로 두는가
+    ///
+    /// 무효화 전파는 *"이 파일의 **표면**이 변했는가"* 를 묻고, 그 답은 집합 비교가 아니라
+    /// **한 값의 비교**여야 한다 — 의존 파일이 많을수록 그 비교가 자주 일어난다.
+    ///
+    /// **소유가 이 조각인 근거**는 `docs/gates/F02-3-scope.md` 에 있다. 쓰는 쪽(무효화
+    /// 전파)은 **F05·F07** 이고 여기서 판정하지 않는다 — 이 조각이 지는 것은 *"값이
+    /// 있고, 집합이 같으면 같고 다르면 다르다"* 까지다.
+    ///
+    /// [`exports`]: FileGraph::exports
+    /// [R-05]: ../../../docs/plan/00-risks.md#r-05
+    pub export_digest: Capable<ExportDigest>,
+    /// 파일 안의 스코프 체인 — **L2a**([R-22]). 만들지 않는 추출기에서는 `NotBuilt` 다.
+    ///
+    /// 빈 [`ScopeChain`] 은 *"스코프가 없는 파일"* 이라는 뜻이고 그것은 어떤 파일에
+    /// 대해서도 참이 아니다 — 모듈 스코프는 언제나 있다. Kotlin 추출기는 이것을 안 만들고,
+    /// **안 만들었다고 적는 자리가 [`Capable`] 이다.**
+    ///
+    /// [R-22]: ../../../docs/plan/00-risks.md#r-22
+    pub scopes: Capable<ScopeChain>,
     /// tree-sitter 가 오류 회복한 **자리들**. 비면 `parsed`, 아니면 `partial`.
     ///
     /// **소스 순서다.** 정렬하지 않는다 — 순회가 소스 순서로 내는 것이 곧 사용자가 파일을
@@ -163,7 +211,12 @@ impl FileGraph {
         recovery_sites: Vec<RecoverySite>,
         exports: Capable<ExportSet>,
         imports: Capable<ImportSet>,
+        scopes: Capable<ScopeChain>,
     ) -> Self {
+        let export_digest = match &exports {
+            Capable::Present(e) => Capable::Present(ExportSet::digest(e)),
+            Capable::NotBuilt { capability } => Capable::NotBuilt { capability: *capability },
+        };
         Self {
             language,
             grade,
@@ -171,6 +224,8 @@ impl FileGraph {
             contains: Vec::new(),
             exports,
             imports,
+            export_digest,
+            scopes,
             recovery_sites,
         }
     }
@@ -232,6 +287,7 @@ mod tests {
             kind: SymbolKind::Class,
             span: Span { byte_start: 0, byte_end: 1, line_start: 1, line_end: 1 },
             body: BodyDigest::of_normalized(name.as_bytes()),
+            identity: crate::IdentityGrade::Ordinal,
         }
     }
 
@@ -254,6 +310,7 @@ mod tests {
             recovery_sites,
             안만듦(),
             Capable::not_built(crate::CapabilityId::new("F02", "kotlin-imports")),
+            Capable::not_built(crate::CapabilityId::new("F02", "kotlin-scopes")),
         )
     }
 

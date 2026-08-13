@@ -113,6 +113,11 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
             name: name.to_owned(),
             kind,
             body: BodyDigest::of_normalized(&normalize(decl_node, source)),
+            // **L1 이라 심볼 단위로도 `ordinal` 이다.** 스코프가 없으므로 어느 이름이
+            // 지역인지 모르고, 모르면 지우지 않는다 — 그것이 R-22 의 요구다.
+            // TypeScript 가 L2 로 오를 때 **이 팔이 딸려 오르면 안 된다**(`grade_of` 의
+            // 주석과 같은 자리).
+            identity: crate::grade_of(Language::Kotlin).identity(),
             span: Span {
                 byte_start: decl_node.start_byte(),
                 byte_end: decl_node.end_byte(),
@@ -131,5 +136,8 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
         // *"아무것도 안 내보낸다"* 는 뜻이고 Kotlin 최상위 선언에 대해 그것은 거짓이다.
         Capable::not_built(CapabilityId::new("F02", "kotlin-exports")),
         Capable::not_built(CapabilityId::new("F02", "kotlin-imports")),
+        // **빈 체인이 아니라 안 만들었다고 적는다.** 빈 `ScopeChain` 은 *"스코프가 없는
+        // 파일"* 이라는 뜻이고 그것은 어떤 Kotlin 파일에 대해서도 참이 아니다.
+        Capable::not_built(CapabilityId::new("F02", "kotlin-scopes")),
     ))
 }

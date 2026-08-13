@@ -11,6 +11,7 @@ mod extractor;
 mod kotlin;
 mod parse;
 mod recognize;
+mod scopes;
 mod typescript;
 
 use pal_core::{Capable, ExtractorVersion, Language, Symbol};
@@ -36,7 +37,14 @@ pub const GRAMMAR_REV: &str = "3dea6dfa9c0129deb7c4315afbda806c85c41667";
 ///
 /// **문법 rev 는 그대로다.** 축이 둘인 이유가 이것이다 — 추출기 코드가 바뀌었다고
 /// 문법이 바뀐 것은 아니다.
-pub const EXTRACTOR_REV: &str = "s2";
+///
+/// # `s2` → `f02-3` (2026-08-13 · #48)
+///
+/// 두 번째로 올린다. 이유는 첫 번째와 같은 형태다 — **추출 산출이 바뀌었다.**
+/// `Symbol` 에 `identity` 가 붙었고 TypeScript 의 `body_digest` 가 지역 이름을 지우기
+/// 시작했다. 올리지 않으면 **옛 캐시가 옛 요약을 새 스키마로 되돌려 준다** — 그러면
+/// 같은 커밋이 캐시 상태에 따라 다른 답을 낸다.
+pub const EXTRACTOR_REV: &str = "f02-3";
 
 #[must_use]
 pub const fn version() -> ExtractorVersion {
