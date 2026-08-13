@@ -61,6 +61,7 @@ fn check(root: &Path) -> Result<()> {
         ("gix 격리", check_gix_isolation(root)),
         ("스키마 정합", check_schema(root)),
         ("선택 필드 금지 (1단계)", check_optional_fields(root)),
+        ("예산 상수 단일 위치", check_budget_constants(root)),
     ];
     let total = checks.len();
 
@@ -734,4 +735,173 @@ fn render_schema_doc(s: &pal_core::GraphSchema) -> String {
         );
     }
     o
+}
+
+// ── 검사 9 — 예산 상수 단일 위치 (stack §5.5 · `[f05.1.pass]` ①) ─────────────
+//
+// > **단일 위치** — 전부 `pal-core::budget` 의 상수. 다른 곳에 리터럴로 나타나면 CI 실패
+//
+// # 왜 목록이 아니라 검사인가
+//
+// `budget.rs` 는 흩어진 자리의 **목록**을 주석으로 들고 있었다. 그 목록은 넷을 적었고
+// 실물은 **열**이었다 — 그 뒤에 늘어난 넷(`DEFAULT_CACHE_BUDGET_BYTES`·`EXTRACT_CHUNK`·
+// `MARKER_SCAN_BYTES`·`CORRUPT_NOTES`)과 애초에 빠뜨린 하나(`CANDIDATE_LIMIT`, 하필
+// 예산 표의 `K` 다)가 거기 없었다. **사람이 세면 다음에 늘어난 것이 빠진다.**
+//
+// # 이 검사가 세는 두 방향
+//
+// | 방향 | 무엇을 막나 |
+// |---|---|
+// | 이름 → 자리 | `budget.rs` 의 이름이 **다른 곳에서 또 정의되는** 것(재수출·복제) |
+// | 자리 → 이름 | **새 예산이 다른 크레이트에서 태어나는** 것 |
+//
+// 둘째가 이 검사의 요점이다. 첫째만 있으면 목록을 안 늘리는 한 통과한다.
+//
+// # 이 검사가 못 보는 것 — **적어 두지 않으면 완전한 척한다**
+//
+//   · 함수 **안**의 `const`(`fn` 지역 상수)와 `impl` 블록의 결합 상수는 이름 규칙에
+//     안 걸리면 안 보인다
+//   · **낱말로 알아본다.** 예산인데 이름에 아래 낱말이 하나도 없으면 못 잡는다.
+//     그것을 막을 방법이 없고, 막는 척하지 않는 것이 여기서 지는 몫이다
+//   · 리터럴 자체(코드 한가운데의 `2048`)는 안 본다 — 그것은 2 단계다
+
+/// 예산으로 **알아보는** 이름의 낱말. 하나라도 들어 있으면 예산 후보다.
+const BUDGET_WORDS: &[&str] =
+    &["BUDGET", "LIMIT", "MAX", "DEPTH", "CHUNK", "OVERSIZE", "PROVISIONAL", "SCAN_BYTES", "NOTES"];
+
+/// 낱말에 걸리지만 예산이 아닌 것 — **하나하나 이유를 적는다.**
+///
+/// 목록이 느는 것 자체가 관측 대상이다(`vocab.toml` 과 같은 규율).
+const NOT_A_BUDGET: &[(&str, &str)] = &[
+    // `Bucket::ALL`·`Provenance::ALL` 류의 결합 상수. 예산이 아니라 열거의 전수다.
+    ("ALL", "열거의 전수 — 값이 아니라 목록이다"),
+    // xtask 자신의 금지어 표. 이 파일이 자기를 검사하는 자리다.
+    ("INTENT_DELETE_MARKERS", "검사 규칙의 표 — 예산이 아니다"),
+    // **이 검사 자신의 규칙 표.** 처음 돌렸을 때 스스로에게 걸렸고, 걸린 것이 옳다 —
+    // 규칙이 자기를 예외로 두려면 그 사실이 목록에 서야 한다.
+    ("BUDGET_WORDS", "이 검사의 규칙 표 — 예산이 아니다"),
+    ("NOT_A_BUDGET", "이 검사의 예외 표 — 예산이 아니다"),
+];
+
+/// `budget.rs` 의 이름들과, 그 밖에서 태어난 예산 후보.
+///
+/// **순수 함수다** — 파일을 읽지 않는다. 그래야 음성 대조를 시험으로 세울 수 있다
+/// (`[f05.1.pass]` ①: *"상수를 하나 옮겼다 되돌리면 검사가 걸리는지"*).
+fn budget_names(source: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for line in source.lines() {
+        let code = line.split("//").next().unwrap_or("");
+        let Some(rest) = code.trim_start().strip_prefix("pub const ").or_else(|| {
+            code.trim_start().strip_prefix("const ")
+        }) else {
+            continue;
+        };
+        let Some(name) = rest.split(':').next().map(str::trim) else { continue };
+        if name.is_empty() || !name.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_') {
+            continue;
+        }
+        out.push(name.to_owned());
+    }
+    out
+}
+
+/// 이 이름이 **예산으로 보이는가.**
+fn looks_like_a_budget(name: &str) -> bool {
+    if NOT_A_BUDGET.iter().any(|(n, _)| *n == name) {
+        return false;
+    }
+    BUDGET_WORDS.iter().any(|w| name.contains(w))
+}
+
+fn check_budget_constants(root: &Path) -> Result<String> {
+    let home = root.join("crates/pal-core/src/budget.rs");
+    let declared = budget_names(
+        &std::fs::read_to_string(&home)
+            .with_context(|| format!("예산 모듈을 읽지 못했다: {}", home.display()))?,
+    );
+
+    // **하한이다.** 이 파일이 비면 아래 전부가 공짜로 통과한다(`2e2eb3f`).
+    if declared.len() < 6 {
+        bail!(
+            "`pal-core::budget` 에 상수가 {}개뿐이다 — 시험되지 않은 검사다",
+            declared.len()
+        );
+    }
+
+    let mut scanned = 0usize;
+    let mut strays = Vec::new();
+    let mut roots = vec![root.join("xtask/src")];
+    for entry in std::fs::read_dir(root.join("crates"))? {
+        roots.push(entry?.path().join("src"));
+    }
+    for dir in roots {
+        if !dir.exists() {
+            continue;
+        }
+        for file in rust_sources(&dir)? {
+            if file == home {
+                continue;
+            }
+            scanned += 1;
+            let text = std::fs::read_to_string(&file)?;
+            for name in budget_names(&text) {
+                if declared.contains(&name) {
+                    strays.push(format!(
+                        "{}: `{name}` 이 `pal-core::budget` 에도 있다 — 한 곳이 두 곳이 됐다",
+                        file.display()
+                    ));
+                } else if looks_like_a_budget(&name) {
+                    strays.push(format!(
+                        "{}: `{name}` 이 예산으로 보이는데 `pal-core::budget` 밖에 있다",
+                        file.display()
+                    ));
+                }
+            }
+        }
+    }
+
+    if !strays.is_empty() {
+        bail!(
+            "예산 상수가 한 곳에 있지 않다 (stack §5.5):\n    {}",
+            strays.join("\n    ")
+        );
+    }
+    Ok(format!("예산 상수 {}개 · 다른 파일 {scanned}개에 0건", declared.len()))
+}
+
+#[cfg(test)]
+mod budget_tests {
+    use super::*;
+
+    /// **음성 대조다.** 옮긴 것을 되돌리면 검사가 걸려야 한다 — 안 걸리면 이 검사는
+    /// 아무것도 안 세고 있는 것이다(`[f05.1.pass]` ①).
+    #[test]
+    fn 예산이_밖에서_태어나면_잡힌다() {
+        assert!(looks_like_a_budget("EXTRACT_CHUNK"));
+        assert!(looks_like_a_budget("PROVISIONAL_SAMPLE_MAX"));
+        assert!(looks_like_a_budget("CANDIDATE_LIMIT"));
+        assert!(looks_like_a_budget("DEFAULT_CACHE_BUDGET_BYTES"));
+        assert!(looks_like_a_budget("MARKER_SCAN_BYTES"));
+        assert!(looks_like_a_budget("CORRUPT_NOTES"));
+    }
+
+    #[test]
+    fn 예산이_아닌_것은_안_잡는다() {
+        // 늘 참이면 이 검사는 통과할 수 없는 검사이고, 통과할 수 없는 검사는 지워진다.
+        for name in ["ZSTD_LEVEL", "GRAMMAR_REV", "SYMBOL", "BY_NAME", "ALL", "TOKEN_SEPARATOR"] {
+            assert!(!looks_like_a_budget(name), "`{name}` 을 예산으로 잡았다");
+        }
+    }
+
+    #[test]
+    fn 이름을_주석과_함께_읽지_않는다() {
+        // 주석 안의 `const` 는 코드가 아니다 — 어휘 검사와 같은 규율이다.
+        let src = "// const FAKE_MAX: usize = 1;\npub const REAL_MAX: usize = 2;\n";
+        assert_eq!(budget_names(src), vec!["REAL_MAX".to_owned()]);
+    }
+
+    #[test]
+    fn 소문자_이름은_상수가_아니다() {
+        assert!(budget_names("const foo: usize = 1;\n").is_empty());
+    }
 }
