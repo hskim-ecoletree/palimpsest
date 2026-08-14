@@ -30,6 +30,7 @@ mod ledger;
 mod manifest;
 mod projection;
 mod query_log;
+mod radius;
 mod rebind;
 mod repo;
 mod schema;
@@ -52,8 +53,8 @@ pub use budget::{
     PROVISIONAL_ERROR_RATIO_PERCENT,
     PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_PATH_PRODUCT_MAX, PROVISIONAL_SAMPLE_MAX,
     PROVISIONAL_QUARANTINE_BUDGET_BYTES, PROVISIONAL_STITCH_BATCH,
-    PROVISIONAL_STRAY_TMP_MAX_AGE_SECS, PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_VIEW_NODE_MAX,
-    SHEBANG_SCAN_BYTES,
+    PROVISIONAL_STRAY_TMP_MAX_AGE_SECS, PROVISIONAL_TRAVERSAL_DEPTH,
+    PROVISIONAL_VIEW_NODE_MAX, PROVISIONAL_WATCH_PRODUCT_MAX, SHEBANG_SCAN_BYTES,
 };
 pub use capable::{Capable, CapabilityId, Declared};
 pub use catalog::{ArgDecl, CatalogError, QueryCatalog, QueryDecl};
@@ -94,6 +95,7 @@ pub use schema::{
 };
 pub use projection::{FileNode, FileRow, RefCounts, ReferenceEdge, file_edges};
 pub use query_log::{QueryLogEntry, QueryName};
+pub use radius::{BudgetRefusal, Neighborhood, Radius, check_budget, expand};
 pub use rebind::{MatchSignals, RebindProposal, propose, propose_with_shape};
 pub use repo::{Digest, ObjectName, RepoAlias, RepoId, RepoPath, Snapshot, TreeRef};
 pub use scope::{
