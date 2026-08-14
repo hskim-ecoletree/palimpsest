@@ -151,6 +151,16 @@ pub struct Projection {
 }
 
 impl Projection {
+    /// 읽기 트랜잭션 하나. **여는 자리가 하나다.**
+    fn read(&self) -> Result<redb::ReadTransaction, ProjectionError> {
+        self.db.begin_read().map_err(tx)
+    }
+
+    /// 쓰기 트랜잭션 하나. **여는 자리가 하나다.**
+    fn write(&self) -> Result<WriteTransaction, ProjectionError> {
+        self.db.begin_write().map_err(tx)
+    }
+
     /// # Errors
     /// 파일을 열지 못하면.
     pub fn open(path: &Path) -> Result<Self, ProjectionError> {
@@ -186,7 +196,7 @@ impl Projection {
 
         // ② 배치마다 커밋한다. **중단되면 그 배치만 잃고 살아 있는 자리는 온전하다.**
         for chunk in files.chunks(batch) {
-            let write = self.db.begin_write().map_err(tx)?;
+            let write = self.write()?;
             {
                 let mut by_id = write.open_table(SYMBOL_STAGE).map_err(tx)?;
                 let mut by_name = write.open_multimap_table(BY_NAME_STAGE).map_err(tx)?;
@@ -248,7 +258,7 @@ impl Projection {
     /// 여기가 `[f22.4]` 의 0/100 이 배치 커밋과 함께 서는 자리다 — 읽는 쪽이 볼 수 있는
     /// 상태는 **교체 전 전체**와 **교체 후 전체** 둘뿐이다.
     fn swap(&self, built_for: &str) -> Result<(), ProjectionError> {
-        let write = self.db.begin_write().map_err(tx)?;
+        let write = self.write()?;
         write.delete_table(SYMBOL).map_err(tx)?;
         write.delete_multimap_table(BY_NAME).map_err(tx)?;
         write.delete_table(FILE).map_err(tx)?;
@@ -275,7 +285,7 @@ impl Projection {
 
     /// 무대를 비우고 자리를 만든다.
     fn prepare_stage(&self) -> Result<(), ProjectionError> {
-        let write = self.db.begin_write().map_err(tx)?;
+        let write = self.write()?;
         clear_stage(&write)?;
         open_stage(&write)?;
         write.commit().map_err(tx)?;
@@ -295,7 +305,7 @@ impl Projection {
     pub fn rebuild(&self, symbols: &[SymbolNode]) -> Result<usize, ProjectionError> {
         self.prepare_stage()?;
         {
-            let write = self.db.begin_write().map_err(tx)?;
+            let write = self.write()?;
             {
                 let mut by_id = write.open_table(SYMBOL_STAGE).map_err(tx)?;
                 let mut by_name = write.open_multimap_table(BY_NAME_STAGE).map_err(tx)?;
@@ -317,7 +327,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하거나 값을 풀지 못하면.
     pub fn symbol(&self, id: SymbolId) -> Result<Option<SymbolNode>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         // 아직 아무것도 안 들어간 2층이면 자리 자체가 없다.
         let Ok(by_id) = read.open_table(SYMBOL) else {
             return Ok(None);
@@ -337,7 +347,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하면.
     pub fn resolve_name(&self, name: &str) -> Result<Vec<SymbolNode>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let (Ok(by_name), Ok(by_id)) = (read.open_multimap_table(BY_NAME), read.open_table(SYMBOL))
         else {
             return Ok(Vec::new());
@@ -374,7 +384,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하거나 값을 풀지 못하면.
     pub fn file(&self, path: &RepoPath) -> Result<Option<FileRow>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let Ok(t) = read.open_table(FILE) else { return Ok(None) };
         let Some(v) = t.get(path.as_str()).map_err(tx)? else { return Ok(None) };
         Ok(Some(
@@ -387,7 +397,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하거나 값을 풀지 못하면.
     pub fn files(&self) -> Result<Vec<FileRow>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let Ok(t) = read.open_table(FILE) else { return Ok(Vec::new()) };
         let mut out = Vec::new();
         for row in t.iter().map_err(tx)? {
@@ -421,7 +431,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하거나 값을 풀지 못하면.
     pub fn symbols_of(&self, path: &RepoPath) -> Result<Vec<SymbolNode>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let (Ok(by_file), Ok(by_id)) = (read.open_multimap_table(BY_FILE), read.open_table(SYMBOL))
         else {
             return Ok(Vec::new());
@@ -448,7 +458,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하거나 값을 풀지 못하면.
     pub fn dump(&self) -> Result<GraphDump, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let mut nodes = Vec::new();
         if let Ok(t) = read.open_table(SYMBOL) {
             for row in t.iter().map_err(tx)? {
@@ -492,7 +502,7 @@ impl Projection {
     ) -> Result<u64, ProjectionError> {
         let raw =
             postcard::to_allocvec(entry).map_err(|e| ProjectionError::Decode(e.to_string()))?;
-        let write = self.db.begin_write().map_err(tx)?;
+        let write = self.write()?;
         let seq;
         {
             let mut t = write.open_table(QUERY_LOG).map_err(tx)?;
@@ -514,7 +524,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하거나 값을 풀지 못하면.
     pub fn query_log(&self, snapshot: &str) -> Result<Vec<QueryLogEntry>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let Ok(t) = read.open_table(QUERY_LOG) else { return Ok(Vec::new()) };
         let mut out = Vec::new();
         for row in t.range((snapshot, 0u64)..=(snapshot, u64::MAX)).map_err(tx)? {
@@ -536,7 +546,7 @@ impl Projection {
         path: &RepoPath,
         name: &str,
     ) -> Result<Option<SymbolId>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let Ok(t) = read.open_table(EXPORTS) else { return Ok(None) };
         let Some(v) = t.get((path.as_str(), name)).map_err(tx)? else { return Ok(None) };
         Ok(symbol_id_of(v.value()))
@@ -583,7 +593,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하면.
     pub fn built_for(&self) -> Result<Option<String>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let Ok(t) = read.open_table(META) else { return Ok(None) };
         let Some(v) = t.get(META_BUILT_FOR).map_err(tx)? else { return Ok(None) };
         let raw = v.value();
@@ -609,7 +619,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하면.
     pub fn table_names(&self) -> Result<Vec<String>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let mut out: Vec<String> = Vec::new();
         for h in read.list_tables().map_err(tx)? {
             out.push(h.name().to_owned());
@@ -626,7 +636,7 @@ impl Projection {
     /// # Errors
     /// 읽기가 실패하면.
     pub fn row_counts(&self) -> Result<BTreeMap<String, u64>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let mut out = BTreeMap::new();
         for h in read.list_tables().map_err(tx)? {
             let name = h.name().to_owned();
@@ -646,7 +656,7 @@ impl Projection {
         which: MultimapTableDefinition<&'static [u8], &'static [u8]>,
         id: SymbolId,
     ) -> Result<Vec<SymbolId>, ProjectionError> {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let Ok(t) = read.open_multimap_table(which) else { return Ok(Vec::new()) };
         let mut out = Vec::new();
         for v in t.get(id.as_bytes().as_slice()).map_err(tx)? {
@@ -663,7 +673,7 @@ impl Projection {
         K: redb::Key + 'static,
         V: redb::Value + 'static,
     {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let Ok(t) = read.open_table(which) else { return Ok(0) };
         let n: u64 = t.len().map_err(tx)?;
         Ok(usize::try_from(n).unwrap_or(usize::MAX))
@@ -677,7 +687,7 @@ impl Projection {
         K: redb::Key + 'static,
         V: redb::Key + 'static,
     {
-        let read = self.db.begin_read().map_err(tx)?;
+        let read = self.read()?;
         let Ok(t) = read.open_multimap_table(which) else { return Ok(0) };
         let n: u64 = t.len().map_err(tx)?;
         Ok(usize::try_from(n).unwrap_or(usize::MAX))
