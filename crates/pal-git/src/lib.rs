@@ -216,6 +216,18 @@ pub struct CommitMeta {
     /// 저자의 안정 식별자 — 이메일. **표시 이름이 아니다**(같은 사람이 여러 이름을 쓴다).
     pub author_id: String,
     pub author_display: String,
+    /// 저자 시각(에포크 초) — **표시용이다.**
+    ///
+    /// # 이 값은 앵커가 아니다 (F09 §6)
+    ///
+    /// 선행 구현은 커밋 시각을 낡음의 앵커로 썼고, 그러면 **포매팅 커밋에도 `stale` 이
+    /// 켜진다** — [R-07] 이 치명이라 부른 실패다. `body_digest` 가 더 강하다.
+    /// **다만 시각은 표시용으로 함께 싣는다** — *"3주 전 코드 기준"* 이 *"12커밋 전"*
+    /// 보다 읽힌다. 그것이 [`pal_core::BoundTime`] 이다.
+    ///
+    /// **커미터가 아니라 저자다** — 리베이스가 커미터 시각을 오늘로 바꾸고, 그러면
+    /// *"3주 전 코드"* 가 리베이스 한 번에 *"오늘"* 이 된다.
+    pub epoch_secs: i64,
 }
 
 /// `gix` 구현. **이 타입 밖에서 `gix` 타입이 보이지 않는다.**
@@ -363,6 +375,7 @@ impl GitAccess for GixRepo {
             summary,
             author_id: author.email.to_string(),
             author_display: author.name.to_string(),
+            epoch_secs: author.time().map_or(0, |t| t.seconds),
         })
     }
 

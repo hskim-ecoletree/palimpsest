@@ -79,14 +79,31 @@ provenance = "asserted"
 rust_type  = "Binding"
 key = ["id"]
 attrs = [
+  # **무엇이** 걸렸나 — 결정·계획·라벨 같은 비코드 개체(F09 §4.3). `note` 는 그 개체의
+  # **본문**이고 이것은 그 개체의 **이름**이다. 둘이 갈려 있어야 같은 결정을 여러
+  # 좌표에 걸 수 있고(F10·F12), 문서가 이동해도 이름이 남는다.
+  #
+  # **`kind` 가 등록형이라는 사실은 이 표에 안 적힌다** — 여기 적으면 그것이 곧 닫힌
+  # 목록이고, F09 §4.3 이 기각한 바로 그 형태다. 등록부는 `pal_core::EntityRegistry`.
+  { name = "subject",       type = "entity_id",     producer = "human",          required = true },
   # 사람이 넣은 것. **S3 에서는 텍스트 조각 하나다** — 문서 인입은 F10.
-  { name = "note",     type = "string",        producer = "human",          required = true },
+  { name = "note",          type = "string",        producer = "human",          required = true },
   # `BOUND_TO` 가 지는 **발생 Snapshot**. 공통 넷 중 넷째다.
-  { name = "bound_at", type = "snapshot",      producer = "machine-record", required = true },
+  { name = "bound_at",      type = "snapshot",      producer = "machine-record", required = true },
+  # 그 커밋의 시각 — **표시용이다. 앵커가 아니다**(F09 §6).
+  #
+  # 앵커로 쓰면 포매팅 커밋에도 `stale` 이 켜지고 그것이 R-07 이 치명이라 부른 실패다.
+  # `body_digest` 가 더 강하다. **다만 시각은 함께 싣는다** — *"3주 전 코드 기준"* 이
+  # *"12커밋 전"* 보다 읽힌다. 상태 계산 경로가 이 값을 안 읽는 것을 CI 가 센다.
+  { name = "bound_at_time", type = "bound_time",    producer = "machine-record", required = true },
+  # **무엇까지** 지켜보나 — 선언이지 계산이 아니다(F09 §3). 이 값이 판정 결과에 함께
+  # 출력된다: *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은 유효하다"* 와 다른
+  # 문장이고, 거짓 음성이 원리적으로 안 닫히므로 **선언이 유일한 대응이다.**
+  { name = "radius",        type = "radius",        producer = "human",          required = true },
   # 감시 집합 — **엣지가 아니라 속성이다.** 결박 시점의 digest 스냅샷은 결박 자신의
-  # 내용이고, 2층의 역방향 색인(F05 의 `WATCH`)이 그것의 파생이다. 엣지로 두면
+  # 내용이고, 의도 저장소의 역방향 색인(`WATCH`)이 그것의 파생이다. 엣지로 두면
   # 공통 넷을 지지 않는 엣지가 하나 생기거나 넷을 무의미하게 채우게 된다.
-  { name = "watch",    type = "watch_entry[]", producer = "machine-record", required = true },
+  { name = "watch",         type = "watch_entry[]", producer = "machine-record", required = true },
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────

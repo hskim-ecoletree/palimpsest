@@ -782,3 +782,26 @@ fn open_stage(write: &WriteTransaction) -> Result<(), ProjectionError> {
     let _ = write.open_table(EXPORTS_STAGE).map_err(tx)?;
     Ok(())
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 반경 확장이 요구하는 이웃 — **F09**
+//
+// `pal-core::radius` 는 2층을 모르고 [`pal_core::Neighborhood`] 위에서 돈다. 여기가
+// 그 트레잇의 유일한 실물 구현이고, 단위 시험의 손으로 만든 표와 **같은 함수를
+// 지나간다**(`pal_core::expand`).
+//
+// # 오류를 빈 목록으로 접는다 — 그리고 그것이 안전한 방향인 이유
+//
+// 트레잇이 `Result` 를 안 진다. 읽기가 실패하면 이웃이 **비고**, 감시 집합은
+// **대상 하나로 줄어든다** — 즉 *"덜 지켜본다"* 이지 *"틀린 것을 지켜본다"* 가 아니다.
+// 그리고 그 축소는 조용하지 않다: 감시 집합 크기가 결박에 저장되고 `binding.status` 가
+// 그것을 낸다. **`callers` 반경인데 크기가 1 이면 산출에서 보인다.**
+impl pal_core::Neighborhood for Projection {
+    fn callers_of(&self, s: SymbolId) -> Vec<SymbolId> {
+        self.callers(s).unwrap_or_default()
+    }
+
+    fn symbols_in(&self, path: &RepoPath) -> Vec<SymbolId> {
+        self.symbols_of(path).map(|v| v.into_iter().map(|n| n.id).collect()).unwrap_or_default()
+    }
+}

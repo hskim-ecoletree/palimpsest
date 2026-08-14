@@ -17,8 +17,8 @@ use std::path::Path;
 
 use pal_core::{Binding, BindingId, SymbolId};
 use redb::{
-    Database, MultimapTableDefinition, ReadOnlyDatabase, ReadableDatabase, ReadableTable,
-    ReadableTableMetadata, TableDefinition,
+    Database, MultimapTableDefinition, ReadOnlyDatabase, ReadableDatabase, ReadableMultimapTable,
+    ReadableTable, ReadableTableMetadata, TableDefinition,
 };
 
 /// 결박 실체.
@@ -26,6 +26,23 @@ const BINDING: TableDefinition<&str, Vec<u8>> = TableDefinition::new("binding");
 
 /// 대상 심볼 → 결박들. **역방향 색인** — `touch` 가 이것을 읽는다.
 const BOUND_BY: MultimapTableDefinition<&[u8], &str> = MultimapTableDefinition::new("bound_by");
+
+/// **감시 원소** → 결박들. `BOUND_BY` 와 다르다 — 반경이 `symbol` 보다 넓으면 갈린다.
+///
+/// # 왜 여기이고 2층이 아닌가 (`[f09].watch_placement`)
+///
+/// `[f05].bound_by_placement` 가 이 둘을 2층에 **안 세웠고** 근거가 *"`Projection::rebuild`
+/// 가 지우는데 재생 코드가 없다"* 였다. **그 근거가 의도 저장소 안에서는 안 걸린다** —
+/// 같은 파일이라 2층 재구축이 안 건드리고, 재생 경로가 `BINDING` 훑기 **하나**다.
+/// F05 의 결정을 뒤집는 것이 아니라 **그 결정이 닿지 않는 자리**이고, `[f05.2]` ④ 의
+/// 모집단(2층 테이블)이 **안 는다**.
+///
+/// # 이것이 없으면 증분 갱신이 없다
+///
+/// 재추출이 digest 를 바꾼 심볼 집합을 알 때(F04), **어느 결박을 다시 계산해야 하는지**
+/// 알 길이 `BINDING` 전수 훑기밖에 없다. 반경이 `symbol` 이면 `BOUND_BY` 로 충분했고,
+/// **반경을 들이는 순간 둘이 갈린다**(F09 §4.1).
+const WATCH: MultimapTableDefinition<&[u8], &str> = MultimapTableDefinition::new("watch");
 
 #[derive(Debug, thiserror::Error)]
 pub enum IntentError {
@@ -129,9 +146,27 @@ impl IntentStore {
     ///
     /// # Errors
     /// 쓰기가 실패하면.
+    /// # 셋이 한 트랜잭션에서 움직인다
+    ///
+    /// `BINDING` · `BOUND_BY` · `WATCH`. **셋 중 하나만 쓰이는 경로가 있으면 그것이 곧
+    /// 조용한 유실이다** — 색인이 실체와 갈려도 **결박 건수는 안 변하므로 왕복 검사가
+    /// 통과한다**(F04 가 발견한 형태). `[f09.1.pass]` 가 그 갈림을 전수로 잰다.
+    ///
+    /// # `WATCH` 의 낡은 자리를 지우는 것은 「의도를 지우는 것」이 아니다
+    ///
+    /// 같은 결박을 더 좁은 반경으로 다시 걸면 옛 감시 원소가 `WATCH` 에 남는다. 그것을
+    /// 안 지우면 색인이 실체와 갈리고 위 검사가 반증을 낸다. **지우는 것은 색인의 한
+    /// 줄이지 결박이 아니다** — `pal-intent` 에 **지우는 공개 API 가 없다**는 R-21 의
+    /// 대응은 그대로다(S3 합격선 ⑤ 는 `pub fn` 의 이름을 센다).
     pub fn record(&self, binding: &Binding) -> Result<(), IntentError> {
         let raw =
             postcard::to_allocvec(binding).map_err(|e| IntentError::Decode(e.to_string()))?;
+        // **덮어쓰기 전의 감시 집합**을 먼저 읽는다 — 트랜잭션 밖에서 읽어도 되는 이유는
+        // 쓰기가 한 프로세스뿐이기 때문이다(`redb` 의 배타 락).
+        let 옛_감시: Vec<SymbolId> =
+            self.get(&binding.id)?.map(|b| b.watch.iter().map(|w| w.symbol).collect()).unwrap_or_default();
+        let 새_감시: Vec<SymbolId> = binding.watch.iter().map(|w| w.symbol).collect();
+
         let write = self.write()?;
         {
             let mut t =
@@ -143,9 +178,103 @@ impl IntentStore {
                 .map_err(|e| IntentError::Transaction(e.to_string()))?;
             idx.insert(binding.target.as_bytes().as_slice(), binding.id.as_str())
                 .map_err(|e| IntentError::Transaction(e.to_string()))?;
+
+            let mut watch = write
+                .open_multimap_table(WATCH)
+                .map_err(|e| IntentError::Transaction(e.to_string()))?;
+            for s in &옛_감시 {
+                if !새_감시.contains(s) {
+                    watch
+                        .remove(s.as_bytes().as_slice(), binding.id.as_str())
+                        .map_err(|e| IntentError::Transaction(e.to_string()))?;
+                }
+            }
+            for s in &새_감시 {
+                watch
+                    .insert(s.as_bytes().as_slice(), binding.id.as_str())
+                    .map_err(|e| IntentError::Transaction(e.to_string()))?;
+            }
         }
         write.commit().map_err(|e| IntentError::Transaction(e.to_string()))?;
         Ok(())
+    }
+
+    /// **이 심볼들을 지켜보는** 결박 전부 — 증분 상태 갱신의 입구 (F09 §4.1).
+    ///
+    /// > 재추출 시 digest 가 바뀐 심볼 집합을 알고 있으므로(F04), `WATCH` 테이블의
+    /// > 역방향 조회로 **영향받는 결박만** 재계산한다. 전체 재계산이 아니다.
+    ///
+    /// **결박 id 순으로 정렬한다** — 같은 저장소가 같은 순서를 낸다.
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 값을 풀지 못하면.
+    pub fn bindings_watching(&self, changed: &[SymbolId]) -> Result<Vec<Binding>, IntentError> {
+        let Some(read) = self.read()? else { return Ok(Vec::new()) };
+        let (Ok(watch), Ok(t)) = (read.open_multimap_table(WATCH), read.open_table(BINDING)) else {
+            return Ok(Vec::new());
+        };
+        let mut ids: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+        for s in changed {
+            let got = watch
+                .get(s.as_bytes().as_slice())
+                .map_err(|e| IntentError::Transaction(e.to_string()))?;
+            for id in got {
+                ids.insert(
+                    id.map_err(|e| IntentError::Transaction(e.to_string()))?.value().to_owned(),
+                );
+            }
+        }
+        let mut out = Vec::new();
+        for id in ids {
+            if let Some(v) = t
+                .get(id.as_str())
+                .map_err(|e| IntentError::Transaction(e.to_string()))?
+            {
+                out.push(
+                    postcard::from_bytes(&v.value())
+                        .map_err(|e| IntentError::Decode(e.to_string()))?,
+                );
+            }
+        }
+        out.sort_by(|a: &Binding, b: &Binding| a.id.cmp(&b.id));
+        Ok(out)
+    }
+
+    /// `WATCH` 색인에 실제로 적힌 `(감시 원소, 결박 id)` 전부 — **검사가 이것을 쓴다.**
+    ///
+    /// # 이 함수가 존재하는 이유가 곧 이 색인의 위험이다
+    ///
+    /// 같은 사실이 `BINDING` 과 `WATCH` **두 곳**에 적혀 있다. 갈려도 **결박 건수는
+    /// 안 변하므로 왕복 검사가 통과한다** — 그러므로 *"두 곳이 갈리는지를 세는 것"* 이
+    /// 유일한 검사이고, 그 검사가 읽을 자리가 여기다(`[f09.1.pass]`).
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn watch_index(&self) -> Result<Vec<(SymbolId, BindingId)>, IntentError> {
+        let Some(read) = self.read()? else { return Ok(Vec::new()) };
+        let Ok(watch) = read.open_multimap_table(WATCH) else { return Ok(Vec::new()) };
+        let mut out = Vec::new();
+        for row in watch.iter().map_err(|e| IntentError::Transaction(e.to_string()))? {
+            let (k, vs) = row.map_err(|e: redb::StorageError| {
+                IntentError::Transaction(e.to_string())
+            })?;
+            let mut raw = [0u8; 32];
+            let bytes = k.value();
+            if bytes.len() != 32 {
+                return Err(IntentError::Decode(format!(
+                    "감시 색인의 열쇠가 32바이트가 아니다: {}바이트",
+                    bytes.len()
+                )));
+            }
+            raw.copy_from_slice(bytes);
+            let symbol = SymbolId::from_bytes(raw);
+            for v in vs {
+                let v = v.map_err(|e| IntentError::Transaction(e.to_string()))?;
+                out.push((symbol, BindingId::new(v.value())));
+            }
+        }
+        out.sort();
+        Ok(out)
     }
 
     /// 이 심볼에 걸린 것 전부. **`touch` 의 근간이다.**
@@ -329,7 +458,18 @@ use serde::{Deserialize, Serialize};
 ///
 /// 2층에는 스키마 버전이 없다 — 지우고 다시 만들면 되기 때문이다. 여기는 **그럴 수
 /// 없으므로** 버전이 있어야 하고, 없으면 옛 파일을 새 코드가 조용히 잘못 읽는다.
-pub const JSONL_SCHEMA_VERSION: u32 = 1;
+///
+/// # 1 → 2 (F09 · 2026-08-14)
+///
+/// `Binding` 이 셋을 더 실었다 — `subject`([`pal_core::EntityId`]) · `radius` ·
+/// `bound_at_time`. **판 1 파일은 그 셋이 없다.**
+///
+/// **판 1 을 읽을 수 있어야 한다.** 못 읽으면 그것은 유실이고, 이 저장소에서
+/// **재생 불가능한 유일한 데이터**다([R-21]). 올리는 규칙은 [`올린다`] 에 있다.
+pub const JSONL_SCHEMA_VERSION: u32 = 2;
+
+/// 이 빌드가 **읽을 수 있는** 판들. 내보내기는 언제나 최신이다.
+pub const READABLE_SCHEMA_VERSIONS: &[u32] = &[1, 2];
 
 /// JSONL 한 줄.
 ///
@@ -348,6 +488,9 @@ pub enum IntentLine {
 /// 읽기 한 회차의 회계.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize)]
 pub struct ImportReport {
+    /// **어느 판을 읽었나.** 옛 판을 읽었다는 사실이 산출에 실려야 사용자가 한 번 더
+    /// 내보내 판을 올릴 수 있다.
+    pub schema_version: u32,
     pub bindings: usize,
     pub aliases: usize,
     /// **이미 있던 것.** 읽기는 더하기이지 바꿔치기가 아니다 — 이 수가 그 증거다.
@@ -393,11 +536,15 @@ impl IntentStore {
         let head = lines.next().ok_or_else(|| {
             IntentError::Decode("빈 파일이다 — 머리 줄이 없으면 판을 알 수 없다".to_owned())
         })?;
-        match serde_json::from_str::<IntentLine>(head) {
-            Ok(IntentLine::Header { schema_version }) if schema_version == JSONL_SCHEMA_VERSION => {}
+        let version = match serde_json::from_str::<IntentLine>(head) {
+            Ok(IntentLine::Header { schema_version })
+                if READABLE_SCHEMA_VERSIONS.contains(&schema_version) =>
+            {
+                schema_version
+            }
             Ok(IntentLine::Header { schema_version }) => {
                 return Err(IntentError::Decode(format!(
-                    "판이 다르다 — 파일 {schema_version} · 이 빌드 {JSONL_SCHEMA_VERSION}"
+                    "판이 다르다 — 파일 {schema_version} · 이 빌드가 읽는 것 {READABLE_SCHEMA_VERSIONS:?}"
                 )));
             }
             _ => {
@@ -405,15 +552,24 @@ impl IntentStore {
                     "첫 줄이 머리가 아니다 — 판을 모르고 읽으면 조용히 잘못 읽는다".to_owned(),
                 ));
             }
-        }
+        };
 
-        let mut report = ImportReport::default();
+        let mut report = ImportReport { schema_version: version, ..ImportReport::default() };
         for (n, line) in lines.enumerate() {
-            let parsed: IntentLine = serde_json::from_str(line)
-                .map_err(|e| IntentError::Decode(format!("{}번째 줄: {e}", n + 2)))?;
+            let 줄 = n + 2;
+            // **판마다 읽는 모양이 다르다.** 새 모양으로 옛 파일을 읽으려 하면
+            // `serde` 가 *"필드가 없다"* 로 멈추고, 그 멈춤이 곧 유실이다.
+            let parsed: IntentLine = if version == 1 {
+                let v1: IntentLineV1 = serde_json::from_str(line)
+                    .map_err(|e| IntentError::Decode(format!("{줄}번째 줄 (판 1): {e}")))?;
+                올린다(v1, 줄)?
+            } else {
+                serde_json::from_str(line)
+                    .map_err(|e| IntentError::Decode(format!("{줄}번째 줄: {e}")))?
+            };
             match parsed {
                 IntentLine::Header { .. } => {
-                    return Err(IntentError::Decode(format!("{}번째 줄에 머리가 또 있다", n + 2)));
+                    return Err(IntentError::Decode(format!("{줄}번째 줄에 머리가 또 있다")));
                 }
                 IntentLine::Binding(b) => {
                     if self.get(&b.id)?.is_some() {
@@ -430,4 +586,68 @@ impl IntentStore {
         }
         Ok(report)
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 판 1 — **읽을 수 있어야 한다. 못 읽으면 유실이다** ([R-21])
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 판 1 의 결박 — `subject` · `radius` · `bound_at_time` 이 없다.
+#[derive(Debug, Clone, Deserialize)]
+struct BindingV1 {
+    id: String,
+    target: pal_core::SymbolId,
+    note: String,
+    bound_at: pal_core::Snapshot,
+    watch: Vec<pal_core::WatchEntry>,
+}
+
+/// 판 1 의 한 줄.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+enum IntentLineV1 {
+    Header { schema_version: u32 },
+    Binding(Box<BindingV1>),
+    Alias(pal_core::RepoAlias),
+}
+
+/// 판 1 을 판 2 로 올린다.
+///
+/// # `subject` 를 **유도한다** — 새로 뽑지 않는다
+///
+/// [`pal_core::EntityId::mint`] 를 부르면 같은 파일을 두 번 읽을 때 **개체가 둘이
+/// 된다.** 읽기는 더하기이지 바꿔치기가 아니므로(`[f05.4]` ②) 두 번 읽는 것은 정상
+/// 경로이고, 그때 왕복이 항등이 아니게 된다.
+///
+/// 그래서 결박 id 에서 **결정적으로** 유도한다. 새 개체는 [`pal_core::EntityId::mint`]
+/// 로만 태어나고, **여기는 옛 파일을 올리는 자리이지 개체를 만드는 자리가 아니다.**
+///
+/// # 반경은 `symbol` 이다
+///
+/// 판 1 에는 반경이 없었고 그때 감시 집합은 **언제나 대상 하나**였다. `symbol` 로
+/// 올리는 것은 추측이 아니라 **그 판의 사실을 적는 것**이다.
+///
+/// # 시각은 [`pal_core::BoundTime::Worktree`] 가 아니다
+///
+/// 판 1 은 시각을 **안 실었다.** 「워킹트리라 없다」와 「옛 판이라 모른다」는 다른
+/// 사건이므로 [`pal_core::BoundTime::Unrecorded`] 로 적는다 — 조용히 0 을 넣으면
+/// *"1970년 코드 기준"* 이 화면에 뜬다.
+fn 올린다(line: IntentLineV1, 줄: usize) -> Result<IntentLine, IntentError> {
+    Ok(match line {
+        IntentLineV1::Header { schema_version } => IntentLine::Header { schema_version },
+        IntentLineV1::Alias(a) => IntentLine::Alias(a),
+        IntentLineV1::Binding(b) => {
+            let id = BindingId::new(b.id);
+            if id.as_str().is_empty() {
+                return Err(IntentError::Decode(format!("{줄}번째 줄의 결박에 id 가 없다")));
+            }
+            IntentLine::Binding(Box::new(Binding::from_v1(
+                id,
+                b.target,
+                &b.note,
+                b.bound_at,
+                b.watch,
+            )))
+        }
+    })
 }

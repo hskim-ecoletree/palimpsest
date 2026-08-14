@@ -184,8 +184,14 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
                 Provenance::Asserted,
                 Anchor::At(coord(b.target)),
             )
+            // **F09 가 셋을 더했다.** 스키마가 `required` 로 적었으므로 여기서 안 실으면
+            // 불변식 ②가 결박 전부를 위반으로 센다 — 그것이 F22-1 의 계약이고,
+            // *"스키마를 코드에 맞추지 않고 코드를 스키마에 맞춘다"* 의 실제 하중이다.
+            .with_attr("subject", Producer::Human)
             .with_attr("note", Producer::Human)
             .with_attr("bound_at", Producer::MachineRecord)
+            .with_attr("bound_at_time", Producer::MachineRecord)
+            .with_attr("radius", Producer::Human)
             .with_attr("watch", Producer::MachineRecord),
         );
         edges.push(pal_core::EdgeInstance::one(

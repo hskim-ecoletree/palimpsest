@@ -159,26 +159,36 @@ impl BodyDigest {
 /// L0 에서 결박을 시도하는 코드는 **컴파일되지 않는다**:
 ///
 /// ```compile_fail
-/// # use pal_core::{Binding, SymbolIdentity, Snapshot, RepoId, TreeRef, ObjectName};
+/// # use pal_core::{Binding, BoundTime, EntityId, EntityKind, EntityOrigin, ObjectName,
+/// #                Radius, RepoId, Snapshot, SymbolIdentity, TreeRef};
 /// let snapshot = Snapshot::single(RepoId::new("r"), TreeRef::Committed(ObjectName::from_bytes([0; 20])));
+/// let subject = EntityId::mint(EntityKind::new("decision"), EntityOrigin::Hand);
 /// // `SymbolIdentity` 는 `SymbolId` 가 아니다 — 그리고 `Unavailable` 에서 꺼낼 수도 없다.
-/// let _ = Binding::new(SymbolIdentity::Unavailable, "메모", snapshot, Vec::new());
+/// let _ = Binding::new(
+///     subject, SymbolIdentity::Unavailable, "메모", snapshot,
+///     BoundTime::Worktree, Radius::Symbol, Vec::new(),
+/// );
 /// ```
 ///
 /// 같은 코드가 좌표를 **꺼내고 나면** 컴파일된다 — 꺼내는 길이 `Exact` 와 `Ordinal`
 /// 둘뿐이기 때문이다:
 ///
 /// ```
-/// # use pal_core::{Binding, SymbolId, SymbolIdentity, Snapshot, RepoId, TreeRef, ObjectName, Discriminator, SymbolKind, RepoPath};
+/// # use pal_core::{Binding, BoundTime, Discriminator, EntityId, EntityKind, EntityOrigin,
+/// #                ObjectName, Radius, RepoId, RepoPath, Snapshot, SymbolId, SymbolIdentity,
+/// #                SymbolKind, TreeRef};
 /// # let id = SymbolId::compute(&RepoId::new("r"), &RepoPath::new("a.ts"), &[], "f",
 /// #     &Discriminator::new(SymbolKind::Function, 0));
 /// # let snapshot = Snapshot::single(RepoId::new("r"), TreeRef::Committed(ObjectName::from_bytes([0; 20])));
+/// # let subject = EntityId::mint(EntityKind::new("decision"), EntityOrigin::Hand);
 /// let target = match SymbolIdentity::Exact(id) {
 ///     SymbolIdentity::Exact(id) | SymbolIdentity::Ordinal(id) => id,
 ///     // **이 팔에서 낼 수 있는 값이 없다.** 그래서 여기서 결박이 끝난다.
 ///     SymbolIdentity::Unavailable => return,
 /// };
-/// let _ = Binding::new(target, "메모", snapshot, Vec::new());
+/// let _ = Binding::new(
+///     subject, target, "메모", snapshot, BoundTime::Worktree, Radius::Symbol, Vec::new(),
+/// );
 /// ```
 ///
 /// [F03 §3.3]: ../../../docs/plan/features/F03-identity.md

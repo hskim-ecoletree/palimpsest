@@ -40,7 +40,10 @@ use crate::repo::RepoPath;
 
 /// 무엇까지 지켜보는가. **선언이지 계산이 아니다.**
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case", tag = "radius")]
+// **내부 태그를 안 쓴다.** 이 값이 `postcard` 로 의도 저장소에 저장되는데
+// postcard 는 내부 태그 열거를 *"영원히 구현하지 않는다"* 고 말한다. 외부 태그면
+// JSON 도 그대로 읽힌다 — `"symbol"` · `{"closure":{"k":2}}`.
+#[serde(rename_all = "snake_case")]
 pub enum Radius {
     /// 결박된 심볼의 요약 하나. **기본값이다.**
     Symbol,

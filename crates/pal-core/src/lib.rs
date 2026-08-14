@@ -44,7 +44,7 @@ mod version;
 mod view;
 
 pub use binding::{
-    Binding, BindingId, BindingStatus, CodeFreshness, Lineage, WatchEntry,
+    Binding, BindingId, BindingStatus, BoundTime, CodeFreshness, Lineage, WatchEntry,
 };
 // **예산 상수는 여기 하나에서 나간다** — stack §5.5 · `[f05.1.pass]` ①.
 // 다른 모듈이 같은 이름을 재수출하면 *"한 곳"* 이 두 곳이 된다.

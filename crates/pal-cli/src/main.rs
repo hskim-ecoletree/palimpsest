@@ -54,6 +54,13 @@ enum Command {
         /// 걸 조각
         #[arg(long)]
         note: String,
+        /// 무엇까지 지켜보나 — `symbol`(기본) · `callers` · `closure:<k>` · `files:<경로,…>`.
+        ///
+        /// **넓을수록 거짓 음성이 줄고 거짓 양성이 는다.** 선언한 값이 판정 결과에
+        /// 함께 출력된다 — *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은
+        /// 유효하다"* 와 다른 문장이다(F09 §3).
+        #[arg(long, default_value = "symbol")]
+        radius: String,
         /// 저장소 경로
         #[arg(long, default_value = ".")]
         repo: PathBuf,
@@ -296,9 +303,10 @@ enum CacheCommand {
 fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Symbols { path, json, graph } => symbols(&path, json, graph),
-        Command::Bind { name, note, repo, at, cache_dir, index, intent } => {
-            bind::run(&repo, at.as_deref(), cache_dir, index, intent, &name, &note)
-        }
+        Command::Bind { name, note, radius, repo, at, cache_dir, index, intent } => bind::run(
+            bind::Args { repo: &repo, rev: at.as_deref(), cache_dir, index, intent,
+                         name: &name, note: &note, radius: &radius },
+        ),
         Command::Defect { rev, repo, history_limit, json } => {
             let report = defect::run(
                 &rev,

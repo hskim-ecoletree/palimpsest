@@ -23,8 +23,11 @@
 | 노드 | 속성 | 형 | 생산자 | 필수 |
 |---|---|---|---|---|
 | `Actor` | `display` | `string` | `extractor` | 예 |
+| `Binding` | `subject` | `entity_id` | `human` | 예 |
 | `Binding` | `note` | `string` | `human` | 예 |
 | `Binding` | `bound_at` | `snapshot` | `machine-record` | 예 |
+| `Binding` | `bound_at_time` | `bound_time` | `machine-record` | 예 |
+| `Binding` | `radius` | `radius` | `human` | 예 |
 | `Binding` | `watch` | `watch_entry[]` | `machine-record` | 예 |
 | `Change` | `kind` | `enum:ChangeKind` | `extractor` | 예 |
 | `Change` | `summary` | `string` | `extractor` | 예 |

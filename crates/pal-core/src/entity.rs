@@ -71,7 +71,8 @@ impl std::fmt::Display for EntityKind {
 /// 이 타입이 존재하는 이유다** — 경로 해시를 정체성으로 쓰면 문서 하나를 옮길 때마다
 /// 결박이 전멸한다.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case", tag = "origin")]
+// **내부 태그를 안 쓴다** — `postcard` 가 못 싣는다([`crate::Radius`] 와 같은 자리).
+#[serde(rename_all = "snake_case")]
 pub enum EntityOrigin {
     /// 사람이 명령줄에서 직접 넣었다 — **이 빌드의 유일한 입구다**(S3 · F09).
     /// 문서 인입은 F10 이고 그때 [`Self::Document`] 가 처음 하중을 진다.
@@ -97,6 +98,21 @@ impl EntityId {
         Self { kind, id: Ulid::now(), origin }
     }
 
+    /// 씨앗에서 **결정적으로** 유도한다 — **옛 판을 올릴 때만 쓴다.**
+    ///
+    /// # 왜 이 문이 필요한가
+    ///
+    /// [`Self::mint`] 를 부르면 같은 파일을 두 번 읽을 때 **개체가 둘이 된다.**
+    /// 의도 저장소의 읽기는 **더하기이지 바꿔치기가 아니므로**(`[f05.4]` ②) 두 번
+    /// 읽는 것은 정상 경로이고, 그때 왕복이 항등이 아니게 된다.
+    ///
+    /// **새 개체는 이 함수로 만들지 않는다.** 유도한 값은 씨앗에 묶여 있으므로,
+    /// 씨앗이 같은 서로 다른 개체가 같은 이름을 갖는다.
+    #[must_use]
+    pub fn derived(kind: EntityKind, origin: EntityOrigin, seed: &[u8]) -> Self {
+        Self { kind, id: Ulid::derived(seed), origin }
+    }
+
     /// 화면과 산출에 싣는 형태 — `decision/01J...`.
     #[must_use]
     pub fn to_display(&self) -> String {
@@ -115,8 +131,34 @@ const CROCKFORD: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// 시간순으로 정렬되는 128비트 이름. **26자 Crockford base32.**
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+///
+/// # 직렬화가 숫자가 아니라 **글자**다
+///
+/// 이유가 둘이고 하나는 강제다:
+///
+///   · **강제** — `serde_json` 은 `u128` 을 *"지원하지 않는다"* 로 거절한다. 그리고
+///     JSONL 내보내기는 [R-21] 의 **유일한 복구 경로**이므로 이 타입이 거기 못 실리면
+///     결박이 못 나간다
+///   · **옳다** — 복구 파일은 사람이 읽고 고칠 수 있어야 한다. `01JQ…` 는 읽히고
+///     `2071394...` 는 안 읽힌다
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Ulid(u128);
+
+impl Serialize for Ulid {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_str(self)
+    }
+}
+
+impl<'de> Deserialize<'de> for Ulid {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let raw = String::deserialize(d)?;
+        // **조용히 0 으로 접지 않는다** — 서로 다른 문자열이 같은 이름이 된다.
+        Self::parse(&raw).ok_or_else(|| {
+            serde::de::Error::custom(format!("ULID 가 아니다: `{raw}` (26자 Crockford base32)"))
+        })
+    }
+}
 
 impl Ulid {
     /// 지금 시각으로 하나.
@@ -142,6 +184,20 @@ impl Ulid {
         let b = u128::from(임의값(n.wrapping_add(0x9E37_79B9_7F4A_7C15)));
         let rand80 = ((a << 16) ^ b) & 0x0000_0000_0000_FFFF_FFFF_FFFF_FFFF_FFFF;
         Self((u128::from(ms) << 80) | rand80)
+    }
+
+    /// 씨앗에서 **결정적으로**. **옛 판을 올릴 때만 쓴다**([`EntityId::derived`]).
+    ///
+    /// 시각 자리도 씨앗에서 나오므로 **시간순 정렬이 뜻을 잃는다.** 그것이 이 함수를
+    /// 일반 경로에 두지 않는 이유이고, 이름이 그렇게 말한다.
+    #[must_use]
+    pub fn derived(seed: &[u8]) -> Self {
+        let mut h = blake3::Hasher::new();
+        h.update(b"pal-entity-v1\0");
+        h.update(seed);
+        let mut raw = [0u8; 16];
+        raw.copy_from_slice(&h.finalize().as_bytes()[..16]);
+        Self(u128::from_be_bytes(raw))
     }
 
     /// 이 이름이 실린 밀리초. **표시용이다** — 앵커가 아니다.
