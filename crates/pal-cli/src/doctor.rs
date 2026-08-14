@@ -31,7 +31,7 @@ use pal_core::{
     Anchor, BINDING_INDEX_KIND, Capable, CapabilityId, CapabilitySet, Coord, Coverage,
     DERIVED_KIND, Diagnosis, DoctorScope, Elision, Envelope, ExtractGrade, GraphSchema,
     GraphView, IdentityGrade, InvariantOutcome, LedgerRef, NodeInstance, NodeKey, Producer,
-    Provenance, ProjectionFreshness, RESIDUAL_KIND, ResolutionGrade, SCOPE_REDUCTION_KIND,
+    Provenance, ProjectionFreshness, QueryName, RESIDUAL_KIND, ResolutionGrade, SCOPE_REDUCTION_KIND,
     Snapshot, SymbolNode,
 };
 use pal_intent::IntentStore;
@@ -47,8 +47,8 @@ const SCHEMA: &str = include_str!("../../../schema/graph.toml");
 fn capabilities() -> CapabilitySet {
     CapabilitySet::new(
         vec![
-            "ledger.snapshot".to_owned(),
-            "symbol.resolve".to_owned(),
+            QueryName::LedgerSnapshot.name().to_owned(),
+            QueryName::SymbolResolve.name().to_owned(),
             "graph.doctor".to_owned(),
         ],
         vec![

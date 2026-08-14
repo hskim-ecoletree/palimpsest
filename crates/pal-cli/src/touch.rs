@@ -12,7 +12,7 @@ use anyhow::{Context, Result};
 use pal_core::{
     BindingStatus, BoundItem, Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision,
     Envelope, ExtractGrade, IdentityGrade, LedgerRef, PROVISIONAL_STITCH_BATCH,
-    ProjectionFreshness, RebuildState, Slot, SymbolFacts, SymbolNode, TouchAnswer,
+    ProjectionFreshness, QueryName, RebuildState, Slot, SymbolFacts, SymbolNode, TouchAnswer,
     TouchResult,
 };
 use pal_intent::IntentStore;
@@ -24,8 +24,8 @@ use crate::ledger;
 fn capabilities() -> CapabilitySet {
     CapabilitySet::new(
         vec![
-            "ledger.snapshot".to_owned(),
-            "symbol.resolve".to_owned(),
+            QueryName::LedgerSnapshot.name().to_owned(),
+            QueryName::SymbolResolve.name().to_owned(),
             "binding.touch".to_owned(),
             // **F05 가 더한 것** — 파일 **안**의 참조 관계. 파일 경계를 넘는 것은 F07 이고,
             // 그 사실이 `coverage.unresolved` 에 수로 실린다.
