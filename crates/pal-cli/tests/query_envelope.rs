@@ -59,8 +59,15 @@ fn 질의(repo: &std::path::Path, name: &str, arg: Option<&str>) -> serde_json::
 fn 모든_질의가_봉투를_지고_나온다() {
     let repo = 저장소("envelope");
     // **하한이다** — 질의 목록이 비면 아래가 공짜로 통과한다.
-    let 목록 = pal(&repo, &["query", "--list"]);
-    assert_eq!(목록.lines().count(), 질의들.len(), "질의 목록과 시험 표가 어긋났다");
+    //
+    // ⚠ **F06 이 `--list` 의 모양을 바꿨다.** 옛 판은 이름을 한 줄에 하나씩 냈고 이
+    // 단언은 줄 수를 셌다. 지금은 **답하는 것과 아직 못 만든 것을 함께** 내므로
+    // (`[f06.1.pass]` ④) 줄 수가 여섯이 아니다. **기계가 읽는 표면**으로 옮긴다 —
+    // 그쪽은 사람용 장식이 없고 파이프의 다음 단계가 파싱하는 바로 그것이다.
+    let 목록: serde_json::Value =
+        serde_json::from_str(&pal(&repo, &["query", "--list", "--json"])).expect("목록 JSON");
+    let 답하는_것 = 목록["built"].as_array().expect("built 가 배열이 아니다");
+    assert_eq!(답하는_것.len(), 질의들.len(), "질의 목록과 시험 표가 어긋났다");
 
     for (name, arg) in 질의들 {
         let v = 질의(&repo, name, arg);

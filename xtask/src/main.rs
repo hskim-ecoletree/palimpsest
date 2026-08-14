@@ -45,7 +45,19 @@ fn main() -> Result<()> {
             println!("  냈다  {}", out.display());
             Ok(())
         }
-        Some(other) => bail!("모르는 명령이다: {other} — `check` 또는 `schema-doc`"),
+        // 파생 — 질의 표를 카탈로그에서 낸다. **손으로 쓰지 않는다.**
+        Some("query-doc") => {
+            let text = std::fs::read_to_string(root.join("surface/queries.toml"))?;
+            let catalog =
+                pal_core::QueryCatalog::parse(&text).map_err(|e| anyhow::anyhow!("{e}"))?;
+            let out = root.join("docs/query-catalog.md");
+            std::fs::write(&out, render_catalog_doc(&catalog))?;
+            println!("  냈다  {}", out.display());
+            Ok(())
+        }
+        Some(other) => {
+            bail!("모르는 명령이다: {other} — `check` · `schema-doc` · `query-doc`")
+        }
     }
 }
 
@@ -60,6 +72,7 @@ fn check(root: &Path) -> Result<()> {
         ("의존 정책", check_deny(root)),
         ("gix 격리", check_gix_isolation(root)),
         ("스키마 정합", check_schema(root)),
+        ("카탈로그 정합", check_catalog(root)),
         ("선택 필드 금지 (1단계)", check_optional_fields(root)),
         ("예산 상수 단일 위치", check_budget_constants(root)),
         ("벗어나는 경로 부재", check_no_escape_hatch(root)),
@@ -541,6 +554,186 @@ fn check_schema(root: &Path) -> Result<String> {
         schema.nodes.len(),
         schema.edges.len()
     ))
+}
+
+// ── 검사 11 — 카탈로그 정합 (F06 §2 · `[f06.1.pass]` ①) ─────────────────────
+//
+// `surface/queries.toml` ↔ `pal_core::QueryName` 의 **양방향** 대조.
+// 「스키마 정합」과 같은 형태이고 같은 자격이다 — F22-1 이 음성 대조 9/9 로 각 방향을
+// **망가뜨려서** 세웠고, 여기서 그 자격을 낮추지 않는다(`scripts/f06-verify.py`).
+//
+// ⚠ **방향마다 루프를 따로 돈다.** 한 루프에서 두 방향을 돌면 한쪽의 `continue` 가
+// 다른 쪽을 끄고, 하필 **통제가 필요한 표본에서만** 꺼진다 — F05 의 바깥 오라클이
+// 정확히 그렇게 꺼졌다(대조가 꺼지는 **열두째** 형태). `check_schema` 가 이미 그
+// 형태이고 여기서도 방향 1·2·3·4 가 각각 자기 루프다.
+//
+// # 방향 4 가 소스 스캔인 이유
+//
+// *"CLI 가 닿을 수 없는 이름이 있으면 실패"* 를 재려면 바이너리를 돌려야 하는데,
+// 이 검사는 **정적**이어야 한다(`cargo xtask check` 는 빌드 산출에 의존하지 않는다).
+// 그래서 여기서는 **CLI 가 자기 목록을 갖지 못하게** 막는다 — 소스에 질의 이름이
+// 리터럴로 박히면 실패다. 목록이 두 곳에서 자라는 것을 원천에서 막는 쪽이 더 강하다.
+// **산출 쪽 대조**(`pal query --list` 의 줄이 카탈로그와 같은가)는
+// `crates/pal-cli/tests/catalog_surface.rs` 가 진다.
+
+/// **하한** — 이보다 적으면 네 방향이 공짜로 통과한다.
+const CATALOG_MIN_QUERIES: usize = 6;
+
+fn check_catalog(root: &Path) -> Result<String> {
+    let path = root.join("surface/queries.toml");
+    let text = std::fs::read_to_string(&path)
+        .with_context(|| format!("카탈로그를 읽지 못했다: {}", path.display()))?;
+
+    // **로딩 시점 거부가 여기서 CI 실패가 된다** — `check_schema` 와 같은 규율.
+    let catalog = pal_core::QueryCatalog::parse(&text).map_err(|e| anyhow::anyhow!("{e}"))?;
+
+    // 하한. **시험되지 않은 대조는 `–` 가 아니라 실패다**(`2e2eb3f`).
+    if catalog.queries.len() < CATALOG_MIN_QUERIES {
+        bail!(
+            "카탈로그의 질의가 {}개다 — {CATALOG_MIN_QUERIES}개 미만이면 아래 네 방향이 \
+             전부 공짜로 통과한다",
+            catalog.queries.len()
+        );
+    }
+
+    let code: BTreeMap<&str, pal_core::QueryName> =
+        pal_core::QueryName::ALL.into_iter().map(|q| (q.name(), q)).collect();
+
+    let mut problems = Vec::new();
+
+    // ── 방향 1 — 카탈로그에 있는데 코드에 없다 ──────────────────────────────
+    for name in catalog.queries.keys() {
+        if !code.contains_key(name.as_str()) {
+            problems.push(format!(
+                "카탈로그가 `{name}` 을 선언했는데 `QueryName::ALL` 에 없다 — \
+                 카탈로그가 이 빌드가 답하지 않는 것을 약속하고 있다"
+            ));
+        }
+    }
+
+    // ── 방향 2 — 코드에 있는데 카탈로그에 없다 ──────────────────────────────
+    for name in code.keys() {
+        if !catalog.queries.contains_key(*name) {
+            problems.push(format!(
+                "코드가 `{name}` 에 답하는데 카탈로그에 없다 — \
+                 질의 추가는 `surface/queries.toml` 변경으로만 일어난다(F06 §2 규칙 1)"
+            ));
+        }
+    }
+
+    // ── 방향 3 — 이름은 같은데 선언이 어긋난다 ──────────────────────────────
+    for (name, decl) in &catalog.queries {
+        let Some(q) = code.get(name.as_str()) else { continue };
+        if decl.summary != q.summary() {
+            problems.push(format!("`{name}` 의 요약이 어긋난다 — 코드 `{}`", q.summary()));
+        }
+        if decl.returns != q.returns() {
+            problems.push(format!(
+                "`{name}` 의 반환이 어긋난다 — 코드 `{}` · 카탈로그 `{}`",
+                q.returns(),
+                decl.returns
+            ));
+        }
+        if decl.introduced != q.introduced() {
+            problems.push(format!(
+                "`{name}` 의 도입이 어긋난다 — 코드 `{}` · 카탈로그 `{}`",
+                q.introduced(),
+                decl.introduced
+            ));
+        }
+        let 이름들: Vec<&str> = decl.args.iter().map(|a| a.name.as_str()).collect();
+        let 타입들: Vec<&str> = decl.args.iter().map(|a| a.value_type.as_str()).collect();
+        if 이름들 != q.arg_names() {
+            problems.push(format!(
+                "`{name}` 의 인자 이름이 어긋난다 — 코드 {:?} · 카탈로그 {이름들:?}",
+                q.arg_names()
+            ));
+        }
+        if 타입들 != q.arg_types() {
+            problems.push(format!(
+                "`{name}` 의 인자 타입이 어긋난다 — 코드 {:?} · 카탈로그 {타입들:?}",
+                q.arg_types()
+            ));
+        }
+    }
+
+    // ── 방향 4 — 표면이 자기 목록을 갖는가 ──────────────────────────────────
+    //
+    // **CLI 소스에 질의 이름이 리터럴로 박히면 실패.** 박히는 순간 목록이 두 곳에서
+    // 자라고, 그러면 카탈로그가 단일 진실이 아니다.
+    let cli_src = root.join("crates/pal-cli/src");
+    let mut 스캔 = 0usize;
+    for file in rust_sources(&cli_src)? {
+        let body = std::fs::read_to_string(&file)?;
+        스캔 += 1;
+        for name in catalog.queries.keys() {
+            // **따옴표 안일 때만 잡는다.** `report.ledger.snapshot` 같은 필드 접근은
+            // 이름이 아니라 경로다 — 그것까지 잡으면 이 검사가 무엇을 재는지 흐려진다.
+            if body.contains(&format!("\"{name}\"")) {
+                problems.push(format!(
+                    "{} 에 질의 이름 `{name}` 이 리터럴로 있다 — 표면은 \
+                     `QueryName::ALL` 에서 렌더링해야 하고, 리터럴은 두 번째 목록이다",
+                    file.strip_prefix(root).unwrap_or(&file).display()
+                ));
+            }
+        }
+    }
+
+    // ── 파생 — 문서 표가 카탈로그에서 나온 그대로인가 ────────────────────────
+    let doc_path = root.join("docs/query-catalog.md");
+    let want = render_catalog_doc(&catalog);
+    match std::fs::read_to_string(&doc_path) {
+        Ok(have) if have == want => {}
+        Ok(_) => problems.push(
+            "docs/query-catalog.md 가 카탈로그와 다르다 — `cargo xtask query-doc` 으로 다시 낸다"
+                .to_owned(),
+        ),
+        Err(_) => {
+            problems.push("docs/query-catalog.md 가 없다 — `cargo xtask query-doc`".to_owned());
+        }
+    }
+
+    if !problems.is_empty() {
+        bail!("카탈로그와 코드가 어긋난다:\n    {}", problems.join("\n    "));
+    }
+    Ok(format!(
+        "질의 {}개 · 양방향 0건 · CLI 소스 {스캔}개에 박힌 이름 0건",
+        catalog.queries.len()
+    ))
+}
+
+/// 파생 — 질의 표. **손으로 쓰지 않는다.**
+fn render_catalog_doc(c: &pal_core::QueryCatalog) -> String {
+    use std::fmt::Write as _;
+    let mut o = String::new();
+    o.push_str("<!-- 이 파일은 `cargo xtask query-doc` 이 낸다. 손으로 고치지 않는다. -->\n");
+    o.push_str("<!-- 정본은 surface/queries.toml 이고 CI 가 둘의 일치를 센다. -->\n\n");
+    let _ = writeln!(o, "# 질의 카탈로그 v{}\n", c.version);
+    let _ = writeln!(
+        o,
+        "**이 빌드가 답하는 질의 {}개.** 여기 없는 것은 이 빌드가 답하지 않는다 — \
+         [F06 §3](plan/features/F06-surface.md)의 표는 **로드맵이고 이 표의 상위집합이 \
+         아니다**.\n",
+        c.queries.len()
+    );
+    o.push_str(
+        "이름을 받는 질의는 `Ambiguous`(여럿이라 못 좁혔다)와 `Unknown`(이 스냅샷에서 \
+         못 찾았다)으로도 답한다. **둘 다 실패가 아니라 답이고 종료 코드 0 이다.**\n\n",
+    );
+    o.push_str("| 질의 | 인자 | 반환 | 도입 | 요약 |\n|---|---|---|---|---|\n");
+    for q in c.queries.values() {
+        let args = if q.args.is_empty() {
+            "—".to_owned()
+        } else {
+            q.args.iter().map(|a| format!("`{}: {}`", a.name, a.value_type)).collect::<Vec<_>>().join(" · ")
+        };
+        let _ = writeln!(
+            o,
+            "| `{}` | {args} | `{}` | {} | {} |",
+            q.name, q.returns, q.introduced, q.summary
+        );
+    }
+    o
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

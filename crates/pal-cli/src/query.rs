@@ -40,10 +40,7 @@ pub struct Args<'a> {
 /// 저장소·캐시·2층 중 하나에 닿지 못하거나 질의 이름을 모르면.
 pub fn run(a: Args) -> Result<()> {
     if a.list {
-        for q in QueryName::ALL {
-            println!("{}", q.name());
-        }
-        return Ok(());
+        return list(a.json);
     }
 
     let Some(query) = NamedQuery::parse(a.name, a.arg) else {
@@ -97,6 +94,67 @@ pub fn run(a: Args) -> Result<()> {
     } else {
         print_screen(&query, &envelope);
     }
+    Ok(())
+}
+
+/// `--list` — **답하는 것과 아직 못 만든 것을 함께 낸다.**
+///
+/// # 왜 둘을 함께 내는가
+///
+/// 카탈로그가 **여섯만** 담는다(`[f06].catalog_scope_decision`). 문서 §3 의 표는 26 인데
+/// 이 빌드가 답하는 것은 여섯이고, 목록이 여섯만 보이면 소비자가 *"이것이 이 제품의
+/// 전부"* 로 읽는다. 그래서 **못 만든 것이 같은 화면에 선다.**
+///
+/// **그러나 못 만든 것은 이름으로 적지 않는다** — 이름을 적으면 그것이 곧 스무 개의
+/// 빈 자리이고 *"있는데 비어 있다"* 로 읽힌다(S2 의 규율). 기능 번호와 능력 이름으로
+/// 적는다. 그것이 [`pal_core::CapabilitySet`] 이 이미 지고 있는 형태다.
+///
+/// **저장소를 안 읽는다.** 이 경로가 호스트도 저장소도 없이 서는 것이
+/// *"호스트 없이도 코어가 답한다"* 의 가장 얕은 층이다.
+fn list(json: bool) -> Result<()> {
+    let caps = pal_query::capabilities();
+    if json {
+        // **기계가 읽는 표면.** 사람용 장식이 하나도 없다 — 파이프의 다음 단계가
+        // 이것을 파싱한다(`[f06.3.pass]` ②).
+        let built: Vec<_> = QueryName::ALL
+            .into_iter()
+            .map(|q| {
+                serde_json::json!({
+                    "name": q.name(),
+                    "summary": q.summary(),
+                    "args": q.arg_names().iter().zip(q.arg_types())
+                        .map(|(n, t)| serde_json::json!({"name": n, "type": t, "required": true}))
+                        .collect::<Vec<_>>(),
+                    "returns": q.returns(),
+                    "introduced": q.introduced(),
+                })
+            })
+            .collect();
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::json!({
+                "built": built,
+                "not_built": caps.not_built,
+            }))?
+        );
+        return Ok(());
+    }
+
+    println!();
+    println!("■ 이 빌드가 답하는 질의 {}", QueryName::ALL.len());
+    for q in QueryName::ALL {
+        let args = q.arg_names().iter().map(|n| format!("<{n}>")).collect::<Vec<_>>().join(" ");
+        println!("  {:<32} {}", format!("{} {args}", q.name()).trim_end(), q.summary());
+    }
+    println!();
+    println!("■ 이 빌드가 아직 못 만든 능력 {}", caps.not_built.len());
+    for c in &caps.not_built {
+        println!("  {:<5} {}", c.feature, c.what);
+    }
+    println!();
+    println!("  **이름을 적지 않습니다** — 아직 만들지 않은 질의의 이름을 적으면");
+    println!("  그것이 곧 빈 자리이고, 빈 자리는 「있는데 비어 있다」로 읽힙니다.");
+    println!();
     Ok(())
 }
 

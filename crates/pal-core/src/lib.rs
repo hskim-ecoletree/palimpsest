@@ -14,6 +14,7 @@ mod attributes;
 mod binding;
 mod budget;
 mod capable;
+mod catalog;
 mod cascade;
 mod chain;
 mod coord;
@@ -54,6 +55,7 @@ pub use budget::{
     SHEBANG_SCAN_BYTES,
 };
 pub use capable::{Capable, CapabilityId, Declared};
+pub use catalog::{ArgDecl, CatalogError, QueryCatalog, QueryDecl};
 pub use cascade::{Cascade, NodeFreshness, cascade};
 pub use chain::{
     Actor, ActorId, Change, ChangeId, ChangeKind, Confidence, Defect, Introduction, Journey,
