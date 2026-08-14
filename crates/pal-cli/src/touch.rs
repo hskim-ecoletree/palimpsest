@@ -67,7 +67,7 @@ pub fn run(
     let indexed = stitched.symbols;
 
     // **의도 저장소는 파생층과 다른 파일이다** — R-21. 2층을 지워도 이쪽은 남는다.
-    let intent = IntentStore::open(&intent_file(repo_path, intent_path))
+    let intent = IntentStore::open_read_only(&intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;
 
     let found = projection.resolve_name(name).context("2층을 읽지 못했다")?;

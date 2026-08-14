@@ -15,6 +15,7 @@ mod bind;
 mod cache;
 mod defect;
 mod doctor;
+mod intent;
 mod ledger;
 mod query;
 mod touch;
@@ -125,6 +126,11 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// 의도 저장소를 JSONL 로 내고 되읽는다 — **재구축 불가한 것의 유일한 복구 경로**
+    Intent {
+        #[command(subcommand)]
+        what: IntentCommand,
+    },
     /// 1층 캐시를 본다 — **`prune` 이 닿는 곳은 `cache/` 뿐이다**(R-21)
     Cache {
         #[command(subcommand)]
@@ -184,6 +190,34 @@ enum Command {
         /// **`--json` 의 형태를 건드리지 않는다** — `s0-compare.py` 가 그것을 파싱한다.
         #[arg(long)]
         symbols: bool,
+    },
+}
+
+#[derive(Subcommand)]
+enum IntentCommand {
+    /// 전부를 JSONL 로 낸다 — **상시 유지되지 않는 내보내기는 없는 것과 같다**
+    Export {
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
+        #[arg(long)]
+        intent: Option<PathBuf>,
+        /// 낼 파일. 없으면 표준출력
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+    /// JSONL 을 읽어 **더한다** — 바꿔치기가 아니다(R-21)
+    Import {
+        /// 읽을 파일
+        file: PathBuf,
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        intent: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
     },
 }
 
@@ -248,6 +282,12 @@ fn main() -> Result<()> {
             };
             doctor::run(&repo, at.as_deref(), cache_dir, index, intent, scope, json)
         }
+        Command::Intent { what } => match what {
+            IntentCommand::Export { repo, intent, out } => intent::export(&repo, intent, out),
+            IntentCommand::Import { file, repo, intent, json } => {
+                intent::import(&repo, intent, &file, json)
+            }
+        },
         Command::Cache { what } => match what {
             CacheCommand::Stats { repo, cache_dir, json } => cache::stats(&repo, cache_dir, json),
             CacheCommand::Prune { repo, cache_dir, budget, json } => cache::prune(

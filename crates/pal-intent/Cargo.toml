@@ -13,6 +13,8 @@ redb.workspace = true
 postcard.workspace = true
 thiserror.workspace = true
 serde.workspace = true
+# JSONL 내보내기 — **의도 저장소만 이 부담을 진다**(F05 §2 의 넷째).
+serde_json.workspace = true
 
 [lints]
 workspace = true

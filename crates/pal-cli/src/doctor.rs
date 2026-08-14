@@ -83,7 +83,7 @@ pub fn run(
     // 이 빌드에서 일어나지 않는다 — 증분은 F05 의 것이다.
     let indexed = projection.rebuild(&report.symbols).context("2층을 세우지 못했다")?;
 
-    let intent = IntentStore::open(&intent_file(repo_path, intent_path))
+    let intent = IntentStore::open_read_only(&intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;
     let bindings = intent.all().context("결박을 읽지 못했다")?;
 

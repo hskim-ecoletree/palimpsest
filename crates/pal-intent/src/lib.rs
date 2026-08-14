@@ -18,13 +18,24 @@
 //!
 //! **여전히 지우는 API 가 없다.** 승인·관측 원문은 F12·F16 이 채운다.
 //!
-//! 내용은 F04·F05 가 채운다. 경계는 `xtask` 가 지금부터 검사한다.
+//! # F05 가 더한 둘
+//!
+//! **JSONL 내보내기/읽기** — 이 저장소만 지는 부담이다(F05 §2 의 넷째). 2층은 지우고
+//! 다시 만들면 되므로 스키마 버전도 백업도 필요 없지만 **여기는 재구축 불가**다.
+//!
+//! **읽기 전용 열기** — `redb::Database::create` 는 열기만 해도 파일을 쓴다(F04 가
+//! 110 바이트를 쟀다). 읽는 명령은 [`IntentStore::open_read_only`] 로 온다.
+//!
+//! **읽기는 여전히 더하기이지 바꿔치기가 아니다** — 파일에 없는 결박은 그대로 남는다.
+//! 지우는 API 가 없다는 대응이 이 명령에서도 참이어야 한다.
 
 #![forbid(unsafe_code)]
 
 mod store;
 
-pub use store::{IntentError, IntentStore};
+pub use store::{
+    ImportReport, IntentError, IntentLine, IntentStore, JSONL_SCHEMA_VERSION,
+};
 
 /// 이 크레이트가 지키는 계약. 문서가 아니라 검사가 이것을 강제한다(`cargo xtask check`).
 pub const CONTRACT: &str = "의도 저장소에는 지우는 API 가 없다 — R-21";

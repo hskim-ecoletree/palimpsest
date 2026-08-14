@@ -24,5 +24,8 @@ serde_json.workspace = true
 anyhow.workspace = true
 rayon.workspace = true
 
+[dev-dependencies]
+pal-intent.workspace = true
+
 [lints]
 workspace = true
