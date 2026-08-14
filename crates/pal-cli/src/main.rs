@@ -16,6 +16,7 @@ mod cache;
 mod defect;
 mod doctor;
 mod evidence;
+mod export;
 mod intent;
 mod ledger;
 mod query;
@@ -163,7 +164,36 @@ enum Command {
         /// 답이 담는 노드 수의 상한. 기본값은 자리표시 500
         #[arg(long)]
         node_max: Option<usize>,
+        /// **2층에 읽기 전용으로 붙는다** — 여럿이 동시에 붙을 수 있다.
+        ///
+        /// 스티칭을 안 하므로 2층이 이 스냅샷에 대해 **이미 서 있어야** 하고,
+        /// 아니면 답이 낡는다(그 사실이 봉투에 실린다). **질의 로그를 못 남기고**
+        /// 그것도 봉투에 실린다 — 조용히 빠지면 F17 이 미조회를 과대 계상한다.
+        #[arg(long)]
+        read_only: bool,
         /// 사람이 읽는 화면 대신 JSON 으로 낸다
+        #[arg(long)]
+        json: bool,
+    },
+    /// 2층을 우리 밖 도구가 읽는 형식으로 낸다 — **못 낸 라벨을 함께 적는다**
+    Export {
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 어느 커밋인가. 기본값은 워킹트리
+        #[arg(long)]
+        at: Option<String>,
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        #[arg(long)]
+        index: Option<PathBuf>,
+        /// 형식. **이 빌드가 아는 것은 하나다** — 나머지는 크레이트를 요구한다
+        #[arg(long, value_enum, default_value_t = export::Format::Cypher)]
+        format: export::Format,
+        /// 낼 파일. 없으면 표준출력으로 가고 근거는 표준오류로 간다
+        #[arg(long)]
+        out: Option<PathBuf>,
+        /// 근거를 JSON 봉투로 낸다. **`--out` 이 있어야 한다**
         #[arg(long)]
         json: bool,
     },
@@ -330,6 +360,7 @@ fn main() -> Result<()> {
             index,
             depth_max,
             node_max,
+            read_only,
             json,
         } => query::run(query::Args {
             name: &name,
@@ -341,8 +372,12 @@ fn main() -> Result<()> {
             index,
             depth_max,
             node_max,
+            read_only,
             json,
         }),
+        Command::Export { repo, at, cache_dir, index, format, out, json } => {
+            export::run(export::Args { repo, rev: at, cache_dir, index, format, out, json })
+        }
         Command::Ledger { path, at, cache_dir, json, symbols } => {
             let report = ledger::compute(&path, at.as_deref(), cache_dir)?;
             if symbols {

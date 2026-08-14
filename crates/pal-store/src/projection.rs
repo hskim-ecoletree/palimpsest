@@ -41,7 +41,7 @@ use std::path::Path;
 
 use pal_core::{FileRow, QueryLogEntry, ReferenceEdge, RepoPath, SymbolId, SymbolNode};
 use redb::{
-    Database, MultimapTableDefinition, MultimapTableHandle, ReadableDatabase,
+    Database, MultimapTableDefinition, MultimapTableHandle, ReadOnlyDatabase, ReadableDatabase,
     ReadableMultimapTable, ReadableTable, ReadableTableMetadata, TableDefinition, TableHandle,
     WriteTransaction,
 };
@@ -110,6 +110,13 @@ pub enum ProjectionError {
     Transaction(String),
     #[error("2층 값을 풀지 못했다: {0}")]
     Decode(String),
+    /// **읽기 전용으로 붙었는데 쓰려 했다.**
+    ///
+    /// 조용히 무시하지 않는 이유: 무시하면 스티칭이 아무것도 안 하고 성공했다고
+    /// 말하고, 그 뒤의 질의는 **빈 2층 위에서** 답한다. 그 답은 비어 있고 정직해
+    /// 보이지만 실제로는 이 빌드가 자기 인덱스를 안 세운 것이다.
+    #[error("2층에 읽기 전용으로 붙었다 — 쓸 수 없다")]
+    ReadOnly,
 }
 
 fn tx(e: impl std::fmt::Display) -> ProjectionError {
@@ -145,24 +152,49 @@ pub struct StitchReport {
     pub commits: usize,
 }
 
+/// 2층에 어떻게 붙었는가 — **락이 다르다.**
+///
+/// `redb` 4.1 의 실물: [`Database::create`]·[`Database::open`] 은 **배타** 락이고
+/// [`ReadOnlyDatabase::open`] 만 **공유** 락이다. F05 §6 의 표가
+/// *"읽기는 동시 가능, 쓰기는 하나. **CLI 는 읽기 전용으로 붙는다**"* 라고 적었는데
+/// **여는 방법이 하나뿐이라 그 문장이 성립하지 않았다** — 두 프로세스가 동시에
+/// `pal query` 를 돌리면 `Database already open. Cannot acquire lock.` 이 났다.
+enum Attached {
+    /// 쓸 수 있다. **한 프로세스만.**
+    Writable(Database),
+    /// 읽기만. **여럿이 동시에 붙는다.**
+    ReadOnly(ReadOnlyDatabase),
+}
+
 /// 질의 투영. **`index.redb` 다** — 의도 저장소와 파일이 갈려 있다(R-21).
 pub struct Projection {
-    db: Database,
+    db: Attached,
 }
 
 impl Projection {
     /// 읽기 트랜잭션 하나. **여는 자리가 하나다.**
     fn read(&self) -> Result<redb::ReadTransaction, ProjectionError> {
-        self.db.begin_read().map_err(tx)
+        match &self.db {
+            Attached::Writable(d) => d.begin_read().map_err(tx),
+            Attached::ReadOnly(d) => d.begin_read().map_err(tx),
+        }
     }
 
     /// 쓰기 트랜잭션 하나. **여는 자리가 하나다.**
+    ///
+    /// 읽기 전용으로 붙었으면 **거절한다.** 조용히 무시하면 스티칭이 아무것도 안 하고
+    /// 성공했다고 말하고, 그 뒤의 질의는 빈 2층 위에서 답한다.
     fn write(&self) -> Result<WriteTransaction, ProjectionError> {
-        self.db.begin_write().map_err(tx)
+        match &self.db {
+            Attached::Writable(d) => d.begin_write().map_err(tx),
+            Attached::ReadOnly(_) => Err(ProjectionError::ReadOnly),
+        }
     }
 
+    /// **쓸 수 있게** 붙는다 — 배타 락이다. 파일이 없으면 만든다.
+    ///
     /// # Errors
-    /// 파일을 열지 못하면.
+    /// 파일을 열지 못하거나 **다른 프로세스가 이미 쓰기로 붙어 있으면**.
     pub fn open(path: &Path) -> Result<Self, ProjectionError> {
         if let Some(dir) = path.parent() {
             std::fs::create_dir_all(dir)
@@ -170,7 +202,29 @@ impl Projection {
         }
         let db = Database::create(path)
             .map_err(|e| ProjectionError::Open(format!("{}: {e}", path.display())))?;
-        Ok(Self { db })
+        Ok(Self { db: Attached::Writable(db) })
+    }
+
+    /// **읽기만** 붙는다 — 공유 락이라 여럿이 동시에 붙는다.
+    ///
+    /// # 없으면 만들지 않는다 — 그리고 조용히 쓰기로 안 돌아간다
+    ///
+    /// 2층이 아직 안 세워졌는데 읽기 전용으로 붙으면 **실패한다.** 여기서 슬쩍
+    /// [`Self::open`] 으로 되돌아가면 `--read-only` 가 거짓말이 되고, 부르는 쪽은
+    /// 자기가 배타 락을 쥐었다는 것을 모른다.
+    ///
+    /// # Errors
+    /// 파일이 없거나, 깨끗이 닫히지 않아 복구가 필요하거나, 읽지 못하면.
+    pub fn open_read_only(path: &Path) -> Result<Self, ProjectionError> {
+        let db = ReadOnlyDatabase::open(path)
+            .map_err(|e| ProjectionError::Open(format!("{}: {e}", path.display())))?;
+        Ok(Self { db: Attached::ReadOnly(db) })
+    }
+
+    /// 읽기 전용으로 붙었는가. **값이다** — 질의 로그를 못 남긴 사유가 여기서 나온다.
+    #[must_use]
+    pub const fn is_read_only(&self) -> bool {
+        matches!(self.db, Attached::ReadOnly(_))
     }
 
     /// **1패스 스티칭.** 무대에 배치로 쓰고 마지막 한 트랜잭션에서 교체한다.

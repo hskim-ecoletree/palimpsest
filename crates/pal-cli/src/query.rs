@@ -33,6 +33,8 @@ pub struct Args<'a> {
     pub index: Option<PathBuf>,
     pub depth_max: Option<usize>,
     pub node_max: Option<usize>,
+    /// **읽기 전용으로 붙는다** — 스티칭을 안 하고 질의 로그를 못 남긴다.
+    pub read_only: bool,
     pub json: bool,
 }
 
@@ -55,12 +57,29 @@ pub fn run(a: Args) -> Result<()> {
 
     let report = ledger::compute(a.repo, a.rev, a.cache_dir)?;
     let index = a.index.unwrap_or_else(|| a.repo.join(".palimpsest/index.redb"));
-    let projection = Projection::open(&index).context("2층을 열지 못했다")?;
-
     let built_for = report.ledger.snapshot.to_string();
-    let stitched = projection
-        .stitch(&built_for, &report.stitches, PROVISIONAL_STITCH_BATCH)
-        .context("2층을 세우지 못했다")?;
+
+    // **붙는 방법이 둘이고 그 갈림이 답에 실린다**(`[f06.3.pass]` ③).
+    //
+    // 기본은 **쓰기**다. 읽기가 기본이면 질의 로그가 조용히 안 쌓이고, F17 은
+    // 데이터가 없어 착수할 수 없다(F05 §5.3). `--read-only` 는 명시해야 켜진다.
+    //
+    // 읽기 전용이면 **스티칭을 안 한다** — 할 수 없다. 그러므로 2층이 이 스냅샷에
+    // 대해 이미 서 있지 않으면 답이 낡고, **그 사실이 `built_for_this_snapshot` 에
+    // 실린다.** 조용히 쓰기로 되돌아가지 않는다.
+    let (projection, indexed) = if a.read_only {
+        let p = Projection::open_read_only(&index)
+            .context("2층에 읽기 전용으로 붙지 못했다 — 먼저 한 번 쓰기로 세워야 한다")?;
+        let n = p.count().context("2층을 읽지 못했다")?;
+        (p, n)
+    } else {
+        let p = Projection::open(&index).context("2층을 열지 못했다")?;
+        let n = p
+            .stitch(&built_for, &report.stitches, PROVISIONAL_STITCH_BATCH)
+            .context("2층을 세우지 못했다")?
+            .symbols;
+        (p, n)
+    };
 
     let counts = report.ledger.counts();
     let out_of_scope = counts.values().sum::<usize>()
@@ -75,7 +94,7 @@ pub fn run(a: Args) -> Result<()> {
             Capable::Present(report.worktree.matches(&report.ledger.snapshot_tree())),
             projection.rebuilding().unwrap_or(false),
             projection.built_for().unwrap_or_default().is_some_and(|s| s == built_for),
-            stitched.symbols,
+            indexed,
         ),
         capabilities: pal_query::capabilities(),
         // **넷을 전부 넘긴다.** 안 넘길 수 있는 경로가 없다.

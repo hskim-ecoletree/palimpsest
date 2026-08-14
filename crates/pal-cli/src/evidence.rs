@@ -15,31 +15,40 @@ use pal_core::{Envelope, LogStatus, NotRecorded};
 
 /// 접힌 것 · 로그 상태 · 대략적 크기를 적는다.
 pub fn print<T>(e: &Envelope<T>) {
+    for l in lines(e) {
+        println!("{l}");
+    }
+}
+
+/// 같은 셋을 **줄로** 낸다 — 산출이 표준출력을 쓰고 있으면 부르는 쪽이 표준오류로 보낸다.
+pub fn lines<T>(e: &Envelope<T>) -> Vec<String> {
+    let mut o = Vec::new();
     if e.fold.is_none() {
-        println!("  접힘      없음 (명시)");
+        o.push("  접힘      없음 (명시)".to_owned());
     } else {
-        println!("  접힘      {}건이 다른 질의로 옮겨졌습니다 — **잘린 것이 아닙니다**", e.fold.moved());
+        o.push(format!("  접힘      {}건이 다른 질의로 옮겨졌습니다 — **잘린 것이 아닙니다**", e.fold.moved()));
         for f in &e.fold.folded {
-            println!("            {} {}건 → `{}` 가 폅니다", f.what.name(), f.count, f.unfolded_by.name());
+            o.push(format!("            {} {}건 → `{}` 가 폅니다", f.what.name(), f.count, f.unfolded_by.name()));
         }
     }
 
     match e.log {
-        LogStatus::Recorded => println!("  질의 로그  남았습니다"),
+        LogStatus::Recorded => o.push("  질의 로그  남았습니다".to_owned()),
         LogStatus::NotRecorded { why } => {
             let 사유 = match why {
                 // 조용히 안 남기면 F17 이 미조회를 **과대 계상**한다. 그래서 화면에도 적는다.
                 NotRecorded::ReadOnlyAttach => "2층에 읽기 전용으로 붙어 남기지 못했습니다",
                 NotRecorded::SurfaceDoesNotLog => "이 표면은 아직 질의 로그를 쓰지 않습니다",
             };
-            println!("  질의 로그  **안 남았습니다** — {사유}");
+            o.push(format!("  질의 로그  **안 남았습니다** — {사유}"));
         }
     }
 
     // **하한이라고 적는다.** 재는 것은 빈틈 없는 JSON 이고, 이 화면처럼 들여쓴
     // 산출은 그보다 크다. 하한임을 안 적으면 소비자가 상한으로 읽는다(백서 §6.3).
-    println!(
+    o.push(format!(
         "  크기      약 {} 토큰 **이상** (잰 것: {} 바이트 · 가정: {} 바이트/토큰)",
         e.tokens.approx_tokens, e.tokens.serialized_bytes, e.tokens.bytes_per_token
-    );
+    ));
+    o
 }

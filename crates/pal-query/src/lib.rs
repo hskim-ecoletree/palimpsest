@@ -31,7 +31,7 @@ use std::time::Instant;
 
 use pal_core::{
     Budget, Capable, CapabilitySet, Coverage, Elision, Envelope, ExtractGrade, Fold, FoldedPart,
-    IdentityGrade, LedgerRef, LogStatus, ProjectionFreshness, QueryLogEntry, QueryName, RepoPath,
+    IdentityGrade, LedgerRef, LogStatus, NotRecorded, ProjectionFreshness, QueryLogEntry, QueryName, RepoPath,
     Slot, Snapshot, Step, SymbolId, SymbolNode, traverse,
 };
 use pal_store::{Projection, ProjectionError};
@@ -156,14 +156,23 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
 
     // **로그는 답보다 먼저 남는다** — 답을 못 낸 질의도 일어난 사건이다.
     // 그런데 절단과 걸린 시간은 답을 낸 뒤에야 안다. 그래서 여기다.
-    let entry = QueryLogEntry {
-        query: q.name(),
-        args_digest: QueryLogEntry::digest_of(q.args()),
-        accessed: accessed.clone(),
-        elision: elision.clone(),
-        duration_micros: u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX),
+    //
+    // ⚠ **읽기 전용으로 붙었으면 못 남긴다.** 조용히 건너뛰지 않는다 — F17 이 그
+    // 공백을 「조회 안 됨」으로 세면 미조회를 **과대 계상**하고, 그것이 이 제품이
+    // 고발하는 형태다(`[f06].readonly_and_the_query_log`).
+    let log = if ctx.projection.is_read_only() {
+        LogStatus::NotRecorded { why: NotRecorded::ReadOnlyAttach }
+    } else {
+        let entry = QueryLogEntry {
+            query: q.name(),
+            args_digest: QueryLogEntry::digest_of(q.args()),
+            accessed: accessed.clone(),
+            elision: elision.clone(),
+            duration_micros: u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX),
+        };
+        ctx.projection.log_query(&ctx.snapshot.to_string(), &entry)?;
+        LogStatus::Recorded
     };
-    ctx.projection.log_query(&ctx.snapshot.to_string(), &entry)?;
 
     Ok(Envelope::new(
         answer,
@@ -174,7 +183,7 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
         ctx.ledger.clone(),
         elision,
         fold,
-        LogStatus::Recorded,
+        log,
     ))
 }
 
