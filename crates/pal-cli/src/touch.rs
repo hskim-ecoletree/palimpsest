@@ -11,10 +11,10 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use pal_core::{
     BindingStatus, BoundItem, Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision,
-    Envelope, ExtractGrade, Fold, FoldedPart, IdentityGrade, LedgerRef, LogStatus,
-    NotRecorded,
+    Envelope, ExtractGrade, Fold, FoldedPart, IdentityGrade, LedgerRef, Lineage, LogStatus,
+    Now, NotRecorded,
     ProjectionFreshness, QueryName, RebuildState, Slot, SymbolFacts, SymbolNode, TouchAnswer,
-    TouchResult,
+    TouchResult, UndeterminableReason,
 };
 use pal_intent::IntentStore;
 use pal_store::Projection;
@@ -74,7 +74,7 @@ pub fn run(
         0 => TouchAnswer::Unknown { name: name.to_owned() },
         1 => {
             let symbol = found.into_iter().next().expect("길이가 1 이다");
-            let bound = bound_items(&intent, &projection, &symbol)?;
+            let bound = bound_items(&intent, &projection, &report, built_for_this, &symbol)?;
             // **파일 안의 호출 관계가 F05 에서 값이 된다.** 파일 경계를 넘는 것은 안 센다 —
             // 그 수는 `coverage.unresolved` 가 진다.
             let facts = SymbolFacts {
@@ -146,17 +146,60 @@ pub fn intent_file(repo_path: &Path, given: Option<PathBuf>) -> PathBuf {
 ///
 /// **낡음은 여기서 계산된다** — 결박 시점의 요약과 2층의 현재 요약을 댄다.
 /// 심볼이 사라졌으면 `Orphaned` 이고 그것은 `Stale` 과 다른 사건이다.
+///
+/// # 못 보는 것을 `Live` 로 접지 않는다 (F09 §2.1 · [R16])
+///
+/// 조회가 [`Now`] 를 낸다 — `Option<BodyDigest>` 가 아니다. `None` 은 *"사라졌다"* 인지
+/// *"비교할 수 없다"* 인지 구별되지 않고, **그 구별이 이 기능의 전부다.**
+///
+/// | 사유 | 여기서 어떻게 아나 |
+/// |---|---|
+/// | `IdentityGrade` | 감시 원소의 등급이 `Unavailable`(L0) — 요약 자체가 없다 |
+/// | `PartialParse` | 그 원소가 사는 파일이 대장에서 `Partial` 이다(F02-2) |
+/// | `WatchMemberGone` | 조회가 비었는데 **대상은 살아 있다** — `evaluate` 가 가른다 |
+/// | `ProjectionStale` | 2층이 이 스냅샷 것이 아니다 — **감시 집합을 보기도 전이다** |
+///
+/// [R16]: ../../../docs/evidence-map.md
 fn bound_items(
     intent: &IntentStore,
     projection: &Projection,
+    report: &ledger::LedgerReport,
+    built_for_this: bool,
     symbol: &SymbolNode,
 ) -> Result<Vec<BoundItem>> {
     let bindings = intent.bound_to(symbol.id).context("결박을 읽지 못했다")?;
+    // **대장이 아는 partial 파일들.** 이름으로 세지 않고 대장에서 뜬다 — 이름으로 세면
+    // 칸이 하나 늘 때 조용히 빠진다.
+    let partial: std::collections::BTreeSet<&str> = report
+        .ledger
+        .entries
+        .iter()
+        .filter(|e| e.state.bucket() == pal_core::Bucket::Partial)
+        .map(|e| e.path.as_str())
+        .collect();
+
     let mut out = Vec::with_capacity(bindings.len());
     for b in bindings {
-        let status = BindingStatus::evaluate(&b, |id| {
-            projection.symbol(id).ok().flatten().map(|n| n.body)
-        });
+        let status = if built_for_this {
+            BindingStatus::evaluate(&b, Lineage::Current, |id| match projection.symbol(id) {
+                Ok(Some(n)) if n.identity == IdentityGrade::Unavailable => {
+                    Now::Undeterminable(UndeterminableReason::IdentityGrade)
+                }
+                Ok(Some(n)) if partial.contains(n.path.as_str()) => {
+                    Now::Undeterminable(UndeterminableReason::PartialParse)
+                }
+                Ok(Some(n)) => Now::Digest(n.body),
+                // **읽기 실패를 「사라졌다」로 적지 않는다.** 못 읽은 것과 없는 것은
+                // 다른 사건이고, 뭉개면 저장 오류가 `Orphaned` 로 나가 사람이 코드를
+                // 고치러 간다.
+                Ok(None) => Now::Gone,
+                Err(_) => Now::Undeterminable(UndeterminableReason::ProjectionStale),
+            })
+        } else {
+            // **2층이 이 스냅샷 것이 아니다.** 감시 집합을 보기도 전에 판정 불가다 —
+            // 여기서 요약을 대면 **옛 세대의 값과 지금의 결박을 대는 것**이 된다.
+            BindingStatus::projection_stale(Lineage::Current)
+        };
         out.push(BoundItem::Note { binding: b.id, note: b.note, status });
     }
     Ok(out)
@@ -335,6 +378,10 @@ fn print_bindings(value: &Capable<Vec<BoundItem>>) {
                 format!("STALE ← {} 개가 변했습니다", triggered_by.len()),
             pal_core::CodeFreshness::Orphaned { missing } =>
                 format!("ORPHANED ← 좌표 {} 개가 사라졌습니다", missing.len()),
+            // **`live` 와 같은 화면이 되면 안 된다** — *"유효하다"* 와 *"유효한지 알 수
+            // 없다"* 가 같은 줄로 나오는 것이 R16 이 겨냥한 실패다.
+            pal_core::CodeFreshness::Undeterminable { reason, at } =>
+                format!("판정 불가 ← {} ({} 개 좌표)", reason.name(), at.len()),
         };
         println!("  [{}] {mark}", binding.as_str());
         for line in note.lines() {
