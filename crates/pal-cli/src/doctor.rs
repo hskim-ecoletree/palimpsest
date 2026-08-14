@@ -213,6 +213,20 @@ fn coverage() -> pal_core::ViewCoverage {
         .absent("MANIFESTS_AT", CapabilityId::new("F05", "graph-storage"))
         .absent("INTRODUCED_BY", CapabilityId::new("F05", "graph-storage"))
         .absent("RESOLVED_BY", CapabilityId::new("F05", "graph-storage"))
+        // ── F05 가 세웠는데 **이 뷰가 아직 안 싣는 둘** ──────────────────────
+        //
+        // 2층에 실제로 값이 있다(`FILE` · `EDGE_OUT`/`EDGE_IN`). 그런데 이 뷰는 심볼과
+        // 결박만 싣는다 — **담을 수 없는 것이 아니라 이 빌드가 안 담는 것**이고,
+        // `Capable` 이 적는 것이 정확히 그 구별이다.
+        //
+        // **왜 지금 안 싣는가**: 지금 참조 엣지는 전부 `scoped` 이고 파일 **안**에서만
+        // 서며 종류가 하나다. 불변식 넷(공통 넷 · 출처 동질성 · 등급 규칙 · 근거 규칙)이
+        // 구조상 어긋날 수 없고, 그것을 "실물에서 통과"로 세는 것은 *작아서 안 걸린 것*을
+        // *성해서 안 걸린 것*으로 읽는 것이다 — 바로 아래 `BINDING_INDEX_KIND` 와 같은
+        // 판단이다. **파일 간 해소(F07)가 후보 엣지와 근거를 만들 때 이 자리가 하중을
+        // 진다.**
+        .absent("File", CapabilityId::new("F07", "graph-view-stitched-nodes"))
+        .absent("REFERENCES", CapabilityId::new("F07", "graph-view-stitched-nodes"))
         // ── 스키마가 이미 `not_built` 로 적은 둘 ─────────────────────────────
         //
         // 여기 적지 않아도 `doctor` 가 스키마에서 파생시키지만, **선언을 빠뜨리면
@@ -227,9 +241,16 @@ fn coverage() -> pal_core::ViewCoverage {
         // *"2층의 색인이 가리키는 실체가 **다른** 저장소에 있는가"* 이고, 지금 색인과
         // 실체는 **같은 파일 안에** 있다. 같은 저장소에서 온 둘을 대조하면 구조상
         // 어긋날 수 없고, 그것을 "실물에서 통과"로 세는 것은 *작아서 안 걸린 것*을
-        // *성해서 안 걸린 것*으로 읽는 것이다. F05 가 색인을 2층으로 옮길 때 이 자리가
-        // 실제로 하중을 진다.
-        .absent(BINDING_INDEX_KIND, CapabilityId::new("F05", "projection-binding-index"))
+        // *성해서 안 걸린 것*으로 읽는 것이다.
+        //
+        // ⚠ **옛 판은 이 자리를 `F05` 로 적었다** — *"F05 가 색인을 2층으로 옮길 때"*.
+        // **F05 는 안 옮기기로 했다**([ADR-0009] · 재생 경로가 없는 파생은 안 세운다).
+        // 기능이 닫혔는데 그 기능을 가리키는 능력 선언이 남으면 **아무도 그것을 안
+        // 잡는다** — 그래서 하중을 실제로 지는 자리로 옮긴다. 결박의 역방향 조회가
+        // 성능 문제로 관측되는 곳은 F09 다.
+        //
+        // [ADR-0009]: ../../../docs/adr/0009-a-derived-index-needs-its-rebuild-path-in-the-same-commit.md
+        .absent(BINDING_INDEX_KIND, CapabilityId::new("F09", "binding-index-in-projection"))
         .absent(DERIVED_KIND, CapabilityId::new("F17", "synthesis"))
 }
 
