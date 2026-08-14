@@ -36,8 +36,8 @@ use pal_core::{
     Snapshot, SymbolNode,
 };
 use pal_intent::IntentStore;
-use pal_store::Projection;
 
+use crate::attach;
 use crate::ledger;
 use crate::touch::intent_file;
 
@@ -86,10 +86,11 @@ pub fn run(
 
     let report = ledger::compute(repo_path, rev, cache_dir)?;
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
-    let projection = Projection::open(&index).context("2층을 열지 못했다")?;
-    // **통째로 다시 만든다.** §12.7 이 든 네 위협 중 *부분 갱신*은 이 경로가 없어서
-    // 이 빌드에서 일어나지 않는다 — 증분은 F05 의 것이다.
-    let indexed = projection.rebuild(&report.symbols).context("2층을 세우지 못했다")?;
+    // ⚠ **통째로 다시 만든다 — 그리고 그것이 엣지를 지운다**(F06 게이트 §6-가-2).
+    // §12.7 이 든 네 위협 중 *부분 갱신*은 이 경로가 없어서 이 빌드에서 일어나지
+    // 않는다. **`Stitching` 으로 옮기는 것이 옳지만 그러면 이 명령의 불변식 모집단이
+    // 바뀌고 `[f22.4]` 의 판정이 움직인다** — F22 후속이다.
+    let indexed = attach::attach(&index, &report, attach::How::SymbolsOnly)?.indexed;
 
     let intent = IntentStore::open_read_only(&intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;

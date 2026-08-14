@@ -13,9 +13,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use pal_core::{Binding, SymbolIdentity, WatchEntry};
 use pal_intent::IntentStore;
-use pal_store::Projection;
 
-use crate::{ledger, touch};
+use crate::{attach, ledger, touch};
 
 /// 좌표 하나에 조각 하나를 건다.
 ///
@@ -33,8 +32,8 @@ pub fn run(
     let report = ledger::compute(repo_path, rev, cache_dir)?;
 
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
-    let projection = Projection::open(&index).context("2층을 열지 못했다")?;
-    projection.rebuild(&report.symbols).context("2층을 세우지 못했다")?;
+    let attached = attach::attach(&index, &report, attach::How::SymbolsOnly)?;
+    let projection = &attached.projection;
 
     let found = projection.resolve_name(name).context("2층을 읽지 못했다")?;
     let symbol = match found.len() {

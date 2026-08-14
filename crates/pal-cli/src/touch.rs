@@ -12,13 +12,14 @@ use anyhow::{Context, Result};
 use pal_core::{
     BindingStatus, BoundItem, Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision,
     Envelope, ExtractGrade, Fold, FoldedPart, IdentityGrade, LedgerRef, LogStatus,
-    NotRecorded, PROVISIONAL_STITCH_BATCH,
+    NotRecorded,
     ProjectionFreshness, QueryName, RebuildState, Slot, SymbolFacts, SymbolNode, TouchAnswer,
     TouchResult,
 };
 use pal_intent::IntentStore;
 use pal_store::Projection;
 
+use crate::attach;
 use crate::ledger;
 
 /// 이 빌드가 답하는 것과 아직 못 만든 것. **응답마다 실린다**(stack §5.3).
@@ -58,14 +59,11 @@ pub fn run(
     let report = ledger::compute(repo_path, rev, cache_dir)?;
 
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
-    let projection = Projection::open(&index).context("2층을 열지 못했다")?;
     // **1패스 스티칭.** 무대에 배치로 쓰고 한 트랜잭션에서 교체한다 — 읽는 쪽은
     // 옛 세대 전체 아니면 새 세대 전체만 본다(F05 §4 · `[f05.2.pass]` ③).
-    let built_for = report.ledger.snapshot.to_string();
-    let stitched = projection
-        .stitch(&built_for, &report.stitches, PROVISIONAL_STITCH_BATCH)
-        .context("2층을 세우지 못했다")?;
-    let indexed = stitched.symbols;
+    let attached = attach::attach(&index, &report, attach::How::Stitching)?;
+    let built_for_this = attached.built_for_this_snapshot();
+    let attach::Attached { projection, indexed, .. } = attached;
 
     // **의도 저장소는 파생층과 다른 파일이다** — R-21. 2층을 지워도 이쪽은 남는다.
     let intent = IntentStore::open_read_only(&intent_file(repo_path, intent_path))
@@ -106,12 +104,8 @@ pub fn run(
             } else {
                 RebuildState::Settled
             }),
-            // **관측이지 기본값이 아니다.** 옛 판은 `true` 로 박혀 있었고 그것은
-            // *"이 스냅샷에서 만들어졌다"* 를 확인하지 않고 적은 것이었다.
-            built_for_this_snapshot: projection
-                .built_for()
-                .unwrap_or_default()
-                .is_some_and(|s| s == built_for),
+            // **관측이지 기본값이 아니다** — [`crate::attach::Attached`] 가 잰다.
+            built_for_this_snapshot: built_for_this,
             symbols_indexed: indexed,
         },
         coverage,

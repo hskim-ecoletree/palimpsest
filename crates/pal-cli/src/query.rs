@@ -16,11 +16,11 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use pal_core::{
     Budget, CANDIDATE_LIMIT, Capable, Envelope, PROVISIONAL_PATH_PRODUCT_MAX,
-    PROVISIONAL_STITCH_BATCH, PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_VIEW_NODE_MAX, QueryName,
+    PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_VIEW_NODE_MAX, QueryName,
 };
 use pal_query::{NamedQuery, QueryCtx, QueryResult};
-use pal_store::Projection;
 
+use crate::attach;
 use crate::ledger;
 
 pub struct Args<'a> {
@@ -57,29 +57,18 @@ pub fn run(a: Args) -> Result<()> {
 
     let report = ledger::compute(a.repo, a.rev, a.cache_dir)?;
     let index = a.index.unwrap_or_else(|| a.repo.join(".palimpsest/index.redb"));
-    let built_for = report.ledger.snapshot.to_string();
 
     // **붙는 방법이 둘이고 그 갈림이 답에 실린다**(`[f06.3.pass]` ③).
     //
     // 기본은 **쓰기**다. 읽기가 기본이면 질의 로그가 조용히 안 쌓이고, F17 은
     // 데이터가 없어 착수할 수 없다(F05 §5.3). `--read-only` 는 명시해야 켜진다.
-    //
-    // 읽기 전용이면 **스티칭을 안 한다** — 할 수 없다. 그러므로 2층이 이 스냅샷에
-    // 대해 이미 서 있지 않으면 답이 낡고, **그 사실이 `built_for_this_snapshot` 에
-    // 실린다.** 조용히 쓰기로 되돌아가지 않는다.
-    let (projection, indexed) = if a.read_only {
-        let p = Projection::open_read_only(&index)
-            .context("2층에 읽기 전용으로 붙지 못했다 — 먼저 한 번 쓰기로 세워야 한다")?;
-        let n = p.count().context("2층을 읽지 못했다")?;
-        (p, n)
-    } else {
-        let p = Projection::open(&index).context("2층을 열지 못했다")?;
-        let n = p
-            .stitch(&built_for, &report.stitches, PROVISIONAL_STITCH_BATCH)
-            .context("2층을 세우지 못했다")?
-            .symbols;
-        (p, n)
-    };
+    let attached = attach::attach(
+        &index,
+        &report,
+        if a.read_only { attach::How::ReadOnly } else { attach::How::Stitching },
+    )?;
+    let built_for_this = attached.built_for_this_snapshot();
+    let attach::Attached { projection, indexed, .. } = attached;
 
     let counts = report.ledger.counts();
     let out_of_scope = counts.values().sum::<usize>()
@@ -93,7 +82,7 @@ pub fn run(a: Args) -> Result<()> {
         freshness: pal_query::freshness(
             Capable::Present(report.worktree.matches(&report.ledger.snapshot_tree())),
             projection.rebuilding().unwrap_or(false),
-            projection.built_for().unwrap_or_default().is_some_and(|s| s == built_for),
+            built_for_this,
             indexed,
         ),
         capabilities: pal_query::capabilities(),

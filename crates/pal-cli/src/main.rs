@@ -11,6 +11,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use pal_core::{Capable, Language};
 
+mod attach;
 mod bind;
 mod cache;
 mod defect;
