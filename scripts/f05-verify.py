@@ -161,6 +161,18 @@ def 대조_CTE(repo: Path, at: str, tag: str) -> None:
     edges = dump["answer"]["edges"]
 
     # ── ㉢ 하한 — 엣지가 0 이면 두 답이 공짜로 같다 ─────────────────────────
+    #
+    # **0 은 「없음」이 아니라 「안 만듦」일 수 있다.** Kotlin 추출기는 스코프 체인을
+    # 안 만들고, 그러면 그 코퍼스의 파일 내 엣지는 **모집단이 0** 이다 —
+    # [ADR-0002] 그대로 그것을 통과로도 어긋남으로도 세지 않는다(`[f05].self_judged` ⑤).
+    if len(edges) == 0:
+        만듦 = sum(1 for n in nodes if n)  # 노드는 섰다 — 엣지만 없다
+        기권(
+            f"③ {tag} — 엣지가 0 이다. 노드는 {만듦}개 섰으므로 스티칭은 돌았고, "
+            "이 코퍼스의 추출기가 스코프 체인을 안 만든다 — **모집단이 0 이라 대조 불가**"
+        )
+        shutil.rmtree(room, ignore_errors=True)
+        return
     if len(edges) < 최소_엣지:
         어긋남(f"③ {tag} 의 엣지가 {len(edges)}개다 (하한 {최소_엣지}) — 이 대조는 성립하지 않는다")
         shutil.rmtree(room, ignore_errors=True)
@@ -193,6 +205,20 @@ def 대조_CTE(repo: Path, at: str, tag: str) -> None:
     뒤집어_갈린_수 = 0
     얕은_합 = 0
     깊은_합 = 0
+    절단_실린_수 = 0
+
+    # ── ★ 반대 방향 ㉠㉡ 은 **CTE 만으로** 잰다 ────────────────────────────
+    #
+    # ⚠ 이 자리가 한 번 꺼졌다. 처음 판은 ㉠㉡ 을 우리 답과의 비교 **뒤**에 뒀고,
+    # 비교를 건너뛴 출발점에서 그 둘도 함께 건너뛰어졌다. 그래서 *"깊이를 올려도 답이
+    # 안 늘었다"* 가 나왔다 — **깊이 너머로 가는 출발점만 정확히 빠졌기 때문이다.**
+    # 통제는 통제하려는 것과 같은 흐름에 두면 안 된다.
+    for n in 출발점:
+        theirs = 도달_CTE(conn, n["id"], 깊이)
+        if 도달_CTE(conn, n["id"], 깊이, reversed_edges=True) != theirs:
+            뒤집어_갈린_수 += 1
+        얕은_합 += len(theirs)
+        깊은_합 += len(도달_CTE(conn, n["id"], 깊은_깊이))
 
     for n in 출발점:
         우리 = json.loads(
@@ -206,10 +232,18 @@ def 대조_CTE(repo: Path, at: str, tag: str) -> None:
         if 우리["answer"]["outcome"] != "reached":
             갈림.append(f"{n['name']}: 우리 답이 `{우리['answer']['outcome']}` 다")
             continue
-        # **절단이 있으면 비교가 성립하지 않는다** — CTE 에는 노드 상한이 없다.
-        if 우리["elision"]["truncated"]:
-            갈림.append(f"{n['name']}: 절단이 일어났다 {우리['elision']['truncated']}")
+
+        잘린것 = {t["reason"] for t in 우리["elision"]["truncated"]}
+        # **깊이 절단은 비교를 깨지 않는다** — CTE 에도 같은 깊이 상한을 걸었다.
+        # 오히려 이것이 stack §2.3 의 논증이 실물에서 보이는 자리다: 두 답이 같은데
+        # **우리 답만 「무엇을 왜 안 봤는지」를 싣는다.** CTE 는 그 사실을 낼 수 없다.
+        if 잘린것 - {"depth_exceeded"}:
+            # 노드 상한 등은 CTE 에 없다 — 그때는 비교가 성립하지 않는다.
+            갈림.append(f"{n['name']}: CTE 에 없는 절단이 일어났다 {sorted(잘린것)}")
             continue
+        if 잘린것:
+            절단_실린_수 += 1
+
         ours = {s["id"] for s in 우리["answer"]["symbols"]}
         theirs = 도달_CTE(conn, n["id"], 깊이)
         if ours != theirs:
@@ -217,17 +251,15 @@ def 대조_CTE(repo: Path, at: str, tag: str) -> None:
                 f"{n['name']}: 우리 {len(ours)} · CTE {len(theirs)} · "
                 f"우리만 {len(ours - theirs)} · CTE 만 {len(theirs - ours)}"
             )
-        # ㉠ 뒤집으면 갈려야 한다
-        if 도달_CTE(conn, n["id"], 깊이, reversed_edges=True) != theirs:
-            뒤집어_갈린_수 += 1
-        # ㉡ 깊이를 올리면 늘어야 한다
-        얕은_합 += len(theirs)
-        깊은_합 += len(도달_CTE(conn, n["id"], 깊은_깊이))
 
     if 갈림:
         어긋남(f"③ {tag} — 자체 인덱스와 CTE 가 갈렸다 ({len(갈림)}건): {갈림[:5]}")
     else:
         ok(f"③ {tag} — 출발점 {len(출발점)}개 · 엣지 {len(edges)} · 자체 인덱스 = CTE")
+    # ★ **답이 같은데 우리 것만 절단을 싣는다.** stack §2.3 의 결정적 이유가 여기서
+    # 관측된다 — `LIMIT` 은 *"한도에 걸린 지점의 사유별 분해"* 를 표현하지 못한다.
+    적음(f"        └ 그중 {절단_실린_수}개는 **우리 답에만 절단이 실렸다** (CTE 는 못 낸다)")
+    기록.append(f"{tag}: 답 일치 {len(출발점) - len(갈림)}/{len(출발점)} · 절단이 실린 답 {절단_실린_수}")
 
     # ── ★ 반대 방향 ─────────────────────────────────────────────────────────
     if 뒤집어_갈린_수 == 0:
