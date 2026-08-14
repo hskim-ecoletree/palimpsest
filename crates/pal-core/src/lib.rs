@@ -19,6 +19,7 @@ mod cascade;
 mod chain;
 mod coord;
 mod derived;
+mod entity;
 mod doctor;
 mod envelope;
 mod file_graph;
@@ -95,6 +96,7 @@ pub use schema::{
 };
 pub use projection::{FileNode, FileRow, RefCounts, ReferenceEdge, file_edges};
 pub use query_log::{QueryLogEntry, QueryName};
+pub use entity::{EntityId, EntityKind, EntityOrigin, EntityRegistry, Ulid};
 pub use radius::{BudgetRefusal, Neighborhood, Radius, check_budget, expand};
 pub use rebind::{MatchSignals, RebindProposal, propose, propose_with_shape};
 pub use repo::{Digest, ObjectName, RepoAlias, RepoId, RepoPath, Snapshot, TreeRef};

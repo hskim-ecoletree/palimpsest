@@ -270,10 +270,9 @@ mod tests {
     fn 폐포_1홉이_직접_호출자와_같다() {
         // **두 반경이 다른 방향으로 자라면 「반경을 넓혔다」가 무엇인지 알 수 없다.**
         let (t, [a, ..]) = 사슬();
-        let mut 직접 = expand(a, &Radius::Callers, &t);
-        let mut 폐포 = expand(a, &Radius::Closure { k: 1 }, &t);
-        직접.sort_unstable();
-        폐포.sort_unstable();
+        // `expand` 는 `BTreeSet` 을 지나므로 이미 정렬돼 나온다 — 여기서 다시 안 정렬한다.
+        let 직접 = expand(a, &Radius::Callers, &t);
+        let 폐포 = expand(a, &Radius::Closure { k: 1 }, &t);
         assert_eq!(직접, 폐포);
         assert_eq!(직접.len(), 2, "대상 + 호출자 하나");
     }
