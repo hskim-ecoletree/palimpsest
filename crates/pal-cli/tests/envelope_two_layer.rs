@@ -240,3 +240,64 @@ fn 봉투를_지는_표면_전부가_아홉을_진다() {
 
     let _ = std::fs::remove_dir_all(&repo);
 }
+
+#[test]
+fn 봉투를_안_지는_표면은_목록으로_서고_봉투인_척하지_않는다() {
+    // `[f06].the_whole_surface_carries_an_envelope` — *"전부가 봉투를 지는 것이 아니다.
+    // **그것이 이 항목의 산출이다.**"* 목록이 게이트에만 있고 검사에 없으면 그 목록은
+    // 다음 표면이 생길 때 조용히 낡는다.
+    let repo = 큰_저장소("nonenvelope");
+
+    // 먼저 2층을 세운다 — `export` 가 읽기 전용으로 붙는다.
+    let _ = pal(&repo, &["query", 대장_자신, "--json"]);
+
+    // **봉투를 지는 표면 넷.** 이름이 아니라 산출로 확인한다.
+    for (이름, args) in [
+        ("query", vec!["query", 대장_자신, "--json"]),
+        ("touch", vec!["touch", "뿌리", "--json"]),
+        ("doctor", vec!["doctor", "--json"]),
+    ] {
+        let v: serde_json::Value = serde_json::from_str(&pal(&repo, &args)).expect("봉투 JSON");
+        for 성분 in 봉투의_아홉 {
+            assert!(v.get(성분).is_some(), "`{이름}` 이 봉투를 진다고 했는데 `{성분}` 이 없다");
+        }
+    }
+    let out = repo.join("out.cypher");
+    let v: serde_json::Value = serde_json::from_str(&pal(
+        &repo,
+        &["export", "--format", "cypher", "--out", out.to_str().expect("경로"), "--json"],
+    ))
+    .expect("봉투 JSON");
+    for 성분 in 봉투의_아홉 {
+        assert!(v.get(성분).is_some(), "`export` 의 답에 `{성분}` 이 없다");
+    }
+
+    // **봉투를 안 지는 표면 넷 — 그리고 안 지는 것이 옳다.**
+    //
+    // ⚠ `query --list` 가 이 목록에서 가장 무겁다. 봉투는 `Snapshot` 을 요구하고,
+    // 요구하면 `--list` 가 **git 저장소를 필요로 한다.** 그 순간 *"호스트 없이도
+    // 코어가 답한다"* 가 목록에서부터 깨진다. **안 지는 것이 조건이다.**
+    let 안_지는: [(&str, Vec<&str>); 4] = [
+        ("query --list", vec!["query", "--list", "--json"]),
+        ("ledger", vec!["ledger", "--json"]),
+        ("symbols", vec!["symbols", "big.ts", "--json"]),
+        ("cache stats", vec!["cache", "stats", "--json"]),
+    ];
+    for (이름, args) in &안_지는 {
+        let 산출 = pal(&repo, args.as_slice());
+        // JSON 이기는 하다 — 비대화 경로가 이것도 파싱한다.
+        let v: serde_json::Value = serde_json::from_str(&산출).expect("JSON 하나");
+        let 있는 = 봉투의_아홉.iter().filter(|f| v.get(**f).is_some()).count();
+        // **봉투인 척하면 안 된다.** 아홉을 전부 지면 그것은 봉투이고, 그러면 이
+        // 목록이 낡은 것이다.
+        assert!(
+            있는 < 봉투의_아홉.len(),
+            "`{이름}` 이 봉투의 아홉을 전부 진다 — 게이트의 목록을 고쳐야 한다"
+        );
+    }
+
+    // **하한** — `--json` 을 내는 표면이 6 개 미만이면 이 시험이 아무것도 안 잰다.
+    assert!(4 + 안_지는.len() >= 6);
+
+    let _ = std::fs::remove_dir_all(&repo);
+}
