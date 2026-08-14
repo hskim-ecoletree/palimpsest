@@ -32,7 +32,19 @@ pub fn run(
     let report = ledger::compute(repo_path, rev, cache_dir)?;
 
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
-    let attached = attach::attach(&index, &report, attach::How::SymbolsOnly)?;
+    // **스티칭한다 — `SymbolsOnly` 가 아니다.**
+    //
+    // 옛 판은 `Projection::rebuild` 를 불렀고 그것이 **엣지를 지웠다**(F06 게이트
+    // §6-가-2 · 실측 ditto 4,601 → 0 · `built_for_this_snapshot` true → false).
+    // S3 가 그렇게 썼고 F05 가 `stitch` 를 세우면서 안 옮긴 자리다.
+    //
+    // **F09 가 고치는 자리인 이유**: `Radius::Callers` 가 **엣지를 요구한다.** 엣지를
+    // 지우는 채로 반경을 세우면 **감시 집합이 조용히 빈다** — 그리고 빈 감시 집합은
+    // 언제나 `Live` 이므로 이 기능의 반대 방향 넷 중 셋이 **공짜로 통과한다.**
+    //
+    // 회귀는 `tests/bind_preserves_edges.rs` 가 막는다. **`--read-only` 로 물어야
+    // 보인다** — 쓰기로 물으면 `pal query` 가 스티칭을 다시 돌려 증상을 가린다.
+    let attached = attach::attach(&index, &report, attach::How::Stitching)?;
     let projection = &attached.projection;
 
     let found = projection.resolve_name(name).context("2층을 읽지 못했다")?;
