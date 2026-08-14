@@ -28,6 +28,7 @@ mod language;
 mod ledger;
 mod manifest;
 mod projection;
+mod query_log;
 mod rebind;
 mod repo;
 mod schema;
@@ -87,6 +88,7 @@ pub use schema::{
     NodeStatus, Requirement, SchemaError,
 };
 pub use projection::{FileNode, FileRow, RefCounts, ReferenceEdge, file_edges};
+pub use query_log::{QueryLogEntry, QueryName};
 pub use rebind::{MatchSignals, RebindProposal, propose, propose_with_shape};
 pub use repo::{Digest, ObjectName, RepoAlias, RepoId, RepoPath, Snapshot, TreeRef};
 pub use scope::{

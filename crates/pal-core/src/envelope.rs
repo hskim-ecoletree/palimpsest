@@ -5,7 +5,7 @@
 //! 모든 응답은 자기 답이 **어느 범위 위에서 계산됐는지**를 동반한다(DESIGN §4.2).
 //! 백서 §6.3 의 *"하한임이 표시되어야 한다"* 가 문장이 아니라 데이터가 되는 지점이다.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::capable::{Capable, CapabilityId};
 use crate::ledger::{Bucket, ExtractGrade, IdentityGrade};
@@ -73,10 +73,17 @@ pub struct Coverage {
 
 /// 무엇 때문에 잘렸는가 — **사유가 값이다.**
 ///
+/// # 이 계열 다섯은 되읽힌다 — [`Envelope`] 와 다르다
+///
+/// [`Envelope`] 에 `Deserialize` 가 없는 이유는 [`CapabilitySet`] 이 [`CapabilityId`] 를
+/// 싣고 그것이 **이 빌드에 박힌 상수**이기 때문이다. **절단에는 그 문제가 없다** —
+/// 사유도 상한도 닫힌 열거이고 빌드의 사실을 담지 않는다. 그리고 **질의 로그가
+/// 되읽혀야 한다**(F17 이 F05 부터 쌓인 것을 읽는다 · §5.3).
+///
 /// 넷을 가르지 않으면 *"자르긴 했다"* 밖에 말할 수 없고, 그러면 사용자가 **무엇을 올려야
 /// 답이 완전해지는지** 모른다. 그것이 `LIMIT` 이 표현하지 못하는 바로 그것이다
 /// (stack §2.3 의 결정적 이유).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ElisionReason {
     /// 후보 집합이 `K` 를 넘어 **그 가지를 버렸다.**
@@ -105,7 +112,7 @@ impl ElisionReason {
 ///
 /// **[`ElisionReason`] 과 다른 타입이다.** 사유는 *"무엇이 일어났나"* 이고 이것은
 /// *"어느 손잡이를 돌리면 되나"* 다. 하나로 합치면 답이 사용자에게 처방을 못 준다.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BudgetName {
     CandidateSetMax,
@@ -133,7 +140,7 @@ impl BudgetName {
 /// F05 §5.2 는 벌거벗은 쌍으로 적었다. **이름을 붙여 가른다** — [`crate::Containment`]
 /// 와 같은 자리다. 벌거벗은 쌍은 읽는 쪽이 `.0` 이 무엇인지 기억해야 하고, 기억은
 /// 검사되지 않는다.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Truncation {
     pub reason: ElisionReason,
     /// **건수다.** *"잘렸다"* 가 아니라 *"몇 개가 잘렸다"* 여야 사용자가 크기를 안다.
@@ -141,7 +148,7 @@ pub struct Truncation {
 }
 
 /// 걸린 상한 하나와 그 값.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LimitHit {
     pub limit: BudgetName,
     /// **그때 이 상한이 얼마였는가.** 값이 없으면 사용자가 얼마로 올려야 할지 모른다.
@@ -162,7 +169,7 @@ pub struct LimitHit {
 /// 옛 판은 `{dropped: usize, reasons: Vec<String>}` 이었다. **사유별 건수도 어느
 /// 상한에 걸렸는지도 담지 못한다** — 문자열 목록은 세어지지 않고, 상한의 값이 없으면
 /// 사용자가 무엇을 얼마로 올려야 하는지 모른다.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Elision {
     /// 사유별 건수. **비어 있으면 자른 것이 없다.**
     pub truncated: Vec<Truncation>,

@@ -1383,6 +1383,7 @@ dependencies = [
  "pal-extract",
  "pal-git",
  "pal-intent",
+ "pal-query",
  "pal-store",
  "rayon",
  "serde",
@@ -1432,6 +1433,17 @@ dependencies = [
  "postcard",
  "redb",
  "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "pal-query"
+version = "0.0.0"
+dependencies = [
+ "pal-core",
+ "pal-store",
+ "serde",
+ "serde_json",
  "thiserror",
 ]
 

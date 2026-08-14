@@ -16,6 +16,7 @@ mod cache;
 mod defect;
 mod doctor;
 mod ledger;
+mod query;
 mod touch;
 
 #[derive(Parser)]
@@ -129,6 +130,36 @@ enum Command {
         #[command(subcommand)]
         what: CacheCommand,
     },
+    /// 이름 붙은 질의 하나를 돌린다 — **답이 봉투를 지고 나온다**
+    Query {
+        /// 질의 이름. `--list` 로 전부 본다
+        #[arg(default_value = "")]
+        name: String,
+        /// 인자 — 심볼 이름
+        arg: Option<String>,
+        /// 이 빌드가 답하는 질의를 전부 낸다
+        #[arg(long)]
+        list: bool,
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 어느 커밋인가. 기본값은 워킹트리
+        #[arg(long)]
+        at: Option<String>,
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        #[arg(long)]
+        index: Option<PathBuf>,
+        /// 몇 홉까지 — **낮추면 절단이 답에 실린다.** 기본값은 자리표시 3
+        #[arg(long)]
+        depth_max: Option<usize>,
+        /// 답이 담는 노드 수의 상한. 기본값은 자리표시 500
+        #[arg(long)]
+        node_max: Option<usize>,
+        /// 사람이 읽는 화면 대신 JSON 으로 낸다
+        #[arg(long)]
+        json: bool,
+    },
     /// 저장소 하나의 관측 범위 대장을 낸다 — **무엇을 보았고 무엇을 보지 않았는가**
     Ledger {
         /// 저장소 경로. 기본값은 현재 디렉터리
@@ -226,6 +257,29 @@ fn main() -> Result<()> {
                 json,
             ),
         },
+        Command::Query {
+            name,
+            arg,
+            list,
+            repo,
+            at,
+            cache_dir,
+            index,
+            depth_max,
+            node_max,
+            json,
+        } => query::run(query::Args {
+            name: &name,
+            arg: arg.as_deref(),
+            list,
+            repo: &repo,
+            rev: at.as_deref(),
+            cache_dir,
+            index,
+            depth_max,
+            node_max,
+            json,
+        }),
         Command::Ledger { path, at, cache_dir, json, symbols } => {
             let report = ledger::compute(&path, at.as_deref(), cache_dir)?;
             if symbols {

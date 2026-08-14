@@ -39,10 +39,11 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use pal_core::{FileRow, ReferenceEdge, RepoPath, SymbolId, SymbolNode};
+use pal_core::{FileRow, QueryLogEntry, ReferenceEdge, RepoPath, SymbolId, SymbolNode};
 use redb::{
     Database, MultimapTableDefinition, MultimapTableHandle, ReadableDatabase,
-    ReadableTable, ReadableTableMetadata, TableDefinition, TableHandle, WriteTransaction,
+    ReadableMultimapTable, ReadableTable, ReadableTableMetadata, TableDefinition, TableHandle,
+    WriteTransaction,
 };
 
 // ── 살아 있는 자리 ───────────────────────────────────────────────────────────
@@ -60,8 +61,21 @@ const EDGE_OUT: MultimapTableDefinition<&[u8], &[u8]> = MultimapTableDefinition:
 /// 저장 2배를 지불하고 *"누가 이걸 부르나"* 를 O(차수)로 만든다. 정방향만 두고 스캔하면
 /// O(전체)다.
 const EDGE_IN: MultimapTableDefinition<&[u8], &[u8]> = MultimapTableDefinition::new("edge_in");
+/// 경로 → 그 파일의 `symbol_id` 들.
+///
+/// **없으면 `symbol.contains` 가 심볼 전체를 훑는다** — 10⁶ 에서 그것은 질의가 아니라
+/// 전수 스캔이고, 벤치의 선형성이 거기서 무너진다.
+const BY_FILE: MultimapTableDefinition<&str, &[u8]> = MultimapTableDefinition::new("by_file");
 /// `(파일, 이름)` → `symbol_id`. F07 의 해소가 읽을 자리.
 const EXPORTS: TableDefinition<(&str, &str), &[u8]> = TableDefinition::new("exports");
+/// `(스냅샷, 순번)` → 질의 한 줄. **append-only** (F05 §5.3).
+///
+/// # 스티칭이 이 자리를 안 건드린다
+///
+/// 질의는 일어난 사건이고 1층에도 git 에도 없다. **재구축이 지우면 F17 의 입력이
+/// 조용히 사라진다** — 그래서 교체 목록에 이것이 없다(`[f05.3.pass]` ②).
+/// 그리고 이 파일에 **지우는 함수가 없다.**
+const QUERY_LOG: TableDefinition<(&str, u64), Vec<u8>> = TableDefinition::new("query_log");
 /// 이 투영이 **무엇에 대해** 세워졌는가. 재구축 대상이 아니다 — 마지막 트랜잭션이 적는다.
 const META: TableDefinition<&str, String> = TableDefinition::new("meta");
 
@@ -77,6 +91,8 @@ const EDGE_OUT_STAGE: MultimapTableDefinition<&[u8], &[u8]> =
     MultimapTableDefinition::new("edge_out.staging");
 const EDGE_IN_STAGE: MultimapTableDefinition<&[u8], &[u8]> =
     MultimapTableDefinition::new("edge_in.staging");
+const BY_FILE_STAGE: MultimapTableDefinition<&str, &[u8]> =
+    MultimapTableDefinition::new("by_file.staging");
 const EXPORTS_STAGE: TableDefinition<(&str, &str), &[u8]> =
     TableDefinition::new("exports.staging");
 
@@ -177,6 +193,7 @@ impl Projection {
                 let mut files_t = write.open_table(FILE_STAGE).map_err(tx)?;
                 let mut out = write.open_multimap_table(EDGE_OUT_STAGE).map_err(tx)?;
                 let mut into = write.open_multimap_table(EDGE_IN_STAGE).map_err(tx)?;
+                let mut by_file = write.open_multimap_table(BY_FILE_STAGE).map_err(tx)?;
                 let mut exports = write.open_table(EXPORTS_STAGE).map_err(tx)?;
 
                 for f in chunk {
@@ -191,6 +208,9 @@ impl Projection {
                         by_id.insert(s.id.as_bytes().as_slice(), raw).map_err(tx)?;
                         by_name
                             .insert(s.name.as_str(), s.id.as_bytes().as_slice())
+                            .map_err(tx)?;
+                        by_file
+                            .insert(f.file.path.as_str(), s.id.as_bytes().as_slice())
                             .map_err(tx)?;
                         report.symbols += 1;
                     }
@@ -234,6 +254,7 @@ impl Projection {
         write.delete_table(FILE).map_err(tx)?;
         write.delete_multimap_table(EDGE_OUT).map_err(tx)?;
         write.delete_multimap_table(EDGE_IN).map_err(tx)?;
+        write.delete_multimap_table(BY_FILE).map_err(tx)?;
         write.delete_table(EXPORTS).map_err(tx)?;
 
         write.rename_table(SYMBOL_STAGE, SYMBOL).map_err(tx)?;
@@ -241,6 +262,7 @@ impl Projection {
         write.rename_table(FILE_STAGE, FILE).map_err(tx)?;
         write.rename_multimap_table(EDGE_OUT_STAGE, EDGE_OUT).map_err(tx)?;
         write.rename_multimap_table(EDGE_IN_STAGE, EDGE_IN).map_err(tx)?;
+        write.rename_multimap_table(BY_FILE_STAGE, BY_FILE).map_err(tx)?;
         write.rename_table(EXPORTS_STAGE, EXPORTS).map_err(tx)?;
 
         {
@@ -392,6 +414,117 @@ impl Projection {
     /// 읽기가 실패하면.
     pub fn callers(&self, id: SymbolId) -> Result<Vec<SymbolId>, ProjectionError> {
         self.adjacent(EDGE_IN, id)
+    }
+
+    /// 이 파일의 심볼 전부 — **경로·줄 순.**
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 값을 풀지 못하면.
+    pub fn symbols_of(&self, path: &RepoPath) -> Result<Vec<SymbolNode>, ProjectionError> {
+        let read = self.db.begin_read().map_err(tx)?;
+        let (Ok(by_file), Ok(by_id)) = (read.open_multimap_table(BY_FILE), read.open_table(SYMBOL))
+        else {
+            return Ok(Vec::new());
+        };
+        let mut out: Vec<SymbolNode> = Vec::new();
+        for v in by_file.get(path.as_str()).map_err(tx)? {
+            let v = v.map_err(tx)?;
+            if let Some(raw) = by_id.get(v.value()).map_err(tx)? {
+                out.push(
+                    postcard::from_bytes(&raw.value())
+                        .map_err(|e| ProjectionError::Decode(e.to_string()))?,
+                );
+            }
+        }
+        out.sort_by_key(|s| s.span.byte_start);
+        Ok(out)
+    }
+
+    /// 노드와 엣지 전부 — **바깥 오라클이 읽는 창.**
+    ///
+    /// `scripts/f05-verify.py` 가 이것을 `sqlite3` 에 넣고 재귀 CTE 로 도달성을 계산해
+    /// 우리 답과 댄다. **이 기능에서 유일하게 바깥에 있는 오라클이다**(R-18).
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 값을 풀지 못하면.
+    pub fn dump(&self) -> Result<GraphDump, ProjectionError> {
+        let read = self.db.begin_read().map_err(tx)?;
+        let mut nodes = Vec::new();
+        if let Ok(t) = read.open_table(SYMBOL) {
+            for row in t.iter().map_err(tx)? {
+                let (_, v) = row.map_err(tx)?;
+                nodes.push(
+                    postcard::from_bytes(&v.value())
+                        .map_err(|e| ProjectionError::Decode(e.to_string()))?,
+                );
+            }
+        }
+        let mut edges = Vec::new();
+        if let Ok(t) = read.open_multimap_table(EDGE_OUT) {
+            for row in t.iter().map_err(tx)? {
+                let (k, vs) = row.map_err(tx)?;
+                let Some(from) = symbol_id_of(k.value()) else { continue };
+                for v in vs {
+                    let v = v.map_err(tx)?;
+                    if let Some(to) = symbol_id_of(v.value()) {
+                        edges.push((from, to));
+                    }
+                }
+            }
+        }
+        edges.sort();
+        Ok((nodes, edges))
+    }
+
+    /// 질의 한 줄을 남긴다 — **append-only.** 순번을 돌려준다.
+    ///
+    /// # 덮어쓰지 않는다
+    ///
+    /// 순번은 이 스냅샷의 마지막 순번 + 1 이다. 같은 `(스냅샷, 순번)` 이 두 번 쓰이면
+    /// 앞의 줄이 사라지고, 그러면 F17 이 세는 것이 질의 수가 아니게 된다.
+    ///
+    /// # Errors
+    /// 쓰기가 실패하거나 값을 담지 못하면.
+    pub fn log_query(
+        &self,
+        snapshot: &str,
+        entry: &QueryLogEntry,
+    ) -> Result<u64, ProjectionError> {
+        let raw =
+            postcard::to_allocvec(entry).map_err(|e| ProjectionError::Decode(e.to_string()))?;
+        let write = self.db.begin_write().map_err(tx)?;
+        let seq;
+        {
+            let mut t = write.open_table(QUERY_LOG).map_err(tx)?;
+            seq = t
+                .range((snapshot, 0u64)..=(snapshot, u64::MAX))
+                .map_err(tx)?
+                .next_back()
+                .transpose()
+                .map_err(tx)?
+                .map_or(0, |(k, _)| k.value().1 + 1);
+            t.insert((snapshot, seq), raw).map_err(tx)?;
+        }
+        write.commit().map_err(tx)?;
+        Ok(seq)
+    }
+
+    /// 이 스냅샷에 쌓인 질의 줄 — **순번 순.**
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 값을 풀지 못하면.
+    pub fn query_log(&self, snapshot: &str) -> Result<Vec<QueryLogEntry>, ProjectionError> {
+        let read = self.db.begin_read().map_err(tx)?;
+        let Ok(t) = read.open_table(QUERY_LOG) else { return Ok(Vec::new()) };
+        let mut out = Vec::new();
+        for row in t.range((snapshot, 0u64)..=(snapshot, u64::MAX)).map_err(tx)? {
+            let (_, v) = row.map_err(tx)?;
+            out.push(
+                postcard::from_bytes(&v.value())
+                    .map_err(|e| ProjectionError::Decode(e.to_string()))?,
+            );
+        }
+        Ok(out)
     }
 
     /// 파일이 그 이름으로 내보내는 심볼.
@@ -551,6 +684,12 @@ impl Projection {
     }
 }
 
+/// 노드와 엣지 전부 — [`Projection::dump`] 의 산출.
+///
+/// **이름을 붙여 가른다.** 벌거벗은 쌍이면 읽는 쪽이 `.0` 이 무엇인지 기억해야 하고,
+/// 기억은 검사되지 않는다([`pal_core::Containment`] 와 같은 자리).
+pub type GraphDump = (Vec<SymbolNode>, Vec<(SymbolId, SymbolId)>);
+
 /// 32바이트가 아니면 그것은 좌표가 아니다. **조용히 0 으로 채우지 않는다.**
 fn symbol_id_of(raw: &[u8]) -> Option<SymbolId> {
     let bytes: [u8; 32] = raw.try_into().ok()?;
@@ -563,6 +702,7 @@ fn clear_stage(write: &WriteTransaction) -> Result<(), ProjectionError> {
     write.delete_table(FILE_STAGE).map_err(tx)?;
     write.delete_multimap_table(EDGE_OUT_STAGE).map_err(tx)?;
     write.delete_multimap_table(EDGE_IN_STAGE).map_err(tx)?;
+    write.delete_multimap_table(BY_FILE_STAGE).map_err(tx)?;
     write.delete_table(EXPORTS_STAGE).map_err(tx)?;
     Ok(())
 }
@@ -574,6 +714,7 @@ fn open_stage(write: &WriteTransaction) -> Result<(), ProjectionError> {
     let _ = write.open_table(FILE_STAGE).map_err(tx)?;
     let _ = write.open_multimap_table(EDGE_OUT_STAGE).map_err(tx)?;
     let _ = write.open_multimap_table(EDGE_IN_STAGE).map_err(tx)?;
+    let _ = write.open_multimap_table(BY_FILE_STAGE).map_err(tx)?;
     let _ = write.open_table(EXPORTS_STAGE).map_err(tx)?;
     Ok(())
 }

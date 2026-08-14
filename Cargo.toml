@@ -6,6 +6,7 @@ members = [
     "crates/pal-git",
     "crates/pal-intent",
     "crates/pal-store",
+    "crates/pal-query",
     "crates/pal-cli",
     "xtask",
 ]
@@ -27,6 +28,7 @@ pal-extract = { path = "crates/pal-extract" }
 pal-git = { path = "crates/pal-git" }
 pal-store = { path = "crates/pal-store" }
 pal-intent = { path = "crates/pal-intent" }
+pal-query = { path = "crates/pal-query" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
