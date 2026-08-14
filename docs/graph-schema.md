@@ -3,7 +3,7 @@
 
 # 그래프 스키마 v1
 
-노드 라벨 **7개** · 엣지 타입 **7개**. 자라는 것 자체가 관측 대상이다([DESIGN §1.2](DESIGN.md)).
+노드 라벨 **8개** · 엣지 타입 **8개**. 자라는 것 자체가 관측 대상이다([DESIGN §1.2](DESIGN.md)).
 
 ## 노드
 
@@ -13,6 +13,7 @@
 | `Binding` | `asserted` | `Binding` | `id` | 값이 선다 |
 | `Change` | `extracted` | `Change` | `id` | 값이 선다 |
 | `Defect` | `extracted` | `Defect` | `id` | 값이 선다 |
+| `File` | `extracted` | `FileNode` | `path` | 값이 선다 |
 | `Journey` | `asserted` | `Journey` | `name` | **자리만** — F19 가 만든다 |
 | `Symbol` | `extracted` | `SymbolNode` | `id` | 값이 선다 |
 | `UnresolvedRef` | `extracted` | `UnresolvedRef` | `site`, `name` | **자리만** — F08 가 만든다 |
@@ -30,6 +31,10 @@
 | `Change` | `at` | `snapshot` | `machine-record` | 예 |
 | `Defect` | `description` | `string` | `extractor` | 예 |
 | `Defect` | `at` | `snapshot` | `machine-record` | 예 |
+| `File` | `language` | `language_id` | `extractor` | 예 |
+| `File` | `grade` | `enum:ExtractGrade` | `extractor` | 예 |
+| `File` | `export_digest` | `capable:digest` | `extractor` | 예 |
+| `File` | `refs` | `capable:ref_counts` | `extractor` | 예 |
 | `Journey` | `entry_points` | `coord[]` | `human` | 예 |
 | `Journey` | `passes_through` | `coord[]` | `human` | 예 |
 | `Journey` | `expected_effects` | `effect[]` | `human` | 예 |
@@ -55,5 +60,6 @@
 | `FOLLOWS` | `Change` | `Change` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Change::parents` |
 | `INTRODUCED_BY` | `Defect` | `Change` | many-to-one | `candidate` (고정) | `extracted` | 해당 없음 | `at` | `Defect::introduced_by` |
 | `MANIFESTS_AT` | `Defect` | `Symbol` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Defect::manifests_at` |
+| `REFERENCES` | `Symbol` | `Symbol` | many-to-many | `scoped` (고정) | `extracted` | 해당 없음 | `at` | `ReferenceEdge::to` |
 | `RESOLVED_BY` | `Defect` | `Change` | many-to-one | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Defect::resolved_by` |
 | `TOUCHES` | `Change` | `Symbol` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Change::touches` |

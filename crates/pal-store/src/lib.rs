@@ -26,7 +26,7 @@ mod projection;
 pub use cache::{
     BlobCache, CacheError, CacheKey, CacheStats, CacheUsage, EvictReport, ExtractCache, Lookup,
 };
-pub use projection::{Projection, ProjectionError};
+pub use projection::{FileStitch, Projection, ProjectionError, StitchReport};
 
 /// 이 크레이트가 지키는 계약.
 pub const CONTRACT: &str = "파생층은 의도 저장소를 지우지 않는다 — R-21";

@@ -193,6 +193,14 @@ pub const PROVISIONAL_TRAVERSAL_DEPTH: usize = 3;
 /// **자리표시다.**
 pub const PROVISIONAL_VIEW_NODE_MAX: usize = 500;
 
+/// 한 무대 커밋에 묶는 파일 수 — F05 §4 의 **1,000**.
+///
+/// `redb` 쓰기 트랜잭션은 커밋마다 fsync 비용이 있다. 묶으면 그 비용이 나뉘고,
+/// 중단되면 **그 배치만 잃는다**(1층이 있으므로 재파싱 없음).
+///
+/// **자리표시다** — 어느 측정도 이 값을 정하지 않았다. 시험은 이 값을 **인자로** 낮춘다.
+pub const PROVISIONAL_STITCH_BATCH: usize = 1_000;
+
 /// 질의 하나가 들고 다니는 예산 — F05 §5.2.
 ///
 /// # `Default` 가 없다. **끄는 손잡이도 없다**

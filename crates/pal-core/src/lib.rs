@@ -27,6 +27,7 @@ mod judgment;
 mod language;
 mod ledger;
 mod manifest;
+mod projection;
 mod rebind;
 mod repo;
 mod schema;
@@ -47,7 +48,8 @@ pub use budget::{
     Budget, CANDIDATE_LIMIT, CORRUPT_NOTES, DEFAULT_CACHE_BUDGET_BYTES, EXTRACT_CHUNK, MARKER_SCAN_BYTES,
     OVERSIZE_BYTES, PROVISIONAL_CASCADE_DEPTH, PROVISIONAL_ERROR_RATIO_PERCENT,
     PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_PATH_PRODUCT_MAX, PROVISIONAL_SAMPLE_MAX,
-    PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_VIEW_NODE_MAX, SHEBANG_SCAN_BYTES,
+    PROVISIONAL_STITCH_BATCH, PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_VIEW_NODE_MAX,
+    SHEBANG_SCAN_BYTES,
 };
 pub use capable::{Capable, CapabilityId, Declared};
 pub use cascade::{Cascade, NodeFreshness, cascade};
@@ -84,6 +86,7 @@ pub use schema::{
     AttrDecl, Cardinality, Carried, Carrier, EdgeDecl, EvidenceRule, GradeRule, GraphSchema, NodeDecl,
     NodeStatus, Requirement, SchemaError,
 };
+pub use projection::{FileNode, FileRow, RefCounts, ReferenceEdge, file_edges};
 pub use rebind::{MatchSignals, RebindProposal, propose, propose_with_shape};
 pub use repo::{Digest, ObjectName, RepoAlias, RepoId, RepoPath, Snapshot, TreeRef};
 pub use scope::{

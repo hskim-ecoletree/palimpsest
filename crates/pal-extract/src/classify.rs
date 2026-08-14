@@ -94,6 +94,19 @@ impl Extraction {
             Self::Graph(g) => &g.contains,
         }
     }
+
+    /// 캐시에 실린 그래프 — **없으면 없다.**
+    ///
+    /// F05 의 1패스가 `scopes`·`export_digest`·`exports` 를 읽는 자리다.
+    /// **그래프가 없는 파일은 2층에 파일 노드도 안 선다** — 이진·생성물·범위 밖은
+    /// 추출의 대상이 아니었고, 그 사실은 대장이 싣는다.
+    #[must_use]
+    pub const fn graph(&self) -> Option<&CachedGraph> {
+        match self {
+            Self::NoGraph => None,
+            Self::Graph(g) => Some(g),
+        }
+    }
 }
 
 /// 파일 하나를 분류한다.

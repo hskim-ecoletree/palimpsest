@@ -11,8 +11,9 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use pal_core::{
     BindingStatus, BoundItem, Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision,
-    Envelope, ExtractGrade, IdentityGrade, LedgerRef, ProjectionFreshness, RebuildState,
-    SymbolNode, TouchAnswer, TouchResult,
+    Envelope, ExtractGrade, IdentityGrade, LedgerRef, PROVISIONAL_STITCH_BATCH,
+    ProjectionFreshness, RebuildState, Slot, SymbolFacts, SymbolNode, TouchAnswer,
+    TouchResult,
 };
 use pal_intent::IntentStore;
 use pal_store::Projection;
@@ -26,9 +27,12 @@ fn capabilities() -> CapabilitySet {
             "ledger.snapshot".to_owned(),
             "symbol.resolve".to_owned(),
             "binding.touch".to_owned(),
+            // **F05 가 더한 것** — 파일 **안**의 참조 관계. 파일 경계를 넘는 것은 F07 이고,
+            // 그 사실이 `coverage.unresolved` 에 수로 실린다.
+            "symbol.references".to_owned(),
         ],
         vec![
-            CapabilityId::new("F07", "reference-resolution"),
+            CapabilityId::new("F07", "cross-file-resolution"),
             CapabilityId::new("F08", "unresolved-refs"),
             CapabilityId::new("F13", "effects"),
             CapabilityId::new("F15", "judgment"),
@@ -54,8 +58,13 @@ pub fn run(
 
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
     let projection = Projection::open(&index).context("2층을 열지 못했다")?;
-    // **통째로 다시 만든다.** 2층은 캐시이고 증분 갱신은 F05 의 것이다.
-    let indexed = projection.rebuild(&report.symbols).context("2층을 세우지 못했다")?;
+    // **1패스 스티칭.** 무대에 배치로 쓰고 한 트랜잭션에서 교체한다 — 읽는 쪽은
+    // 옛 세대 전체 아니면 새 세대 전체만 본다(F05 §4 · `[f05.2.pass]` ③).
+    let built_for = report.ledger.snapshot.to_string();
+    let stitched = projection
+        .stitch(&built_for, &report.stitches, PROVISIONAL_STITCH_BATCH)
+        .context("2층을 세우지 못했다")?;
+    let indexed = stitched.symbols;
 
     // **의도 저장소는 파생층과 다른 파일이다** — R-21. 2층을 지워도 이쪽은 남는다.
     let intent = IntentStore::open(&intent_file(repo_path, intent_path))
@@ -67,11 +76,19 @@ pub fn run(
         1 => {
             let symbol = found.into_iter().next().expect("길이가 1 이다");
             let bound = bound_items(&intent, &projection, &symbol)?;
-            TouchAnswer::Found(Box::new(touch_result(&report, symbol, bound)))
+            // **파일 안의 호출 관계가 F05 에서 값이 된다.** 파일 경계를 넘는 것은 안 센다 —
+            // 그 수는 `coverage.unresolved` 가 진다.
+            let facts = SymbolFacts {
+                callers: projection.callers(symbol.id).context("역방향을 읽지 못했다")?.len(),
+                callees: projection.callees(symbol.id).context("정방향을 읽지 못했다")?.len(),
+            };
+            TouchAnswer::Found(Box::new(touch_result(&report, symbol, bound, facts)))
         }
         _ => TouchAnswer::Ambiguous { name: name.to_owned(), candidates: found },
     };
 
+    // **범위는 답보다 먼저 계산한다** — 답이 무엇을 골랐는가가 범위를 정하기 때문이다.
+    let coverage = coverage(&report, &projection, &answer);
     let envelope = Envelope::new(
         answer,
         report.ledger.snapshot.clone(),
@@ -81,21 +98,22 @@ pub fn run(
             matches_worktree: Capable::Present(
                 report.worktree.matches(&report.ledger.snapshot_tree()),
             ),
-            // 재구축의 시작과 끝을 아는 것은 2층을 소유한 쪽이다 — F05.
-            rebuild: Capable::not_built(CapabilityId::new("F05", "rebuild-progress")),
-            built_for_this_snapshot: true,
+            // **F05 가 이 자리를 값으로 바꿨다.** 무대가 서 있으면 재구축 중이고,
+            // 그것을 읽을 수 있게 된 것이 배치 커밋의 부산물이다(DESIGN §12.7 격리 3번).
+            rebuild: Capable::Present(if projection.rebuilding().unwrap_or(false) {
+                RebuildState::Rebuilding
+            } else {
+                RebuildState::Settled
+            }),
+            // **관측이지 기본값이 아니다.** 옛 판은 `true` 로 박혀 있었고 그것은
+            // *"이 스냅샷에서 만들어졌다"* 를 확인하지 않고 적은 것이었다.
+            built_for_this_snapshot: projection
+                .built_for()
+                .unwrap_or_default()
+                .is_some_and(|s| s == built_for),
             symbols_indexed: indexed,
         },
-        Coverage {
-            // 참조 해소가 없으므로 미해소를 **셀 수조차 없다**. 0 은 "없다"가 아니라
-            // "이 빌드가 참조를 보지 않는다"이고, 그 사실은 capabilities 가 말한다.
-            unresolved: 0,
-            out_of_scope_files: report.ledger.counts().values().sum::<usize>()
-                - report.ledger.counts().get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
-                - report.ledger.counts().get(&pal_core::Bucket::Partial).copied().unwrap_or(0),
-            lowest_grade: ExtractGrade::L0,
-            identity: IdentityGrade::Ordinal,
-        },
+        coverage,
         capabilities(),
         LedgerRef::of(&report.ledger),
         // 자를 만큼의 답이 아직 없다. **그래도 명시한다.**
@@ -135,10 +153,65 @@ fn bound_items(
     Ok(out)
 }
 
+/// 이 답이 **무엇을 못 봤는가** — 질의마다 다른 값이어야 한다.
+///
+/// # 왜 전역 합이 아닌가 (`[f05.3.pass]` ⑤)
+///
+/// `UNRESOLVED` 전체 수를 복사하면 **질의와 무관한 값**이 되고, 서로 다른 두 질의가
+/// 같은 `coverage` 를 낸다. 그러면 그 숫자는 답의 성질이 아니라 저장소의 성질이다.
+/// 그래서 답을 찾은 경우에는 **그 심볼이 사는 파일**의 미해소 수를 싣는다.
+///
+/// 못 찾은 경우(`Unknown`·`Ambiguous`)에는 **본 것 전체**가 근거다 — 어느 파일도
+/// 고르지 않았으므로 전부가 이 답의 범위다.
+fn coverage(
+    report: &ledger::LedgerReport,
+    projection: &Projection,
+    answer: &TouchAnswer,
+) -> Coverage {
+    let counts = report.ledger.counts();
+    let out_of_scope = counts.values().sum::<usize>()
+        - counts.get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
+        - counts.get(&pal_core::Bucket::Partial).copied().unwrap_or(0);
+
+    let rows = match answer {
+        TouchAnswer::Found(r) => projection
+            .file(&r.symbol.path)
+            .ok()
+            .flatten()
+            .map(|f| vec![f])
+            .unwrap_or_default(),
+        _ => projection.files().unwrap_or_default(),
+    };
+
+    // **미해소를 셀 수 있게 된 것이 F05 다.** 옛 판은 0 이었고 그것은 *"없다"* 가 아니라
+    // *"이 빌드가 참조를 안 본다"* 였다. 스코프 체인이 없는 파일은 지금도 셀 수 없고,
+    // 그 사실은 `Capable` 이 파일 노드에서 진다 — 여기서는 **셀 수 있는 것만 더한다.**
+    let unresolved = rows
+        .iter()
+        .filter_map(|f| match &f.refs {
+            Slot::Built(c) => Some(c.unresolved),
+            Slot::NotBuilt => None,
+        })
+        .sum::<usize>();
+
+    Coverage {
+        unresolved,
+        out_of_scope_files: out_of_scope,
+        // **이 답이 경유한 가장 낮은 등급.** 상수가 아니다.
+        lowest_grade: rows.iter().map(|f| f.grade).min().unwrap_or(ExtractGrade::L0),
+        identity: match answer {
+            TouchAnswer::Found(r) => r.symbol.identity,
+            // 심볼을 하나로 고르지 못했으면 이 답이 선 정체성은 가장 낮은 것이다.
+            _ => IdentityGrade::Ordinal,
+        },
+    }
+}
+
 fn touch_result(
     report: &ledger::LedgerReport,
     symbol: SymbolNode,
     bound: Vec<BoundItem>,
+    facts: SymbolFacts,
 ) -> TouchResult {
     // 좌표는 **저장소 하나**를 가리킨다. 스냅샷은 집합이므로 그중 하나를 골라야 하고,
     // 이 빌드는 저장소를 하나만 본다(대장의 `repos_declared` 가 언제나 1 이다).
@@ -160,7 +233,9 @@ fn touch_result(
         symbol,
         // **S2 에서는 여기가 NotBuilt 였다.** 채워지는 것이 S3 의 인수 기준 ② 다.
         bindings: Capable::Present(bound),
-        facts: Capable::not_built(CapabilityId::new("F07", "reference-resolution")),
+        // **F05 에서 값이 된다** — 파일 **안**의 호출 관계다. 파일 경계를 넘는 것은
+        // 여기 없고 그 수는 봉투의 `coverage.unresolved` 가 진다.
+        facts: Capable::Present(facts),
         unresolved: Capable::not_built(CapabilityId::new("F08", "unresolved-refs")),
         effects: Capable::not_built(CapabilityId::new("F13", "effects")),
         judgments: Capable::not_built(CapabilityId::new("F15", "judgment")),

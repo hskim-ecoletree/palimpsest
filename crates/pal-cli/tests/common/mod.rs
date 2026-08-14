@@ -23,7 +23,7 @@ use std::process::Command;
 
 pub const PAL: &str = env!("CARGO_BIN_EXE_pal");
 
-/// 저장소 하나를 세운다 — TypeScript 둘 · Kotlin 하나.
+/// 저장소 하나를 세운다 — TypeScript 셋 · Kotlin 하나.
 ///
 /// 이름은 **저장소 안에서 유일**해야 한다. `pal bind` 가 후보가 여럿이면 멈추고,
 /// 그 멈춤은 이 시험이 재려는 것과 무관한 실패다.
@@ -41,6 +41,14 @@ pub fn 저장소(tag: &str) -> PathBuf {
     // 여기서 고치지 않는다(범위 밖). **TypeScript 쪽 둘은 일부러 한글로 둔다** — 그쪽은
     // 읽으므로, 두 언어의 차이가 이 시험 안에 남는다.
     std::fs::write(root.join("gamma.kt"), "class Gamma { fun method() {} }\n").expect("gamma.kt");
+    // **F05 가 더한 파일** — 파일 **안**의 참조가 실제로 생기는 자리다.
+    // 앞의 셋에는 심볼→심볼 참조가 하나도 없고, 그러면 재구축 등가성이 엣지에 대해
+    // **공짜로 통과한다**(`[f05.2.pass]` ④ 의 하한이 이것을 막는다).
+    std::fs::write(
+        root.join("delta.ts"),
+        "export function 도움() { return 1 }\nexport function 부름() { return 도움() }\n",
+    )
+    .expect("delta.ts");
 
     git(&root, &["init", "-q", "."]);
     git(&root, &["add", "-A"]);

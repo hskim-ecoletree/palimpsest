@@ -16,13 +16,14 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use pal_core::{
     Attributes, Bucket, CORRUPT_NOTES, Containment, DetectorFreshness, Discriminator,
-    EXTRACT_CHUNK, ExtractGrade, FileState, OVERSIZE_BYTES,
+    EXTRACT_CHUNK, ExtractGrade, FileRow, FileState, OVERSIZE_BYTES, RefCounts, ReferenceEdge,
+    Slot,
     IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath,
     ScopeSource, Snapshot, SymbolId, SymbolNode, TreeRef, UnsupportedReason,
 };
 use pal_extract::FileOutcome;
 use pal_git::{GitAccess, GixRepo, WorktreeState};
-use pal_store::{BlobCache, CacheKey, CacheStats, ExtractCache as _, Lookup};
+use pal_store::{BlobCache, CacheKey, CacheStats, ExtractCache as _, FileStitch, Lookup};
 use rayon::prelude::*;
 use serde::Serialize;
 
@@ -41,6 +42,12 @@ pub struct LedgerReport {
     /// 2층에 들어갈 심볼들. **표에는 안 나오고 `pal touch` 가 쓴다.**
     #[serde(skip)]
     pub symbols: Vec<SymbolNode>,
+    /// 2층에 들어갈 파일치 — **1패스 스티칭의 입력**(F05 §4).
+    ///
+    /// **여기서 만들어지는 것이 요점이다.** 1층 캐시가 이미 `scopes`·`export_digest` 를
+    /// 싣고 있으므로(F04) **재파싱 없이** 만들어진다 — 적중한 파일도 엣지를 낸다.
+    #[serde(skip)]
+    pub stitches: Vec<FileStitch>,
     /// 깨져서 격리된 엔트리의 자리 몇 — **수는 `cache.corrupt` 가 전부 센다.**
     ///
     /// 비어 있는 것이 정상 상태다. 비어 있지 않으면 화면에 뜬다.
@@ -107,10 +114,13 @@ pub fn compute(
         .as_ref()
         .and_then(|m| m.repos.first())
         .map_or_else(|| RepoId::new(repo_name(repo_path)), |r| r.id.clone());
+    // 엣지가 지는 **공통 넷의 넷째**다. 덩어리를 돌기 전에 한 번 만든다.
+    let snapshot = Snapshot::single(repo_id.clone(), tree);
     let mut stats = CacheStats::default();
     let mut corrupt: Vec<String> = Vec::new();
     let mut entries = Vec::with_capacity(files.len());
     let mut symbols: Vec<SymbolNode> = Vec::new();
+    let mut stitches: Vec<FileStitch> = Vec::new();
 
     // **덩어리 하나씩 — 읽기는 직렬, 추출은 병렬**(F02 §3.6 · `[f02.4]`).
     //
@@ -199,13 +209,17 @@ pub fn compute(
                 entries.push(LedgerEntry { path: path.clone(), state: FileState::Excluded { rule } });
                 continue;
             };
-            symbols.extend(nodes_of(&repo_id, path, outcome.graph.symbols(), outcome.graph.contains()));
+            let nodes = nodes_of(&repo_id, path, outcome.graph.symbols(), outcome.graph.contains());
+            if let Some(stitch) = stitch_of(&snapshot, path, &outcome.graph, &nodes) {
+                stitches.push(stitch);
+            }
+            symbols.extend(nodes);
             entries.push(LedgerEntry { path: path.clone(), state: outcome.state });
         }
     }
 
     let ledger = assemble(repo_id, tree, manifest.as_ref(), entries, version, worktree.base);
-    Ok(LedgerReport { ledger, cache: stats, corrupt, symbols, worktree })
+    Ok(LedgerReport { ledger, cache: stats, corrupt, symbols, stitches, worktree })
 }
 
 /// 센 것을 대장으로 조립한다. **정책이 없다** — 세는 일은 위에서 끝났다.
@@ -321,6 +335,65 @@ pub(crate) fn nodes_of(
         });
     }
     out
+}
+
+/// 파일 하나치의 2층 입력 — **1패스가 파일마다 만드는 것**(F05 §4).
+///
+/// # 그래프가 없으면 파일 노드도 없다
+///
+/// 이진·생성물·범위 밖·미인식·미지원은 **추출의 대상이 아니었다.** 2층에 빈 노드를
+/// 세우면 *"참조가 없는 파일"* 처럼 보이고, 그 파일들이 왜 없는지는 **대장이 싣는다** —
+/// 같은 사실을 두 곳에 적으면 그것이 곧 drift 다.
+///
+/// # `EXPORTS` 는 **유일하게 해소되는 최상위 이름만** 담는다
+///
+/// `ExportSet.names` 는 이름이고 2층의 열쇠는 좌표다. 같은 이름의 최상위 선언이 둘이면
+/// 어느 것을 내보내는지 **파일 하나만 보고 알 수 없고**(재선언·오버로드), 하나를 고르면
+/// 그것이 조용한 오답이다. `export * from` 과 기본 내보내기도 이름이 아니라 여기 없다 —
+/// 그 둘의 해소는 F07 이다.
+fn stitch_of(
+    snapshot: &Snapshot,
+    path: &RepoPath,
+    graph: &pal_extract::Extraction,
+    nodes: &[SymbolNode],
+) -> Option<FileStitch> {
+    let g = graph.graph()?;
+
+    // 스코프 체인이 있으면 엣지와 다섯 갈래의 건수가 나온다. 없으면 **0 이 아니라 안 만듦**.
+    let (edges, refs) = match &g.scopes {
+        Slot::Built(chain) => {
+            let (edges, counts) = pal_core::file_edges(&g.symbols, nodes, chain, snapshot);
+            (edges, Slot::Built(counts))
+        }
+        Slot::NotBuilt => (Vec::<ReferenceEdge>::new(), Slot::<RefCounts>::NotBuilt),
+    };
+
+    let exports = match &g.exports {
+        Slot::NotBuilt => Vec::new(),
+        Slot::Built(set) => set
+            .names
+            .iter()
+            .filter_map(|name| {
+                let mut hit = nodes.iter().filter(|n| n.container.is_empty() && &n.name == name);
+                let first = hit.next()?;
+                // **둘 이상이면 담지 않는다.** 하나를 고르면 그것이 조용한 오답이다.
+                if hit.next().is_some() { None } else { Some((name.clone(), first.id)) }
+            })
+            .collect(),
+    };
+
+    Some(FileStitch {
+        file: FileRow {
+            path: path.clone(),
+            language: g.language.clone(),
+            grade: g.grade,
+            export_digest: g.export_digest.clone(),
+            refs,
+        },
+        symbols: nodes.to_vec(),
+        exports,
+        edges,
+    })
 }
 
 /// 매니페스트를 읽는다. **없는 것과 깨진 것은 다르다.**

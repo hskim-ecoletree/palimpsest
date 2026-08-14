@@ -54,11 +54,16 @@ pub struct CachedGraph {
     pub contains: Vec<Containment>,
     /// **F02-2 가 F04 로 넘긴 자리다** — 전에는 개수만 실렸다.
     pub recovery_sites: Vec<RecoverySite>,
-    exports: Slot<ExportSet>,
-    imports: Slot<ImportSet>,
-    export_digest: Slot<ExportDigest>,
+    /// 이 파일이 이름으로 내보내는 것. **2층의 `EXPORTS` 가 이것을 읽는다**(F05 §4).
+    pub exports: Slot<ExportSet>,
+    pub imports: Slot<ImportSet>,
+    /// R-05 무효화 전파의 입력. **2층의 파일 노드가 이것을 싣는다**(F05).
+    pub export_digest: Slot<ExportDigest>,
     /// **F02-3 이 F04 로 넘긴 자리다** — 전에는 아예 안 실렸다.
-    scopes: Slot<ScopeChain>,
+    ///
+    /// **F05 의 1패스가 이것을 읽어 파일 내 엣지를 만든다 — 재파싱 없이.**
+    /// 그것이 F04 가 F05 에게 준 가장 큰 것이다.
+    pub scopes: Slot<ScopeChain>,
 }
 
 impl CachedGraph {
