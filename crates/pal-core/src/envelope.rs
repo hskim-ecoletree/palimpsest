@@ -7,8 +7,10 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::budget::PROVISIONAL_BYTES_PER_TOKEN;
 use crate::capable::{Capable, CapabilityId};
 use crate::ledger::{Bucket, ExtractGrade, IdentityGrade};
+use crate::query_log::QueryName;
 use crate::repo::Snapshot;
 
 /// 2층이 지금 다시 만들어지는 중인가 — DESIGN §12.7 의 스냅샷 격리 3번.
@@ -218,6 +220,180 @@ impl Elision {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 접기 — **부피를 옮긴 것. 절단이 아니다** (F06 §4.3 · `[f06].fold_is_not_elision`)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 봉투에서 **요약만 싣고 본체를 다른 질의로 옮긴** 자리.
+///
+/// # [`Elision`] 과 다른 필드인 이유
+///
+/// 둘은 다른 사건이다:
+///
+/// ```text
+/// Fold      값이 있다. 다른 질의로 옮겼다.   → **어느 질의가 펴는지**가 값이다
+/// Elision   값이 없다. 예산에 걸려 안 봤다.  → **어느 상한에 걸렸는지**가 값이다
+/// ```
+///
+/// 한 필드에 뭉개면 소비자가 *"부피를 옮겼다"* 와 *"못 봤다"* 를 구별할 수 없고,
+/// 그 순간 [`Elision`] 이 F05 에서 지던 하중이 희석된다. [R-11] 이 요구하는 것은
+/// *"**첨부 필수는 지키고** 부피를 옮긴다"* 이고, **옮겼다는 사실 자체가 첨부물이다.**
+///
+/// [R-11]: ../../../docs/plan/00-risks.md#r-11
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FoldedPart {
+    /// 대장 — 요약 여섯 값만 싣고 전체는 `ledger.snapshot` 이 낸다.
+    Ledger,
+}
+
+impl FoldedPart {
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Ledger => "ledger",
+        }
+    }
+}
+
+/// 접힌 자리 하나.
+///
+/// **`capabilities` 는 여기 올 수 없다** — [`FoldedPart`] 에 변형이 없다. F06 §4.3 이
+/// 못 박았다: *"**능력 목록은 접지 않는다.** 부피가 작고, 이것을 접으면 소비자가 공백을
+/// 「이상 없음」으로 읽는다."* 타입이 그것을 지고, `[f06.2.pass]` ②가 **산출에서** 다시
+/// 센다 — 타입만으로 막고 안 재면 그 문장이 검사되지 않는다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Folded {
+    pub what: FoldedPart,
+    /// **몇 건이 옮겨졌는가.** *"접혔다"* 가 아니라 *"몇 건이 접혔다"* 여야 크기를 안다.
+    pub count: usize,
+    /// 어느 질의가 그것을 펴는가. **문자열이 아니라 이름이다** — 오타가 새 질의가 되면
+    /// 소비자가 못 펴고, 그것은 [`QueryName`] 이 열린 문자열이 아닌 이유와 같다.
+    pub unfolded_by: QueryName,
+}
+
+/// 이 답에서 접힌 것 전부. **없어도 명시해야 한다.**
+///
+/// [`Elision`] 과 같은 규율이다 — [`Fold::none`] 을 **명시적으로** 불러야 하고
+/// 기본값이 없다. 기본값이 있으면 접은 것을 적는 것을 잊는 경로가 생긴다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Fold {
+    pub folded: Vec<Folded>,
+}
+
+impl Fold {
+    /// **접은 것이 없다고 명시한다.** 이 함수를 부르는 것 자체가 기록이다.
+    #[must_use]
+    pub const fn none() -> Self {
+        Self { folded: Vec::new() }
+    }
+
+    /// 자리 하나를 더한다. **같은 자리를 두 번 적지 않는다.**
+    pub fn push(&mut self, what: FoldedPart, count: usize, unfolded_by: QueryName) {
+        if !self.folded.iter().any(|f| f.what == what) {
+            self.folded.push(Folded { what, count, unfolded_by });
+        }
+    }
+
+    #[must_use]
+    pub fn is_none(&self) -> bool {
+        self.folded.is_empty()
+    }
+
+    /// 옮겨진 총 건수.
+    #[must_use]
+    pub fn moved(&self) -> usize {
+        self.folded.iter().map(|f| f.count).sum()
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 토큰 추정 — **잰 것과 가정한 것을 가른다** (F06 §4.3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 이 응답이 소비자의 예산을 얼마나 먹는가 — **대략**.
+///
+/// # 왜 숫자 하나가 아닌가
+///
+/// 토크나이저가 이 빌드에 없다. 숫자 하나만 실으면 소비자는 그것이 **잰 값**인지
+/// **가정한 값**인지 모르고, 모르면 어디까지 믿을지도 모른다. 그래서 셋을 싣는다:
+///
+/// ```text
+/// serialized_bytes  ← **잰 것.** 이 봉투를 JSON 으로 쓴 바이트 수
+/// bytes_per_token   ← **가정한 것.** 토크나이저가 아니다
+/// approx_tokens     ← 위 둘에서 나온 것
+/// ```
+///
+/// **`serialized_bytes` 는 이 필드가 채워지기 전의 봉투를 잰 값이다.** 자기 자신을
+/// 세는 것은 불가능하고, 그 차이는 소비자가 밖에서 잴 수 있다(`[f06.2.pass]` ③).
+///
+/// # **하한이다** — 그리고 그 사실이 표시되어야 한다
+///
+/// 재는 것은 **빈틈 없는 JSON** 이다. 표면이 사람을 위해 들여쓰면 실제로 나가는 텍스트는
+/// 이보다 크다. 들여쓰기는 봉투의 내용이 아니라 **표면의 선택**이라 여기서 못 안다.
+/// 백서 §6.3 이 요구하는 것이 정확히 이 형태다 — *"하한임이 표시되어야 한다."*
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TokenEstimate {
+    /// 빈틈 없는 JSON 의 UTF-8 바이트 수. **잰 것이고 하한이다.**
+    pub serialized_bytes: usize,
+    pub bytes_per_token: u32,
+    pub approx_tokens: usize,
+}
+
+impl TokenEstimate {
+    /// 잰 바이트에서 추정을 만든다.
+    #[must_use]
+    pub const fn of_bytes(serialized_bytes: usize) -> Self {
+        Self {
+            serialized_bytes,
+            bytes_per_token: PROVISIONAL_BYTES_PER_TOKEN,
+            approx_tokens: serialized_bytes / PROVISIONAL_BYTES_PER_TOKEN as usize,
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 질의 로그 상태 — **안 남았으면 그 사실이 답에 실린다** (`[f06].readonly_and_the_query_log`)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 이 답이 질의 로그에 남았는가.
+///
+/// # `bool` 이 아닌 이유
+///
+/// [ADR-0005](../../../docs/adr/0005-absence-carries-its-kind.md) 그대로다 —
+/// **부재는 종류를 싣는다.** *"안 남았다"* 만으로는 F17 이 그것을 어떻게 다뤄야 하는지
+/// 모른다. 읽기 전용으로 붙어서 못 남긴 것과 이 표면이 애초에 안 남기는 것은 다르다.
+///
+/// **조용히 안 남기는 것이 금지인 이유**: F05 §5.3 이 *"처음부터 켜지 않으면 F17 은
+/// 데이터가 없어 착수할 수 없다"* 고 적었다. 로그가 조용히 빠지면 F17 은 **미조회를
+/// 과대 계상**하고, 그것이 이 제품이 고발하는 조용한 공백 그 자체다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", tag = "status")]
+pub enum LogStatus {
+    /// 남았다. **줄이 하나 늘었다.**
+    Recorded,
+    /// 안 남았다 — 왜인지가 값이다.
+    NotRecorded { why: NotRecorded },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NotRecorded {
+    /// 2층에 **읽기 전용**으로 붙었다 — 쓰기 트랜잭션이 없다.
+    ReadOnlyAttach,
+    /// 이 표면이 질의 로그를 안 쓴다. **`pal touch`·`pal doctor` 가 그렇다** —
+    /// F05 §5.3 은 *"모든 질의 실행"* 이라 적었고 그 둘은 아직 그 자리에 없다.
+    /// **0 으로 세지 않고 이렇게 적는다.**
+    SurfaceDoesNotLog,
+}
+
+impl LogStatus {
+    #[must_use]
+    pub const fn is_recorded(self) -> bool {
+        matches!(self, Self::Recorded)
+    }
+}
+
 /// 이 빌드가 실제로 산출할 수 있는 것.
 ///
 /// **소비자가 능력 유무를 질의 없이 안다**(stack §5.3). 미구축 능력이 목록에 서 있고,
@@ -290,11 +466,38 @@ pub struct Envelope<T> {
     pub ledger: LedgerRef,
     /// **`Elision::none()` 이라도 명시적으로 넘어온다.**
     pub elision: Elision,
+    /// 부피를 다른 질의로 옮긴 자리. **`Fold::none()` 이라도 명시적으로 넘어온다.**
+    pub fold: Fold,
+    /// 이 답이 질의 로그에 남았는가. **안 남았으면 왜인지가 값이다.**
+    pub log: LogStatus,
+    /// 이 응답이 얼마나 큰가 — **부르는 쪽이 안 채운다.**
+    ///
+    /// [`Envelope::new`] 가 나머지 전부를 직렬화해서 잰다. 인자로 받으면 부르는 쪽이
+    /// 아무 숫자나 넣을 수 있고, 그 순간 이 값은 관측이 아니라 주장이 된다.
+    pub tokens: TokenEstimate,
 }
 
-impl<T> Envelope<T> {
-    /// 봉투를 씌운다. 인자 일곱이 곧 계약이다.
-    pub const fn new(
+impl<T: Serialize> Envelope<T> {
+    /// 봉투를 씌운다. **인자 아홉이 곧 계약이다.**
+    ///
+    /// # `tokens` 가 인자가 아닌 이유
+    ///
+    /// 이 함수가 **나머지를 직렬화해서 잰다.** 인자로 받으면 잊거나 틀릴 수 있고,
+    /// 잊는 경로가 하나라도 있으면 그것이 곧 조용한 답이 나가는 경로다 — 이 타입이
+    /// `Default` 도 빌더도 두지 않는 것과 같은 이유다.
+    ///
+    /// **자기 자신은 못 센다.** `tokens` 자리를 0 으로 둔 봉투를 재고 그 값을 채운다.
+    /// 그 차이는 밖에서 잴 수 있고 `[f06.2.pass]` ③이 그것을 잰다.
+    ///
+    /// # 인자가 아홉인 것은 결함이 아니라 계약이다
+    ///
+    /// clippy 의 상한은 일곱이고 여기는 아홉이다. **줄이는 방법은 빌더나 `Default` 뿐인데
+    /// 이 타입이 그 둘을 금지한다** — 하나라도 빠뜨릴 수 있는 경로가 생기면 그것이 곧
+    /// 조용한 답이 나가는 경로다(이 타입의 머리 주석). 묶어서 구조체로 만들어도
+    /// 그 구조체가 같은 문제를 물려받는다.
+    #[allow(clippy::too_many_arguments)]
+    #[must_use]
+    pub fn new(
         answer: T,
         snapshot: Snapshot,
         projection: ProjectionFreshness,
@@ -302,8 +505,27 @@ impl<T> Envelope<T> {
         capabilities: CapabilitySet,
         ledger: LedgerRef,
         elision: Elision,
+        fold: Fold,
+        log: LogStatus,
     ) -> Self {
-        Self { answer, snapshot, projection, coverage, capabilities, ledger, elision }
+        let mut e = Self {
+            answer,
+            snapshot,
+            projection,
+            coverage,
+            capabilities,
+            ledger,
+            elision,
+            fold,
+            log,
+            tokens: TokenEstimate::of_bytes(0),
+        };
+        // 직렬화가 실패하면 **0 이 아니라 그대로 둔다** — 0 은 *"작다"* 로 읽히고
+        // 그것이 조용한 거짓말이다. `serde_json` 이 이 타입들에서 실패할 경로는 없다.
+        if let Ok(bytes) = serde_json::to_vec(&e) {
+            e.tokens = TokenEstimate::of_bytes(bytes.len());
+        }
+        e
     }
 }
 

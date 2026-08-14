@@ -196,6 +196,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
         e.coverage.identity.name()
     );
     print_elision(e);
+    crate::evidence::print(e);
     println!(
         "  능력      {} · 미구축 {}",
         e.capabilities.built.join(" · "),

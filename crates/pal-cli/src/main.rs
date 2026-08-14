@@ -15,6 +15,7 @@ mod bind;
 mod cache;
 mod defect;
 mod doctor;
+mod evidence;
 mod intent;
 mod ledger;
 mod query;

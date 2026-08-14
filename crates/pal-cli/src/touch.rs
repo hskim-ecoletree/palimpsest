@@ -11,7 +11,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use pal_core::{
     BindingStatus, BoundItem, Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision,
-    Envelope, ExtractGrade, IdentityGrade, LedgerRef, PROVISIONAL_STITCH_BATCH,
+    Envelope, ExtractGrade, Fold, FoldedPart, IdentityGrade, LedgerRef, LogStatus,
+    NotRecorded, PROVISIONAL_STITCH_BATCH,
     ProjectionFreshness, QueryName, RebuildState, Slot, SymbolFacts, SymbolNode, TouchAnswer,
     TouchResult,
 };
@@ -118,6 +119,13 @@ pub fn run(
         LedgerRef::of(&report.ledger),
         // 자를 만큼의 답이 아직 없다. **그래도 명시한다.**
         Elision::none(),
+        // **대장이 접혀 있다.** 이 답에 실린 것은 요약 여섯 값이고 전체는
+        // `ledger.snapshot` 이 낸다 — 절단이 아니라 **부피를 옮긴 것**이다(F06 §4.3).
+        접힌_대장(&report),
+        // ⚠ **이 표면은 질의 로그를 안 쓴다.** F05 §5.3 은 *"모든 질의 실행"* 이라
+        // 적었고 `pal touch` 는 아직 그 자리에 없다. **0 으로 세지 않고 이렇게 적는다** —
+        // 조용히 빠지면 F17 이 미조회를 과대 계상한다.
+        LogStatus::NotRecorded { why: NotRecorded::SurfaceDoesNotLog },
     );
 
     if json {
@@ -126,6 +134,13 @@ pub fn run(
         print_screen(&envelope);
     }
     Ok(())
+}
+
+/// 이 답에서 접힌 것 — **대장 하나.**
+fn 접힌_대장(report: &ledger::LedgerReport) -> Fold {
+    let mut fold = Fold::none();
+    fold.push(FoldedPart::Ledger, report.ledger.total(), QueryName::LedgerSnapshot);
+    fold
 }
 
 /// 의도 저장소 위치. **기본값이 2층과 다른 파일이다**(stack §2.4).
@@ -298,6 +313,7 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
             "  재구축    (이 빌드는 재구축 중인지 모릅니다 — {} 미구축)", capability.feature),
     }
     println!("  절단      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
+    crate::evidence::print(e);
     println!("  능력      {} · 미구축 {}",
              e.capabilities.built.join(" · "),
              e.capabilities.not_built.iter().map(|c| c.feature).collect::<Vec<_>>().join(" · "));

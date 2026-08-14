@@ -193,6 +193,14 @@ pub const PROVISIONAL_TRAVERSAL_DEPTH: usize = 3;
 /// **자리표시다.**
 pub const PROVISIONAL_VIEW_NODE_MAX: usize = 500;
 
+/// 바이트 몇 개를 토큰 하나로 볼 것인가 — [`crate::TokenEstimate`] 가 쓴다.
+///
+/// **토크나이저가 아니다.** 이 빌드에 토크나이저가 없고, 그 사실이 추정치에
+/// `bytes_per_token` 으로 실려 나간다 — 소비자가 어디까지 믿을지 알아야 한다.
+///
+/// **자리표시다.**
+pub const PROVISIONAL_BYTES_PER_TOKEN: u32 = 4;
+
 /// 격리 방(`cache/.corrupt/`)에 남길 바이트의 기본 제안값.
 ///
 /// **기본으로 쓰이지 않는다** — `--sweep-quarantine` 을 명시해야 처분이 일어난다.

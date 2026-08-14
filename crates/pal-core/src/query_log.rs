@@ -23,20 +23,36 @@ use crate::envelope::Elision;
 ///
 /// 문자열이면 오타가 새 질의 이름이 되고, F17 이 로그를 셀 때 그 오타가 하나의 질의로
 /// 잡힌다. **이름이 값이면 세어진다.**
+/// # 직렬화된 이름이 **표면 이름과 같다** (F06 · `[f06.1]`)
+///
+/// 옛 판은 `rename_all = "snake_case"` 라 JSON 에 `"ledger_snapshot"` 이 나갔는데
+/// 표면이 받는 이름은 `ledger.snapshot` 이었다. **소비자가 산출에서 읽은 이름으로
+/// 이 도구를 부를 수 없었다** — F06 이 `Folded::unfolded_by` 를 세우면서 드러났다
+/// (*"어느 질의가 이것을 펴는가"* 가 부를 수 없는 이름이면 아무 말도 안 한 것이다).
+///
+/// 그래서 변형마다 **표면 이름을 명시한다.** 아래 시험이 둘을 묶는다.
+///
+/// **질의 로그의 저장 형식은 안 바뀐다** — `postcard` 는 변형의 **번호**로 쓰고
+/// 이름을 안 쓴다. 이름은 JSON 처럼 자기서술 형식에서만 나간다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
 pub enum QueryName {
     /// 이 스냅샷의 관측 범위 대장.
+    #[serde(rename = "ledger.snapshot")]
     LedgerSnapshot,
     /// 이름 하나 → 후보 심볼들.
+    #[serde(rename = "symbol.resolve")]
     SymbolResolve,
     /// 이 심볼이 담는 것들.
+    #[serde(rename = "symbol.contains")]
     SymbolContains,
     /// 이 심볼을 가리키는 것들 — 1홉 역방향.
+    #[serde(rename = "symbol.callers")]
     SymbolCallers,
     /// 이 심볼에서 닿는 것들 — 예산 절단이 있는 BFS.
+    #[serde(rename = "symbol.reaches")]
     SymbolReaches,
     /// 노드와 엣지 전부 — **바깥 오라클(SQLite CTE)이 읽는 창**이다.
+    #[serde(rename = "graph.dump")]
     GraphDump,
 }
 
@@ -114,6 +130,20 @@ mod tests {
             assert_eq!(QueryName::parse(q.name()), Some(q));
         }
         assert_eq!(QueryName::parse("symbol.resolvee"), None, "오타가 질의가 됐다");
+    }
+
+    #[test]
+    fn 직렬화된_이름이_표면_이름과_같다() {
+        // **두 이름이 있으면 산출에서 읽은 이름으로 이 도구를 못 부른다.**
+        // F06 이 `Folded::unfolded_by` 를 세우면서 드러난 자리다 — *"어느 질의가
+        // 이것을 편다"* 가 부를 수 없는 이름이면 아무 말도 안 한 것이다.
+        for q in QueryName::ALL {
+            let json = serde_json::to_value(q).expect("직렬화");
+            assert_eq!(json.as_str(), Some(q.name()), "{q:?} 의 두 이름이 갈렸다");
+            // 되읽히기도 해야 한다 — F17 이 로그를 읽는다.
+            let back: QueryName = serde_json::from_value(json).expect("역직렬화");
+            assert_eq!(back, q);
+        }
     }
 
     #[test]

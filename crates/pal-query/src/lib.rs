@@ -30,9 +30,9 @@ use std::collections::BTreeSet;
 use std::time::Instant;
 
 use pal_core::{
-    Budget, Capable, CapabilitySet, Coverage, Elision, Envelope, ExtractGrade, IdentityGrade,
-    LedgerRef, ProjectionFreshness, QueryLogEntry, QueryName, RepoPath, Slot, Snapshot, Step,
-    SymbolId, SymbolNode, traverse,
+    Budget, Capable, CapabilitySet, Coverage, Elision, Envelope, ExtractGrade, Fold, FoldedPart,
+    IdentityGrade, LedgerRef, LogStatus, ProjectionFreshness, QueryLogEntry, QueryName, RepoPath,
+    Slot, Snapshot, Step, SymbolId, SymbolNode, traverse,
 };
 use pal_store::{Projection, ProjectionError};
 use serde::Serialize;
@@ -152,6 +152,7 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
 
     let answer = run(q, ctx, &mut elision, &mut accessed)?;
     let coverage = coverage_of(ctx, &accessed)?;
+    let fold = fold_of(&answer, &ctx.ledger);
 
     // **로그는 답보다 먼저 남는다** — 답을 못 낸 질의도 일어난 사건이다.
     // 그런데 절단과 걸린 시간은 답을 낸 뒤에야 안다. 그래서 여기다.
@@ -172,7 +173,27 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
         ctx.capabilities.clone(),
         ctx.ledger.clone(),
         elision,
+        fold,
+        LogStatus::Recorded,
     ))
+}
+
+/// 이 답에서 **부피가 다른 질의로 옮겨진** 자리 (F06 §4.3 · `[f06.2.pass]` ①).
+///
+/// # 접기는 이미 일어나고 있었다 — 없던 것은 그 사실의 기록이다
+///
+/// 모든 봉투가 [`LedgerRef`] 를 싣는데 그것은 대장 전체가 아니라 **요약 여섯 값**이다.
+/// 즉 부피는 이미 옮겨져 있고, 옮겼다는 사실만 산출에 없었다. 그것이 이 함수가
+/// 닫는 구멍이다.
+///
+/// **`ledger.snapshot` 만 안 접힌다** — 그 질의의 답이 대장 자신이기 때문이다.
+/// 그 하나와 나머지 다섯이 다른 것이 이 값이 무언가를 재고 있다는 증거다.
+fn fold_of(answer: &QueryResult, ledger: &LedgerRef) -> Fold {
+    let mut fold = Fold::none();
+    if !matches!(answer, QueryResult::Ledger { .. }) {
+        fold.push(FoldedPart::Ledger, ledger.files_total, QueryName::LedgerSnapshot);
+    }
+    fold
 }
 
 fn run(

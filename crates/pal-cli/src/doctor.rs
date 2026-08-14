@@ -31,7 +31,8 @@ use pal_core::{
     Anchor, BINDING_INDEX_KIND, Capable, CapabilityId, CapabilitySet, Coord, Coverage,
     DERIVED_KIND, Diagnosis, DoctorScope, Elision, Envelope, ExtractGrade, GraphSchema,
     GraphView, IdentityGrade, InvariantOutcome, LedgerRef, NodeInstance, NodeKey, Producer,
-    Provenance, ProjectionFreshness, QueryName, RESIDUAL_KIND, ResolutionGrade, SCOPE_REDUCTION_KIND,
+    Fold, FoldedPart, LogStatus, NotRecorded, Provenance, ProjectionFreshness, QueryName,
+    RESIDUAL_KIND, ResolutionGrade, SCOPE_REDUCTION_KIND,
     Snapshot, SymbolNode,
 };
 use pal_intent::IntentStore;
@@ -59,6 +60,13 @@ fn capabilities() -> CapabilitySet {
             CapabilityId::new("F20", "conformance"),
         ],
     )
+}
+
+/// 이 답에서 접힌 것 — **대장 하나.**
+fn 접힌_대장(report: &ledger::LedgerReport) -> Fold {
+    let mut fold = Fold::none();
+    fold.push(FoldedPart::Ledger, report.ledger.total(), QueryName::LedgerSnapshot);
+    fold
 }
 
 /// `pal doctor` 를 돌린다.
@@ -116,6 +124,10 @@ pub fn run(
         LedgerRef::of(&report.ledger),
         // 검사가 절단하는 것은 없다 — 표본은 **잔여**로 나가고 그것이 절단과 다른 것이다.
         Elision::none(),
+        // **대장이 접혀 있다** — 절단이 아니라 부피를 옮긴 것이다(F06 §4.3).
+        접힌_대장(&report),
+        // ⚠ **이 표면은 질의 로그를 안 쓴다.** `pal touch` 와 같은 자리다.
+        LogStatus::NotRecorded { why: NotRecorded::SurfaceDoesNotLog },
     );
 
     if json {
@@ -352,6 +364,7 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
     );
     println!("  2층       심볼 {} 색인됨", e.projection.symbols_indexed);
     println!("  절단      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
+    crate::evidence::print(e);
     println!(
         "  능력      {} · 미구축 {}",
         e.capabilities.built.join(" · "),

@@ -48,7 +48,8 @@ pub use binding::{
 // 다른 모듈이 같은 이름을 재수출하면 *"한 곳"* 이 두 곳이 된다.
 pub use budget::{
     Budget, CANDIDATE_LIMIT, CORRUPT_NOTES, DEFAULT_CACHE_BUDGET_BYTES, EXTRACT_CHUNK, MARKER_SCAN_BYTES,
-    OVERSIZE_BYTES, PROVISIONAL_CASCADE_DEPTH, PROVISIONAL_ERROR_RATIO_PERCENT,
+    OVERSIZE_BYTES, PROVISIONAL_BYTES_PER_TOKEN, PROVISIONAL_CASCADE_DEPTH,
+    PROVISIONAL_ERROR_RATIO_PERCENT,
     PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_PATH_PRODUCT_MAX, PROVISIONAL_SAMPLE_MAX,
     PROVISIONAL_QUARANTINE_BUDGET_BYTES, PROVISIONAL_STITCH_BATCH,
     PROVISIONAL_STRAY_TMP_MAX_AGE_SECS, PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_VIEW_NODE_MAX,
@@ -75,8 +76,9 @@ pub use file_graph::{
 pub use glob::{Glob, GlobError};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};
 pub use envelope::{
-    BudgetName, CapabilitySet, Coverage, Elision, ElisionReason, Envelope, LedgerRef, LimitHit,
-    ProjectionFreshness, RebuildState, Truncation,
+    BudgetName, CapabilitySet, Coverage, Elision, ElisionReason, Envelope, Fold, Folded,
+    FoldedPart, LedgerRef, LimitHit, LogStatus, NotRecorded, ProjectionFreshness,
+    RebuildState, TokenEstimate, Truncation,
 };
 pub use judgment::{Residual, ResidualReason};
 pub use manifest::{ExclusionRule, Manifest, ManifestError, RepoDecl, ScopeSource};
