@@ -20,8 +20,11 @@ use pal_core::{
 };
 use pal_query::{NamedQuery, QueryCtx, QueryResult};
 
+use pal_intent::IntentStore;
+
 use crate::attach;
 use crate::ledger;
+use crate::touch;
 
 pub struct Args<'a> {
     pub name: &'a str,
@@ -31,6 +34,8 @@ pub struct Args<'a> {
     pub rev: Option<&'a str>,
     pub cache_dir: Option<PathBuf>,
     pub index: Option<PathBuf>,
+    /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
+    pub intent: Option<PathBuf>,
     pub depth_max: Option<usize>,
     pub node_max: Option<usize>,
     /// **읽기 전용으로 붙는다** — 스티칭을 안 하고 질의 로그를 못 남긴다.
@@ -70,6 +75,12 @@ pub fn run(a: Args) -> Result<()> {
     let built_for_this = attached.built_for_this_snapshot();
     let attach::Attached { projection, indexed, .. } = attached;
 
+    // **의도 저장소는 읽기로만 연다** — 이 명령은 결박을 안 만든다.
+    // 파일이 없으면 결박이 0 건이고 **그것이 정확한 값**이다(아직 아무도 안 걸었다).
+    let intent = IntentStore::open_read_only(&touch::intent_file(a.repo, a.intent))
+        .context("의도 저장소를 열지 못했다")?;
+    let bindings = intent.all().context("결박을 읽지 못했다")?;
+
     let counts = report.ledger.counts();
     let out_of_scope = counts.values().sum::<usize>()
         - counts.get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
@@ -94,6 +105,15 @@ pub fn run(a: Args) -> Result<()> {
             a.node_max.unwrap_or(PROVISIONAL_VIEW_NODE_MAX),
         ),
         out_of_scope_files: out_of_scope,
+        bindings,
+        // **대장에서 뜬다** — 이름으로 세면 칸이 하나 늘 때 조용히 빠진다.
+        partial_files: report
+            .ledger
+            .entries
+            .iter()
+            .filter(|e| e.state.bucket() == pal_core::Bucket::Partial)
+            .map(|e| e.path.clone())
+            .collect(),
     };
 
     let envelope = pal_query::execute(&query, &ctx).context("질의가 실패했다")?;
@@ -181,6 +201,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
         QueryResult::Graph { nodes, edges } => {
             println!("  노드 {} · 엣지 {}", nodes.len(), edges.len());
         }
+        QueryResult::Bindings { bindings } => print_bindings(bindings),
         QueryResult::Ambiguous { name, candidates } => {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
             print_symbols(candidates);
@@ -211,6 +232,70 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
         e.capabilities.not_built.iter().map(|c| c.feature).collect::<Vec<_>>().join(" · ")
     );
     println!();
+}
+
+/// 결박마다 한 줄 — **상태 · 반경 · 무엇이 켰는가를 함께 낸다.**
+///
+/// F09 §5 의 마지막 행이 요구한 것이다: *"`stale` 출력에 **`triggered_by` 와 반경을
+/// 항상 붙여** 행동 가능하게 만든다."* 상태만 적으면 사람이 어디를 볼지 모르고,
+/// 그러면 표시를 무시하기 시작한다 — 그것이 [목표 G1] 의 반증 조건이다.
+///
+/// [목표 G1]: ../../../docs/plan/00-goals.md
+fn print_bindings(bindings: &[pal_core::BindingReport]) {
+    if bindings.is_empty() {
+        // **빈 목록이 정직하다** — 능력이 있고 값이 없는 것이다. `not_built` 가 아니다.
+        println!("  결박이 아직 없습니다.");
+        return;
+    }
+    println!("  결박 {}건", bindings.len());
+    println!();
+    for b in bindings {
+        let mark = match &b.status.code {
+            pal_core::CodeFreshness::Live => "live".to_owned(),
+            pal_core::CodeFreshness::Stale { triggered_by } => {
+                format!("STALE ← {} 개가 변했습니다", triggered_by.len())
+            }
+            pal_core::CodeFreshness::Orphaned { missing } => {
+                format!("ORPHANED ← 좌표 {} 개가 사라졌습니다", missing.len())
+            }
+            // **`live` 와 같은 화면이 되면 안 된다** — *"유효하다"* 와 *"유효한지 알 수
+            // 없다"* 가 같은 줄로 나오는 것이 R16 이 겨냥한 실패다.
+            pal_core::CodeFreshness::Undeterminable { reason, at } => {
+                format!("판정 불가 ← {} ({} 개 좌표)", reason.name(), at.len())
+            }
+        };
+        let 계보 = match &b.status.lineage {
+            pal_core::Lineage::Current => String::new(),
+            pal_core::Lineage::Superseded { by } => format!(" · 대체됨 → {}", by.to_display()),
+        };
+        println!("  [{}] {mark}{계보}", b.binding.as_str());
+        // **반경이 상태와 같은 줄에 있다** — *"이 결정은 `symbol` 반경에서 live"* 는
+        // *"이 결정은 유효하다"* 와 다른 문장이다(F09 §3).
+        let 등급 = b
+            .watch_grades
+            .iter()
+            .map(|(g, n)| format!("{g} {n}"))
+            .collect::<Vec<_>>()
+            .join(" · ");
+        println!("      반경 {} · 감시 {} 개 · 등급 {{{등급}}}", b.radius, b.watch);
+        println!("      {}  ·  {}", b.subject, 시각(b.bound_at_time));
+        for line in b.note.lines() {
+            println!("      {line}");
+        }
+        println!();
+    }
+    println!("  **반경 밖의 변경은 여기 안 뜹니다** — 거짓 음성은 원리적으로 안 닫힙니다.");
+    println!("  선언된 반경이 위에 적혀 있고, 그것이 이 도구가 할 수 있는 전부입니다.");
+}
+
+/// 결박한 코드의 시각 — **표시용이다.** *"3주 전 코드 기준"* 이 *"12커밋 전"* 보다 읽힌다.
+fn 시각(t: pal_core::BoundTime) -> String {
+    match t {
+        pal_core::BoundTime::Committed { epoch_secs } => format!("커밋 시각 {epoch_secs}"),
+        pal_core::BoundTime::Worktree => "워킹트리 (커밋 없음)".to_owned(),
+        // **「없다」와 「모른다」를 가른다.** 옛 판 파일에서 읽은 결박이다.
+        pal_core::BoundTime::Unrecorded => "시각 안 적힘 (옛 판)".to_owned(),
+    }
 }
 
 /// **자른 것을 화면에도 적는다.** 산출에만 있고 화면에 없으면 사람은 그 공백을 못 본다.

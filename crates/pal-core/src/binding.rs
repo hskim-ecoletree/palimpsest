@@ -729,3 +729,38 @@ mod tests {
         assert_eq!(상태(&늦은, |_| Now::Digest(d)), CodeFreshness::Live);
     }
 }
+
+/// 결박 하나의 **산출 한 줄** — `binding.status` 가 이것을 낸다 (F09 §8).
+///
+/// # 무엇이 실려야 하는가 — 문서 §5 의 마지막 행이 요구한 것
+///
+/// > `stale` 출력에 **`triggered_by` 와 반경을 항상 붙여** 행동 가능하게 만든다.
+///
+/// 그래서 [`Self::radius`] 와 [`Self::watch`] 가 상태와 **같은 줄**에 있다.
+/// *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은 유효하다"* 와 다른 문장이고,
+/// 그 차이가 산출에 남는 것이 §3 의 요구다.
+///
+/// # [`Self::watch_grades`] 가 여기 있는 이유
+///
+/// `ordinal` 좌표 위의 결박은 **비교가 가능하지만 약하다**(좌표가 선언 순서에 의존하고,
+/// 지역 이름을 안 지워 리네임에 요약이 움직인다). 그것을 [`UndeterminableReason`] 로
+/// 접으면 이 코퍼스가 통째로 판정 불가가 된다(`[f09].ordinal_is_not_undeterminable`).
+/// **접지 않는 대신 숨기지도 않는다** — 등급 분포가 산출에 실린다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct BindingReport {
+    pub binding: BindingId,
+    /// 무엇이 걸렸나 — `decision/01J…`.
+    pub subject: String,
+    pub note: String,
+    pub target: SymbolId,
+    /// 선언된 반경의 이름 — `symbol` · `callers` · `closure:2` · `files:3`.
+    pub radius: String,
+    /// 감시 집합의 크기. **`callers` 인데 1 이면 이웃이 없었다는 뜻이고 그것이 보인다.**
+    pub watch: usize,
+    /// 감시 원소의 정체성 등급 분포 — `{"exact": 3, "ordinal": 1}`.
+    pub watch_grades: std::collections::BTreeMap<&'static str, usize>,
+    pub status: BindingStatus,
+    pub bound_at: Snapshot,
+    /// **표시용이다.** 앵커가 아니다([`BoundTime`]).
+    pub bound_at_time: BoundTime,
+}

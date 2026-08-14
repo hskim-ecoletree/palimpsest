@@ -44,7 +44,7 @@ mod version;
 mod view;
 
 pub use binding::{
-    Binding, BindingId, BindingStatus, BoundTime, CodeFreshness, Lineage, Now,
+    Binding, BindingId, BindingReport, BindingStatus, BoundTime, CodeFreshness, Lineage, Now,
     UndeterminableReason, WatchEntry,
 };
 // **예산 상수는 여기 하나에서 나간다** — stack §5.5 · `[f05.1.pass]` ①.

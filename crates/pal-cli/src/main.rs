@@ -166,6 +166,9 @@ enum Command {
         cache_dir: Option<PathBuf>,
         #[arg(long)]
         index: Option<PathBuf>,
+        /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
+        #[arg(long)]
+        intent: Option<PathBuf>,
         /// 몇 홉까지 — **낮추면 절단이 답에 실린다.** 기본값은 자리표시 3
         #[arg(long)]
         depth_max: Option<usize>,
@@ -367,6 +370,7 @@ fn main() -> Result<()> {
             at,
             cache_dir,
             index,
+            intent: intent_path,
             depth_max,
             node_max,
             read_only,
@@ -379,6 +383,7 @@ fn main() -> Result<()> {
             rev: at.as_deref(),
             cache_dir,
             index,
+            intent: intent_path,
             depth_max,
             node_max,
             read_only,

@@ -100,3 +100,23 @@ summary    = "노드와 엣지 전부 — 바깥 오라클이 읽는 창"
 args       = []
 returns    = "Graph"
 introduced = "F05"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# F09 — 결박과 낡음. **이 이름이 [ADR-0012] 의 첫 실전이다**
+#
+# > 각 기능이 **자기 이름을 자기 종료 시점에** 등록한다. F07 이 `refs.callers` 를,
+# > F08 이 `refs.unresolved` 를. **그것이 그 기능이 실제로 섰다는 산출 수준의 표시다.**
+#
+# 그리고 그 장치가 실제로 일했다 — 코드 쪽만 먼저 더했더니 `cargo xtask check` 가 막았다:
+#
+#     코드가 `binding.status` 에 답하는데 카탈로그에 없다 —
+#     질의 추가는 `surface/queries.toml` 변경으로만 일어난다(F06 §2 규칙 1)
+#
+# [ADR-0012]: ../docs/adr/0012-a-single-truth-file-declares-only-what-has-a-counterpart-in-code.md
+# ─────────────────────────────────────────────────────────────────────────────
+
+[query."binding.status"]
+summary    = "결박마다 상태 + **반경** + 무엇이 켰는가"
+args       = []
+returns    = "Bindings"
+introduced = "F09"

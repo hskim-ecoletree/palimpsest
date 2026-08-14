@@ -54,6 +54,15 @@ pub enum QueryName {
     /// 노드와 엣지 전부 — **바깥 오라클(SQLite CTE)이 읽는 창**이다.
     #[serde(rename = "graph.dump")]
     GraphDump,
+    /// 결박마다 **상태 + 반경 + 무엇이 켰는가** (F09 §8).
+    ///
+    /// # 왜 결박에서 출발하는 표면이 따로 필요한가
+    ///
+    /// `pal touch <이름>` 은 **이름으로 먼저 찾는다.** 그래서 좌표가 사라진 결박은
+    /// `unknown` 이 되어 **결박에 닿지 못하고**, `Orphaned` 가 화면에 안 뜬다 —
+    /// 그것이 이 기능이 가장 보여야 하는 상태 하나다.
+    #[serde(rename = "binding.status")]
+    BindingStatus,
 }
 
 impl QueryName {
@@ -66,17 +75,19 @@ impl QueryName {
             Self::SymbolCallers => "symbol.callers",
             Self::SymbolReaches => "symbol.reaches",
             Self::GraphDump => "graph.dump",
+            Self::BindingStatus => "binding.status",
         }
     }
 
     /// 이 빌드가 답하는 질의 전부. **표면이 이것을 그대로 낸다.**
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 7] = [
         Self::LedgerSnapshot,
         Self::SymbolResolve,
         Self::SymbolContains,
         Self::SymbolCallers,
         Self::SymbolReaches,
         Self::GraphDump,
+        Self::BindingStatus,
     ];
 
     #[must_use]

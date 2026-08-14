@@ -19,13 +19,21 @@ const 봉투의_여섯: [&str; 6] =
     ["snapshot", "projection", "coverage", "capabilities", "ledger", "elision"];
 
 /// 이 빌드가 답하는 질의와 그 인자.
-const 질의들: [(&str, Option<&str>); 6] = [
+///
+/// **손으로 쓴다.** 카탈로그에서 뜨면 아래의 어긋남 단언이 항등식이 되어 영원히
+/// 통과한다 — `surface/queries.toml` 을 코드에서 생성하지 않는 것과 같은 이유다
+/// ([ADR-0012]: *"사본은 drift 를 못 잡는다"*).
+///
+/// [ADR-0012]: ../../../docs/adr/0012-a-single-truth-file-declares-only-what-has-a-counterpart-in-code.md
+const 질의들: [(&str, Option<&str>); 7] = [
     ("ledger.snapshot", None),
     ("symbol.resolve", Some("도움")),
     ("symbol.contains", Some("도움")),
     ("symbol.callers", Some("도움")),
     ("symbol.reaches", Some("부름")),
     ("graph.dump", None),
+    // F09 — 인자를 안 받는다. **결박이 0 건이어도 봉투를 진다.**
+    ("binding.status", None),
 ];
 
 fn 저장소(tag: &str) -> PathBuf {

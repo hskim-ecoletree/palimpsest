@@ -17,6 +17,8 @@ use std::process::{Command, Stdio};
 /// `graph.dump` 만 빈 목록이 옳다 — 그 질의는 *"전부"* 가 답이고 전부가 0 건이다.
 const 전부가_답인_질의: &str = "graph.dump";
 const 대장_질의: &str = "ledger.snapshot";
+/// 인자를 안 받고 **빈 목록이 정직한** 질의 — 능력이 있고 값이 없는 것이다.
+const 결박_질의: &str = "binding.status";
 
 fn 빈_저장소(tag: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("pal-f06-{tag}-{}", std::process::id()));
@@ -45,14 +47,27 @@ fn 있는_저장소(tag: &str) -> PathBuf {
     root
 }
 
-fn 질의_이름들() -> Vec<String> {
+/// 이 빌드가 답하는 질의 — **이름과 「인자를 받는가」를 함께.**
+///
+/// # 이름을 손으로 나열하지 않는다
+///
+/// 옛 판은 인자를 받는 질의를 *"`graph.dump` 와 `ledger.snapshot` 이 아닌 것"* 으로
+/// 셌다. **F09 가 `binding.status`(인자 없음)를 더하자 그 셈이 틀렸다** — 없는 이름을
+/// 인자로 넘겨 `unknown` 을 기대했는데 그 질의는 인자를 안 받는다.
+///
+/// 카탈로그가 이미 그 사실을 안다(`arg_names()`). **거기서 뜬다** — 이름으로 세는
+/// 검사는 이름이 하나 늘 때마다 조용히 틀린다.
+fn 질의_이름들() -> Vec<(String, bool)> {
     let out = Command::new(PAL).args(["query", "--list", "--json"]).output().expect("pal");
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("목록 JSON");
     v["built"]
         .as_array()
         .expect("built")
         .iter()
-        .map(|q| q["name"].as_str().expect("이름").to_owned())
+        .map(|q| {
+            let 인자를_받나 = !q["args"].as_array().expect("args").is_empty();
+            (q["name"].as_str().expect("이름").to_owned(), 인자를_받나)
+        })
         .collect()
 }
 
@@ -88,9 +103,9 @@ fn 관측_0_건에서_여섯이_전부_답한다() {
     assert_eq!(v["answer"]["ledger"]["files_total"].as_u64(), Some(0), "저장소가 안 비었다");
 
     let mut 갈래: Vec<(String, String)> = Vec::new();
-    for name in &이름들 {
+    for (name, 인자를_받나) in &이름들 {
         let mut args = vec!["query", name.as_str()];
-        if name != 전부가_답인_질의 && name != 대장_질의 {
+        if *인자를_받나 {
             args.push("이런것은없다");
         }
         args.push("--json");
@@ -107,6 +122,9 @@ fn 관측_0_건에서_여섯이_전부_답한다() {
         let 옳은 = match name.as_str() {
             대장_질의 => "ledger",
             전부가_답인_질의 => "graph",
+            // **결박이 0 건인 것과 「안 만듦」은 다르다.** 이 빌드에는 결박 능력이
+            // 있고 아무도 안 걸었을 뿐이다 — `not_built` 로 내면 거짓말이 된다.
+            결박_질의 => "bindings",
             // ★ **`symbols` 가 아니라 `unknown` 이다.** 빈 목록으로 답하면
             // *"없다"* 와 *"못 찾았다"* 가 같은 출력이 된다.
             _ => "unknown",
@@ -129,9 +147,9 @@ fn 비대화_경로가_전_질의에_닿는다() {
 
     let mut 종료_갈래: std::collections::BTreeSet<i32> = std::collections::BTreeSet::new();
 
-    for name in &이름들 {
+    for (name, 인자를_받나) in &이름들 {
         let mut args = vec!["query", name.as_str()];
-        if name != 전부가_답인_질의 && name != 대장_질의 {
+        if *인자를_받나 {
             args.push("도움");
         }
         args.push("--json");

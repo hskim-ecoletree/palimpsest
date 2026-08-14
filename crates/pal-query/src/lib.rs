@@ -30,9 +30,10 @@ use std::collections::BTreeSet;
 use std::time::Instant;
 
 use pal_core::{
-    Budget, Capable, CapabilitySet, Coverage, Elision, Envelope, ExtractGrade, Fold, FoldedPart,
-    IdentityGrade, LedgerRef, LogStatus, NotRecorded, ProjectionFreshness, QueryLogEntry, QueryName, RepoPath,
-    Slot, Snapshot, Step, SymbolId, SymbolNode, traverse,
+    Binding, BindingReport, BindingStatus, Budget, Capable, CapabilitySet, CodeFreshness, Coverage,
+    Elision, Envelope, ExtractGrade, Fold, FoldedPart, IdentityGrade, LedgerRef, Lineage, LogStatus,
+    Now, NotRecorded, ProjectionFreshness, QueryLogEntry, QueryName, RepoPath, Slot, Snapshot, Step,
+    SymbolId, SymbolNode, UndeterminableReason, traverse,
 };
 use pal_store::{Projection, ProjectionError};
 use serde::Serialize;
@@ -60,6 +61,8 @@ pub enum NamedQuery {
     SymbolReaches { name: String },
     /// 노드와 엣지 전부 — 바깥 오라클이 읽는 창.
     GraphDump,
+    /// 결박마다 상태 + **반경** + 무엇이 켰는가.
+    BindingStatus,
 }
 
 impl NamedQuery {
@@ -72,6 +75,7 @@ impl NamedQuery {
             Self::SymbolCallers { .. } => QueryName::SymbolCallers,
             Self::SymbolReaches { .. } => QueryName::SymbolReaches,
             Self::GraphDump => QueryName::GraphDump,
+            Self::BindingStatus => QueryName::BindingStatus,
         }
     }
 
@@ -79,7 +83,7 @@ impl NamedQuery {
     #[must_use]
     pub fn args(&self) -> &str {
         match self {
-            Self::LedgerSnapshot | Self::GraphDump => "",
+            Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus => "",
             Self::SymbolResolve { name }
             | Self::SymbolContains { name }
             | Self::SymbolCallers { name }
@@ -94,6 +98,7 @@ impl NamedQuery {
         match QueryName::parse(name)? {
             QueryName::LedgerSnapshot => Some(Self::LedgerSnapshot),
             QueryName::GraphDump => Some(Self::GraphDump),
+            QueryName::BindingStatus => Some(Self::BindingStatus),
             QueryName::SymbolResolve => named(|name| Self::SymbolResolve { name }),
             QueryName::SymbolContains => named(|name| Self::SymbolContains { name }),
             QueryName::SymbolCallers => named(|name| Self::SymbolCallers { name }),
@@ -120,6 +125,8 @@ pub enum QueryResult {
     Symbols { symbols: Vec<SymbolNode> },
     Reached { start: SymbolId, symbols: Vec<SymbolNode> },
     Graph { nodes: Vec<SymbolNode>, edges: Vec<DumpEdge> },
+    /// 결박마다 한 줄. **빈 목록이 정직한 답이다** — 능력이 있고 값이 없는 것이다.
+    Bindings { bindings: Vec<BindingReport> },
     /// 이름이 여럿으로 해소됐다. **하나를 고르지 않는다.**
     Ambiguous { name: String, candidates: Vec<SymbolNode> },
     /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 봉투가 진다.
@@ -139,6 +146,25 @@ pub struct QueryCtx<'a> {
     /// **넷을 손으로 넘겨야 만들 수 있다** — 끄는 손잡이가 없다(`[f05.1.pass]` ④).
     pub budget: Budget,
     pub out_of_scope_files: usize,
+    /// 이 저장소의 결박 전부 — **부르는 쪽이 지고 온다.**
+    ///
+    /// # 왜 이 크레이트가 `pal-intent` 에 의존하지 않는가
+    ///
+    /// [R-21] 이 금한 것은 *"파생층의 폐기 경로가 의도에 닿는 것"* 이고
+    /// `cargo xtask check` 는 `pal-store → pal-intent` 만 막는다. 여기는 읽기 경로라
+    /// 그 규칙에 안 걸린다 — **그래도 안 붙인다.**
+    ///
+    /// 이 구조체의 머리가 이미 그 근거를 적었다: *"봉투의 성분을 부르는 쪽이 지고 온다.
+    /// 대장을 만드는 것은 표면이고, 이 크레이트가 그것을 다시 계산하면 같은 사실이 두
+    /// 곳에서 계산된다."* **결박도 같은 자격이다** — 표면이 이미 의도 저장소를 연다
+    /// (`pal touch`). 여기서 또 열면 **한 명령이 같은 파일을 두 번 연다.**
+    ///
+    /// [R-21]: ../../../docs/plan/00-risks.md#r-21
+    pub bindings: Vec<Binding>,
+    /// 대장이 `Partial` 로 적은 파일들 — [`UndeterminableReason::PartialParse`] 의 입력.
+    ///
+    /// **이름으로 세지 않고 대장에서 뜬다.** 이름으로 세면 칸이 하나 늘 때 조용히 빠진다.
+    pub partial_files: BTreeSet<RepoPath>,
 }
 
 /// 질의 하나를 돌린다. **반환 타입이 봉투뿐이다.**
@@ -214,6 +240,9 @@ fn run(
     let p = ctx.projection;
     match q {
         NamedQuery::LedgerSnapshot => Ok(QueryResult::Ledger { ledger: ctx.ledger.clone() }),
+        NamedQuery::BindingStatus => Ok(QueryResult::Bindings {
+            bindings: binding_reports(ctx, accessed),
+        }),
         NamedQuery::GraphDump => {
             let (nodes, edges) = p.dump()?;
             accessed.extend(nodes.iter().map(|n| n.id));
@@ -381,5 +410,98 @@ pub fn freshness(
         }),
         built_for_this_snapshot,
         symbols_indexed,
+    }
+}
+
+/// 결박마다 산출 한 줄 — `binding.status` 의 몸통.
+///
+/// # 판정 불가가 이 함수의 절반이다 (F09 §2.1 · [R16])
+///
+/// 조회가 [`Now`] 를 낸다. `Option<BodyDigest>` 였으면 *"사라졌다"* 와 *"비교할 수
+/// 없다"* 가 같은 값이 되고, **그 구별이 이 기능의 전부다.**
+///
+/// | 사유 | 여기서 어떻게 아나 |
+/// |---|---|
+/// | `ProjectionStale` | 2층이 이 스냅샷 것이 아니다 — **감시 집합을 보기도 전이다** |
+/// | `IdentityGrade` | 감시 원소의 등급이 `Unavailable`(L0) — 요약 자체가 없다 |
+/// | `PartialParse` | 그 원소가 사는 파일이 대장에서 `Partial` 이다 |
+/// | `WatchMemberGone` | 조회가 비었는데 **대상은 살아 있다** — `evaluate` 가 가른다 |
+///
+/// # `ordinal` 은 여기 없다 — **접지 않고 대신 싣는다**
+///
+/// `ordinal` 좌표는 **비교가 가능하지만 약하다.** 판정 불가로 접으면 Kotlin 코퍼스가
+/// 통째로 판정 불가가 되고 그것이 *"지배하면 정직하지만 쓸모없다"* 다.
+/// 그래서 [`BindingReport::watch_grades`] 가 등급 분포를 산출에 싣는다 —
+/// 반경을 산출에 싣는 것과 **정확히 같은 자리**다(§3: 닫히지 않는 것을 선언으로 다룬다).
+///
+/// [R16]: ../../../docs/evidence-map.md
+fn binding_reports(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> Vec<BindingReport> {
+    let p = ctx.projection;
+    let 이_스냅샷 = ctx.freshness.built_for_this_snapshot;
+
+    let mut out = Vec::with_capacity(ctx.bindings.len());
+    for b in &ctx.bindings {
+        accessed.push(b.target);
+        accessed.extend(b.watch.iter().map(|w| w.symbol));
+
+        // **등급 분포는 상태와 무관하게 센다** — 판정 불가여도 *"어떤 좌표 위에 서
+        // 있는가"* 는 알 수 있고, 그것이 이 값이 지도인 이유다.
+        let mut grades: std::collections::BTreeMap<&'static str, usize> =
+            std::collections::BTreeMap::new();
+        for w in &b.watch {
+            if let Ok(Some(n)) = p.symbol(w.symbol) {
+                *grades.entry(n.identity.name()).or_insert(0) += 1;
+            }
+        }
+
+        let status = if 이_스냅샷 {
+            BindingStatus::evaluate(b, Lineage::Current, |id| match p.symbol(id) {
+                Ok(Some(n)) if n.identity == IdentityGrade::Unavailable => {
+                    Now::Undeterminable(UndeterminableReason::IdentityGrade)
+                }
+                Ok(Some(n)) if ctx.partial_files.contains(&n.path) => {
+                    Now::Undeterminable(UndeterminableReason::PartialParse)
+                }
+                Ok(Some(n)) => Now::Digest(n.body),
+                Ok(None) => Now::Gone,
+                // **읽기 실패를 「사라졌다」로 적지 않는다.** 못 읽은 것과 없는 것은
+                // 다른 사건이고, 뭉개면 저장 오류가 `Orphaned` 로 나가 사람이 코드를
+                // 고치러 간다.
+                Err(_) => Now::Undeterminable(UndeterminableReason::ProjectionStale),
+            })
+        } else {
+            // **감시 집합을 보기도 전에 판정 불가다.** 여기서 요약을 대면 옛 세대의
+            // 값과 지금의 결박을 대는 것이 된다.
+            BindingStatus::projection_stale(Lineage::Current)
+        };
+
+        out.push(BindingReport {
+            binding: b.id.clone(),
+            subject: b.subject.to_display(),
+            note: b.note.clone(),
+            target: b.target,
+            radius: b.radius.name(),
+            watch: b.watch.len(),
+            watch_grades: grades,
+            status,
+            bound_at: b.bound_at.clone(),
+            bound_at_time: b.bound_at_time,
+        });
+    }
+    // **결박 id 순.** 회차마다 순서가 달라지면 사람이 보는 목록이 흔들리고,
+    // 흔들리는 목록은 행동의 근거가 못 된다.
+    out.sort_by(|a, b| a.binding.cmp(&b.binding));
+    out
+}
+
+/// 이 답에서 낡음이 켜진 결박의 수 — **화면과 종료 코드가 함께 쓴다.**
+#[must_use]
+pub fn stale_count(r: &QueryResult) -> usize {
+    match r {
+        QueryResult::Bindings { bindings } => bindings
+            .iter()
+            .filter(|b| matches!(b.status.code, CodeFreshness::Stale { .. }))
+            .count(),
+        _ => 0,
     }
 }
