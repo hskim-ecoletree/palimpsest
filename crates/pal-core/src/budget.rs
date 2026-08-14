@@ -193,6 +193,23 @@ pub const PROVISIONAL_TRAVERSAL_DEPTH: usize = 3;
 /// **자리표시다.**
 pub const PROVISIONAL_VIEW_NODE_MAX: usize = 500;
 
+/// 격리 방(`cache/.corrupt/`)에 남길 바이트의 기본 제안값.
+///
+/// **기본으로 쓰이지 않는다** — `--sweep-quarantine` 을 명시해야 처분이 일어난다.
+/// 격리된 바이트는 **결함의 증거**이고, 예산 때문에 지우면 격리가 유예된 삭제가 된다
+/// (F04 의 판단 · `[f05.5.pass]` ①).
+///
+/// **자리표시다.**
+pub const PROVISIONAL_QUARANTINE_BUDGET_BYTES: u64 = 64 * 1024 * 1024;
+
+/// 죽은 `.tmp` 로 보기까지의 나이(초) — **한 시간.**
+///
+/// `.tmp` 는 죽은 쓰기이거나 **지금 도는 쓰기**다. 나이 없이 지우면 도는 쓰기의
+/// `rename` 이 깨진다 — 나이가 둘을 가르는 유일한 값이다.
+///
+/// **자리표시다** — 어느 측정도 이 값을 정하지 않았다. 시험은 이 값을 **인자로** 낮춘다.
+pub const PROVISIONAL_STRAY_TMP_MAX_AGE_SECS: u64 = 3_600;
+
 /// 한 무대 커밋에 묶는 파일 수 — F05 §4 의 **1,000**.
 ///
 /// `redb` 쓰기 트랜잭션은 커밋마다 fsync 비용이 있다. 묶으면 그 비용이 나뉘고,

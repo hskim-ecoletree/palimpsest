@@ -245,6 +245,17 @@ enum CacheCommand {
         /// 남길 바이트. 기본값은 2GiB (F04 §3.4 · **자리표시다**)
         #[arg(long)]
         budget: Option<u64>,
+        /// **격리 방**(`.corrupt/`)을 이 바이트까지 줄인다.
+        ///
+        /// **주지 않으면 한 바이트도 안 지운다** — 격리된 바이트는 결함의 증거다.
+        #[arg(long)]
+        sweep_quarantine: Option<u64>,
+        /// **죽은 `.tmp`** 를 지운다. 주지 않으면 한 개도 안 지운다
+        #[arg(long)]
+        sweep_stray: bool,
+        /// `.tmp` 를 죽은 것으로 보기까지의 나이(초). 기본값은 자리표시 3600
+        #[arg(long)]
+        stray_age: Option<u64>,
         #[arg(long)]
         json: bool,
     },
@@ -290,12 +301,23 @@ fn main() -> Result<()> {
         },
         Command::Cache { what } => match what {
             CacheCommand::Stats { repo, cache_dir, json } => cache::stats(&repo, cache_dir, json),
-            CacheCommand::Prune { repo, cache_dir, budget, json } => cache::prune(
-                &repo,
+            CacheCommand::Prune {
+                repo,
                 cache_dir,
-                budget.unwrap_or(pal_core::DEFAULT_CACHE_BUDGET_BYTES),
+                budget,
+                sweep_quarantine,
+                sweep_stray,
+                stray_age,
                 json,
-            ),
+            } => cache::prune(cache::PruneArgs {
+                repo,
+                cache_dir,
+                budget: budget.unwrap_or(pal_core::DEFAULT_CACHE_BUDGET_BYTES),
+                sweep_quarantine,
+                sweep_stray,
+                stray_age: stray_age.unwrap_or(pal_core::PROVISIONAL_STRAY_TMP_MAX_AGE_SECS),
+                json,
+            }),
         },
         Command::Query {
             name,

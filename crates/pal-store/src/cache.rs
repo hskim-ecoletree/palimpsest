@@ -27,6 +27,7 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use pal_core::{ExtractorVersion, ObjectName, RepoPath};
 use serde::{Serialize, de::DeserializeOwned};
@@ -177,6 +178,43 @@ pub trait ExtractCache: Send + Sync {
     ///
     /// [R-21]: ../../../docs/plan/00-risks.md#r-21
     fn evict_to(&self, budget_bytes: u64) -> Result<EvictReport, CacheError>;
+
+    /// **격리 방**을 예산까지 줄인다 — 오래된 것부터.
+    ///
+    /// # 기본으로 일어나지 않는다 (`[f05.5.pass]` ①)
+    ///
+    /// 격리된 바이트는 **결함의 증거**다. 예산 때문에 지우면 격리가 유예된 삭제가 되고,
+    /// 그것이 F04 가 *"축출이 안 건드린다"* 로 정한 이유다. **처분이 생기되 부르는 쪽이
+    /// 명시해야 한다.**
+    ///
+    /// # Errors
+    /// 훑거나 지우지 못하면.
+    fn sweep_quarantine(&self, budget_bytes: u64) -> Result<EvictReport, CacheError>;
+
+    /// **죽은 `.tmp`** 를 지운다 — `older_than` 보다 오래된 것만.
+    ///
+    /// # 나이가 유일한 가름이다 (`[f05.5.pass]` ②)
+    ///
+    /// `.tmp` 는 죽은 쓰기이거나 **지금 도는 쓰기**다. 나이 없이 지우면 도는 쓰기의
+    /// `rename` 이 깨진다 — 그것이 F04 가 *"세기는 하고 지우지 않는다"* 로 둔 이유다.
+    ///
+    /// # Errors
+    /// 훑거나 지우지 못하면.
+    fn sweep_stray(&self, older_than: Duration) -> Result<SweepReport, CacheError>;
+}
+
+/// `.tmp` 청소 한 회차의 회계.
+///
+/// **본 것과 지운 것을 따로 적는다** — 숫자만 내고 안 지우는 구현이 하나만 보면
+/// 통과한다(`[f04.pass]` ④ 와 같은 형태).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct SweepReport {
+    /// 본 `.tmp` 의 수.
+    pub scanned: usize,
+    pub removed: usize,
+    pub freed_bytes: u64,
+    /// **어려서 남긴 것.** 0 이 아니면 그 회차에 도는 쓰기가 있었다는 뜻이다.
+    pub too_young: usize,
 }
 
 /// 콘텐츠 주소 캐시.
@@ -453,6 +491,98 @@ impl ExtractCache for BlobCache {
             kept_bytes: live,
             budget_bytes,
         })
+    }
+
+    /// 격리 방을 예산까지 — **오래된 것부터.**
+    ///
+    /// 축출과 같은 규칙을 **다른 방**에 적용한다. 한 함수로 합치지 않는 이유: 합치면
+    /// 예산 하나가 두 방을 함께 재고, 그러면 *"캐시가 커서 증거가 지워지는"* 경로가 생긴다.
+    fn sweep_quarantine(&self, budget_bytes: u64) -> Result<EvictReport, CacheError> {
+        let dir = self.quarantine_dir();
+        let mut entries: Vec<Scanned> = Vec::new();
+        if let Ok(read) = fs::read_dir(&dir) {
+            for f in read {
+                let f = f.map_err(|e| CacheError::Read(e.to_string()))?;
+                let meta = f.metadata().map_err(|e| CacheError::Read(e.to_string()))?;
+                if meta.is_file() {
+                    entries.push((
+                        f.path(),
+                        meta.len(),
+                        meta.modified().unwrap_or(std::time::UNIX_EPOCH),
+                    ));
+                }
+            }
+        }
+        let scanned = entries.len();
+        let total: u64 = entries.iter().map(|(_, n, _)| n).sum();
+        entries.sort_by(|a, b| a.2.cmp(&b.2).then_with(|| a.0.cmp(&b.0)));
+
+        let mut live = total;
+        let mut removed = 0usize;
+        let mut freed = 0u64;
+        for (path, size, _) in entries {
+            if live <= budget_bytes {
+                break;
+            }
+            fs::remove_file(&path)
+                .map_err(|e| CacheError::Write(format!("{}: {e}", path.display())))?;
+            live -= size;
+            freed += size;
+            removed += 1;
+        }
+        Ok(EvictReport {
+            scanned,
+            removed,
+            freed_bytes: freed,
+            kept_entries: scanned - removed,
+            kept_bytes: live,
+            budget_bytes,
+        })
+    }
+
+    /// 죽은 `.tmp` 를 지운다 — **나이로 가른다.**
+    fn sweep_stray(&self, older_than: Duration) -> Result<SweepReport, CacheError> {
+        let now = std::time::SystemTime::now();
+        let mut out = SweepReport::default();
+        let shards = match fs::read_dir(&self.root) {
+            Ok(d) => d,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(out),
+            Err(e) => return Err(CacheError::Read(format!("{}: {e}", self.root.display()))),
+        };
+        for shard in shards {
+            let shard = shard.map_err(|e| CacheError::Read(e.to_string()))?.path();
+            if !shard.is_dir() || shard.file_name().is_some_and(|n| n == QUARANTINE) {
+                continue;
+            }
+            for file in fs::read_dir(&shard)
+                .map_err(|e| CacheError::Read(format!("{}: {e}", shard.display())))?
+            {
+                let file = file.map_err(|e| CacheError::Read(e.to_string()))?;
+                let path = file.path();
+                if path.extension().is_none_or(|e| e != "tmp") {
+                    continue;
+                }
+                let meta = file.metadata().map_err(|e| CacheError::Read(e.to_string()))?;
+                out.scanned += 1;
+                let 나이 = meta
+                    .modified()
+                    .ok()
+                    .and_then(|m| now.duration_since(m).ok())
+                    .unwrap_or_default();
+                if 나이 < older_than {
+                    // ★ **어린 것은 지금 도는 쓰기일 수 있다.** 지우면 그 쓰기의
+                    // `rename` 이 깨진다 — 나이가 둘을 가르는 유일한 값이다.
+                    out.too_young += 1;
+                    continue;
+                }
+                let size = meta.len();
+                fs::remove_file(&path)
+                    .map_err(|e| CacheError::Write(format!("{}: {e}", path.display())))?;
+                out.removed += 1;
+                out.freed_bytes += size;
+            }
+        }
+        Ok(out)
     }
 }
 

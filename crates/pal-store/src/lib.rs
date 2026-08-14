@@ -25,6 +25,7 @@ mod projection;
 
 pub use cache::{
     BlobCache, CacheError, CacheKey, CacheStats, CacheUsage, EvictReport, ExtractCache, Lookup,
+    SweepReport,
 };
 pub use projection::{FileStitch, GraphDump, Projection, ProjectionError, StitchReport};
 

@@ -27,10 +27,25 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
-use pal_store::{BlobCache, ExtractCache as _};
+use pal_store::{BlobCache, EvictReport, ExtractCache as _, SweepReport};
 
 // **기본 예산은 여기 없다.** `pal-core::budget::DEFAULT_CACHE_BUDGET_BYTES` 한 곳이다
 // (stack §5.5 · `[f05.1.pass]` ①). 넘겨서 줄이는 것은 `--budget` 이다.
+
+/// `pal cache prune` 의 인자. **손잡이가 다섯이라 이름으로 받는다** —
+/// 위치 인자 다섯은 뒤바뀌어도 타입이 안 잡는다.
+pub struct PruneArgs {
+    pub repo: PathBuf,
+    pub cache_dir: Option<PathBuf>,
+    pub budget: u64,
+    /// 격리 방을 이 예산까지 줄인다. **`None` 이면 한 바이트도 안 지운다.**
+    pub sweep_quarantine: Option<u64>,
+    /// 죽은 `.tmp` 를 지운다. **거짓이면 한 개도 안 지운다.**
+    pub sweep_stray: bool,
+    /// `.tmp` 를 죽은 것으로 보기까지의 나이(초).
+    pub stray_age: u64,
+    pub json: bool,
+}
 
 /// 캐시 뿌리. **`<저장소>/.palimpsest/cache` 하나뿐이다.**
 fn root_of(repo: &Path, cache_dir: Option<PathBuf>) -> PathBuf {
@@ -85,13 +100,28 @@ pub fn stats(repo: &Path, cache_dir: Option<PathBuf>, json: bool) -> Result<()> 
 ///
 /// # Errors
 /// 캐시를 열거나 지우지 못하면.
-pub fn prune(repo: &Path, cache_dir: Option<PathBuf>, budget: u64, json: bool) -> Result<()> {
-    let root = root_of(repo, cache_dir);
+pub fn prune(a: PruneArgs) -> Result<()> {
+    let PruneArgs { repo, cache_dir, budget, sweep_quarantine, sweep_stray, stray_age, json } = a;
+    let root = root_of(&repo, cache_dir);
     let cache = BlobCache::open(&root).context("캐시를 열지 못했다")?;
     let before = cache.usage().context("캐시를 훑지 못했다")?;
     let report = cache.evict_to(budget).context("축출하지 못했다")?;
     // **지운 뒤에 다시 센다.** 보고가 스스로를 확인하면 그것은 확인이 아니다 —
     // 숫자만 내고 안 지우는 구현이 통과한다(`[f04.pass]` ④).
+    // ── F04 가 넘긴 둘 — **기본은 안 지운다** (`[f05.5]`) ────────────────────
+    //
+    // 격리된 바이트는 **결함의 증거**이고 `.tmp` 는 **도는 쓰기일 수 있다.**
+    // 둘 다 기본으로 지우면 되돌릴 수 없는 쪽이라 부르는 쪽이 명시해야 한다.
+    let 격리: Option<EvictReport> = match sweep_quarantine {
+        Some(b) => Some(cache.sweep_quarantine(b).context("격리 방을 줄이지 못했다")?),
+        None => None,
+    };
+    let 임시: Option<SweepReport> = if sweep_stray {
+        Some(cache.sweep_stray(std::time::Duration::from_secs(stray_age)).context("`.tmp` 를 지우지 못했다")?)
+    } else {
+        None
+    };
+
     let after = cache.usage().context("캐시를 다시 훑지 못했다")?;
 
     if json {
@@ -100,6 +130,8 @@ pub fn prune(repo: &Path, cache_dir: Option<PathBuf>, budget: u64, json: bool) -
             serde_json::to_string_pretty(&serde_json::json!({
                 "before": before,
                 "report": report,
+                "quarantine": 격리,
+                "stray": 임시,
                 "after": after,
             }))?
         );
@@ -119,6 +151,20 @@ pub fn prune(repo: &Path, cache_dir: Option<PathBuf>, budget: u64, json: bool) -
         사람이_읽는(after.bytes),
         사람이_읽는(report.freed_bytes)
     );
+    // **안 부른 손잡이는 한 줄도 안 적는다.** 늘 적으면 `Finding 0` 이 되고,
+    // 그것이 이 도구가 고발하는 형태다.
+    if let Some(q) = 격리 {
+        println!(
+            "격리 방   훑음 {} · 지움 {} · 남김 {} · 푼 것 {}",
+            q.scanned, q.removed, q.kept_entries, 사람이_읽는(q.freed_bytes)
+        );
+    }
+    if let Some(s) = 임시 {
+        println!(
+            "`.tmp`    훑음 {} · 지움 {} · **어려서 남김 {}** · 푼 것 {}",
+            s.scanned, s.removed, s.too_young, 사람이_읽는(s.freed_bytes)
+        );
+    }
     // **보고와 실물을 나란히 적는다.** 다르면 그것이 곧 꺼진 대조의 신호다.
     if after.entries != report.kept_entries {
         println!(
