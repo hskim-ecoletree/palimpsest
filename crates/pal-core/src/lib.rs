@@ -44,7 +44,8 @@ mod version;
 mod view;
 
 pub use binding::{
-    Binding, BindingId, BindingReport, BindingStatus, BoundTime, CodeFreshness, Lineage, Now,
+    Binding, BindingId, BindingReport, BindingStatus, BoundTime, CodeFreshness,
+    DetectorReport, Lineage, Now,
     UndeterminableReason, WatchEntry,
 };
 // **예산 상수는 여기 하나에서 나간다** — stack §5.5 · `[f05.1.pass]` ①.
@@ -99,7 +100,10 @@ pub use projection::{FileNode, FileRow, RefCounts, ReferenceEdge, file_edges};
 pub use query_log::{QueryLogEntry, QueryName};
 pub use entity::{EntityId, EntityKind, EntityOrigin, EntityRegistry, Ulid};
 pub use radius::{BudgetRefusal, Neighborhood, Radius, check_budget, expand};
-pub use rebind::{MatchSignals, RebindProposal, propose, propose_with_shape};
+pub use rebind::{
+    BatchRefusal, MatchSignals, RebindBatch, RebindProposal, approve_batch, propose,
+    propose_with_shape,
+};
 pub use repo::{Digest, ObjectName, RepoAlias, RepoId, RepoPath, Snapshot, TreeRef};
 pub use scope::{
     BoundSymbol, LocalRef, Namespace, RefResolution, Scope, ScopeBinding, ScopeChain, ScopeIx,

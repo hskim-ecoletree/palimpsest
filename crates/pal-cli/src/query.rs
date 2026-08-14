@@ -106,6 +106,16 @@ pub fn run(a: Args) -> Result<()> {
         ),
         out_of_scope_files: out_of_scope,
         bindings,
+        // **낡음을 재는 자의 낡음** — 대장이 이미 들고 있다(F01).
+        //
+        // `matches_head` 는 **상수 시간**이다(문서 §5: *"그래서 무한 후퇴하지 않는다"*).
+        // 대장이 계산될 때의 HEAD 와 이 답이 선 트리를 댄다 — 다르면 대장이 그 사이의
+        // 커밋들을 안 봤다는 뜻이고 판정 전부가 「그때 기준」이 된다.
+        detector: pal_core::DetectorReport {
+            grammar: report.ledger.detector.grammar.clone(),
+            extractor: report.ledger.detector.extractor.clone(),
+            matches_head: report.ledger.detector.head_now == report.ledger.snapshot_tree().base(),
+        },
         // **대장에서 뜬다** — 이름으로 세면 칸이 하나 늘 때 조용히 빠진다.
         partial_files: report
             .ledger
@@ -201,7 +211,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
         QueryResult::Graph { nodes, edges } => {
             println!("  노드 {} · 엣지 {}", nodes.len(), edges.len());
         }
-        QueryResult::Bindings { bindings } => print_bindings(bindings),
+        QueryResult::Bindings { bindings, detector } => print_bindings(bindings, detector),
         QueryResult::Ambiguous { name, candidates } => {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
             print_symbols(candidates);
@@ -241,7 +251,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
 /// 그러면 표시를 무시하기 시작한다 — 그것이 [목표 G1] 의 반증 조건이다.
 ///
 /// [목표 G1]: ../../../docs/plan/00-goals.md
-fn print_bindings(bindings: &[pal_core::BindingReport]) {
+fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::DetectorReport) {
     if bindings.is_empty() {
         // **빈 목록이 정직하다** — 능력이 있고 값이 없는 것이다. `not_built` 가 아니다.
         println!("  결박이 아직 없습니다.");
@@ -286,6 +296,13 @@ fn print_bindings(bindings: &[pal_core::BindingReport]) {
     }
     println!("  **반경 밖의 변경은 여기 안 뜹니다** — 거짓 음성은 원리적으로 안 닫힙니다.");
     println!("  선언된 반경이 위에 적혀 있고, 그것이 이 도구가 할 수 있는 전부입니다.");
+    println!();
+    // **낡음을 재는 자의 낡음**(F09 §5). 안 적으면 낡은 감지기가 낸 `live` 가
+    // 지금의 `live` 로 읽힌다.
+    println!("  감지기  문법 {} · 추출기 {}", detector.grammar, detector.extractor);
+    if !detector.matches_head {
+        println!("  ⚠ **대장이 지금 HEAD 를 안 봤습니다** — 위 판정은 「그때 기준」입니다.");
+    }
 }
 
 /// 결박한 코드의 시각 — **표시용이다.** *"3주 전 코드 기준"* 이 *"12커밋 전"* 보다 읽힌다.

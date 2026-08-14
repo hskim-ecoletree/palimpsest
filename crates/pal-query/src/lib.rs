@@ -31,6 +31,7 @@ use std::time::Instant;
 
 use pal_core::{
     Binding, BindingReport, BindingStatus, Budget, Capable, CapabilitySet, CodeFreshness, Coverage,
+    DetectorReport,
     Elision, Envelope, ExtractGrade, Fold, FoldedPart, IdentityGrade, LedgerRef, Lineage, LogStatus,
     Now, NotRecorded, ProjectionFreshness, QueryLogEntry, QueryName, RepoPath, Slot, Snapshot, Step,
     SymbolId, SymbolNode, UndeterminableReason, traverse,
@@ -126,7 +127,10 @@ pub enum QueryResult {
     Reached { start: SymbolId, symbols: Vec<SymbolNode> },
     Graph { nodes: Vec<SymbolNode>, edges: Vec<DumpEdge> },
     /// 결박마다 한 줄. **빈 목록이 정직한 답이다** — 능력이 있고 값이 없는 것이다.
-    Bindings { bindings: Vec<BindingReport> },
+    ///
+    /// `detector` 는 **낡음을 재는 자의 낡음**이다(F09 §5). 안 실으면 낡은 감지기가 낸
+    /// `Live` 가 지금의 `Live` 로 읽힌다 — 그것이 *"감지기가 낡는다"* 의 실패 형태다.
+    Bindings { bindings: Vec<BindingReport>, detector: DetectorReport },
     /// 이름이 여럿으로 해소됐다. **하나를 고르지 않는다.**
     Ambiguous { name: String, candidates: Vec<SymbolNode> },
     /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 봉투가 진다.
@@ -161,6 +165,8 @@ pub struct QueryCtx<'a> {
     ///
     /// [R-21]: ../../../docs/plan/00-risks.md#r-21
     pub bindings: Vec<Binding>,
+    /// **낡음을 재는 자의 낡음** — 대장에서 온다(F01). 표면이 지고 온다.
+    pub detector: DetectorReport,
     /// 대장이 `Partial` 로 적은 파일들 — [`UndeterminableReason::PartialParse`] 의 입력.
     ///
     /// **이름으로 세지 않고 대장에서 뜬다.** 이름으로 세면 칸이 하나 늘 때 조용히 빠진다.
@@ -242,6 +248,7 @@ fn run(
         NamedQuery::LedgerSnapshot => Ok(QueryResult::Ledger { ledger: ctx.ledger.clone() }),
         NamedQuery::BindingStatus => Ok(QueryResult::Bindings {
             bindings: binding_reports(ctx, accessed),
+            detector: ctx.detector.clone(),
         }),
         NamedQuery::GraphDump => {
             let (nodes, edges) = p.dump()?;
@@ -498,7 +505,7 @@ fn binding_reports(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> Vec<BindingR
 #[must_use]
 pub fn stale_count(r: &QueryResult) -> usize {
     match r {
-        QueryResult::Bindings { bindings } => bindings
+        QueryResult::Bindings { bindings, .. } => bindings
             .iter()
             .filter(|b| matches!(b.status.code, CodeFreshness::Stale { .. }))
             .count(),

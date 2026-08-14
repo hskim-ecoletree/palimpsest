@@ -190,3 +190,147 @@ mod tests {
         assert!(!p[1].signals.name && !p[1].signals.container);
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 일괄 승인 — **F09 가 유일한 소유자다** (문서 §8 · §5 의 다섯째 행)
+//
+// > 같은 `body_digest` 의 새 심볼로 **재결박 제안**(자동 아님) + **같은 경로 접두사
+// > 변경은 일괄 승인**.
+//
+// F03 은 **제안 신호 계산까지**이고(이 파일의 위쪽), 무엇을 승인할지는 여기다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 한 번에 승인할 수 있는 묶음 — **경로 접두어 하나의 이동.**
+///
+/// # 왜 접두어인가
+///
+/// F09 §5 가 [R-08](../../../docs/plan/00-risks.md#r-08)(`Orphaned` 폭발)의 원인을
+/// **디렉터리 이동**이라 적었다. 그 사건 하나가 결박 수백 개를 한꺼번에 깨뜨리고,
+/// 사람이 그것을 하나씩 승인하면 **승인이 형식이 된다** — 형식이 된 승인은 승인이 아니다.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct RebindBatch {
+    /// 옛 경로 접두어 — `src/old/`.
+    pub was: String,
+    /// 새 경로 접두어 — `src/new/`.
+    pub now: String,
+    /// 이 묶음이 승인하면 옮겨 붙을 것들.
+    pub proposals: Vec<RebindProposal>,
+}
+
+/// 일괄 승인이 **거부되는** 이유 — 값으로 남는다.
+///
+/// *"승인할 수 없다"* 만 적으면 사람이 무엇을 손으로 봐야 하는지 모른다.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BatchRefusal {
+    /// 한 옛 좌표에 후보가 여럿이다. **하나를 골라주지 않는다** — 고르는 것은 사람의 일이다.
+    Ambiguous { orphaned: SymbolId, candidates: usize },
+    /// 신호가 약하다 — 이름이나 컨테이너가 다르다.
+    ///
+    /// **본문 요약이 같은 것만으로는 부족하다.** 한 줄짜리 접근자
+    /// (`get x() { return this.x }`)가 실제 코퍼스에 흔하고, 그것들은 서로 본문이 같다
+    /// (이 파일 머리 · F03 §4.2). **일괄에서는 그 위험이 N 배가 된다.**
+    WeakSignals { orphaned: SymbolId, strength: u8 },
+}
+
+/// 일괄 승인의 판정 — **묶음 하나에 대해.**
+///
+/// # ★ 이 함수의 값은 「승인한다」가 아니라 **「승인할 수 없는 것을 가른다」**이다
+///
+/// F03 §5 가 기각한 것은 *"의미가 다른 동일 코드에 **잘못 붙는** 것"* 이고,
+/// **일괄에서는 그 위험이 묶음 크기만큼 곱해진다.** 그래서 이 함수는 하나라도 걸리면
+/// **묶음 전체를 거부한다** — 부분 승인은 *"어디까지 승인했나"* 를 사람이 다시 세게 한다.
+///
+/// # Errors
+/// 후보가 여럿이거나 신호가 약한 제안이 하나라도 있으면 — **그 목록과 함께.**
+pub fn approve_batch(batch: &RebindBatch) -> Result<&[RebindProposal], Vec<BatchRefusal>> {
+    let mut refusals = Vec::new();
+
+    for p in &batch.proposals {
+        let 후보_수 = batch.proposals.iter().filter(|q| q.orphaned == p.orphaned).count();
+        if 후보_수 > 1 {
+            let r = BatchRefusal::Ambiguous { orphaned: p.orphaned, candidates: 후보_수 };
+            if !refusals.contains(&r) {
+                refusals.push(r);
+            }
+            continue;
+        }
+        // **신호 셋이 전부 맞아야 한다.** 본문만 같은 것은 일괄의 대상이 아니다 —
+        // 손으로 하나씩 보는 것이 맞다.
+        if p.signals.strength() < 3 {
+            refusals.push(BatchRefusal::WeakSignals {
+                orphaned: p.orphaned,
+                strength: p.signals.strength(),
+            });
+        }
+    }
+
+    if refusals.is_empty() { Ok(&batch.proposals) } else { Err(refusals) }
+}
+
+#[cfg(test)]
+mod batch_tests {
+    use super::*;
+    use crate::coord::Discriminator;
+    use crate::repo::{RepoId, RepoPath};
+    use crate::symbol::{Span, SymbolKind};
+
+    fn 제안(path: &str, name: &str, body: &str, signals: MatchSignals) -> RebindProposal {
+        let id = |p: &str, n: &str| {
+            SymbolId::compute(
+                &RepoId::new("r"),
+                &RepoPath::new(p),
+                &[],
+                n,
+                &Discriminator::new(SymbolKind::Function, 0),
+            )
+        };
+        let _ = Span { byte_start: 0, byte_end: 1, line_start: 1, line_end: 1 };
+        let _ = BodyDigest::of_normalized(body.as_bytes());
+        RebindProposal { orphaned: id("src/old/a.ts", name), candidate: id(path, name), signals }
+    }
+
+    fn 묶음(proposals: Vec<RebindProposal>) -> RebindBatch {
+        RebindBatch { was: "src/old/".to_owned(), now: "src/new/".to_owned(), proposals }
+    }
+
+    #[test]
+    fn 신호_셋이_전부_맞으면_승인한다() {
+        let b = 묶음(vec![제안(
+            "src/new/a.ts",
+            "f",
+            "본문",
+            MatchSignals { body: true, name: true, container: true },
+        )]);
+        assert_eq!(approve_batch(&b).expect("승인").len(), 1);
+    }
+
+    #[test]
+    fn 신호가_약하면_묶음_전체를_거부한다() {
+        // **★ 반대 방향이고 이 기능의 핵심이다.** 본문만 같은 것은 한 줄짜리 접근자에서
+        // 흔하고, 일괄에서는 그 위험이 묶음 크기만큼 곱해진다(F03 §5).
+        let b = 묶음(vec![
+            제안("src/new/a.ts", "f", "본문", MatchSignals { body: true, name: true, container: true }),
+            제안("src/new/b.ts", "g", "본문", MatchSignals { body: true, name: false, container: false }),
+        ]);
+        let e = approve_batch(&b).expect_err("약한 신호가 섞였는데 승인했다");
+        // **부분 승인이 아니다** — 하나라도 걸리면 묶음 전체가 거부된다.
+        assert!(matches!(e[0], BatchRefusal::WeakSignals { strength: 1, .. }), "{e:?}");
+    }
+
+    #[test]
+    fn 후보가_여럿이면_고르지_않고_거부한다() {
+        // 같은 옛 좌표에 둘 — **하나를 골라주지 않는다.**
+        let 셋 = MatchSignals { body: true, name: true, container: true };
+        let b = 묶음(vec![제안("src/new/a.ts", "f", "본문", 셋), 제안("src/new/c.ts", "f", "본문", 셋)]);
+        let e = approve_batch(&b).expect_err("후보가 둘인데 승인했다");
+        assert_eq!(e.len(), 1, "같은 좌표를 두 번 적었다");
+        assert!(matches!(e[0], BatchRefusal::Ambiguous { candidates: 2, .. }), "{e:?}");
+    }
+
+    #[test]
+    fn 빈_묶음은_승인할_것이_없다() {
+        // **빈 것이 정확한 답이다** — 억지로 채우면 §5 가 기각한 자리다.
+        assert!(approve_batch(&묶음(Vec::new())).expect("빈 묶음").is_empty());
+    }
+}

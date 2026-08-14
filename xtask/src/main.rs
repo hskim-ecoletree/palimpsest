@@ -76,6 +76,8 @@ fn check(root: &Path) -> Result<()> {
         ("선택 필드 금지 (1단계)", check_optional_fields(root)),
         ("예산 상수 단일 위치", check_budget_constants(root)),
         ("벗어나는 경로 부재", check_no_escape_hatch(root)),
+        ("앵커는 신고받지 않는다", check_anchor_is_measured(root)),
+        ("낡음이 생성기를 안 부른다", check_no_regeneration(root)),
     ];
     let total = checks.len();
 
@@ -1181,4 +1183,110 @@ mod budget_tests {
     fn 소문자_이름은_상수가_아니다() {
         assert!(budget_names("const foo: usize = 1;\n").is_empty());
     }
+}
+
+// ── 검사 12 — 앵커는 신고받지 않는다 (F09 §4.1 · DESIGN §6.5 D32) ────────────
+//
+// > 결박을 만드는 주체가 *"이건 커밋 X 기준이야"* 라고 말해도 그 값이 앵커가 되지
+// > 않는다 — **앵커는 결박 시점에 기계가 대상 좌표에서 읽은 digest 다.**
+//
+// **이 검사는 회귀 방지다.** 동작은 이미 참이고(`pal bind` 가 투영에서 읽는다) 없던
+// 것은 그 부재를 세는 장치다 — `[f05].envelope_boundary` 와 같은 형태.
+//
+// # 이름을 세지 않고 **자리를 센다**
+//
+// 낱말 목록으로 세면 새 이름이 생길 때 조용히 빠진다. 그래서 `WatchEntry` 를 **만드는
+// 자리의 수**를 등록하고, 그 수가 변하면 멈춘다 — 사람이 새 자리를 보고 판단한다.
+// (`[f05.1]` 의 예산 상수 검사와 같은 형태.)
+
+/// `WatchEntry { .. }` 리터럴이 허용되는 자리 — **`(파일, 왜)`.**
+const WATCH_ENTRY_SITES: &[(&str, &str)] = &[
+    ("crates/pal-core/src/binding.rs", "타입 선언과 그 단위 시험"),
+    ("crates/pal-cli/src/bind.rs", "투영에서 읽어 만든다 — **기계가 잰 값이다**"),
+];
+
+fn check_anchor_is_measured(root: &Path) -> Result<String> {
+    let mut sites: Vec<String> = Vec::new();
+    for dir in ["crates/pal-core/src", "crates/pal-cli/src", "crates/pal-query/src",
+                "crates/pal-store/src", "crates/pal-intent/src", "crates/pal-extract/src"] {
+        for file in rust_sources(&root.join(dir))? {
+            let text = std::fs::read_to_string(&file)?;
+            for (n, line) in text.lines().enumerate() {
+                let code = line.split("//").next().unwrap_or("");
+                // 선언(`pub struct WatchEntry {`)은 리터럴이 아니다.
+                if code.contains("WatchEntry {") && !code.contains("struct WatchEntry") {
+                    let rel = file.strip_prefix(root).unwrap_or(&file).display().to_string();
+                    sites.push(format!("{rel}:{}", n + 1));
+                }
+            }
+        }
+    }
+
+    // **하한이다.** 자리가 0 이면 이 검사가 아무것도 안 세고 있다 — 타입이 옮겨 갔거나
+    // 이름이 바뀐 것이고, 그러면 *"신고를 안 받는다"* 가 검사되지 않는다.
+    if sites.is_empty() {
+        bail!("`WatchEntry` 를 만드는 자리가 하나도 없다 — 이 검사는 아무것도 안 세고 있다");
+    }
+
+    let 허용 = |s: &str| WATCH_ENTRY_SITES.iter().any(|(f, _)| s.starts_with(f));
+    let 새것: Vec<&String> = sites.iter().filter(|s| !허용(s)).collect();
+    if !새것.is_empty() {
+        bail!(
+            "`WatchEntry` 를 만드는 자리가 늘었다 — **앵커가 어디서 오는지 사람이 봐야 한다**\n    \
+             (F09 §4.1: 앵커는 결박 시점에 **기계가 대상 좌표에서 읽은** digest 다.\n    \
+             생산자의 신고를 여기 넣으면 그 신고가 앵커가 된다):\n    {}",
+            새것.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n    ")
+        );
+    }
+    Ok(format!("`WatchEntry` 생성 자리 {}개 · 등록된 자리 {}개", sites.len(), WATCH_ENTRY_SITES.len()))
+}
+
+// ── 검사 13 — 낡음이 생성기를 안 부른다 (F09 §4.1) ──────────────────────────
+//
+// > **낡음은 탐지만 한다.** `Stale` 이 재생성을 트리거하지 않는다 — 하면
+// > ① 생산자 분리(F17)가 깨지고 ② 기록하되 통치하지 않는다는 경계가 무너지고
+// > ③ **사람이 승인한 것이 승인 없이 교체된다.**
+//
+// `Stale` 을 다루는 파일에 쓰기·생성 낱말이 없어야 한다. `pal-intent` 의
+// 「지우는 API 부재」와 같은 형태이고 같은 이유로 정적이다.
+
+/// 낡음을 다루는 자리에 있으면 안 되는 낱말.
+const REGENERATION_MARKERS: &[&str] =
+    &["regenerate", "regen(", "rebuild_note", "write_note", "auto_fix", "autofix"];
+
+fn check_no_regeneration(root: &Path) -> Result<String> {
+    let files = ["crates/pal-core/src/binding.rs", "crates/pal-query/src/lib.rs"];
+    let mut hits = Vec::new();
+    let mut 봤나 = false;
+
+    for rel in files {
+        let path = root.join(rel);
+        let text = std::fs::read_to_string(&path)
+            .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+        // **하한** — `Stale` 을 안 다루는 파일을 검사하면 아무것도 안 센다.
+        if text.contains("CodeFreshness::Stale") {
+            봤나 = true;
+        }
+        for (n, line) in text.lines().enumerate() {
+            let code = line.split("//").next().unwrap_or("");
+            for m in REGENERATION_MARKERS {
+                if code.to_lowercase().contains(m) {
+                    hits.push(format!("{rel}:{} `{m}`", n + 1));
+                }
+            }
+        }
+    }
+
+    if !봤나 {
+        bail!("`CodeFreshness::Stale` 을 다루는 파일이 하나도 없다 — 이 검사는 아무것도 안 세고 있다");
+    }
+    if !hits.is_empty() {
+        bail!(
+            "낡음이 생성기를 부르는 경로가 생겼다 (F09 §4.1):\n    \
+             ① 생산자 분리(F17)가 깨지고 ② 기록하되 통치하지 않는다는 경계가 무너지고\n    \
+             ③ **사람이 승인한 것이 승인 없이 교체된다**:\n    {}",
+            hits.join("\n    ")
+        );
+    }
+    Ok(format!("낡음을 다루는 파일 {}개 · 생성 낱말 {}개에 0건", files.len(), REGENERATION_MARKERS.len()))
 }
