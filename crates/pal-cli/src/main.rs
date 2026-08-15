@@ -20,6 +20,7 @@ mod evidence;
 mod export;
 mod intent;
 mod ledger;
+mod narrative;
 mod query;
 mod touch;
 
@@ -28,6 +29,42 @@ mod touch;
 struct Cli {
     #[command(subcommand)]
     command: Command,
+}
+
+/// `pal narrative` 의 손잡이들 — **평탄화해서 변형 하나로 든다.**
+#[derive(clap::Args)]
+struct NarrativeArgs {
+    /// 저장소 경로
+    #[arg(long, default_value = ".")]
+    repo: PathBuf,
+    /// 어느 커밋인가
+    #[arg(long)]
+    at: Option<String>,
+    #[arg(long)]
+    cache_dir: Option<PathBuf>,
+    #[arg(long)]
+    index: Option<PathBuf>,
+    #[arg(long)]
+    intent: Option<PathBuf>,
+    /// 이 개체의 제안을 **승인한다** — 새 `asserted` 결박이 생긴다
+    #[arg(long, conflicts_with = "refuse")]
+    approve: Option<String>,
+    /// 이 개체의 제안을 **거부한다** — 다시 묻지 않는다
+    #[arg(long)]
+    refuse: Option<String>,
+    /// 후보가 여럿일 때 사람이 고르는 좌표. **기계가 고르지 않는다**
+    #[arg(long)]
+    pick: Option<String>,
+    /// 왜 거부하는가. **`--refuse` 에 필수다** — 이유 없는 거부는 다음 사람에게
+    /// 아무 말도 안 한다
+    #[arg(long)]
+    reason: Option<String>,
+    /// 이 경로 아래의 조각을 **일괄 승인**한다 — 하나라도 걸리면 묶음 전체가 거부된다
+    #[arg(long)]
+    all_of: Option<String>,
+    /// 사람이 읽는 화면 대신 JSON 으로 낸다
+    #[arg(long)]
+    json: bool,
 }
 
 #[derive(Subcommand)]
@@ -75,6 +112,15 @@ enum Command {
         #[arg(long)]
         intent: Option<PathBuf>,
     },
+    /// 문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
+    ///
+    /// 인자 없이 부르면 3분류를 낸다. `--approve` 는 사람의 승인이고 `--refuse` 는
+    /// 거부이며 **둘 다 기록된다.**
+    ///
+    /// 손잡이를 **평탄화한 구조체**로 받는다 — 다른 명령들처럼 변형 안에 늘어놓으면
+    /// `main` 의 한 팔이 열한 줄이 되고, 그때 `main` 이 *"조립"* 이 아니라
+    /// *"손잡이 목록"* 이 된다.
+    Narrative(NarrativeArgs),
     /// 수정 커밋 하나에서 결함을 소급 결박한다 — **못 담은 것도 센다**
     Defect {
         /// 수정 커밋
@@ -306,6 +352,7 @@ enum CacheCommand {
 fn main() -> Result<()> {
     match Cli::parse().command {
         Command::Symbols { path, json, graph } => symbols(&path, json, graph),
+        Command::Narrative(a) => 서술물(&a),
         Command::Bind { name, note, radius, repo, at, cache_dir, index, intent } => bind::run(
             bind::Args { repo: &repo, rev: at.as_deref(), cache_dir, index, intent,
                          name: &name, note: &note, radius: &radius },
@@ -330,9 +377,7 @@ fn main() -> Result<()> {
             let scope = if full {
                 pal_core::DoctorScope::Full
             } else {
-                pal_core::DoctorScope::Sample {
-                    max: sample.unwrap_or(pal_core::PROVISIONAL_SAMPLE_MAX),
-                }
+                pal_core::DoctorScope::Sample { max: sample.unwrap_or(pal_core::PROVISIONAL_SAMPLE_MAX) }
             };
             doctor::run(&repo, at.as_deref(), cache_dir, index, intent, scope, json)
         }
@@ -482,4 +527,56 @@ fn print_table(path: &Path, language: Language, found: &[pal_core::Symbol]) {
     }
     println!();
     println!("  선언 {}", found.len());
+}
+
+/// `pal narrative` — 손잡이를 갈래로 바꿔 넘긴다.
+///
+/// # Errors
+/// 갈래를 못 가르거나 인입이 실패하면.
+fn 서술물(a: &NarrativeArgs) -> Result<()> {
+    narrative::run(narrative::Args {
+        repo: &a.repo,
+        rev: a.at.as_deref(),
+        cache_dir: a.cache_dir.clone(),
+        index: a.index.clone(),
+        intent: a.intent.clone(),
+        json: a.json,
+        what: 서술물_갈래(
+            a.approve.as_deref(),
+            a.refuse.as_deref(),
+            a.pick.as_deref(),
+            a.reason.as_deref(),
+            a.all_of.as_deref(),
+        )?,
+    })
+}
+
+/// `pal narrative` 의 갈래 셋을 손잡이에서 가른다.
+///
+/// **`--refuse` 는 이유를 요구한다** — 이유 없는 거부는 다음 사람에게 아무 말도 안
+/// 한다(F10 §3.3: *"재질문 제거가 승인 비용 절감의 대부분"*).
+fn 서술물_갈래<'a>(
+    approve: Option<&'a str>,
+    refuse: Option<&'a str>,
+    pick: Option<&'a str>,
+    reason: Option<&'a str>,
+    all_of: Option<&'a str>,
+) -> Result<narrative::What<'a>> {
+    if let Some(item) = refuse {
+        let (Some(pick), Some(reason)) = (pick, reason) else {
+            anyhow::bail!(
+                "`--refuse` 는 `--pick <좌표>` 와 `--reason <왜>` 를 요구합니다 — \
+                 거부는 **(조각, 좌표) 짝**에 대한 것이고, 이유가 없으면 다음 사람이 \
+                 같은 후보를 다시 봅니다"
+            );
+        };
+        return Ok(narrative::What::Refuse { item, pick, reason });
+    }
+    if let Some(item) = approve {
+        return Ok(narrative::What::Approve { item, pick, all_of: None });
+    }
+    if let Some(prefix) = all_of {
+        return Ok(narrative::What::Approve { item: "", pick: None, all_of: Some(prefix) });
+    }
+    Ok(narrative::What::Ingest)
 }

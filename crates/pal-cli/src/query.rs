@@ -105,6 +105,15 @@ pub fn run(a: Args) -> Result<()> {
             a.node_max.unwrap_or(PROVISIONAL_VIEW_NODE_MAX),
         ),
         out_of_scope_files: out_of_scope,
+        // **이 질의에서만 문서를 읽는다.** 다른 질의에서 비어 있는 것은 *"미결박이
+        // 0"* 이 아니라 *"안 물었다"* 이고, 그 구별이 `QueryCtx::narrative` 의 머리에
+        // 적혀 있다. 인입은 저장소 전체의 문서를 읽으므로 **묻지 않은 질의에 그 비용을
+        // 지우지 않는다.**
+        narrative: if matches!(query, NamedQuery::NarrativeUnbound) {
+            crate::narrative::ingest(a.repo, &report, &projection, &intent)?.proposals
+        } else {
+            Vec::new()
+        },
         bindings,
         // **낡음을 재는 자의 낡음** — 대장이 이미 들고 있다(F01).
         //
@@ -212,6 +221,9 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
             println!("  노드 {} · 엣지 {}", nodes.len(), edges.len());
         }
         QueryResult::Bindings { bindings, detector } => print_bindings(bindings, detector),
+        QueryResult::Narrative { unbound, candidates, bound } => {
+            print_narrative(unbound, *candidates, *bound);
+        }
         QueryResult::Ambiguous { name, candidates } => {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
             print_symbols(candidates);
@@ -339,4 +351,41 @@ fn print_symbols(symbols: &[pal_core::SymbolNode]) {
     for s in symbols {
         println!("  {:<10} {:<24} {}:{}", s.kind.name(), s.name, s.path, s.span.line_start);
     }
+}
+
+/// 미결박 목록 — **이것이 사람의 작업 목록이다** (F10 §2).
+///
+/// # 세 갈래를 함께 낸다
+///
+/// 미결박만 내면 *"이 저장소의 문서가 코드에 전혀 안 걸린다"* 로 읽힌다. 걸린 것과
+/// 후보가 있는 것의 **수**가 같은 화면에 있어야 그 목록이 무엇에 대한 목록인지 읽힌다.
+/// **그러나 목록은 섞지 않는다** — 후보가 있는 것은 할 일이 아니라 승인 대기다.
+fn print_narrative(unbound: &[pal_query::UnboundItem], candidates: usize, bound: usize) {
+    println!("  결박됨 {bound} · 후보 있음 {candidates} · **미결박 {}**", unbound.len());
+    println!();
+    if unbound.is_empty() {
+        // **빈 목록이 정직하다** — 능력이 있고 값이 없는 것이다.
+        println!("  좌표를 못 찾은 조각이 없습니다.");
+        return;
+    }
+    for u in unbound {
+        println!("  {}", u.item);
+        println!("      {}#{}", u.path, u.anchor);
+        println!("      {}", u.head);
+        // ★ **신호 0 과 「신호는 있는데 못 찾았다」는 다른 사건이다.**
+        // 뭉개면 *"문서가 심볼을 안 가리킨다"*(R-09)와 *"계단식이 안 돈다"* 가
+        // 같은 숫자가 된다.
+        println!(
+            "      신호 {} — {}",
+            u.signals_seen,
+            if u.signals_seen == 0 {
+                "**이 조각은 코드를 아예 안 가리킵니다**"
+            } else {
+                "신호는 있는데 대장·인덱스에서 아무것도 못 찾았습니다"
+            }
+        );
+        println!();
+    }
+    println!("  **여기 있는 것은 기계가 못 건 것입니다.** 사람이 좌표를 붙이면");
+    println!("  `pal bind` 로 걸리고 `hand` 로 남습니다.");
 }

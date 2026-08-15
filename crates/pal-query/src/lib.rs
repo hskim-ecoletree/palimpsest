@@ -64,6 +64,8 @@ pub enum NamedQuery {
     GraphDump,
     /// 결박마다 상태 + **반경** + 무엇이 켰는가.
     BindingStatus,
+    /// 좌표를 못 찾은 문서 조각들 — **사람의 작업 목록** (F10 §2).
+    NarrativeUnbound,
 }
 
 impl NamedQuery {
@@ -77,6 +79,7 @@ impl NamedQuery {
             Self::SymbolReaches { .. } => QueryName::SymbolReaches,
             Self::GraphDump => QueryName::GraphDump,
             Self::BindingStatus => QueryName::BindingStatus,
+            Self::NarrativeUnbound => QueryName::NarrativeUnbound,
         }
     }
 
@@ -84,7 +87,8 @@ impl NamedQuery {
     #[must_use]
     pub fn args(&self) -> &str {
         match self {
-            Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus => "",
+            Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus
+            | Self::NarrativeUnbound => "",
             Self::SymbolResolve { name }
             | Self::SymbolContains { name }
             | Self::SymbolCallers { name }
@@ -100,12 +104,33 @@ impl NamedQuery {
             QueryName::LedgerSnapshot => Some(Self::LedgerSnapshot),
             QueryName::GraphDump => Some(Self::GraphDump),
             QueryName::BindingStatus => Some(Self::BindingStatus),
+            QueryName::NarrativeUnbound => Some(Self::NarrativeUnbound),
             QueryName::SymbolResolve => named(|name| Self::SymbolResolve { name }),
             QueryName::SymbolContains => named(|name| Self::SymbolContains { name }),
             QueryName::SymbolCallers => named(|name| Self::SymbolCallers { name }),
             QueryName::SymbolReaches => named(|name| Self::SymbolReaches { name }),
         }
     }
+}
+
+/// 좌표를 못 찾은 조각 하나 — 산출에 실리는 형태.
+///
+/// **본문 전체를 안 싣는다.** 작업 목록은 *"어디를 봐야 하는가"* 에 답하는 것이지
+/// 문서를 다시 보여 주는 것이 아니고, 조각 수백 개의 본문이 실리면 목록이 안 읽힌다.
+/// 첫 줄과 좌표가 있으면 사람이 문서를 연다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct UnboundItem {
+    /// 개체의 이름 — `decision/01J…`. **승인·거부가 이 이름으로 부른다.**
+    pub item: String,
+    pub path: RepoPath,
+    pub anchor: String,
+    /// 본문의 첫 줄. **전부가 아니다.**
+    pub head: String,
+    /// 이 조각이 든 신호의 수 — **0 이면 문서가 코드를 아예 안 가리킨다.**
+    ///
+    /// 0 과 「신호는 있는데 아무것도 못 찾았다」는 다른 사건이다. 뭉개면 *"문서가
+    /// 심볼을 안 가리킨다"*([R-09])와 *"계단식이 안 돈다"* 가 같은 숫자가 된다.
+    pub signals_seen: usize,
 }
 
 /// 엣지 하나 — 산출에 실리는 형태.
@@ -131,6 +156,14 @@ pub enum QueryResult {
     /// `detector` 는 **낡음을 재는 자의 낡음**이다(F09 §5). 안 실으면 낡은 감지기가 낸
     /// `Live` 가 지금의 `Live` 로 읽힌다 — 그것이 *"감지기가 낡는다"* 의 실패 형태다.
     Bindings { bindings: Vec<BindingReport>, detector: DetectorReport },
+    /// 좌표를 못 찾은 문서 조각들 — **이것이 사람의 작업 목록이다** (F10 §2).
+    ///
+    /// # 후보가 있는 것은 여기 없다
+    ///
+    /// *"여럿이라 못 좁혔다"* 는 **이미 후보가 있는 것**이고 *"신호가 없다"* 는
+    /// **사람이 좌표를 붙여야 하는 것**이다. 섞으면 작업 목록이 안 읽힌다.
+    /// 그래서 `candidates` 는 **수로만** 실린다 — 있다는 사실은 남고 목록은 안 섞인다.
+    Narrative { unbound: Vec<UnboundItem>, candidates: usize, bound: usize },
     /// 이름이 여럿으로 해소됐다. **하나를 고르지 않는다.**
     Ambiguous { name: String, candidates: Vec<SymbolNode> },
     /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 봉투가 진다.
@@ -150,6 +183,17 @@ pub struct QueryCtx<'a> {
     /// **넷을 손으로 넘겨야 만들 수 있다** — 끄는 손잡이가 없다(`[f05.1.pass]` ④).
     pub budget: Budget,
     pub out_of_scope_files: usize,
+    /// 이 스냅샷의 문서 제안 전부 — **부르는 쪽이 지고 온다.**
+    ///
+    /// # 왜 여기서 계산하지 않는가
+    ///
+    /// [`Self::bindings`] 와 **같은 이유다** — 조립은 표면의 일이고, 이 크레이트가
+    /// 문서를 읽으면 같은 사실이 두 곳에서 계산된다. 그리고 인입은 git 이력을 타는데
+    /// **이 크레이트는 git 을 모른다.**
+    ///
+    /// **`narrative.unbound` 가 아닌 질의에서는 비어 있고, 그것이 정확한 값이다** —
+    /// 문서를 안 읽었으므로 *"미결박이 0"* 이 아니라 *"안 물었다"* 다.
+    pub narrative: Vec<pal_core::Proposal>,
     /// 이 저장소의 결박 전부 — **부르는 쪽이 지고 온다.**
     ///
     /// # 왜 이 크레이트가 `pal-intent` 에 의존하지 않는가
@@ -246,6 +290,33 @@ fn run(
     let p = ctx.projection;
     match q {
         NamedQuery::LedgerSnapshot => Ok(QueryResult::Ledger { ledger: ctx.ledger.clone() }),
+        NamedQuery::NarrativeUnbound => {
+            let mut unbound = Vec::new();
+            let mut candidates = 0;
+            let mut bound = 0;
+            for p in &ctx.narrative {
+                match &p.class {
+                    pal_core::Classification::Bound { target, .. } => {
+                        bound += 1;
+                        // **승인된 좌표는 이 답이 만진 것이다** — F17 이 로그를 셀 때
+                        // *"인입이 무엇을 봤나"* 가 여기서 나온다.
+                        accessed.push(*target);
+                    }
+                    pal_core::Classification::Candidates { candidates: c, .. } => {
+                        candidates += 1;
+                        accessed.extend(c.iter().copied());
+                    }
+                    pal_core::Classification::Unbound => unbound.push(UnboundItem {
+                        item: p.item.to_display(),
+                        path: p.fragment.path.clone(),
+                        anchor: p.fragment.anchor.clone(),
+                        head: p.fragment.body.lines().next().unwrap_or("").to_owned(),
+                        signals_seen: 신호_수(&p.fragment.signals),
+                    }),
+                }
+            }
+            Ok(QueryResult::Narrative { unbound, candidates, bound })
+        }
         NamedQuery::BindingStatus => Ok(QueryResult::Bindings {
             bindings: binding_reports(ctx, accessed),
             detector: ctx.detector.clone(),
@@ -511,4 +582,13 @@ pub fn stale_count(r: &QueryResult) -> usize {
             .count(),
         _ => 0,
     }
+}
+
+/// 이 조각이 든 신호가 몇 개인가 — **0 이면 문서가 코드를 아예 안 가리킨다.**
+///
+/// 붙어 있는 좌표 · 프론트매터 · 펜스 안의 경로 · 인라인 스팬만 센다.
+/// **동반 변경은 안 센다** — 그것은 조각이 든 신호가 아니라 **저장소의 사정**이고,
+/// 세면 모든 조각이 최소 하나를 갖게 되어 이 값이 아무것도 안 가른다.
+fn 신호_수(s: &pal_core::RawSignals) -> usize {
+    s.attached.len() + s.grounds.len() + s.fenced_paths.len() + s.spans.len()
 }

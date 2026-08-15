@@ -63,6 +63,15 @@ pub enum QueryName {
     /// 그것이 이 기능이 가장 보여야 하는 상태 하나다.
     #[serde(rename = "binding.status")]
     BindingStatus,
+    /// 좌표를 못 찾은 문서 조각들 — **이것이 사람의 작업 목록이다** (F10 §2).
+    ///
+    /// # 왜 「미결박」이고 「후보 있음」이 아닌가
+    ///
+    /// 둘은 다른 답이다. *"여럿이라 못 좁혔다"* 는 **이미 후보가 있는 것**이고,
+    /// *"신호가 없다"* 는 **사람이 좌표를 붙여야 하는 것**이다. 뭉치면 작업 목록에
+    /// 할 일이 아닌 것이 섞이고, 섞이면 목록이 안 읽힌다.
+    #[serde(rename = "narrative.unbound")]
+    NarrativeUnbound,
 }
 
 impl QueryName {
@@ -76,11 +85,12 @@ impl QueryName {
             Self::SymbolReaches => "symbol.reaches",
             Self::GraphDump => "graph.dump",
             Self::BindingStatus => "binding.status",
+            Self::NarrativeUnbound => "narrative.unbound",
         }
     }
 
     /// 이 빌드가 답하는 질의 전부. **표면이 이것을 그대로 낸다.**
-    pub const ALL: [Self; 7] = [
+    pub const ALL: [Self; 8] = [
         Self::LedgerSnapshot,
         Self::SymbolResolve,
         Self::SymbolContains,
@@ -88,6 +98,7 @@ impl QueryName {
         Self::SymbolReaches,
         Self::GraphDump,
         Self::BindingStatus,
+        Self::NarrativeUnbound,
     ];
 
     #[must_use]

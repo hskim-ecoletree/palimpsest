@@ -63,7 +63,12 @@ pub fn fragment(path: &RepoPath, source: &str) -> Vec<Fragment> {
                 out.push(std::mem::replace(&mut 지금, 열린조각::새것()));
                 어디 = 자리::헤딩;
             }
-            Event::End(TagEnd::Heading(_)) => 어디 = 자리::본문,
+            Event::End(TagEnd::Heading(_)) => {
+                // **헤딩 뒤에 줄을 넣는다** — 안 넣으면 `제목본문` 이 한 낱말로 붙고,
+                // 그 조각의 첫 줄이 작업 목록에 그대로 실린다.
+                지금.body.push('\n');
+                어디 = 자리::본문;
+            }
 
             Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(_) | CodeBlockKind::Indented)) => {
                 펜스.clear();
@@ -96,8 +101,10 @@ pub fn fragment(path: &RepoPath, source: &str) -> Vec<Fragment> {
                 자리::본문 => 지금.body.push_str(&t),
             },
 
-            Event::SoftBreak | Event::HardBreak | Event::Rule => 지금.body.push('\n'),
-            Event::End(TagEnd::Paragraph | TagEnd::Item) => 지금.body.push('\n'),
+            Event::SoftBreak
+            | Event::HardBreak
+            | Event::Rule
+            | Event::End(TagEnd::Paragraph | TagEnd::Item) => 지금.body.push('\n'),
             _ => {}
         }
     }
@@ -105,7 +112,7 @@ pub fn fragment(path: &RepoPath, source: &str) -> Vec<Fragment> {
 
     // 프론트매터의 좌표는 **문서 첫 조각**에 붙는다 — 문서 전체에 대한 선언이기 때문이다.
     let grounds = grounds_of(&프론트매터);
-    닫는다(path, out, grounds)
+    닫는다(path, out, &grounds)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -133,7 +140,7 @@ impl 열린조각 {
 }
 
 /// 열린 조각들을 [`Fragment`] 로 닫는다 — **앵커를 여기서 유일하게 만든다.**
-fn 닫는다(path: &RepoPath, 열린: Vec<열린조각>, grounds: Vec<String>) -> Vec<Fragment> {
+fn 닫는다(path: &RepoPath, 열린: Vec<열린조각>, grounds: &[String]) -> Vec<Fragment> {
     let mut 쓴것: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
     let mut out = Vec::new();
     for (i, f) in 열린.into_iter().enumerate() {
@@ -155,7 +162,7 @@ fn 닫는다(path: &RepoPath, 열린: Vec<열린조각>, grounds: Vec<String>) -
         let mut signals = f.signals;
         // 프론트매터는 **첫 조각에만** 붙는다.
         if out.is_empty() {
-            signals.grounds.clone_from(&grounds);
+            signals.grounds = grounds.to_vec();
         }
         out.push(Fragment {
             path: path.clone(),
@@ -176,10 +183,8 @@ fn slug(heading: &str) -> String {
     for ch in heading.chars() {
         if ch.is_alphanumeric() {
             s.extend(ch.to_lowercase());
-        } else if ch.is_whitespace() || ch == '-' || ch == '_' {
-            if !s.ends_with('-') {
-                s.push('-');
-            }
+        } else if (ch.is_whitespace() || ch == '-' || ch == '_') && !s.ends_with('-') {
+            s.push('-');
         }
     }
     let s = s.trim_matches('-').to_owned();
@@ -304,6 +309,8 @@ mod tests {
         assert_eq!(f.len(), 2);
         assert_eq!(f[0].anchor, "하나");
         assert!(f[0].body.contains("첫째 본문"));
+        // **헤딩과 본문이 한 낱말로 붙으면 안 된다** — 작업 목록의 첫 줄이 그것이다.
+        assert_eq!(f[0].body.lines().next(), Some("하나"), "{:?}", f[0].body);
         assert!(!f[0].body.contains("둘째"), "경계가 안 섰다");
         assert_eq!(f[1].anchor, "둘");
     }

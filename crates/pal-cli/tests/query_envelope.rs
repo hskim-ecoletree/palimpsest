@@ -25,7 +25,7 @@ const 봉투의_여섯: [&str; 6] =
 /// ([ADR-0012]: *"사본은 drift 를 못 잡는다"*).
 ///
 /// [ADR-0012]: ../../../docs/adr/0012-a-single-truth-file-declares-only-what-has-a-counterpart-in-code.md
-const 질의들: [(&str, Option<&str>); 7] = [
+const 질의들: [(&str, Option<&str>); 8] = [
     ("ledger.snapshot", None),
     ("symbol.resolve", Some("도움")),
     ("symbol.contains", Some("도움")),
@@ -34,6 +34,8 @@ const 질의들: [(&str, Option<&str>); 7] = [
     ("graph.dump", None),
     // F09 — 인자를 안 받는다. **결박이 0 건이어도 봉투를 진다.**
     ("binding.status", None),
+    // F10 — 인자를 안 받는다. **작업 목록은 전부를 내야 목록이다.**
+    ("narrative.unbound", None),
 ];
 
 fn 저장소(tag: &str) -> PathBuf {

@@ -15,7 +15,7 @@
 
 use std::path::Path;
 
-use pal_core::{Binding, BindingId, SymbolId};
+use pal_core::{Binding, BindingId, EntityId, Refusal, SymbolId};
 use redb::{
     Database, MultimapTableDefinition, ReadOnlyDatabase, ReadableDatabase, ReadableMultimapTable,
     ReadableTable, ReadableTableMetadata, TableDefinition,
@@ -43,6 +43,36 @@ const BOUND_BY: MultimapTableDefinition<&[u8], &str> = MultimapTableDefinition::
 /// 알 길이 `BINDING` 전수 훑기밖에 없다. 반경이 `symbol` 이면 `BOUND_BY` 로 충분했고,
 /// **반경을 들이는 순간 둘이 갈린다**(F09 §4.1).
 const WATCH: MultimapTableDefinition<&[u8], &str> = MultimapTableDefinition::new("watch");
+
+/// 문서 조각의 **출처 → 개체 이름** (F10 §3.1 · `[f10].entity_identity`).
+///
+/// # 왜 여기인가 — **민팅한 값은 재계산이 불가능하다**
+///
+/// 문서 조각의 제안은 **결정론적 파생**이라 다시 계산된다. 그런데 [`pal_core::EntityId`]
+/// 는 `mint` 로 태어나므로 **계산에서 안 나온다.** 대응을 안 남기면 같은 문서를 두 번
+/// 인입할 때 개체가 둘이 되고, **읽기가 더하기가 아니라 복제가 된다**(`[f05.4]` ②).
+///
+/// # 왜 `derived` 를 안 쓰나
+///
+/// [`pal_core::EntityId::derived`] 는 *"옛 판을 올릴 때만 쓴다"* 이고, 씨앗을 경로로
+/// 잡으면 **경로 해시가 정체성이 되어** `EntityId` 가 존재하는 이유(*"문서가 이동해도
+/// 유지"*)를 정면으로 깬다.
+///
+/// # 열쇠가 `<경로>\0<앵커>` 다 — 저장소 id 가 없다
+///
+/// 이 파일이 **저장소마다 하나**이기 때문이다(`<저장소>/.palimpsest/intent.redb`).
+/// 멀티레포 인입은 F10 의 범위 밖이고 그 사실이 게이트에 적혀 있다.
+const ENTITY: TableDefinition<&str, Vec<u8>> = TableDefinition::new("narrative_entity");
+
+/// 사람이 **거부한** (조각, 좌표) 짝 (F10 §3.3).
+///
+/// # 왜 여기인가 — **재생 불가하다**
+///
+/// 제안은 다시 계산되지만 *"사람이 이것을 거부했다"* 는 **계산에서 안 나온다.**
+/// 그리고 문서 §3.3 이 그 값을 못 박았다 — *"거부해도 기록된다 ← **재질문 제거가
+/// 승인 비용 절감의 대부분**"*. 지워지면 다음 인입이 같은 것을 다시 묻고,
+/// **그 순간 이 기능의 값이 사라진다**([R-21] 이 가르는 선이 정확히 여기다).
+const REFUSAL: TableDefinition<&str, Vec<u8>> = TableDefinition::new("narrative_refusal");
 
 #[derive(Debug, thiserror::Error)]
 pub enum IntentError {
@@ -355,6 +385,112 @@ impl IntentStore {
         Ok(out)
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // 서술물 인입이 남기는 둘 — **재생 불가한 것만** (F10 · `[f10].queue_placement`)
+    //
+    // 제안은 여기 없다. **결정론적 파생이라 다시 계산하고**, 저장하면 재생 경로를
+    // 하나 더 지어야 한다. 2층에 두면 `[f05.2]` ④ 의 모집단이 늘어 남의 합격선이
+    // 움직인다. 승인 큐도 없다 — **큐는 값이 아니라 뷰다**(제안 − (승인 ∪ 거부)).
+    // ─────────────────────────────────────────────────────────────────────
+
+    /// 문서 조각의 출처 → 개체 이름. **없으면 아직 안 본 조각이다.**
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 값을 풀지 못하면.
+    pub fn entity_of(&self, origin: &str) -> Result<Option<EntityId>, IntentError> {
+        let Some(read) = self.read()? else { return Ok(None) };
+        let Ok(t) = read.open_table(ENTITY) else { return Ok(None) };
+        let got = t.get(origin).map_err(|e| IntentError::Transaction(e.to_string()))?;
+        match got {
+            None => Ok(None),
+            Some(v) => Ok(Some(
+                postcard::from_bytes(&v.value()).map_err(|e| IntentError::Decode(e.to_string()))?,
+            )),
+        }
+    }
+
+    /// 개체 이름을 남긴다. **이미 있으면 안 덮어쓴다** — 덮어쓰면 그 조각에 걸린
+    /// 결박이 **가리키는 것을 잃는다**(`EntityRegistry::register` 와 같은 판단).
+    ///
+    /// 이미 있었으면 `false`.
+    ///
+    /// # Errors
+    /// 쓰기가 실패하면.
+    pub fn keep_entity(&self, origin: &str, id: &EntityId) -> Result<bool, IntentError> {
+        if self.entity_of(origin)?.is_some() {
+            return Ok(false);
+        }
+        let raw = postcard::to_allocvec(id).map_err(|e| IntentError::Decode(e.to_string()))?;
+        let write = self.write()?;
+        {
+            let mut t =
+                write.open_table(ENTITY).map_err(|e| IntentError::Transaction(e.to_string()))?;
+            t.insert(origin, raw).map_err(|e| IntentError::Transaction(e.to_string()))?;
+        }
+        write.commit().map_err(|e| IntentError::Transaction(e.to_string()))?;
+        Ok(true)
+    }
+
+    /// 개체가 몇 개인가 — **두 번째 인입에서 이 수가 안 늘어야 한다**(`[f10.1.pass]` ①).
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn entity_count(&self) -> Result<usize, IntentError> {
+        let Some(read) = self.read()? else { return Ok(0) };
+        let Ok(t) = read.open_table(ENTITY) else { return Ok(0) };
+        let n = t.len().map_err(|e: redb::StorageError| IntentError::Transaction(e.to_string()))?;
+        Ok(usize::try_from(n).unwrap_or(usize::MAX))
+    }
+
+    /// 거부를 남긴다. **같은 짝을 두 번 거부해도 하나다.**
+    ///
+    /// # Errors
+    /// 쓰기가 실패하면.
+    pub fn keep_refusal(&self, r: &Refusal) -> Result<(), IntentError> {
+        let raw = postcard::to_allocvec(r).map_err(|e| IntentError::Decode(e.to_string()))?;
+        let write = self.write()?;
+        {
+            let mut t =
+                write.open_table(REFUSAL).map_err(|e| IntentError::Transaction(e.to_string()))?;
+            t.insert(거부_열쇠(&r.item, r.target).as_str(), raw)
+                .map_err(|e| IntentError::Transaction(e.to_string()))?;
+        }
+        write.commit().map_err(|e| IntentError::Transaction(e.to_string()))?;
+        Ok(())
+    }
+
+    /// 이 짝이 이미 거부됐나 — **재질문 제거가 이 함수 하나다**(문서 §3.3).
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn refused(&self, item: &EntityId, target: SymbolId) -> Result<bool, IntentError> {
+        let Some(read) = self.read()? else { return Ok(false) };
+        let Ok(t) = read.open_table(REFUSAL) else { return Ok(false) };
+        let got = t
+            .get(거부_열쇠(item, target).as_str())
+            .map_err(|e| IntentError::Transaction(e.to_string()))?;
+        Ok(got.is_some())
+    }
+
+    /// 거부 전부 — **결박 id 처럼 정렬해서 낸다.**
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 값을 풀지 못하면.
+    pub fn refusals(&self) -> Result<Vec<Refusal>, IntentError> {
+        let Some(read) = self.read()? else { return Ok(Vec::new()) };
+        let Ok(t) = read.open_table(REFUSAL) else { return Ok(Vec::new()) };
+        let mut out = Vec::new();
+        let range = t.iter().map_err(|e| IntentError::Transaction(e.to_string()))?;
+        for row in range {
+            let (_, v) =
+                row.map_err(|e: redb::StorageError| IntentError::Transaction(e.to_string()))?;
+            out.push(
+                postcard::from_bytes(&v.value()).map_err(|e| IntentError::Decode(e.to_string()))?,
+            );
+        }
+        Ok(out)
+    }
+
     /// 결박이 몇 건인가. **파생층을 지운 뒤 이 수가 그대로여야 한다**(S3 합격선 ①).
     ///
     /// # Errors
@@ -650,4 +786,12 @@ fn 올린다(line: IntentLineV1, 줄: usize) -> Result<IntentLine, IntentError> 
             )))
         }
     })
+}
+
+/// 거부의 열쇠 — `<개체>\0<좌표>`.
+///
+/// **조각 전체가 아니라 (조각, 좌표) 짝이다** — 후보 셋 중 하나만 틀렸을 수 있고,
+/// 그때 나머지 둘까지 지우면 정보를 버린 것이다.
+fn 거부_열쇠(item: &EntityId, target: SymbolId) -> String {
+    format!("{}\u{0}{}", item.to_display(), target)
 }

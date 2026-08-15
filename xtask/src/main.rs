@@ -1205,6 +1205,12 @@ mod budget_tests {
 const WATCH_ENTRY_SITES: &[(&str, &str)] = &[
     ("crates/pal-core/src/binding.rs", "타입 선언과 그 단위 시험"),
     ("crates/pal-cli/src/bind.rs", "투영에서 읽어 만든다 — **기계가 잰 값이다**"),
+    // ★ **F10 이 더한 자리이고, 이 검사가 그것을 잡아서 여기 적힌다.**
+    // `pal narrative approve` 도 `pal bind` 와 **같은 자리에서 같은 값을 읽는다** —
+    // 투영의 `symbol.body` 다. 제안이 지고 온 값을 앵커로 쓰는 경로가 **없다**:
+    // 제안은 좌표까지만 낸다(`Classification`). 그것이 F09 §4.1(D32)이 요구한
+    // *"`watch_snapshot` 은 신고받지 않는다"* 를 인입 경로에서도 지키는 형태다.
+    ("crates/pal-cli/src/narrative.rs", "승인이 투영에서 읽어 만든다 — 제안이 지고 오지 않는다"),
 ];
 
 fn check_anchor_is_measured(root: &Path) -> Result<String> {

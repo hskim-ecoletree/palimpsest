@@ -18,13 +18,19 @@
 //! |---|---|---|
 //! | `head` · `list_tree` · `read_blob` | 있다 | S1 |
 //! | `worktree_state` | **있다** | F01 — `TreeRef::Worktree` 를 만드는 자리 |
-//! | `changed_between` | **없다** | 소비자가 없다 (아래) |
+//! | `changed_between` | **있다** — `changed_in` (F10) | 소비자가 생겼다 (아래) |
 //! | — | `commit` · `path_at` · `first_parent_walk` | F22-3 이 들였다 |
 //!
-//! **`changed_between` 을 세우지 않는다.** 워킹트리 축에서는
-//! [`WorktreeState::dirty_paths`] 가 그 자리를 이미 지고, 커밋↔커밋 비교를 쓰는 것은
-//! F05 의 증분 재추출이다. **없는 소비자를 위한 것을 만들지 않는다** — 그것이 곧
-//! 검사되지 않는 산출이고, F22 가 파생 다섯 중 둘에 대해 내린 것과 같은 판단이다.
+//! **`changed_between` 이 오래 비어 있었고 그 근거는 *"소비자가 없다"* 였다** —
+//! *"없는 소비자를 위한 것을 만들지 않는다. 그것이 곧 검사되지 않는 산출이다."*
+//!
+//! ★ **F10 이 그 소비자다.** 문서 §3.2 의 신호 넷째가 *"같은 커밋에서 함께 변경된
+//! 파일 — git 이력에서 계산"* 이고, [`GitAccess::changed_in`] 이 그 자리다.
+//! **모양이 `changed_between` 이 아니라 `changed_in` 인 것**도 소비자가 정했다 —
+//! 인입이 묻는 것은 *"두 커밋 사이"* 가 아니라 *"이 커밋이 무엇을 함께 바꿨나"* 다.
+//! 그리고 **first parent 와만 댄다** — 병합에서 갈래를 다 따라가면 같은 커밋이
+//! 회차마다 다른 답을 내고, 그러면 조각의 후보가 흔들린다
+//! ([`GitAccess::first_parent_walk`] 와 같은 근거).
 
 #![forbid(unsafe_code)]
 
@@ -120,6 +126,21 @@ pub trait GitAccess {
         from: ObjectName,
         limit: usize,
     ) -> Result<Vec<ObjectName>, GitError>;
+
+    /// 이 커밋이 **first parent 와 견주어** 바꾼 경로들 — F10 §3.2 의 넷째 신호.
+    ///
+    /// # 왜 `first parent` 하나와만 대는가
+    ///
+    /// [`GitAccess::first_parent_walk`] 와 **같은 근거다**: 병합 커밋에서 갈래를 다
+    /// 따라가면 *"이 커밋이 무엇을 바꿨나"* 가 하나로 안 정해지고, 그러면 같은 입력이
+    /// 같은 답을 낸다는 배정 규칙 1 이 깨진다. 문서 조각의 후보가 회차마다 흔들리면
+    /// **거부 기록이 아무것도 안 가린다**(`[f10].queue_placement`).
+    ///
+    /// **부모가 없으면(최초 커밋) 그 트리 전부다** — 전부가 그 커밋에서 생겼다.
+    ///
+    /// # Errors
+    /// 커밋이나 트리를 읽지 못하면.
+    fn changed_in(&self, commit: ObjectName) -> Result<Vec<RepoPath>, GitError>;
 }
 
 /// 워킹트리 훑기의 결과 — 목록과 회계 둘.
@@ -406,6 +427,53 @@ impl GitAccess for GixRepo {
         }
         Ok(out)
     }
+
+    fn changed_in(&self, commit: ObjectName) -> Result<Vec<RepoPath>, GitError> {
+        let this = self.commit_at(commit)?;
+        let 지금 = 경로집합(&this.tree().map_err(|e| GitError::Tree(e.to_string()))?)?;
+
+        let Some(parent) = this.parent_ids().next() else {
+            // **최초 커밋** — 부모가 없으면 그 트리 전부가 여기서 생겼다.
+            let mut out: Vec<RepoPath> = 지금.into_keys().collect();
+            out.sort();
+            return Ok(out);
+        };
+        let 부모 = 경로집합(
+            &self.commit_at_oid(parent.detach())?.tree().map_err(|e| GitError::Tree(e.to_string()))?,
+        )?;
+
+        let mut out = Vec::new();
+        for (path, oid) in &지금 {
+            // 추가되었거나 내용이 달라졌다.
+            if 부모.get(path) != Some(oid) {
+                out.push(path.clone());
+            }
+        }
+        // **지워진 것도 「바뀐 것」이다.** 빼면 *"이 커밋이 무엇을 함께 건드렸나"* 가
+        // 반쪽이 되고, 문서와 함께 지워진 코드가 신호에서 사라진다.
+        // **지워진 것도 「바뀐 것」이다** — 위 주석 그대로.
+        out.extend(부모.into_keys().filter(|path| !지금.contains_key(path)));
+        out.sort();
+        out.dedup();
+        Ok(out)
+    }
+}
+
+/// 트리 하나의 `경로 → blob 이름`. **blob 만 센다** — 디렉터리와 서브모듈은 파일이 아니다.
+fn 경로집합(
+    tree: &gix::Tree<'_>,
+) -> Result<std::collections::BTreeMap<RepoPath, ObjectName>, GitError> {
+    let mut recorder = gix::traverse::tree::Recorder::default();
+    tree.traverse().breadthfirst(&mut recorder).map_err(|e| GitError::Tree(e.to_string()))?;
+    let mut out = std::collections::BTreeMap::new();
+    for entry in recorder.records {
+        if !entry.mode.is_blob_or_symlink() {
+            continue;
+        }
+        let path = String::from_utf8_lossy(entry.filepath.as_ref()).into_owned();
+        out.insert(RepoPath::new(path), to_name(entry.oid));
+    }
+    Ok(out)
 }
 
 /// 인덱스의 stat 이 지금 파일과 같은가 — **같으면 blob 이름을 다시 재지 않는다.**

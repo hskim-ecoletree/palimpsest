@@ -183,6 +183,7 @@ impl QueryName {
             Self::SymbolReaches => "이 심볼에서 닿는 것들 — **예산 절단이 있는 BFS**",
             Self::GraphDump => "노드와 엣지 전부 — 바깥 오라클이 읽는 창",
             Self::BindingStatus => "결박마다 상태 + **반경** + 무엇이 켰는가",
+            Self::NarrativeUnbound => "좌표를 못 찾은 문서 조각들 — **사람의 작업 목록**",
         }
     }
 
@@ -193,7 +194,8 @@ impl QueryName {
     #[must_use]
     pub const fn arg_names(self) -> &'static [&'static str] {
         match self {
-            Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus => &[],
+            Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus
+            | Self::NarrativeUnbound => &[],
             Self::SymbolResolve | Self::SymbolContains | Self::SymbolCallers
             | Self::SymbolReaches => &["name"],
         }
@@ -203,7 +205,8 @@ impl QueryName {
     #[must_use]
     pub const fn arg_types(self) -> &'static [&'static str] {
         match self {
-            Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus => &[],
+            Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus
+            | Self::NarrativeUnbound => &[],
             Self::SymbolResolve | Self::SymbolContains | Self::SymbolCallers
             | Self::SymbolReaches => &["SymbolName"],
         }
@@ -218,6 +221,7 @@ impl QueryName {
             Self::SymbolReaches => "Reached",
             Self::GraphDump => "Graph",
             Self::BindingStatus => "Bindings",
+            Self::NarrativeUnbound => "Narrative",
         }
     }
 
@@ -230,6 +234,7 @@ impl QueryName {
             Self::SymbolResolve => "F03",
             Self::SymbolCallers | Self::SymbolReaches | Self::GraphDump => "F05",
             Self::BindingStatus => "F09",
+            Self::NarrativeUnbound => "F10",
         }
     }
 

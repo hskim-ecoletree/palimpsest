@@ -19,6 +19,8 @@ const 전부가_답인_질의: &str = "graph.dump";
 const 대장_질의: &str = "ledger.snapshot";
 /// 인자를 안 받고 **빈 목록이 정직한** 질의 — 능력이 있고 값이 없는 것이다.
 const 결박_질의: &str = "binding.status";
+/// 인자를 안 받고 **빈 목록으로 답하는** 질의 — F10.
+const 서술물_질의: &str = "narrative.unbound";
 
 fn 빈_저장소(tag: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("pal-f06-{tag}-{}", std::process::id()));
@@ -125,6 +127,11 @@ fn 관측_0_건에서_여섯이_전부_답한다() {
             // **결박이 0 건인 것과 「안 만듦」은 다르다.** 이 빌드에는 결박 능력이
             // 있고 아무도 안 걸었을 뿐이다 — `not_built` 로 내면 거짓말이 된다.
             결박_질의 => "bindings",
+            // ★ **문서 조각이 0 건인 것도 「안 만듦」이 아니다.** 빈 저장소에는
+            // 문서가 없고, 그 사실이 `narrative` 갈래의 **빈 목록**으로 나온다 —
+            // `not_built` 로 내면 거짓말이 되고 `unknown` 으로 내면 *"못 찾았다"* 가
+            // 된다. 둘 다 아니다: **물었고, 없었다.**
+            서술물_질의 => "narrative",
             // ★ **`symbols` 가 아니라 `unknown` 이다.** 빈 목록으로 답하면
             // *"없다"* 와 *"못 찾았다"* 가 같은 출력이 된다.
             _ => "unknown",
