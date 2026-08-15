@@ -192,7 +192,11 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
             .with_attr("bound_at", Producer::MachineRecord)
             .with_attr("bound_at_time", Producer::MachineRecord)
             .with_attr("radius", Producer::Human)
-            .with_attr("watch", Producer::MachineRecord),
+            .with_attr("watch", Producer::MachineRecord)
+            // **F10 이 하나를 더했고 바로 위 주석이 그 자리를 예언했다** — 스키마가
+            // `required` 로 적었는데 여기서 안 실어 `f22-4` 의 불변식 ②가 결박 하나를
+            // 위반으로 셌다. 장치가 설계대로 일했고, 그 관측이 F10 게이트에 있다.
+            .with_attr("promoted_by", Producer::MachineRecord),
         );
         edges.push(pal_core::EdgeInstance::one(
             "BOUND_TO",
@@ -253,6 +257,24 @@ fn coverage() -> pal_core::ViewCoverage {
         // 여기서도 적는다.
         .absent("Journey", CapabilityId::new("F19", "journey-authoring"))
         .absent("UnresolvedRef", CapabilityId::new("F08", "unresolved-refs"))
+        // ── F10 이 더한 둘 — **담을 수 없는 것이 아니라 이 뷰가 안 담는 것** ──
+        //
+        // `NarrativeItem`(제안)은 **저장되지 않는다** — 결정론적 파생이라 다시 계산하고,
+        // 2층에 두면 `[f05.2]` ④ 의 모집단이 는다(`[f10].queue_placement`).
+        // `NarrativeRefusal`(거부)은 의도 저장소에 **저장되지만** 이 뷰가 안 싣는다 —
+        // 2층에 색인이 없어 대조할 상대가 없고, 그것은 아래 `BINDING_INDEX_KIND` 와
+        // **같은 판단**이다(같은 저장소에서 온 둘을 대조하면 구조상 안 어긋난다).
+        //
+        // ⚠ **선언을 빠뜨리면 구멍으로 세어진다** — F10 이 실제로 그것을 밟았고
+        // `f22-4` 가 `덮개 구멍: ['NarrativeItem', 'NarrativeRefusal']` 로 잡았다.
+        // **그리고 선언이 없으면 불변식 ④(`inferred` 의 근거)가 `NarrativeItem` 을
+        // 모집단으로 삼아 「모집단 0 · 위반 0」으로 바뀐다** — `[f22.4]` 의 판정이
+        // 움직이는 것이고, 선언하면 그 자리가 `not_built` 로 되돌아간다.
+        //
+        // 담기는 시점은 **의도층 노드가 그래프에 설 때**다(F09 게이트 §7 이 그것을
+        // F12 로 넘겼다).
+        .absent("NarrativeItem", CapabilityId::new("F12", "intent-layer-nodes"))
+        .absent("NarrativeRefusal", CapabilityId::new("F12", "intent-layer-nodes"))
         // ── 스키마 라벨이 아닌 넷 ────────────────────────────────────────────
         .absent(RESIDUAL_KIND, CapabilityId::new("F15", "judgment"))
         .absent(SCOPE_REDUCTION_KIND, CapabilityId::new("F20", "conformance"))
