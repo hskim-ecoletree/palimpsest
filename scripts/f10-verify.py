@@ -74,8 +74,13 @@ MIN_CHANGED_BYTES = 1
 # 코드와 무관한 것으로 채워져 이 값이 **저장소가 아니라 우리가 쓰는 도구를 잰다.**
 TOOL_DIRS = (".claude/", ".ditto/", ".github/")
 
-# **기계가 확인한 신호** — 조회이지 판단이 아니다(`ResolutionSignal::is_confirmed`).
-CONFIRMED = {"attached", "frontmatter", "fenced-path", "span"}
+# **확정할 수 있는 신호** — 거리가 0 인 것(`ResolutionSignal::can_confirm_subject`).
+#
+# ⚠ **2026-08-15 에 넷에서 둘로 줄었다** (`[f10.5].signal_ruling` · #59).
+# 앞선 판은 `fenced-path`·`span` 도 여기 담고 *"조회이지 판단이 아니므로 정의상 거짓일
+# 수 없다"* 라고 적었는데, **실측이 그것을 반증했다**(`span` 48.9%) — [ADR-0015].
+# **이 상수를 안 고치면 ①의 층화 판정이 없어진 함수의 뜻으로 계속 돈다.**
+CONFIRMED = {"attached", "frontmatter"}
 
 결과: list[tuple[str, str, str]] = []  # (표시, 이름, 값)
 
@@ -288,22 +293,45 @@ def 동점(tmp: Path) -> None:
         이름별.setdefault(n["name"], []).append(n)
     중복 = sorted((k for k, v in 이름별.items() if len(v) >= 2 and k.isidentifier()),
                   key=lambda k: (-len(이름별[k]), k))
-    유일 = sorted(k for k, v in 이름별.items() if len(v) == 1 and k.isidentifier())
     두경로 = sorted({n["path"] for n in dump["answer"]["nodes"]})
 
-    if not 중복 or len(두경로) < 2 or not 유일:
+    # ⚠ **「확정」 픽스처가 거리 0 인 신호로 바뀌었다** (2026-08-15 · `[f10.5].tie_grounds`).
+    #
+    # 앞선 판은 **유일한 스팬**으로 확정을 만들었는데, `span` 은 이제 거리가 있어서
+    # **유일해도 확정하지 않는다.** 픽스처를 안 고치면 이 대조가 *"확정을 못 했다"* 로
+    # 어긋나고, 그것은 동점 처리가 깨진 것이 아니라 **재료가 바뀐 것**이다.
+    # **이것이 「대조가 꺼지는 열아홉째」가 이 자리에 실제로 걸린 모습이다** —
+    # 등록(`[f10.pass]` ④)은 그대로이고 **픽스처가 그 등록을 따라간다.**
+    #
+    # 거리 0 인 신호로 확정을 만드는 법: 프론트매터에 `경로#이름` 을 적는다.
+    확정파일, 확정이름 = None, None
+    파일별: dict[str, list[dict]] = {}
+    for n in dump["answer"]["nodes"]:
+        파일별.setdefault(n["path"], []).append(n)
+    for path, v in sorted(파일별.items()):
+        나온 = [x["name"] for x in v]
+        for nm in sorted(set(나온)):
+            if 나온.count(nm) == 1:
+                확정파일, 확정이름 = path, nm
+                break
+        if 확정파일:
+            break
+
+    if not 중복 or len(두경로) < 2 or not 확정파일:
         skip("⑤ 동점", "코퍼스에 동점을 만들 재료가 없다 — **모집단 0 이라 대조 불가**")
         return
 
     doc = repo / "docs" / "f10-tie.md"
     doc.parent.mkdir(parents=True, exist_ok=True)
     doc.write_text(
+        # ③ 확정 — **거리 0 인 신호로.** 프론트매터는 **문서 첫 조각에만** 걸리므로
+        #    맨 앞에 둔다. **이것이 없으면 「전부 후보로 낸다」가 통과한다.**
+        f"---\ngrounds: [\"{확정파일}#{확정이름}\"]\n---\n\n"
+        f"# 확정\n\n`{확정이름}` 하나를 가리킨다.\n\n"
         # ① 인라인 스팬 동점 — 같은 이름이 여럿
         f"# 스팬 동점\n\n`{중복[0]}` 를 가리킨다.\n\n"
         # ② 펜스 경로 동점 — 서로 다른 경로 둘
-        f"# 경로 동점\n\n```\n{두경로[0]}\n{두경로[1]}\n```\n\n"
-        # ③ 확정 — 유일한 이름 하나. **이것이 없으면 「전부 후보로 낸다」가 통과한다**
-        f"# 확정\n\n`{유일[0]}` 하나뿐이다.\n",
+        f"# 경로 동점\n\n```\n{두경로[0]}\n{두경로[1]}\n```\n",
         encoding="utf-8",
     )
     run(["git", "-C", str(repo), "add", "-A"])
@@ -319,7 +347,7 @@ def 동점(tmp: Path) -> None:
         return
 
     걸림 = []
-    for 앵커, 기대 in [("스팬-동점", "candidates"), ("경로-동점", "candidates"), ("확정", "bound")]:
+    for 앵커, 기대 in [("스팬-동점", "candidates"), ("경로-동점", "candidates"), ("확정", "bound")]:  # noqa: B007
         p = 내것.get(앵커)
         if p is None:
             걸림.append(f"{앵커}: 조각이 없다")

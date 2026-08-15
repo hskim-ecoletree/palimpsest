@@ -1,0 +1,24 @@
+코퍼스	개체	문서	앵커	걸린신호	심볼	종류	코드경로	조각머리	판정	근거
+ditto	01M02FZGB6KQNM8EDK0TS6RZNP	rebuild/knowledge/adr-authoring.ts	L8	attached	pad2	function	rebuild/knowledge/adr-authoring.ts	/**		
+ditto	01M02FZWPWXQ4H3PJ80KQFRBT0	src/cli/commands/cleanup.ts	L22	attached	parseFormatOrExit	function	src/cli/commands/cleanup.ts	/**		
+ditto	01M02FZWXBP903EVHAB1XWGASZ	src/cli/commands/semantic.ts	L27	attached	semanticPath	function	src/cli/commands/semantic.ts	/**		
+ditto	01M02FZWYTSN8BX0AD1F38T00N	src/cli/commands/work.ts	L521	attached	reflectManualTermination	function	src/cli/commands/work.ts	/**		
+ditto	01M02FZWYYVJDD471H4AN18J8G	src/cli/commands/work.ts	L564	attached	resolveClaimBranch	function	src/cli/commands/work.ts	// no-op. Every gh failure is a notice, never a throw (ADR-0018).		
+ditto	01M02FZX1454BHX9BSHZ9854N9	src/core/autopilot-complete.ts	L16	attached	OracleMap	type_alias	src/core/autopilot-complete.ts	/** Per-AC oracle lookup threaded into the closure decision (ADR-0024 §3 ③ JUDGE). */		
+ditto	01M02FZX19CX5FEH174PB8N8GR	src/core/autopilot-complete.ts	L90	attached	nodeVerdictFor	function	src/core/autopilot-complete.ts	/**		
+ditto	01M02FZX1JGJQMZF7GQYJQ7GDR	src/core/autopilot-complete.ts	L382	attached	barrierRanGreen	function	src/core/autopilot-complete.ts	/**		
+ditto	01M02FZX1PBVBZRR6ZWXC713C0	src/core/autopilot-complete.ts	L492	attached	frozenBreachUnverified	function	src/core/autopilot-complete.ts	/**		
+ditto	01M02FZX1VGNZC7AWWATM9XZ12	src/core/autopilot-complete.ts	L579	attached	loopStuckBlocked	function	src/core/autopilot-complete.ts	/**		
+ditto	01M02FZX561FQQS5XJ81DMTKTC	src/core/autopilot-loop.ts	L311	attached	collectRetroContext	function	src/core/autopilot-loop.ts	/**		
+ditto	01M02FZX82PX4232H6MCTFCP7V	src/core/autopilot-loop.ts	L2131	attached	surfaceLspDiagnostics	function	src/core/autopilot-loop.ts	/**		
+ditto	01M02FZX8FSRBR7S92VGPFMB44	src/core/autopilot-loop.ts	L2269	attached	DeclaredDecisionConflict	type_alias	src/core/autopilot-loop.ts	// ── ADR-0020 decision-conflict carrier lifecycle (producer side) ─────────────		
+ditto	01M02FZX8VQKEJAJ9PBS6M342E	src/core/autopilot-loop.ts	L2520	attached	unmetOracles	function	src/core/autopilot-loop.ts	/**		
+ditto	01M02FZX8ZYRXX80WE0KHNEJG5	src/core/autopilot-loop.ts	L2637	attached	recordLoopTermination	function	src/core/autopilot-loop.ts	/**		
+ditto	01M02FZX98VND4EY6X66J4MFP5	src/core/autopilot-loop.ts	L2742	attached	applyAutoResolveSplice	function	src/core/autopilot-loop.ts	/**		
+ditto	01M02FZX9HJE7QCQ6ZYQG3F3W0	src/core/autopilot-loop.ts	L2862	attached	directPostDecisions	function	src/core/autopilot-loop.ts	/**		
+ditto	01M02FZXM4XG1F7PTFD6RCKHQH	src/core/e2e/generator.ts	L139	attached	defaultReadPlaywrightVersion	function	src/core/e2e/generator.ts	/**		
+ditto	01M02FZXP4P96K39E11ZYXTST4	src/core/gates.ts	L462	attached	groundingWorkItemIds	function	src/core/gates.ts	/**		
+ditto	01M02FZXZNTYNWBKJD7BVXVYMJ	src/core/prism/opponent.ts	L15	attached	ModelPolicy	type_alias	src/core/prism/opponent.ts	/**		
+ditto	01M02FZY31T3TEQ2KE7MHD11KC	src/core/work-item-store.ts	L1010	attached	archive	method	src/core/work-item-store.ts	/**		
+ditto	01M02FZY4EHAPS70GW1WVNTJBC	src/hooks/rebuilt/stop-gate.ts	L150	attached	oracleGapPending	function	src/hooks/rebuilt/stop-gate.ts	/**		
+ditto	01M02FZY65EMDYTAFQQ823WZ1R	src/hooks/stop.ts	L669	attached	oracleGapPending	function	src/hooks/stop.ts	/**		
