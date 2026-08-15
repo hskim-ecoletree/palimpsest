@@ -96,6 +96,17 @@ pub struct Args<'a> {
     pub name: &'a str,
     /// 한 구역이 싣는 결박의 상한. `None` 이면 자리표시.
     pub binding_max: Option<usize>,
+    /// 걸린 시간을 **표준오류**로 낸다 — `elapsed_micros=<n>`.
+    ///
+    /// # 왜 산출이 아니라 표준오류인가
+    ///
+    /// 시간은 **답의 성질이 아니다**([`pal_core::LogStatus::Recorded`]). 산출에 섞으면
+    /// 답의 바이트 동일성이 시간에 대해 깨지고, 이 저장소가 그 위에 세운 검사 둘이
+    /// 무너진다. `pal ledger` 가 산출과 근거를 다른 줄기로 보내는 것과 같은 자리다.
+    ///
+    /// **손잡이가 있는 이유**: 소비자가 있다 — `[f11.pass]` ⑦ 이 이 값을 잰다.
+    /// 없는 자리를 미리 만드는 것이 아니다.
+    pub timing: bool,
     pub json: bool,
 }
 
@@ -105,7 +116,8 @@ pub struct Args<'a> {
 /// 저장소·캐시·2층·의도 저장소 중 하나에 닿지 못하면.
 pub fn run(a: Args) -> Result<()> {
     let Args { repo: repo_path, rev, cache_dir, index: index_path, intent: intent_path, name,
-               binding_max, json } = a;
+               binding_max, timing, json } = a;
+    let 프로세스_시작 = std::time::Instant::now();
     // 대장을 먼저 만든다. **답의 근거가 먼저 서야 답이 나간다.**
     let report = ledger::compute(repo_path, rev, cache_dir)?;
 
@@ -175,6 +187,20 @@ pub fn run(a: Args) -> Result<()> {
         println!("{}", serde_json::to_string_pretty(&envelope)?);
     } else {
         print_screen(&envelope);
+    }
+
+    // **두 시계를 둘 다 낸다** — 합격선은 질의 시간에만 걸리고(`[f11.pass]` ⑦),
+    // 프로세스 시간은 기록이다. 하나만 내면 *"500ms 안에 답한다"* 가 사용자가 겪을 수
+    // 없는 문장이 되거나(질의만), `touch` 가 아닌 것을 재게 된다(프로세스만).
+    if timing {
+        let 질의 = envelope.log.duration_micros().map_or_else(
+            // **안 잰 것을 0 으로 접지 않는다** — 읽기 전용은 로그를 못 남기고,
+            // 그러면 시간도 안 남는다.
+            || "none".to_owned(),
+            |v| v.to_string(),
+        );
+        let 프로세스 = 프로세스_시작.elapsed().as_micros();
+        eprintln!("elapsed_micros={질의} process_micros={프로세스}");
     }
     Ok(())
 }

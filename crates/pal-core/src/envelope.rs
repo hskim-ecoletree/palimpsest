@@ -386,7 +386,30 @@ impl TokenEstimate {
 #[serde(rename_all = "snake_case", tag = "status")]
 pub enum LogStatus {
     /// 남았다. **줄이 하나 늘었다.**
-    Recorded,
+    ///
+    /// # 걸린 시간이 여기 있고 **직렬화에는 없다** (F11 §6)
+    ///
+    /// [F11 §6] 의 물음이 *"대화 흐름을 끊지 않는가"* 이고, 재려면 표면이 자기 시간을
+    /// 낼 수 있어야 한다. [`crate::QueryLogEntry::duration_micros`] 가 그 값을 들고 있지만
+    /// 2층 안에 있고 표면이 못 읽었다. 그래서 여기 싣는다.
+    ///
+    /// ⚠ **그런데 `skip` 이다. 시간은 답의 성질이 아니기 때문이다.**
+    /// 같은 질문에 같은 답이 나와도 시간은 매번 다르다. 산출에 실으면
+    /// **답의 바이트 동일성이 시간에 대해 깨지고**, 이 저장소가 그 위에 세운 검사 둘이
+    /// 무너진다 — *"2층을 지웠다 되세워도 같은 답"*(재구축 등가성 · F04) 과
+    /// *"내보내고 읽어도 같은 답"*(왕복 항등 · F05). **그 둘이 실제로 이것을 잡았다**
+    /// (2026-08-15, 이 필드를 실어 보고 되돌린 자리). [`Envelope::tokens`](Envelope) 도
+    /// 시간의 자릿수를 세게 되어 함께 흔들린다.
+    ///
+    /// **그래서 타입에는 있고 산출에는 없다.** 표면이 `--timing` 으로 표준오류에 내고,
+    /// **지속되는 기록은 2층의 질의 로그**다 — F17 이 읽을 자리도 거기다.
+    ///
+    /// ⚠ **안 남았으면 이 값도 없다**(`not_recorded`) — 로그가 없는데 시간만 있으면
+    /// 어디에도 대조할 수 없다.
+    Recorded {
+        #[serde(skip)]
+        duration_micros: u64,
+    },
     /// 안 남았다 — 왜인지가 값이다.
     NotRecorded { why: NotRecorded },
 }
@@ -396,16 +419,31 @@ pub enum LogStatus {
 pub enum NotRecorded {
     /// 2층에 **읽기 전용**으로 붙었다 — 쓰기 트랜잭션이 없다.
     ReadOnlyAttach,
-    /// 이 표면이 질의 로그를 안 쓴다. **`pal touch`·`pal doctor` 가 그렇다** —
-    /// F05 §5.3 은 *"모든 질의 실행"* 이라 적었고 그 둘은 아직 그 자리에 없다.
+    /// 이 표면이 질의 로그를 안 쓴다. **`pal doctor` 가 그렇다** —
+    /// F05 §5.3 은 *"모든 질의 실행"* 이라 적었고 그 자리에 아직 안 왔다.
     /// **0 으로 세지 않고 이렇게 적는다.**
+    ///
+    /// ⚠ **`pal touch` 는 2026-08-15 에 여기서 빠졌다**(F11) — 실행기를 지나면서
+    /// 로그를 남기게 됐다. 그 전까지 F17 은 이 표면의 조회를 **미조회로 과대 계상**했다.
     SurfaceDoesNotLog,
 }
 
 impl LogStatus {
     #[must_use]
     pub const fn is_recorded(self) -> bool {
-        matches!(self, Self::Recorded)
+        matches!(self, Self::Recorded { .. })
+    }
+
+    /// 이 답이 걸린 시간 — **안 남았으면 없다.**
+    ///
+    /// `Option` 인 것이 정확하다: *"0 마이크로초"* 와 *"안 쟀다"* 는 다른 사건이고,
+    /// 0 으로 접으면 p95 가 안 잰 것들로 눌린다.
+    #[must_use]
+    pub const fn duration_micros(self) -> Option<u64> {
+        match self {
+            Self::Recorded { duration_micros } => Some(duration_micros),
+            Self::NotRecorded { .. } => None,
+        }
     }
 }
 

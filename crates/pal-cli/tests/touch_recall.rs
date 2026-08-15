@@ -269,3 +269,43 @@ fn 두_표면이_같은_답을_내고_로그를_남긴다() {
 
     let _ = std::fs::remove_dir_all(&root);
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// ⑦ **두 시계** — 그리고 **시간이 답에 안 섞인다**
+// ═════════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn 시간은_표준오류로_가고_답은_두_번_돌려도_같다() {
+    let root = 저장소("timing");
+    let 방 = 방(&root, "timing");
+    bind(&root, &방, "deriveVerdicts", "완료 경로는 같은 함수를 부른다", "files:core.ts");
+
+    let mut args: Vec<&str> = vec!["touch", "deriveVerdicts"];
+    args.extend(방.iter().map(String::as_str));
+    args.extend(["--timing", "--json"]);
+
+    let 한번 = std::process::Command::new(common::PAL)
+        .args(&args)
+        .current_dir(&root)
+        .output()
+        .expect("pal");
+    assert!(한번.status.success());
+    let 오류 = String::from_utf8(한번.stderr).expect("UTF-8");
+    // 두 시계가 **둘 다** 나온다 — 하나만 내면 무엇을 쟀는지 갈리지 않는다.
+    assert!(오류.contains("elapsed_micros="), "질의 시간이 없다: {오류}");
+    assert!(오류.contains("process_micros="), "프로세스 시간이 없다: {오류}");
+
+    let 두번 = std::process::Command::new(common::PAL)
+        .args(&args)
+        .current_dir(&root)
+        .output()
+        .expect("pal");
+    // ★ **답은 바이트로 같다.** 시간이 산출에 섞였다면 여기서 깨진다 —
+    // 재구축 등가성(F04)과 왕복 항등(F05)이 그 위에 서 있다.
+    assert_eq!(한번.stdout, 두번.stdout, "같은 질문에 다른 바이트가 나왔다");
+    // 그리고 산출에는 시간이 없다.
+    let 산출 = String::from_utf8(두번.stdout).expect("UTF-8");
+    assert!(!산출.contains("duration_micros"), "시간이 산출에 섞였다: {산출}");
+
+    let _ = std::fs::remove_dir_all(&root);
+}

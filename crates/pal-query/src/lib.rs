@@ -343,15 +343,19 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
     let log = if ctx.projection.is_read_only() {
         LogStatus::NotRecorded { why: NotRecorded::ReadOnlyAttach }
     } else {
+        // **한 번만 잰다.** 로그의 값과 봉투의 값이 같은 `Instant` 에서 나와야
+        // *"산출의 숫자와 로그의 숫자가 다르다"* 가 일어나지 않는다.
+        let duration_micros =
+            u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX);
         let entry = QueryLogEntry {
             query: q.name(),
             args_digest: QueryLogEntry::digest_of(q.args()),
             accessed: accessed.clone(),
             elision: elision.clone(),
-            duration_micros: u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX),
+            duration_micros,
         };
         ctx.projection.log_query(&ctx.snapshot.to_string(), &entry)?;
-        LogStatus::Recorded
+        LogStatus::Recorded { duration_micros }
     };
 
     Ok(Envelope::new(

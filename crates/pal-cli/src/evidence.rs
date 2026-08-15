@@ -33,7 +33,9 @@ pub fn lines<T>(e: &Envelope<T>) -> Vec<String> {
     }
 
     match e.log {
-        LogStatus::Recorded => o.push("  질의 로그  남았습니다".to_owned()),
+        // ⚠ **시간을 여기 안 적는다.** 화면도 산출이고, 회차마다 달라지는 값이 섞이면
+        // 화면을 대는 검사가 시간에 대해 참이 아니게 된다. `--timing` 이 표준오류로 낸다.
+        LogStatus::Recorded { .. } => o.push("  질의 로그  남았습니다".to_owned()),
         LogStatus::NotRecorded { why } => {
             let 사유 = match why {
                 // 조용히 안 남기면 F17 이 미조회를 **과대 계상**한다. 그래서 화면에도 적는다.
