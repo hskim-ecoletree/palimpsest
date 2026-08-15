@@ -22,9 +22,26 @@ trap restore EXIT
 
 pass=0; fail=0
 
-# 검사가 실패해야 정상인 경우
+# 검사가 실패해야 정상인 경우.
+#
+# ⚠ **변형이 파일을 실제로 바꿨는지 먼저 센다** (2026-08-15 · F09 가 밟았다).
+#
+# 이 스크립트의 변형은 **리터럴 치환**이라 스키마의 정렬이 한 칸만 바뀌어도 조용히
+# 아무것도 안 바꾼다. 그러면 `cargo xtask check` 가 **성한 스키마를** 검사해 통과하고,
+# 출력은 *"검사가 통과했다 — 이 자리는 세어지지 않는다"* 가 된다 — **정작 세어지지
+# 않은 것은 그 변형이다.**
+#
+# F09 가 `Binding` 에 속성 셋을 더하며 그 줄의 정렬을 바꿨고, 대조 ⑤가 그렇게 꺼졌다.
+# **변형이 아무것도 안 바꾸면 그것은 「검사의 실패」가 아니라 「대조의 고장」이고,
+# 둘을 뭉개면 다음 사람이 검사를 고치러 간다.**
 must_fail() {
   local name="$1"
+  if cmp -s "$BACKUP" "$SCHEMA" && cmp -s "$DOC_BACKUP" "$DOC"; then
+    printf '  ✗ %-44s **변형이 아무것도 안 바꿨다** — 대조가 꺼졌다\n' "$name"
+    fail=$((fail+1))
+    cp "$BACKUP" "$SCHEMA"; cp "$DOC_BACKUP" "$DOC"
+    return
+  fi
   if cargo xtask check >/dev/null 2>&1; then
     printf '  ✗ %-44s 검사가 통과했다 — 이 자리는 세어지지 않는다\n' "$name"
     fail=$((fail+1))
@@ -71,8 +88,10 @@ must_fail "엣지 \`BOUND_TO\` 를 스키마에서 지움"
 # ③ 코드에 없는 속성을 스키마에 더한다 (스키마 → 코드 방향)
 python3 - <<'PY'
 s=open('schema/graph.toml',encoding='utf-8').read()
-s=s.replace('  { name = "span",     type = "span",               producer = "extractor", required = true },',
-            '  { name = "span",     type = "span",               producer = "extractor", required = true },\n  { name = "owner",    type = "string",             producer = "extractor", required = true },')
+# **정렬에 안 묶인다** — ⑤와 같은 이유(F09 · 2026-08-15).
+i=s.index('[node.Symbol]')
+j=s.index('\n', s.index('name = "span"', i))
+s=s[:j]+'\n  { name = "owner", type = "string", producer = "extractor", required = true },'+s[j:]
 open('schema/graph.toml','w',encoding='utf-8').write(s)
 PY
 must_fail "코드에 없는 속성 \`Symbol.owner\` 를 더함"
@@ -80,7 +99,11 @@ must_fail "코드에 없는 속성 \`Symbol.owner\` 를 더함"
 # ④ 코드에 있는 속성을 스키마에서 뺀다 (코드 → 스키마 방향)
 python3 - <<'PY'
 s=open('schema/graph.toml',encoding='utf-8').read()
-s=s.replace('  { name = "span",     type = "span",               producer = "extractor", required = true },\n','')
+# **정렬에 안 묶인다** — ⑤와 같은 이유.
+i=s.index('[node.Symbol]')
+a=s.rindex('\n', 0, s.index('name = "span"', i))
+b=s.index('\n', s.index('name = "span"', i))
+s=s[:a]+s[b:]
 open('schema/graph.toml','w',encoding='utf-8').write(s)
 PY
 must_fail "코드에 있는 \`Symbol.span\` 을 스키마에서 뺌"
@@ -88,8 +111,11 @@ must_fail "코드에 있는 \`Symbol.span\` 을 스키마에서 뺌"
 # ⑤ 속성 출처 동질성을 깨뜨린다 — 로딩 시점 거부여야 한다
 python3 - <<'PY'
 s=open('schema/graph.toml',encoding='utf-8').read()
-s=s.replace('{ name = "note",     type = "string",        producer = "human",          required = true }',
-            '{ name = "note",     type = "string",        producer = "agent",          required = true }')
+# **정렬에 안 묶인다.** 옛 판은 줄 전체를 리터럴로 적었고, `Binding` 에 속성이 늘어
+# 정렬이 바뀌자 조용히 아무것도 안 바꿨다(F09 · 2026-08-15).
+i=s.index('[node.Binding]')
+j=s.index('producer = "human"', i)
+s=s[:j]+'producer = "agent"'+s[j+len('producer = "human"'):]
 open('schema/graph.toml','w',encoding='utf-8').write(s)
 PY
 must_fail "asserted 노드에 agent 생산자를 섞음"
