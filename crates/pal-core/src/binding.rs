@@ -879,14 +879,23 @@ mod tests {
     // ─────────────────────────────────────────────────────────────────────────
 
     fn 제안(target: SymbolId, 여럿: bool) -> crate::narrative::Proposal {
-        use crate::narrative::{Classification, Fragment, RawSignals, ResolutionSignal};
+        use crate::narrative::{
+            Classification, ConfirmingSignal, Fragment, RawSignals, ResolutionSignal,
+        };
         let class = if 여럿 {
             Classification::Candidates {
                 by: ResolutionSignal::FencedPath,
                 candidates: vec![target, 심볼("다른것")],
             }
         } else {
-            Classification::Bound { target, by: ResolutionSignal::Span }
+            // ⚠ **여기가 `Span` 이었고 타입이 그것을 막았다** (2026-08-15 · `[f10.5]`).
+            //   거리 있는 신호는 확정을 낼 수 없으므로 `ConfirmingSignal` 이 안 만들어진다 —
+            //   **시험 픽스처조차 못 만든다**는 것이 이 타입이 실제로 문을 지킨다는 증거다.
+            Classification::Bound {
+                target,
+                by: ConfirmingSignal::new(ResolutionSignal::Attached)
+                    .expect("`attached` 는 거리 0 이다"),
+            }
         };
         crate::narrative::Proposal {
             item: crate::EntityId::mint(
@@ -935,7 +944,7 @@ mod tests {
             panic!("승격인데 `Hand` 다 — 손으로 건 것과 구별이 안 된다");
         };
         assert_eq!(item, &p.item);
-        assert_eq!(*by, crate::narrative::ResolutionSignal::Span);
+        assert_eq!(*by, crate::narrative::ResolutionSignal::Attached);
         assert!(b.promoted_by.is_promotion());
         // ③ 조각의 본문이 결박의 메모다 — **이것이 실제 메모다**(ADR-0014).
         assert_eq!(b.note, p.fragment.body);

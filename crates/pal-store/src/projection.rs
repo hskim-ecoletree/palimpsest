@@ -831,14 +831,4 @@ impl pal_core::Coordinates for Projection {
         self.symbols_of(path).map(|v| v.into_iter().map(좌표로).collect()).unwrap_or_default()
     }
 
-    fn under_prefix(&self, prefix: &str) -> Vec<pal_core::NamedCoord> {
-        let Ok(files) = self.files() else { return Vec::new() };
-        files
-            .into_iter()
-            .filter(|f| f.path.as_str().starts_with(prefix))
-            .filter_map(|f| self.symbols_of(&f.path).ok())
-            .flatten()
-            .map(좌표로)
-            .collect()
-    }
 }

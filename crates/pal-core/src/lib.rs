@@ -88,8 +88,8 @@ pub use envelope::{
 pub use judgment::{Residual, ResidualReason};
 pub use manifest::{ExclusionRule, Manifest, ManifestError, RepoDecl, ScopeSource};
 pub use narrative::{
-    Classification, Coordinates, Fragment, NamedCoord, PromotionRefusal, Proposal, RawSignals,
-    Refusal, ResolutionSignal, resolve,
+    ClaimDistance, Classification, ConfirmingSignal, Coordinates, Fragment, NamedCoord,
+    PromotionRefusal, Proposal, RawSignals, Refusal, ResolutionSignal, resolve,
 };
 pub use language::Language;
 pub use ledger::{

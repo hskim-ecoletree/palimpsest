@@ -46,8 +46,6 @@ pub trait Coordinates {
     /// 이 경로의 심볼 전부. **경로가 대장에 없으면 빈 목록** — 그것이 *"경로가 대장에
     /// 존재하는가"*(§3.2)의 답이다.
     fn in_path(&self, path: &RepoPath) -> Vec<NamedCoord>;
-    /// 이 접두어 아래의 심볼 전부 — 디렉터리 근접성이 쓴다.
-    fn under_prefix(&self, prefix: &str) -> Vec<NamedCoord>;
 }
 
 /// 좌표 하나와 그것을 좁히는 데 필요한 만큼의 이름.
@@ -87,6 +85,18 @@ pub struct RawSignals {
     ///
     /// **`pal-core` 가 git 을 모르므로 부르는 쪽이 지고 온다** —
     /// [`crate::Neighborhood`] 가 2층을 모르는 것과 같은 자리다.
+    ///
+    /// # ⚠ 이것은 **날것이고 해소에 쓰이지 않는다** (2026-08-15 · `[f10.5].signal_ruling`)
+    ///
+    /// `same-commit` 은 [`ResolutionSignal`] 에서 **빠졌다** — 확인된 명제
+    /// (*"같은 커밋이 이 둘을 바꿨다"*)와 주장(*"이 글은 그 코드에 관한 것이다"*) 사이의
+    /// **거리가 크기 때문**이다([ADR-0015]). 함께 바뀜은 **함께 배포됨**일 수 있다.
+    ///
+    /// **그런데 값은 남긴다.** 지우면 나중에 다시 재려 할 때 **모집단이 사라지고**,
+    /// 그러면 *"안 쓴다"* 와 *"없다"* 가 같은 상태가 된다([ADR-0002] 가 이름 붙인 그것).
+    ///
+    /// [ADR-0002]: https://github.com/hskim-ecoletree/palimpsest/blob/main/docs/adr/0002-empty-population-is-not-zero-violations.md
+    /// [ADR-0015]: https://github.com/hskim-ecoletree/palimpsest/blob/main/docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
     pub co_changed: Vec<RepoPath>,
 }
 
@@ -134,22 +144,35 @@ pub enum ResolutionSignal {
     /// **확정하지 않는다.** 후보 목록을 제안하고 승인을 요구한다."* — 즉 **유일함은
     /// 이 신호의 조건이 아니라 [`resolve`] 가 후보 하나를 볼 때 하는 일**이다.
     Span,
-    /// 문서와 **같은 커밋**에서 함께 바뀌었다.
-    SameCommit,
-    /// 문서 경로와 **디렉터리가 가깝다** — `docs/order/` ↔ `src/order/`.
-    DirectoryProximity,
+}
+
+/// 확인된 명제와 **주장 사이의 거리** — [ADR-0015] 가 요구한 둘째다.
+///
+/// # 왜 이것이 타입인가
+///
+/// [ADR-0015] 는 셋을 요구한다 — **① 확인된 명제를 문장으로 ② 그것과 주장 사이의 거리를
+/// ③ 그 거리를 합격선의 층화에.** 셋을 산문으로 두면 신호가 늘 때 조용히 빠지고,
+/// 빠지면 *"기계가 확인했다"* 가 다시 무엇을 확인했는지 안 적은 채로 선다.
+///
+/// **그래서 ①은 [`ResolutionSignal::confirmed_proposition`] 이 지고, ②는 이 열거가 지고,
+/// ③은 [`ConfirmingSignal`] 이 **타입으로** 진다** — 거리가 있는 신호는 확정을 낼 수
+/// 없다는 것이 컴파일 시점에 박힌다.
+///
+/// [ADR-0015]: https://github.com/hskim-ecoletree/palimpsest/blob/main/docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ClaimDistance {
+    /// **0** — 확인된 명제가 곧 주장이다. 붙어 있음(구문 트리)과 사람이 적음이 그것이다.
+    Zero,
+    /// **있음** — 아무리 결정론적이어도 **추론**이다([ADR-0015] 요구 ②).
+    ///
+    /// [ADR-0015]: https://github.com/hskim-ecoletree/palimpsest/blob/main/docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
+    Present,
 }
 
 impl ResolutionSignal {
     /// **강한 것부터.** 이 배열의 순서가 계단식이고, 순서를 바꾸면 판정이 바뀐다.
-    pub const ALL: [Self; 6] = [
-        Self::Attached,
-        Self::Frontmatter,
-        Self::FencedPath,
-        Self::Span,
-        Self::SameCommit,
-        Self::DirectoryProximity,
-    ];
+    pub const ALL: [Self; 4] = [Self::Attached, Self::Frontmatter, Self::FencedPath, Self::Span];
 
     #[must_use]
     pub const fn name(self) -> &'static str {
@@ -158,21 +181,109 @@ impl ResolutionSignal {
             Self::Frontmatter => "frontmatter",
             Self::FencedPath => "fenced-path",
             Self::Span => "span",
-            Self::SameCommit => "same-commit",
-            Self::DirectoryProximity => "directory-proximity",
         }
     }
 
-    /// 이 신호가 **기계가 확인한 사실**인가 — 판단이 안 들어갔는가.
+    /// **이 신호가 확인한 명제** — [ADR-0015] 요구 ①. 산문이 아니라 값이다.
     ///
-    /// # 이 함수가 합격선의 성분이다
+    /// 주장은 넷 다 같다: *"이 문서 조각은 그 좌표의 코드에 관한 것이다."*
+    /// **이 문장과 그 주장이 다르면 그 신호는 확정된 것이 아니다.**
     ///
-    /// `[f10.2].sample_selection` 이 **거짓 결박률 표본을 신호 종류로 층화**하라고
-    /// 요구한다. 확인된 신호만 담으면 그 값이 **0 으로 나오고 아무것도 안 잰다** —
-    /// 경로가 대장에 있는지와 이름이 유일한지는 조회이지 판단이 아니기 때문이다.
+    /// [ADR-0015]: https://github.com/hskim-ecoletree/palimpsest/blob/main/docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
     #[must_use]
-    pub const fn is_confirmed(self) -> bool {
-        matches!(self, Self::Attached | Self::Frontmatter | Self::FencedPath | Self::Span)
+    pub const fn confirmed_proposition(self) -> &'static str {
+        match self {
+            Self::Attached => "이 주석은 이 선언에 붙어 있다",
+            Self::Frontmatter => "사람이 이 좌표를 적었다",
+            Self::FencedPath => "이 경로가 대장에 있다",
+            Self::Span => "이 이름이 인덱스에서 해소된다",
+        }
+    }
+
+    /// 확인된 명제와 **주장 사이의 거리** — [ADR-0015] 요구 ②.
+    ///
+    /// # 이 함수가 F10 의 반증이 낳은 것이다
+    ///
+    /// 앞선 판(`is_confirmed`)은 *"조회이지 판단이 아니므로 정의상 거짓일 수 없다"* 를
+    /// 근거로 `FencedPath` 와 `Span` 을 **확인된 신호**로 분류했다. **실측이 그것을
+    /// 반증했다** — `span` 으로 걸린 것의 **48.9%** 가 엉뚱한 좌표였다.
+    ///
+    /// **기계가 확인한 것은 이름의 유일성이지 주제의 일치가 아니다.**
+    /// *"붙어 있음은 **구문 트리**의 사실이고, 유일함은 **이름 공간**의 사실이다"*
+    /// ([ADR-0015]) — 앞의 것만이 주장을 뒷받침한다.
+    ///
+    /// [ADR-0015]: https://github.com/hskim-ecoletree/palimpsest/blob/main/docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
+    #[must_use]
+    pub const fn claim_distance(self) -> ClaimDistance {
+        match self {
+            // 붙어 있음은 파싱의 산물이고, 사람이 적은 좌표는 주장 그 자체다.
+            Self::Attached | Self::Frontmatter => ClaimDistance::Zero,
+            // ⚠ **언급은 주제가 아니다.** 문서가 그 파일을 적었다는 것과 그 글이 그
+            //   코드에 **관한** 것이라는 것은 다른 문장이다.
+            Self::FencedPath | Self::Span => ClaimDistance::Present,
+        }
+    }
+
+    /// 이 신호로 **좌표를 확정해도 되는가** — [ADR-0015] 요구 ③의 입구.
+    ///
+    /// 거리가 있는 신호는 후보를 낼 뿐이고 **확정은 사람이 한다.**
+    #[must_use]
+    pub const fn can_confirm_subject(self) -> bool {
+        matches!(self.claim_distance(), ClaimDistance::Zero)
+    }
+
+}
+
+/// **확정할 수 있는 신호** — 거리가 0 인 것만 이 타입이 된다.
+///
+/// # 왜 시험이 아니라 타입인가
+///
+/// `[f10.5.pass].falsified_if` 가 *"거리가 있는 신호가 `결박됨` 을 하나라도 내면 구현의
+/// 반증이다"* 라고 등록했다. **시험으로 두면 시험이 안 돌 때 반증이 안 보이고**,
+/// 타입으로 두면 [`Classification::Bound`] 를 그 신호로 만드는 코드가 **컴파일되지
+/// 않는다.** F10 이 세탁 금지를 `PromotedBy` 로 세운 것과 같은 자리다.
+///
+/// **직렬화는 [`ResolutionSignal`] 과 글자까지 같다** — 산출의 모양이 안 바뀐다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(into = "ResolutionSignal", try_from = "ResolutionSignal")]
+pub struct ConfirmingSignal(ResolutionSignal);
+
+impl ConfirmingSignal {
+    /// 거리가 0 이면 [`Some`], 아니면 [`None`]. **거르는 자리가 여기 하나다.**
+    #[must_use]
+    pub const fn new(s: ResolutionSignal) -> Option<Self> {
+        if s.can_confirm_subject() { Some(Self(s)) } else { None }
+    }
+
+    #[must_use]
+    pub const fn signal(self) -> ResolutionSignal {
+        self.0
+    }
+
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        self.0.name()
+    }
+}
+
+impl From<ConfirmingSignal> for ResolutionSignal {
+    fn from(c: ConfirmingSignal) -> Self {
+        c.0
+    }
+}
+
+impl TryFrom<ResolutionSignal> for ConfirmingSignal {
+    type Error = String;
+
+    fn try_from(s: ResolutionSignal) -> Result<Self, Self::Error> {
+        Self::new(s).ok_or_else(|| {
+            format!(
+                "`{}` 는 확정할 수 없는 신호입니다 — 확인한 것은 「{}」이고 \
+                 그것과 「이 글이 그 코드에 관한 것이다」 사이에 거리가 있습니다",
+                s.name(),
+                s.confirmed_proposition()
+            )
+        })
     }
 }
 
@@ -186,8 +297,13 @@ impl ResolutionSignal {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "class")]
 pub enum Classification {
-    /// 강한 신호로 좌표가 **유일하게** 해소됐다.
-    Bound { target: SymbolId, by: ResolutionSignal },
+    /// **거리 0 인 신호로** 좌표가 **유일하게** 해소됐다.
+    ///
+    /// ⚠ **「후보가 하나」가 이 분류의 조건이 아니다** — 문서 §2 가
+    /// *"**강한 신호로** 좌표가 해소됨"* 이라고 적었는데 앞선 판은 **카디널리티로**
+    /// 갈랐다. 거리 있는 신호가 후보 하나를 내면 그것은 **제안**이지 확정이 아니다
+    /// (`[f10.5].signal_ruling`).
+    Bound { target: SymbolId, by: ConfirmingSignal },
     /// 후보가 여럿이다. **하나를 고르지 않는다** — 고르는 것은 사람의 일이다.
     Candidates { by: ResolutionSignal, candidates: Vec<SymbolId> },
     /// 신호가 없다 — **이것이 사람의 작업 목록이다**(§2).
@@ -207,10 +323,22 @@ impl Classification {
 
 /// 조각 하나를 좌표에 건다 — **신호를 강한 것부터, 첫 번째로 걸리는 것에서 멈춘다.**
 ///
+/// # 무엇이 「결박됨」을 가르는가 — **카디널리티가 아니라 거리다**
+///
+/// **거리가 0 인 신호가 후보 하나를 낼 때만** [`Classification::Bound`] 다
+/// (`[f10.5].signal_ruling` · [ADR-0015]). 거리가 있는 신호는 후보가 하나여도
+/// [`Classification::Candidates`] 로 나가고 **확정은 사람이 한다.**
+///
+/// ⚠ **이것이 F10 의 반증이 낳은 변경이다.** 앞선 판은 *"후보가 하나면 확정"* 이었고
+/// 그래서 `span` 하나로 걸린 결박의 **48.9%** 가 엉뚱한 좌표였다. 문서 §2 는 처음부터
+/// *"**강한 신호로** 좌표가 해소됨"* 이라고 적었는데 **구현이 카디널리티로 갈랐다.**
+///
 /// # 왜 「멈춘다」인가
 ///
 /// 더 약한 신호로 내려가 동점을 깨면 그것이 §4 가 적은 거짓 결박의 원인
 /// (*"약한 신호로 확정"*)이다. **여럿이면 여럿으로 나간다.**
+///
+/// [ADR-0015]: https://github.com/hskim-ecoletree/palimpsest/blob/main/docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
 ///
 /// # 왜 신호 하나 안에서만 동점을 보는가
 ///
@@ -228,8 +356,10 @@ pub fn resolve(f: &Fragment, c: &impl Coordinates) -> Classification {
         // 흔들리는 목록은 승인의 근거가 못 된다(`rebind::propose_with_shape` 와 같은 자리).
         found.sort();
         found.dedup();
-        if let [only] = found[..] {
-            return Classification::Bound { target: only, by: signal };
+        // ★ **거리가 0 인 신호만 확정한다.** `ConfirmingSignal::new` 가 그 문을 진다 —
+        //   여기 하나뿐이라 새 신호가 늘어도 이 판단을 다시 안 쓴다.
+        if let ([only], Some(confirming)) = (&found[..], ConfirmingSignal::new(signal)) {
+            return Classification::Bound { target: *only, by: confirming };
         }
         return Classification::Candidates { by: signal, candidates: found };
     }
@@ -256,16 +386,6 @@ fn candidates(s: ResolutionSignal, f: &Fragment, c: &impl Coordinates) -> Vec<Sy
             // 좁혔다」와 「신호가 없다」가 같은 답이 되는 것이고 `[f10.pass]` ⑤의
             // 반대 방향이 금지한 형태다. 유일함은 [`resolve`] 가 후보 하나를 볼 때 한다.
             f.signals.spans.iter().flat_map(|s| by_span(s, c)).collect()
-        }
-        ResolutionSignal::SameCommit => f
-            .signals
-            .co_changed
-            .iter()
-            .flat_map(|p| c.in_path(p))
-            .map(|n| n.id)
-            .collect(),
-        ResolutionSignal::DirectoryProximity => {
-            nearby_prefixes(&f.path).into_iter().flat_map(|p| c.under_prefix(&p)).map(|n| n.id).collect()
         }
     }
 }
@@ -335,23 +455,6 @@ fn looks_like_an_identifier(raw: &str) -> bool {
         && raw.chars().next().is_some_and(|ch| ch.is_alphabetic() || ch == '_')
 }
 
-/// 문서 경로에서 **가까운 소스 접두어**를 만든다 — `docs/order/x.md` → `src/order/`.
-///
-/// **가장 약한 신호다.** 이것만으로 걸리는 조각은 대개 여럿을 내고, 여럿은 확정되지
-/// 않는다. 그것이 이 신호가 계단식의 바닥에 있는 이유다.
-fn nearby_prefixes(doc: &RepoPath) -> Vec<String> {
-    let dirs: Vec<&str> = doc.as_str().split('/').collect();
-    // 마지막은 파일 이름이다.
-    let Some(tail) = dirs.len().checked_sub(1).and_then(|n| dirs.get(..n)) else {
-        return Vec::new();
-    };
-    // **문서 디렉터리의 마지막 성분**이 도메인 이름이라고 본다 — `docs/order/` 의 `order`.
-    let Some(domain) = tail.last().copied().filter(|d| !d.is_empty() && d != &"docs") else {
-        return Vec::new();
-    };
-    ["src", "lib", "app"].iter().map(|root| format!("{root}/{domain}/")).collect()
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 제안 — **`inferred` 다. 승인 없이 `asserted` 가 되지 않는다** (§1 · §3.3)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -392,7 +495,8 @@ impl Proposal {
     #[must_use]
     pub const fn signal(&self) -> Option<ResolutionSignal> {
         match &self.class {
-            Classification::Bound { by, .. } | Classification::Candidates { by, .. } => Some(*by),
+            Classification::Bound { by, .. } => Some(by.signal()),
+            Classification::Candidates { by, .. } => Some(*by),
             Classification::Unbound => None,
         }
     }
@@ -510,9 +614,6 @@ mod tests {
         fn in_path(&self, path: &RepoPath) -> Vec<NamedCoord> {
             self.0.iter().filter(|n| n.path == *path).cloned().collect()
         }
-        fn under_prefix(&self, prefix: &str) -> Vec<NamedCoord> {
-            self.0.iter().filter(|n| n.path.as_str().starts_with(prefix)).cloned().collect()
-        }
     }
 
     fn 조각(path: &str, signals: RawSignals) -> Fragment {
@@ -532,19 +633,42 @@ mod tests {
     }
 
     #[test]
-    fn 유일한_스팬이_확정한다() {
+    fn 유일한_스팬도_확정하지_않는다() {
+        // ★ **이 절의 핵심 단언이다** (`[f10.5].signal_ruling` · [ADR-0015]).
+        //
+        // 앞선 판은 이것을 `Bound` 로 냈고, 그렇게 걸린 결박의 **48.9%** 가 엉뚱한
+        // 좌표였다. **기계가 확인한 것은 이름의 유일성이지 주제의 일치가 아니다** —
+        // 유일해도 그 글이 그 코드에 **관한** 것이라는 근거가 되지 않는다.
         let t = 표::default().더("src/order/cancel.ts", &["OrderService"], "cancel");
         let f = 조각(
             "docs/x.md",
             RawSignals { spans: vec!["OrderService.cancel".to_owned()], ..RawSignals::default() },
         );
-        assert_eq!(
-            resolve(&f, &t),
-            Classification::Bound {
-                target: t.좌표("src/order/cancel.ts", "cancel"),
-                by: ResolutionSignal::Span,
-            }
-        );
+        let Classification::Candidates { by, candidates } = resolve(&f, &t) else {
+            panic!("유일한 스팬이 확정됐다 — 거리 있는 신호가 확정을 냈다");
+        };
+        assert_eq!(by, ResolutionSignal::Span);
+        // ⚠ **미결박으로 접히지도 않는다** — 후보는 있다. 그것이 사람의 작업 목록이다.
+        assert_eq!(candidates, vec![t.좌표("src/order/cancel.ts", "cancel")]);
+    }
+
+    #[test]
+    fn 거리_있는_신호는_확정을_낼_수_없다() {
+        // **타입이 그것을 진다** — 시험이 아니라 `ConfirmingSignal` 이 문을 지킨다.
+        for s in ResolutionSignal::ALL {
+            let 만들어졌나 = ConfirmingSignal::new(s).is_some();
+            assert_eq!(
+                만들어졌나,
+                s.can_confirm_subject(),
+                "`{}` 의 문이 거리와 어긋난다",
+                s.name()
+            );
+            assert_eq!(만들어졌나, s.claim_distance() == ClaimDistance::Zero);
+        }
+        assert!(ConfirmingSignal::new(ResolutionSignal::Span).is_none());
+        assert!(ConfirmingSignal::new(ResolutionSignal::FencedPath).is_none());
+        assert!(ConfirmingSignal::new(ResolutionSignal::Attached).is_some());
+        assert!(ConfirmingSignal::new(ResolutionSignal::Frontmatter).is_some());
     }
 
     #[test]
@@ -585,41 +709,81 @@ mod tests {
     fn 동점을_약한_신호로_깨지_않는다() {
         // **★ 이것이 이 모듈의 가장 무거운 판단이다.** 약한 신호로 내려가 동점을 깨면
         // *"강 신호로 걸렸다"* 가 거짓이 되고, 그것이 §4 가 적은 거짓 결박의 원인이다.
+        //
+        // ⚠ **#60 의 셋째 후보가 정확히 이 자리였고 기각됐다**(`[f10.5].narrowing_ruling`):
+        // 거리 있는 명제 둘을 곱해도 거리 0 이 되지 않는다 — **후보 수는 줄고 거짓률은
+        // 안 준다.**
         let t = 표::default()
             .더("src/order/a.ts", &[], "cancel")
             .더("src/other/b.ts", &[], "cancel");
         let f = 조각(
-            // 디렉터리 근접성이면 `src/order/` 하나로 좁혀질 자리다 — **좁히지 않는다.**
+            // 스팬이 둘을 낸다. 더 약한 신호(스팬 안의 경로 겹침)로 좁히지 **않는다.**
             "docs/order/x.md",
             RawSignals {
                 fenced_paths: vec![RepoPath::new("src/order/a.ts"), RepoPath::new("src/other/b.ts")],
+                spans: vec!["cancel".to_owned()],
                 ..RawSignals::default()
             },
         );
-        assert!(matches!(resolve(&f, &t), Classification::Candidates { candidates, .. } if candidates.len() == 2));
+        // 더 강한 `fenced-path` 가 둘을 냈고 **거기서 멈춘다** — 스팬으로 안 내려간다.
+        let Classification::Candidates { by, candidates } = resolve(&f, &t) else {
+            panic!("동점이 확정되거나 미결박으로 접혔다");
+        };
+        assert_eq!(by, ResolutionSignal::FencedPath);
+        assert_eq!(candidates.len(), 2);
     }
 
     #[test]
     fn 강한_신호가_약한_것을_이긴다() {
         // 계단식이 아니라 목록이면 이 단언이 무너진다.
         let t = 표::default()
-            .더("src/order/a.ts", &[], "cancel")
+            .더("src/order/a.ts", &["OrderService"], "cancel")
             .더("src/order/b.ts", &[], "other");
+        let id = t.좌표("src/order/a.ts", "cancel");
+        let f = 조각(
+            "src/order/a.ts",
+            RawSignals {
+                // 붙어 있는 주석(거리 0)과 스팬(거리 있음)을 함께 준다.
+                attached: vec![id],
+                spans: vec!["other".to_owned()],
+                ..RawSignals::default()
+            },
+        );
+        // **강한 것이 이긴다** — 그리고 그것이 거리 0 이라 확정된다.
+        let Classification::Bound { target, by } = resolve(&f, &t) else {
+            panic!("계단식이 아니라 목록이다");
+        };
+        assert_eq!(target, id);
+        assert_eq!(by.signal(), ResolutionSignal::Attached);
+    }
+
+    #[test]
+    fn 뺀_신호의_날것은_아무것도_안_건다() {
+        // ⚠ **`co_changed` 는 남아 있지만 해소에 안 쓰인다**(`[f10.5].signal_ruling`).
+        // 남긴 이유는 [ADR-0002] 다 — 지우면 *"안 쓴다"* 와 *"없다"* 가 같은 상태가 된다.
+        // **이 시험이 그 둘을 가른다**: 값은 실렸는데 분류는 미결박이다.
+        let t = 표::default().더("src/order/b.ts", &[], "other");
         let f = 조각(
             "docs/order/x.md",
             RawSignals {
-                fenced_paths: vec![RepoPath::new("src/order/a.ts")],
-                // 같은 커밋·근접성은 둘을 다 낸다 — 그런데 **더 강한 것이 이미 하나를 냈다.**
                 co_changed: vec![RepoPath::new("src/order/b.ts")],
                 ..RawSignals::default()
             },
         );
+        assert!(!f.signals.co_changed.is_empty(), "날것이 안 실렸다 — 이 시험이 아무것도 안 센다");
+        assert_eq!(resolve(&f, &t), Classification::Unbound);
+    }
+
+    #[test]
+    fn 디렉터리_근접성은_더_이상_후보를_안_낸다() {
+        // `docs/order/x.md` ↔ `src/order/` 는 앞선 판에서 후보를 냈다 — 중앙 **2,345** 개.
+        // *"디렉터리 이름이 겹친다"* 와 *"이 글은 그 코드에 관한 것이다"* 사이의 거리다.
+        let t = 표::default()
+            .더("src/order/a.ts", &[], "cancel")
+            .더("src/order/b.ts", &[], "other");
         assert_eq!(
-            resolve(&f, &t),
-            Classification::Bound {
-                target: t.좌표("src/order/a.ts", "cancel"),
-                by: ResolutionSignal::FencedPath,
-            }
+            resolve(&조각("docs/order/x.md", RawSignals::default()), &t),
+            Classification::Unbound
         );
     }
 
@@ -631,10 +795,10 @@ mod tests {
             "src/order/a.ts",
             RawSignals { attached: vec![id], ..RawSignals::default() },
         );
-        assert_eq!(
-            resolve(&f, &t),
-            Classification::Bound { target: id, by: ResolutionSignal::Attached }
-        );
+        let Classification::Bound { target, by } = resolve(&f, &t) else {
+            panic!("붙어 있는 주석이 확정을 못 했다 — 거리 0 인 신호다");
+        };
+        assert_eq!((target, by.signal()), (id, ResolutionSignal::Attached));
     }
 
     #[test]
@@ -649,13 +813,10 @@ mod tests {
                 ..RawSignals::default()
             },
         );
-        assert_eq!(
-            resolve(&f, &t),
-            Classification::Bound {
-                target: t.좌표("src/order/cancel.ts", "cancel"),
-                by: ResolutionSignal::Frontmatter,
-            }
-        );
+        let Classification::Bound { target, by } = resolve(&f, &t) else {
+            panic!("프론트매터가 확정을 못 했다 — 사람이 적은 좌표는 거리 0 이다");
+        };
+        assert_eq!((target, by.signal()), (t.좌표("src/order/cancel.ts", "cancel"), ResolutionSignal::Frontmatter));
     }
 
     #[test]
@@ -695,15 +856,22 @@ mod tests {
     }
 
     #[test]
-    fn 확인된_신호와_판단이_드는_신호가_갈린다() {
-        // **`[f10.2].sample_selection` 이 이 구별 위에 선다** — 확인된 것만 표본에 담으면
-        // 거짓 결박률이 0 으로 나오고 아무것도 안 잰다.
-        let 확인 = ResolutionSignal::ALL.iter().filter(|s| s.is_confirmed()).count();
-        let 판단 = ResolutionSignal::ALL.len() - 확인;
-        assert!(확인 >= 1 && 판단 >= 1, "두 갈래가 다 서지 않는다");
-        assert!(!ResolutionSignal::SameCommit.is_confirmed());
-        assert!(ResolutionSignal::Span.is_confirmed());
-        assert!(!ResolutionSignal::DirectoryProximity.is_confirmed());
+    fn 거리가_둘로_갈리고_명제가_전부_적혀_있다() {
+        // **[ADR-0015] 의 요구 셋이 값으로 서 있는가.**
+        //
+        // **하한** — 한 갈래가 비면 이 구별이 아무것도 안 가른다. 그리고 그때
+        // *"거리 0 인 신호만 확정한다"* 는 규칙이 **전부 확정** 이나 **전부 제안** 으로
+        // 무너지고, 무너진 줄도 모르고 통과한다.
+        let 거리0 = ResolutionSignal::ALL.iter().filter(|s| s.can_confirm_subject()).count();
+        let 거리있음 = ResolutionSignal::ALL.len() - 거리0;
+        assert!(거리0 >= 1 && 거리있음 >= 1, "두 갈래가 다 서지 않는다 — 이 구별이 꺼졌다");
+
+        // 요구 ① — **확인된 명제가 신호마다 적혀 있고 서로 다르다.**
+        // 뭉개지면 *"무엇을 확인했나"* 가 다시 안 적힌 채로 선다.
+        let 명제: std::collections::BTreeSet<&str> =
+            ResolutionSignal::ALL.iter().map(|s| s.confirmed_proposition()).collect();
+        assert_eq!(명제.len(), ResolutionSignal::ALL.len(), "확인된 명제가 겹친다");
+        assert!(명제.iter().all(|m| !m.is_empty()));
     }
 
     #[test]
@@ -712,8 +880,10 @@ mod tests {
         let 이름: Vec<&str> = ResolutionSignal::ALL.iter().map(|s| s.name()).collect();
         assert_eq!(
             이름,
-            vec!["attached", "frontmatter", "fenced-path", "span", "same-commit",
-                 "directory-proximity"]
+            // ⚠ **`same-commit` 과 `directory-proximity` 가 빠졌다** — 거리가 크다
+            //   (`[f10.5].signal_ruling`). **뺀 것이 이 시험에 남아 있어야** 다시
+            //   들어올 때 이 시험을 지나간다.
+            vec!["attached", "frontmatter", "fenced-path", "span"]
         );
         // 그리고 서로 다르다 — 뭉개지면 산출이 무엇이 걸었는지 못 말한다.
         let 집합: std::collections::BTreeSet<&str> = 이름.iter().copied().collect();

@@ -412,11 +412,21 @@ fn 일괄_승인(
                 p.item.to_display(),
                 candidates.len()
             )),
-            Classification::Bound { by, .. } if !by.is_confirmed() => 거부들.push(format!(
-                "{} — `{}` 는 판단이 드는 신호입니다. 일괄의 대상이 아닙니다",
-                p.item.to_display(),
-                by.name()
-            )),
+            // ⚠ **이 사유는 이제 구조적으로 도달 불가다** (2026-08-15 ·
+            //   `[f10.5.pass].batch_refusal_grounds`). `Classification::Bound` 가
+            //   `ConfirmingSignal` 을 지므로 **거리 있는 신호가 여기 올 수 없다.**
+            //
+            //   ★ **그런데 지우지 않는다.** 나중에 거리 있는 신호가 확정을 내게 되면
+            //   **이 사유가 다시 켜져야** 하고, 지우면 그때 아무것도 안 막는다.
+            //   모집단이 0 이 된 사실은 게이트가 적는다 — *"안 켜진다"* 와 *"없다"* 를
+            //   가르는 것이 [ADR-0002] 다.
+            Classification::Bound { by, .. } if !by.signal().can_confirm_subject() => {
+                거부들.push(format!(
+                    "{} — `{}` 는 판단이 드는 신호입니다. 일괄의 대상이 아닙니다",
+                    p.item.to_display(),
+                    by.name()
+                ));
+            }
             _ => {}
         }
     }
