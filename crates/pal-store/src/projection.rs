@@ -805,3 +805,40 @@ impl pal_core::Neighborhood for Projection {
         self.symbols_of(path).map(|v| v.into_iter().map(|n| n.id).collect()).unwrap_or_default()
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 좌표 해소가 요구하는 조회 (F10 §3.2)
+//
+// [`pal_core::Neighborhood`] 와 **같은 규율이다** — 트레잇이 `Result` 를 안 지고,
+// 읽기가 실패하면 후보가 **빈다.** 즉 *"덜 건다"* 이지 *"틀린 것을 건다"* 가 아니고,
+// 그 축소는 조용하지 않다: 미결박은 `narrative.unbound` 가 **작업 목록으로** 낸다.
+//
+// ⚠ **후보 수를 자르지 않는다.** 자르면 *"여럿이라 못 좁혔다"* 의 규모가 사라지고,
+// 사람은 **50 건짜리 제안과 2 건짜리 제안을 같은 화면으로 본다.** 후보의 수 자체가
+// 산출이다(`TouchAnswer::Ambiguous` 와 같은 판단) — 조용한 절단 금지.
+// ─────────────────────────────────────────────────────────────────────────────
+
+fn 좌표로(n: SymbolNode) -> pal_core::NamedCoord {
+    pal_core::NamedCoord { id: n.id, name: n.name, container: n.container, path: n.path }
+}
+
+impl pal_core::Coordinates for Projection {
+    fn by_name(&self, name: &str) -> Vec<pal_core::NamedCoord> {
+        self.resolve_name(name).map(|v| v.into_iter().map(좌표로).collect()).unwrap_or_default()
+    }
+
+    fn in_path(&self, path: &RepoPath) -> Vec<pal_core::NamedCoord> {
+        self.symbols_of(path).map(|v| v.into_iter().map(좌표로).collect()).unwrap_or_default()
+    }
+
+    fn under_prefix(&self, prefix: &str) -> Vec<pal_core::NamedCoord> {
+        let Ok(files) = self.files() else { return Vec::new() };
+        files
+            .into_iter()
+            .filter(|f| f.path.as_str().starts_with(prefix))
+            .filter_map(|f| self.symbols_of(&f.path).ok())
+            .flatten()
+            .map(좌표로)
+            .collect()
+    }
+}

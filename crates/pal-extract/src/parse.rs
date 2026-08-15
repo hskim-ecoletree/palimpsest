@@ -449,3 +449,160 @@ mod tests {
         }
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 표식 있는 주석 (F10 §3.4)
+//
+// > 주석은 **가장 정확한 좌표를 이미 갖고 있다** — 붙어 있는 심볼.
+// > 다만 주석이 결정인지 설명인지는 모른다. **표식이 있는 주석만 인입한다.**
+//
+// ⚠ **정규화 경로를 안 건드린다.** [`normalize`] 가 주석을 버리는 것은 의도한 동작이고
+// (F03: *"주석 수정이 결박을 stale 로 만들지 않는다"*), 문서 §3.4 가 스스로 그것을
+// 적었다. 그래서 여기 있는 것은 **별도의 수집 경로**이고 `body_digest` 에 안 닿는다.
+// 닿으면 골든 넷이 움직이고 그것이 반증이다(`[f10.pass]`).
+//
+// # 왜 텍스트 스캔이 아니라 구문 트리인가
+//
+// 이 저장소가 가장 자주 밟은 대조 고장이 *"어디가 코드이고 어디가 아닌가"* 다
+// (F03 아홉 중 다섯). 문자열 리터럴 안의 `// @decision:` 을 텍스트로 세면 그것이
+// **여섯 번째**가 된다. tree-sitter 는 이미 그 답을 갖고 있다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 표식이 붙은 주석 하나 — **그리고 그것이 붙은 선언의 자리.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MarkedComment {
+    /// 주석 자신의 자리.
+    pub span: Span,
+    /// 주석의 글자 — 표식을 포함한다. **이것이 조각의 본문이 된다.**
+    pub text: String,
+    /// **바로 뒤에 오는 선언의 시작 바이트.** 붙일 심볼을 부르는 쪽이 이것으로 찾는다.
+    ///
+    /// 뒤에 선언이 없으면(파일 끝의 주석) [`None`] 이고, 그때 이 주석은 **좌표가 없다** —
+    /// 지어내지 않는다.
+    pub attaches_to_byte: Option<usize>,
+}
+
+/// 표식이 붙은 주석을 모은다. **표식 없는 주석은 안 본다**(§3.4 가 기각했다).
+///
+/// # 「붙어 있다」의 정의 — **바로 다음 형제**
+///
+/// 주석의 부모 안에서 **그 주석 다음에 오는 첫 이름 있는 마디**가 붙는 대상이다.
+/// 사이에 다른 주석이 있으면 건너뛴다 — 여러 줄 주석 블록이 흔하기 때문이다.
+/// 다음 마디가 없으면 좌표가 **없고**, 없는 것을 지어내지 않는다.
+#[must_use]
+pub fn marked_comments(root: Node<'_>, source: &[u8], markers: &[&str]) -> Vec<MarkedComment> {
+    let mut out = Vec::new();
+    모은다(root, source, markers, &mut out);
+    // **결정적 순서** — 소스 순서다. 흔들리면 조각의 앵커가 흔들린다.
+    out.sort_by_key(|c| c.span.byte_start);
+    out
+}
+
+fn 모은다(node: Node<'_>, source: &[u8], markers: &[&str], out: &mut Vec<MarkedComment>) {
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        if child.kind().contains("comment") {
+            let Ok(text) = std::str::from_utf8(&source[child.byte_range()]) else { continue };
+            if markers.iter().any(|m| text.contains(m)) {
+                out.push(MarkedComment {
+                    span: Span {
+                        byte_start: child.start_byte(),
+                        byte_end: child.end_byte(),
+                        // **자르지 않고 포화시킨다** — 줄 번호는 표시용이고,
+                        // `as` 로 자르면 큰 파일에서 조용히 0 이 된다.
+                        line_start: u32::try_from(child.start_position().row + 1)
+                            .unwrap_or(u32::MAX),
+                        line_end: u32::try_from(child.end_position().row + 1).unwrap_or(u32::MAX),
+                    },
+                    text: text.to_owned(),
+                    attaches_to_byte: 다음_선언(child),
+                });
+            }
+            continue;
+        }
+        모은다(child, source, markers, out);
+    }
+}
+
+/// 이 주석 **다음에 오는 첫 이름 있는 마디**의 시작 바이트.
+///
+/// 주석을 건너뛰는 것이 이 함수의 전부다 — 주석 블록이 여러 줄이면 그 전부가 같은
+/// 선언에 붙는다. 다음이 없으면 [`None`] 이고, 그것이 *"이 주석에는 좌표가 없다"* 다.
+fn 다음_선언(comment: Node<'_>) -> Option<usize> {
+    let mut n = comment.next_named_sibling();
+    while let Some(x) = n {
+        if !x.kind().contains("comment") {
+            return Some(x.start_byte());
+        }
+        n = x.next_named_sibling();
+    }
+    None
+}
+
+#[cfg(test)]
+mod marked_comment_tests {
+    use super::*;
+    use crate::extractor::LanguageExtractor;
+
+    /// 표식 셋 — 문서 §3.4 그대로. **`ADR-` 가 넓은 것은 의도다**:
+    /// ADR 을 인용하는 주석은 **구조상** 결정에 관한 것이다.
+    const 표식: [&str; 2] = ["@decision:", "ADR-"];
+
+    fn ts(src: &str) -> Vec<MarkedComment> {
+        crate::TypeScriptExtractor.marked_comments(src.as_bytes(), &표식).expect("파싱")
+    }
+
+    #[test]
+    fn 표식_있는_주석만_모은다() {
+        let c = ts("// 그냥 설명\n// @decision: 재시도하지 않는다\nexport function f() {}\n");
+        assert_eq!(c.len(), 1, "표식 없는 주석까지 모았다");
+        assert!(c[0].text.contains("재시도하지 않는다"));
+    }
+
+    #[test]
+    fn 주석이_다음_선언에_붙는다() {
+        // **주석은 가장 정확한 좌표를 이미 갖고 있다**(§3.4) — 붙어 있는 선언.
+        let src = "// ADR-0042 이래서 이렇다\nexport function cancel() {}\n";
+        let c = ts(src);
+        assert_eq!(c.len(), 1);
+        let at = c[0].attaches_to_byte.expect("붙을 선언이 있다");
+        assert!(src[at..].starts_with("export function cancel"), "{}", &src[at..]);
+    }
+
+    #[test]
+    fn 주석_블록_전체가_같은_선언에_붙는다() {
+        // 여러 줄 주석이 흔하다. 사이의 주석을 건너뛰지 않으면 앞줄이 좌표를 잃는다.
+        let src = "// @decision: 첫 줄\n// 이어지는 설명\n// ADR-0007\nexport class C {}\n";
+        let c = ts(src);
+        assert_eq!(c.len(), 2, "표식 있는 둘이 나와야 한다");
+        assert_eq!(c[0].attaches_to_byte, c[1].attaches_to_byte);
+    }
+
+    #[test]
+    fn 파일_끝의_주석은_좌표가_없다() {
+        // **없는 것을 지어내지 않는다.** 좌표 없는 주석은 미결박으로 간다.
+        let c = ts("export function f() {}\n// @decision: 뒤에 아무것도 없다\n");
+        assert_eq!(c.len(), 1);
+        assert_eq!(c[0].attaches_to_byte, None);
+    }
+
+    #[test]
+    fn 문자열_안의_표식은_주석이_아니다() {
+        // **★ 이 저장소가 가장 자주 밟은 고장이 여기다** — *"어디가 코드이고 어디가
+        // 아닌가"*(F03 아홉 중 다섯). 텍스트로 세면 이것이 여섯 번째가 된다.
+        let c = ts("export const s = \"// @decision: 이건 문자열이다\"\n");
+        assert!(c.is_empty(), "문자열 안의 표식을 주석으로 셌다: {c:?}");
+    }
+
+    #[test]
+    fn 주석_수집이_요약을_안_건드린다() {
+        // ⚠ **정규화는 주석을 버린다** — F03 이 세운 것이고 F10 이 안 건드린다.
+        // 건드리면 골든 넷이 움직이고 그것이 반증이다(`[f10.pass]`).
+        let 없이 = crate::TypeScriptExtractor.extract(b"export function f() { return 1 }\n").expect("추출");
+        let 있이 = crate::TypeScriptExtractor
+            .extract("// @decision: 무언가\nexport function f() { return 1 }\n".as_bytes())
+            .expect("추출");
+        assert_eq!(없이.symbols[0].body, 있이.symbols[0].body,
+                   "표식 주석이 `body_digest` 를 움직였다");
+    }
+}

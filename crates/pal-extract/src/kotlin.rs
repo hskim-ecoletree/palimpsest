@@ -37,6 +37,16 @@ impl LanguageExtractor for KotlinExtractor {
     fn extract(&self, source: &[u8]) -> Result<FileGraph, ExtractError> {
         extract_detailed(source)
     }
+
+    fn marked_comments(
+        &self,
+        source: &[u8],
+        markers: &[&str],
+    ) -> Result<Vec<crate::parse::MarkedComment>, ExtractError> {
+        let language = tree_sitter::Language::new(brokk_tree_sitter_kotlin::LANGUAGE);
+        let tree = parse_with(&language, source)?;
+        Ok(crate::parse::marked_comments(tree.root_node(), source, markers))
+    }
 }
 
 /// 쿼리 원문. **CLI 레퍼런스가 읽는 그 파일이다.**

@@ -50,6 +50,16 @@ impl LanguageExtractor for TypeScriptExtractor {
     fn extract(&self, source: &[u8]) -> Result<FileGraph, ExtractError> {
         extract_detailed(source)
     }
+
+    fn marked_comments(
+        &self,
+        source: &[u8],
+        markers: &[&str],
+    ) -> Result<Vec<crate::parse::MarkedComment>, ExtractError> {
+        let language = tree_sitter::Language::new(tree_sitter_typescript::LANGUAGE_TYPESCRIPT);
+        let tree = crate::parse::parse_with(&language, source)?;
+        Ok(crate::parse::marked_comments(tree.root_node(), source, markers))
+    }
 }
 
 /// 선언 목록 · 포함 관계 · export/import · 회복 지점.

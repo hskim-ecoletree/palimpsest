@@ -24,6 +24,7 @@
 use pal_core::{Capable, CapabilityId, ExtractGrade, FileGraph, Language};
 
 use crate::ExtractError;
+use crate::parse::MarkedComment;
 
 /// 언어 하나를 읽는 능력.
 ///
@@ -45,6 +46,17 @@ pub trait LanguageExtractor: Send + Sync {
     /// 문법을 붙이지 못하거나 파싱이 중단되면 [`ExtractError`]. **깨진 소스는 오류가
     /// 아니다** — 회복 지점과 함께 부분 결과가 나온다(`recovery_sites`).
     fn extract(&self, source: &[u8]) -> Result<FileGraph, ExtractError>;
+
+    /// 표식이 붙은 주석들 — F10 §3.4. **표식 없는 주석은 안 본다.**
+    ///
+    /// 구현이 언어마다 하나뿐인 이유는 **문법을 붙이는 자리가 언어마다 다르기**
+    /// 때문이고, 실제 수집은 [`crate::parse::marked_comments`] **하나**가 한다.
+    /// 언어마다 따로 쓰면 두 언어의 「붙어 있다」가 서로 다른 규칙 위에 선다.
+    ///
+    /// # Errors
+    /// 문법을 붙이지 못하거나 파싱이 중단되면 [`ExtractError`].
+    fn marked_comments(&self, source: &[u8], markers: &[&str])
+        -> Result<Vec<MarkedComment>, ExtractError>;
 }
 
 /// 이 빌드에 그 언어의 추출기가 있는가 — **소스 없이 묻는다.**
