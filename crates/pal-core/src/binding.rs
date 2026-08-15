@@ -886,7 +886,7 @@ mod tests {
                 candidates: vec![target, 심볼("다른것")],
             }
         } else {
-            Classification::Bound { target, by: ResolutionSignal::UniqueSpan }
+            Classification::Bound { target, by: ResolutionSignal::Span }
         };
         crate::narrative::Proposal {
             item: crate::EntityId::mint(
@@ -935,7 +935,7 @@ mod tests {
             panic!("승격인데 `Hand` 다 — 손으로 건 것과 구별이 안 된다");
         };
         assert_eq!(item, &p.item);
-        assert_eq!(*by, crate::narrative::ResolutionSignal::UniqueSpan);
+        assert_eq!(*by, crate::narrative::ResolutionSignal::Span);
         assert!(b.promoted_by.is_promotion());
         // ③ 조각의 본문이 결박의 메모다 — **이것이 실제 메모다**(ADR-0014).
         assert_eq!(b.note, p.fragment.body);

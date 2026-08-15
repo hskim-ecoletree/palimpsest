@@ -221,8 +221,8 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
             println!("  노드 {} · 엣지 {}", nodes.len(), edges.len());
         }
         QueryResult::Bindings { bindings, detector } => print_bindings(bindings, detector),
-        QueryResult::Narrative { unbound, candidates, bound } => {
-            print_narrative(unbound, *candidates, *bound);
+        QueryResult::Narrative { unbound, candidates, bound, candidate_sizes } => {
+            print_narrative(unbound, *candidates, *bound, candidate_sizes);
         }
         QueryResult::Ambiguous { name, candidates } => {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
@@ -360,9 +360,27 @@ fn print_symbols(symbols: &[pal_core::SymbolNode]) {
 /// 미결박만 내면 *"이 저장소의 문서가 코드에 전혀 안 걸린다"* 로 읽힌다. 걸린 것과
 /// 후보가 있는 것의 **수**가 같은 화면에 있어야 그 목록이 무엇에 대한 목록인지 읽힌다.
 /// **그러나 목록은 섞지 않는다** — 후보가 있는 것은 할 일이 아니라 승인 대기다.
-fn print_narrative(unbound: &[pal_query::UnboundItem], candidates: usize, bound: usize) {
+fn print_narrative(
+    unbound: &[pal_query::UnboundItem],
+    candidates: usize,
+    bound: usize,
+    spread: &[pal_query::CandidateSpread],
+) {
     println!("  결박됨 {bound} · 후보 있음 {candidates} · **미결박 {}**", unbound.len());
     println!();
+    if !spread.is_empty() {
+        // ★ **수만 내면 「후보 있음 1,563」이 「승인 대기 1,563 건」으로 읽힌다.**
+        // 후보가 229 개짜리인 제안은 **사람이 볼 수 없는 목록이고 제안이 아니다.**
+        println!("■ 후보를 좁혔는가 — 신호별");
+        for s in spread {
+            println!(
+                "  {:<22} 조각 {:>5} · 후보 중앙 {:>5} · 최대 {:>5} · **셋 이하 {}**",
+                s.by, s.items, s.median, s.max, s.reviewable
+            );
+        }
+        println!("  **「셋 이하」가 사람이 실제로 고를 수 있는 것입니다.**");
+        println!();
+    }
     if unbound.is_empty() {
         // **빈 목록이 정직하다** — 능력이 있고 값이 없는 것이다.
         println!("  좌표를 못 찾은 조각이 없습니다.");

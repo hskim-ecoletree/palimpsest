@@ -118,8 +118,22 @@ pub enum ResolutionSignal {
     Frontmatter,
     /// 펜스 친 코드 안의 경로가 **대장에 있다**.
     FencedPath,
-    /// 인라인 스팬의 식별자가 **인덱스에 유일**하다.
-    UniqueSpan,
+    /// 인라인 스팬의 식별자가 **인덱스에서 해소된다**.
+    ///
+    /// # ⚠ 이름이 `UniqueSpan` 이 아니다 — 그것이 결함이었다 (2026-08-15 · `[f10.pass]` ⑤)
+    ///
+    /// 처음에는 **유일하게 해소될 때만** 이 신호를 냈다. 그러면 같은 이름이 둘인 스팬은
+    /// 신호를 **아예 안 내고**, 그 조각이 더 약한 신호로 떨어져 결국 **미결박**이 된다.
+    ///
+    /// **그것이 `[f10.pass]` ⑤의 반대 방향이 금지한 바로 그 형태다** — *"동점을
+    /// 미결박으로 접으면 그것도 반증이다. 「여럿이라 못 좁혔다」와 「신호가 없다」는
+    /// 다른 답이고, 뭉개면 작업 목록에 이미 후보가 있는 것이 섞인다."*
+    /// 등록한 합격선이 구현을 잡았고, **`scripts/f10-verify.py` ⑤가 그것을 냈다.**
+    ///
+    /// 문서 §3.2 의 마지막 줄이 그 답을 이미 적어 두었다: *"같은 강도의 후보가 여럿이면
+    /// **확정하지 않는다.** 후보 목록을 제안하고 승인을 요구한다."* — 즉 **유일함은
+    /// 이 신호의 조건이 아니라 [`resolve`] 가 후보 하나를 볼 때 하는 일**이다.
+    Span,
     /// 문서와 **같은 커밋**에서 함께 바뀌었다.
     SameCommit,
     /// 문서 경로와 **디렉터리가 가깝다** — `docs/order/` ↔ `src/order/`.
@@ -132,7 +146,7 @@ impl ResolutionSignal {
         Self::Attached,
         Self::Frontmatter,
         Self::FencedPath,
-        Self::UniqueSpan,
+        Self::Span,
         Self::SameCommit,
         Self::DirectoryProximity,
     ];
@@ -143,7 +157,7 @@ impl ResolutionSignal {
             Self::Attached => "attached",
             Self::Frontmatter => "frontmatter",
             Self::FencedPath => "fenced-path",
-            Self::UniqueSpan => "unique-span",
+            Self::Span => "span",
             Self::SameCommit => "same-commit",
             Self::DirectoryProximity => "directory-proximity",
         }
@@ -158,7 +172,7 @@ impl ResolutionSignal {
     /// 경로가 대장에 있는지와 이름이 유일한지는 조회이지 판단이 아니기 때문이다.
     #[must_use]
     pub const fn is_confirmed(self) -> bool {
-        matches!(self, Self::Attached | Self::Frontmatter | Self::FencedPath | Self::UniqueSpan)
+        matches!(self, Self::Attached | Self::Frontmatter | Self::FencedPath | Self::Span)
     }
 }
 
@@ -236,18 +250,12 @@ fn candidates(s: ResolutionSignal, f: &Fragment, c: &impl Coordinates) -> Vec<Sy
             .flat_map(|p| c.in_path(p))
             .map(|n| n.id)
             .collect(),
-        ResolutionSignal::UniqueSpan => {
-            // ★ **유일한 것만 센다.** 이 신호의 정의가 *"인덱스에 유일"*(§3.2)이므로,
-            // 여럿으로 해소되는 스팬은 **이 신호를 안 낸다** — 후보로 올리면
-            // *"강 신호로 걸렸다"* 가 거짓이 된다.
-            let mut out = Vec::new();
-            for span in &f.signals.spans {
-                let hits = by_span(span, c);
-                if let [only] = hits[..] {
-                    out.push(only);
-                }
-            }
-            out
+        ResolutionSignal::Span => {
+            // ⚠ **해소되는 것을 전부 낸다.** 유일한 것만 내면 같은 이름이 둘인 스팬이
+            // 신호를 아예 못 내고, 그 조각이 **미결박으로 접힌다** — 「여럿이라 못
+            // 좁혔다」와 「신호가 없다」가 같은 답이 되는 것이고 `[f10.pass]` ⑤의
+            // 반대 방향이 금지한 형태다. 유일함은 [`resolve`] 가 후보 하나를 볼 때 한다.
+            f.signals.spans.iter().flat_map(|s| by_span(s, c)).collect()
         }
         ResolutionSignal::SameCommit => f
             .signals
@@ -534,7 +542,7 @@ mod tests {
             resolve(&f, &t),
             Classification::Bound {
                 target: t.좌표("src/order/cancel.ts", "cancel"),
-                by: ResolutionSignal::UniqueSpan,
+                by: ResolutionSignal::Span,
             }
         );
     }
@@ -549,8 +557,14 @@ mod tests {
             "docs/x.md",
             RawSignals { spans: vec!["cancel".to_owned()], ..RawSignals::default() },
         );
-        // 유일하지 않으므로 **`UniqueSpan` 이 아예 안 난다** — 그 신호의 정의가 「유일」이다.
-        assert_eq!(resolve(&f, &t), Classification::Unbound);
+        // ★ **여럿이면 「후보 있음」이다. 미결박이 아니다.**
+        // 「여럿이라 못 좁혔다」와 「신호가 없다」는 다른 답이고, 뭉개면 작업 목록에
+        // **이미 후보가 있는 것**이 섞인다(`[f10.pass]` ⑤의 반대 방향).
+        let Classification::Candidates { by, candidates } = resolve(&f, &t) else {
+            panic!("스팬 동점이 「후보 있음」이 아니다 — 미결박으로 접혔다");
+        };
+        assert_eq!(by, ResolutionSignal::Span);
+        assert_eq!(candidates.len(), 2);
 
         // 그런데 **경로 신호는 여럿을 낸다** — 그때는 「후보 있음」이지 미결박이 아니다.
         let g = 조각(
@@ -688,6 +702,7 @@ mod tests {
         let 판단 = ResolutionSignal::ALL.len() - 확인;
         assert!(확인 >= 1 && 판단 >= 1, "두 갈래가 다 서지 않는다");
         assert!(!ResolutionSignal::SameCommit.is_confirmed());
+        assert!(ResolutionSignal::Span.is_confirmed());
         assert!(!ResolutionSignal::DirectoryProximity.is_confirmed());
     }
 
@@ -697,7 +712,7 @@ mod tests {
         let 이름: Vec<&str> = ResolutionSignal::ALL.iter().map(|s| s.name()).collect();
         assert_eq!(
             이름,
-            vec!["attached", "frontmatter", "fenced-path", "unique-span", "same-commit",
+            vec!["attached", "frontmatter", "fenced-path", "span", "same-commit",
                  "directory-proximity"]
         );
         // 그리고 서로 다르다 — 뭉개지면 산출이 무엇이 걸었는지 못 말한다.

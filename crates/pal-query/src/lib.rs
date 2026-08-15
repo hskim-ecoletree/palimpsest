@@ -133,6 +133,20 @@ pub struct UnboundItem {
     pub signals_seen: usize,
 }
 
+/// 신호 하나가 낸 후보 집합들의 크기 — **좁혔는가를 이 값이 말한다.**
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct CandidateSpread {
+    /// 무엇이 걸었나.
+    pub by: &'static str,
+    /// 그 신호로 「후보 있음」이 된 조각 수.
+    pub items: usize,
+    /// 후보 집합 크기의 중앙값. **이 값이 크면 그 신호는 안 좁힌 것이다.**
+    pub median: usize,
+    pub max: usize,
+    /// 후보가 **셋 이하**인 것 — *"사람이 실제로 고를 수 있는 것"* 의 수.
+    pub reviewable: usize,
+}
+
 /// 엣지 하나 — 산출에 실리는 형태.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DumpEdge {
@@ -163,7 +177,23 @@ pub enum QueryResult {
     /// *"여럿이라 못 좁혔다"* 는 **이미 후보가 있는 것**이고 *"신호가 없다"* 는
     /// **사람이 좌표를 붙여야 하는 것**이다. 섞으면 작업 목록이 안 읽힌다.
     /// 그래서 `candidates` 는 **수로만** 실린다 — 있다는 사실은 남고 목록은 안 섞인다.
-    Narrative { unbound: Vec<UnboundItem>, candidates: usize, bound: usize },
+    Narrative {
+        unbound: Vec<UnboundItem>,
+        candidates: usize,
+        bound: usize,
+        /// ★ **후보가 몇 개짜리인가** — 신호별로.
+        ///
+        /// # 왜 수만으로는 거짓말이 되는가 (F10 실측 · 2026-08-15)
+        ///
+        /// *"후보 있음 1,563"* 은 **승인 대기 1,563 건**처럼 읽힌다. 그런데 실측에서
+        /// `same-commit` 의 후보 집합은 중앙값이 **229** 였다(최대 658) —
+        /// **사람이 볼 수 없는 목록이고, 그것은 제안이 아니다.**
+        ///
+        /// 크기를 안 실으면 *"후보를 좁혔다"* 와 *"후보를 안 좁혔다"* 가 **같은 줄**이
+        /// 된다. F09 가 반경을 산출에 실은 것과 정확히 같은 자리다 — **닫히지 않는
+        /// 것을 선언으로 다룬다.**
+        candidate_sizes: Vec<CandidateSpread>,
+    },
     /// 이름이 여럿으로 해소됐다. **하나를 고르지 않는다.**
     Ambiguous { name: String, candidates: Vec<SymbolNode> },
     /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 봉투가 진다.
@@ -315,7 +345,12 @@ fn run(
                     }),
                 }
             }
-            Ok(QueryResult::Narrative { unbound, candidates, bound })
+            Ok(QueryResult::Narrative {
+                unbound,
+                candidates,
+                bound,
+                candidate_sizes: 후보_퍼짐(&ctx.narrative),
+            })
         }
         NamedQuery::BindingStatus => Ok(QueryResult::Bindings {
             bindings: binding_reports(ctx, accessed),
@@ -591,4 +626,32 @@ pub fn stale_count(r: &QueryResult) -> usize {
 /// 세면 모든 조각이 최소 하나를 갖게 되어 이 값이 아무것도 안 가른다.
 fn 신호_수(s: &pal_core::RawSignals) -> usize {
     s.attached.len() + s.grounds.len() + s.fenced_paths.len() + s.spans.len()
+}
+
+/// 신호마다 후보 집합이 얼마나 넓은가 — **좁혔는가를 재는 자리.**
+///
+/// **후보가 셋 이하인 것을 따로 센다.** 그것이 *"사람이 실제로 고를 수 있는 것"* 이고,
+/// 나머지는 **제안이 아니라 목록**이다.
+fn 후보_퍼짐(proposals: &[pal_core::Proposal]) -> Vec<CandidateSpread> {
+    let mut 모음: std::collections::BTreeMap<&'static str, Vec<usize>> =
+        std::collections::BTreeMap::new();
+    for p in proposals {
+        if let pal_core::Classification::Candidates { by, candidates } = &p.class {
+            모음.entry(by.name()).or_default().push(candidates.len());
+        }
+    }
+    모음
+        .into_iter()
+        .map(|(by, mut sizes)| {
+            sizes.sort_unstable();
+            let median = sizes.get(sizes.len() / 2).copied().unwrap_or(0);
+            CandidateSpread {
+                by,
+                items: sizes.len(),
+                median,
+                max: sizes.last().copied().unwrap_or(0),
+                reviewable: sizes.iter().filter(|n| **n <= 3).count(),
+            }
+        })
+        .collect()
 }
