@@ -1,24 +1,24 @@
 코퍼스	개체	문서	앵커	걸린신호	심볼	종류	코드경로	조각머리	판정	근거
-ditto	01M02FZGB6KQNM8EDK0TS6RZNP	rebuild/knowledge/adr-authoring.ts	L8	attached	pad2	function	rebuild/knowledge/adr-authoring.ts	/**		
-ditto	01M02FZWPWXQ4H3PJ80KQFRBT0	src/cli/commands/cleanup.ts	L22	attached	parseFormatOrExit	function	src/cli/commands/cleanup.ts	/**		
-ditto	01M02FZWXBP903EVHAB1XWGASZ	src/cli/commands/semantic.ts	L27	attached	semanticPath	function	src/cli/commands/semantic.ts	/**		
-ditto	01M02FZWYTSN8BX0AD1F38T00N	src/cli/commands/work.ts	L521	attached	reflectManualTermination	function	src/cli/commands/work.ts	/**		
-ditto	01M02FZWYYVJDD471H4AN18J8G	src/cli/commands/work.ts	L564	attached	resolveClaimBranch	function	src/cli/commands/work.ts	// no-op. Every gh failure is a notice, never a throw (ADR-0018).		
-ditto	01M02FZX1454BHX9BSHZ9854N9	src/core/autopilot-complete.ts	L16	attached	OracleMap	type_alias	src/core/autopilot-complete.ts	/** Per-AC oracle lookup threaded into the closure decision (ADR-0024 §3 ③ JUDGE). */		
-ditto	01M02FZX19CX5FEH174PB8N8GR	src/core/autopilot-complete.ts	L90	attached	nodeVerdictFor	function	src/core/autopilot-complete.ts	/**		
-ditto	01M02FZX1JGJQMZF7GQYJQ7GDR	src/core/autopilot-complete.ts	L382	attached	barrierRanGreen	function	src/core/autopilot-complete.ts	/**		
-ditto	01M02FZX1PBVBZRR6ZWXC713C0	src/core/autopilot-complete.ts	L492	attached	frozenBreachUnverified	function	src/core/autopilot-complete.ts	/**		
-ditto	01M02FZX1VGNZC7AWWATM9XZ12	src/core/autopilot-complete.ts	L579	attached	loopStuckBlocked	function	src/core/autopilot-complete.ts	/**		
-ditto	01M02FZX561FQQS5XJ81DMTKTC	src/core/autopilot-loop.ts	L311	attached	collectRetroContext	function	src/core/autopilot-loop.ts	/**		
-ditto	01M02FZX82PX4232H6MCTFCP7V	src/core/autopilot-loop.ts	L2131	attached	surfaceLspDiagnostics	function	src/core/autopilot-loop.ts	/**		
-ditto	01M02FZX8FSRBR7S92VGPFMB44	src/core/autopilot-loop.ts	L2269	attached	DeclaredDecisionConflict	type_alias	src/core/autopilot-loop.ts	// ── ADR-0020 decision-conflict carrier lifecycle (producer side) ─────────────		
-ditto	01M02FZX8VQKEJAJ9PBS6M342E	src/core/autopilot-loop.ts	L2520	attached	unmetOracles	function	src/core/autopilot-loop.ts	/**		
-ditto	01M02FZX8ZYRXX80WE0KHNEJG5	src/core/autopilot-loop.ts	L2637	attached	recordLoopTermination	function	src/core/autopilot-loop.ts	/**		
-ditto	01M02FZX98VND4EY6X66J4MFP5	src/core/autopilot-loop.ts	L2742	attached	applyAutoResolveSplice	function	src/core/autopilot-loop.ts	/**		
-ditto	01M02FZX9HJE7QCQ6ZYQG3F3W0	src/core/autopilot-loop.ts	L2862	attached	directPostDecisions	function	src/core/autopilot-loop.ts	/**		
-ditto	01M02FZXM4XG1F7PTFD6RCKHQH	src/core/e2e/generator.ts	L139	attached	defaultReadPlaywrightVersion	function	src/core/e2e/generator.ts	/**		
-ditto	01M02FZXP4P96K39E11ZYXTST4	src/core/gates.ts	L462	attached	groundingWorkItemIds	function	src/core/gates.ts	/**		
-ditto	01M02FZXZNTYNWBKJD7BVXVYMJ	src/core/prism/opponent.ts	L15	attached	ModelPolicy	type_alias	src/core/prism/opponent.ts	/**		
-ditto	01M02FZY31T3TEQ2KE7MHD11KC	src/core/work-item-store.ts	L1010	attached	archive	method	src/core/work-item-store.ts	/**		
-ditto	01M02FZY4EHAPS70GW1WVNTJBC	src/hooks/rebuilt/stop-gate.ts	L150	attached	oracleGapPending	function	src/hooks/rebuilt/stop-gate.ts	/**		
-ditto	01M02FZY65EMDYTAFQQ823WZ1R	src/hooks/stop.ts	L669	attached	oracleGapPending	function	src/hooks/stop.ts	/**		
+ditto	01M02FZGB6KQNM8EDK0TS6RZNP	rebuild/knowledge/adr-authoring.ts	L8	attached	pad2	function	rebuild/knowledge/adr-authoring.ts	/**	거짓	파일 머리의 ADR 식별자 정책 주석이다 — `pad2` 는 그 아래 자기 주석(`Two-digit zero-padded helper`)을 따로 갖는다
+ditto	01M02FZWPWXQ4H3PJ80KQFRBT0	src/cli/commands/cleanup.ts	L22	attached	parseFormatOrExit	function	src/cli/commands/cleanup.ts	/**	거짓	`ditto cleanup` **명령 전체**의 머리 주석이다 — `parseFormatOrExit` 는 그 아래 첫 헬퍼일 뿐이다
+ditto	01M02FZWXBP903EVHAB1XWGASZ	src/cli/commands/semantic.ts	L27	attached	semanticPath	function	src/cli/commands/semantic.ts	/**	거짓	`ditto semantic` **명령 전체**의 머리 주석(scan·detect·verdict)이다 — `semanticPath` 는 경로 헬퍼다
+ditto	01M02FZWYTSN8BX0AD1F38T00N	src/cli/commands/work.ts	L521	attached	reflectManualTermination	function	src/cli/commands/work.ts	/**	참	수동 경로 GitHub 반영이 언제 켜지고 무엇을 건너뛰는지 — 그 함수의 계약 그대로다
+ditto	01M02FZWYYVJDD471H4AN18J8G	src/cli/commands/work.ts	L564	attached	resolveClaimBranch	function	src/cli/commands/work.ts	// no-op. Every gh failure is a notice, never a throw (ADR-0018).	거짓	**앞 함수의 꼬리 주석**이다(gh 실패는 throw 하지 않는다) — `resolveClaimBranch` 는 브랜치를 고른다
+ditto	01M02FZX1454BHX9BSHZ9854N9	src/core/autopilot-complete.ts	L16	attached	OracleMap	type_alias	src/core/autopilot-complete.ts	/** Per-AC oracle lookup threaded into the closure decision (ADR-0024 §3 ③ JUDGE). */	참	`OracleMap` 이 무엇을 담는지(AC 별 오라클 조회)를 적었다 — 그 타입의 계약이다
+ditto	01M02FZX19CX5FEH174PB8N8GR	src/core/autopilot-complete.ts	L90	attached	nodeVerdictFor	function	src/core/autopilot-complete.ts	/**	참	한 노드가 한 기준에 내는 판정과 ADR-0024 오라클 강등 규칙 — 그 함수가 하는 일이다
+ditto	01M02FZX1JGJQMZF7GQYJQ7GDR	src/core/autopilot-complete.ts	L382	attached	barrierRanGreen	function	src/core/autopilot-complete.ts	/**	참	테스트 배리어의 완료 이음매와 「증명된 GREEN」의 정의 — 그 함수의 판정 규칙이다
+ditto	01M02FZX1PBVBZRR6ZWXC713C0	src/core/autopilot-complete.ts	L492	attached	frozenBreachUnverified	function	src/core/autopilot-complete.ts	/**	참	동결 테스트 훼손 바닥과 `currentHash` 주입의 뜻 — 그 함수의 인자와 반환을 적었다
+ditto	01M02FZX1VGNZC7AWWATM9XZ12	src/core/autopilot-complete.ts	L579	attached	loopStuckBlocked	function	src/core/autopilot-complete.ts	/**	거짓	주제는 **`deriveNonPassStatus`**(L610 · `state`·`grounding` 을 쓰는 WRITER)다 — `loopStuckBlocked` 는 그 안에서 쓰이는 조건일 뿐이다
+ditto	01M02FZX561FQQS5XJ81DMTKTC	src/core/autopilot-loop.ts	L311	attached	collectRetroContext	function	src/core/autopilot-loop.ts	/**	참	회고 발표 맥락을 무엇으로 조립하는지와 각 근거의 출처 — 그 함수가 하는 일이다
+ditto	01M02FZX82PX4232H6MCTFCP7V	src/core/autopilot-loop.ts	L2131	attached	surfaceLspDiagnostics	function	src/core/autopilot-loop.ts	/**	참	편집→진단 게이트가 무엇을 훑고 왜 완료를 안 막는지 — 그 함수의 계약이다
+ditto	01M02FZX8FSRBR7S92VGPFMB44	src/core/autopilot-loop.ts	L2269	attached	DeclaredDecisionConflict	type_alias	src/core/autopilot-loop.ts	// ── ADR-0020 decision-conflict carrier lifecycle (producer side) ─────────────	참	배너가 명명한 「결정-충돌 캐리어」가 곧 이 타입이다 — 그 캐리어에 대한 ADR-0020 결정이다
+ditto	01M02FZX8VQKEJAJ9PBS6M342E	src/core/autopilot-loop.ts	L2520	attached	unmetOracles	function	src/core/autopilot-loop.ts	/**	참	루프 안 오라클 권위가 무엇을 미충족으로 세는지 — 그 함수의 반환을 적었다
+ditto	01M02FZX8ZYRXX80WE0KHNEJG5	src/core/autopilot-loop.ts	L2637	attached	recordLoopTermination	function	src/core/autopilot-loop.ts	/**	참	루프 종료를 결정 로그에 어떻게 남기고 왜 멱등이 아닌지 — 그 함수의 규칙이다
+ditto	01M02FZX98VND4EY6X66J4MFP5	src/core/autopilot-loop.ts	L2742	attached	applyAutoResolveSplice	function	src/core/autopilot-loop.ts	/**	참	T1 자동 해소 전방 스플라이스가 어디서 돌고 무엇에 상한이 걸리는지 — 그 함수다
+ditto	01M02FZX9HJE7QCQ6ZYQG3F3W0	src/core/autopilot-loop.ts	L2862	attached	directPostDecisions	function	src/core/autopilot-loop.ts	/**	참	G8 직접 게시가 언제 돌고 왜 fail-open 인지 — 그 함수의 계약이다
+ditto	01M02FZXM4XG1F7PTFD6RCKHQH	src/core/e2e/generator.ts	L139	attached	defaultReadPlaywrightVersion	function	src/core/e2e/generator.ts	/**	참	기본 playwright 버전 리더가 자동 설치를 안 하고 안 던진다 — 그 함수의 계약이다
+ditto	01M02FZXP4P96K39E11ZYXTST4	src/core/gates.ts	L462	attached	groundingWorkItemIds	function	src/core/gates.ts	/**	참	근거 문자열에서 작업 항목 id 후보를 왜 전부 뽑는지 — 그 함수가 하는 일이다
+ditto	01M02FZXZNTYNWBKJD7BVXVYMJ	src/core/prism/opponent.ts	L15	attached	ModelPolicy	type_alias	src/core/prism/opponent.ts	/**	거짓	`opponent.ts` **모듈 전체**의 머리 주석(ac-5·ac-6·ADR-0001 경계)이다 — `ModelPolicy` 는 그 아래 첫 타입 별칭이다
+ditto	01M02FZY31T3TEQ2KE7MHD11KC	src/core/work-item-store.ts	L1010	attached	archive	method	src/core/work-item-store.ts	/**	참	종료 작업 항목을 활성 집합에서 어디로 옮기는지와 설계에서 벗어난 이유 — 그 메서드다
+ditto	01M02FZY4EHAPS70GW1WVNTJBC	src/hooks/rebuilt/stop-gate.ts	L150	attached	oracleGapPending	function	src/hooks/rebuilt/stop-gate.ts	/**	참	오라클 공백의 정의(할당이 켜지면 덮인 AC 전부가 가져야 한다) — 그 함수가 재는 것이다
+ditto	01M02FZY65EMDYTAFQQ823WZ1R	src/hooks/stop.ts	L669	attached	oracleGapPending	function	src/hooks/stop.ts	/**	참	같은 공백 검사를 Stop 훅 P4 에서 다시 계산한다 — 그 함수가 하는 일이다
