@@ -30,6 +30,7 @@ mod language;
 mod ledger;
 mod manifest;
 mod narrative;
+mod plan;
 mod projection;
 mod query_log;
 mod radius;
@@ -55,7 +56,8 @@ pub use budget::{
     Budget, CANDIDATE_LIMIT, CORRUPT_NOTES, DEFAULT_CACHE_BUDGET_BYTES, EXTRACT_CHUNK, MARKER_SCAN_BYTES,
     OVERSIZE_BYTES, PROVISIONAL_BYTES_PER_TOKEN, PROVISIONAL_CASCADE_DEPTH,
     PROVISIONAL_ERROR_RATIO_PERCENT,
-    PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_PATH_PRODUCT_MAX, PROVISIONAL_SAMPLE_MAX,
+    PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_PATH_PRODUCT_MAX,
+    PROVISIONAL_PLAN_PATTERN_FILE_MAX, PROVISIONAL_SAMPLE_MAX,
     PROVISIONAL_QUARANTINE_BUDGET_BYTES, PROVISIONAL_STITCH_BATCH,
     PROVISIONAL_STRAY_TMP_MAX_AGE_SECS, PROVISIONAL_TOUCH_BINDING_MAX,
     PROVISIONAL_TRAVERSAL_DEPTH,
@@ -93,6 +95,14 @@ pub use narrative::{
     PromotionRefusal, Proposal, RawSignals, Refusal, ResolutionSignal, resolve,
 };
 pub use language::Language;
+// **계획-구현 결박** — F12. 결박(`binding`)과 **다른 모집단**이고, 그래서 열거도 다르다
+// (`[f12].pending_ruling`).
+pub use plan::{
+    CoordPattern, Deviation, DeviationRate, ItemResolution, PatternSource, PendingReason, Plan,
+    PlanBaseline, PlanBinding, PlanBindingState, PlanId, PlanItem, PlanItemId, PlanRefusal,
+    Planned, Resolution, SnapshotView, SymbolDelta, Unmeasured, UnresolvedWhy, VerificationStep,
+    deviate, resolve as resolve_plan, resolve_pattern, symbol_delta,
+};
 pub use ledger::{
     Bucket, BinaryReason, DetectorFreshness, ExclusionRuleId, ExtractGrade, FileState,
     GeneratedEvidence, IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry,

@@ -45,7 +45,15 @@ impl fmt::Display for GlobError {
 ///
 /// **`/` 가 (끝을 빼고) 없는 패턴은 파일 이름에 댄다** — git 과 같은 규칙이다.
 /// `*.bat` 은 `a/b/c.bat` 에 걸리고 `vendor/**` 는 걸리지 않는다.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// # 직렬화는 **원문 하나**다 (F12 가 처음 요구했다)
+///
+/// 파생 필드(`segments`·`name_only`·`dir_only`)를 그대로 실으면 되읽을 때
+/// [`Glob::new`] 를 **안 지나간다** — 그러면 이 모듈이 *"검사하거나 거부하거나 둘 중
+/// 하나만 한다"* 라고 세운 규율이 역직렬화 경로에서 조용히 꺼진다.
+/// [`crate::ConfirmingSignal`] 이 같은 형태로 서 있다.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(into = "String", try_from = "String")]
 pub struct Glob {
     /// 원문 — 오류·기록에 그대로 쓴다.
     source: String,
@@ -63,6 +71,21 @@ enum Segment {
     AnyDepth,
     /// 그 밖의 세그먼트. 내부에 `*` · `?` 가 있을 수 있다.
     Pattern(String),
+}
+
+impl From<Glob> for String {
+    fn from(g: Glob) -> Self {
+        g.source
+    }
+}
+
+impl TryFrom<String> for Glob {
+    type Error = GlobError;
+
+    /// **되읽기도 [`Glob::new`] 를 지난다** — 검사를 건너뛰는 문을 안 만든다.
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::new(&s)
+    }
 }
 
 impl Glob {

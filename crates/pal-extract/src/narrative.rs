@@ -226,7 +226,13 @@ fn 경로처럼(text: &str) -> Vec<RepoPath> {
 ///
 /// 문서는 **좌표를 줄 번호와 함께 적는 일이 흔하다.** 안 떼면 확장자가 `ts:12` 가 되어
 /// 대장에 없는 경로가 되고, **신호가 조용히 사라진다.**
-fn 줄번호를_뗀다(t: &str) -> &str {
+///
+/// # 왜 `pub(crate)` 인가
+///
+/// [`crate::plan`](crate::ingest_plan) 이 **같은 판정을 본문 전체에 쓴다**(F12).
+/// 거기서 다시 쓰면 같은 규칙이 두 곳에 살고, 한쪽만 고쳐지는 날 두 인입기가
+/// 서로 다른 경로를 본다 — 계획 §7 의 넷째가 금한 형태다.
+pub(crate) fn 줄번호를_뗀다(t: &str) -> &str {
     let mut cut = t;
     for _ in 0..2 {
         if let Some((head, tail)) = cut.rsplit_once(':') {
