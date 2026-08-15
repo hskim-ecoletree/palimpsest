@@ -60,6 +60,9 @@ pub fn run(a: Args) -> Result<()> {
         );
     };
 
+    // **캐시 위치를 미리 뜬다** — `plan.deviation` 은 대장을 **두 번 더** 만든다
+    // (기준선과 머리). 같은 캐시를 지나야 두 번째가 적중한다.
+    let cache_dir = a.cache_dir.clone();
     let report = ledger::compute(a.repo, a.rev, a.cache_dir)?;
     let index = a.index.unwrap_or_else(|| a.repo.join(".palimpsest/index.redb"));
 
@@ -122,6 +125,9 @@ pub fn run(a: Args) -> Result<()> {
             Vec::new()
         },
         bindings,
+        // ★ **계산은 표면의 일이다** — 이탈은 **두 스냅샷**을 요구하는데 `QueryCtx` 는
+        // 투영 하나만 든다. `narrative` 와 같은 자리이고 이유가 하나 더 있다.
+        deviation: 이탈(&query, a.repo, a.rev, cache_dir)?,
         bound: &bound,
         binding_max: pal_core::PROVISIONAL_TOUCH_BINDING_MAX,
         extractor: pal_extract::version(),
@@ -152,6 +158,30 @@ pub fn run(a: Args) -> Result<()> {
         print_screen(&query, &envelope);
     }
     Ok(())
+}
+
+/// `plan.deviation` 일 때만 이탈을 계산한다.
+///
+/// **다른 질의에서 [`pal_query::DeviationInput::NotAsked`] 인 것이 정확한 값이다** —
+/// *"이탈이 0"* 이 아니라 *"안 물었다"* 다. 그리고 계산은 대장을 두 번 더 만들므로
+/// **묻지 않은 질의에 그 비용을 지우지 않는다**(`narrative` 와 같은 판단).
+fn 이탈(
+    query: &NamedQuery,
+    repo: &Path,
+    rev: Option<&str>,
+    cache_dir: Option<PathBuf>,
+) -> Result<pal_query::DeviationInput> {
+    let NamedQuery::PlanDeviation { plan } = query else {
+        return Ok(pal_query::DeviationInput::NotAsked);
+    };
+    let c = crate::plan::compute(&crate::plan::Args {
+        repo,
+        rev,
+        cache_dir,
+        plan: Path::new(plan),
+        json: false,
+    })?;
+    Ok(pal_query::DeviationInput::Computed(Box::new(c.deviation)))
 }
 
 /// `--list` — **답하는 것과 아직 못 만든 것을 함께 낸다.**
@@ -251,6 +281,12 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
             println!("  {}", touch::한_줄_found(result));
             println!();
             println!("  **전문은 `pal touch <이름>` 이 냅니다** — 이 표면은 답의 모양만 냅니다.");
+        }
+        // **같은 판단이다** — 전문의 화면은 `pal deviation` 이 진다.
+        QueryResult::Deviation { deviation } => {
+            println!("  {}", crate::plan::한_줄_deviation(deviation));
+            println!();
+            println!("  **전문은 `pal deviation <문서>` 가 냅니다** — 이 표면은 답의 모양만 냅니다.");
         }
     }
 

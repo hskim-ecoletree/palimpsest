@@ -89,6 +89,16 @@ pub enum QueryName {
     /// [ADR-0012]: ../../../docs/adr/0012-a-single-truth-file-declares-only-what-has-a-counterpart-in-code.md
     #[serde(rename = "binding.touch")]
     BindingTouch,
+    /// ★ **계획과 실제의 갈림** — 넷이고 `unmeasurable` 이 분리돼 있다 (F12).
+    ///
+    /// # 인자가 **좌표가 아니라 계획 문서**다
+    ///
+    /// 이름을 받는 다른 다섯은 전부 `SymbolName` 을 받는데 이것은 `RepoPath` 를 받는다.
+    /// **기준선이 그 문서 안에 있기 때문이다**([`crate::PlanBaseline`]) — [F12 §4] 가
+    /// *"계획 승인 시점의 Snapshot 을 계획에 기록"* 이라고 적었고, `--base <ref>` 는
+    /// [F23] 의 손잡이다.
+    #[serde(rename = "plan.deviation")]
+    PlanDeviation,
 }
 
 impl QueryName {
@@ -104,11 +114,12 @@ impl QueryName {
             Self::BindingStatus => "binding.status",
             Self::NarrativeUnbound => "narrative.unbound",
             Self::BindingTouch => "binding.touch",
+            Self::PlanDeviation => "plan.deviation",
         }
     }
 
     /// 이 빌드가 답하는 질의 전부. **표면이 이것을 그대로 낸다.**
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 10] = [
         Self::LedgerSnapshot,
         Self::SymbolResolve,
         Self::SymbolContains,
@@ -118,6 +129,7 @@ impl QueryName {
         Self::BindingStatus,
         Self::NarrativeUnbound,
         Self::BindingTouch,
+        Self::PlanDeviation,
     ];
 
     #[must_use]

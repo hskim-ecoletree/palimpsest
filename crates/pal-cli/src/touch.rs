@@ -163,6 +163,8 @@ pub fn run(a: Args) -> Result<()> {
         narrative: Vec::new(),
         // ⚠ **전수를 안 싣는다.** `touch` 는 좌표 하나에 답하고, 색인은 `bound` 다.
         bindings: Vec::new(),
+        // **이 질의는 계획을 안 읽는다.** *"이탈이 0"* 이 아니라 *"안 물었다"* 다.
+        deviation: pal_query::DeviationInput::NotAsked,
         bound: &bound,
         binding_max: binding_max.unwrap_or(PROVISIONAL_TOUCH_BINDING_MAX),
         extractor: pal_extract::version(),

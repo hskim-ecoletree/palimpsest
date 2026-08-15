@@ -185,6 +185,7 @@ impl QueryName {
             Self::BindingStatus => "결박마다 상태 + **반경** + 무엇이 켰는가",
             Self::NarrativeUnbound => "좌표를 못 찾은 문서 조각들 — **사람의 작업 목록**",
             Self::BindingTouch => "좌표 하나를 만진다 — **걸린 것**과 ★ **지켜보는 것**을 함께 낸다",
+            Self::PlanDeviation => "계획과 실제의 갈림 — 넷이고 ★ **못 잰 것이 분리돼 있다**",
         }
     }
 
@@ -199,6 +200,8 @@ impl QueryName {
             | Self::NarrativeUnbound => &[],
             Self::SymbolResolve | Self::SymbolContains | Self::SymbolCallers
             | Self::SymbolReaches | Self::BindingTouch => &["name"],
+            // **좌표가 아니라 계획 문서다** — 기준선이 그 문서 안에 있다(F12 §4).
+            Self::PlanDeviation => &["plan"],
         }
     }
 
@@ -210,6 +213,7 @@ impl QueryName {
             | Self::NarrativeUnbound => &[],
             Self::SymbolResolve | Self::SymbolContains | Self::SymbolCallers
             | Self::SymbolReaches | Self::BindingTouch => &["SymbolName"],
+            Self::PlanDeviation => &["RepoPath"],
         }
     }
 
@@ -224,6 +228,7 @@ impl QueryName {
             Self::BindingStatus => "Bindings",
             Self::NarrativeUnbound => "Narrative",
             Self::BindingTouch => "Touch",
+            Self::PlanDeviation => "Deviation",
         }
     }
 
@@ -238,6 +243,7 @@ impl QueryName {
             Self::BindingStatus => "F09",
             Self::NarrativeUnbound => "F10",
             Self::BindingTouch => "F11",
+            Self::PlanDeviation => "F12",
         }
     }
 
@@ -294,7 +300,7 @@ introduced = "F03"
     }
 
     #[test]
-    fn 코드의_선언이_여섯을_전부_덮는다() {
+    fn 코드의_선언이_전부를_덮는다() {
         // 하나라도 빠지면 `match` 가 컴파일을 막지만, **값이 빈 문자열인 것**은 못 막는다.
         for q in QueryName::ALL {
             assert!(!q.summary().is_empty(), "{} 의 요약이 비었다", q.name());

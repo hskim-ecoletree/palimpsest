@@ -31,7 +31,7 @@ use std::time::Instant;
 
 use pal_core::{
     Binding, BindingReport, BindingStatus, BoundItem, BoundTarget, Budget, Capable, CapabilitySet,
-    CodeFreshness, Coverage, DetectorReport, SymbolFacts, TargetPlace,
+    CodeFreshness, Coverage, DetectorReport, Deviation, SymbolFacts, TargetPlace,
     Elision, ElisionReason, Envelope, ExtractGrade, Fold, FoldedPart, IdentityGrade, LedgerRef,
     Lineage, LogStatus,
     Now, NotRecorded, ProjectionFreshness, QueryLogEntry, QueryName, RepoPath, Slot, Snapshot, Step,
@@ -50,6 +50,14 @@ pub enum QueryError {
     /// [`BoundIndex`] 가 그 경계이고, 오류 타입을 들이면 경계가 새어 나온다.
     #[error("결박 색인을 읽지 못했다: {0}")]
     BoundIndex(String),
+    /// 부르는 쪽이 이 질의의 입력을 **안 지고 왔다.**
+    ///
+    /// **빈 답으로 접지 않는다** — 접으면 *"계획대로 0"* 과 *"안 물었다"* 가 같은 답이
+    /// 되고, 그것이 이 제품이 고발하는 형태다([ADR-0005]).
+    ///
+    /// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
+    #[error("{what} 가 이 답에 안 실렸다 — 부르는 쪽이 지고 와야 한다")]
+    NotSupplied { what: &'static str },
 }
 
 /// 이 빌드가 답하는 질의 하나 — **이름과 인자.**
@@ -75,6 +83,10 @@ pub enum NamedQuery {
     NarrativeUnbound,
     /// ★ 좌표 하나를 만진다 — **걸린 것**과 **지켜보는 것**을 함께 (F11).
     BindingTouch { name: String },
+    /// ★ 계획과 실제의 갈림 — **넷이고 못 잰 것이 분리돼 있다** (F12).
+    ///
+    /// 인자는 **계획 문서의 경로**다. 기준선이 그 문서 안에 있다([F12 §4]).
+    PlanDeviation { plan: String },
 }
 
 impl NamedQuery {
@@ -90,6 +102,7 @@ impl NamedQuery {
             Self::BindingStatus => QueryName::BindingStatus,
             Self::NarrativeUnbound => QueryName::NarrativeUnbound,
             Self::BindingTouch { .. } => QueryName::BindingTouch,
+            Self::PlanDeviation { .. } => QueryName::PlanDeviation,
         }
     }
 
@@ -104,6 +117,8 @@ impl NamedQuery {
             | Self::SymbolCallers { name }
             | Self::SymbolReaches { name }
             | Self::BindingTouch { name } => name,
+            // **인자의 이름이 다르다** — 좌표가 아니라 계획 문서다.
+            Self::PlanDeviation { plan } => plan,
         }
     }
 
@@ -121,6 +136,7 @@ impl NamedQuery {
             QueryName::SymbolCallers => named(|name| Self::SymbolCallers { name }),
             QueryName::SymbolReaches => named(|name| Self::SymbolReaches { name }),
             QueryName::BindingTouch => named(|name| Self::BindingTouch { name }),
+            QueryName::PlanDeviation => named(|plan| Self::PlanDeviation { plan }),
         }
     }
 }
@@ -212,6 +228,14 @@ pub enum QueryResult {
     /// 변형을 따로 두지 않는다** — 이름을 받는 질의 다섯이 이미 그 둘로 답하고,
     /// 여기만 다른 갈래를 내면 소비자가 질의마다 다른 표를 읽어야 한다.
     Touch { result: Box<pal_core::TouchResult> },
+    /// ★ 계획과 실제의 갈림 (F12).
+    ///
+    /// # `unmeasurable` 이 **다른 자리에 있다**
+    ///
+    /// [F12 §2] 가 못 박았다 — *"좌표로 해소되지 않은 계획 항목을 「계획대로」나
+    /// 「미구현」에 섞으면 **이탈률이 거짓말이 된다.**"* 그 분리가 이 타입이 아니라
+    /// [`Deviation`] 안에 있고, 이 변형은 그것을 그대로 싣는다.
+    Deviation { deviation: Box<Deviation> },
     /// 이름이 여럿으로 해소됐다. **하나를 고르지 않는다.**
     Ambiguous { name: String, candidates: Vec<SymbolNode> },
     /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 봉투가 진다.
@@ -248,6 +272,21 @@ pub trait BoundIndex {
     /// # Errors
     /// 색인을 읽지 못하면.
     fn watching(&self, member: SymbolId) -> Result<Vec<Binding>, QueryError>;
+}
+
+/// 이탈이 실렸는가 — **[`Option`] 이 아니다.**
+///
+/// `None` 이 *"이탈이 0"* 인지 *"안 물었다"* 인지 구별되지 않는다([ADR-0005]).
+/// [`QueryCtx::narrative`] 는 빈 `Vec` 으로 그 구별을 문서 주석에 맡겼는데, 이탈은
+/// **빈 값이 곧 「계획대로 100%」로 읽히는 답**이라 값으로 갈라야 한다.
+///
+/// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
+#[derive(Debug, Clone, PartialEq)]
+pub enum DeviationInput {
+    /// 이 질의가 아니다 — **묻지 않았다.**
+    NotAsked,
+    /// 부르는 쪽이 계산해서 지고 왔다.
+    Computed(Box<Deviation>),
 }
 
 /// 질의 하나가 서는 바닥.
@@ -315,6 +354,17 @@ pub struct QueryCtx<'a> {
     pub extractor: pal_core::ExtractorVersion,
     /// **낡음을 재는 자의 낡음** — 대장에서 온다(F01). 표면이 지고 온다.
     pub detector: DetectorReport,
+    /// ★ 이 계획의 이탈 — **부르는 쪽이 지고 온다** (F12).
+    ///
+    /// # 왜 여기서 계산하지 않는가
+    ///
+    /// [`Self::narrative`] 와 **같은 이유이고 하나 더 있다.** 이탈은 **두 스냅샷**을
+    /// 요구하는데 이 구조체는 투영 **하나**만 든다 — 여기서 계산하려면 이 크레이트가
+    /// 대장을 두 번 만들어야 하고, 그것은 표면의 일이다.
+    ///
+    /// **`plan.deviation` 이 아닌 질의에서는 [`DeviationInput::NotAsked`] 이고
+    /// 그것이 정확한 값이다** — *"이탈이 0"* 이 아니라 *"안 물었다"* 다.
+    pub deviation: DeviationInput,
     /// 대장이 `Partial` 로 적은 파일들 — [`UndeterminableReason::PartialParse`] 의 입력.
     ///
     /// **이름으로 세지 않고 대장에서 뜬다.** 이름으로 세면 칸이 하나 늘 때 조용히 빠진다.
@@ -441,6 +491,17 @@ fn run(
             detector: ctx.detector.clone(),
         }),
         NamedQuery::BindingTouch { name } => touch_result(ctx, name, elision, accessed),
+        NamedQuery::PlanDeviation { .. } => match &ctx.deviation {
+            DeviationInput::Computed(d) => {
+                // **이 답이 실제로 만진 좌표** — F17 이 로그를 셀 때 여기서 나온다.
+                accessed.extend(d.as_planned.iter().map(|p| p.coord));
+                accessed.extend(d.unplanned.iter().copied());
+                Ok(QueryResult::Deviation { deviation: d.clone() })
+            }
+            // ⚠ **빈 이탈을 지어내지 않는다** — 지으면 *"계획대로 0"* 과 *"안 물었다"*
+            // 가 같은 답이 된다.
+            DeviationInput::NotAsked => Err(QueryError::NotSupplied { what: "계획 이탈" }),
+        },
         NamedQuery::GraphDump => {
             let (nodes, edges) = p.dump()?;
             accessed.extend(nodes.iter().map(|n| n.id));

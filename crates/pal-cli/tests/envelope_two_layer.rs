@@ -31,6 +31,40 @@ const 대장_자신: &str = "ledger.snapshot";
 /// 이름을 안 받는 질의들 — 인자를 안 붙인다.
 const 인자_없는: [&str; 2] = [대장_자신, "graph.dump"];
 
+/// **좌표가 아니라 계획 문서를 받는 질의** — F12.
+///
+/// 인자를 받는 질의가 전부 `SymbolName` 을 받는다는 가정이 여기서 처음 깨진다.
+/// 시험이 그 가정을 들고 있으면 새 질의가 늘 때마다 **엉뚱한 인자로 부르고**,
+/// 그 실패는 봉투의 결함처럼 보인다.
+///
+/// **이름이 아니라 카탈로그의 인자 타입에서 뜬다** — `host_free` 가 같은 교훈을
+/// 이미 적었다(*"이름으로 세는 검사는 이름이 하나 늘 때마다 조용히 틀린다"*).
+const 문서_인자: &str = "RepoPath";
+
+/// 이 질의가 계획 문서를 받는가 — **카탈로그가 답한다.**
+fn 계획_문서를_받나(name: &str) -> bool {
+    let out = Command::new(PAL).args(["query", "--list", "--json"]).output().expect("pal");
+    let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("목록 JSON");
+    v["built"]
+        .as_array()
+        .expect("built")
+        .iter()
+        .find(|q| q["name"].as_str() == Some(name))
+        .and_then(|q| q["args"].as_array().expect("args").first())
+        .and_then(|a| a["type"].as_str())
+        == Some(문서_인자)
+}
+
+/// 계획 문서의 자리 — **저장소 밖이다.**
+///
+/// ⚠ **안에 두면 `narrative.unbound` 가 실패한다.** 그 질의는 저장소의 마크다운을
+/// 인입하는데 `pal query` 는 의도 저장소를 **읽기로** 열고, 인입은 개체 이름을 쓰려
+/// 한다. **F12 가 만든 결함이 아니라 `.md` 파일 하나가 드러낸 F10 표면의 결함이고**,
+/// 그 사실은 `docs/gates/F12.md` 가 「다음으로 넘기는 것」에 적는다.
+fn 계획_문서(repo: &Path) -> PathBuf {
+    repo.with_extension("plan.md")
+}
+
 /// **하한** — 능력 목록이 이보다 짧으면 「안 접혔다」가 공짜로 통과한다.
 const 최소_능력: usize = 6;
 
@@ -59,12 +93,30 @@ fn 큰_저장소(tag: &str) -> PathBuf {
     git(&root, &["init", "-q", "."]);
     git(&root, &["add", "-A"]);
     git(&root, &["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "첫"]);
+    // **계획 문서를 저장소 밖에 심는다** — `plan.deviation` 이 좌표가 아니라 이것을
+    // 받는다(F12). 기준선을 `HEAD` 로 두면 두 스냅샷이 같아 이탈이 정의되지 않는데,
+    // **이 시험이 재는 것은 봉투이지 이탈이 아니므로** 그것이 정확한 설정이다.
+    std::fs::write(
+        계획_문서(&root),
+        "---\nbaseline: HEAD\n---\n# 이 저장소의 계획\n무엇을 왜\n\n## 하나\n`뿌리` 를 고친다\n",
+    )
+    .expect("plan.md");
     root
 }
 
+/// 저장소와 그 계획 문서를 함께 지운다.
+fn 치운다(repo: &Path) {
+    let _ = std::fs::remove_dir_all(repo);
+    let _ = std::fs::remove_file(계획_문서(repo));
+}
+
 fn 질의(repo: &Path, name: &str, extra: &[&str]) -> serde_json::Value {
+    let 계획 = 계획_문서(repo);
+    let 계획 = 계획.to_string_lossy();
     let mut args = vec!["query", name];
-    if !인자_없는.contains(&name) {
+    if 계획_문서를_받나(name) {
+        args.push(&계획);
+    } else if !인자_없는.contains(&name) {
         args.push("뿌리");
     }
     args.extend_from_slice(extra);
@@ -117,7 +169,7 @@ fn 접힌_것이_어디로_갔는지_함께_실린다() {
     assert!(접힌_회차 >= 1, "접힌 회차가 없다 — 이 시험은 아무것도 안 쟀다");
     assert_eq!(안_접힌_회차, 1, "안 접힌 회차가 하나가 아니다");
 
-    let _ = std::fs::remove_dir_all(&repo);
+    치운다(&repo);
 }
 
 #[test]
@@ -139,7 +191,7 @@ fn 능력_목록은_접히지_않는다() {
             }
         }
     }
-    let _ = std::fs::remove_dir_all(&repo);
+    치운다(&repo);
 }
 
 #[test]
@@ -175,7 +227,7 @@ fn 토큰_추정이_실제_크기를_따라간다() {
     );
     assert!(큰.2 > 작은.2, "큰 답의 추정이 더 크지 않다 — 상수일 수 있다");
 
-    let _ = std::fs::remove_dir_all(&repo);
+    치운다(&repo);
 }
 
 #[test]
@@ -198,7 +250,7 @@ fn 접힘과_절단이_같은_사건을_두_번_세지_않는다() {
         "절단이 접힘을 바꿨다 — 둘이 갈려 있지 않다"
     );
 
-    let _ = std::fs::remove_dir_all(&repo);
+    치운다(&repo);
 }
 
 #[test]
@@ -238,7 +290,7 @@ fn 봉투를_지는_표면_전부가_아홉을_진다() {
     let 안_남은 = 봉투들.len() - 남은;
     assert!(남은 >= 1 && 안_남은 >= 1, "로그 상태의 갈래가 하나뿐이다 — 아무것도 안 재고 있다");
 
-    let _ = std::fs::remove_dir_all(&repo);
+    치운다(&repo);
 }
 
 #[test]
@@ -299,5 +351,5 @@ fn 봉투를_안_지는_표면은_목록으로_서고_봉투인_척하지_않는
     // **하한** — `--json` 을 내는 표면이 6 개 미만이면 이 시험이 아무것도 안 잰다.
     assert!(4 + 안_지는.len() >= 6);
 
-    let _ = std::fs::remove_dir_all(&repo);
+    치운다(&repo);
 }

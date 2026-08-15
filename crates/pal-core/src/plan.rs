@@ -481,6 +481,19 @@ impl ItemResolution {
         out
     }
 
+    /// ★ **계획이 자리를 적었는데 그 자리가 아직 없는가** — [F12 §4] 의 한 줄이다.
+    ///
+    /// > **`pending` 이 영원히 안 풀림** | 계획했는데 안 만듦 | 정상이다.
+    /// > **`unimplemented` 로 잡히는 것이 이 기능의 산출**
+    ///
+    /// ⚠ **그러므로 이 경우는 `unmeasurable` 이 아니다.** 좌표가 없는 것은 같지만
+    /// 사건이 다르다 — *"어디를 건드릴지 못 알아냈다"* 와 *"어디를 건드릴지 적었고
+    /// 안 건드렸다"* 는 사람이 다르게 처리한다.
+    #[must_use]
+    pub fn still_pending(&self) -> bool {
+        self.at_head.iter().any(|b| matches!(b.state, PlanBindingState::Pending { .. }))
+    }
+
     /// 이 항목이 **왜 못 재는가** — 걸린 좌표가 하나도 없을 때의 사유.
     ///
     /// 사유가 여럿이면 [`UnresolvedWhy::ALL`] 의 순서에서 첫째를 싣는다
@@ -814,7 +827,12 @@ impl Deviation {
         DeviationRate::Rate { value: self.unplanned.len() as f64 / a as f64, changed: a }
     }
 
-    /// 계획 항목 중 좌표가 하나라도 해소된 것의 비율 — [F12 §6] 의 **좌표 해소율**.
+    /// **판정할 수 있었던 항목의 비율** — [F12 §6] 의 좌표 해소율.
+    ///
+    /// 분자는 `as_planned ∪ unimplemented` 의 항목 수, 즉 **`unmeasurable` 이 아닌 것**이다.
+    /// ⚠ **「좌표가 걸렸다」와 같지 않다** — 계획이 자리를 적었는데 그 자리가 아직 없는
+    /// 항목([`ItemResolution::still_pending`])도 여기 든다. 그 항목에 대해 우리는
+    /// *"계획했고 안 만들었다"* 를 **말할 수 있고**, 그것이 [F12 §4] 가 요구한 산출이다.
     ///
     /// **분모는 계획 항목 전부다.** `unmeasurable` 을 빼면 이 값이 정의상 1.0 이 된다.
     #[must_use]
@@ -894,8 +912,15 @@ pub fn deviate(plan: &Plan, resolutions: &[ItemResolution], delta: &SymbolDelta)
         promoted += r.promoted_from_pending();
         let e = r.expected_coords();
         if e.is_empty() {
-            // ★ **여기가 [F12 §2] 가 분리를 요구한 자리다.**
-            unmeasurable.push(Unmeasured { item: r.item.clone(), why: r.unmeasurable_why() });
+            if r.still_pending() {
+                // ★ **[F12 §4]** — *"계획했는데 안 만듦. 정상이다. `unimplemented` 로
+                // 잡히는 것이 이 기능의 산출."* 좌표가 없는 것은 아래와 같지만
+                // **사건이 다르다.**
+                unimplemented.push(r.item.clone());
+            } else {
+                // ★ **여기가 [F12 §2] 가 분리를 요구한 자리다.**
+                unmeasurable.push(Unmeasured { item: r.item.clone(), why: r.unmeasurable_why() });
+            }
             continue;
         }
         declared.extend(e.iter().copied());
@@ -1172,6 +1197,29 @@ mod tests {
         assert_eq!(d.rate(), DeviationRate::Rate { value: 0.5, changed: 2 });
         // 해소율의 분모가 **항목 전부**다 — `unmeasurable` 을 빼면 정의상 1.0 이 된다.
         assert_eq!(d.resolution(), Resolution { resolved: 2, total: 3 });
+    }
+
+    #[test]
+    fn 계획한_자리를_끝내_안_만들면_미구현이다() {
+        // ★ [F12 §4] — *"`pending` 이 영원히 안 풀림 … **`unimplemented` 로 잡히는
+        // 것이 이 기능의 산출**"*. `unmeasurable` 로 접으면 *"못 알아냈다"* 와
+        // *"안 만들었다"* 가 같은 줄이 된다.
+        let base = vec![심볼("a", "src/a.ts", 1)];
+        let head = vec![심볼("a", "src/a.ts", 9)];
+        let files = [RepoPath::new("src/a.ts")];
+        let b = SnapshotView { symbols: &base, files: &files };
+        let h = SnapshotView { symbols: &head, files: &files };
+        let plan = 계획(vec![항목(
+            "a-1",
+            "환불을 만든다",
+            vec![CoordPattern::NewSymbol {
+                name: "refund".to_owned(),
+                by: PatternSource::Declared,
+            }],
+        )]);
+        let d = deviate(&plan, &resolve(&plan, &b, &h, 32), &symbol_delta(&base, &head));
+        assert_eq!(d.unimplemented.len(), 1, "{d:?}");
+        assert!(d.unmeasurable.is_empty(), "안 만든 것이 못 잰 것으로 갔다");
     }
 
     #[test]

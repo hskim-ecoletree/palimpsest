@@ -21,6 +21,25 @@ const 대장_질의: &str = "ledger.snapshot";
 const 결박_질의: &str = "binding.status";
 /// 인자를 안 받고 **빈 목록으로 답하는** 질의 — F10.
 const 서술물_질의: &str = "narrative.unbound";
+/// **좌표가 아니라 계획 문서를 받는** 질의 — F12.
+const 이탈_질의: &str = "plan.deviation";
+/// 계획 문서가 받는 인자의 타입 — 카탈로그가 적은 이름 그대로.
+const 문서_인자: &str = "RepoPath";
+
+/// 계획 문서의 자리 — **저장소 밖이다.**
+///
+/// ⚠ **안에 두면 `narrative.unbound` 가 실패한다.** 그 질의는 저장소의 마크다운을
+/// 인입하는데 `pal query` 는 의도 저장소를 **읽기로** 열고, 인입은 개체 이름을 쓰려
+/// 한다. **F12 가 만든 결함이 아니라 `.md` 파일 하나가 드러낸 F10 표면의 결함이고**,
+/// 그 사실은 `docs/gates/F12.md` 가 「다음으로 넘기는 것」에 적는다.
+fn 계획_문서(repo: &Path) -> PathBuf {
+    let path = repo.with_extension("plan.md");
+    // 기준선을 `HEAD` 로 둔다 — 두 스냅샷이 같아 이탈이 **정의되지 않는데**, 이 시험이
+    // 재는 것은 *"답의 갈래와 종료 코드"* 이지 이탈의 값이 아니다.
+    std::fs::write(&path, "---\nbaseline: HEAD\n---\n# 계획\n무엇을 왜\n\n## 하나\n`도움` 을 고친다\n")
+        .expect("plan.md");
+    path
+}
 
 fn 빈_저장소(tag: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("pal-f06-{tag}-{}", std::process::id()));
@@ -59,7 +78,14 @@ fn 있는_저장소(tag: &str) -> PathBuf {
 ///
 /// 카탈로그가 이미 그 사실을 안다(`arg_names()`). **거기서 뜬다** — 이름으로 세는
 /// 검사는 이름이 하나 늘 때마다 조용히 틀린다.
-fn 질의_이름들() -> Vec<(String, bool)> {
+///
+/// # ⚠ 그리고 **인자의 타입도 거기서 뜬다** (F12 가 그 자리를 늘렸다)
+///
+/// 옛 판은 인자를 받는 질의가 **전부 `SymbolName` 을 받는다**고 가정하고 없는 이름을
+/// 넘겼다. `plan.deviation` 은 **계획 문서의 경로**를 받으므로 그 가정이 깨진다 —
+/// 없는 파일을 넘기면 그것은 *"못 찾은 이름"*(답이다)이 아니라 **잘못된 호출**이고,
+/// 종료 코드가 1 인 것이 옳다. 위의 「이름으로 세지 않는다」와 **같은 교훈이다.**
+fn 질의_이름들() -> Vec<(String, Option<String>)> {
     let out = Command::new(PAL).args(["query", "--list", "--json"]).output().expect("pal");
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("목록 JSON");
     v["built"]
@@ -67,8 +93,12 @@ fn 질의_이름들() -> Vec<(String, bool)> {
         .expect("built")
         .iter()
         .map(|q| {
-            let 인자를_받나 = !q["args"].as_array().expect("args").is_empty();
-            (q["name"].as_str().expect("이름").to_owned(), 인자를_받나)
+            let 인자_타입 = q["args"]
+                .as_array()
+                .expect("args")
+                .first()
+                .map(|a| a["type"].as_str().expect("인자 타입").to_owned());
+            (q["name"].as_str().expect("이름").to_owned(), 인자_타입)
         })
         .collect()
 }
@@ -104,10 +134,17 @@ fn 관측_0_건에서_여섯이_전부_답한다() {
     let v: serde_json::Value = serde_json::from_str(&대장).expect("봉투 JSON");
     assert_eq!(v["answer"]["ledger"]["files_total"].as_u64(), Some(0), "저장소가 안 비었다");
 
+    let 계획 = 계획_문서(&repo);
+    let 계획 = 계획.to_string_lossy();
     let mut 갈래: Vec<(String, String)> = Vec::new();
-    for (name, 인자를_받나) in &이름들 {
+    for (name, 인자_타입) in &이름들 {
         let mut args = vec!["query", name.as_str()];
-        if *인자를_받나 {
+        // ⚠ **상수를 `match` 패턴에 쓰지 않는다.** 이름이 바인딩으로 읽히면 모든
+        // 질의가 계획 문서를 받고, 그래도 이 시험은 **통과한다**(경로는 심볼 이름으로
+        // 안 풀려 `unknown` 이 나온다). 조용히 꺼지는 대조라 `==` 로 적는다.
+        if 인자_타입.as_deref() == Some(문서_인자) {
+            args.push(&계획);
+        } else if 인자_타입.is_some() {
             args.push("이런것은없다");
         }
         args.push("--json");
@@ -132,6 +169,9 @@ fn 관측_0_건에서_여섯이_전부_답한다() {
             // `not_built` 로 내면 거짓말이 되고 `unknown` 으로 내면 *"못 찾았다"* 가
             // 된다. 둘 다 아니다: **물었고, 없었다.**
             서술물_질의 => "narrative",
+            // ★ **계획이 좌표를 하나도 못 풀어도 `unknown` 이 아니다.** 물었고,
+            // 답이 나왔고, 못 잰 것이 **`unmeasurable` 로 갈려 있다**(F12 §2).
+            이탈_질의 => "deviation",
             // ★ **`symbols` 가 아니라 `unknown` 이다.** 빈 목록으로 답하면
             // *"없다"* 와 *"못 찾았다"* 가 같은 출력이 된다.
             _ => "unknown",
@@ -145,6 +185,7 @@ fn 관측_0_건에서_여섯이_전부_답한다() {
     assert!(갈래_수.len() >= 3, "답의 갈래가 {}가지뿐이다", 갈래_수.len());
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(repo.with_extension("plan.md"));
 }
 
 #[test]
@@ -154,9 +195,13 @@ fn 비대화_경로가_전_질의에_닿는다() {
 
     let mut 종료_갈래: std::collections::BTreeSet<i32> = std::collections::BTreeSet::new();
 
-    for (name, 인자를_받나) in &이름들 {
+    let 계획 = 계획_문서(&repo);
+    let 계획 = 계획.to_string_lossy();
+    for (name, 인자_타입) in &이름들 {
         let mut args = vec!["query", name.as_str()];
-        if *인자를_받나 {
+        if 인자_타입.as_deref() == Some(문서_인자) {
+            args.push(&계획);
+        } else if 인자_타입.is_some() {
             args.push("도움");
         }
         args.push("--json");
@@ -187,6 +232,7 @@ fn 비대화_경로가_전_질의에_닿는다() {
     assert!(종료_갈래.len() >= 2, "종료 코드 갈래가 {}가지뿐이다", 종료_갈래.len());
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(repo.with_extension("plan.md"));
 }
 
 /// `[f06.3.pass]` ③ — F05 가 넘긴 자리다. **그리고 여기서 등록이 반증됐다.**
@@ -266,6 +312,7 @@ fn 읽기_전용_여럿이_동시에_붙고_쓰기는_배타다() {
     drop(쓰는_쪽);
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(repo.with_extension("plan.md"));
 }
 
 /// 이 저장소의 스냅샷 열쇠 — 사람이 읽는 화면이 그것을 적는다.
@@ -315,6 +362,7 @@ fn 로그_줄이_실제로_늘고_읽기_전용에서는_안_는다() {
     assert_eq!(세기(&열쇠), 쓴_뒤, "`not_recorded` 라고 적었는데 로그가 늘었다");
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(repo.with_extension("plan.md"));
 }
 
 #[test]
@@ -329,6 +377,7 @@ fn 읽기_전용은_없는_2층에_조용히_안_붙는다() {
     // 그리고 **2층을 만들지 않았다** — 만들었으면 조용히 쓰기로 되돌아간 것이다.
     assert!(!repo.join(".palimpsest/index.redb").exists(), "읽기 전용이 2층을 만들었다");
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(repo.with_extension("plan.md"));
 }
 
 #[test]
@@ -403,6 +452,7 @@ fn 내보내기의_라벨이_스키마에서_오고_못_낸_것을_적는다() {
     assert!(text.matches('"').count() % 2 == 0, "따옴표 수가 홀수다");
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(repo.with_extension("plan.md"));
 }
 
 #[test]
@@ -425,4 +475,5 @@ fn 산출과_근거가_다른_줄기로_간다() {
     assert!(오류.contains("--out"));
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(repo.with_extension("plan.md"));
 }

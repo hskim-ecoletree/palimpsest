@@ -21,6 +21,7 @@ mod export;
 mod intent;
 mod ledger;
 mod narrative;
+mod plan;
 mod query;
 mod touch;
 
@@ -62,6 +63,27 @@ struct NarrativeArgs {
     /// 이 경로 아래의 조각을 **일괄 승인**한다 — 하나라도 걸리면 묶음 전체가 거부된다
     #[arg(long)]
     all_of: Option<String>,
+    /// 사람이 읽는 화면 대신 JSON 으로 낸다
+    #[arg(long)]
+    json: bool,
+}
+
+/// `pal plan` · `pal deviation` 의 손잡이들 — **평탄화해서 변형 둘이 함께 든다.**
+///
+/// 둘이 받는 것이 같다. 변형마다 늘어놓으면 `main` 의 팔이 둘 다 다섯 줄이 되고,
+/// 그때 `main` 이 *"조립"* 이 아니라 *"손잡이 목록"* 이 된다(`NarrativeArgs` 와 같은 판단).
+#[derive(clap::Args)]
+struct PlanArgs {
+    /// 계획 문서
+    file: PathBuf,
+    /// 저장소 경로. 기본값은 현재 디렉터리
+    #[arg(long, default_value = ".")]
+    repo: PathBuf,
+    /// 어느 커밋인가. 기본값은 워킹트리
+    #[arg(long)]
+    at: Option<String>,
+    #[arg(long)]
+    cache_dir: Option<PathBuf>,
     /// 사람이 읽는 화면 대신 JSON 으로 낸다
     #[arg(long)]
     json: bool,
@@ -135,6 +157,16 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// 계획 문서를 읽고 지금 스냅샷에 대 본다 — **이탈은 안 잰다**
+    ///
+    /// 이탈을 재려면 기준선이 필요하고, 그것은 계획 문서의 프론트매터가 진다
+    /// (`baseline: <rev>` · F12 §4). `pal deviation` 이 그 자리다.
+    Plan(PlanArgs),
+    /// 계획과 실제의 갈림 — **넷이고 ★ 못 잰 것이 분리돼 있다**
+    ///
+    /// ⚠ **`--base <ref>` 가 없다.** 기준선은 계획 문서의 프론트매터가 진다
+    /// (F12 §4) — 그 손잡이의 소유자는 F23 이다.
+    Deviation(PlanArgs),
     /// 좌표 하나를 만진다 — **빈 답도 정직하게 낸다**
     Touch {
         /// 심볼 이름
@@ -379,6 +411,8 @@ fn main() -> Result<()> {
                 Ok(())
             }
         }
+        Command::Plan(a) => plan::plan(&계획_인자(&a)),
+        Command::Deviation(a) => plan::deviation(&계획_인자(&a)),
         Command::Touch { name, repo, at, cache_dir, index, intent, binding_max, timing, json } =>
             touch::run(touch::Args { repo: &repo, rev: at.as_deref(), cache_dir, index, intent,
                                      name: &name, binding_max, timing, json }),
@@ -396,26 +430,7 @@ fn main() -> Result<()> {
                 intent::import(&repo, intent, &file, json)
             }
         },
-        Command::Cache { what } => match what {
-            CacheCommand::Stats { repo, cache_dir, json } => cache::stats(&repo, cache_dir, json),
-            CacheCommand::Prune {
-                repo,
-                cache_dir,
-                budget,
-                sweep_quarantine,
-                sweep_stray,
-                stray_age,
-                json,
-            } => cache::prune(cache::PruneArgs {
-                repo,
-                cache_dir,
-                budget: budget.unwrap_or(pal_core::DEFAULT_CACHE_BUDGET_BYTES),
-                sweep_quarantine,
-                sweep_stray,
-                stray_age: stray_age.unwrap_or(pal_core::PROVISIONAL_STRAY_TMP_MAX_AGE_SECS),
-                json,
-            }),
-        },
+        Command::Cache { what } => 캐시(what),
         Command::Query {
             name,
             arg,
@@ -536,6 +551,46 @@ fn print_table(path: &Path, language: Language, found: &[pal_core::Symbol]) {
     }
     println!();
     println!("  선언 {}", found.len());
+}
+
+/// `pal cache` 의 갈래 둘 — **`main` 밖으로 뗀다.**
+///
+/// `main` 은 조립이고, 팔 하나가 스무 줄이면 그것은 조립이 아니라 손잡이 목록이다.
+///
+/// # Errors
+/// 캐시를 읽지 못하거나 줄이지 못하면.
+fn 캐시(what: CacheCommand) -> Result<()> {
+    match what {
+        CacheCommand::Stats { repo, cache_dir, json } => cache::stats(&repo, cache_dir, json),
+        CacheCommand::Prune {
+            repo,
+            cache_dir,
+            budget,
+            sweep_quarantine,
+            sweep_stray,
+            stray_age,
+            json,
+        } => cache::prune(cache::PruneArgs {
+            repo,
+            cache_dir,
+            budget: budget.unwrap_or(pal_core::DEFAULT_CACHE_BUDGET_BYTES),
+            sweep_quarantine,
+            sweep_stray,
+            stray_age: stray_age.unwrap_or(pal_core::PROVISIONAL_STRAY_TMP_MAX_AGE_SECS),
+            json,
+        }),
+    }
+}
+
+/// `pal plan`·`pal deviation` 의 손잡이를 실행부의 인자로 바꾼다.
+fn 계획_인자(a: &PlanArgs) -> plan::Args<'_> {
+    plan::Args {
+        repo: &a.repo,
+        rev: a.at.as_deref(),
+        cache_dir: a.cache_dir.clone(),
+        plan: &a.file,
+        json: a.json,
+    }
 }
 
 /// `pal narrative` — 손잡이를 갈래로 바꿔 넘긴다.

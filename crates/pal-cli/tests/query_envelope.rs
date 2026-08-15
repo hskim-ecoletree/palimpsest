@@ -25,7 +25,14 @@ const 봉투의_여섯: [&str; 6] =
 /// ([ADR-0012]: *"사본은 drift 를 못 잡는다"*).
 ///
 /// [ADR-0012]: ../../../docs/adr/0012-a-single-truth-file-declares-only-what-has-a-counterpart-in-code.md
-const 질의들: [(&str, Option<&str>); 9] = [
+/// 인자 자리의 **자리표시** — [`질의`] 가 그 저장소의 계획 문서 경로로 바꾼다.
+///
+/// 표는 손으로 쓰지만 **경로는 회차마다 다르다**(임시 디렉터리). 표에 진짜 경로를
+/// 박을 수 없으므로 자리표시 하나를 둔다 — 표가 재는 것은 **이름 목록의 어긋남**이고
+/// 인자의 글자가 아니다.
+const 계획_자리: &str = "@plan";
+
+const 질의들: [(&str, Option<&str>); 10] = [
     ("ledger.snapshot", None),
     ("symbol.resolve", Some("도움")),
     ("symbol.contains", Some("도움")),
@@ -38,6 +45,8 @@ const 질의들: [(&str, Option<&str>); 9] = [
     ("narrative.unbound", None),
     // F11 — 좌표 하나. **`pal touch` 와 같은 실행기를 지난다.**
     ("binding.touch", Some("도움")),
+    // ★ F12 — **좌표가 아니라 계획 문서다.** 기준선이 그 문서 안에 있다(F12 §4).
+    ("plan.deviation", Some(계획_자리)),
 ];
 
 fn 저장소(tag: &str) -> PathBuf {
@@ -55,13 +64,27 @@ fn 저장소(tag: &str) -> PathBuf {
     git(&root, &["init", "-q", "."]);
     git(&root, &["add", "-A"]);
     git(&root, &["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "첫"]);
+    // **계획 문서는 저장소 밖이다** — 안에 두면 `narrative.unbound` 가 인입을 하면서
+    // 읽기로 연 의도 저장소에 쓰려 한다(F10 표면의 결함 · `docs/gates/F12.md`).
+    std::fs::write(
+        계획_문서(&root),
+        "---\nbaseline: HEAD\n---\n# 계획\n무엇을 왜\n\n## 하나\n`도움` 을 고친다\n",
+    )
+    .expect("plan.md");
     root
 }
 
+/// 그 저장소의 계획 문서 — **저장소 밖에 산다.**
+fn 계획_문서(repo: &std::path::Path) -> PathBuf {
+    repo.with_extension("plan.md")
+}
+
 fn 질의(repo: &std::path::Path, name: &str, arg: Option<&str>) -> serde_json::Value {
+    let 계획 = 계획_문서(repo);
+    let 계획 = 계획.to_string_lossy();
     let mut args = vec!["query", name];
     if let Some(a) = arg {
-        args.push(a);
+        args.push(if a == 계획_자리 { &계획 } else { a });
     }
     args.push("--json");
     serde_json::from_str(&pal(repo, &args)).expect("봉투 JSON")
@@ -103,6 +126,7 @@ fn 모든_질의가_봉투를_지고_나온다() {
     }
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(계획_문서(&repo));
 }
 
 #[test]
@@ -140,6 +164,7 @@ fn 질의_로그가_쌓이고_재구축이_지우지_않는다() {
     assert_eq!(줄2[..10], 줄[..], "앞의 줄이 덮였다 — append-only 가 아니다");
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(계획_문서(&repo));
 }
 
 #[test]
@@ -161,6 +186,7 @@ fn 범위는_질의마다_다른_값이다() {
     assert_ne!(a["coverage"]["lowest_grade"], b["coverage"]["lowest_grade"]);
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(계획_문서(&repo));
 }
 
 #[test]
@@ -190,4 +216,5 @@ fn 예산을_낮추면_절단이_정확한_사유와_상한으로_실린다() {
     assert_eq!(l[0]["value"], 1);
 
     let _ = std::fs::remove_dir_all(&repo);
+    let _ = std::fs::remove_file(계획_문서(&repo));
 }
