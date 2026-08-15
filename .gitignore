@@ -10,3 +10,7 @@
 
 # Rust
 /target/
+
+# 파이썬 바이트코드 — 대조 스크립트가 서로를 import 하면서 생긴다
+__pycache__/
+*.pyc
