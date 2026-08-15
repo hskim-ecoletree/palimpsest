@@ -353,8 +353,8 @@ f10   ① 층화        (결박 하한이 서야 도달한다) → **대조 불�
 
 | 넘기는 것 | 어디로 |
 |---|---|
-| ⚠ ★ **거짓 둘 다 「구문 트리로 안 갈리는 것」이다** — 잘못 놓인 doc · 빈 줄 없는 구역 배너. **가르려면 주석의 내용을 읽어야 하고 그것은 `[f10.pass]` ②가 금지한 자리다** | **F15**(판정) · 새 이슈 |
-| ⚠ ★ **빈 줄로 갈린 50 건 중 참이 몇인가** — 처분 (나)가 깎은 재현율의 값. **표본 여섯으로 세운 처분이다** | **F10 후속** · 새 이슈 |
+| ⚠ ★ **거짓 둘 다 「구문 트리로 안 갈리는 것」이다** — 잘못 놓인 doc · 빈 줄 없는 구역 배너. **가르려면 주석의 내용을 읽어야 하고 그것은 `[f10.pass]` ②가 금지한 자리다** | **F15**(판정) · [#65] |
+| ⚠ ★ **빈 줄로 갈린 50 건 중 참이 몇인가** — 처분 (나)가 깎은 재현율의 값. **표본 여섯으로 세운 처분이다** | **F10 후속** · [#64] |
 | ★ **표본기의 상한(코퍼스당 10)이 합격선의 하한(20)을 구조적으로 못 채운다** — 그리고 **켜진 것이 0 이라는 둘째 벽** | **F09** ([#63]) |
 | **표식 주석 관례가 없는 저장소** — portal-backend 결박 0 · Kotlin 실 코퍼스 대조 불가 | **F16** |
 | ★ **F11 이 무엇 위에 서는가** — 결박 **137**(거짓 4.0%) · 후보 **987** | **F11** ([#15]) |
@@ -368,4 +368,6 @@ f10   ① 층화        (결박 하한이 서야 도달한다) → **대조 불�
 [#58]: https://github.com/hskim-ecoletree/palimpsest/issues/58
 [#61]: https://github.com/hskim-ecoletree/palimpsest/issues/61
 [#62]: https://github.com/hskim-ecoletree/palimpsest/issues/62
+[#64]: https://github.com/hskim-ecoletree/palimpsest/issues/64
+[#65]: https://github.com/hskim-ecoletree/palimpsest/issues/65
 [#63]: https://github.com/hskim-ecoletree/palimpsest/issues/63
