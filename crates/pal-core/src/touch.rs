@@ -56,21 +56,183 @@ pub struct SymbolNode {
     pub identity: IdentityGrade,
 }
 
+/// 이 결박이 **어디에** 걸렸나 — `touch` 한 좌표인가, 다른 좌표인가.
+///
+/// # 이 값이 없으면 두 문장이 한 줄로 뭉친다 (`[f11.pass]` ⑤)
+///
+/// *"내 코드에 걸린 결정"* 과 *"남의 코드에 걸렸는데 나를 지켜보는 결정"* 은 **고치러
+/// 갈 자리가 다르다.** 뭉치면 사람이 엉뚱한 좌표를 연다.
+///
+/// 그리고 후자가 [F11 이 실제로 겨냥한 형태]다 — `corpus/tasks/recurrence.toml` 이
+/// *"재발의 지배적 형태는 「몰랐다」가 아니라 **「경로 하나를 빠뜨렸다」**"* 라고 적었다.
+///
+/// [F11 이 실제로 겨냥한 형태]: ../../../corpus/tasks/recurrence.toml
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case", tag = "at")]
+pub enum BoundTarget {
+    /// 결박의 대상이 **지금 만진 좌표 그 자체**다.
+    Here,
+    /// 대상이 **다른 좌표**다 — 이 좌표는 그 결박의 **감시 집합**에 들어 있을 뿐이다.
+    ///
+    /// 감시 집합의 크기는 결박이 선언한 [`crate::Radius`] 가 정한다. **선언이지
+    /// 계산이 아니고**, 그 사실이 [`BoundItem::Note::radius`] 로 함께 실린다.
+    Elsewhere {
+        symbol: SymbolId,
+        /// 그 좌표가 어디인가. **못 찾은 것도 값이다**(ADR-0005).
+        place: TargetPlace,
+    },
+}
+
+/// 다른 좌표의 자리.
+///
+/// **`Option` 이 아니다** — `None` 이 *"2층에 없다"* 인지 *"안 찾아봤다"* 인지 구별되지
+/// 않고, 앞의 것은 `Orphaned` 와 같은 사건이라 화면에 떠야 한다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum TargetPlace {
+    Known { path: RepoPath, container: Vec<String>, name: String, line: u32 },
+    /// 2층에 그 심볼이 없다 — **결박은 있는데 대상이 사라졌다.**
+    Gone,
+}
+
 /// 이 좌표에 걸린 것.
 ///
 /// F11 §2 는 일곱 종류를 적었다 — 결정 · 대체 이력 · 라벨 · 계획 항목 · 결함 계보 ·
 /// 잔여 · 범위 축소. **여기 하나뿐인 것은 나머지를 만들 기능이 아직 없어서다.**
 /// 만들 수 없는 변형을 미리 두면 그것이 곧 "있는데 안 나오는" 상태가 된다.
+/// 그 판단의 전문은 `corpus/criteria.toml` `[f11].bounditem_ruling` 에 있다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "kind")]
 pub enum BoundItem {
     /// 사람이 손으로 건 조각 — **S3 가 만드는 유일한 종류다.**
     Note {
         binding: crate::binding::BindingId,
+        /// **무엇이** 걸렸나 — 조각의 본문(`note`)과 다른 축이다. 같은 결정이 여러
+        /// 좌표에 걸리면 이 이름이 같다.
+        subject: crate::entity::EntityId,
         note: String,
         /// 두 축 — 코드 신선도와 계보.
         status: crate::binding::BindingStatus,
+        /// 무엇까지 지켜보나 — **선언이지 계산이 아니다**(F09 §3).
+        ///
+        /// *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은 유효하다"* 와 **다른
+        /// 문장**이고, 그 차이가 산출에 남는 것이 F09 의 요구다.
+        radius: String,
+        /// 감시 집합의 크기. 반경 이름만으로는 `files:3` 이 몇 개를 지켜보는지 모른다.
+        watch: usize,
+        /// 언제 걸었나 — **표시용이다. 앵커가 아니다**(F09 §6).
+        ///
+        /// 낡음 판정은 이 값을 안 읽는다. **정렬은 읽는다** — 정렬은 화면의 일이고
+        /// [F11 §3.3] 이 *"결박 시점이 최근인 것 우선"* 을 사실 기반 정렬로 요구했다.
+        bound_at_time: crate::binding::BoundTime,
+        /// **여기인가 다른 좌표인가.**
+        at: BoundTarget,
     },
+}
+
+/// 두 이름이 「가깝다」의 갈래 — **점수가 아니라 예/아니오다** (`[f11.pass]` ③).
+///
+/// [F11 §5] 가 정렬에서 관련도 점수를 기각했다: *"점수는 근거가 없다."*
+/// **편집거리 임계도 같은 종류다** — 임계를 우리가 정하는 순간 그 숫자가 산출을
+/// 정한다. 그래서 임계가 없는 두 술어만 쓴다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum NearKind {
+    /// 소문자화하고 `_` 와 `-` 를 지운 형태가 **같다** — `resolve_claim_branch` ↔
+    /// `resolveClaimBranch`.
+    Spelling,
+    /// 한쪽이 다른 쪽의 **부분 문자열**이다(대소문자 무시) — [F11 §4] 의 *"부분 매칭"*.
+    Substring,
+}
+
+impl NearKind {
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Spelling => "표기",
+            Self::Substring => "부분",
+        }
+    }
+}
+
+/// 표기만 다른 같은 이름인가를 재기 위한 정규화.
+fn 표기_지움(s: &str) -> String {
+    s.chars().filter(|c| *c != '_' && *c != '-').flat_map(char::to_lowercase).collect()
+}
+
+/// 입력과 후보 이름이 가까운가. **가깝지 않으면 `None`.**
+///
+/// 두 술어가 다 참이면 [`NearKind::Spelling`] 이 이긴다 — 표기 차이가 더 강한 사실이다.
+#[must_use]
+pub fn near_kind(input: &str, name: &str) -> Option<NearKind> {
+    if input == name {
+        // 같은 이름은 「가까운 후보」가 아니다 — 그것은 답이다.
+        return None;
+    }
+    if 표기_지움(input) == 표기_지움(name) {
+        return Some(NearKind::Spelling);
+    }
+    let (a, b) = (input.to_lowercase(), name.to_lowercase());
+    // **빈 입력은 모든 이름의 부분 문자열이다.** 그것을 후보로 세면 전부가 후보가 된다.
+    if !a.is_empty() && (b.contains(&a) || a.contains(&b)) {
+        return Some(NearKind::Substring);
+    }
+    None
+}
+
+/// 가까운 이름 하나 — **하나를 고르지 않는다**(P6 · `[f11.pass]` ③).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct NearName {
+    pub name: String,
+    pub kind: NearKind,
+}
+
+/// 결박을 화면에 세울 순서 — **사실 기반 정렬이다. 점수가 아니다**([F11 §3.3]).
+///
+/// ```text
+/// ① stale · orphaned · 판정 불가   ← 낡은 것이 안 보이면 이 기능의 존재 이유가 사라진다
+/// ② superseded (계보)
+/// ③ 결박 시점이 최근인 것
+/// ④ 결박 id                        ← 같은 저장소가 같은 순서를 낸다
+/// ```
+///
+/// **②가 「pending」이다.** [F11 §3.3] 은 `stale > pending > live` 라고 적었는데 이
+/// 빌드의 계보 축은 [`crate::Lineage`] 둘(`Current` · `Superseded`)이고, *"대체됐다"*
+/// 가 그 자리다. **없는 상태를 만들어 셋을 맞추지 않는다.**
+#[must_use]
+pub fn 정렬_열쇠(item: &BoundItem) -> (u8, u8, i64, String) {
+    let BoundItem::Note { binding, status, bound_at_time, .. } = item;
+    let 신선도 = match &status.code {
+        // **`stale` 과 `orphaned` 가 같은 칸이다** — 둘 다 *"코드가 움직였다"* 이고,
+        // 사람이 봐야 하는 것에는 차이가 없다. **다르다는 사실은 지워지지 않는다** —
+        // 화면이 둘을 다른 문장으로 낸다(F09 §5).
+        crate::binding::CodeFreshness::Stale { .. }
+        | crate::binding::CodeFreshness::Orphaned { .. } => 0,
+        crate::binding::CodeFreshness::Undeterminable { .. } => 1,
+        crate::binding::CodeFreshness::Live => 3,
+    };
+    let 계보 = match &status.lineage {
+        crate::binding::Lineage::Superseded { .. } => 0,
+        crate::binding::Lineage::Current => 1,
+    };
+    let 시각 = match bound_at_time {
+        crate::binding::BoundTime::Committed { epoch_secs } => -*epoch_secs,
+        // 워킹트리는 **커밋보다 최근이다** — 아직 커밋되지 않았다.
+        crate::binding::BoundTime::Worktree => i64::MIN,
+        // 모르는 것은 뒤로. **0(1970년)으로 접지 않는다.**
+        crate::binding::BoundTime::Unrecorded => i64::MAX,
+    };
+    (신선도, 계보, 시각, binding.as_str().to_owned())
+}
+
+/// **낡은 것은 상한에 걸려도 실린다** ([F11 §3.3] · `[f11.pass]` ④).
+///
+/// > `stale` 은 항상 보인다 — 상한에 걸려도 `stale` 항목은 우선 포함.
+/// > **낡은 것이 안 보이면 이 기능의 존재 이유가 사라진다.**
+#[must_use]
+pub fn 낡았나(item: &BoundItem) -> bool {
+    let BoundItem::Note { status, .. } = item;
+    !matches!(status.code, crate::binding::CodeFreshness::Live)
 }
 
 /// 이 심볼이 하는 것 — **F07(참조 해소)이 채운다.**
@@ -108,8 +270,20 @@ pub struct TouchResult {
     pub target: Coord,
     /// **이것만 실제 값이다.** 2층이 붙었다는 증거다.
     pub symbol: SymbolNode,
-    /// 이 좌표에 걸린 것 — F09
+    /// 이 좌표에 **걸린** 것 — F09
     pub bindings: Capable<Vec<BoundItem>>,
+    /// ★ 이 좌표를 **지켜보는** 것 — 대상이 **다른 좌표**인 결박들 (`[f11.pass]` ⑤).
+    ///
+    /// # 왜 `bindings` 와 한 목록이 아닌가
+    ///
+    /// *"내 코드에 걸린 결정"* 과 *"남의 코드에 걸렸는데 나를 지켜보는 결정"* 은
+    /// **고치러 갈 자리가 다르다.** 그리고 후자가 재발의 지배적 형태다 —
+    /// `recurrence.toml` 이 *"경로 하나를 빠뜨렸다"* 로 이름 붙였다.
+    ///
+    /// 실체는 의도 저장소의 `WATCH` 색인이고 F09 가 증분 갱신을 위해 세운 것이다.
+    /// **같은 색인이 이 질의를 받는다** — 반경이 `symbol` 이면 이 목록이 비고,
+    /// 그것이 *"아무도 나를 안 지켜본다"* 라는 정확한 답이다.
+    pub watching: Capable<Vec<BoundItem>>,
     /// 이 심볼이 하는 것 — F07
     pub facts: Capable<SymbolFacts>,
     /// 내가 모르는 것 — F08
@@ -136,7 +310,10 @@ pub enum TouchAnswer {
     /// 후보가 여럿이다. **하나를 고르지 않는다** — 고르는 것은 에이전트의 일이다(P6).
     Ambiguous { name: String, candidates: Vec<SymbolNode> },
     /// 2층에 그 이름이 없다.
-    Unknown { name: String },
+    ///
+    /// **`near` 가 비어 있는 것과 목록이 있는 것은 다른 답이다** — 앞은 *"가까운 것도
+    /// 없다"* 이고 뒤는 *"이것을 뜻했습니까"* 다. ⚠ **하나를 고르지 않는다**(P6).
+    Unknown { name: String, near: Vec<NearName> },
 }
 
 #[cfg(test)]

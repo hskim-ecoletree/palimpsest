@@ -72,6 +72,23 @@ pub enum QueryName {
     /// 할 일이 아닌 것이 섞이고, 섞이면 목록이 안 읽힌다.
     #[serde(rename = "narrative.unbound")]
     NarrativeUnbound,
+    /// ★ **좌표 하나를 만진다** — 걸린 것 · 지켜보는 것 · 이 심볼이 하는 것 · 못 만든 자리
+    /// (F11).
+    ///
+    /// # 왜 `pal touch` 가 이 목록에 이제야 오는가
+    ///
+    /// S2 부터 서 있었는데 **카탈로그에 짝이 없었다.** 능력 목록(`capabilities.built`)에는
+    /// `binding.touch` 가 실려 있고 `surface/queries.toml` 에는 줄이 없었다 —
+    /// [ADR-0012] 가 금한 *"짝 없는 이름"* 의 **반대편**이고, 그 자리에서는 양방향
+    /// 대조가 꺼진 채로 돌았다.
+    ///
+    /// **그리고 이름이 여기 서야 질의 로그가 켜진다.** 옛 판의 `pal touch` 는
+    /// [`crate::LogStatus::NotRecorded`] 를 `SurfaceDoesNotLog` 로 냈고, 그러면 F17 이
+    /// 미조회를 **과대 계상**한다.
+    ///
+    /// [ADR-0012]: ../../../docs/adr/0012-a-single-truth-file-declares-only-what-has-a-counterpart-in-code.md
+    #[serde(rename = "binding.touch")]
+    BindingTouch,
 }
 
 impl QueryName {
@@ -86,11 +103,12 @@ impl QueryName {
             Self::GraphDump => "graph.dump",
             Self::BindingStatus => "binding.status",
             Self::NarrativeUnbound => "narrative.unbound",
+            Self::BindingTouch => "binding.touch",
         }
     }
 
     /// 이 빌드가 답하는 질의 전부. **표면이 이것을 그대로 낸다.**
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::LedgerSnapshot,
         Self::SymbolResolve,
         Self::SymbolContains,
@@ -99,6 +117,7 @@ impl QueryName {
         Self::GraphDump,
         Self::BindingStatus,
         Self::NarrativeUnbound,
+        Self::BindingTouch,
     ];
 
     #[must_use]

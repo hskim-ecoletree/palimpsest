@@ -433,6 +433,36 @@ impl Projection {
         self.len_of(SYMBOL)
     }
 
+    /// 2층에 있는 **서로 다른 이름 전부** — 근접 후보가 이것을 훑는다 (F11 §4).
+    ///
+    /// # 왜 이름만 내는가
+    ///
+    /// [`Self::resolve_name`] 이 못 찾았을 때만 불린다. 그때 필요한 것은 *"무엇을
+    /// 뜻했습니까"* 뿐이고, 후보의 좌표는 사용자가 하나를 고른 **다음** 질의가 낸다.
+    /// 노드 전체를 들면 못 찾은 답 하나가 저장소 전체를 메모리에 올린다.
+    ///
+    /// # 자르지 않는다
+    ///
+    /// 훑는 것은 `BY_NAME` 의 **열쇠**뿐이고 값(심볼 id)은 안 읽는다. 여기서 자르면
+    /// *"가까운 것이 없다"* 와 *"안 찾아봤다"* 가 같은 답이 되고, 그 구별이 F11 의
+    /// 빈 답 규율이다. **자르는 것은 후보를 고른 뒤이고 그 절단은 `elision` 에 실린다.**
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn names(&self) -> Result<Vec<String>, ProjectionError> {
+        let read = self.read()?;
+        let Ok(by_name) = read.open_multimap_table(BY_NAME) else { return Ok(Vec::new()) };
+        let mut out = Vec::new();
+        for row in by_name.iter().map_err(tx)? {
+            let (k, _) = row.map_err(tx)?;
+            out.push(k.value().to_owned());
+        }
+        // **결정적 순서** — 같은 저장소가 같은 후보 목록을 낸다.
+        out.sort();
+        out.dedup();
+        Ok(out)
+    }
+
     /// 파일 노드 하나.
     ///
     /// # Errors

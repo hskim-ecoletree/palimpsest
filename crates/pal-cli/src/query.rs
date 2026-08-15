@@ -79,7 +79,14 @@ pub fn run(a: Args) -> Result<()> {
     // 파일이 없으면 결박이 0 건이고 **그것이 정확한 값**이다(아직 아무도 안 걸었다).
     let intent = IntentStore::open_read_only(&touch::intent_file(a.repo, a.intent))
         .context("의도 저장소를 열지 못했다")?;
-    let bindings = intent.all().context("결박을 읽지 못했다")?;
+    // ⚠ **`binding.status` 만 전수가 필요하다** — 그 질의의 답이 결박 전부다.
+    // 다른 질의에서 전수를 들면 좌표 하나에 답하는 데 O(전체 결박)을 낸다(F11 §3.1).
+    let bindings = if matches!(query, NamedQuery::BindingStatus) {
+        intent.all().context("결박을 읽지 못했다")?
+    } else {
+        Vec::new()
+    };
+    let bound = touch::index_of(&intent);
 
     let counts = report.ledger.counts();
     let out_of_scope = counts.values().sum::<usize>()
@@ -115,6 +122,9 @@ pub fn run(a: Args) -> Result<()> {
             Vec::new()
         },
         bindings,
+        bound: &bound,
+        binding_max: pal_core::PROVISIONAL_TOUCH_BINDING_MAX,
+        extractor: pal_extract::version(),
         // **낡음을 재는 자의 낡음** — 대장이 이미 들고 있다(F01).
         //
         // `matches_head` 는 **상수 시간**이다(문서 §5: *"그래서 무한 후퇴하지 않는다"*).
@@ -228,10 +238,19 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
             print_symbols(candidates);
         }
-        QueryResult::Unknown { name } => {
+        QueryResult::Unknown { name, near } => {
             println!("  `{name}` 을 이 스냅샷에서 찾지 못했습니다.");
             println!();
             println!("  **없다는 뜻이 아닙니다** — 아래 근거가 무엇을 보았는지 말합니다.");
+            // ★ F11 이 더한 자리 — **이것을 뜻했습니까.** 빈 목록도 답이다.
+            touch::print_near(near, &e.elision);
+        }
+        // **전문의 화면은 `pal touch` 가 진다.** 여기서 다시 그리면 같은 답이 표면마다
+        // 다른 모양으로 나가고, 그것이 곧 두 곳에 적힌 같은 것이다(계획 §7 의 넷째).
+        QueryResult::Touch { result } => {
+            println!("  {}", touch::한_줄_found(result));
+            println!();
+            println!("  **전문은 `pal touch <이름>` 이 냅니다** — 이 표면은 답의 모양만 냅니다.");
         }
     }
 

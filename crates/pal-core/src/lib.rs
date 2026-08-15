@@ -57,7 +57,8 @@ pub use budget::{
     PROVISIONAL_ERROR_RATIO_PERCENT,
     PROVISIONAL_HISTORY_BUDGET, PROVISIONAL_PATH_PRODUCT_MAX, PROVISIONAL_SAMPLE_MAX,
     PROVISIONAL_QUARANTINE_BUDGET_BYTES, PROVISIONAL_STITCH_BATCH,
-    PROVISIONAL_STRAY_TMP_MAX_AGE_SECS, PROVISIONAL_TRAVERSAL_DEPTH,
+    PROVISIONAL_STRAY_TMP_MAX_AGE_SECS, PROVISIONAL_TOUCH_BINDING_MAX,
+    PROVISIONAL_TRAVERSAL_DEPTH,
     PROVISIONAL_VIEW_NODE_MAX, PROVISIONAL_WATCH_PRODUCT_MAX, SHEBANG_SCAN_BYTES,
 };
 pub use capable::{Capable, CapabilityId, Declared};
@@ -118,8 +119,9 @@ pub use slot::{ShellMismatch, Slot};
 pub use symbol::{Span, Symbol, SymbolKind};
 pub use traverse::{Step, traverse};
 pub use touch::{
-    BoundItem, EffectSet, JudgmentSummary, SymbolFacts, SymbolNode, TouchAnswer, TouchResult,
-    UnresolvedRef,
+    BoundItem, BoundTarget, EffectSet, JudgmentSummary, NearKind, NearName, SymbolFacts,
+    SymbolNode, TargetPlace, TouchAnswer, TouchResult, UnresolvedRef, near_kind, 낡았나,
+    정렬_열쇠,
 };
 pub use version::ExtractorVersion;
 pub use view::{

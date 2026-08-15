@@ -154,6 +154,12 @@ enum Command {
         /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
         #[arg(long)]
         intent: Option<PathBuf>,
+        /// 한 구역이 싣는 결박의 상한. 기본값은 자리표시 10 (F11 §3.3)
+        ///
+        /// **낡은 것은 이 상한에 안 걸린다** — 낡은 것이 안 보이면 이 명령이 존재할
+        /// 이유가 없다. 잘린 수는 `elision` 에 실린다.
+        #[arg(long)]
+        binding_max: Option<usize>,
         /// 사람이 읽는 화면 대신 JSON 으로 낸다
         #[arg(long)]
         json: bool,
@@ -370,9 +376,10 @@ fn main() -> Result<()> {
                 Ok(())
             }
         }
-        Command::Touch { name, repo, at, cache_dir, index, intent, json } => {
-            touch::run(&repo, at.as_deref(), cache_dir, index, intent, &name, json)
-        }
+        Command::Touch { name, repo, at, cache_dir, index, intent, binding_max, json } => touch::run(
+            touch::Args { repo: &repo, rev: at.as_deref(), cache_dir, index, intent,
+                          name: &name, binding_max, json },
+        ),
         Command::Doctor { repo, at, cache_dir, index, intent, full, sample, json } => {
             let scope = if full {
                 pal_core::DoctorScope::Full

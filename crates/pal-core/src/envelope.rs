@@ -96,6 +96,20 @@ pub enum ElisionReason {
     DepthExceeded,
     /// 답이 담을 수 있는 노드 수를 넘었다.
     NodeMaxExceeded,
+    /// 한 좌표에 걸린 것이 [`crate::PROVISIONAL_TOUCH_BINDING_MAX`] 를 넘어 **뒤를 잘랐다**
+    /// (F11 §3.3 · `[f11.pass]` ④).
+    ///
+    /// # [`BudgetName`] 에 짝이 없다 — **그것이 지금의 사실이다**
+    ///
+    /// [`crate::Budget`] 의 넷은 **탐색** 예산이고(후보·경로 곱·깊이·노드), 이 절단은
+    /// 탐색이 아니라 **한 답이 싣는 결박의 수**다. `Budget` 에 다섯째를 넣으면 *"이
+    /// 값을 올리면 더 걷는다"* 와 *"이 값을 올리면 더 싣는다"* 가 같은 타입이 된다.
+    ///
+    /// **손잡이는 있다** — `pal touch --binding-max`. 다만 그것은 [`Budget`] 을 안
+    /// 지나므로 [`LimitHit`] 이 아니라 이 사유로만 실린다.
+    ///
+    /// [`Budget`]: crate::Budget
+    BindingMaxExceeded,
 }
 
 impl ElisionReason {
@@ -106,6 +120,7 @@ impl ElisionReason {
             Self::PathProductExceeded => "path_product_exceeded",
             Self::DepthExceeded => "depth_exceeded",
             Self::NodeMaxExceeded => "node_max_exceeded",
+            Self::BindingMaxExceeded => "binding_max_exceeded",
         }
     }
 }
@@ -526,6 +541,31 @@ impl<T: Serialize> Envelope<T> {
             e.tokens = TokenEstimate::of_bytes(bytes.len());
         }
         e
+    }
+
+    /// 답의 모양만 바꾼다 — **근거는 그대로다.**
+    ///
+    /// # 왜 필드를 손으로 옮기지 않고 [`Self::new`] 를 다시 지나는가
+    ///
+    /// [`Self::tokens`] 가 **자기를 직렬화해서 잰 값**이기 때문이다. 필드를 그대로
+    /// 옮기면 *"이 응답이 얼마나 큰가"* 가 **다른 모양을 잰 값**으로 남고, 그 순간
+    /// 그 숫자는 관측이 아니라 주장이 된다(이 필드의 머리가 그것을 금했다).
+    ///
+    /// 쓰는 자리는 하나다 — `pal touch` 가 `binding.touch` 의 답을 지고 나올 때.
+    /// **계산을 두 벌 두지 않으려고 실행기를 지나므로**, 답의 겉옷 하나만 벗긴다.
+    #[must_use]
+    pub fn map<U: Serialize>(self, f: impl FnOnce(T) -> U) -> Envelope<U> {
+        Envelope::new(
+            f(self.answer),
+            self.snapshot,
+            self.projection,
+            self.coverage,
+            self.capabilities,
+            self.ledger,
+            self.elision,
+            self.fold,
+            self.log,
+        )
     }
 }
 

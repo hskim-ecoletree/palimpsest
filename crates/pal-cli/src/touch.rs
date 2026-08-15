@@ -1,60 +1,111 @@
-//! `pal touch <이름>` — 적시 제시.
+//! `pal touch <이름>` — 적시 제시. **F11 이 목적이라고 부른 자리다.**
 //!
-//! # 이 명령이 S2 에서 증명하는 것은 **빈 답의 정직성**이다
+//! # 이 명령이 S2 에서 증명한 것은 **빈 답의 정직성**이었다
 //!
-//! 결박도 참조 해소도 판정도 아직 없다. 화면이 거의 비는데, 그 빈 자리가 `[]` 나
+//! 결박도 참조 해소도 판정도 없던 시절, 화면이 거의 비는데 그 빈 자리가 `[]` 나
 //! `Finding 0` 으로 나오면 이 도구는 자기가 고발한 문제를 스스로 저지른다.
-//! 그래서 자리마다 **어느 기능이 그것을 만드는지**가 적힌다.
+//! 그래서 자리마다 **어느 기능이 그것을 만드는지**가 적힌다. 그 규율은 그대로다.
+//!
+//! # F11 이 더한 것 — **걸린 것과 지켜보는 것을 가른다**
+//!
+//! `corpus/tasks/recurrence.toml` 이 재발 다섯을 읽고 이렇게 적었다:
+//!
+//! > 재발의 지배적 형태는 '몰랐다'가 아니라 **'경로 하나를 빠뜨렸다'** 이다.
+//! > `touch(좌표)` 만으로는 부족하고 **"이 규칙을 지켜야 하는 다른 좌표가 어디인가"**
+//! > 라는 역방향 질의가 필요하다.
+//!
+//! 그래서 화면에 구역이 둘이다 — *"이 좌표에 걸린 것"* 과 *"이 좌표를 지켜보는 것"*.
+//! 뒤엣것의 실체는 의도 저장소의 `WATCH` 색인이고 F09 가 증분 갱신을 위해 세웠다.
+//!
+//! # 그리고 계산이 실행기로 옮겨 갔다
+//!
+//! 옛 판은 이 파일이 답을 **직접 조립**했다. 그러면 `binding.touch` 를 카탈로그에
+//! 올릴 수 없고(코드 쪽 짝이 표면에만 있다), **질의 로그도 안 남는다** —
+//! `LogStatus::NotRecorded{SurfaceDoesNotLog}` 가 그 자리였고 F17 이 그것을 미조회로
+//! 과대 계상한다. 지금은 [`pal_query::touch`] 하나를 지나고 화면만 여기 있다.
 
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use pal_core::{
-    BindingStatus, BoundItem, Capable, CapabilityId, CapabilitySet, Coord, Coverage, Elision,
-    Envelope, ExtractGrade, Fold, FoldedPart, IdentityGrade, LedgerRef, Lineage, LogStatus,
-    Now, NotRecorded,
-    ProjectionFreshness, QueryName, RebuildState, Slot, SymbolFacts, SymbolNode, TouchAnswer,
-    TouchResult, UndeterminableReason,
+    Binding, BoundItem, BoundTarget, Budget, CANDIDATE_LIMIT, Capable,
+    CapabilitySet, Elision, Envelope, PROVISIONAL_PATH_PRODUCT_MAX, PROVISIONAL_TOUCH_BINDING_MAX,
+    PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_VIEW_NODE_MAX, RebuildState, SymbolId, TargetPlace,
+    TouchAnswer,
 };
 use pal_intent::IntentStore;
-use pal_store::Projection;
+use pal_query::{BoundIndex, QueryCtx, QueryError};
 
 use crate::attach;
 use crate::ledger;
 
 /// 이 빌드가 답하는 것과 아직 못 만든 것. **응답마다 실린다**(stack §5.3).
+///
+/// **질의 이름을 손으로 안 적는다** — [`pal_query::capabilities`] 가 `QueryName::ALL`
+/// 에서 낸다. 손으로 적으면 카탈로그가 늘 때 이 목록만 뒤처지고, 그 어긋남은
+/// `cargo xtask check` 의 카탈로그 정합이 **표면의 능력 목록까지는 안 본다.**
 fn capabilities() -> CapabilitySet {
+    let base = pal_query::capabilities();
     CapabilitySet::new(
-        vec![
-            QueryName::LedgerSnapshot.name().to_owned(),
-            QueryName::SymbolResolve.name().to_owned(),
-            "binding.touch".to_owned(),
+        base.built
+            .into_iter()
             // **F05 가 더한 것** — 파일 **안**의 참조 관계. 파일 경계를 넘는 것은 F07 이고,
             // 그 사실이 `coverage.unresolved` 에 수로 실린다.
-            "symbol.references".to_owned(),
-        ],
-        vec![
-            CapabilityId::new("F07", "cross-file-resolution"),
-            CapabilityId::new("F08", "unresolved-refs"),
-            CapabilityId::new("F13", "effects"),
-            CapabilityId::new("F15", "judgment"),
-        ],
+            .chain(std::iter::once("symbol.references".to_owned()))
+            .collect(),
+        base.not_built,
     )
+}
+
+/// 의도 저장소를 [`BoundIndex`] 로 보이게 한다 — **색인 조회이지 전수 훑기가 아니다.**
+///
+/// `pal-query` 는 `pal-intent` 를 모른다. 그 경계가 이 타입이고,
+/// [`pal_core::BindingStatus::evaluate`] 가 조회를 클로저로 받는 것과 같은 형태다.
+pub struct IntentIndex<'a>(&'a IntentStore);
+
+/// 의도 저장소를 색인으로 감싼다 — `pal query` 도 같은 것을 지난다.
+#[must_use]
+pub fn index_of(intent: &IntentStore) -> IntentIndex<'_> {
+    IntentIndex(intent)
+}
+
+impl BoundIndex for IntentIndex<'_> {
+    fn bound_to(&self, target: SymbolId) -> Result<Vec<Binding>, QueryError> {
+        self.0.bound_to(target).map_err(|e| QueryError::BoundIndex(e.to_string()))
+    }
+
+    fn watching(&self, member: SymbolId) -> Result<Vec<Binding>, QueryError> {
+        self.0
+            .bindings_watching(&[member])
+            .map_err(|e| QueryError::BoundIndex(e.to_string()))
+    }
+}
+
+/// `pal touch` 하나의 인자.
+///
+/// **구조체인 것은 `bind`·`query` 와 같은 형태다.** 자리 여덟을 위치로 넘기면 같은 타입
+/// 셋(`Option<PathBuf>`)이 나란히 서서 **바꿔 넣어도 컴파일된다** — 캐시와 2층과 의도가
+/// 서로의 자리에 들어가는 것이 이 저장소에서 가장 비싼 실수다(방마다 파일이 따로여야
+/// 대조가 안 꺼진다 · `[f04].self_judged` ③).
+pub struct Args<'a> {
+    pub repo: &'a Path,
+    pub rev: Option<&'a str>,
+    pub cache_dir: Option<PathBuf>,
+    pub index: Option<PathBuf>,
+    pub intent: Option<PathBuf>,
+    pub name: &'a str,
+    /// 한 구역이 싣는 결박의 상한. `None` 이면 자리표시.
+    pub binding_max: Option<usize>,
+    pub json: bool,
 }
 
 /// 좌표 하나를 만진다.
 ///
 /// # Errors
-/// 저장소·캐시·2층 중 하나에 닿지 못하면.
-pub fn run(
-    repo_path: &Path,
-    rev: Option<&str>,
-    cache_dir: Option<PathBuf>,
-    index_path: Option<PathBuf>,
-    intent_path: Option<PathBuf>,
-    name: &str,
-    json: bool,
-) -> Result<()> {
+/// 저장소·캐시·2층·의도 저장소 중 하나에 닿지 못하면.
+pub fn run(a: Args) -> Result<()> {
+    let Args { repo: repo_path, rev, cache_dir, index: index_path, intent: intent_path, name,
+               binding_max, json } = a;
     // 대장을 먼저 만든다. **답의 근거가 먼저 서야 답이 나간다.**
     let report = ledger::compute(repo_path, rev, cache_dir)?;
 
@@ -68,59 +119,57 @@ pub fn run(
     // **의도 저장소는 파생층과 다른 파일이다** — R-21. 2층을 지워도 이쪽은 남는다.
     let intent = IntentStore::open_read_only(&intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;
+    let bound = IntentIndex(&intent);
 
-    let found = projection.resolve_name(name).context("2층을 읽지 못했다")?;
-    let answer = match found.len() {
-        0 => TouchAnswer::Unknown { name: name.to_owned() },
-        1 => {
-            let symbol = found.into_iter().next().expect("길이가 1 이다");
-            let bound = bound_items(&intent, &projection, &report, built_for_this, &symbol)?;
-            // **파일 안의 호출 관계가 F05 에서 값이 된다.** 파일 경계를 넘는 것은 안 센다 —
-            // 그 수는 `coverage.unresolved` 가 진다.
-            let facts = SymbolFacts {
-                callers: projection.callers(symbol.id).context("역방향을 읽지 못했다")?.len(),
-                callees: projection.callees(symbol.id).context("정방향을 읽지 못했다")?.len(),
-            };
-            TouchAnswer::Found(Box::new(touch_result(&report, symbol, bound, facts)))
-        }
-        _ => TouchAnswer::Ambiguous { name: name.to_owned(), candidates: found },
-    };
+    let counts = report.ledger.counts();
+    let out_of_scope = counts.values().sum::<usize>()
+        - counts.get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
+        - counts.get(&pal_core::Bucket::Partial).copied().unwrap_or(0);
 
-    // **범위는 답보다 먼저 계산한다** — 답이 무엇을 골랐는가가 범위를 정하기 때문이다.
-    let coverage = coverage(&report, &projection, &answer);
-    let envelope = Envelope::new(
-        answer,
-        report.ledger.snapshot.clone(),
-        ProjectionFreshness {
+    let ctx = QueryCtx {
+        projection: &projection,
+        snapshot: report.ledger.snapshot.clone(),
+        ledger: pal_core::LedgerRef::of(&report.ledger),
+        freshness: pal_query::freshness(
             // **F01 이 이 자리를 값으로 바꿨다.** 워킹트리를 재고 이 답이 선 트리와
             // 대므로 이제 *"모른다"* 가 아니라 *"같다 / 다르다"* 를 적을 수 있다.
-            matches_worktree: Capable::Present(
-                report.worktree.matches(&report.ledger.snapshot_tree()),
-            ),
-            // **F05 가 이 자리를 값으로 바꿨다.** 무대가 서 있으면 재구축 중이고,
-            // 그것을 읽을 수 있게 된 것이 배치 커밋의 부산물이다(DESIGN §12.7 격리 3번).
-            rebuild: Capable::Present(if projection.rebuilding().unwrap_or(false) {
-                RebuildState::Rebuilding
-            } else {
-                RebuildState::Settled
-            }),
-            // **관측이지 기본값이 아니다** — [`crate::attach::Attached`] 가 잰다.
-            built_for_this_snapshot: built_for_this,
-            symbols_indexed: indexed,
+            Capable::Present(report.worktree.matches(&report.ledger.snapshot_tree())),
+            projection.rebuilding().unwrap_or(false),
+            built_for_this,
+            indexed,
+        ),
+        capabilities: capabilities(),
+        budget: Budget::new(
+            CANDIDATE_LIMIT,
+            PROVISIONAL_PATH_PRODUCT_MAX,
+            PROVISIONAL_TRAVERSAL_DEPTH,
+            PROVISIONAL_VIEW_NODE_MAX,
+        ),
+        out_of_scope_files: out_of_scope,
+        // **이 질의는 문서를 안 읽는다.** 비어 있는 것은 *"미결박이 0"* 이 아니라
+        // *"안 물었다"* 이고, 그 구별이 `QueryCtx::narrative` 의 머리에 적혀 있다.
+        narrative: Vec::new(),
+        // ⚠ **전수를 안 싣는다.** `touch` 는 좌표 하나에 답하고, 색인은 `bound` 다.
+        bindings: Vec::new(),
+        bound: &bound,
+        binding_max: binding_max.unwrap_or(PROVISIONAL_TOUCH_BINDING_MAX),
+        extractor: pal_extract::version(),
+        detector: pal_core::DetectorReport {
+            grammar: report.ledger.detector.grammar.clone(),
+            extractor: report.ledger.detector.extractor.clone(),
+            matches_head: report.ledger.detector.head_now == report.ledger.snapshot_tree().base(),
         },
-        coverage,
-        capabilities(),
-        LedgerRef::of(&report.ledger),
-        // 자를 만큼의 답이 아직 없다. **그래도 명시한다.**
-        Elision::none(),
-        // **대장이 접혀 있다.** 이 답에 실린 것은 요약 여섯 값이고 전체는
-        // `ledger.snapshot` 이 낸다 — 절단이 아니라 **부피를 옮긴 것**이다(F06 §4.3).
-        접힌_대장(&report),
-        // ⚠ **이 표면은 질의 로그를 안 쓴다.** F05 §5.3 은 *"모든 질의 실행"* 이라
-        // 적었고 `pal touch` 는 아직 그 자리에 없다. **0 으로 세지 않고 이렇게 적는다** —
-        // 조용히 빠지면 F17 이 미조회를 과대 계상한다.
-        LogStatus::NotRecorded { why: NotRecorded::SurfaceDoesNotLog },
-    );
+        // **대장에서 뜬다** — 이름으로 세면 칸이 하나 늘 때 조용히 빠진다.
+        partial_files: report
+            .ledger
+            .entries
+            .iter()
+            .filter(|e| e.state.bucket() == pal_core::Bucket::Partial)
+            .map(|e| e.path.clone())
+            .collect(),
+    };
+
+    let envelope = pal_query::touch(&ctx, name).context("질의가 실패했다")?;
 
     if json {
         println!("{}", serde_json::to_string_pretty(&envelope)?);
@@ -130,167 +179,30 @@ pub fn run(
     Ok(())
 }
 
-/// 이 답에서 접힌 것 — **대장 하나.**
-fn 접힌_대장(report: &ledger::LedgerReport) -> Fold {
-    let mut fold = Fold::none();
-    fold.push(FoldedPart::Ledger, report.ledger.total(), QueryName::LedgerSnapshot);
-    fold
-}
-
 /// 의도 저장소 위치. **기본값이 2층과 다른 파일이다**(stack §2.4).
 pub fn intent_file(repo_path: &Path, given: Option<PathBuf>) -> PathBuf {
     given.unwrap_or_else(|| repo_path.join(".palimpsest/intent.redb"))
 }
 
-/// 이 심볼에 걸린 것들과 그 상태.
+/// 답의 모양 한 줄 — `pal query binding.touch` 가 이것만 낸다.
 ///
-/// **낡음은 여기서 계산된다** — 결박 시점의 요약과 2층의 현재 요약을 댄다.
-/// 심볼이 사라졌으면 `Orphaned` 이고 그것은 `Stale` 과 다른 사건이다.
-///
-/// # 못 보는 것을 `Live` 로 접지 않는다 (F09 §2.1 · [R16])
-///
-/// 조회가 [`Now`] 를 낸다 — `Option<BodyDigest>` 가 아니다. `None` 은 *"사라졌다"* 인지
-/// *"비교할 수 없다"* 인지 구별되지 않고, **그 구별이 이 기능의 전부다.**
-///
-/// | 사유 | 여기서 어떻게 아나 |
-/// |---|---|
-/// | `IdentityGrade` | 감시 원소의 등급이 `Unavailable`(L0) — 요약 자체가 없다 |
-/// | `PartialParse` | 그 원소가 사는 파일이 대장에서 `Partial` 이다(F02-2) |
-/// | `WatchMemberGone` | 조회가 비었는데 **대상은 살아 있다** — `evaluate` 가 가른다 |
-/// | `ProjectionStale` | 2층이 이 스냅샷 것이 아니다 — **감시 집합을 보기도 전이다** |
-///
-/// [R16]: ../../../docs/evidence-map.md
-fn bound_items(
-    intent: &IntentStore,
-    projection: &Projection,
-    report: &ledger::LedgerReport,
-    built_for_this: bool,
-    symbol: &SymbolNode,
-) -> Result<Vec<BoundItem>> {
-    let bindings = intent.bound_to(symbol.id).context("결박을 읽지 못했다")?;
-    // **대장이 아는 partial 파일들.** 이름으로 세지 않고 대장에서 뜬다 — 이름으로 세면
-    // 칸이 하나 늘 때 조용히 빠진다.
-    let partial: std::collections::BTreeSet<&str> = report
-        .ledger
-        .entries
-        .iter()
-        .filter(|e| e.state.bucket() == pal_core::Bucket::Partial)
-        .map(|e| e.path.as_str())
-        .collect();
-
-    let mut out = Vec::with_capacity(bindings.len());
-    for b in bindings {
-        let status = if built_for_this {
-            BindingStatus::evaluate(&b, Lineage::Current, |id| match projection.symbol(id) {
-                Ok(Some(n)) if n.identity == IdentityGrade::Unavailable => {
-                    Now::Undeterminable(UndeterminableReason::IdentityGrade)
-                }
-                Ok(Some(n)) if partial.contains(n.path.as_str()) => {
-                    Now::Undeterminable(UndeterminableReason::PartialParse)
-                }
-                Ok(Some(n)) => Now::Digest(n.body),
-                // **읽기 실패를 「사라졌다」로 적지 않는다.** 못 읽은 것과 없는 것은
-                // 다른 사건이고, 뭉개면 저장 오류가 `Orphaned` 로 나가 사람이 코드를
-                // 고치러 간다.
-                Ok(None) => Now::Gone,
-                Err(_) => Now::Undeterminable(UndeterminableReason::ProjectionStale),
-            })
-        } else {
-            // **2층이 이 스냅샷 것이 아니다.** 감시 집합을 보기도 전에 판정 불가다 —
-            // 여기서 요약을 대면 **옛 세대의 값과 지금의 결박을 대는 것**이 된다.
-            BindingStatus::projection_stale(Lineage::Current)
-        };
-        out.push(BoundItem::Note { binding: b.id, note: b.note, status });
-    }
-    Ok(out)
+/// **전문을 두 표면이 각자 그리지 않는다.** 같은 답이 표면마다 다른 모양으로 나가면
+/// 그것이 곧 두 곳에 적힌 같은 것이다(계획 §7 의 넷째).
+#[must_use]
+pub fn 한_줄_found(r: &pal_core::TouchResult) -> String {
+    format!(
+        "{} — 걸린 것 {} · 지켜보는 것 {}",
+        r.symbol.name,
+        수(&r.bindings),
+        수(&r.watching),
+    )
 }
 
-/// 이 답이 **무엇을 못 봤는가** — 질의마다 다른 값이어야 한다.
-///
-/// # 왜 전역 합이 아닌가 (`[f05.3.pass]` ⑤)
-///
-/// `UNRESOLVED` 전체 수를 복사하면 **질의와 무관한 값**이 되고, 서로 다른 두 질의가
-/// 같은 `coverage` 를 낸다. 그러면 그 숫자는 답의 성질이 아니라 저장소의 성질이다.
-/// 그래서 답을 찾은 경우에는 **그 심볼이 사는 파일**의 미해소 수를 싣는다.
-///
-/// 못 찾은 경우(`Unknown`·`Ambiguous`)에는 **본 것 전체**가 근거다 — 어느 파일도
-/// 고르지 않았으므로 전부가 이 답의 범위다.
-fn coverage(
-    report: &ledger::LedgerReport,
-    projection: &Projection,
-    answer: &TouchAnswer,
-) -> Coverage {
-    let counts = report.ledger.counts();
-    let out_of_scope = counts.values().sum::<usize>()
-        - counts.get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
-        - counts.get(&pal_core::Bucket::Partial).copied().unwrap_or(0);
-
-    let rows = match answer {
-        TouchAnswer::Found(r) => projection
-            .file(&r.symbol.path)
-            .ok()
-            .flatten()
-            .map(|f| vec![f])
-            .unwrap_or_default(),
-        _ => projection.files().unwrap_or_default(),
-    };
-
-    // **미해소를 셀 수 있게 된 것이 F05 다.** 옛 판은 0 이었고 그것은 *"없다"* 가 아니라
-    // *"이 빌드가 참조를 안 본다"* 였다. 스코프 체인이 없는 파일은 지금도 셀 수 없고,
-    // 그 사실은 `Capable` 이 파일 노드에서 진다 — 여기서는 **셀 수 있는 것만 더한다.**
-    let unresolved = rows
-        .iter()
-        .filter_map(|f| match &f.refs {
-            Slot::Built(c) => Some(c.unresolved),
-            Slot::NotBuilt => None,
-        })
-        .sum::<usize>();
-
-    Coverage {
-        unresolved,
-        out_of_scope_files: out_of_scope,
-        // **이 답이 경유한 가장 낮은 등급.** 상수가 아니다.
-        lowest_grade: rows.iter().map(|f| f.grade).min().unwrap_or(ExtractGrade::L0),
-        identity: match answer {
-            TouchAnswer::Found(r) => r.symbol.identity,
-            // 심볼을 하나로 고르지 못했으면 이 답이 선 정체성은 가장 낮은 것이다.
-            _ => IdentityGrade::Ordinal,
-        },
-    }
-}
-
-fn touch_result(
-    report: &ledger::LedgerReport,
-    symbol: SymbolNode,
-    bound: Vec<BoundItem>,
-    facts: SymbolFacts,
-) -> TouchResult {
-    // 좌표는 **저장소 하나**를 가리킨다. 스냅샷은 집합이므로 그중 하나를 골라야 하고,
-    // 이 빌드는 저장소를 하나만 본다(대장의 `repos_declared` 가 언제나 1 이다).
-    // **멀티레포에서는 심볼이 어느 저장소의 것인지를 `SymbolNode` 가 실어야 하고,
-    // 그것은 F14 다** — 여기서 조용히 첫 것을 고르는 대신 그 사실을 적어 둔다.
-    let (repo, tree) = report
-        .ledger
-        .snapshot
-        .entries()
-        .next()
-        .expect("스냅샷은 비어 있을 수 없다");
-    TouchResult {
-        target: Coord {
-            repo: repo.clone(),
-            tree: *tree,
-            extractor: pal_extract::version(),
-            symbol: symbol.id,
-        },
-        symbol,
-        // **S2 에서는 여기가 NotBuilt 였다.** 채워지는 것이 S3 의 인수 기준 ② 다.
-        bindings: Capable::Present(bound),
-        // **F05 에서 값이 된다** — 파일 **안**의 호출 관계다. 파일 경계를 넘는 것은
-        // 여기 없고 그 수는 봉투의 `coverage.unresolved` 가 진다.
-        facts: Capable::Present(facts),
-        unresolved: Capable::not_built(CapabilityId::new("F08", "unresolved-refs")),
-        effects: Capable::not_built(CapabilityId::new("F13", "effects")),
-        judgments: Capable::not_built(CapabilityId::new("F15", "judgment")),
+/// 능력이 없으면 수가 아니라 그 사실을 낸다.
+fn 수(v: &Capable<Vec<BoundItem>>) -> String {
+    match v {
+        Capable::Present(items) => items.len().to_string(),
+        Capable::NotBuilt { capability } => format!("(미구축 {})", capability.feature),
     }
 }
 
@@ -298,10 +210,11 @@ fn touch_result(
 fn print_screen(envelope: &Envelope<TouchAnswer>) {
     println!();
     match &envelope.answer {
-        TouchAnswer::Unknown { name } => {
+        TouchAnswer::Unknown { name, near } => {
             println!("  `{name}` 을 이 스냅샷에서 찾지 못했습니다.");
             println!();
             println!("  **없다는 뜻이 아닙니다** — 아래 근거가 무엇을 보았는지 말합니다.");
+            print_near(near, &envelope.elision);
         }
         TouchAnswer::Ambiguous { name, candidates } => {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
@@ -316,8 +229,11 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
                      r.symbol.kind.name(), r.symbol.path, r.symbol.span.line_start,
                      r.symbol.identity.name(), r.symbol.body.short());
             println!();
-            print_bindings(&r.bindings);
-            slot("이 심볼이 하는 것", &r.facts);
+            print_bindings("이 좌표에 걸린 것", &r.bindings, &envelope.elision);
+            // ★ **다른 구역이다.** *"내 코드에 걸린 결정"* 과 *"남의 코드에 걸렸는데
+            // 나를 지켜보는 결정"* 은 고치러 갈 자리가 다르다.
+            print_bindings("이 좌표를 지켜보는 것", &r.watching, &envelope.elision);
+            print_facts(&r.facts);
             slot("내가 모르는 것", &r.unresolved);
             slot("효과", &r.effects);
             slot("판정", &r.judgments);
@@ -349,7 +265,11 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
         Capable::NotBuilt { capability } => println!(
             "  재구축    (이 빌드는 재구축 중인지 모릅니다 — {} 미구축)", capability.feature),
     }
-    println!("  절단      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
+    println!("  절단      {}", if e.elision.is_none() {
+        "없음 (명시)".to_owned()
+    } else {
+        format!("{}건 — 상한을 넘어 잘렸습니다", e.elision.dropped())
+    });
     crate::evidence::print(e);
     println!("  능력      {} · 미구축 {}",
              e.capabilities.built.join(" · "),
@@ -357,21 +277,44 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
     println!();
 }
 
-/// 결박을 띄운다 — **제품의 형태가 처음으로 보이는 자리다.**
-fn print_bindings(value: &Capable<Vec<BoundItem>>) {
+/// 가까운 이름들 — **하나를 고르지 않는다**(P6).
+///
+/// 빈 목록과 목록이 있는 것은 **다른 답**이다. 앞은 *"가까운 것도 없다"* 이고 그것은
+/// 이 스냅샷에 대한 사실이다.
+pub fn print_near(near: &[pal_core::NearName], elision: &Elision) {
+    println!();
+    println!("■ 이것을 뜻했습니까 ({})", near.len());
+    if near.is_empty() {
+        println!("  가까운 이름도 없습니다.");
+        return;
+    }
+    for n in near {
+        println!("  [{}] {}", n.kind.name(), n.name);
+    }
+    let 자른 = elision.count_of(pal_core::ElisionReason::BindingMaxExceeded);
+    if 자른 > 0 {
+        let 상한 = PROVISIONAL_TOUCH_BINDING_MAX;
+        println!("  … 그 밖 {자른}건 — **잘렸습니다. 상한이 {상한}입니다**");
+    }
+    println!();
+    println!("  **하나를 고르지 않습니다** — 고르는 것은 사람이나 에이전트의 일입니다.");
+}
+
+/// 결박을 띄운다 — **제품의 형태가 보이는 자리다.**
+fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elision) {
     let Capable::Present(items) = value else {
-        println!("■ 이 좌표에 걸린 것");
+        println!("■ {title}");
         println!("  (이 빌드에는 binding 능력이 없습니다)");
         return;
     };
-    println!("■ 이 좌표에 걸린 것 ({})", items.len());
+    println!("■ {title} ({})", items.len());
     if items.is_empty() {
         // **여기의 빈 목록은 정직하다** — 능력이 있고 값이 없는 것이다.
         println!("  아직 없습니다.");
         return;
     }
     for item in items {
-        let BoundItem::Note { binding, note, status } = item;
+        let BoundItem::Note { binding, note, status, radius, watch, at, .. } = item;
         let mark = match &status.code {
             pal_core::CodeFreshness::Live => "live".to_owned(),
             pal_core::CodeFreshness::Stale { triggered_by } =>
@@ -383,9 +326,45 @@ fn print_bindings(value: &Capable<Vec<BoundItem>>) {
             pal_core::CodeFreshness::Undeterminable { reason, at } =>
                 format!("판정 불가 ← {} ({} 개 좌표)", reason.name(), at.len()),
         };
-        println!("  [{}] {mark}", binding.as_str());
+        // **반경을 함께 낸다** — *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은
+        // 유효하다"* 와 다른 문장이다(F09 §3).
+        println!("  [{}] {mark}  ·  {radius} 반경 · 감시 {watch}", binding.as_str());
+        // ★ **어디에 걸렸는지가 다음 행동을 정한다.**
+        if let BoundTarget::Elsewhere { symbol, place } = at {
+            match place {
+                TargetPlace::Known { path, container, name, line } => {
+                    let 이름 = if container.is_empty() {
+                        name.clone()
+                    } else {
+                        format!("{}.{name}", container.join("."))
+                    };
+                    println!("      ↳ 걸린 자리  {이름}  ·  {path}:{line}");
+                }
+                TargetPlace::Gone => println!(
+                    "      ↳ 걸린 자리  {}  — **2층에 없습니다**", symbol.short()),
+            }
+        }
         for line in note.lines() {
             println!("      {line}");
+        }
+    }
+    let 자른 = elision.count_of(pal_core::ElisionReason::BindingMaxExceeded);
+    if 자른 > 0 {
+        println!("  … 그 밖 {자른}건 — **잘렸습니다. 낡은 것은 잘리지 않습니다**");
+    }
+}
+
+/// 이 심볼이 하는 것 — **수를 낸다. `(있음)` 은 아무것도 안 말한다.**
+fn print_facts(value: &Capable<pal_core::SymbolFacts>) {
+    println!("■ 이 심볼이 하는 것");
+    match value {
+        Capable::NotBuilt { capability } => println!(
+            "  (이 빌드에는 {} 능력이 없습니다 — {} 미구축)", capability.what, capability.feature),
+        Capable::Present(f) => {
+            println!("  호출자 {} · 피호출자 {}", f.callers, f.callees);
+            // ⚠ **파일 경계를 넘는 것은 여기 없다.** 그 수는 봉투의 `coverage.unresolved`
+            // 가 지고, 그 사실을 화면에서 지우면 0 이 *"아무도 안 부른다"* 로 읽힌다.
+            println!("  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다");
         }
     }
 }

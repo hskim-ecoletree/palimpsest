@@ -184,6 +184,7 @@ impl QueryName {
             Self::GraphDump => "노드와 엣지 전부 — 바깥 오라클이 읽는 창",
             Self::BindingStatus => "결박마다 상태 + **반경** + 무엇이 켰는가",
             Self::NarrativeUnbound => "좌표를 못 찾은 문서 조각들 — **사람의 작업 목록**",
+            Self::BindingTouch => "좌표 하나를 만진다 — **걸린 것**과 ★ **지켜보는 것**을 함께 낸다",
         }
     }
 
@@ -197,7 +198,7 @@ impl QueryName {
             Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus
             | Self::NarrativeUnbound => &[],
             Self::SymbolResolve | Self::SymbolContains | Self::SymbolCallers
-            | Self::SymbolReaches => &["name"],
+            | Self::SymbolReaches | Self::BindingTouch => &["name"],
         }
     }
 
@@ -208,7 +209,7 @@ impl QueryName {
             Self::LedgerSnapshot | Self::GraphDump | Self::BindingStatus
             | Self::NarrativeUnbound => &[],
             Self::SymbolResolve | Self::SymbolContains | Self::SymbolCallers
-            | Self::SymbolReaches => &["SymbolName"],
+            | Self::SymbolReaches | Self::BindingTouch => &["SymbolName"],
         }
     }
 
@@ -222,6 +223,7 @@ impl QueryName {
             Self::GraphDump => "Graph",
             Self::BindingStatus => "Bindings",
             Self::NarrativeUnbound => "Narrative",
+            Self::BindingTouch => "Touch",
         }
     }
 
@@ -235,6 +237,7 @@ impl QueryName {
             Self::SymbolCallers | Self::SymbolReaches | Self::GraphDump => "F05",
             Self::BindingStatus => "F09",
             Self::NarrativeUnbound => "F10",
+            Self::BindingTouch => "F11",
         }
     }
 
