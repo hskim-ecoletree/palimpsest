@@ -161,6 +161,34 @@ pub struct Binding {
     pub watch: Vec<WatchEntry>,
 }
 
+/// [`Binding::new`] 가 받는 것 — **이름이 붙은 인자들.**
+///
+/// # 왜 구조체인가
+///
+/// `pal-cli` 의 `bind::Args` 가 이미 그 근거를 적었다: *"손잡이를 늘리면 인자가 늘고,
+/// 인자가 여덟이면 부르는 쪽이 순서를 틀린다."* 이 생성자가 정확히 그 자리에 왔다 —
+/// 그리고 **틀려도 컴파일된다**: `subject`·`target` 은 타입이 다르지만
+/// `bound_at_time`·`radius` 처럼 뒤에 붙는 것들은 순서를 바꿔도 안 걸리는 조합이 생긴다.
+///
+/// **구조체로 묶으면 이름이 붙고, 이름은 순서를 안 탄다.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NewBinding {
+    /// **무엇이** 걸렸나 — 비코드 개체([`EntityId`]).
+    pub subject: EntityId,
+    /// 무엇에 걸었나.
+    pub target: SymbolId,
+    /// 무엇을 걸었나 — 조각의 본문.
+    pub note: String,
+    /// 언제 걸었나.
+    pub bound_at: Snapshot,
+    /// 그 커밋의 시각 — **표시용이다.**
+    pub bound_at_time: BoundTime,
+    /// **무엇까지** 지켜보나.
+    pub radius: Radius,
+    /// 무엇을 지켜보나 — [`Radius`] 가 편 결과.
+    pub watch: Vec<WatchEntry>,
+}
+
 impl Binding {
     /// 결박 하나를 만든다. **[`SymbolId`] 를 요구한다 — 그것이 이 생성자의 전부다.**
     ///
@@ -176,24 +204,16 @@ impl Binding {
     /// 번째 결박이 새 개체를 만들어 **같은 것이 둘이 된다** — 그래서 부르는 쪽이
     /// 기존 결박의 `subject` 를 물려준다(`pal bind`).
     #[must_use]
-    pub fn new(
-        subject: EntityId,
-        target: SymbolId,
-        note: &str,
-        bound_at: Snapshot,
-        bound_at_time: BoundTime,
-        radius: Radius,
-        watch: Vec<WatchEntry>,
-    ) -> Self {
+    pub fn new(a: NewBinding) -> Self {
         Self {
-            id: BindingId::derive(target, note),
-            subject,
-            target,
-            note: note.to_owned(),
-            bound_at,
-            bound_at_time,
-            radius,
-            watch,
+            id: BindingId::derive(a.target, &a.note),
+            subject: a.subject,
+            target: a.target,
+            note: a.note,
+            bound_at: a.bound_at,
+            bound_at_time: a.bound_at_time,
+            radius: a.radius,
+            watch: a.watch,
         }
     }
 
@@ -536,15 +556,21 @@ mod tests {
     }
 
     fn 결박_반경(target: SymbolId, watch: &[(SymbolId, BodyDigest)], r: crate::Radius) -> Binding {
-        Binding::new(
-            crate::EntityId::mint(crate::EntityKind::new("decision"), crate::EntityOrigin::Hand),
+        Binding::new(NewBinding {
+            subject: crate::EntityId::mint(
+                crate::EntityKind::new("decision"),
+                crate::EntityOrigin::Hand,
+            ),
             target,
-            "메모",
-            Snapshot::single(RepoId::new("r"), TreeRef::Committed(ObjectName::from_bytes([0; 20]))),
-            BoundTime::Committed { epoch_secs: 1_700_000_000 },
-            r,
-            watch.iter().map(|(s, d)| WatchEntry { symbol: *s, digest: *d }).collect(),
-        )
+            note: "메모".to_owned(),
+            bound_at: Snapshot::single(
+                RepoId::new("r"),
+                TreeRef::Committed(ObjectName::from_bytes([0; 20])),
+            ),
+            bound_at_time: BoundTime::Committed { epoch_secs: 1_700_000_000 },
+            radius: r,
+            watch: watch.iter().map(|(s, d)| WatchEntry { symbol: *s, digest: *d }).collect(),
+        })
     }
 
     fn 상태(b: &Binding, now: impl Fn(SymbolId) -> Now) -> CodeFreshness {

@@ -12,7 +12,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 use pal_core::{
-    Binding, BindingId, BoundTime, EntityId, EntityKind, EntityOrigin, Radius, SymbolIdentity,
+    Binding, BindingId, BoundTime, EntityId, EntityKind, EntityOrigin, NewBinding, Radius,
+    SymbolIdentity,
     WatchEntry, check_budget, expand,
 };
 use pal_git::{GitAccess, GixRepo};
@@ -128,15 +129,15 @@ pub fn run(a: Args) -> Result<()> {
         |b| b.subject,
     );
 
-    let binding = Binding::new(
+    let binding = Binding::new(NewBinding {
         subject,
         target,
-        note,
-        report.ledger.snapshot.clone(),
-        커밋_시각(repo_path, &report),
+        note: note.to_owned(),
+        bound_at: report.ledger.snapshot.clone(),
+        bound_at_time: 커밋_시각(repo_path, &report),
         radius,
         watch,
-    );
+    });
     intent.record(&binding).context("결박을 남기지 못했다")?;
 
     println!();
