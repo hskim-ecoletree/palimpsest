@@ -1,0 +1,6 @@
+사례	결과	근거커밋	결박좌표	반경파일수	재발좌표	같은좌표	어디	왜
+1	떴다	4f8d9289	nodeVerdictFor	2	writeWorkItemHandoff	아니오	지켜보는 것	
+2	대조 불가	4f8d9289	nodeVerdictFor					(라) `mirrorAcceptanceVerdicts` 이 `264c3371^` 의 2층에서 unknown 이다
+3	떴다	4f8d9289	nodeVerdictFor	2	writeWorkItemHandoff	아니오	지켜보는 것	
+4	대조 불가	6f04625e	autopilotIntentDrift					(라) `dequotePorcelainPath` 이 `d2940f7f^` 의 2층에서 unknown 이다
+5	안 떴다	6f04625e	autopilotIntentDrift	1	collectChangedFiles	아니오	—	
