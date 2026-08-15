@@ -1,6 +1,6 @@
 # palimpsest
 
-환경에 종속되지 않는 코드 이해의 큐레이터. **코드가 서 있다** — `pal` 바이너리(`symbols`·`ledger`·`bind`·`touch`·`query`·`export`·`defect`·`doctor`·`cache`·`intent`)와 크레이트 일곱. 무엇이 실제로 서 있고 무엇이 자리뿐인지는 **문서가 아니라 산출이 말한다**: `pal doctor` 는 검사하지 못한 것을 `Residual` 로, 담을 수 없는 것을 능력 부재로 낸다.
+환경에 종속되지 않는 코드 이해의 큐레이터. **코드가 서 있다** — `pal` 바이너리(`symbols`·`ledger`·`bind`·`narrative`·`touch`·`query`·`export`·`defect`·`doctor`·`cache`·`intent`)와 크레이트 일곱. 무엇이 실제로 서 있고 무엇이 자리뿐인지는 **문서가 아니라 산출이 말한다**: `pal doctor` 는 검사하지 못한 것을 `Residual` 로, 담을 수 없는 것을 능력 부재로 낸다.
 
 ## 지금 어디에 서 있는가
 
@@ -45,4 +45,4 @@
 
 ### Domain docs
 
-단일 컨텍스트 — 루트의 `CONTEXT.md` + `docs/adr/`. **`CONTEXT.md` 는 아직 없고 없는 것이 정상 상태다.** ADR 은 **열넷** 있다(F22·F01·F02·F03·F05·F06·**F09** 종료 시 발행). `docs/agents/domain.md` 참조.
+단일 컨텍스트 — 루트의 `CONTEXT.md` + `docs/adr/`. **`CONTEXT.md` 는 아직 없고 없는 것이 정상 상태다.** ADR 은 **열다섯** 있다(F22·F01·F02·F03·F05·F06·F09·**F10** 종료 시 발행). `docs/agents/domain.md` 참조.
