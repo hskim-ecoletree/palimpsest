@@ -78,6 +78,8 @@ fn check(root: &Path) -> Result<()> {
         ("벗어나는 경로 부재", check_no_escape_hatch(root)),
         ("앵커는 신고받지 않는다", check_anchor_is_measured(root)),
         ("낡음이 생성기를 안 부른다", check_no_regeneration(root)),
+        ("인입이 자연어 유사도를 안 쓴다", check_no_similarity(root)),
+        ("승격이 원본을 안 고친다", check_promotion_is_not_in_place(root)),
     ];
     let total = checks.len();
 
@@ -1289,4 +1291,124 @@ fn check_no_regeneration(root: &Path) -> Result<String> {
         );
     }
     Ok(format!("낡음을 다루는 파일 {}개 · 생성 낱말 {}개에 0건", files.len(), REGENERATION_MARKERS.len()))
+}
+
+// ── 검사 14 — 인입이 자연어 유사도를 안 쓴다 (F10 §3.2 · §5) ────────────────
+//
+// 문서 §3.2 의 표가 여섯째 줄에 못 박았다:
+//
+// > **본문 자연어의 이름 유사도 — 쓰지 않는다.** 거짓 결박을 만든다.
+// > *"주문 취소 로직"* 이 `cancelOrder` 인지 `OrderCanceller` 인지 **기계가 모른다.**
+//
+// **문장으로 두면 잊힌다.** `[f10.pass]` 가 그것을 CI 로 올린 근거는 이렇다:
+// 거짓 결박률은 **표본 50 건의 손 검토**이고 표본은 표본 밖을 못 본다.
+// *"유사도를 안 쓴다"* 는 **전수에 걸리는 성질**이라 그 빈자리를 덮는 유일한 수단이다.
+
+/// 좌표 해소에 있으면 안 되는 낱말 — **전부 「비슷하다」를 계산하는 것들.**
+const SIMILARITY_MARKERS: &[&str] = &[
+    "levenshtein", "jaro", "edit_distance", "similarity", "fuzzy",
+    "embedding", "cosine", "ngram", "trigram", "soundex",
+];
+
+/// 이 검사가 실제로 무언가를 세고 있다는 증거 — **하한.**
+///
+/// 없으면 파일이 옮겨 갔거나 이름이 바뀐 것이고, 그러면 이 검사는 **성한 자리를
+/// 검사하며 통과한다.** F09 의 검사 12·13 이 세운 형태 그대로다.
+const CASCADE_WITNESS: &str = "ResolutionSignal";
+
+fn check_no_similarity(root: &Path) -> Result<String> {
+    let files = ["crates/pal-core/src/narrative.rs", "crates/pal-extract/src/narrative.rs"];
+    let mut hits = Vec::new();
+    let mut 봤나 = false;
+    let mut 센_파일 = 0;
+
+    for rel in files {
+        let path = root.join(rel);
+        // **없는 파일은 건너뛰지 않고 센다** — 아래 하한이 그것을 잡는다.
+        let Ok(text) = std::fs::read_to_string(&path) else { continue };
+        센_파일 += 1;
+        if text.contains(CASCADE_WITNESS) {
+            봤나 = true;
+        }
+        for (n, line) in text.lines().enumerate() {
+            // 주석은 산문이라 검사하지 않는다 — 금지 대상은 **코드의 어휘**다
+            // (「코어 어휘 금지」와 같은 규율). 이 파일의 머리가 그 낱말들을 **설명**한다.
+            let code = line.split("//").next().unwrap_or("");
+            for m in SIMILARITY_MARKERS {
+                if code.to_lowercase().contains(m) {
+                    hits.push(format!("{rel}:{} `{m}`", n + 1));
+                }
+            }
+        }
+    }
+
+    // **하한** — 계단식이 있는 파일을 안 보고 있으면 이 검사는 아무것도 안 센다.
+    if !봤나 {
+        bail!(
+            "`{CASCADE_WITNESS}` 를 쓰는 파일이 하나도 없다 — 이 검사는 아무것도 안 세고 있다 \
+             (검사한 파일 {센_파일}개)"
+        );
+    }
+    if !hits.is_empty() {
+        bail!(
+            "좌표 해소가 자연어 유사도를 쓴다 (F10 §3.2 · §5):\n    \
+             **거짓 결박을 대량 생산한다. 그리고 틀린 결박은 없는 결박보다 나쁘다.**\n    \
+             동점은 좁히는 것이 아니라 **후보로 내고 승인을 요구한다**:\n    {}",
+            hits.join("\n    ")
+        );
+    }
+    Ok(format!("인입 파일 {센_파일}개 · 유사도 낱말 {}개에 0건", SIMILARITY_MARKERS.len()))
+}
+
+// ── 검사 15 — 승격이 원본을 안 고친다 (F10 §1 · §3.3) ──────────────────────
+//
+// > **승격은 필드를 고쳐 쓰는 것이 아니다.** `inferred` 노드를 승인하면 그것을 가리키는
+// > **새 `asserted` 노드**가 생기고 원본은 `promoted_by` 와 함께 남는다.
+//
+// `Provenance` 에 setter 가 없는 것과 같은 규율이다(`graph.rs`: *"고쳐 쓰는 경로가 없는
+// 것 자체가 세탁 방지의 구현 형태"*). 타입이 이미 `&` 로 받지만, **그 시그니처가
+// `&mut` 로 되돌아가는 커밋을 이 검사가 멈춘다.**
+
+/// 승격 경로에 있으면 안 되는 형태 — **제자리에서 고쳐 쓰는 것들.**
+const IN_PLACE_PROMOTION: &[&str] =
+    &["fn promote(&mut self", ".promoted_by =", ".provenance =", "fn set_promoted", "fn launder"];
+
+/// 승격 함수가 실제로 있다는 증거 — **하한.**
+const PROMOTION_WITNESS: &str = "pub fn promote(";
+
+fn check_promotion_is_not_in_place(root: &Path) -> Result<String> {
+    let files = ["crates/pal-core/src/binding.rs", "crates/pal-core/src/narrative.rs"];
+    let mut hits = Vec::new();
+    let mut 봤나 = false;
+
+    for rel in files {
+        let path = root.join(rel);
+        let text = std::fs::read_to_string(&path)
+            .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+        if text.contains(PROMOTION_WITNESS) {
+            봤나 = true;
+        }
+        for (n, line) in text.lines().enumerate() {
+            let code = line.split("//").next().unwrap_or("");
+            for m in IN_PLACE_PROMOTION {
+                if code.contains(m) {
+                    hits.push(format!("{rel}:{} `{m}`", n + 1));
+                }
+            }
+        }
+    }
+
+    // **하한** — 승격 함수가 없으면 이 검사는 아무것도 안 센다.
+    if !봤나 {
+        bail!("`{PROMOTION_WITNESS}` 가 어디에도 없다 — 이 검사는 아무것도 안 세고 있다");
+    }
+    if !hits.is_empty() {
+        bail!(
+            "승격이 원본을 제자리에서 고친다 (F10 §3.3):\n    \
+             ① 되돌릴 수 없고 ② **원래 누구의 추론이었는가**가 계보에서 사라지고\n    \
+             ③ *\"어디까지가 기록이고 어디부터가 재구성인지\"* 를 아무도 모르게 된다:\n    {}",
+            hits.join("\n    ")
+        );
+    }
+    Ok(format!("승격을 다루는 파일 {}개 · 제자리 수정 {}개 형태에 0건", files.len(), IN_PLACE_PROMOTION.len()))
 }

@@ -29,6 +29,7 @@ mod judgment;
 mod language;
 mod ledger;
 mod manifest;
+mod narrative;
 mod projection;
 mod query_log;
 mod radius;
@@ -45,7 +46,7 @@ mod view;
 
 pub use binding::{
     Binding, BindingId, BindingReport, BindingStatus, BoundTime, CodeFreshness,
-    DetectorReport, Lineage, NewBinding, Now,
+    DetectorReport, Lineage, NewBinding, Now, PromotedBy, PromotionSite,
     UndeterminableReason, WatchEntry,
 };
 // **예산 상수는 여기 하나에서 나간다** — stack §5.5 · `[f05.1.pass]` ①.
@@ -86,6 +87,10 @@ pub use envelope::{
 };
 pub use judgment::{Residual, ResidualReason};
 pub use manifest::{ExclusionRule, Manifest, ManifestError, RepoDecl, ScopeSource};
+pub use narrative::{
+    Classification, Coordinates, Fragment, NamedCoord, PromotionRefusal, Proposal, RawSignals,
+    Refusal, ResolutionSignal, resolve,
+};
 pub use language::Language;
 pub use ledger::{
     Bucket, BinaryReason, DetectorFreshness, ExclusionRuleId, ExtractGrade, FileState,

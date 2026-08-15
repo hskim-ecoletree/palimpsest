@@ -3,7 +3,7 @@
 
 # 그래프 스키마 v1
 
-노드 라벨 **8개** · 엣지 타입 **8개**. 자라는 것 자체가 관측 대상이다([DESIGN §1.2](DESIGN.md)).
+노드 라벨 **10개** · 엣지 타입 **8개**. 자라는 것 자체가 관측 대상이다([DESIGN §1.2](DESIGN.md)).
 
 ## 노드
 
@@ -15,6 +15,8 @@
 | `Defect` | `extracted` | `Defect` | `id` | 값이 선다 |
 | `File` | `extracted` | `FileNode` | `path` | 값이 선다 |
 | `Journey` | `asserted` | `Journey` | `name` | **자리만** — F19 가 만든다 |
+| `NarrativeItem` | `inferred` | `Proposal` | `item` | 값이 선다 |
+| `NarrativeRefusal` | `asserted` | `Refusal` | `item`, `target` | 값이 선다 |
 | `Symbol` | `extracted` | `SymbolNode` | `id` | 값이 선다 |
 | `UnresolvedRef` | `extracted` | `UnresolvedRef` | `site`, `name` | **자리만** — F08 가 만든다 |
 
@@ -29,6 +31,7 @@
 | `Binding` | `bound_at_time` | `bound_time` | `machine-record` | 예 |
 | `Binding` | `radius` | `radius` | `human` | 예 |
 | `Binding` | `watch` | `watch_entry[]` | `machine-record` | 예 |
+| `Binding` | `promoted_by` | `promoted_by` | `machine-record` | 예 |
 | `Change` | `kind` | `enum:ChangeKind` | `extractor` | 예 |
 | `Change` | `summary` | `string` | `extractor` | 예 |
 | `Change` | `at` | `snapshot` | `machine-record` | 예 |
@@ -41,6 +44,10 @@
 | `Journey` | `entry_points` | `coord[]` | `human` | 예 |
 | `Journey` | `passes_through` | `coord[]` | `human` | 예 |
 | `Journey` | `expected_effects` | `effect[]` | `human` | 예 |
+| `NarrativeItem` | `fragment` | `fragment` | `machine-record` | 예 |
+| `NarrativeItem` | `class` | `classification` | `agent` | 예 |
+| `NarrativeRefusal` | `at` | `snapshot` | `machine-record` | 예 |
+| `NarrativeRefusal` | `reason` | `string` | `human` | 예 |
 | `Symbol` | `path` | `repo_path` | `extractor` | 예 |
 | `Symbol` | `container` | `string[]` | `extractor` | 예 |
 | `Symbol` | `name` | `string` | `extractor` | 예 |

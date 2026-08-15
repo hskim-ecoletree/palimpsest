@@ -159,6 +159,64 @@ pub struct Binding {
     /// **결박 시점에 기계가 대상 좌표에서 읽은 값이다.** 생산자의 신고를 여기 넣는
     /// 경로가 없고([`Binding`] 머리 · F09 §4.1 D32), `cargo xtask check` 가 그 부재를 센다.
     pub watch: Vec<WatchEntry>,
+    /// **어떻게 섰나** — 손으로 걸었나, 제안을 승인해서 섰나 ([`PromotedBy`] · F10 §3.3).
+    pub promoted_by: PromotedBy,
+}
+
+/// 이 결박이 **어떻게 섰는가** — 그리고 **길이 둘뿐이다** (F10 §3.3 · §1).
+///
+/// # `Option` 이 아니다
+///
+/// `cargo xtask check` 의 「선택 필드 금지」가 이 빌드에 선택 필드를 **0** 으로 지킨다.
+/// 그리고 그것이 여기서는 규칙이 아니라 **설계**다 — `None` 은 *"승격이 아니다"* 인지
+/// *"모른다"* 인지 구별되지 않고([ADR-0005]), 그 구별이 이 기능의 전부다.
+///
+/// # ★ 이것이 세탁 금지를 **타입으로** 세우는 자리다 (문서 §1 · §4)
+///
+/// 결박이 서는 길이 **둘**이고 **둘 다 사람의 행위**다:
+///
+/// ```text
+/// Hand       사람이 이름으로 직접 걸었다        `pal bind`
+/// Proposal   사람이 제안을 승인했다              `pal narrative approve`
+/// ```
+///
+/// **셋째 길이 생기려면 이 열거를 늘려야 하고, 늘리는 커밋이 사람에게 보인다.**
+/// 그것이 *"에이전트가 이력을 읽고 「이 결정은 아마 X였을 것」을 채우는 것"*(문서 §1)을
+/// 막는 구조적 형태다 — 문장이 아니라 **타입**이다.
+///
+/// 그리고 절반은 이미 서 있었다: [`crate::Producer::Agent`] 가
+/// [`crate::Provenance::Inferred`] 에만 맞는다(F22-1). **여기가 없던 절반이다.**
+///
+/// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// **내부 태그를 안 쓴다** — `postcard` 가 못 싣는다([`Radius`] 와 같은 자리).
+#[serde(rename_all = "snake_case")]
+pub enum PromotedBy {
+    /// 사람이 이름으로 직접 걸었다. **승격이 아니다.**
+    Hand,
+    /// 문서 조각의 `inferred` 제안을 사람이 **승인해서** 섰다.
+    ///
+    /// `item` 이 그 조각의 개체이고 `by` 가 **무엇이 좌표를 걸었는지**다.
+    /// 문서 §3.3 의 목적 ②(*"원래 누구의 추론이었는가가 계보에 남아야 한다"*)가
+    /// 이 두 값이다 — **`asserted` 쪽에서 `inferred` 를 가리킨다.**
+    Proposal { item: EntityId, by: crate::narrative::ResolutionSignal },
+}
+
+impl PromotedBy {
+    /// 스키마 파일이 적는 이름.
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Hand => "hand",
+            Self::Proposal { .. } => "proposal",
+        }
+    }
+
+    /// 승인을 지난 것인가. **`pal bind` 는 승인이 아니라 사람의 직접 행위다.**
+    #[must_use]
+    pub const fn is_promotion(&self) -> bool {
+        matches!(self, Self::Proposal { .. })
+    }
 }
 
 /// [`Binding::new`] 가 받는 것 — **이름이 붙은 인자들.**
@@ -189,6 +247,19 @@ pub struct NewBinding {
     pub watch: Vec<WatchEntry>,
 }
 
+/// 승격이 **결박에서 오지 않는 것들** — 좌표를 걸 때의 스냅샷과 반경.
+///
+/// 제안은 *"어느 조각이 어느 좌표에 관한 것인가"* 까지만 안다. **언제·무엇까지
+/// 지켜보는가는 승인하는 시점의 사실**이고, 그것을 제안에 넣으면 제안이 스냅샷에
+/// 묶여 **재계산이 항등이 아니게 된다**([`crate::narrative::Proposal`] 머리).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PromotionSite {
+    pub bound_at: Snapshot,
+    pub bound_at_time: BoundTime,
+    pub radius: Radius,
+    pub watch: Vec<WatchEntry>,
+}
+
 impl Binding {
     /// 결박 하나를 만든다. **[`SymbolId`] 를 요구한다 — 그것이 이 생성자의 전부다.**
     ///
@@ -214,7 +285,73 @@ impl Binding {
             bound_at_time: a.bound_at_time,
             radius: a.radius,
             watch: a.watch,
+            // **손으로 건 것이다.** 승격은 [`Self::promote`] 하나뿐이다.
+            promoted_by: PromotedBy::Hand,
         }
+    }
+
+    /// 제안 하나를 **승인해서 새 결박을 낳는다** (F10 §3.3 · §4).
+    ///
+    /// # ★ 이 함수의 시그니처가 이 기능의 세탁 방지다
+    ///
+    /// 문서 §3.3:
+    ///
+    /// > **승격은 필드를 고쳐 쓰는 것이 아니다.** `inferred` 노드를 승인하면 그것을
+    /// > 가리키는 **새 `asserted` 노드**가 생기고 원본은 `promoted_by` 와 함께 남는다.
+    /// > ① 되돌릴 수 있어야 하고 ② *"원래 누구의 추론이었는가"* 가 계보에 남아야 한다.
+    ///
+    /// 셋을 **타입이** 지킨다:
+    ///
+    ///   · **제안을 `&` 로 받는다.** `&mut` 가 아니므로 **원본을 고칠 수 없다** —
+    ///     되돌리기(①)는 이 결박을 지우면 성립한다
+    ///   · **반환이 새 [`Binding`] 이다.** 제자리 수정 경로가 없다
+    ///   · **[`PromotedBy::Proposal`] 이 제안을 가리킨다**(②). 손으로 건 것과
+    ///     **값으로 갈린다**
+    ///
+    /// 그리고 [`crate::Provenance`] 에 setter 가 없는 것이 그 짝이다(`graph.rs`) —
+    /// *"고쳐 쓰는 경로가 없는 것 자체가 세탁 방지의 구현 형태"*.
+    /// `cargo xtask check` 의 검사 15 가 그 부재를 센다.
+    ///
+    /// # 왜 `pick` 을 받는가 — **고르는 것은 사람의 일이다**
+    ///
+    /// 후보가 여럿인 제안도 승인될 수 있다. 다만 **기계가 고르지 않는다**(§3.2) —
+    /// 사람이 고른 좌표를 받고, **그것이 후보에 없으면 거부한다.** 후보 밖을 승인할 수
+    /// 있으면 그것은 승격이 아니라 **지어낸 결박**이다.
+    ///
+    /// # Errors
+    /// 후보가 없거나([`PromotionRefusal::NothingToApprove`]), 고른 좌표가 후보 밖이면
+    /// ([`PromotionRefusal::NotACandidate`]).
+    pub fn promote(
+        proposal: &crate::narrative::Proposal,
+        pick: SymbolId,
+        at: PromotionSite,
+    ) -> Result<Self, crate::narrative::PromotionRefusal> {
+        let choices = proposal.choices();
+        // **신호와 후보를 한 자리에서 꺼낸다.** 따로 꺼내면 *"후보는 있는데 신호가
+        // 없다"* 를 `expect` 로 접게 되고, 그것은 **못 일어난다고 믿는 것**이다.
+        let (Some(by), false) = (proposal.signal(), choices.is_empty()) else {
+            return Err(crate::narrative::PromotionRefusal::NothingToApprove);
+        };
+        if !choices.contains(&pick) {
+            return Err(crate::narrative::PromotionRefusal::NotACandidate {
+                picked: pick,
+                candidates: choices.len(),
+            });
+        }
+        Ok(Self {
+            id: BindingId::derive(pick, &proposal.fragment.body),
+            // **개체는 물려받는다** — 새로 뽑으면 같은 조각이 둘이 된다.
+            subject: proposal.item.clone(),
+            target: pick,
+            // 결박의 조각이 곧 **문서 조각의 본문**이다. 이것이 F09 가 합성 메모로 잰
+            // 거짓 양성률을 실물로 다시 재게 하는 자리다([ADR-0014]).
+            note: proposal.fragment.body.clone(),
+            bound_at: at.bound_at,
+            bound_at_time: at.bound_at_time,
+            radius: at.radius,
+            watch: at.watch,
+            promoted_by: PromotedBy::Proposal { item: proposal.item.clone(), by },
+        })
     }
 
     /// **판 1 의 결박을 그대로 되살린다** — JSONL 읽기 전용 문이다.
@@ -261,6 +398,9 @@ impl Binding {
             // 추측이 아니라 **그 판의 사실을 적는 것**이다.
             radius: Radius::Symbol,
             watch,
+            // **판 1 에는 승격이 없었다.** `Hand` 는 추측이 아니라 그 판의 사실이다 —
+            // 그때 결박을 만드는 경로가 `pal bind` 하나였다.
+            promoted_by: PromotedBy::Hand,
         }
     }
 }
@@ -732,6 +872,142 @@ mod tests {
         assert!(current_live.admissible());
         assert!(!current_stale.admissible());
         assert!(!superseded_live.admissible(), "대체된 결정이 유효로 보증됐다 — 낡음보다 나쁜 거짓 신호다");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 승격 — **세탁 금지가 타입인지 시험한다** (F10 §1 · §3.3)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    fn 제안(target: SymbolId, 여럿: bool) -> crate::narrative::Proposal {
+        use crate::narrative::{Classification, Fragment, RawSignals, ResolutionSignal};
+        let class = if 여럿 {
+            Classification::Candidates {
+                by: ResolutionSignal::FencedPath,
+                candidates: vec![target, 심볼("다른것")],
+            }
+        } else {
+            Classification::Bound { target, by: ResolutionSignal::UniqueSpan }
+        };
+        crate::narrative::Proposal {
+            item: crate::EntityId::mint(
+                crate::EntityKind::new("decision"),
+                crate::EntityOrigin::Document {
+                    path: "docs/x.md".to_owned(),
+                    anchor: "머리".to_owned(),
+                },
+            ),
+            fragment: Fragment {
+                path: crate::RepoPath::new("docs/x.md"),
+                anchor: "머리".to_owned(),
+                body: "이 함수는 X 때문에 재시도하지 않는다".to_owned(),
+                signals: RawSignals::default(),
+            },
+            class,
+        }
+    }
+
+    fn 자리() -> PromotionSite {
+        PromotionSite {
+            bound_at: Snapshot::single(
+                RepoId::new("r"),
+                TreeRef::Committed(ObjectName::from_bytes([0; 20])),
+            ),
+            bound_at_time: BoundTime::Worktree,
+            radius: crate::Radius::Symbol,
+            watch: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn 승격은_새_결박을_낳고_원본은_안_변한다() {
+        // **★ 문서 §3.3 의 목적 ①②가 여기 있다.** 되돌릴 수 있어야 하고, 원래 누구의
+        // 추론이었는지가 계보에 남아야 한다.
+        let s = 심볼("f");
+        let p = 제안(s, false);
+        let 원본 = p.clone();
+        let b = Binding::promote(&p, s, 자리()).expect("승격");
+
+        // ① 원본이 **바이트로** 그대로다 — `&` 로 받으므로 타입이 이미 막지만,
+        //    그 사실이 시험으로도 남아야 한다.
+        assert_eq!(p, 원본, "승격이 원본을 고쳤다 — 세탁 방지의 형태가 무너졌다");
+        // ② 계보가 원본을 가리킨다.
+        let PromotedBy::Proposal { item, by } = &b.promoted_by else {
+            panic!("승격인데 `Hand` 다 — 손으로 건 것과 구별이 안 된다");
+        };
+        assert_eq!(item, &p.item);
+        assert_eq!(*by, crate::narrative::ResolutionSignal::UniqueSpan);
+        assert!(b.promoted_by.is_promotion());
+        // ③ 조각의 본문이 결박의 메모다 — **이것이 실제 메모다**(ADR-0014).
+        assert_eq!(b.note, p.fragment.body);
+        assert_eq!(b.subject, p.item);
+    }
+
+    #[test]
+    fn 손으로_건_것은_승격이_아니다() {
+        // **둘이 값으로 갈린다.** 안 갈리면 *"어디까지가 기록이고 어디부터가 재구성인지
+        // 아무도 모른다"*(문서 §1)가 그대로 일어난다.
+        let s = 심볼("f");
+        let b = 결박(s, BodyDigest::of_normalized(b"x"));
+        assert_eq!(b.promoted_by, PromotedBy::Hand);
+        assert!(!b.promoted_by.is_promotion());
+    }
+
+    #[test]
+    fn 후보_밖의_좌표는_승인할_수_없다() {
+        // **★ 이것이 세탁을 막는 자리다.** 후보 밖을 승인할 수 있으면 사람이
+        // *"아마 이것일 것"* 을 넣을 수 있고, 그러면 제안이 아니라 **지어낸 것**이
+        // `asserted` 가 된다.
+        let s = 심볼("f");
+        let p = 제안(s, false);
+        let 남 = 심볼("남");
+        let e = Binding::promote(&p, 남, 자리()).expect_err("후보 밖인데 승격했다");
+        assert!(matches!(
+            e,
+            crate::narrative::PromotionRefusal::NotACandidate { candidates: 1, .. }
+        ), "{e:?}");
+    }
+
+    #[test]
+    fn 후보가_여럿이면_사람이_고른_것만_승인된다() {
+        // 기계가 안 고른다(§3.2). 사람이 고른 것이 후보 안이면 승인된다.
+        let s = 심볼("f");
+        let p = 제안(s, true);
+        assert_eq!(p.choices().len(), 2);
+        assert!(Binding::promote(&p, s, 자리()).is_ok());
+        assert!(Binding::promote(&p, 심볼("바깥"), 자리()).is_err());
+    }
+
+    #[test]
+    fn 미결박은_승인할_것이_없다() {
+        // **빈 것이 정확한 답이다** — 억지로 채우면 그것이 거짓 결박이다.
+        use crate::narrative::{Classification, PromotionRefusal};
+        let mut p = 제안(심볼("f"), false);
+        p.class = Classification::Unbound;
+        assert!(p.choices().is_empty());
+        assert_eq!(
+            Binding::promote(&p, 심볼("f"), 자리()).expect_err("미결박을 승인했다"),
+            PromotionRefusal::NothingToApprove
+        );
+    }
+
+    #[test]
+    fn 승격_경로가_둘뿐이다() {
+        // **셋째 길이 생기려면 이 열거를 늘려야 하고, 늘리는 커밋이 사람에게 보인다.**
+        // 이 단언이 그 커밋을 멈춘다.
+        let 둘 = [
+            PromotedBy::Hand,
+            PromotedBy::Proposal {
+                item: crate::EntityId::mint(
+                    crate::EntityKind::new("decision"),
+                    crate::EntityOrigin::Hand,
+                ),
+                by: crate::narrative::ResolutionSignal::Attached,
+            },
+        ];
+        let 이름: std::collections::BTreeSet<&str> = 둘.iter().map(PromotedBy::name).collect();
+        assert_eq!(이름.len(), 2, "두 길의 이름이 뭉갰다");
+        // 그리고 **둘 다 사람의 행위다** — 하나는 직접, 하나는 승인.
+        assert!(!둘[0].is_promotion() && 둘[1].is_promotion());
     }
 
     #[test]
