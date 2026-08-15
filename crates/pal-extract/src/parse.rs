@@ -484,21 +484,52 @@ pub struct MarkedComment {
 
 /// 표식이 붙은 주석을 모은다. **표식 없는 주석은 안 본다**(§3.4 가 기각했다).
 ///
-/// # 「붙어 있다」의 정의 — **바로 다음 형제**
+/// # 「붙어 있다」의 정의 — **인접한 다음 형제, 래퍼를 벗긴 자리**
 ///
 /// 주석의 부모 안에서 **그 주석 다음에 오는 첫 이름 있는 마디**가 붙는 대상이다.
 /// 사이에 다른 주석이 있으면 건너뛴다 — 여러 줄 주석 블록이 흔하기 때문이다.
 /// 다음 마디가 없으면 좌표가 **없고**, 없는 것을 지어내지 않는다.
+///
+/// # ⚠ 그리고 둘이 더 걸린다 — [ADR-0016] 이 요구한 형태다 (`[f10.6]`)
+///
+/// **F10-5 가 이 함수의 명제를 반증했다.** 적힌 것은 *"이 주석은 이 선언에 붙어
+/// 있다"* 였는데 계산한 것은 *"이 주석 **다음에** 이 선언이 시작한다"* 였고,
+/// 그 차이가 **거짓 결박 26.1%** 였다(`docs/gates/F10-5-signals.md` §4-나).
+/// 그래서 계산을 명제에 맞춘다:
+///
+///   · ★ **빈 줄로 갈리면 붙어 있는 것이 아니다.** *"붙어 있다"* 는 **인접**이고
+///     빈 줄은 **경계**다. 파일·모듈 머리 주석과 앞 함수의 꼬리 주석이 여기서 갈린다
+///   · ★ **래퍼 마디를 벗긴다.** `export` 는 **가시성**을, `const`/`let` 은 **저장
+///     종류**를 적을 뿐 **선언이 아니다.** 심볼이 서는 마디까지 벗겨야 부르는 쪽
+///     (`pal-cli::narrative` 의 `자리` 맵)의 **정확 일치** 조회가 같은 바이트를 본다.
+///     ⚠ **정확 일치를 푸는 것이 아니다** — 거리를 열면 빈 줄로 갈린 주석이 **더
+///     멀리 있는 것에도** 붙는다. 벗기는 것은 구문 트리의 사실이고 거리를 여는 것은
+///     추측이다
+///
+/// ⚠ **벗길 목록(`wrappers`)은 추출기가 넘긴다.** 여기 박으면 *"모든 언어가
+/// TypeScript 처럼 생겼다"* 는 주장이 된다 — Kotlin 은 **빈 목록**이고, 그것이
+/// *"안 봤다"* 가 아니라 *"보고 비었다"* 임을 시험이 센다.
 #[must_use]
-pub fn marked_comments(root: Node<'_>, source: &[u8], markers: &[&str]) -> Vec<MarkedComment> {
+pub fn marked_comments(
+    root: Node<'_>,
+    source: &[u8],
+    markers: &[&str],
+    wrappers: &[&str],
+) -> Vec<MarkedComment> {
     let mut out = Vec::new();
-    모은다(root, source, markers, &mut out);
+    모은다(root, source, markers, wrappers, &mut out);
     // **결정적 순서** — 소스 순서다. 흔들리면 조각의 앵커가 흔들린다.
     out.sort_by_key(|c| c.span.byte_start);
     out
 }
 
-fn 모은다(node: Node<'_>, source: &[u8], markers: &[&str], out: &mut Vec<MarkedComment>) {
+fn 모은다(
+    node: Node<'_>,
+    source: &[u8],
+    markers: &[&str],
+    wrappers: &[&str],
+    out: &mut Vec<MarkedComment>,
+) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         if child.kind().contains("comment") {
@@ -515,28 +546,92 @@ fn 모은다(node: Node<'_>, source: &[u8], markers: &[&str], out: &mut Vec<Mark
                         line_end: u32::try_from(child.end_position().row + 1).unwrap_or(u32::MAX),
                     },
                     text: text.to_owned(),
-                    attaches_to_byte: 다음_선언(child),
+                    attaches_to_byte: 다음_선언(child, source, wrappers),
                 });
             }
             continue;
         }
-        모은다(child, source, markers, out);
+        모은다(child, source, markers, wrappers, out);
     }
 }
 
-/// 이 주석 **다음에 오는 첫 이름 있는 마디**의 시작 바이트.
+/// 이 주석에 **인접한** 다음 선언의 시작 바이트 — **래퍼를 벗긴 자리**.
 ///
-/// 주석을 건너뛰는 것이 이 함수의 전부다 — 주석 블록이 여러 줄이면 그 전부가 같은
-/// 선언에 붙는다. 다음이 없으면 [`None`] 이고, 그것이 *"이 주석에는 좌표가 없다"* 다.
-fn 다음_선언(comment: Node<'_>) -> Option<usize> {
+/// 셋이 전부다: 주석을 건너뛰고, **빈 줄에서 멈추고**, **래퍼를 벗긴다.**
+/// 주석 블록이 여러 줄이면 그 전부가 같은 선언에 붙는다. 다음이 없거나 **빈 줄로
+/// 갈리면** [`None`] 이고, 그것이 *"이 주석에는 좌표가 없다"* 다.
+fn 다음_선언(comment: Node<'_>, source: &[u8], wrappers: &[&str]) -> Option<usize> {
+    let mut 앞 = comment;
     let mut n = comment.next_named_sibling();
     while let Some(x) = n {
-        if !x.kind().contains("comment") {
-            return Some(x.start_byte());
+        // ★ **빈 줄은 경계다.** 주석을 건너뛸 때도 **걸음마다** 본다 —
+        // `// A` · 빈 줄 · `// B` · 선언 에서 **A 는 그 선언에 안 붙는다.**
+        if 사이에_빈_줄(source, 앞.end_byte(), x.start_byte()) {
+            return None;
         }
+        if !x.kind().contains("comment") {
+            return Some(벗긴다(x, wrappers).start_byte());
+        }
+        앞 = x;
         n = x.next_named_sibling();
     }
     None
+}
+
+/// 두 자리 사이에 **공백만 있는 줄**이 하나라도 있는가.
+///
+/// 들여쓰기가 있는 빈 줄도 빈 줄이다. 글자가 하나라도 있으면 그 줄은 안 비었다.
+fn 사이에_빈_줄(source: &[u8], from: usize, to: usize) -> bool {
+    if from >= to || to > source.len() {
+        return false;
+    }
+    let mut 줄바꿈 = 0u8;
+    for &b in &source[from..to] {
+        match b {
+            b'\n' => {
+                줄바꿈 = 줄바꿈.saturating_add(1);
+                if 줄바꿈 >= 2 {
+                    return true;
+                }
+            }
+            // 공백은 줄을 안 끊는다.
+            b' ' | b'\t' | b'\r' | b'\x0c' => {}
+            // 글자가 있으면 그 줄은 비어 있지 않다 — 다시 센다.
+            _ => 줄바꿈 = 0,
+        }
+    }
+    false
+}
+
+/// 래퍼 마디를 벗긴다 — **심볼이 서는 마디까지.**
+///
+/// `export function f` 의 `export_statement` 와 `const X = …` 의
+/// `lexical_declaration` 이 그것이다. **그 마디의 시작 바이트는 `export`·`const`
+/// 키워드 자리**인데 2층 심볼은 안쪽에서 서므로, 안 벗기면 부르는 쪽의 정확 일치
+/// 조회가 **한 바이트 차이로** 못 찾는다.
+///
+/// **벗길 목록은 추출기가 넘긴다**(`[f10.6].attachment_ruling` 처분 (다)).
+fn 벗긴다<'a>(node: Node<'a>, wrappers: &[&str]) -> Node<'a> {
+    let mut 지금 = node;
+    // **깊이를 막는다** — `export declare const` 처럼 겹칠 수 있고, 문법이 자기를
+    // 감싸면 무한이 된다. 넷이면 실물에 충분하고 넘으면 안 벗긴 채로 낸다.
+    for _ in 0..4 {
+        if !wrappers.contains(&지금.kind()) {
+            return 지금;
+        }
+        let mut cursor = 지금.walk();
+        let 안쪽 = 지금
+            .named_children(&mut cursor)
+            .find(|c| !c.kind().contains("comment") && c.kind() != "decorator");
+        drop(cursor);
+        match 안쪽 {
+            Some(x) => 지금 = x,
+            // 안쪽이 선언이 아닌 자리(`export { a }`)다. **벗기지 않는다** —
+            // 좌표가 안 맞으면 미결박이고, 그것이 정확한 값이다.
+            None => return 지금,
+        }
+    }
+    지금
 }
 
 #[cfg(test)]
@@ -552,6 +647,20 @@ mod marked_comment_tests {
         crate::TypeScriptExtractor.marked_comments(src.as_bytes(), &표식).expect("파싱")
     }
 
+    fn kt(src: &str) -> Vec<MarkedComment> {
+        crate::KotlinExtractor.marked_comments(src.as_bytes(), &표식).expect("파싱")
+    }
+
+    /// 첫 심볼이 서는 바이트 — **부르는 쪽이 정확 일치로 찾는 그 값이다.**
+    fn 첫_심볼_시작(src: &str, kotlin: bool) -> usize {
+        let g = if kotlin {
+            crate::KotlinExtractor.extract(src.as_bytes()).expect("추출")
+        } else {
+            crate::TypeScriptExtractor.extract(src.as_bytes()).expect("추출")
+        };
+        g.symbols.first().expect("심볼이 있다").span.byte_start
+    }
+
     #[test]
     fn 표식_있는_주석만_모은다() {
         let c = ts("// 그냥 설명\n// @decision: 재시도하지 않는다\nexport function f() {}\n");
@@ -560,13 +669,95 @@ mod marked_comment_tests {
     }
 
     #[test]
-    fn 주석이_다음_선언에_붙는다() {
-        // **주석은 가장 정확한 좌표를 이미 갖고 있다**(§3.4) — 붙어 있는 선언.
-        let src = "// ADR-0042 이래서 이렇다\nexport function cancel() {}\n";
+    fn 주석이_심볼이_서는_자리에_붙는다() {
+        // ★ **이것이 `[f10.6]` 이 고친 명제 그대로다**(#62 · [ADR-0016]).
+        //
+        // 옛 시험은 `src[at..].starts_with("export function cancel")` 을 단언했다 —
+        // **그것이 옛 명제였고 옛 고장이었다.** 주석이 낸 바이트가 `export` 키워드
+        // 자리를 가리키는데 2층 심볼은 `function` 에서 서므로, `narrative` 의 정확
+        // 일치 조회가 **한 바이트 차이로** 못 찾았다(못 붙은 307 중 211 · #62).
+        //
+        // **그래서 단언은 「무슨 글자로 시작하는가」가 아니라 「심볼이 서는 자리와
+        // 같은가」여야 한다** — 그것이 부르는 쪽이 실제로 하는 계산이다.
+        for src in [
+            "// ADR-0042 이래서 이렇다\nexport function cancel() {}\n",
+            "// ADR-0042\nfunction plain() {}\n",
+            "// ADR-0042\nexport const cancel = 1\n",
+            "// ADR-0042\nconst cancel = 1\n",
+            "// ADR-0042\nexport class C {}\n",
+            "// ADR-0042\nexport interface I { a: number }\n",
+            "// ADR-0042\nexport type T = number\n",
+            "// ADR-0042\nexport default function named() {}\n",
+        ] {
+            let c = ts(src);
+            assert_eq!(c.len(), 1, "{src}");
+            let at = c[0].attaches_to_byte.expect("붙을 선언이 있다");
+            assert_eq!(at, 첫_심볼_시작(src, false), "래퍼를 안 벗겼다: {src}");
+        }
+    }
+
+    #[test]
+    fn 빈_줄로_갈리면_안_붙는다() {
+        // ★ **거짓 결박 여섯 중 다섯이 이 형태였다**(F10-5 §4-나). `pad2` 가 가장
+        // 또렷하다 — 자기 doc 주석을 **따로 갖고 있는데도** 그 위의 파일 머리 주석이
+        // 걸렸다. *"붙어 있다"* 는 **인접**이고 빈 줄은 **경계**다.
+        let 파일머리 = "// ADR-0001 이 파일의 식별자 정책\n\n\
+                        /** 두 자리로 채운다 */\nexport function pad2() {}\n";
+        assert_eq!(ts(파일머리)[0].attaches_to_byte, None, "파일 머리 주석이 붙었다");
+
+        // **앞 함수의 꼬리 주석** — 여섯 중 하나가 이것이었다(`resolveClaimBranch`).
+        let 꼬리 = "export function a() {}\n\
+                    // ADR-0018 gh 실패는 throw 하지 않는다\n\n\
+                    export function b() {}\n";
+        assert_eq!(ts(꼬리)[0].attaches_to_byte, None, "꼬리 주석이 다음 선언에 붙었다");
+
+        // ⚠ **들여쓰기가 있는 빈 줄도 빈 줄이다.**
+        let 들여쓰기 = "// ADR-0001\n   \nexport function f() {}\n";
+        assert_eq!(ts(들여쓰기)[0].attaches_to_byte, None, "공백만 있는 줄을 안 셌다");
+    }
+
+    #[test]
+    fn 빈_줄이_없으면_그대로_붙는다() {
+        // **반대 방향** — 빈 줄 규칙이 「아무것도 안 붙이는 인입기」가 되면 안 된다.
+        // ⚠ **이 시험이 없으면 `다음_선언` 이 늘 `None` 을 내도 위 시험이 통과한다.**
+        let src = "/** ADR-0024 이 타입이 담는 것 */\nexport type OracleMap = number\n";
         let c = ts(src);
-        assert_eq!(c.len(), 1);
-        let at = c[0].attaches_to_byte.expect("붙을 선언이 있다");
-        assert!(src[at..].starts_with("export function cancel"), "{}", &src[at..]);
+        assert_eq!(c[0].attaches_to_byte, Some(첫_심볼_시작(src, false)));
+    }
+
+    #[test]
+    fn 빈_줄은_주석_블록도_가른다() {
+        // `// A` · 빈 줄 · `// B` · 선언 — **A 는 그 선언에 안 붙고 B 는 붙는다.**
+        // 걸음마다 빈 줄을 안 보면 A 가 B 를 건너뛰면서 **빈 줄도 함께 건너뛴다.**
+        let src = "// ADR-0001 위쪽 블록\n\n// ADR-0002 아래쪽 블록\nexport function f() {}\n";
+        let c = ts(src);
+        assert_eq!(c.len(), 2);
+        assert_eq!(c[0].attaches_to_byte, None, "빈 줄 위의 주석이 붙었다");
+        assert_eq!(c[1].attaches_to_byte, Some(첫_심볼_시작(src, false)));
+    }
+
+    #[test]
+    fn 코틀린도_심볼이_서는_자리에_붙는다() {
+        // ★ **`래퍼` 가 빈 것이 「안 봤다」가 아니라 「보고 비었다」임을 이 시험이 센다.**
+        // ⚠ **실 코퍼스로는 못 잰다** — portal-backend 의 `.kt` 에 `ADR-` 주석이
+        // **0 건**이고 그것은 0% 가 아니라 **대조 불가**다(`[f10.6].language_ruling`).
+        for src in [
+            "// ADR-0007 이래서 이렇다\nclass C(val a: Int)\n",
+            "// ADR-0007\ninternal fun f() {}\n",
+            "// ADR-0007\nval x = 1\n",
+        ] {
+            let c = kt(src);
+            assert_eq!(c.len(), 1, "{src}");
+            let at = c[0].attaches_to_byte.expect("붙을 선언이 있다");
+            assert_eq!(at, 첫_심볼_시작(src, true), "코틀린 좌표가 어긋난다: {src}");
+        }
+    }
+
+    #[test]
+    fn 코틀린도_빈_줄로_갈리면_안_붙는다() {
+        // **처분 (나)는 언어 공통이다** — `다음_선언` 하나가 두 언어를 다 지난다.
+        let src = "// ADR-0007 파일 머리 주석\n\nclass C(val a: Int)\n";
+        assert_eq!(kt(src)[0].attaches_to_byte, None, "코틀린 파일 머리 주석이 붙었다");
     }
 
     #[test]

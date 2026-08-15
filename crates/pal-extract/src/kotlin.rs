@@ -16,6 +16,18 @@ use crate::parse::{ExtractError, normalize, parse_with, recovery_sites};
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
 pub(crate) static KOTLIN: KotlinExtractor = KotlinExtractor;
 
+/// **벗길 래퍼가 없다** — `[f10.6].attachment_ruling` 처분 (다).
+///
+/// `queries/kotlin/top-level.scm` 이 `source_file` 의 **직계 자식**을 심볼로 세므로
+/// 주석의 다음 형제가 **곧 그 마디**다. 가시성(`internal`)과 `annotation` 은
+/// `modifiers` 로 **그 마디 안**에 들어가고, 그래서 벗길 것이 없다.
+///
+/// ★ **빈 것이 「안 봤다」가 아니라 「보고 비었다」임을 시험이 센다** —
+/// `코틀린도_심볼이_서는_자리에_붙는다`. ⚠ **실 코퍼스로는 못 잰다**: portal-backend 의
+/// `.kt` 에 `ADR-` 표식 주석이 **0 건**이고, 그것은 0% 가 아니라 **대조 불가**다
+/// ([ADR-0002] · `[f10.6].language_ruling`).
+const 래퍼: [&str; 0] = [];
+
 /// S0 이 세운 최상위 쿼리 추출기.
 ///
 /// **이 조각은 이것을 다시 짓지 않는다.** `queries/kotlin/top-level.scm` 을 CLI
@@ -45,7 +57,7 @@ impl LanguageExtractor for KotlinExtractor {
     ) -> Result<Vec<crate::parse::MarkedComment>, ExtractError> {
         let language = tree_sitter::Language::new(brokk_tree_sitter_kotlin::LANGUAGE);
         let tree = parse_with(&language, source)?;
-        Ok(crate::parse::marked_comments(tree.root_node(), source, markers))
+        Ok(crate::parse::marked_comments(tree.root_node(), source, markers, &래퍼))
     }
 }
 

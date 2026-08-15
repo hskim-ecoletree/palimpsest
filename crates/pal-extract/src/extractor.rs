@@ -53,6 +53,10 @@ pub trait LanguageExtractor: Send + Sync {
     /// 때문이고, 실제 수집은 [`crate::parse::marked_comments`] **하나**가 한다.
     /// 언어마다 따로 쓰면 두 언어의 「붙어 있다」가 서로 다른 규칙 위에 선다.
     ///
+    /// ⚠ **그러나 벗길 래퍼 목록은 언어마다 다르다**(`[f10.6]` 처분 (다)) —
+    /// 규칙은 한 곳에 있고 **목록만** 구현이 넘긴다. TypeScript 는 넷,
+    /// Kotlin 은 **빈 목록**이다.
+    ///
     /// # Errors
     /// 문법을 붙이지 못하거나 파싱이 중단되면 [`ExtractError`].
     fn marked_comments(&self, source: &[u8], markers: &[&str])

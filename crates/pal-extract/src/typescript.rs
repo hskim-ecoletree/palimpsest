@@ -29,6 +29,20 @@ use crate::scopes::{self, Scoped};
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
 pub(crate) static TYPESCRIPT: TypeScriptExtractor = TypeScriptExtractor;
 
+/// **벗길 래퍼 넷** — `[f10.6].attachment_ruling` 처분 (다).
+///
+/// `export` 는 **가시성**을, `const`/`let`/`var` 는 **저장 종류**를 적을 뿐
+/// **선언이 아니다.** 심볼은 안쪽 마디에서 선다 — `export_statement` 는
+/// [`TsWalk::visit_export`] 를 거쳐 안쪽 선언에서, `lexical_declaration` 은
+/// [`TsWalk::visit_declarators`] 를 거쳐 `variable_declarator` 에서.
+/// **그 차이를 안 지우면 주석의 좌표가 한 바이트 어긋나 미결박이 된다**(#62).
+const 래퍼: [&str; 4] = [
+    "export_statement",
+    "ambient_declaration",
+    "lexical_declaration",
+    "variable_declaration",
+];
+
 /// TypeScript 추출기.
 ///
 /// **`.tsx` 는 이 문법이 아니다.** `tree_sitter_typescript` 는 `LANGUAGE_TYPESCRIPT` 와
@@ -58,7 +72,7 @@ impl LanguageExtractor for TypeScriptExtractor {
     ) -> Result<Vec<crate::parse::MarkedComment>, ExtractError> {
         let language = tree_sitter::Language::new(tree_sitter_typescript::LANGUAGE_TYPESCRIPT);
         let tree = crate::parse::parse_with(&language, source)?;
-        Ok(crate::parse::marked_comments(tree.root_node(), source, markers))
+        Ok(crate::parse::marked_comments(tree.root_node(), source, markers, &래퍼))
     }
 }
 
