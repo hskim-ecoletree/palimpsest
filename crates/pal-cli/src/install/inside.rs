@@ -80,6 +80,24 @@ impl Root {
         // 가리키는 심링크가 일반 파일로 바뀌고 모드·하드링크가 함께 소실된다.
         Ok(candidate)
     }
+
+    /// **밖에서 받은 아무 경로**가 대상 안인가 — 안이면 그 자리를, 밖이면 `None`.
+    ///
+    /// # 왜 [`Root::join`] 과 따로 서는가
+    ///
+    /// `join` 은 **우리가 만든 상대 경로**를 위한 문이라 절대 경로를 곧바로 거절한다
+    /// (`Path::join` 이 base 를 통째로 버리기 때문이다). 그런데 `git` 에게 자리를
+    /// 물으면(`rev-parse --git-path` · `config --get core.excludesFile`) **절대 경로로
+    /// 답할 수 있고**, 그 자리가 대상 안일 수도 밖일 수도 있다.
+    ///
+    /// 그래서 이 문은 *"이 경로가 대상 안인가"* 만 판정한다. 밖이면 **읽지 않는다** —
+    /// 우리는 대상 안만 읽는다(`[f24]` ⑦ 의 뒷면).
+    #[must_use]
+    pub fn 안이면(&self, p: &Path) -> Option<PathBuf> {
+        let candidate = if p.is_absolute() { p.to_path_buf() } else { self.0.join(p) };
+        let real = 실제_경로(&candidate, 0).ok()?;
+        real.starts_with(&self.0).then_some(candidate)
+    }
 }
 
 impl fmt::Display for Root {

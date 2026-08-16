@@ -24,6 +24,7 @@
 mod blocks;
 mod child;
 mod doctor;
+mod eol;
 mod guard;
 mod hooks;
 mod ignore;
@@ -642,9 +643,15 @@ fn 블록_하나(
 }
 
 /// 이 경로의 기록을 **갈아 끼운다** — 목록을 통째로 비웠다 다시 채우지 않는다.
+///
+/// ⚠ **자리를 그대로 둔다.** 빼고 뒤에 붙이면 두 번째 설치의 매니페스트가 첫 번째와
+/// **순서만 다른 바이트**가 되고, 게이트 ① 의 멱등(*"두 번째 설치가 첫 번째와 같은
+/// 상태를 낸다"*)이 거기서 깨진다.
 fn 갈아_끼운다(기록: &mut Journal, entry: BlockEntry) {
-    기록.m.blocks.retain(|b| b.path != entry.path);
-    기록.m.blocks.push(entry);
+    match 기록.m.blocks.iter_mut().find(|b| b.path == entry.path) {
+        Some(자리) => *자리 = entry,
+        None => 기록.m.blocks.push(entry),
+    }
 }
 
 fn 마커(rel: &Rel) -> &'static layout::Markers {
@@ -721,8 +728,9 @@ pub fn update(target: &Path) -> Result<()> {
         let rel = Rel::new(res.path);
         let path = root.join(&rel)?;
         let 새_sha = sha256::내용(res.body.as_bytes());
-        let 실물 =
-            if path.exists() { Some(sha256::내용(&guard::읽는다(&path)?)) } else { None };
+        // **바이트를 한 번만 읽는다** — sha 를 뜨는 데도, 되쓸 줄바꿈을 정하는 데도 쓴다.
+        let 지금_바이트 = if path.exists() { Some(guard::읽는다(&path)?) } else { None };
+        let 실물 = 지금_바이트.as_deref().map(sha256::내용);
 
         // ★ **사람의 것인가** — 종류로도 대고 sha 로도 댄다.
         //
@@ -751,7 +759,11 @@ pub fn update(target: &Path) -> Result<()> {
             std::fs::create_dir_all(parent)
                 .with_context(|| format!("만들지 못했다: {}", parent.display()))?;
         }
-        guard::쓴다(&path, res.body.as_bytes())?;
+        // ★ **그 파일의 기존 줄바꿈을 보존한다**(소유자 결정 2026-08-16). 정규화해서
+        // 대조하면서 되쓸 때 LF 로 통일하면, `core.autocrlf` 클론에서 우리 파일 다섯이
+        // 사용자의 `git status` 에 **매번** 뜬다. 없던 파일은 우리 것이라 LF 다.
+        let crlf = eol::그_파일의_줄바꿈(지금_바이트.as_deref());
+        guard::쓴다(&path, &eol::맞춘다(res.body.as_bytes(), crlf))?;
         report.say("교체", res.path);
         files.push(FileEntry { path: rel, sha256: 새_sha, origin: Origin::Ours });
     }

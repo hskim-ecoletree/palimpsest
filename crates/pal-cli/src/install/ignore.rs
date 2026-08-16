@@ -77,7 +77,7 @@ use std::process::{Command, Stdio};
 use anyhow::{Context, Result};
 
 use super::child;
-use super::inside::{Rel, Root};
+use super::inside::Root;
 use super::layout::{DERIVED, IGNORE_FILE};
 
 /// 한 경로에 대해 git 이 답한 것.
@@ -244,8 +244,12 @@ fn 소스들(root: &Root, 질의: &str) -> Result<Vec<(PathBuf, String)>> {
 }
 
 /// 대상 **안**으로 확정되는 자리만 목록에 든다. 밖이면 조용히 빠진다.
-fn 안쪽만(root: &Root, rel: &str, prefix: String, out: &mut Vec<(PathBuf, String)>) {
-    if let Ok(path) = root.join(&Rel::new(rel)) {
+///
+/// ⚠ git 은 **절대 경로로 답할 수 있다**(`rev-parse --git-path` · `config --get`).
+/// 그래서 [`Root::join`] 이 아니라 [`Root::안이면`] 을 지난다 — 절대 경로여도 대상
+/// 안이면 읽고, 밖이면 안 읽는다.
+fn 안쪽만(root: &Root, 자리: &str, prefix: String, out: &mut Vec<(PathBuf, String)>) {
+    if let Some(path) = root.안이면(std::path::Path::new(자리)) {
         out.push((path, prefix));
     }
 }

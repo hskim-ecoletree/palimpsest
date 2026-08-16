@@ -72,10 +72,20 @@ pub fn add(path: &Path, markers: &Markers, block: &str) -> Result<Added> {
         return Ok(Added::AlreadyThere);
     }
 
+    // ★ **그 파일의 줄바꿈으로 넣는다**(소유자 결정 2026-08-16). 우리 줄만 LF 로 튀면
+    // 사용자의 `git status` 에 우리 블록이 **매번** 뜬다.
+    let crlf = super::eol::crlf_인가(&existing);
     // **끝 개행이 없으면 개행을 먼저 넣는다.** 안 넣으면 사용자의 마지막 규칙과 우리
     // 첫 줄이 한 줄로 붙어 **둘 다 파괴된다**(실측).
     let needs_newline = !existing.is_empty() && !existing.ends_with(b"\n");
-    let inserted = if needs_newline { format!("\n{block}") } else { block.to_owned() };
+    let mut bytes = Vec::new();
+    if needs_newline {
+        bytes.extend_from_slice(if crlf { b"\r\n" } else { b"\n" });
+    }
+    bytes.extend_from_slice(&super::eol::맞춘다(block.as_bytes(), crlf));
+    // 블록은 우리가 만든 UTF-8 이고 여기서 더한 것은 `\r` 뿐이라 실패할 수 없다.
+    let inserted = String::from_utf8(bytes)
+        .with_context(|| format!("블록이 UTF-8 이 아니게 됐다: {}", path.display()))?;
 
     let mut next = existing;
     next.extend_from_slice(inserted.as_bytes());
@@ -189,9 +199,24 @@ fn 마커가_있나(existing: &[u8], markers: &Markers) -> bool {
 }
 
 /// 우리 바이트열이 앉은 **원본에서의 구간**.
+///
+/// # ★ 줄바꿈을 맞춰서 찾는다 — 소유자 결정 (2026-08-16)
+///
+/// `core.autocrlf` 가 켜진 클론에서는 우리가 넣은 블록이 CRLF 로 앉아 있고, 매니페스트
+/// 가 지고 있는 `inserted` 는 LF 다. 바이트 완전 일치로만 찾으면 **`uninstall` 이
+/// 통째로 거부되고 걷어낼 방법이 없어진다**(실측).
+///
+/// 찾기는 정규화 공간에서 하고 **지우기는 원본 구간에서** 한다 —
+/// [`super::eol::사상`] 이 그 둘을 잇는다. 그래서 블록 밖의 바이트는 한 개도 안 움직인다.
 fn 자리(existing: &[u8], inserted: &[u8]) -> Option<(usize, usize)> {
-    let at = find(existing, inserted)?;
-    Some((at, at + inserted.len()))
+    // 빠른 길 — 바이트가 그대로면 사상을 만들 필요가 없다.
+    if let Some(at) = find(existing, inserted) {
+        return Some((at, at + inserted.len()));
+    }
+    let (정규, 사상) = super::eol::사상(existing);
+    let 바늘 = super::eol::정규화(inserted);
+    let at = find(&정규, &바늘)?;
+    Some((사상[at], 사상[at + 바늘.len()]))
 }
 
 /// 바이트열 안에서 바늘의 첫 자리.
@@ -268,6 +293,10 @@ mod tests {
             // NUL 바이트 — 텍스트 필터가 사용자 줄을 자른 자리.
             &b"a\n\0\xff\xfe\nb\n"[..],
             &b""[..],
+            // ★ CRLF — `core.autocrlf` 클론의 모양. 왕복이 **바이트 동일**이어야 한다.
+            &b"a\r\nb\r\n"[..],
+            // 끝 개행 없는 CRLF — 우리가 개행을 **먼저** 넣는 자리. 그 개행도 CRLF 다.
+            &b"a\r\nb"[..],
         ] {
             let path = dir.join("f");
             std::fs::write(&path, 원본).expect("원본");
@@ -309,6 +338,12 @@ mod tests {
     }
 
     /// ★ **stale 마커가 사용자가 나중에 만든 파일을 지운 형태** — 여기서 막힌다.
+    ///
+    /// ⚠ **판정이 「거부」에서 「뺄 것이 없다」로 바뀌었다.** 재는 성질은 그대로다 —
+    /// **사용자 파일이 한 바이트도 안 움직인다.** 바뀐 것은 그 뒤에 남는 상태다:
+    /// 옛 판정은 rc=1 이라 `uninstall` 이 **영영 못 돌았고**, 사용자에게 남는 길이
+    /// 「우리가 안 만든 자기 파일을 지운다」뿐이었다. 우리 마커가 **하나도 없는**
+    /// 파일은 우리가 걷을 것이 없는 파일이다.
     #[test]
     fn 사용자가_나중에_만든_파일을_안_지운다() {
         let dir = 방("stale");
@@ -322,8 +357,11 @@ mod tests {
         let 사용자_것 = "사용자가 쓴 것\n";
         std::fs::write(&path, 사용자_것).expect("사용자 파일");
 
-        // 우리 바이트열이 안 보이므로 **거부한다** — 지우지 않는다.
-        assert!(remove(&path, &IGNORE_MARKERS, &bytes, created).is_err());
+        // 우리 마커도 우리 바이트열도 없다 — **뺄 것이 없고, 지우지도 않는다.**
+        assert!(matches!(
+            remove(&path, &IGNORE_MARKERS, &bytes, created).expect("빼기"),
+            Removal::Missing
+        ));
         assert_eq!(std::fs::read_to_string(&path).expect("읽기"), 사용자_것);
     }
 
@@ -341,6 +379,37 @@ mod tests {
         std::fs::write(&path, &훼손).expect("훼손");
         assert!(remove(&path, &IGNORE_MARKERS, &bytes, false).is_err());
         assert_eq!(std::fs::read_to_string(&path).expect("읽기"), 훼손, "거부했는데 파일이 바뀌었다");
+    }
+
+    /// ★ **매니페스트가 LF 를 지고 있어도 CRLF 실물에서 걷힌다.**
+    ///
+    /// `core.autocrlf` 클론의 모양이다 — 설치는 LF 기계에서 했고 그 `inserted` 가
+    /// 매니페스트에 실려 왔는데 워킹트리의 파일은 CRLF 다. 옛 코드는 여기서 **통째로
+    /// 거부**했고 걷어낼 방법이 없었다.
+    #[test]
+    fn lf_기록으로_crlf_실물을_걷는다() {
+        let dir = 방("줄바꿈기록");
+        let path = dir.join("f");
+        std::fs::write(&path, b"a\n").expect("원본");
+        let Added::Inserted { bytes, .. } = add(&path, &IGNORE_MARKERS, &블록()).expect("더하기")
+        else {
+            panic!("이미 있다고 나왔다");
+        };
+        // 파일 전체가 CRLF 가 된 채로 다시 왔다(클론이 그렇게 준다).
+        let crlf = std::fs::read_to_string(&path).expect("읽기").replace('\n', "\r\n");
+        std::fs::write(&path, &crlf).expect("CRLF");
+
+        // 기록은 LF 그대로다 — 그래도 **찾고 걷는다.**
+        assert_eq!(
+            super::상태(&path, &IGNORE_MARKERS, &bytes).expect("상태"),
+            super::상태::그대로
+        );
+        remove(&path, &IGNORE_MARKERS, &bytes, false).expect("빼기");
+        assert_eq!(
+            std::fs::read(&path).expect("읽기"),
+            b"a\r\n",
+            "블록 밖의 바이트가 움직였다"
+        );
     }
 
     /// ★ **사용자가 우리보다 먼저 써 둔 같은 줄을 안 지운다.**

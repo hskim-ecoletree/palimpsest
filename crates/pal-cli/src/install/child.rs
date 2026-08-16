@@ -40,6 +40,7 @@ const 간격: Duration = Duration::from_millis(1);
 
 /// 자식이 낸 것 — [`std::process::Output`] 과 같은 모양이되 **우리가 상한을 걸고**
 /// 모은 것이다.
+#[derive(Debug)]
 pub struct 대답 {
     pub status: ExitStatus,
     pub stdout: Vec<u8>,
