@@ -436,3 +436,79 @@ fn 파이프_방어가_이_플랫폼에서는_안_재진다() {
          막는지는 이 플랫폼에서 안 쟀다**"
     );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. **매니페스트의 크기가 공격자 손에 있다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 매니페스트의 `files` 를 **정당한 경로로만** 불린다.
+///
+/// ★ 경계 검사가 못 막는 형태다 — 하나하나가 전부 우리가 놓을 수 있는 자리다.
+fn 항목을_불린다(root: &Path, 개수: usize) {
+    let mp = 매니페스트_자리(root);
+    let mut m = 값(&mp);
+    let files = m["files"].as_array_mut().expect("files");
+    for i in 0..개수 {
+        files.push(serde_json::json!({
+            "path": format!(".claude/pal/채움-{i}.md"),
+            "sha256": "0".repeat(64),
+            "origin": "ours",
+        }));
+    }
+    쓴다(&mp, &m);
+}
+
+/// ★ **커밋되는 파일 하나로 거는 DoS.**
+///
+/// 관측(고치기 전): 항목 200개 0.12s · 800개 1.18s · **3,200개 18.09s** ·
+/// 20,000개는 60초에 미완료. 항목 **하나를 걷을 때마다 매니페스트 전체를 다시 썼다**
+/// (O(n²)). 매니페스트는 대상 안의 **커밋되는 평범한 파일**이라 크기가 남의 손에 있고,
+/// 전부 정당한 경로라 경계 검사가 못 막는다.
+#[test]
+fn 매니페스트의_항목_수가_무기가_되지_않는다() {
+    let 방 = 방("항목수");
+    성공(&방.안, &["install"]);
+    항목을_불린다(&방.안, 3_200);
+
+    let t0 = std::time::Instant::now();
+    let out = 시간_안에(&방.안, &["uninstall"], 30_000);
+    assert!(
+        !out.status.success(),
+        "상한을 넘긴 매니페스트를 그대로 걷었다 ({:?})",
+        t0.elapsed()
+    );
+    assert!(
+        t0.elapsed() < std::time::Duration::from_secs(5),
+        "항목 수에 값이 붙어 있다 — {:?} 걸렸다",
+        t0.elapsed()
+    );
+    let stderr = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert!(stderr.contains("상한"), "무엇이 걸렸는지 안 적었다:\n{stderr}");
+}
+
+/// ★ **상한 안이면 값이 항목 수에 선형이다** — 그리고 걷어낸다.
+///
+/// 상한만으로는 부족하다. 상한 바로 아래에서 O(n²) 가 남아 있으면 같은 형태가
+/// 그대로 산다 — 그래서 **상한 가장자리**를 재고, 그 자리가 빨라야 한다.
+#[test]
+fn 상한_안의_큰_매니페스트도_빠르게_걷힌다() {
+    let 방 = 방("상한가장자리");
+    성공(&방.안, &["install"]);
+    // 설치가 적는 경로가 17개다. 상한(256) 바로 아래까지 채운다.
+    항목을_불린다(&방.안, 230);
+
+    let t0 = std::time::Instant::now();
+    let out = 시간_안에(&방.안, &["uninstall"], 30_000);
+    assert!(
+        out.status.success(),
+        "상한 안인데 거부했다\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(
+        t0.elapsed() < std::time::Duration::from_secs(3),
+        "상한 가장자리에서 {:?} 걸렸다",
+        t0.elapsed()
+    );
+    assert!(!방.안.join(".claude").exists(), "`.claude/` 가 남았다");
+}

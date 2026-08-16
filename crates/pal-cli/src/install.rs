@@ -805,12 +805,24 @@ pub fn uninstall(target: &Path) -> Result<()> {
         bail!("아무것도 지우지 않았다.\n\n{}", 훼손.join("\n\n"));
     }
 
-    // ── 2단계 · 적용. ★ **기록이 걸음마다 앞선다 — 여기에도** ───────────────
+    // ── 2단계 · 적용. ★ **기록이 걸음마다 앞선다 — 그러나 걸음마다 쓰지는 않는다** ──
     //
     // `install` 은 걸음마다 매니페스트를 다시 썼는데 `uninstall` 은 안 썼다. 그래서
     // 파일 루프 중간에서 실패하면 **이미 지운 것이 기록에 그대로 남고**, 다시 돌려도
-    // 같은 자리에서 같은 실패를 반복했다. 이제 한 항목을 걷을 때마다 그 항목을 기록에서
-    // 뺀다 — 다시 돌리면 **이어서 끝난다.**
+    // 같은 자리에서 같은 실패를 반복했다. 그래서 앞 회차가 **한 항목마다 매니페스트
+    // 전체를 다시 쓰게** 했고, 그것이 항목 수에 대한 **O(n²)** 를 만들었다(실측:
+    // 3,200개 18.1초). 매니페스트는 커밋되는 파일이라 그 크기가 남의 손에 있다.
+    //
+    // # 왜 걸음마다 안 써도 재개가 서는가 — **걷기가 멱등이기 때문이다**
+    //
+    // | 항목 | 이미 걷힌 자리를 다시 만나면 |
+    // |---|---|
+    // | 파일 | 없으니 `이미 없음`. 그리고 `removing` 이 참이라 ⑥-b 의 거짓 경보도 안 난다 |
+    // | 블록 | 우리 바이트도 마커도 없으니 `사라짐` → `이미 없음`(이 회차가 갈랐다) |
+    // | 설정 | 우리가 더한 키가 이미 없으니 `이미 없음` |
+    //
+    // 그래서 **실패한 자리에서만** 기록을 줄여 적는다 — 재개는 그대로 서고, 값은
+    // 항목 수에 선형이 된다.
     let lock = Lock::take(&root)?;
     let mut report = Report::new();
     // **제거가 시작됐다는 사실 자체를 먼저 적는다.** 이 한 줄이 없으면 다음 회차가
@@ -818,24 +830,32 @@ pub fn uninstall(target: &Path) -> Result<()> {
     m.removing = true;
     manifest::write(&manifest_path, &m)?;
 
-    while let Some(b) = m.blocks.first().cloned() {
+    let mut 걷은 = 0usize;
+    let 결과 = m.blocks.iter().try_for_each(|b| -> Result<()> {
         match blocks::remove(자리.자리(&b.path)?, 마커(&b.path), &b.inserted, b.created)? {
             blocks::Removal::Block => report.say("블록 뺌", b.path.as_str()),
             blocks::Removal::FileGone => report.say("지웠다", b.path.as_str()),
             blocks::Removal::Missing => report.say("이미 없음", b.path.as_str()),
         }
-        m.blocks.remove(0);
-        manifest::write(&manifest_path, &m)?;
-    }
+        걷은 += 1;
+        Ok(())
+    });
+    m.blocks.drain(..걷은);
+    let 쓰기 = manifest::write(&manifest_path, &m);
+    결과?;
+    쓰기?;
+
     if let Some(s) = m.settings.clone() {
         설정_되돌리기(&자리, &s, &mut report)?;
         m.settings = None;
         manifest::write(&manifest_path, &m)?;
     }
-    while let Some(f) = m.files.first().cloned() {
-        // **회복 방법을 문구가 준다.** 기록이 걸음마다 앞서므로, 걸린 자리를 손으로
-        // 치운 뒤 다시 돌리면 나머지를 이어서 걷는다.
-        파일_하나_걷기(&자리, &f, &mut report).with_context(|| {
+
+    let mut 걷은 = 0usize;
+    let 결과 = m.files.iter().try_for_each(|f| -> Result<()> {
+        // **회복 방법을 문구가 준다.** 걷은 만큼은 기록에서 빠지므로, 걸린 자리를
+        // 손으로 치운 뒤 다시 돌리면 나머지를 이어서 걷는다.
+        파일_하나_걷기(&자리, f, &mut report).with_context(|| {
             format!(
                 "{} 에서 멈췄다 — 여기까지 걷은 것은 매니페스트에서 이미 빠졌다. \
                  이 자리를 손으로 치운 뒤 `pal uninstall` 을 **다시 돌리면** 나머지를 \
@@ -843,8 +863,14 @@ pub fn uninstall(target: &Path) -> Result<()> {
                 f.path
             )
         })?;
-        m.files.remove(0);
-        manifest::write(&manifest_path, &m)?;
+        걷은 += 1;
+        Ok(())
+    });
+    if let Err(e) = 결과 {
+        m.files.drain(..걷은);
+        let 쓰기 = manifest::write(&manifest_path, &m);
+        쓰기?;
+        return Err(e);
     }
 
     std::fs::remove_file(&manifest_path)
