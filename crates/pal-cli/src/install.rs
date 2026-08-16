@@ -138,6 +138,7 @@ pub fn install(target: &Path) -> Result<()> {
     let settings_path = root.join(&Rel::new(SETTINGS))?;
     let manifest_path = root.join(&Rel::new(MANIFEST))?;
     settings::read(&settings_path)?;
+    쓸_수_있나(&root)?;
 
     // ── 2단계 · 잠금 ────────────────────────────────────────────────────────
     //
@@ -162,28 +163,88 @@ pub fn install(target: &Path) -> Result<()> {
         created_dirs.push(claude_rel);
     }
 
-    // ── 3단계 · 적용 ────────────────────────────────────────────────────────
+    // ── 3단계 · 적용. **기록이 걸음마다 앞선다** ────────────────────────────
     let mut report = Report::new();
     디렉터리_세우기(&root, &mut created_dirs)?;
-    let files = 파일_놓기(&root, &mut report)?;
-    let settings_entry = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
-    let blocks = 블록_넣기(&root, 이전.as_ref(), &mut report)?;
 
-    let m = Manifest {
-        pal_version: crate::version::describe().to_owned(),
-        roots: Roots {
-            dirs: OWNED_DIRS.iter().map(|s| Rel::new(s)).collect(),
-            files: OWNED_FILES.iter().map(|s| Rel::new(s)).collect(),
+    // 옛 기록을 지고 시작한다 — 다시 설치하다 죽어도 **먼젓번 것을 되돌릴 수 있어야**
+    // 한다. 새 설치면 비어 있고, 한 걸음마다 찬다.
+    let mut 기록 = Journal {
+        path: manifest_path,
+        m: Manifest {
+            pal_version: crate::version::describe().to_owned(),
+            roots: Roots {
+                dirs: OWNED_DIRS.iter().map(|s| Rel::new(s)).collect(),
+                files: OWNED_FILES.iter().map(|s| Rel::new(s)).collect(),
+            },
+            own_path: Rel::new(MANIFEST),
+            files: Vec::new(),
+            blocks: 이전.as_ref().map(|m| m.blocks.clone()).unwrap_or_default(),
+            settings: 이전.as_ref().and_then(|m| m.settings.clone()),
+            created_dirs,
         },
-        own_path: Rel::new(MANIFEST),
-        files,
-        blocks,
-        settings: settings_entry,
-        created_dirs,
     };
-    manifest::write(&manifest_path, &m)?;
-    report.say("매니페스트", &format!("{MANIFEST}  ·  pal {}", m.pal_version));
+    기록.적는다()?;
+
+    파일_놓기(&root, &mut 기록, &mut report)?;
+    기록.m.settings = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
+    기록.적는다()?;
+    블록_넣기(&root, 이전.as_ref(), &mut 기록, &mut report)?;
+
+    report.say("매니페스트", &format!("{MANIFEST}  ·  pal {}", 기록.m.pal_version));
     report.print(&format!("설치 — {root}"));
+    Ok(())
+}
+
+/// **기록이 걸음마다 앞선다** — 매 변경 뒤에 매니페스트를 다시 쓴다.
+///
+/// # 왜 되감기((a))가 아니라 기록((b))을 골랐는가
+///
+/// 관측된 실패 트리거 넷 중 **하나가 `SIGKILL`** 이다. 프로세스가 그 자리에서 죽으면
+/// 되감을 코드가 돌 기회 자체가 없다 — (a) 는 그 트리거를 **원리상** 못 덮는다.
+/// 반면 기록이 앞서 있으면 죽은 자리와 무관하게 **`uninstall` 이 걷어낼 수 있다.**
+/// 미리 볼 수 있는 것([`쓸_수_있나`])은 1단계에서 끊어 (a) 로 처리하고, 못 보는 자리는
+/// (b) 가 받는다.
+struct Journal {
+    path: PathBuf,
+    m: Manifest,
+}
+
+impl Journal {
+    fn 적는다(&mut self) -> Result<()> {
+        manifest::write(&self.path, &self.m)
+    }
+}
+
+/// **1단계에서 미리 볼 수 있는 것** — 쓸 수 없는 자리를 여기서 끊는다.
+///
+/// 관측된 트리거 셋(`.gitignore` 444 · `CLAUDE.md` 444 · `settings.json` 444)은
+/// **읽기는 성공하고 쓰기만 실패해서** 옛 검증(`settings::read` 하나)을 통과했다.
+///
+/// ⚠ **이 검사가 못 보는 것**: 모드 비트만 본다. 남의 소유라 못 쓰는 자리·ACL·읽기
+/// 전용 마운트는 여기를 통과하고, 그때는 기록([`Journal`])이 받는다.
+fn 쓸_수_있나(root: &Root) -> Result<()> {
+    쓸_수_있는가(root.path())?;
+    for rel in [CLAUDE_DIR, SETTINGS, ROOT_INSTRUCTION_FILE, IGNORE_FILE]
+        .into_iter()
+        .chain(DIRS.iter().copied())
+    {
+        쓸_수_있는가(&root.join(&Rel::new(rel))?)?;
+    }
+    Ok(())
+}
+
+fn 쓸_수_있는가(path: &Path) -> Result<()> {
+    // 없는 자리는 못 본다 — 그 부모는 위에서 이미 봤다.
+    let Ok(meta) = std::fs::metadata(path) else { return Ok(()) };
+    if meta.permissions().readonly() {
+        bail!(
+            "{} 에 **쓸 수 없다**(읽기 전용) — 설치는 여기서 멈춘다.\n    \
+             읽기는 되고 쓰기만 안 되는 자리라 예전에는 **반쯤 설치하고 나갔다.** \
+             권한을 고친 뒤 다시 돌리십시오",
+            path.display()
+        );
+    }
     Ok(())
 }
 
@@ -204,8 +265,7 @@ fn 디렉터리_세우기(root: &Root, created: &mut Vec<Rel>) -> Result<()> {
 }
 
 /// **대상에 없는 것만 쓴다**(`[f24]` ①). 있는 것은 안 건드리고 그 사실을 적는다.
-fn 파일_놓기(root: &Root, report: &mut Report) -> Result<Vec<FileEntry>> {
-    let mut files = Vec::new();
+fn 파일_놓기(root: &Root, 기록: &mut Journal, report: &mut Report) -> Result<()> {
     for res in PAYLOAD {
         let rel = Rel::new(res.path);
         let path = root.join(&rel)?;
@@ -223,9 +283,11 @@ fn 파일_놓기(root: &Root, report: &mut Report) -> Result<Vec<FileEntry>> {
         // **실물에서 뜬다** — 매니페스트가 적는 값이 곧 디스크의 값이어야 ③ 이 선다.
         let bytes = std::fs::read(&path)
             .with_context(|| format!("읽지 못했다: {}", path.display()))?;
-        files.push(FileEntry { path: rel, sha256: sha256::hex(&bytes) });
+        기록.m.files.push(FileEntry { path: rel, sha256: sha256::hex(&bytes) });
+        // **한 걸음마다 적는다.** 다섯을 다 놓고 적으면 셋째에서 죽었을 때 기록이 없다.
+        기록.적는다()?;
     }
-    Ok(files)
+    Ok(())
 }
 
 fn 설정_병합(
@@ -296,14 +358,19 @@ fn 설정_병합(
 fn 블록_넣기(
     root: &Root,
     이전: Option<&Manifest>,
+    기록: &mut Journal,
     report: &mut Report,
-) -> Result<Vec<BlockEntry>> {
+) -> Result<()> {
+    // 옛 기록을 비우고 이 회차가 다시 채운다 — **한 걸음마다 적으므로** 중간에 죽어도
+    // 그 시점까지의 진실이 남는다.
     let mut out = Vec::new();
+    기록.m.blocks.clear();
+    기록.적는다()?;
     // ── CLAUDE.md — `@` 임포트 한 줄 ────────────────────────────────────────
     //
     // ⚠ **`AGENTS.md` 에 규율을 담지 않는다. 자동 주입되지 않는다**(실측).
     let 지시 = blocks::compose(&MD_MARKERS, &[IMPORT_LINE.to_owned()]);
-    블록_하나(root, ROOT_INSTRUCTION_FILE, &지시, 이전, report, &mut out)?;
+    블록_하나(root, ROOT_INSTRUCTION_FILE, &지시, 이전, 기록, report, &mut out)?;
 
     // ── .gitignore — 파생 경로. **git 에게 물어서 정한다** ──────────────────
     //
@@ -316,7 +383,9 @@ fn 블록_넣기(
         if blocks::present(&root.join(&ignore_rel)?, &old.inserted)? {
             report.say("이미 있음", IGNORE_FILE);
             out.push(old);
-            return Ok(out);
+            기록.m.blocks.clone_from(&out);
+            기록.적는다()?;
+            return Ok(());
         }
     }
 
@@ -349,13 +418,13 @@ fn 블록_넣기(
             report.say("건드리지 않음", &format!("{IGNORE_FILE}  (더할 것이 없다)"));
         } else {
             let block = blocks::compose(&IGNORE_MARKERS, &등재);
-            블록_하나(root, IGNORE_FILE, &block, 이전, report, &mut out)?;
+            블록_하나(root, IGNORE_FILE, &block, 이전, 기록, report, &mut out)?;
         }
     } else {
         // **rc=128 을 rc=1 과 뭉개면 저장소가 아닌 곳에 `.gitignore` 를 만든다.**
         report.say("건너뜀", &format!("{IGNORE_FILE}  (git worktree 가 아니다)"));
     }
-    Ok(out)
+    Ok(())
 }
 
 fn 블록_하나(
@@ -363,6 +432,7 @@ fn 블록_하나(
     rel: &str,
     block: &str,
     이전: Option<&Manifest>,
+    기록: &mut Journal,
     report: &mut Report,
     out: &mut Vec<BlockEntry>,
 ) -> Result<()> {
@@ -391,7 +461,9 @@ fn 블록_하나(
             out.push(old);
         }
     }
-    Ok(())
+    // **넣자마자 적는다** — 넣고 죽으면 그 블록은 아무도 못 걷어낸다.
+    기록.m.blocks.clone_from(out);
+    기록.적는다()
 }
 
 fn 마커(rel: &Rel) -> &'static layout::Markers {

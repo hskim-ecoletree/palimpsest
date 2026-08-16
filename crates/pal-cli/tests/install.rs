@@ -771,3 +771,59 @@ fn 설치가_없으면_잔여로_낸다() {
     assert_eq!(결말(&c, 2), "residual");
     assert_eq!(결말(&c, 3), "residual");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 부분 설치 — **되감거나 기록이 남거나 둘 중 하나다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ★ **쓸 수 없는 자리는 1단계에서 미리 끊는다** — 그러면 아무것도 안 남는다(되감기 (a)).
+///
+/// 관측된 트리거 셋 — `.gitignore` 444 · `CLAUDE.md` 444 · `settings.json` 444.
+/// 셋 다 **읽기는 성공하고 쓰기만 실패해서** 옛 검증(`settings::read` 하나)을 통과했다.
+#[test]
+#[cfg(unix)]
+fn 쓸_수_없는_자리는_미리_끊는다() {
+    use std::os::unix::fs::PermissionsExt;
+
+    for 이름 in [".gitignore", "CLAUDE.md", ".claude/settings.json"] {
+        let root = 살고_있는_프로젝트(&format!("h-{}", 이름.replace(['/', '.'], "-")));
+        let path = root.join(이름);
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o444)).expect("chmod");
+
+        let 전 = 스냅샷(&root);
+        let stderr = 실패(&root, &["install"]);
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+
+        assert_eq!(스냅샷(&root), 전, "{이름}: 부분 설치가 남았다");
+        assert!(!root.join(".claude/pal").exists(), "{이름}: 디렉터리가 남았다");
+        assert!(stderr.contains("쓸 수 없다"), "{이름}: 까닭을 안 적었다 — {stderr}");
+    }
+}
+
+/// ★ **미리 못 보는 자리에서 실패해도 `uninstall` 이 걷어낼 수 있다**(기록 (b)).
+///
+/// `CLAUDE.md` 가 **디렉터리**면 블록 단계에서 읽기가 깨진다 — 권한 검사로는 못 보는
+/// 자리이고, 그때는 이미 파일 다섯과 설정 병합이 끝나 있다. 옛 코드는 매니페스트를
+/// **마지막에** 썼으므로 그 오염에 **기록이 없었고**, `doctor` 는 *"설치를 찾지 못했다"*
+/// 를, `uninstall` 은 rc=1 을 냈다 — 사용자에게 남는 길이 손으로 지우는 것뿐이었다.
+#[test]
+fn 미리_못_보는_실패도_기록을_남긴다() {
+    let root = 빈_프로젝트("h-기록");
+    let s0 = 스냅샷(&root);
+    std::fs::create_dir_all(root.join("CLAUDE.md")).expect("걸림돌");
+
+    실패(&root, &["install"]);
+
+    // ① 오염이 남았다 — 그리고 **그 오염에 기록이 있다.**
+    assert!(root.join(".claude/pal/manifest.json").is_file(), "기록이 없다");
+    let c = 검사들(&root, None);
+    assert_ne!(결말(&c, 2), "residual", "진단이 설치를 못 봤다: {}", c[1]);
+
+    // ② 걸림돌을 치우면 제거가 걷어낸다 — **설치 전으로 돌아간다.**
+    std::fs::remove_dir(root.join("CLAUDE.md")).expect("걸림돌 치우기");
+    성공(&root, &["uninstall"]);
+
+    let mut s2 = 스냅샷(&root);
+    s2.remove(".claude/settings.json");
+    assert_eq!(s2, s0, "제거 후가 설치 전과 다르다");
+}
