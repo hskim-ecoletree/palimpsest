@@ -273,9 +273,15 @@ fn 실행_파일() -> Outcome {
 }
 
 fn 등재(target: &Path) -> Outcome {
+    // ★ **여기도 `Root` 를 지난다.** git 이 읽는 자리를 우리가 열어 볼 때 그 자리가
+    // 대상 안인지를 [`Root::join`] 이 판정한다.
+    let 뿌리 = match Root::세운다(target) {
+        Ok(r) => r,
+        Err(e) => return Outcome::Residual(format!("{e}")),
+    };
     let mut 빠진 = Vec::new();
     for path in DERIVED {
-        match ignore::verdict(target, path) {
+        match ignore::verdict(&뿌리, path) {
             Ok(ignore::Verdict::Covered) => {}
             Ok(ignore::Verdict::NotAWorktree) => {
                 return Outcome::Residual("git worktree 가 아니다 — 등재를 물을 수 없다".to_owned());

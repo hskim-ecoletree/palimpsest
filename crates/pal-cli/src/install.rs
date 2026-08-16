@@ -22,6 +22,7 @@
 //! 등록이 답을 정한다.**
 
 mod blocks;
+mod child;
 mod doctor;
 mod guard;
 mod hooks;
@@ -322,6 +323,10 @@ fn 쓸_수_있나(root: &Root) -> Result<()> {
     {
         쓸_수_있는가(&root.join(&Rel::new(rel))?)?;
     }
+    // ★ **우리 대신 읽는 프로세스의 자리도 여기서 본다.** `git check-ignore` 는
+    // 중첩 `.gitignore` 와 `.git/info/exclude` 도 읽고, 그중 하나가 FIFO 면 **git 이**
+    // 매달린다. 1단계에서 끊어야 반쯤 설치된 프로젝트가 안 남는다.
+    ignore::점검(root)?;
     Ok(())
 }
 
@@ -530,7 +535,7 @@ fn 블록_넣기(
     let mut 등재 = Vec::new();
     let mut worktree = true;
     for path in DERIVED {
-        match ignore::verdict(root.path(), path)? {
+        match ignore::verdict(root, path)? {
             ignore::Verdict::Covered => report.say("이미 등재됨", path),
             ignore::Verdict::NotAWorktree => {
                 worktree = false;
@@ -541,7 +546,7 @@ fn 블록_넣기(
                 report.say("건드리지 않음", &format!("{path}  (사용자가 `{pattern}` 로 되살렸다)"));
             }
             ignore::Verdict::Uncovered => {
-                if ignore::tracked(root.path(), path)? {
+                if ignore::tracked(root, path)? {
                     report.say(
                         "⚠ 추적 중",
                         &format!("{path}  (규칙만으로는 배제되지 않는다 — `git rm --cached` 가 필요하다)"),

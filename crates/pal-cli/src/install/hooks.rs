@@ -227,7 +227,7 @@ pub fn probe(event: &str) -> Result<()> {
 
     let exe = 실행_파일()?;
     // **인자는 우리가 정한다.** 셸을 안 거치므로 따옴표도 메타문자도 없다.
-    let mut child = std::process::Command::new(&exe)
+    let mut child: std::process::Child = std::process::Command::new(&exe)
         .arg("hook")
         .arg(event)
         .stdin(std::process::Stdio::piped())
@@ -240,7 +240,10 @@ pub fn probe(event: &str) -> Result<()> {
         // 상대가 표준입력을 안 읽고 죽으면 여기가 깨진 파이프다 — 그것도 대답의 일부다.
         let _ = sink.write_all(payload.as_bytes());
     }
-    let out = child.wait_with_output().context("훅의 대답을 못 받았다")?;
+    // ★ **시간 상한을 지고 기다린다.** 훅이 안 돌아오면 `pal doctor` 도 안 돌아왔다 —
+    // 우리가 띄우는 자식은 전부 [`super::child`] 를 지난다.
+    let out = super::child::기다린다(child, super::child::기본_상한, "훅 탐침")
+        .context("훅의 대답을 못 받았다")?;
 
     let stderr = String::from_utf8_lossy(&out.stderr);
     match out.status.code() {

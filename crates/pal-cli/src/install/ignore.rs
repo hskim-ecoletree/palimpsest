@@ -71,12 +71,14 @@
 //! 추적 중이어도 경고가 안 뜬다. 슬래시 **없는** 형태는 디렉터리에도 맞는다. 그래서
 //! 두 명령의 질의 형태를 **갈라 쓴다.**
 
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result};
 
-use super::layout::IGNORE_FILE;
+use super::child;
+use super::inside::{Rel, Root};
+use super::layout::{DERIVED, IGNORE_FILE};
 
 /// 한 경로에 대해 git 이 답한 것.
 pub enum Verdict {
@@ -90,29 +92,59 @@ pub enum Verdict {
     NotAWorktree,
 }
 
-/// 이 경로를 규칙이 덮는가. **판정 명령은 하나다.**
+/// **git 이 읽을 자리를 전부 먼저 본다** — 우리가 등재를 물어야 하는 경로 전부에 대해.
 ///
-/// # ★ git 에게 묻기 전에 `.gitignore` 의 **종류**를 먼저 본다
+/// 1단계 검증([`super::쓸_수_있나`])이 이것을 부른다. **한 바이트도 쓰기 전에**
+/// 걸려야, FIFO 하나 때문에 반쯤 설치된 프로젝트가 안 남는다.
+///
+/// # Errors
+/// git 이 읽는 자리 중 하나가 일반 파일이 아니거나, git 을 못 돌리면.
+pub fn 점검(root: &Root) -> Result<()> {
+    for path in DERIVED {
+        점검_하나(root, path)?;
+    }
+    Ok(())
+}
+
+/// 이 경로 하나를 물을 때 git 이 여는 자리들의 **종류**를 본다.
+///
+/// # ★ git 에게 묻기 전에 소스들의 **종류**를 먼저 본다
 ///
 /// 실측: `.gitignore` 가 이름 있는 파이프(FIFO)면 **`git check-ignore` 자체가 영원히
 /// 매달린다.** 우리 코드에 `fs::read` 가 하나도 없어도 매달린다 — 매다는 것이 우리가
 /// 아니라 우리가 부른 프로세스이기 때문이다. *"우리가 읽고 쓰는 자리는 일반 파일이거나
 /// 없거나"* 라는 규율은 **우리 대신 읽는 프로세스에도** 선다.
 ///
+/// **뿌리 `.gitignore` 하나만 보던 자리다.** `check-ignore` 는 중첩 `.gitignore` 와
+/// `.git/info/exclude` 도 읽고, 그중 하나가 FIFO 면 거기서 잠긴다 — 실측으로 둘 다
+/// 매달렸다. 이제 [`소스들`] 이 내는 자리 **전부**가 이 문을 지난다.
+///
+/// ⚠ **그래도 목록은 완전하지 않다.** 전역 `core.excludesFile` 과 `.git/config` 은
+/// 대상 밖에 살 수 있어 우리 경계 안에서 열 수 없다. 그 자리는 [`child::기본_상한`] 이
+/// 받는다 — 목록과 상한, **문 둘로 나눠 받는다.**
+fn 점검_하나(root: &Root, path: &str) -> Result<()> {
+    for (source, _) in 소스들(root, path.trim_end_matches('/'))? {
+        super::guard::일반_파일이거나_없나(&source)?;
+    }
+    Ok(())
+}
+
+/// 이 경로를 규칙이 덮는가. **판정 명령은 하나다.**
+///
 /// # Errors
-/// `git` 을 못 돌리거나, `.gitignore` 가 일반 파일이 아니면.
-pub fn verdict(dir: &Path, path: &str) -> Result<Verdict> {
-    super::guard::일반_파일이거나_없나(&dir.join(IGNORE_FILE))?;
+/// `git` 을 못 돌리거나, git 이 읽는 자리 중 하나가 일반 파일이 아니면.
+pub fn verdict(root: &Root, path: &str) -> Result<Verdict> {
+    점검_하나(root, path)?;
     let slashed = with_slash(path);
-    let code = run_code(dir, &["check-ignore", "-q", "--no-index", "--", &slashed])?;
+    let code = run_code(root, &["check-ignore", "-q", "--no-index", "--", &slashed])?;
     match code {
         Some(0) => Ok(Verdict::Covered),
         // **rc=128 을 rc=1 과 뭉개지 않는다.**
         Some(128) | None => Ok(Verdict::NotAWorktree),
-        _ => match negation(dir, path)? {
+        _ => match negation(root, path)? {
             Some(pattern) => Ok(Verdict::Revived { pattern }),
             // git 이 침묵했다 — 그때만 소스를 읽는다.
-            None => match 소스에서_되살림(dir, path)? {
+            None => match 소스에서_되살림(root, path)? {
                 Some(pattern) => Ok(Verdict::Revived { pattern }),
                 None => Ok(Verdict::Uncovered),
             },
@@ -121,9 +153,9 @@ pub fn verdict(dir: &Path, path: &str) -> Result<Verdict> {
 }
 
 /// 마지막 매치 패턴이 `!` 로 시작하는가. **두 형태를 다 묻는다.**
-fn negation(dir: &Path, path: &str) -> Result<Option<String>> {
+fn negation(root: &Root, path: &str) -> Result<Option<String>> {
     for query in [with_slash(path), path.trim_end_matches('/').to_owned()] {
-        let out = git(dir, &["check-ignore", "-v", "--no-index", "--", &query])?;
+        let out = git(root, &["check-ignore", "-v", "--no-index", "--", &query])?;
         for line in String::from_utf8_lossy(&out.stdout).lines() {
             if let Some(pattern) = last_pattern(line) {
                 if pattern.starts_with('!') {
@@ -159,10 +191,13 @@ fn last_pattern(line: &str) -> Option<&str> {
 ///
 /// ⚠ **못 보는 것**: 전역 설정값이 `~` 로 시작하면 **건너뛴다.** 그것을 펴려면 홈을
 /// 읽어야 하고, `[f24]` ⑦ 이 그 자리를 닫아 두었다.
-fn 소스에서_되살림(dir: &Path, path: &str) -> Result<Option<String>> {
+fn 소스에서_되살림(root: &Root, path: &str) -> Result<Option<String>> {
     let 질의 = path.trim_end_matches('/');
-    for (source, prefix) in 소스들(dir, 질의)? {
-        let Ok(text) = std::fs::read_to_string(&source) else { continue };
+    for (source, prefix) in 소스들(root, 질의)? {
+        // **종류를 묻고 읽는다** — 여기도 `guard` 를 지난다. 앞의 [`점검_하나`] 가
+        // 이미 봤지만, 이 함수는 그 문 없이도 서야 한다.
+        let Ok(bytes) = super::guard::읽는다(&source) else { continue };
+        let Ok(text) = String::from_utf8(bytes) else { continue };
         for line in text.lines() {
             let line = line.trim();
             let Some(pattern) = line.strip_prefix('!') else { continue };
@@ -175,8 +210,18 @@ fn 소스에서_되살림(dir: &Path, path: &str) -> Result<Option<String>> {
 }
 
 /// 읽을 소스와 그 소스가 서 있는 **접두사**(중첩 `.gitignore` 는 자기 디렉터리 기준이다).
-fn 소스들(dir: &Path, 질의: &str) -> Result<Vec<(PathBuf, String)>> {
-    let mut out = vec![(dir.join(IGNORE_FILE), String::new())];
+///
+/// ★ **자리는 전부 [`Root::join`] 을 지난다.** 옛 코드는 `dir.join(…)` 을 썼고, 그러면
+/// git 이 답한 문자열이 절대 경로일 때 **대상 밖 파일을 우리가 연다.** 밖을 가리키는
+/// 자리는 **목록에서 뺀다** — 우리는 대상 안만 읽는다.
+///
+/// ⚠ **그래서 못 보는 것**: 전역 `core.excludesFile` 은 거의 언제나 대상 밖이라
+/// 여기서 빠진다. 그 파일에만 사는 `!` 되살림은 [`negation`] 이 잡거나(디스크에 그
+/// 디렉터리가 있으면 git 이 답한다) 아무도 못 잡는다. **git 은 그것을 읽으므로**
+/// 그 자리가 FIFO 면 매달릴 수 있고, 그 문은 [`child::기본_상한`] 이 진다.
+fn 소스들(root: &Root, 질의: &str) -> Result<Vec<(PathBuf, String)>> {
+    let mut out = Vec::new();
+    안쪽만(root, IGNORE_FILE, String::new(), &mut out);
     // 조상들의 중첩 `.gitignore` — `a/b/c` 면 `a/` 와 `a/b/` 를 본다.
     let mut prefix = String::new();
     let mut parts: Vec<&str> = 질의.split('/').collect();
@@ -184,19 +229,25 @@ fn 소스들(dir: &Path, 질의: &str) -> Result<Vec<(PathBuf, String)>> {
     for part in parts {
         prefix.push_str(part);
         prefix.push('/');
-        out.push((dir.join(&prefix).join(IGNORE_FILE), prefix.clone()));
+        안쪽만(root, &format!("{prefix}{IGNORE_FILE}"), prefix.clone(), &mut out);
     }
-    let exclude = 한_줄(dir, &["rev-parse", "--git-path", "info/exclude"])?;
-    if let Some(p) = exclude {
-        out.push((dir.join(p), String::new()));
+    if let Some(p) = 한_줄(root, &["rev-parse", "--git-path", "info/exclude"])? {
+        안쪽만(root, &p, String::new(), &mut out);
     }
     // 전역 — **`~` 는 안 편다.** 홈을 읽는 것이 `[f24]` ⑦ 이 닫은 자리다.
-    if let Some(p) = 한_줄(dir, &["config", "--get", "core.excludesFile"])? {
+    if let Some(p) = 한_줄(root, &["config", "--get", "core.excludesFile"])? {
         if !p.starts_with('~') {
-            out.push((dir.join(p), String::new()));
+            안쪽만(root, &p, String::new(), &mut out);
         }
     }
     Ok(out)
+}
+
+/// 대상 **안**으로 확정되는 자리만 목록에 든다. 밖이면 조용히 빠진다.
+fn 안쪽만(root: &Root, rel: &str, prefix: String, out: &mut Vec<(PathBuf, String)>) {
+    if let Ok(path) = root.join(&Rel::new(rel)) {
+        out.push((path, prefix));
+    }
 }
 
 /// 이 부정 패턴이 그 경로를 가리키나.
@@ -217,8 +268,8 @@ fn 가리키나(pattern: &str, prefix: &str, 질의: &str) -> bool {
 }
 
 /// 첫 줄만 — 없으면 `None`.
-fn 한_줄(dir: &Path, args: &[&str]) -> Result<Option<String>> {
-    let out = git(dir, args)?;
+fn 한_줄(root: &Root, args: &[&str]) -> Result<Option<String>> {
+    let out = git(root, args)?;
     let text = String::from_utf8_lossy(&out.stdout);
     Ok(text.lines().next().map(str::trim).filter(|s| !s.is_empty()).map(ToOwned::to_owned))
 }
@@ -227,11 +278,11 @@ fn 한_줄(dir: &Path, args: &[&str]) -> Result<Option<String>> {
 ///
 /// # Errors
 /// `git` 을 못 돌리면.
-pub fn tracked(dir: &Path, path: &str) -> Result<bool> {
+pub fn tracked(root: &Root, path: &str) -> Result<bool> {
     // **후행 슬래시를 뗀다** — 붙이면 파일 경로가 영원히 rc=1 이다(머리말의 실측).
     let bare = path.trim_end_matches('/');
     // **`--error-unmatch` 가 없으면 언제나 rc=0 이다.**
-    Ok(run_code(dir, &["ls-files", "--error-unmatch", "--", bare])? == Some(0))
+    Ok(run_code(root, &["ls-files", "--error-unmatch", "--", bare])? == Some(0))
 }
 
 /// **`check-ignore` 에는 후행 슬래시가 필수다** — 없으면 규칙 14종 중 둘에서 오답이
@@ -240,17 +291,25 @@ fn with_slash(path: &str) -> String {
     if path.ends_with('/') { path.to_owned() } else { format!("{path}/") }
 }
 
-fn run_code(dir: &Path, args: &[&str]) -> Result<Option<i32>> {
-    Ok(git(dir, args)?.status.code())
+fn run_code(root: &Root, args: &[&str]) -> Result<Option<i32>> {
+    Ok(git(root, args)?.status.code())
 }
 
-fn git(dir: &Path, args: &[&str]) -> Result<std::process::Output> {
-    Command::new("git")
+/// `git` 을 **시간 상한 안에서** 돌린다.
+///
+/// ★ **`Command::output()` 을 안 쓴다.** 그것은 상한이 없어서, git 이 매달리면
+/// 우리도 매달린다 — 그 형태가 이 회차에 실측으로 세 번 났다([`child`] 머리말).
+fn git(root: &Root, args: &[&str]) -> Result<child::대답> {
+    let child = Command::new("git")
         .arg("-C")
-        .arg(dir)
+        .arg(root.path())
         .args(args)
-        .output()
-        .with_context(|| format!("git {args:?} 을 돌리지 못했다"))
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .with_context(|| format!("git {args:?} 을 돌리지 못했다"))?;
+    child::기다린다(child, child::기본_상한, &format!("git {args:?}"))
 }
 
 #[cfg(test)]
