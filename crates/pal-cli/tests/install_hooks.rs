@@ -525,6 +525,68 @@ fn 진단이_남이_심은_항목을_안_돌린다() {
     let _ = std::fs::remove_file(&흔적);
 }
 
+/// ★ **훅 `command` 만 경계 검사의 모집단 밖이었다.**
+///
+/// `settings.hooks[].command` 는 `Rel` 이 아니라 `String` 이라 `Manifest::경로들` ·
+/// `자리들` 이 **원리상** 그것을 못 본다. 그래서 매니페스트와 `settings.json` 의
+/// `command` 를 **대상 밖 실행 파일**로 맞춰 두면 검사 6 이 이렇게 답했다(실측):
+///
+/// ```text
+/// ok   6  등록된 훅이 실제로 도는가
+///      등록된 1개가 설정과 맞고 그 자리가 실행될 수 있다.
+/// ```
+///
+/// 하네스가 `SubagentStop` 에 실제로 띄울 것은 **그 파일**인데 진단은 「이상 없음」이다.
+/// 탐침이 「돈다」고 말할 때 실제로 돌려 본 것은 **지금 도는 이 실행 파일**이라, 둘이
+/// 다르면 그 확인이 등록된 것에 대해 **아무것도 말하지 않는다.**
+///
+/// ⚠ **판정은 「대상 안인가」가 아니다.** 우리가 등록하는 것은 설치 시점에 해석한 `pal`
+/// 의 절대 경로라 **대상 밖이 정상**이다. 그러니 **「우리가 등록한 그것인가」**로 댄다.
+///
+/// ⚠ **그리고 여전히 안 돌린다.** 저장소에서 읽은 문자열을 실행하는 구멍은 앞 회차가
+/// 막았고, 이 회차는 그 규율 위에서 **대조만** 더한다.
+#[test]
+fn 진단이_대상_밖_실행_파일을_초록으로_안_낸다() {
+    let 흔적 = std::env::temp_dir().join(format!("pal-f24-훅경계-{}", std::process::id()));
+    let _ = std::fs::remove_file(&흔적);
+
+    let root = 프로젝트("진단-밖의exe");
+    성공(Path::new(PAL), &root, &["install"]);
+
+    // **대상 밖**에 실행 파일 하나를 심는다 — 있고, 일반 파일이고, 실행 권한이 있다.
+    // 그 셋이 `실행할_수_있나` 가 보는 전부라 옛 코드는 여기서 초록이었다.
+    let 밖 = root.parent().expect("부모").join("밖");
+    std::fs::create_dir_all(&밖).expect("밖");
+    let 심은것 = 밖.join("남의것");
+    std::fs::write(&심은것, format!("#!/bin/sh\ntouch {}\n", 흔적.display())).expect("심기");
+    실행_권한(&심은것);
+
+    let 자리 = 심은것.display().to_string();
+    let mut s = 설정(&root);
+    s["hooks"]["SubagentStop"] = serde_json::json!([{
+        "hooks": [{"type": "command", "command": 자리, "args": ["hook", "SubagentStop"]}]
+    }]);
+    std::fs::write(
+        root.join(".claude/settings.json"),
+        serde_json::to_string_pretty(&s).expect("직렬화"),
+    )
+    .expect("쓰기");
+    let mut m = 매니페스트(&root);
+    m["settings"]["hooks"] = serde_json::json!([{
+        "event": "SubagentStop", "command": 자리, "args": ["hook", "SubagentStop"]
+    }]);
+    매니페스트_쓰기(&root, &m);
+
+    let c = 훅_검사(&root);
+    assert_eq!(c["outcome"], "failed", "대상 밖 실행 파일을 초록으로 냈다: {c}");
+    let detail = c["detail"].as_str().expect("detail");
+    assert!(detail.contains("update"), "무엇을 하라고 안 적었다: {detail}");
+
+    // ★ **완화는 그대로다** — 진단이 그것을 돌리지 않는다.
+    assert!(!흔적.exists(), "진단이 심어 둔 실행 파일을 돌렸다: {}", 흔적.display());
+    let _ = std::fs::remove_file(&흔적);
+}
+
 /// 설치가 없으면 **`Residual`** 이다 — 검사하지 못한 것은 「이상 없음」이 아니다.
 #[test]
 fn 설치가_없으면_훅_검사가_잔여다() {
