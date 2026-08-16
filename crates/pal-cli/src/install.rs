@@ -813,13 +813,60 @@ pub fn uninstall(target: &Path) -> Result<()> {
 
     // 잠금을 먼저 놓는다 — 안 놓으면 `.claude` 가 비어 있지 않아 안 지워진다.
     drop(lock);
-    for dir in m.created_dirs.iter().rev() {
-        let path = 자리.자리(dir)?;
-        // **빈 것만 지운다.** 남의 것이 들어와 있으면 그 자리는 이제 우리 것이 아니다.
-        if path.is_dir() && std::fs::remove_dir(path).is_ok() {
-            report.say("지웠다", &format!("{dir}/"));
-        }
-    }
+    디렉터리_걷기(&m, &자리, &mut report)?;
     report.print(&format!("제거 — {root}"));
     Ok(())
+}
+
+/// **우리가 만든 디렉터리를 걷는다** — ★ **순서에 안 기대고, 못 지우면 말한다.**
+///
+/// # 왜 목록의 순서를 안 믿는가
+///
+/// `install` 은 옛 매니페스트에서 목록을 물려받은 **뒤에** `.claude` 를 `push` 한다.
+/// 다른 프로세스가 `.claude` 를 먼저 만든 회차에서는 순서가 뒤집히고, 역순으로 도는
+/// 제거가 `.claude` 를 자식보다 **먼저** 지우려다 실패했다. 옛 코드의
+/// `if path.is_dir() && remove_dir(path).is_ok()` 가 **그 실패를 삼켜** rc=0 과
+/// *"제거 완료"* 화면을 냈고 디렉터리는 남았다.
+///
+/// 그래서 **깊은 것부터** 지운다. 목록이 어떤 순서로 적혀 있든 결과가 같다.
+///
+/// # 그리고 못 지웠으면 말한다
+///
+/// 남의 것이 들어와 있으면 그 자리는 이제 우리 것이 아니라 **안 지우는 것이 맞다**(⑥).
+/// 그런데 **안 지웠다는 사실을 안 말하면** 사용자는 제거가 끝났다고 믿는다 — 게이트
+/// ④ 가 세운 *"밟지 않는 것과 말하지 않는 것은 다르다"* 를 여기에도 세운다.
+fn 디렉터리_걷기(m: &Manifest, 자리: &manifest::Places, report: &mut Report) -> Result<()> {
+    // ⚠ **경로 구분자 가정**: `Rel` 은 언제나 `/` 로 갈린다(`layout` 의 상수와
+    // `manifest::walk` 가 그 규칙 하나 위에 선다). 깊이는 그 개수다.
+    let mut dirs: Vec<&Rel> = m.created_dirs.iter().collect();
+    dirs.sort_by_key(|r| std::cmp::Reverse(r.as_str().matches('/').count()));
+    for dir in dirs {
+        let path = 자리.자리(dir)?;
+        if !path.is_dir() {
+            report.say("이미 없음", &format!("{dir}/"));
+            continue;
+        }
+        match std::fs::remove_dir(path) {
+            Ok(()) => report.say("지웠다", &format!("{dir}/")),
+            Err(e) => report.say("남겼다", &format!("{dir}/  ({})", 왜_못_지웠나(path, &e))),
+        }
+    }
+    Ok(())
+}
+
+/// 왜 못 지웠는지 — **비어 있지 않으면 무엇이 남았는지까지.**
+fn 왜_못_지웠나(path: &Path, e: &std::io::Error) -> String {
+    let mut 남은: Vec<String> = std::fs::read_dir(path)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|d| d.file_name().to_string_lossy().into_owned())
+        .collect();
+    if 남은.is_empty() {
+        return format!("{e}");
+    }
+    남은.sort();
+    let 몇 = 남은.len();
+    남은.truncate(5);
+    format!("비어 있지 않다 — 남의 것 {몇}개가 산다: {}", 남은.join(" · "))
 }

@@ -156,3 +156,59 @@ fn 산_잠금은_기다린다() {
     let out = child.wait_with_output().expect("wait");
     assert!(out.status.success(), "잠금을 놓았는데 못 들어왔다");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. **순서에 기대지 않는다. 그리고 못 지웠으면 말한다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ★ **`created_dirs` 의 순서에 기대면 동시 설치 뒤에 뒤집힌다.**
+///
+/// `install` 이 옛 매니페스트에서 목록을 물려받은 **뒤에** `.claude` 를 `push` 하므로,
+/// 다른 프로세스가 `.claude` 를 먼저 만든 회차에서는 순서가 뒤집힌다. 옛 제거는
+/// 역순으로 돌면서 `.claude` 를 자식보다 **먼저** 지우려다 실패했고,
+/// `if path.is_dir() && remove_dir(path).is_ok()` 가 **그 실패를 삼켰다** — rc=0,
+/// 화면에 `.claude/` 없음, 디렉터리 남음.
+#[test]
+fn 제거는_깊은_것부터_지운다() {
+    let root = 프로젝트("순서");
+    성공(&root, &["install"]);
+    순서를_뒤집는다(&root);
+
+    let report = 성공(&root, &["uninstall"]);
+    assert!(
+        !root.join(".claude").exists(),
+        "`.claude/` 가 남았다 — 순서에 기댔다:\n{report}"
+    );
+    assert!(report.contains(".claude/"), "지웠으면서 말하지 않았다:\n{report}");
+}
+
+/// 측정자가 확인한 결정론적 재현 — `.claude` 를 목록의 **끝**으로 옮긴다.
+fn 순서를_뒤집는다(root: &Path) {
+    let path = root.join(".claude/pal/manifest.json");
+    let mut m: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&path).expect("읽기")).expect("JSON");
+    let dirs = m["created_dirs"].as_array_mut().expect("created_dirs");
+    let at = dirs.iter().position(|d| d == ".claude").expect("`.claude` 가 목록에 없다");
+    let claude = dirs.remove(at);
+    dirs.push(claude);
+    std::fs::write(&path, serde_json::to_string_pretty(&m).expect("직렬화")).expect("쓰기");
+}
+
+/// ★ **못 지웠으면 말한다** — 게이트 ④ 의 *"밟지 않는 것과 말하지 않는 것은 다르다"*.
+///
+/// 남의 것이 들어와 있으면 그 자리는 이제 우리 것이 아니고 **안 지우는 것이 맞다**(⑥).
+/// 그런데 안 지웠다는 사실을 안 말하면 사용자는 제거가 끝났다고 믿는다.
+#[test]
+fn 못_지운_디렉터리를_말한다() {
+    let root = 프로젝트("남긴다");
+    성공(&root, &["install"]);
+    // 남의 파일이 우리가 만든 디렉터리에 들어왔다.
+    std::fs::write(root.join(".claude/agents/남의것.md"), "남의 에이전트\n").expect("남의 것");
+
+    let report = 성공(&root, &["uninstall"]);
+    assert!(root.join(".claude/agents").is_dir(), "남의 것이 든 자리를 지웠다");
+    assert!(
+        report.contains("남겼다") && report.contains(".claude/agents"),
+        "못 지웠는데 말하지 않았다:\n{report}"
+    );
+}
