@@ -329,11 +329,22 @@ fn 훅(root: Option<&Path>) -> Outcome {
                 h.event
             ));
         }
+        // ★ **옛 형태와 「우리 것이 아니다」를 가른다.** 옛 형태는 우리 것이 맞고,
+        // 사람에게 필요한 말은 *"형태가 아니다"* 가 아니라 **무엇을 돌리라**이다.
+        if hooks::옛_형태인가(h) {
+            return Outcome::Failed(format!(
+                "{} 이 **옛 형태(shell form)로 걸려 있다** — 등록 문자열 전체가 셸을 \
+                 거친다. Windows 에서는 Git Bash 가 없으면 그 셸이 **PowerShell** 이고 \
+                 POSIX 인용이 안 통한다. `pal update` 가 exec form 으로 옮긴다",
+                h.event
+            ));
+        }
         let Some(등록된_자리) = hooks::되읽는다(h) else {
             return Outcome::Failed(format!(
-                "{} 에 걸린 문자열이 우리 형태가 아니다 — **돌려보지 않는다.** \
+                "{} 에 걸린 항목이 우리 형태가 아니다 — **돌려보지 않는다.** \
                  매니페스트와 {SETTINGS} 는 대상 프로젝트 안의 평범한 파일이라 \
-                 남이 커밋해 보낼 수 있다. `pal install` 을 다시 돌리십시오",
+                 남이 커밋해 보낼 수 있고, exec form 의 `command` 는 **실행 파일 경로 \
+                 그 자체**다. `pal install` 을 다시 돌리십시오",
                 h.event
             ));
         };

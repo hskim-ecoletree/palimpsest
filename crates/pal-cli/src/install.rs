@@ -427,10 +427,10 @@ fn 설정_병합(
     let 바라는_훅 = hooks::desired(HOOK_EVENTS)?;
     let plan = hooks::plan(read.current.as_ref(), &적힌_훅, &바라는_훅);
     for entry in &plan.remove {
-        report.say("훅 뺌", &format!("{}  ·  {}", entry.event, entry.command));
+        report.say("훅 뺌", &format!("{}  ·  {}", entry.event, entry.보임()));
     }
     for entry in &plan.add {
-        report.say("훅 등록", &format!("{}  ·  {}", entry.event, entry.command));
+        report.say("훅 등록", &format!("{}  ·  {}", entry.event, entry.보임()));
     }
     if plan.is_empty() && !바라는_훅.is_empty() {
         report.say("이미 등록됨", &format!("훅 {}개", 바라는_훅.len()));

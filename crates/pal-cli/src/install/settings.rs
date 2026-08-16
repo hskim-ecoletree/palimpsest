@@ -202,10 +202,7 @@ mod tests {
     }
 
     fn 훅() -> Vec<HookEntry> {
-        vec![HookEntry {
-            event: "SubagentStop".to_owned(),
-            command: "'/bin/pal' hook SubagentStop".to_owned(),
-        }]
+        vec![hooks::entry(std::path::Path::new("/bin/pal"), "SubagentStop")]
     }
 
     fn 계획(r: &Read, 훅: &[HookEntry]) -> hooks::Plan {

@@ -13,11 +13,13 @@
 //! 3. 차단할 때 내는 바이트가 **실측된 규약 그대로**다 — `exit 0` + 표준출력
 //!    `{"decision":"block","reason":…}`.
 //!
-//! # ★ 왜 `/bin/sh -c` 로도 한 번 돌리는가
+//! # ★ 왜 공백이 든 경로로도 한 번 돌리는가
 //!
-//! 실측: **훅 커맨드는 `/bin/sh -c "<등록 문자열 원문>"` 으로 실행된다.** 그래서
-//! 바이너리를 직접 부르는 시험만 있으면 **등록 문자열이 셸을 통과하는지**는 아무도
-//! 안 잰다 — 경로에 공백 하나면 그 자리가 무너진다.
+//! 실측(Claude Code 2.1.233): 훅 항목에 **`args` 배열**이 있으면 **exec form** 이고
+//! `command` 가 실행 파일로 **셸 없이** 직접 뜬다. 그래서 옛 회차가 재던 「등록 문자열이
+//! 셸을 통과하는가」는 **더 이상 재는 것이 아니고**, 대신 재야 하는 것이 생겼다 —
+//! **경로에 공백이 있어도 따옴표 없이 도는가.** shell form 에서는 따옴표가 **필요**
+//! 했고 exec form 에서는 따옴표가 **틀린다.** 그 뒤집힘을 공백 없는 경로로는 못 잰다.
 
 use std::io::Write;
 use std::path::Path;
@@ -30,9 +32,9 @@ fn 훅(event: &str, stdin: &str) -> Output {
     돌린다(Command::new(PAL).args(["hook", event]), stdin)
 }
 
-/// 훅을 부른다 — **실측된 규약 그대로 `/bin/sh -c` 를 거쳐서.**
-fn 셸을_거쳐(command: &str, stdin: &str) -> Output {
-    돌린다(Command::new("/bin/sh").arg("-c").arg(command), stdin)
+/// 훅을 부른다 — **실측된 exec form 규약 그대로. 셸이 없다.**
+fn 하네스처럼(command: &Path, args: &[&str], stdin: &str) -> Output {
+    돌린다(Command::new(command).args(args), stdin)
 }
 
 fn 돌린다(cmd: &mut Command, stdin: &str) -> Output {
@@ -152,13 +154,17 @@ fn 모르는_입력에서_조용히_통과한다() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ★ 셸을 거친다 — **등록 문자열은 `/bin/sh -c` 로 실행된다**(실측)
+// ★ 셸이 없다 — **`args` 가 있으면 exec form 이다**(실측)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// 경로에 **공백이 있어도** 셸을 거쳐 같은 답이 나온다. 따옴표가 없으면 여기서
-/// exit 127 이 나고, 실측상 그 실패는 **하네스에서 완전히 침묵한다.**
+/// ★ **경로에 공백이 있어도 따옴표 없이 돈다.** 그리고 **따옴표를 붙이면 안 돈다** —
+/// 그 뒤집힘이 이 회차가 옮긴 것의 전부다.
+///
+/// shell form 에서는 따옴표가 **필요**했다(없으면 exit 127). exec form 에서는
+/// `command` 가 경로 그 자체라 따옴표가 **경로의 일부**가 된다. 그래서 옛 규칙을
+/// 그대로 두면 **아무것도 안 돌고 그 실패는 침묵한다.**
 #[test]
-fn 공백이_든_경로가_셸을_거쳐도_돈다() {
+fn 공백이_든_경로가_따옴표_없이_돈다() {
     let dir = std::env::temp_dir().join(format!("pal f24 훅 {}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).expect("방");
@@ -166,15 +172,18 @@ fn 공백이_든_경로가_셸을_거쳐도_돈다() {
     std::fs::copy(PAL, &exe).expect("복사");
     복사한_것에_실행_권한(&exe);
 
-    let 따옴표_없이 = format!("{} hook SubagentStop", exe.display());
-    let out = 셸을_거쳐(&따옴표_없이, &페이로드(Some(""), false));
-    assert!(출력(&out).is_empty(), "따옴표 없이도 돌았다 — 이 시험의 전제가 틀렸다");
-
-    let 따옴표로 = format!("'{}' hook SubagentStop", exe.display());
-    let out = 셸을_거쳐(&따옴표로, &페이로드(Some(""), false));
+    // 따옴표 없이 — 돈다.
+    let out = 하네스처럼(&exe, &["hook", "SubagentStop"], &페이로드(Some(""), false));
     let v: serde_json::Value =
-        serde_json::from_str(출력(&out).trim()).expect("셸을 거치니 답이 안 나왔다");
+        serde_json::from_str(출력(&out).trim()).expect("exec form 으로 답이 안 나왔다");
     assert_eq!(v["decision"], "block");
+
+    // 옛 규칙대로 따옴표를 붙이면 — **그 자리가 없다.** 이 시험의 전제를 여기서 잡는다.
+    let 따옴표로 = dir.parent().expect("부모").join(format!("'{}'", exe.display()));
+    assert!(
+        Command::new(&따옴표로).args(["hook", "SubagentStop"]).output().is_err(),
+        "따옴표가 붙은 경로가 돌았다 — 이 시험의 전제가 틀렸다"
+    );
 
     let _ = std::fs::remove_dir_all(&dir);
 }

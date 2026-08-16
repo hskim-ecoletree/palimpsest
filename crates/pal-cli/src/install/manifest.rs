@@ -97,16 +97,51 @@ pub struct BlockEntry {
     pub created: bool,
 }
 
-/// 설정 파일에 등록한 훅 하나.
+/// 설정 파일에 등록한 훅 하나. **필드 이름이 하네스 스키마의 것 그대로다.**
 ///
-/// **`command` 는 등록 문자열 원문이다.** 실측: 하네스의 중복 제거는 이 문자열의
+/// **`command` 는 등록된 바이트 그대로다.** 실측: 하네스의 중복 제거는 이 문자열의
 /// **완전 일치** 기준이라 공백 하나만 달라도 두 번 돈다 — 그래서 제거도 완전 일치로만
 /// 하고, 그러려면 우리가 넣은 바이트를 그대로 지고 있어야 한다(블록의 `inserted` 와
 /// 같은 판단).
+///
+/// # ★ `args` 의 **없음**이 곧 형태다
+///
+/// 하네스 스키마의 원문: *"Argument list for exec form. **When present**, `command` is
+/// resolved as an executable and spawned directly with these arguments — **no shell**.
+/// … **When absent**, `command` runs through a shell."*
+///
+/// 그래서 여기서 `None` 은 **「안 만듦」이 아니라 「셸을 거치는 옛 형태」라는 종류**다.
+/// [ADR-0005] 의 판별식(*"같은 칸 안에서 다르게 **행동**해야 하면 이유"*)을 그대로
+/// 적용하면 이것은 값으로 실을 것이고, **그 값의 표현을 하네스 쪽에서 빌려 왔다** —
+/// 이 필드가 그대로 `settings.json` 에 실리므로 두 곳의 이름이 갈리면 대조가 어려워진다.
+///
+/// **`#[serde(default)]` 이라 이 회차 이전의 매니페스트는 전부 `None` 으로 읽힌다** —
+/// 그것이 정확히 그때의 사실이다(그때는 shell form 이었다).
+///
+/// ⚠ **`Some(빈 배열)` 은 절대 만들지 않는다.** 실측: `args: []` 도 exec form 이고,
+/// 그때는 `command` **문자열 전체**가 실행 파일 경로가 되어 ENOENT 로 죽는다. 그리고
+/// exec form 의 실행 실패는 **기본 채널에서 침묵한다.**
+/// [`super::hooks::더한다`] 가 그것을 거부한다.
+///
+/// [ADR-0005]: ../../../../docs/adr/0005-absence-carries-its-kind.md
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct HookEntry {
     pub event: String,
     pub command: String,
+    /// exec form 의 인자 목록. **없으면 옛 형태(shell form)다.**
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub args: Option<Vec<String>>,
+}
+
+impl HookEntry {
+    /// 사람이 읽는 한 줄. **보고에만 쓴다.**
+    #[must_use]
+    pub fn 보임(&self) -> String {
+        match &self.args {
+            Some(args) => format!("{} {}", self.command, args.join(" ")),
+            None => format!("{}  (옛 형태 — 셸을 거친다)", self.command),
+        }
+    }
 }
 
 /// 설정 파일에 더한 키들.

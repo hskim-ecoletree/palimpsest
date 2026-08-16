@@ -1,23 +1,51 @@
 //! 대상 `settings.json` 의 훅 구역 — **등록 · 갱신 · 제거**(`[f24]` ⑧).
 //!
-//! # 실측이 이 파일의 모든 줄을 정했다
+//! # 실측이 이 파일의 모든 줄을 정했다 — **exec form 을 쓴다**
 //!
-//! - **등록 문자열은 `/bin/sh -c "<원문>"` 으로 실행된다.** 셸 메타문자가 들어가면
-//!   셸이 해석하고, **경로에 공백이 있으면 따옴표가 필요하다.** 그래서 실행 파일
-//!   경로를 언제나 **홑따옴표**로 감싼다 — 겹따옴표는 `$`·`` ` ``·`\` 를 살려 두지만
-//!   홑따옴표는 전부 죽인다.
+//! 하네스(Claude Code 2.1.233 · darwin-arm64) 안의 스키마 원문:
+//!
+//! > *"Argument list for exec form. When present, `command` is resolved as an
+//! > executable and spawned directly with these arguments — **no shell**. Path
+//! > placeholders … are substituted per-element as plain strings, so paths with
+//! > quotes, `$`, or backticks **never reach a shell parser**. When absent, `command`
+//! > runs through a shell (bash on POSIX, **PowerShell on Windows without Git Bash**)."*
+//!
+//! 그래서 **`args` 를 언제나 둔다.** 얻는 것 셋:
+//!
+//! - **셸 인용이 통째로 사라진다.** 공백·`$`·따옴표·백틱이 든 경로가 그대로 argv 에
+//!   도착한다(실행으로 확인: 조상 프로세스에 `sh` 가 없다).
+//! - **Windows 에서 갈리지 않는다.** shell form 은 Git Bash 가 없으면 **PowerShell**
+//!   로 도는데, POSIX 홑따옴표는 PowerShell 의 인용이 아니다. 소유자 결정
+//!   (2026-08-16): *"windows 를 대응한다는 가정하에 앞으로 모든 설계와 개발이 되어야
+//!   해."* 이 한 줄이 그 결정이 코드에 닿는 첫 자리다.
+//! - **stdin JSON 과 종료 코드 해석이 shell form 과 동일하다**(SHA-256 까지 같다).
+//!   그래서 [`crate::hook`] 의 규약은 한 글자도 안 움직인다.
+//!
+//! 그 밖의 실측:
+//!
 //! - **중복 제거는 명령 문자열의 완전 일치 기준이다. 공백 하나만 달라도 두 번 돈다.**
-//!   그래서 이 파일이 만드는 문자열은 **바이트 단위로 안정적**이어야 하고, 제거도
-//!   완전 일치로만 한다.
+//!   그래서 이 파일이 만드는 항목은 **바이트 단위로 안정적**이어야 하고, 제거도
+//!   완전 일치로만 한다. 우리는 **사건 하나에 항목 하나**만 걸므로 `command` 가 같고
+//!   `args` 만 다른 두 항목을 같은 배열에 넣는 일이 없다.
 //! - **훅은 전 레이어의 합집합**이다. 우리는 프로젝트 레이어 하나만 만지고, 남이
 //!   같은 사건에 걸어 둔 것을 **하나도 안 건드린다.**
 //!
+//! # ⚠ 밟으면 조용히 죽는 자리 셋
+//!
+//! - **`args: []` 도 exec form 이다.** 빈 배열이면 `command` **문자열 전체**가 실행
+//!   파일 경로가 되어 ENOENT 로 죽는다. [`더한다`] 가 그것을 거부한다.
+//! - **`shell` 키에 enum(`bash`/`powershell`) 밖 값을 넣으면 그 훅 배열 **전체**가
+//!   조용히 사라진다.** 어느 채널에도 흔적이 없다. **우리는 그 키를 안 쓴다.**
+//! - **exec form 의 실행 실패는 종료 코드가 항상 1 이고 기본 채널에서 침묵한다**
+//!   (shell form 의 126/127 이 안 나온다). `pal doctor` 가 유일한 문이라는 사실이
+//!   여기서 한 겹 더 세진다.
+//!
 //! # ★ PATH 이름으로 등록하지 않는다
 //!
-//! 실측상 PATH 이름 등록도 동작한다(네이티브 바이너리의 `argv[0]` 이 맨 이름 그대로
-//! 들어온다). 그런데 **실행 파일을 못 찾으면 exit 127 이고 그 실패는 완전히
-//! 침묵한다** — `claude` 의 종료 코드는 0 이고 트랜스크립트에도 대화형 화면에도 흔적이
-//! 없다. 그래서 **설치 시점에 해석한 절대 경로**로 등록한다.
+//! 실측상 PATH 이름 등록도 동작한다(exec form 에서도 이름 탐색이 된다). 그런데
+//! **실행 파일을 못 찾으면 그 실패가 완전히 침묵한다** — `claude -p` 의 stdout·
+//! stderr·종료 코드 어디에도 안 나온다. 그래서 **설치 시점에 해석한 절대 경로**로
+//! 등록한다.
 //!
 //! # 남의 구조를 고치려 들지 않는다
 //!
@@ -38,9 +66,13 @@ const GROUP: &str = "hooks";
 const COMMAND: &str = "command";
 const KIND: &str = "type";
 const KIND_COMMAND: &str = "command";
+/// **이 키가 있으면 exec form 이다.** 이름을 하네스 스키마에서 그대로 빌렸다.
+const ARGS: &str = "args";
+/// 우리 바이너리의 서브커맨드.
+const SUBCOMMAND: &str = "hook";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 등록 문자열 — **바이트 단위로 안정적이어야 한다**
+// 등록 항목 — **바이트 단위로 안정적이어야 한다**
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// 이 설치가 등록할 것. 사건 목록이 비면 실행 파일도 안 찾는다.
@@ -52,10 +84,7 @@ pub fn desired(events: &[&str]) -> Result<Vec<HookEntry>> {
         return Ok(Vec::new());
     }
     let exe = 실행_파일()?;
-    Ok(events
-        .iter()
-        .map(|e| HookEntry { event: (*e).to_owned(), command: command(&exe, e) })
-        .collect())
+    Ok(events.iter().map(|e| entry(&exe, e)).collect())
 }
 
 /// **지금 도는 이 바이너리**의 절대 경로.
@@ -69,20 +98,31 @@ fn 실행_파일() -> Result<PathBuf> {
     Ok(exe.canonicalize().unwrap_or(exe))
 }
 
-/// 등록 문자열 하나.
+/// 등록 항목 하나 — **exec form.**
+///
+/// `command` 는 실행 파일 경로 **그 자체**다. 따옴표도 이스케이프도 안 붙인다 —
+/// 셸을 안 거치므로 붙이면 오히려 그 글자가 경로의 일부가 된다.
 #[must_use]
-pub fn command(exe: &Path, event: &str) -> String {
-    format!("{} hook {event}", 홑따옴표(&exe.to_string_lossy()))
-}
-
-/// POSIX 홑따옴표 — 안의 `'` 는 `'\''` 로 닫았다 다시 연다.
-fn 홑따옴표(s: &str) -> String {
-    format!("'{}'", s.replace('\'', r"'\''"))
+pub fn entry(exe: &Path, event: &str) -> HookEntry {
+    HookEntry {
+        event: event.to_owned(),
+        command: exe.to_string_lossy().into_owned(),
+        args: Some(vec![SUBCOMMAND.to_owned(), event.to_owned()]),
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★ 탐침 — **「적혀 있다」로는 부족하다. 그러나 남의 문자열을 돌리지는 않는다**
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// 이 항목이 **셸을 거치는 옛 형태**인가 — `args` 가 없으면 그렇다.
+///
+/// 이 회차 이전에 설치된 프로젝트가 여기 걸린다. **「우리 것이 아니다」와 다르다** —
+/// 우리 것이 맞고, `pal update` 가 옮긴다.
+#[must_use]
+pub fn 옛_형태인가(entry: &HookEntry) -> bool {
+    entry.args.is_none()
+}
 
 /// 등록 항목을 **우리 형태로 되읽는다.** 실패하면 우리가 쓴 것이 아니다.
 ///
@@ -94,32 +134,21 @@ fn 홑따옴표(s: &str) -> String {
 /// 여기서 되읽은 경로는 **존재와 실행 권한을 `stat` 으로 보는 데만** 쓰고, 프로세스를
 /// 띄우는 데는 [`probe`] 가 **지금 도는 이 실행 파일**만 쓴다.
 ///
-/// 되읽는 형태는 [`command`] 가 만드는 것 하나뿐이다 — `'<경로>' hook <사건>`.
+/// ⚠ **exec form 에서 이 규율이 한 겹 더 중요해진다.** shell form 의 `command` 는
+/// 셸 문법이라 「우리 형태인가」를 파싱으로 물어야 했지만, exec form 의 `command` 는
+/// **실행 파일 경로 그 자체**다 — 그것을 그대로 띄우면 남이 커밋해 보낸 임의의
+/// 바이너리가 돈다. 그래서 [`entry`] 가 만드는 형태 하나만 되읽는다:
+/// `args == ["hook", "<사건>"]`.
 #[must_use]
 pub fn 되읽는다(entry: &HookEntry) -> Option<PathBuf> {
-    let rest = entry.command.strip_prefix('\'')?;
-    let mut path = String::new();
-    let mut chars = rest.char_indices();
-    let 꼬리 = loop {
-        let (i, c) = chars.next()?;
-        if c != '\'' {
-            path.push(c);
-            continue;
-        }
-        // `'\''` 는 홑따옴표 하나를 뜻한다 — 그것만 이어 읽는다.
-        if rest[i..].starts_with(r"'\''") {
-            path.push('\'');
-            chars.next()?;
-            chars.next()?;
-            chars.next()?;
-            continue;
-        }
-        break &rest[i + 1..];
-    };
-    if 꼬리 != format!(" hook {}", entry.event) || path.is_empty() {
+    let args = entry.args.as_deref()?;
+    if args.len() != 2 || args[0] != SUBCOMMAND || args[1] != entry.event {
         return None;
     }
-    Some(PathBuf::from(path))
+    if entry.command.is_empty() {
+        return None;
+    }
+    Some(PathBuf::from(&entry.command))
 }
 
 /// 등록된 자리가 **실행될 수 있는가** — `stat` 으로만 본다. **안 돌린다.**
@@ -174,9 +203,10 @@ pub fn 실행할_수_있나(path: &Path) -> Result<()> {
 /// **우리가 아는 것만 실행한다**: [`std::env::current_exe`] 와 우리가 정한 인자.
 /// 파일에서 읽은 문자열은 [`registered`]·[`되읽는다`] 의 **대조에만** 쓴다.
 ///
-/// ⚠ 하네스는 여전히 등록 문자열을 `/bin/sh -c` 로 돌린다. 그래서 **등록 문자열은
-/// 셸 규칙을 타야 한다**([`홑따옴표`]). 그것과 **우리 진단이 셸을 쓰는 것**은 다른
-/// 문제이고, 여기서 둘을 갈랐다.
+/// ★ 이제 하네스도 셸을 안 거친다(exec form). 그래서 **이 탐침이 하는 일이 하네스가
+/// 하는 일과 같은 모양**이 됐다 — 실행 파일 하나와 인자 둘. 그래도 **경로의 출처는
+/// 다르다**: 하네스는 `settings.json` 에서 읽고 우리는 [`std::env::current_exe`] 에서
+/// 얻는다. 그 차이가 이 규율의 전부다.
 ///
 /// # 탐침은 무슨 정책이 걸려 있어도 차단을 못 낸다
 ///
@@ -281,8 +311,29 @@ pub fn registered(current: Option<&Map<String, Value>>, entry: &HookEntry) -> bo
 }
 
 /// 설정 안의 항목 하나가 **우리가 적어 둔 그 항목인가.**
+///
+/// # 동등성을 어디까지 보는가 — **`command` 와 `args` 둘 다**
+///
+/// 하네스의 중복 제거는 **`command` 문자열 완전 일치**다. 그런데 exec form 에서 같은
+/// `command` 에 다른 `args` 는 **다른 훅**이다. 둘 중 좁은 쪽(`command` 만)으로
+/// 판정하면 우리가 안 건 항목을 우리 것으로 읽어 **제거가 남의 것을 걷고**, 넓은
+/// 쪽(둘 다)으로 판정하면 최악의 경우 **우리 것을 못 알아보고 하나 더 건다.**
+///
+/// **넓은 쪽을 골랐다.** 못 알아본 것은 `doctor` 의 검사 여섯이 잡고 화면에 뜨지만,
+/// 남의 등록을 걷는 것은 `[f24]` ⑦ 을 무너뜨리고 **조용하다.** 그리고 우리는 사건
+/// 하나에 항목 하나만 걸므로 「하나 더 거는」 쪽이 실제로 일어나려면 사용자가 같은
+/// 절대 경로를 손으로 다른 인자와 함께 걸어 뒀어야 한다.
+///
+/// **`args` 의 없음도 값이다** — 옛 형태와 새 형태는 여기서 갈리고, 그래서 `update`
+/// 가 옛 것을 빼고 새 것을 걸 수 있다.
 fn 같은_등록인가(c: &Value, entry: &HookEntry) -> bool {
     c.get(COMMAND).and_then(Value::as_str) == Some(entry.command.as_str())
+        && c.get(ARGS) == 인자_값(entry).as_ref()
+}
+
+/// 이 항목의 `args` 를 JSON 으로. 옛 형태면 **없음**이다.
+fn 인자_값(entry: &HookEntry) -> Option<Value> {
+    entry.args.as_ref().map(|a| json!(a))
 }
 
 /// 계획을 설정 지도에 적용한다. **더한 것이 있으면 `hooks` 키를 우리가 만들었는지**를
@@ -316,11 +367,31 @@ pub fn strip(map: &mut Map<String, Value>, recorded: &[HookEntry], hooks_key_cre
 }
 
 /// 설정에 넣을 항목 하나의 JSON.
+///
+/// ⚠ **`shell` 키를 안 쓴다.** 실측: enum(`bash`/`powershell`) 밖 값을 넣으면 그 훅
+/// 배열 **전체**가 조용히 사라진다. 안 쓰는 키는 안 쓴다.
 fn 항목(entry: &HookEntry) -> Value {
-    json!({ KIND: KIND_COMMAND, COMMAND: entry.command })
+    let mut o = Map::new();
+    o.insert(KIND.to_owned(), json!(KIND_COMMAND));
+    o.insert(COMMAND.to_owned(), json!(entry.command));
+    if let Some(args) = 인자_값(entry) {
+        o.insert(ARGS.to_owned(), args);
+    }
+    Value::Object(o)
 }
 
 fn 더한다(map: &mut Map<String, Value>, entry: &HookEntry) -> Result<bool> {
+    // ⚠ **`args: []` 는 exec form 이고 반드시 죽는다** — 빈 배열이면 `command` 문자열
+    // **전체**가 실행 파일 경로가 되어 ENOENT 다. 그리고 그 실패는 기본 채널에서
+    // 침묵한다. 우리 코드가 그것을 만들 길은 지금 없지만, **생기면 여기서 멈춘다.**
+    if entry.args.as_ref().is_some_and(Vec::is_empty) {
+        bail!(
+            "`{}` 에 인자가 빈 배열인 항목을 걸려 했다 — 빈 배열도 exec form 이고, \
+             그때는 명령 문자열 **전체**가 실행 파일 경로가 되어 죽는다. \
+             그리고 그 실패는 침묵한다",
+            entry.event
+        );
+    }
     let 없었다 = !map.contains_key(HOOKS);
     let hooks = map.entry(HOOKS).or_insert_with(|| json!({}));
     let Value::Object(hooks) = hooks else {
@@ -370,7 +441,7 @@ fn 치운다(map: &mut Map<String, Value>, 우리가_만들었나: bool) {
 
 #[cfg(test)]
 mod tests {
-    use super::{HookEntry, apply, command, plan, registered, strip, 되읽는다};
+    use super::{HookEntry, apply, entry, plan, registered, strip, 되읽는다, 옛_형태인가};
     use serde_json::{Map, Value, json};
     use std::path::Path;
 
@@ -378,12 +449,18 @@ mod tests {
         v.as_object().expect("객체").clone()
     }
 
-    fn 하나(command: &str) -> HookEntry {
-        HookEntry { event: "SubagentStop".to_owned(), command: command.to_owned() }
+    /// 새 형태 하나.
+    fn 하나(exe: &str) -> HookEntry {
+        entry(Path::new(exe), "SubagentStop")
     }
 
-    fn 바람(command: &str) -> Vec<HookEntry> {
-        vec![하나(command)]
+    /// **옛 형태 하나** — 이 회차 이전의 설치본이 지고 있는 것.
+    fn 옛것(command: &str) -> HookEntry {
+        HookEntry { event: "SubagentStop".to_owned(), command: command.to_owned(), args: None }
+    }
+
+    fn 바람(exe: &str) -> Vec<HookEntry> {
+        vec![하나(exe)]
     }
 
     /// 적어 둔 것 없이 새로 건다 — 시험마다 두 줄이 되는 자리를 접는다.
@@ -392,51 +469,163 @@ mod tests {
         apply(map, &p).expect("적용")
     }
 
-    /// **경로에 공백이 있으면 따옴표가 필요하다** — 없으면 셸이 갈라 읽고 exit 127 이
-    /// 나며 그 실패는 침묵한다.
-    #[test]
-    fn 공백이_든_경로가_따옴표로_묶인다() {
-        let c = command(Path::new("/opt/pal 도구/pal"), "SubagentStop");
-        assert_eq!(c, "'/opt/pal 도구/pal' hook SubagentStop");
+    /// 그 사건에 걸린 항목 전부.
+    fn 걸린(map: &Map<String, Value>, event: &str) -> Vec<Value> {
+        map["hooks"][event]
+            .as_array()
+            .expect("배열")
+            .iter()
+            .filter_map(|g| g["hooks"].as_array())
+            .flatten()
+            .cloned()
+            .collect()
     }
 
-    /// 홑따옴표가 든 경로도 셸에서 한 낱말이다.
+    /// ★ **공백·따옴표·`$`·백틱이 든 경로가 그대로 간다** — exec form 은 셸을 안 거치므로
+    /// 인용이 필요 없고, **붙이면 오히려 그 글자가 경로의 일부가 된다.**
     #[test]
-    fn 홑따옴표가_든_경로도_한_낱말이다() {
-        let c = command(Path::new("/opt/it's/pal"), "SubagentStop");
-        assert_eq!(c, r"'/opt/it'\''s/pal' hook SubagentStop");
-    }
-
-    /// ★ **우리가 만든 문자열만 되읽힌다** — 되읽히지 않는 것은 우리 것이 아니다.
-    #[test]
-    fn 우리가_만든_문자열만_되읽힌다() {
-        for 경로 in ["/bin/pal", "/opt/pal 도구/pal", "/opt/it's/pal", "/한글/경로/pal"] {
-            let e = 하나(&command(Path::new(경로), "SubagentStop"));
-            assert_eq!(
-                되읽는다(&e).as_deref(),
-                Some(Path::new(경로)),
-                "왕복이 안 됐다: {}",
-                e.command
-            );
-        }
-    }
-
-    /// ★ **남이 심은 문자열은 우리 형태가 아니다.** 되읽기가 그것을 가른다 —
-    /// 그리고 되읽은 경로는 `stat` 에만 쓰이지 실행에는 안 쓰인다.
-    #[test]
-    fn 남이_심은_문자열은_안_되읽힌다() {
-        for 남의것 in [
-            "touch /tmp/PWNED",
-            "'/bin/pal' hook SubagentStop; touch /tmp/PWNED",
-            "'/bin/pal' hook SessionStart",
-            "/bin/pal hook SubagentStop",
-            "'/bin/sh' -c 'touch /tmp/PWNED'",
-            "'' hook SubagentStop",
-            "'미완성 hook SubagentStop",
-            "",
+    fn 인용_없이_경로가_그대로_간다() {
+        for 경로 in [
+            "/bin/pal",
+            "/opt/pal 도구/pal",
+            "/opt/it's/pal",
+            // ⚠ 셸 메타문자를 여기 그대로 둔다 — exec form 에서는 **전부 리터럴**이다.
+            "/opt/$PWD `whoami`/pal",
+            "/opt/a;b|c/pal",
+            "/한글/경로/pal",
         ] {
-            assert!(되읽는다(&하나(남의것)).is_none(), "`{남의것}` 를 우리 것으로 읽었다");
+            let e = 하나(경로);
+            assert_eq!(e.command, 경로, "경로에 무엇이 덧붙었다");
+            assert_eq!(e.args.as_deref(), Some(["hook".to_owned(), "SubagentStop".to_owned()].as_slice()));
         }
+    }
+
+    /// ★ **설정에 실제로 실리는 모양** — `args` 가 있고 `shell` 키가 없다.
+    ///
+    /// ⚠ `args: []` 는 exec form 이고 그때는 명령 문자열 **전체**가 실행 파일 경로가
+    /// 되어 죽는다. 그래서 **비어 있지 않다**를 여기서 못박는다.
+    #[test]
+    fn 설정에_실리는_모양이_exec_form_이다() {
+        let mut map = Map::new();
+        건다(&mut map, &바람("/opt/pal 도구/pal"));
+        let 항목들 = 걸린(&map, "SubagentStop");
+        assert_eq!(항목들.len(), 1);
+        assert_eq!(
+            항목들[0],
+            json!({
+                "type": "command",
+                "command": "/opt/pal 도구/pal",
+                "args": ["hook", "SubagentStop"],
+            })
+        );
+        assert!(항목들[0].get("shell").is_none(), "`shell` 키를 썼다 — 훅 배열이 통째로 사라진다");
+    }
+
+    /// **인자가 빈 배열이면 멈춘다** — 그 항목은 반드시 죽고, 그 실패는 침묵한다.
+    #[test]
+    fn 빈_인자_배열은_거절한다() {
+        let mut map = Map::new();
+        let 빈것 = vec![HookEntry {
+            event: "SubagentStop".to_owned(),
+            command: "/bin/pal hook SubagentStop".to_owned(),
+            args: Some(Vec::new()),
+        }];
+        let p = plan(Some(&map), &[], &빈것);
+        assert!(apply(&mut map, &p).is_err(), "빈 인자 배열을 그대로 걸었다");
+    }
+
+    /// ★ **우리가 만든 항목만 되읽힌다** — 되읽히지 않는 것은 우리 것이 아니다.
+    #[test]
+    fn 우리가_만든_항목만_되읽힌다() {
+        for 경로 in ["/bin/pal", "/opt/pal 도구/pal", "/opt/it's/pal", "/한글/경로/pal"] {
+            let e = 하나(경로);
+            assert_eq!(되읽는다(&e).as_deref(), Some(Path::new(경로)), "왕복이 안 됐다: {경로}");
+        }
+    }
+
+    /// ★ **남이 심은 항목은 우리 형태가 아니다.** 되읽기가 그것을 가른다 —
+    /// 그리고 되읽은 경로는 `stat` 에만 쓰이지 실행에는 안 쓰인다.
+    ///
+    /// exec form 에서 이 줄이 더 세진다: `command` 가 **실행 파일 경로 그 자체**라
+    /// 되읽기가 무르면 남이 커밋해 보낸 바이너리를 우리가 띄운다.
+    #[test]
+    fn 남이_심은_항목은_안_되읽힌다() {
+        let 남의것: Vec<HookEntry> = vec![
+            // 인자가 없다 — **옛 형태**이지 우리 새 형태가 아니다.
+            옛것("'/bin/pal' hook SubagentStop"),
+            옛것("touch /tmp/PWNED"),
+            // 인자가 우리 것이 아니다.
+            인자("/usr/bin/touch", &["/tmp/PWNED"]),
+            인자("/bin/sh", &["-c", "touch /tmp/PWNED"]),
+            인자("/bin/pal", &["hook", "SessionStart"]),
+            인자("/bin/pal", &["hook"]),
+            인자("/bin/pal", &["hook", "SubagentStop", "--그리고"]),
+            인자("/bin/pal", &[]),
+            // 경로가 비었다.
+            인자("", &["hook", "SubagentStop"]),
+        ];
+        for e in &남의것 {
+            assert!(되읽는다(e).is_none(), "`{}` 를 우리 것으로 읽었다", e.보임());
+        }
+    }
+
+    fn 인자(command: &str, args: &[&str]) -> HookEntry {
+        HookEntry {
+            event: "SubagentStop".to_owned(),
+            command: command.to_owned(),
+            args: Some(args.iter().map(|s| (*s).to_owned()).collect()),
+        }
+    }
+
+    /// ★ **옛 형태는 「우리 것이 아니다」가 아니라 「옛 형태」다.** 그 구분이
+    /// `update` 의 안내와 `uninstall` 의 걷기를 가른다.
+    #[test]
+    fn 옛_형태를_종류로_가른다() {
+        assert!(옛_형태인가(&옛것("'/bin/pal' hook SubagentStop")));
+        assert!(!옛_형태인가(&하나("/bin/pal")));
+    }
+
+    /// ★ **항목 동등성은 `command` 와 `args` 둘 다 본다.**
+    ///
+    /// 같은 경로에 다른 인자가 걸려 있으면 **다른 훅**이다 — 우리 것으로 읽어서
+    /// 걷어내면 그것이 곧 남의 등록을 지우는 일이다.
+    #[test]
+    fn 인자가_다르면_다른_등록이다() {
+        let mut map = Map::new();
+        건다(&mut map, &바람("/bin/pal"));
+
+        assert!(registered(Some(&map), &하나("/bin/pal")));
+        assert!(!registered(Some(&map), &인자("/bin/pal", &["hook", "SessionStart"])));
+        assert!(!registered(Some(&map), &옛것("/bin/pal")), "`args` 없는 항목을 같다고 읽었다");
+    }
+
+    /// ★ **`update` 가 옛 형태를 빼고 새 형태를 건다.** 안 빼면 같은 훅이 두 번 돌고,
+    /// 옛 것은 셸을 거친다.
+    #[test]
+    fn 갱신이_옛_형태를_빼고_새_형태를_건다() {
+        let mut map = Map::new();
+        let 옛 = vec![옛것("'/bin/pal' hook SubagentStop")];
+        건다(&mut map, &옛);
+
+        let 새 = 바람("/bin/pal");
+        let p = plan(Some(&map), &옛, &새);
+        assert_eq!(p.add.len(), 1, "새 형태를 안 걸려 한다");
+        assert_eq!(p.remove.len(), 1, "옛 형태를 안 빼려 한다");
+        apply(&mut map, &p).expect("적용");
+
+        let 항목들 = 걸린(&map, "SubagentStop");
+        assert_eq!(항목들.len(), 1, "옛 등록이 남았다: {항목들:?}");
+        assert_eq!(항목들[0]["args"], json!(["hook", "SubagentStop"]));
+    }
+
+    /// ★ **`uninstall` 이 옛 형태도 걷어낸다.** 매니페스트가 적은 그대로 뺀다.
+    #[test]
+    fn 제거가_옛_형태도_걷어낸다() {
+        let mut map = Map::new();
+        let 옛 = vec![옛것("'/bin/pal' hook SubagentStop")];
+        let 만들었나 = 건다(&mut map, &옛);
+        strip(&mut map, &옛, 만들었나);
+        assert!(map.is_empty(), "옛 형태가 남았다: {map:?}");
     }
 
     /// ★ **같은 설치에서 두 번 등록하면 두 번 돈다** — 중복 제거가 완전 일치 기준이므로
@@ -444,7 +633,7 @@ mod tests {
     #[test]
     fn 두_번째_계획은_비어_있다() {
         let mut map = Map::new();
-        let 바람 = 바람("'/bin/pal' hook SubagentStop");
+        let 바람 = 바람("/bin/pal");
         let p = plan(Some(&map), &[], &바람);
         assert_eq!(p.add.len(), 1);
         apply(&mut map, &p).expect("적용");
@@ -457,10 +646,10 @@ mod tests {
     #[test]
     fn 옮겨_가면_옛_등록을_뺀다() {
         let mut map = Map::new();
-        let 옛 = 바람("'/옛/pal' hook SubagentStop");
+        let 옛 = 바람("/옛/pal");
         건다(&mut map, &옛);
 
-        let 새 = 바람("'/새/pal' hook SubagentStop");
+        let 새 = 바람("/새/pal");
         let p = plan(Some(&map), &옛, &새);
         assert_eq!(p.add.len(), 1);
         assert_eq!(p.remove.len(), 1);
@@ -480,7 +669,7 @@ mod tests {
             }
         });
         let mut map = 지도(&남의것);
-        let 바람 = 바람("'/bin/pal' hook SubagentStop");
+        let 바람 = 바람("/bin/pal");
         건다(&mut map, &바람);
         assert_eq!(map["hooks"]["SubagentStop"].as_array().expect("배열").len(), 2);
 
@@ -491,7 +680,7 @@ mod tests {
     /// **우리가 만든 `hooks` 키는 비면 사라진다.** 사용자가 만든 것은 안 사라진다.
     #[test]
     fn 우리가_만든_훅_키만_사라진다() {
-        let 바람 = 바람("'/bin/pal' hook SubagentStop");
+        let 바람 = 바람("/bin/pal");
 
         let mut 우리것 = Map::new();
         let 만들었나 = 건다(&mut 우리것, &바람);
@@ -511,7 +700,7 @@ mod tests {
     fn 모양이_다르면_멈춘다() {
         for 이상한 in [json!({"hooks": "문자열"}), json!({"hooks": {"SubagentStop": 1}})] {
             let mut map = 지도(&이상한);
-            let 바람 = 바람("'/bin/pal' hook SubagentStop");
+            let 바람 = 바람("/bin/pal");
             let p = plan(Some(&map), &[], &바람);
             assert!(apply(&mut map, &p).is_err(), "{이상한} 에서 안 멈췄다");
         }
@@ -521,7 +710,7 @@ mod tests {
     #[test]
     fn 우리만_있던_사건_자리는_통째로_사라진다() {
         let mut map = Map::new();
-        let 바람 = 바람("'/bin/pal' hook SubagentStop");
+        let 바람 = 바람("/bin/pal");
         let 만들었나 = 건다(&mut map, &바람);
         strip(&mut map, &바람, 만들었나);
         assert!(map.is_empty());

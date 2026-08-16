@@ -7,10 +7,12 @@
 //!
 //! | 재는 것 | 어떻게 |
 //! |---|---|
-//! | 등록된 문자열이 **실제로 도는가** | 실측된 규약 그대로 `/bin/sh -c "<등록 문자열 원문>"` 로 실행 |
+//! | 등록된 항목이 **실제로 도는가** | 실측된 **exec form** 규약 그대로 `command` 를 실행 파일로 직접 띄우고 `args` 를 그대로 넘긴다. **셸이 없다** |
 //! | 그 실행이 **차단 바이트를 내는가** | 표준출력이 `{"decision":"block","reason":…}` · 종료 코드 0 |
-//! | **두 번 설치해도 한 번만 도는가** | 중복 제거가 완전 일치 기준이므로 등록이 하나여야 한다 |
+//! | **두 번 설치해도 한 번만 도는가** | 등록이 하나여야 한다 |
 //! | 남의 등록을 **안 건드리는가** | 사용자 훅이 든 fixture 에서 왕복 후 값 비교 |
+//! | **옛 형태를 새 형태로 옮기는가** | 손으로 shell form 을 심고 `update` 뒤에 남은 것을 센다 |
+//! | **옛 형태도 걷어내는가** | 같은 fixture 에서 `uninstall` 뒤 사용자 설정과 바이트 비교 |
 //!
 //! **못 재는 것**: 하네스가 그 바이트를 받아 실제로 서브에이전트를 막는 마지막 한 칸.
 //! 그것은 `claude` 세션을 실제로 돌려야 보이고 **이 회차는 안 했다.** 그래서 그 한 칸은
@@ -19,8 +21,10 @@
 //!
 //! # ★ 왜 공백이 든 경로에 바이너리를 복사해서 설치하는가
 //!
-//! 등록 문자열은 셸을 거친다. 우리 시험 바이너리는 `target/debug/deps/` 아래라 공백이
-//! 없고, 그러면 **따옴표가 없어도 전부 통과한다.** 따옴표를 재려면 공백이 있어야 한다.
+//! 옛 형태(shell form)에서는 등록 문자열이 셸을 거쳐서 **공백이 있으면 따옴표가
+//! 필요했다.** 새 형태에서는 `command` 가 실행 파일 경로 그 자체라 **따옴표가 있으면
+//! 오히려 못 찾는다.** 어느 쪽이든 **공백 없는 경로로만 재면 그 차이가 안 드러난다** —
+//! 우리 시험 바이너리는 `target/debug/deps/` 아래라 공백이 없다. 그래서 복사한다.
 
 mod common;
 
@@ -71,6 +75,11 @@ fn 실행_권한(exe: &Path) {
 #[cfg(not(unix))]
 fn 실행_권한(_exe: &Path) {}
 
+/// 등록에 실리는 경로 — **설치가 심링크를 푼다**(`hooks::실행_파일`).
+fn 실제(exe: &Path) -> String {
+    exe.canonicalize().expect("canonicalize").display().to_string()
+}
+
 fn 성공(exe: &Path, cwd: &Path, args: &[&str]) -> String {
     let out = Command::new(exe).args(args).current_dir(cwd).output().expect("pal 을 못 돌렸다");
     assert!(
@@ -87,42 +96,56 @@ fn 설정(root: &Path) -> serde_json::Value {
         .expect("JSON")
 }
 
-/// 그 사건에 걸린 명령 문자열 전부 — **묶음 구조를 여기 한 번만 안다.**
-fn 걸린_명령(설정: &serde_json::Value, event: &str) -> Vec<String> {
+/// 그 사건에 걸린 **항목** 전부 — **묶음 구조를 여기 한 번만 안다.**
+fn 걸린_항목(설정: &serde_json::Value, event: &str) -> Vec<serde_json::Value> {
     설정["hooks"][event]
         .as_array()
         .map(|groups| {
-            groups
-                .iter()
-                .filter_map(|g| g["hooks"].as_array())
-                .flatten()
-                .filter_map(|c| c["command"].as_str())
-                .map(str::to_owned)
-                .collect()
+            groups.iter().filter_map(|g| g["hooks"].as_array()).flatten().cloned().collect()
         })
         .unwrap_or_default()
 }
 
-fn 우리_명령(root: &Path) -> String {
-    let 전부 = 걸린_명령(&설정(root), "SubagentStop");
-    let 우리것: Vec<_> = 전부.iter().filter(|c| c.contains("hook SubagentStop")).collect();
+/// 그 사건에 걸린 `command` 문자열 전부.
+fn 걸린_명령(설정: &serde_json::Value, event: &str) -> Vec<String> {
+    걸린_항목(설정, event)
+        .iter()
+        .filter_map(|c| c["command"].as_str())
+        .map(str::to_owned)
+        .collect()
+}
+
+/// 우리 등록 하나 — 없거나 둘이면 여기서 걸린다.
+fn 우리_항목(root: &Path) -> serde_json::Value {
+    let 전부 = 걸린_항목(&설정(root), "SubagentStop");
+    let 우리것: Vec<_> = 전부.iter().filter(|c| c.get("args").is_some()).collect();
     assert_eq!(우리것.len(), 1, "우리 등록이 하나가 아니다: {전부:?}");
     우리것[0].clone()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ★ 실측된 규약 그대로 — **`/bin/sh -c "<등록 문자열 원문>"`**
+// ★ 실측된 규약 그대로 — **exec form. 셸이 없다**
+//
+// 스키마 원문: *"Argument list for exec form. When present, `command` is resolved as
+// an executable and spawned directly with these arguments — **no shell**."*
+// 그래서 이 자리도 `/bin/sh -c` 를 안 쓴다. **따옴표를 붙이면 오히려 못 찾는다.**
 // ─────────────────────────────────────────────────────────────────────────────
 
-fn 하네스처럼(command: &str, payload: &str) -> Output {
-    let mut child = Command::new("/bin/sh")
-        .arg("-c")
-        .arg(command)
+fn 하네스처럼(항목: &serde_json::Value, payload: &str) -> Output {
+    let command = 항목["command"].as_str().expect("command 가 문자열이 아니다");
+    let args: Vec<&str> = 항목["args"]
+        .as_array()
+        .expect("args 가 배열이 아니다 — exec form 이 아니다")
+        .iter()
+        .map(|a| a.as_str().expect("인자가 문자열이 아니다"))
+        .collect();
+    let mut child = Command::new(command)
+        .args(&args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("셸을 못 돌렸다");
+        .expect("등록된 실행 파일을 못 돌렸다");
     child.stdin.as_mut().expect("stdin").write_all(payload.as_bytes()).expect("쓰기");
     child.wait_with_output().expect("wait")
 }
@@ -144,22 +167,43 @@ fn 페이로드(마지막_말: &str, 반복중: bool) -> String {
 // (a) 발화 · (b) 차단
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// ★ **등록된 그 문자열이 실제로 돌고, 차단 바이트를 낸다.**
+/// ★ **등록된 그 항목이 실제로 돌고, 차단 바이트를 낸다.**
 ///
 /// 「`settings.json` 에 적혀 있다」로는 부족하다 — 파일이 사라지거나 실행 권한을 잃어도
-/// 하네스는 exit 126/127 을 **완전히 삼킨다.** 그래서 적힌 문자열을 **실행해서** 잰다.
+/// 하네스는 그 실패를 **완전히 삼킨다.** 그래서 적힌 항목을 **실행해서** 잰다.
+///
+/// 그리고 **exec form 의 모양 자체**를 여기서 못박는다 — `command` 는 실행 파일 경로
+/// **그 자체**이고(따옴표 없음), `args` 는 `["hook", "<사건>"]` 이며 **비어 있지 않다.**
+/// ⚠ 실측: `args: []` 도 exec form 이고, 그때는 `command` **문자열 전체**가 실행 파일
+/// 경로가 되어 ENOENT 로 죽는다.
 #[test]
 fn 등록된_명령이_돌고_차단을_낸다() {
     let root = 프로젝트("발화");
     let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "발화");
     성공(&exe, &root, &["install"]);
 
-    let command = 우리_명령(&root);
-    assert!(command.contains(&exe.display().to_string()), "절대 경로로 안 걸렸다: {command}");
-    assert!(command.starts_with('\''), "공백이 든 경로가 따옴표로 안 묶였다: {command}");
+    let 항목 = 우리_항목(&root);
+    assert_eq!(
+        항목["command"].as_str(),
+        Some(실제(&exe).as_str()),
+        "`command` 가 실행 파일 경로 그 자체가 아니다 — exec form 은 셸을 안 거친다: {항목}"
+    );
+    assert_eq!(
+        항목["args"],
+        serde_json::json!(["hook", "SubagentStop"]),
+        "`args` 가 우리 형태가 아니다: {항목}"
+    );
+    assert_eq!(항목["type"], "command");
+    // ★ **셸 인용이 하나도 안 남았다.** 남으면 exec form 이 그것을 경로의 일부로 읽는다.
+    assert!(
+        !항목["command"].as_str().expect("command").contains('\''),
+        "exec form 에 홑따옴표가 남았다: {항목}"
+    );
+    // ⚠ **`shell` 키를 안 쓴다** — enum 밖 값을 넣으면 그 훅 배열 전체가 조용히 사라진다.
+    assert!(항목.get("shell").is_none(), "`shell` 키를 썼다: {항목}");
 
     // (a) 발화 — 부르면 흔적이 남는다.
-    let out = 하네스처럼(&command, &페이로드("다 했다", false));
+    let out = 하네스처럼(&항목, &페이로드("다 했다", false));
     assert!(out.status.success(), "등록된 명령이 exit 0 을 안 냈다");
     assert!(
         String::from_utf8_lossy(&out.stderr).contains("pal hook"),
@@ -169,14 +213,14 @@ fn 등록된_명령이_돌고_차단을_낸다() {
     assert!(out.stdout.is_empty(), "통과인데 표준출력이 있다");
 
     // (b) 차단 — 실측된 규약 그대로의 바이트가 나온다.
-    let out = 하네스처럼(&command, &페이로드("", false));
+    let out = 하네스처럼(&항목, &페이로드("", false));
     assert!(out.status.success(), "차단인데 exit 0 이 아니다");
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("표준출력이 JSON 이 아니다");
     assert_eq!(v["decision"], "block", "차단 결정이 안 나왔다: {v}");
     assert!(!v["reason"].as_str().expect("reason").trim().is_empty());
 
     // 그리고 반복 회차에서는 같은 페이로드가 통과다.
-    let out = 하네스처럼(&command, &페이로드("", true));
+    let out = 하네스처럼(&항목, &페이로드("", true));
     assert!(out.stdout.is_empty(), "반복 회차에서 또 차단했다");
 }
 
@@ -233,25 +277,130 @@ fn 갱신이_옮겨간_실행_파일을_따라간다() {
     let 부모 = root.parent().expect("부모").to_path_buf();
     let 옛 = 공백이_든_곳의_pal(&부모, "옛");
     성공(&옛, &root, &["install"]);
-    let 옛_명령 = 우리_명령(&root);
+    let 옛_항목 = 우리_항목(&root);
 
     let 새 = 공백이_든_곳의_pal(&부모, "새");
     let report = 성공(&새, &root, &["update"]);
     assert!(report.contains("훅"), "훅을 갱신했다고 말하지 않았다:\n{report}");
 
-    let 지금 = 우리_명령(&root);
-    assert_ne!(지금, 옛_명령, "옛 등록을 그대로 뒀다");
-    assert!(지금.contains(&새.display().to_string()), "새 경로로 안 갈렸다: {지금}");
+    let 지금 = 우리_항목(&root);
+    assert_ne!(지금, 옛_항목, "옛 등록을 그대로 뒀다");
+    assert_eq!(지금["command"].as_str(), Some(실제(&새).as_str()));
     assert_eq!(걸린_명령(&설정(&root), "SubagentStop").len(), 1, "죽은 등록이 남았다");
 
     // 그리고 매니페스트가 지금 걸린 것을 적고 있다 — 안 적으면 제거가 못 되돌린다.
-    let m: serde_json::Value =
-        serde_json::from_slice(&std::fs::read(root.join(".claude/pal/manifest.json")).expect("읽기"))
-            .expect("JSON");
-    assert_eq!(m["settings"]["hooks"][0]["command"], serde_json::json!(지금));
+    let m = 매니페스트(&root);
+    assert_eq!(m["settings"]["hooks"][0]["command"], 지금["command"]);
+    assert_eq!(m["settings"]["hooks"][0]["args"], 지금["args"]);
 
     성공(&새, &root, &["uninstall"]);
     assert!(!root.join(".claude/settings.json").exists(), "우리가 만든 설정이 남았다");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ★ 옛 형태(shell form) — **옮기고, 걷어낸다**
+//
+// 이미 설치된 프로젝트는 `'<경로>' hook <사건>` 한 문자열로 걸려 있다. `update` 가
+// 그것을 안 옮기면 **그 프로젝트들만 영원히 셸을 거치고**, `uninstall` 이 그것을 못
+// 걷으면 **죽은 등록이 남는다.** 둘 다 실패가 침묵하는 자리다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+fn 매니페스트(root: &Path) -> serde_json::Value {
+    serde_json::from_slice(&std::fs::read(root.join(".claude/pal/manifest.json")).expect("읽기"))
+        .expect("JSON")
+}
+
+fn 매니페스트_쓰기(root: &Path, m: &serde_json::Value) {
+    std::fs::write(
+        root.join(".claude/pal/manifest.json"),
+        serde_json::to_string_pretty(m).expect("직렬화"),
+    )
+    .expect("쓰기");
+}
+
+/// 설치된 새 형태를 **옛 형태로 되돌린다** — 이 회차 이전의 설치본을 그대로 재현한다.
+///
+/// 옛 등록 문자열은 `'<경로>' hook <사건>` 이었고 매니페스트에 `args` 가 없었다.
+fn 옛_형태로_되돌린다(root: &Path) -> String {
+    let 옛_명령 = {
+        let 항목 = 우리_항목(root);
+        format!("'{}' hook SubagentStop", 항목["command"].as_str().expect("command"))
+    };
+
+    let mut s = 설정(root);
+    s["hooks"]["SubagentStop"] =
+        serde_json::json!([{"hooks": [{"type": "command", "command": 옛_명령}]}]);
+    std::fs::write(
+        root.join(".claude/settings.json"),
+        serde_json::to_string_pretty(&s).expect("직렬화"),
+    )
+    .expect("쓰기");
+
+    let mut m = 매니페스트(root);
+    m["settings"]["hooks"] =
+        serde_json::json!([{"event": "SubagentStop", "command": 옛_명령}]);
+    매니페스트_쓰기(root, &m);
+    옛_명령
+}
+
+/// ★ **`update` 가 옛 형태를 새 형태로 옮긴다.** 안 옮기면 이미 설치된 프로젝트가
+/// 옛 형태로 남는다 — 그리고 그 프로젝트만 계속 셸을 거친다.
+#[test]
+fn 갱신이_옛_형태를_새_형태로_옮긴다() {
+    let root = 프로젝트("이주");
+    let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "이주");
+    성공(&exe, &root, &["install"]);
+    let 옛_명령 = 옛_형태로_되돌린다(&root);
+
+    let report = 성공(&exe, &root, &["update"]);
+    assert!(report.contains("훅"), "훅을 갱신했다고 말하지 않았다:\n{report}");
+
+    // 옛 문자열이 하나도 안 남았다 — 남으면 같은 훅이 두 번 돈다.
+    let 전부 = 걸린_명령(&설정(&root), "SubagentStop");
+    assert_eq!(전부.len(), 1, "옛 등록이 남았다: {전부:?}");
+    assert!(!전부.contains(&옛_명령), "옛 형태가 그대로다: {전부:?}");
+
+    let 지금 = 우리_항목(&root);
+    assert_eq!(지금["command"].as_str(), Some(실제(&exe).as_str()));
+    assert_eq!(지금["args"], serde_json::json!(["hook", "SubagentStop"]));
+
+    // 매니페스트도 새 형태를 적었다 — 안 적으면 제거가 새 형태를 못 되돌린다.
+    let m = 매니페스트(&root);
+    assert_eq!(m["settings"]["hooks"][0]["args"], serde_json::json!(["hook", "SubagentStop"]));
+
+    // 그리고 옮긴 뒤에도 그 항목이 실제로 돈다.
+    let out = 하네스처럼(&지금, &페이로드("", false));
+    let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("표준출력이 JSON 이 아니다");
+    assert_eq!(v["decision"], "block");
+}
+
+/// ★ **`uninstall` 이 옛 형태도 걷어낸다.** 갱신을 안 거치고 바로 지우는 경로다.
+#[test]
+fn 제거가_옛_형태도_걷어낸다() {
+    let root = 프로젝트("옛제거");
+    let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "옛제거");
+    std::fs::create_dir_all(root.join(".claude")).expect(".claude");
+    let 원본 = serde_json::json!({
+        "env": {"A": "1"},
+        "hooks": {"SubagentStop": [{"hooks": [{"type": "command", "command": "내 것.sh"}]}]}
+    });
+    std::fs::write(
+        root.join(".claude/settings.json"),
+        serde_json::to_string_pretty(&원본).expect("직렬화"),
+    )
+    .expect("settings");
+
+    성공(&exe, &root, &["install"]);
+    옛_형태로_되돌린다(&root);
+    assert_eq!(걸린_명령(&설정(&root), "SubagentStop").len(), 1, "이 시험이 재려는 상태가 아니다");
+
+    성공(&exe, &root, &["uninstall"]);
+    // 옛 형태를 걷어내되 **남의 것은 안 건드린다.** 위에서 우리가 사건 배열을 통째로
+    // 갈아 놨으므로 남의 등록이 사라진 상태이고, 그것까지 되살리지는 않는다 —
+    // 여기서 재는 것은 **우리 옛 등록이 남지 않는가**다.
+    let 남은 = 걸린_명령(&설정(&root), "SubagentStop");
+    assert!(남은.is_empty(), "옛 형태가 제거 뒤에 남았다: {남은:?}");
+    assert_eq!(설정(&root)["env"], serde_json::json!({"A": "1"}), "사용자 키가 사라졌다");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -317,6 +466,63 @@ fn 진단이_등록된_훅을_실제로_돌려본다() {
         c["detail"].as_str().expect("detail").contains("127"),
         "왜인지 안 적었다: {c}"
     );
+}
+
+/// ★ **옛 형태로 걸린 등록을 지목한다 — 그리고 「우리 것이 아니다」라고 안 한다.**
+///
+/// 옛 형태는 우리 것이 맞다. 사람에게 필요한 말은 *"형태가 아니다"* 가 아니라
+/// ***"`pal update` 를 돌리십시오"*** 다.
+#[test]
+fn 진단이_옛_형태를_지목한다() {
+    let root = 프로젝트("진단-옛형태");
+    let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "진단옛");
+    성공(&exe, &root, &["install"]);
+    옛_형태로_되돌린다(&root);
+
+    let c = 훅_검사(&root);
+    assert_eq!(c["outcome"], "failed", "옛 형태인데 초록이다: {c}");
+    let detail = c["detail"].as_str().expect("detail");
+    assert!(detail.contains("update"), "무엇을 하라고 안 적었다: {detail}");
+}
+
+/// ★ **남이 심은 항목은 절대 안 돌린다.** 매니페스트도 설정도 남이 커밋해 보낼 수 있다.
+///
+/// 옛 회차가 `command` 를 `/bin/sh -c` 로 돌려서 `pal doctor` 한 번이 임의 코드 실행
+/// 이었다. exec form 은 셸을 안 거치지만 **`command` 를 실행 파일로 직접 띄우므로**
+/// 규율은 그대로여야 한다 — `args` 가 우리 것이 아니면 **띄우지 않는다.**
+#[test]
+fn 진단이_남이_심은_항목을_안_돌린다() {
+    let 흔적 = std::env::temp_dir().join(format!("pal-f24-PWNED-{}", std::process::id()));
+    let _ = std::fs::remove_file(&흔적);
+
+    let root = 프로젝트("진단-남의것");
+    let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "진단남");
+    성공(&exe, &root, &["install"]);
+
+    let 남의_것 = serde_json::json!({
+        "type": "command",
+        "command": "/usr/bin/touch",
+        "args": [흔적.display().to_string()],
+    });
+    let mut s = 설정(&root);
+    s["hooks"]["SubagentStop"] = serde_json::json!([{"hooks": [남의_것.clone()]}]);
+    std::fs::write(
+        root.join(".claude/settings.json"),
+        serde_json::to_string_pretty(&s).expect("직렬화"),
+    )
+    .expect("쓰기");
+    let mut m = 매니페스트(&root);
+    m["settings"]["hooks"] = serde_json::json!([{
+        "event": "SubagentStop",
+        "command": "/usr/bin/touch",
+        "args": [흔적.display().to_string()],
+    }]);
+    매니페스트_쓰기(&root, &m);
+
+    let c = 훅_검사(&root);
+    assert_eq!(c["outcome"], "failed", "남이 심은 항목을 초록으로 냈다: {c}");
+    assert!(!흔적.exists(), "진단이 남이 심은 명령을 실행했다: {}", 흔적.display());
+    let _ = std::fs::remove_file(&흔적);
 }
 
 /// 설치가 없으면 **`Residual`** 이다 — 검사하지 못한 것은 「이상 없음」이 아니다.
