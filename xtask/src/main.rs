@@ -80,6 +80,7 @@ fn check(root: &Path) -> Result<()> {
         ("낡음이 생성기를 안 부른다", check_no_regeneration(root)),
         ("인입이 자연어 유사도를 안 쓴다", check_no_similarity(root)),
         ("승격이 원본을 안 고친다", check_promotion_is_not_in_place(root)),
+        ("설치 경로가 홈을 안 부른다", check_install_never_reaches_home(root)),
     ];
     let total = checks.len();
 
@@ -1417,4 +1418,75 @@ fn check_promotion_is_not_in_place(root: &Path) -> Result<String> {
         );
     }
     Ok(format!("승격을 다루는 파일 {}개 · 제자리 수정 {}개 형태에 0건", files.len(), IN_PLACE_PROMOTION.len()))
+}
+
+// ── 검사 16 — 설치 경로가 홈을 안 부른다 (F24 §2 ⑦) ─────────────────────────
+//
+// 소유자의 문장이 이 검사를 낳았다:
+//
+// > **`~/.claude/` 하위에 기대는 구조는 절대 있어서는 안 돼**
+//
+// 「기대지 않는다」는 코드를 읽어서도 말할 수 있지만, **안 기댄다는 주장과 안 쓴다는
+// 사실은 다르다.** 그래서 여기가 재는 것은 **구조 한 겹**이고 하중의 대부분은 아니다.
+//
+// # ⚠ 이 검사가 못 보는 것 — **적어 두지 않으면 완전한 척한다**
+//
+// F04 가 이미 같은 말을 했다 — *"그것은 문자열 스캔이라 「소스에 그 낱말이 없다」만
+// 말한다 — **낱말 없이도 상위 디렉터리를 지울 수 있고 `..` 하나면 경계가 사라진다**."*
+// **실물 하중은 스냅샷이 진다**(`crates/pal-cli/tests/install_stays_inside.rs`:
+// 격리 HOME · 격리 TMPDIR · 대상의 부모 — 차이 0).
+
+/// 홈을 유도하는 형태. **설치 경로의 코드에 나타나면 실패.**
+const HOME_REACHING: &[&str] =
+    &["home_dir", "dirs::", "directories::", "\"HOME\"", "$HOME", "expanduser", "shellexpand"];
+
+/// 이 검사가 실제로 무언가를 세고 있다는 증거 — **하한.**
+///
+/// 없으면 파일이 옮겨 갔거나 이름이 바뀐 것이고, 그러면 이 검사는 **성한 자리를
+/// 검사하며 통과한다.** 검사 12·13·14 가 세운 형태 그대로다.
+const INSTALL_WITNESS: &str = "pub fn install(";
+
+fn check_install_never_reaches_home(root: &Path) -> Result<String> {
+    let dir = root.join("crates/pal-cli/src/install");
+    let mut files = rust_sources(&dir)?;
+    files.push(root.join("crates/pal-cli/src/install.rs"));
+    // 빌드 스크립트도 설치 경로다 — 커밋을 박으려고 홈을 읽으면 같은 자리가 무너진다.
+    files.push(root.join("crates/pal-cli/build.rs"));
+
+    let mut hits = Vec::new();
+    let mut 봤나 = false;
+    let mut 센_파일 = 0;
+    for file in &files {
+        let Ok(text) = std::fs::read_to_string(file) else { continue };
+        센_파일 += 1;
+        if text.contains(INSTALL_WITNESS) {
+            봤나 = true;
+        }
+        for (n, line) in text.lines().enumerate() {
+            // 주석은 산문이라 검사하지 않는다 — 이 파일들의 머리가 그 낱말들을 **설명**한다.
+            let code = line.split("//").next().unwrap_or("");
+            for m in HOME_REACHING {
+                if code.contains(m) {
+                    hits.push(format!("{}:{} `{m}`", file.display(), n + 1));
+                }
+            }
+        }
+    }
+
+    // **하한** — 설치 경로를 안 보고 있으면 이 검사는 아무것도 안 센다.
+    if !봤나 {
+        bail!(
+            "`{INSTALL_WITNESS}` 가 어디에도 없다 — 이 검사는 아무것도 안 세고 있다 \
+             (검사한 파일 {센_파일}개)"
+        );
+    }
+    if !hits.is_empty() {
+        bail!(
+            "설치 경로가 홈을 부른다 (F24 ⑦):\n    \
+             소유자의 문장은 **\"`~/.claude/` 하위에 기대는 구조는 절대 있어서는 안 돼\"** \
+             였다.\n    설치·갱신·제거는 **대상 프로젝트 안에서만** 선다:\n    {}",
+            hits.join("\n    ")
+        );
+    }
+    Ok(format!("설치 소스 {센_파일}개 · 홈 낱말 {}개에 0건", HOME_REACHING.len()))
 }
