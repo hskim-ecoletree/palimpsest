@@ -121,8 +121,21 @@ fn 경계(from: &Path) -> PathBuf {
     from.to_path_buf()
 }
 
+/// ★ **읽는 자리도 [`Root::join`] 을 지난다.**
+///
+/// 옛 코드는 `target.join(…)` 을 직접 썼다. 그래서 `.claude/settings.json` 이 홈을
+/// 가리키는 심링크면 **대상 밖 파일을 읽어서** 그 내용으로 판정했다(실측). 쓰기는
+/// 안 일어나지만 **읽기에도 경계가 있다** — 게이트 ⑦ 의 뒷면이다.
+fn 자리(target: &Path, rel: &str) -> Result<PathBuf, String> {
+    let root = Root::세운다(target).map_err(|e| format!("{e:#}"))?;
+    root.join(&Rel::new(rel)).map_err(|e| format!("{e:#}"))
+}
+
 fn 설정(target: &Path) -> Outcome {
-    let path = target.join(SETTINGS);
+    let path = match 자리(target, SETTINGS) {
+        Ok(p) => p,
+        Err(e) => return Outcome::Failed(e),
+    };
     if !path.exists() {
         return Outcome::Residual(format!("{SETTINGS} 가 없다 — 읽을 것이 없다"));
     }
@@ -136,9 +149,13 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
     let Some(root) = root else {
         return Outcome::Residual("설치를 찾지 못했다 — 대조할 상대가 없다".to_owned());
     };
-    let m = match manifest::read(&root.join(MANIFEST)) {
+    let 매니페스트_자리 = match 자리(root, MANIFEST) {
+        Ok(p) => p,
+        Err(e) => return Outcome::Failed(e),
+    };
+    let m = match manifest::read(&매니페스트_자리) {
         Ok(m) => m,
-        Err(e) => return Outcome::Failed(format!("{e}")),
+        Err(e) => return Outcome::Failed(format!("{e:#}")),
     };
     let 뿌리 = match Root::세운다(root) {
         Ok(r) => r,
@@ -315,16 +332,20 @@ fn 훅(root: Option<&Path>) -> Outcome {
     let Some(root) = root else {
         return Outcome::Residual("설치를 찾지 못했다 — 등록된 훅이 없다".to_owned());
     };
-    let m = match manifest::read(&root.join(MANIFEST)) {
+    let (매니페스트_자리, 설정_자리) = match (자리(root, MANIFEST), 자리(root, SETTINGS)) {
+        (Ok(a), Ok(b)) => (a, b),
+        (Err(e), _) | (_, Err(e)) => return Outcome::Failed(e),
+    };
+    let m = match manifest::read(&매니페스트_자리) {
         Ok(m) => m,
-        Err(e) => return Outcome::Failed(format!("{e}")),
+        Err(e) => return Outcome::Failed(format!("{e:#}")),
     };
     let 적힌: &[manifest::HookEntry] = match &m.settings {
         Some(s) if !s.hooks.is_empty() => &s.hooks,
         _ => return Outcome::Residual("매니페스트에 등록된 훅이 없다".to_owned()),
     };
 
-    let read = match settings::read(&root.join(SETTINGS)) {
+    let read = match settings::read(&설정_자리) {
         Ok(r) => r,
         Err(e) => return Outcome::Failed(format!("설정을 못 읽어 등록을 확인할 수 없다 — {e}")),
     };
