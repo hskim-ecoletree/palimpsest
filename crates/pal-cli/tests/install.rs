@@ -636,6 +636,56 @@ fn 동시_설치_여덟이_블록을_하나만_만든다() {
     }
 }
 
+/// ★ **동시 설치가 되돌리기 기록을 날린다** — 파일 안 블록 수만 보면 이것이 안 걸린다.
+///
+/// 이전 매니페스트를 **잠금 밖에서** 읽으면 경쟁 프로세스가 전부 「이전 = 없음」을
+/// 보고, 마지막 회차가 `blocks: []` · `settings: null` · `created_dirs: []` 인
+/// 매니페스트를 쓴다. 그러면 `uninstall` 이 **rc=0 으로 「제거」 화면을 내면서** 블록도
+/// 설정 키도 빈 디렉터리도 전부 남긴다 — **거짓 성공**이다.
+#[test]
+fn 동시_설치가_되돌리기_기록을_안_잃는다() {
+    let root = 살고_있는_프로젝트("g-기록");
+    let path = std::env::var("PATH").unwrap_or_default();
+    let 아이들: Vec<_> = (0..8)
+        .map(|_| {
+            Command::new(PAL)
+                .args(["install"])
+                .current_dir(&root)
+                .env("PATH", format!("{}:{path}", pal_dir().display()))
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .spawn()
+                .expect("spawn")
+        })
+        .collect();
+    let mut 성공수 = 0;
+    for mut child in 아이들 {
+        if child.wait().expect("wait").success() {
+            성공수 += 1;
+        }
+    }
+    assert!(성공수 >= 1, "여덟이 전부 실패했다");
+
+    // ① 매니페스트가 되돌릴 것을 전부 지고 있는가.
+    let m = 값(&root.join(".claude/pal/manifest.json"));
+    assert!(!m["blocks"].as_array().expect("blocks").is_empty(), "블록 기록이 사라졌다: {m}");
+    assert!(m["settings"].is_object(), "설정 기록이 사라졌다: {m}");
+    assert!(
+        !m["created_dirs"].as_array().expect("created_dirs").is_empty(),
+        "만든 디렉터리 기록이 사라졌다: {m}"
+    );
+
+    // ② 그래서 제거가 실제로 걷어내는가 — **거짓 성공 금지.**
+    성공(&root, &["uninstall"]);
+    for file in ["CLAUDE.md", ".gitignore"] {
+        let text = std::fs::read_to_string(root.join(file)).expect("읽기");
+        assert!(!text.contains("pal:begin"), "{file} 에 블록이 남았다:\n{text}");
+    }
+    let settings = 값(&root.join(".claude/settings.json"));
+    assert!(settings.get("agent").is_none(), "설정 키가 남았다: {settings}");
+    assert!(!root.join(".claude/pal").exists(), "빈 디렉터리가 남았다");
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ⑤ doctor — 검사 다섯
 // ─────────────────────────────────────────────────────────────────────────────

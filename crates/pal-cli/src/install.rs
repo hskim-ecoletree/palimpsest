@@ -136,24 +136,33 @@ pub fn install(target: &Path) -> Result<()> {
 
     // ── 1단계 · 검증. **여기까지 한 바이트도 안 쓴다** ──────────────────────
     let settings_path = root.join(&Rel::new(SETTINGS))?;
-    let read = settings::read(&settings_path)?;
     let manifest_path = root.join(&Rel::new(MANIFEST))?;
-    let 이전 = if manifest_path.exists() { Some(manifest::read(&manifest_path)?) } else { None };
+    settings::read(&settings_path)?;
 
-    // ── 2단계 · 적용 ────────────────────────────────────────────────────────
-    let mut created_dirs = 이전.as_ref().map(|m| m.created_dirs.clone()).unwrap_or_default();
-    // 잠금은 `.claude/` 안에 산다 — 그래서 그것만 먼저 세운다. **없던 것만 적는다**:
-    // 있던 디렉터리를 「우리가 만들었다」고 적으면 제거가 남의 자리를 노린다.
+    // ── 2단계 · 잠금 ────────────────────────────────────────────────────────
+    //
+    // ★ **이전 상태를 읽는 것부터 매니페스트를 쓰는 것까지가 이 안에 있다.** 밖에서
+    // 읽으면 경쟁 프로세스가 전부 「이전 = 없음」을 보고, 마지막 회차가 `blocks: []` ·
+    // `settings: null` 인 매니페스트를 쓴다 — 그러면 제거가 **거짓 성공**한다.
+    //
+    // 잠금은 `.claude/` 안에 사니까 그것만 먼저 세운다. **없던 것만 적는다**: 있던
+    // 디렉터리를 「우리가 만들었다」고 적으면 제거가 남의 자리를 노린다.
     let claude_rel = Rel::new(CLAUDE_DIR);
     let claude = root.join(&claude_rel)?;
     let 우리가_만든다 = !claude.is_dir();
     std::fs::create_dir_all(&claude)
         .with_context(|| format!("만들지 못했다: {}", claude.display()))?;
+    let _lock = Lock::take(&root)?;
+
+    let 이전 = if manifest_path.exists() { Some(manifest::read(&manifest_path)?) } else { None };
+    // 잠금 밖에서 읽은 설정은 이미 남이 바꿨을 수 있다 — **안에서 다시 읽는다.**
+    let read = settings::read(&settings_path)?;
+    let mut created_dirs = 이전.as_ref().map(|m| m.created_dirs.clone()).unwrap_or_default();
     if 우리가_만든다 && !created_dirs.contains(&claude_rel) {
         created_dirs.push(claude_rel);
     }
-    let _lock = Lock::take(&root)?;
 
+    // ── 3단계 · 적용 ────────────────────────────────────────────────────────
     let mut report = Report::new();
     디렉터리_세우기(&root, &mut created_dirs)?;
     let files = 파일_놓기(&root, &mut report)?;
@@ -366,16 +375,20 @@ fn 블록_하나(
             out.push(BlockEntry { path: rel, inserted: bytes, created });
         }
         blocks::Added::AlreadyThere => {
-            report.say("이미 있음", rel.as_str());
             // **옛 기록을 그대로 지고 간다** — 잃으면 제거가 못 되돌린다.
-            if let Some(old) = 옛것 {
-                out.push(old);
-            } else {
-                report.say(
-                    "⚠ 기록 없음",
-                    &format!("{rel}  (우리 마커가 있는데 매니페스트에 기록이 없다 — 제거가 이 블록을 못 되돌린다)"),
+            let Some(old) = 옛것 else {
+                // ★ **되돌리기 기록을 잃은 채 성공을 보고하지 않는다.** 우리 마커가
+                // 파일에 있는데 매니페스트에 그 블록이 없으면 제거가 이것을 못 걷어내고,
+                // 그때 `uninstall` 은 **rc=0 으로 「제거」 화면을 내면서 블록을 남긴다.**
+                bail!(
+                    "{rel} 에 우리 마커가 있는데 매니페스트에 그 기록이 없다 — \
+                     **제거가 이 블록을 못 되돌린다.**\n    \
+                     성공이라고 적지 않는다: 그 블록을 손으로 지운 뒤 다시 돌리거나, \
+                     기록이 살아 있는 매니페스트를 되살리십시오"
                 );
-            }
+            };
+            report.say("이미 있음", rel.as_str());
+            out.push(old);
         }
     }
     Ok(())
