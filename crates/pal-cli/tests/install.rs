@@ -597,6 +597,43 @@ fn 이미_덮인_경로는_안_더한다() {
     assert_eq!(ignore.matches(".palimpsest/cache/").count(), 1, "덮인 규칙을 또 적었다:\n{ignore}");
 }
 
+/// ★ **추적 중인 것은 파일 경로에서도 말한다.**
+///
+/// ignore 규칙은 **이미 추적 중인 파일을 배제하지 못한다** — 그래서 규칙만 더하고
+/// 말하지 않으면 사용자는 파생이 빠졌다고 믿는다.
+///
+/// # 실측 (git 2.50.1) — `ls-files` 와 `check-ignore` 의 규칙이 다르다
+///
+/// ```text
+/// ls-files --error-unmatch -- '.palimpsest/index.redb/'  rc=1  (pathspec did not match)
+/// ls-files --error-unmatch -- '.palimpsest/index.redb'   rc=0  (실제로 추적 중)
+/// ls-files --error-unmatch -- '.palimpsest/cache/'       rc=0
+/// ls-files --error-unmatch -- '.palimpsest/cache'        rc=0
+/// ```
+///
+/// **후행 슬래시는 `check-ignore` 쪽에만 필요하다.** `ls-files` 에 붙이면 파일 경로가
+/// 영원히 rc=1 이 된다.
+#[test]
+fn 추적_중이면_파일_경로에서도_말한다() {
+    let root = 방("g-추적");
+    std::fs::write(root.join("README.md"), "hello\n").expect("README");
+    git(&root, &["init", "-q", "."]);
+    std::fs::create_dir_all(root.join(".palimpsest/cache")).expect("cache");
+    std::fs::write(root.join(".palimpsest/cache/c"), "c\n").expect("c");
+    std::fs::write(root.join(".palimpsest/index.redb"), "i\n").expect("index");
+    std::fs::write(root.join(".palimpsest/intent.redb"), "n\n").expect("intent");
+    git(&root, &["add", "-A", "-f"]);
+    git(&root, &["-c", "user.email=t@e", "-c", "user.name=t", "commit", "-qm", "첫"]);
+
+    let report = 성공(&root, &["install"]);
+    for 파생 in [".palimpsest/cache/", ".palimpsest/index.redb", ".palimpsest/intent.redb"] {
+        assert!(
+            report.lines().any(|l| l.contains("추적 중") && l.contains(파생)),
+            "{파생} 가 추적 중인데 말하지 않았다:\n{report}"
+        );
+    }
+}
+
 /// **끝 개행이 없는 파일** — 그냥 append 하면 마지막 규칙과 우리 규칙이 둘 다 깨진다.
 /// 그리고 **NUL 바이트** — 텍스트 필터가 사용자 줄을 자른 자리.
 ///

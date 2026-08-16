@@ -52,11 +52,24 @@
 //! ignore 규칙은 **이미 추적 중인 파일을 배제하지 못한다.**
 //!
 //! ```text
-//! git -C <d> ls-files --error-unmatch -- '<경로>/'   rc=0 있음 · rc=1 없음
+//! git -C <d> ls-files --error-unmatch -- '<경로>'    rc=0 있음 · rc=1 없음
 //! ```
 //!
 //! `--error-unmatch` 없이 종료 코드로 판정하면 **언제나 rc=0** 이다. 그리고
 //! **bare 저장소에서는 128 이 아니라 1** 이 나온다.
+//!
+//! ⚠ **후행 슬래시 규칙이 `check-ignore` 와 반대다.** 실측 (git 2.50.1):
+//!
+//! ```text
+//! ls-files --error-unmatch -- '.palimpsest/index.redb/'  rc=1  (pathspec did not match)
+//! ls-files --error-unmatch -- '.palimpsest/index.redb'   rc=0  (실제로 추적 중)
+//! ls-files --error-unmatch -- '.palimpsest/cache/'       rc=0
+//! ls-files --error-unmatch -- '.palimpsest/cache'        rc=0
+//! ```
+//!
+//! 슬래시를 붙이면 **파일 경로가 영원히 rc=1** 이 되어 `index.redb`·`intent.redb` 는
+//! 추적 중이어도 경고가 안 뜬다. 슬래시 **없는** 형태는 디렉터리에도 맞는다. 그래서
+//! 두 명령의 질의 형태를 **갈라 쓴다.**
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -207,12 +220,14 @@ fn 한_줄(dir: &Path, args: &[&str]) -> Result<Option<String>> {
 /// # Errors
 /// `git` 을 못 돌리면.
 pub fn tracked(dir: &Path, path: &str) -> Result<bool> {
-    let slashed = with_slash(path);
+    // **후행 슬래시를 뗀다** — 붙이면 파일 경로가 영원히 rc=1 이다(머리말의 실측).
+    let bare = path.trim_end_matches('/');
     // **`--error-unmatch` 가 없으면 언제나 rc=0 이다.**
-    Ok(run_code(dir, &["ls-files", "--error-unmatch", "--", &slashed])? == Some(0))
+    Ok(run_code(dir, &["ls-files", "--error-unmatch", "--", bare])? == Some(0))
 }
 
-/// **후행 슬래시는 필수다** — 없으면 규칙 14종 중 둘에서 오답이 났다.
+/// **`check-ignore` 에는 후행 슬래시가 필수다** — 없으면 규칙 14종 중 둘에서 오답이
+/// 났다. ⚠ `ls-files` 는 반대다([`tracked`]).
 fn with_slash(path: &str) -> String {
     if path.ends_with('/') { path.to_owned() } else { format!("{path}/") }
 }
