@@ -128,8 +128,12 @@ jobs:
   # 앞 회차는 이것을 **Windows↔Windows 로만** 쟀다. 같은 기계의 같은 `core.autocrlf`
   # 로는 위 셋 중 **하나도** 안 드러난다.
 
+  # ⚠ **job id · matrix 키 · 아티팩트 이름은 ASCII 다.** 이 저장소는 이름을 한국어로
+  # 쓰지만 이 셋은 못 쓴다 — GitHub 이 job id 를 `[A-Za-z_][A-Za-z0-9_-]*` 로 받고,
+  # 비ASCII 를 쓰면 워크플로가 **0초 만에 죽는다**(실측 2026-08-17). `name:` 은 자유롭다.
+
   # 1단계 — 각 플랫폼이 **설치하고 커밋한 저장소**를 하나씩 낸다.
-  놓는다:
+  produce:
     name: 놓는다 · ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -158,22 +162,22 @@ jobs:
 
       - name: 설치하고 커밋한다
         shell: bash
-        run: bash scripts/interop-produce.sh 낸것
+        run: bash scripts/interop-produce.sh produced
 
       # ⚠ **`.git` 을 같이 싣는다.** 받는 쪽이 `git clone` 으로 받아야 **git 이
       # 워킹트리 바이트를 정한다** — 그것이 이 측정의 대상이다. 아티팩트 압축이
       # 바이트를 정하게 두면 `core.autocrlf` 가 아예 안 걸리고, 그러면 재려던 축이 사라진다.
       - uses: actions/upload-artifact@v4
         with:
-          name: 설치된-저장소-${{ matrix.os }}
-          path: 낸것
+          name: installed-repo-${{ matrix.os }}
+          path: produced
           include-hidden-files: true
           retention-days: 1
 
   # 2단계 — **다른 플랫폼**이 그것을 clone 해서 판정한다.
-  받는다:
-    name: 받는다 · ${{ matrix.놓는쪽 }} → ${{ matrix.os }}
-    needs: 놓는다
+  receive:
+    name: 받는다 · ${{ matrix.from }} → ${{ matrix.os }}
+    needs: produce
     runs-on: ${{ matrix.os }}
     strategy:
       # ★ **양방향으로 잰다.** 한 방향만 재면 「받는 쪽이 관대한가」와 「놓는 쪽이
@@ -181,9 +185,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - 놓는쪽: windows-latest
+          - from: windows-latest
             os: ubuntu-latest
-          - 놓는쪽: ubuntu-latest
+          - from: ubuntu-latest
             os: windows-latest
     steps:
       - name: 줄바꿈을 실사용자 환경과 같게 맞춘다 (Windows)
@@ -194,8 +198,8 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: 설치된-저장소-${{ matrix.놓는쪽 }}
-          path: 받은것
+          name: installed-repo-${{ matrix.from }}
+          path: received
 
       - uses: actions/cache@v4
         with:
@@ -212,4 +216,4 @@ jobs:
 
       - name: 상호운용을 판정한다
         shell: bash
-        run: bash scripts/interop-receive.sh 받은것
+        run: bash scripts/interop-receive.sh received
