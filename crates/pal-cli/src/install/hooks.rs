@@ -84,7 +84,7 @@ fn 홑따옴표(s: &str) -> String {
 // ★ 탐침 — **「적혀 있다」로는 부족하다. 그러나 남의 문자열을 돌리지는 않는다**
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// 등록 문자열을 **우리 형태로 되읽는다.** 실패하면 우리가 쓴 것이 아니다.
+/// 등록 항목을 **우리 형태로 되읽는다.** 실패하면 우리가 쓴 것이 아니다.
 ///
 /// # ★ 이 함수의 결과를 실행에 쓰지 않는다
 ///
@@ -96,8 +96,8 @@ fn 홑따옴표(s: &str) -> String {
 ///
 /// 되읽는 형태는 [`command`] 가 만드는 것 하나뿐이다 — `'<경로>' hook <사건>`.
 #[must_use]
-pub fn 되읽는다(command: &str, event: &str) -> Option<PathBuf> {
-    let rest = command.strip_prefix('\'')?;
+pub fn 되읽는다(entry: &HookEntry) -> Option<PathBuf> {
+    let rest = entry.command.strip_prefix('\'')?;
     let mut path = String::new();
     let mut chars = rest.char_indices();
     let 꼬리 = loop {
@@ -116,7 +116,7 @@ pub fn 되읽는다(command: &str, event: &str) -> Option<PathBuf> {
         }
         break &rest[i + 1..];
     };
-    if 꼬리 != format!(" hook {event}") || path.is_empty() {
+    if 꼬리 != format!(" hook {}", entry.event) || path.is_empty() {
         return None;
     }
     Some(PathBuf::from(path))
@@ -256,32 +256,33 @@ pub fn plan(
     recorded: &[HookEntry],
     desired: &[HookEntry],
 ) -> Plan {
-    let add = desired
-        .iter()
-        .filter(|d| !registered(current, &d.event, &d.command))
-        .cloned()
-        .collect();
+    let add = desired.iter().filter(|d| !registered(current, d)).cloned().collect();
     let remove = recorded
         .iter()
         .filter(|r| !desired.iter().any(|d| d == *r))
-        .filter(|r| registered(current, &r.event, &r.command))
+        .filter(|r| registered(current, r))
         .cloned()
         .collect();
     Plan { add, remove }
 }
 
-/// 그 명령이 그 사건에 **완전 일치로** 걸려 있는가.
+/// 그 항목이 그 사건에 **완전 일치로** 걸려 있는가.
 #[must_use]
-pub fn registered(current: Option<&Map<String, Value>>, event: &str, command: &str) -> bool {
+pub fn registered(current: Option<&Map<String, Value>>, entry: &HookEntry) -> bool {
     let Some(map) = current else { return false };
-    let Some(Value::Array(groups)) = map.get(HOOKS).and_then(|h| h.get(event)) else {
+    let Some(Value::Array(groups)) = map.get(HOOKS).and_then(|h| h.get(&entry.event)) else {
         return false;
     };
     groups.iter().any(|g| {
-        g.get(GROUP).and_then(Value::as_array).is_some_and(|cmds| {
-            cmds.iter().any(|c| c.get(COMMAND).and_then(Value::as_str) == Some(command))
-        })
+        g.get(GROUP)
+            .and_then(Value::as_array)
+            .is_some_and(|cmds| cmds.iter().any(|c| 같은_등록인가(c, entry)))
     })
+}
+
+/// 설정 안의 항목 하나가 **우리가 적어 둔 그 항목인가.**
+fn 같은_등록인가(c: &Value, entry: &HookEntry) -> bool {
+    c.get(COMMAND).and_then(Value::as_str) == Some(entry.command.as_str())
 }
 
 /// 계획을 설정 지도에 적용한다. **더한 것이 있으면 `hooks` 키를 우리가 만들었는지**를
@@ -291,11 +292,11 @@ pub fn registered(current: Option<&Map<String, Value>>, event: &str, command: &s
 /// `hooks` 가 객체가 아니거나 사건 자리가 배열이 아니면. **고치려 들지 않는다.**
 pub fn apply(map: &mut Map<String, Value>, plan: &Plan) -> Result<bool> {
     for entry in &plan.remove {
-        뺀다(map, &entry.event, &entry.command);
+        뺀다(map, entry);
     }
     let mut 우리가_만들었나 = false;
     for entry in &plan.add {
-        우리가_만들었나 |= 더한다(map, &entry.event, &entry.command)?;
+        우리가_만들었나 |= 더한다(map, entry)?;
     }
     치운다(map, false);
     Ok(우리가_만들었나)
@@ -308,36 +309,42 @@ pub fn apply(map: &mut Map<String, Value>, plan: &Plan) -> Result<bool> {
 pub fn strip(map: &mut Map<String, Value>, recorded: &[HookEntry], hooks_key_created: bool) -> bool {
     let mut 뺐다 = false;
     for entry in recorded {
-        뺐다 |= 뺀다(map, &entry.event, &entry.command);
+        뺐다 |= 뺀다(map, entry);
     }
     치운다(map, hooks_key_created);
     뺐다
 }
 
-fn 더한다(map: &mut Map<String, Value>, event: &str, command: &str) -> Result<bool> {
+/// 설정에 넣을 항목 하나의 JSON.
+fn 항목(entry: &HookEntry) -> Value {
+    json!({ KIND: KIND_COMMAND, COMMAND: entry.command })
+}
+
+fn 더한다(map: &mut Map<String, Value>, entry: &HookEntry) -> Result<bool> {
     let 없었다 = !map.contains_key(HOOKS);
     let hooks = map.entry(HOOKS).or_insert_with(|| json!({}));
     let Value::Object(hooks) = hooks else {
         bail!("`{HOOKS}` 가 객체가 아니다 — 남의 구조를 고치려 들지 않는다");
     };
+    let event = &entry.event;
     let groups = hooks.entry(event).or_insert_with(|| json!([]));
     let Value::Array(groups) = groups else {
         bail!("`{HOOKS}.{event}` 이 배열이 아니다 — 남의 구조를 고치려 들지 않는다");
     };
     // **우리 묶음 하나를 따로 넣는다.** 남의 묶음에 끼워 넣으면 제거가 남의 것을 건드린다.
-    groups.push(json!({ GROUP: [{ KIND: KIND_COMMAND, COMMAND: command }] }));
+    groups.push(json!({ GROUP: [항목(entry)] }));
     Ok(없었다)
 }
 
-fn 뺀다(map: &mut Map<String, Value>, event: &str, command: &str) -> bool {
+fn 뺀다(map: &mut Map<String, Value>, entry: &HookEntry) -> bool {
     let Some(Value::Object(hooks)) = map.get_mut(HOOKS) else { return false };
-    let Some(Value::Array(groups)) = hooks.get_mut(event) else { return false };
+    let Some(Value::Array(groups)) = hooks.get_mut(&entry.event) else { return false };
 
     let mut 뺐다 = false;
     groups.retain_mut(|g| {
         let Some(Value::Array(cmds)) = g.get_mut(GROUP) else { return true };
         let 전 = cmds.len();
-        cmds.retain(|c| c.get(COMMAND).and_then(Value::as_str) != Some(command));
+        cmds.retain(|c| !같은_등록인가(c, entry));
         if cmds.len() == 전 {
             return true;
         }
@@ -346,7 +353,7 @@ fn 뺀다(map: &mut Map<String, Value>, event: &str, command: &str) -> bool {
         !cmds.is_empty()
     });
     if 뺐다 && groups.is_empty() {
-        hooks.remove(event);
+        hooks.remove(&entry.event);
     }
     뺐다
 }
@@ -371,8 +378,12 @@ mod tests {
         v.as_object().expect("객체").clone()
     }
 
+    fn 하나(command: &str) -> HookEntry {
+        HookEntry { event: "SubagentStop".to_owned(), command: command.to_owned() }
+    }
+
     fn 바람(command: &str) -> Vec<HookEntry> {
-        vec![HookEntry { event: "SubagentStop".to_owned(), command: command.to_owned() }]
+        vec![하나(command)]
     }
 
     /// 적어 둔 것 없이 새로 건다 — 시험마다 두 줄이 되는 자리를 접는다.
@@ -400,11 +411,12 @@ mod tests {
     #[test]
     fn 우리가_만든_문자열만_되읽힌다() {
         for 경로 in ["/bin/pal", "/opt/pal 도구/pal", "/opt/it's/pal", "/한글/경로/pal"] {
-            let c = command(Path::new(경로), "SubagentStop");
+            let e = 하나(&command(Path::new(경로), "SubagentStop"));
             assert_eq!(
-                되읽는다(&c, "SubagentStop").as_deref(),
+                되읽는다(&e).as_deref(),
                 Some(Path::new(경로)),
-                "왕복이 안 됐다: {c}"
+                "왕복이 안 됐다: {}",
+                e.command
             );
         }
     }
@@ -423,7 +435,7 @@ mod tests {
             "'미완성 hook SubagentStop",
             "",
         ] {
-            assert!(되읽는다(남의것, "SubagentStop").is_none(), "`{남의것}` 를 우리 것으로 읽었다");
+            assert!(되읽는다(&하나(남의것)).is_none(), "`{남의것}` 를 우리 것으로 읽었다");
         }
     }
 
@@ -454,8 +466,8 @@ mod tests {
         assert_eq!(p.remove.len(), 1);
         apply(&mut map, &p).expect("적용");
 
-        assert!(!registered(Some(&map), "SubagentStop", &옛[0].command));
-        assert!(registered(Some(&map), "SubagentStop", &새[0].command));
+        assert!(!registered(Some(&map), &옛[0]));
+        assert!(registered(Some(&map), &새[0]));
     }
 
     /// ★ **남이 같은 사건에 걸어 둔 것을 하나도 안 건드린다.**

@@ -323,13 +323,13 @@ fn 훅(root: Option<&Path>) -> Outcome {
         Err(e) => return Outcome::Failed(format!("설정을 못 읽어 등록을 확인할 수 없다 — {e}")),
     };
     for h in 적힌 {
-        if !hooks::registered(read.current.as_ref(), &h.event, &h.command) {
+        if !hooks::registered(read.current.as_ref(), h) {
             return Outcome::Failed(format!(
                 "{} 의 등록이 {SETTINGS} 에서 사라졌다 — `pal install` 을 다시 돌리십시오",
                 h.event
             ));
         }
-        let Some(등록된_자리) = hooks::되읽는다(&h.command, &h.event) else {
+        let Some(등록된_자리) = hooks::되읽는다(h) else {
             return Outcome::Failed(format!(
                 "{} 에 걸린 문자열이 우리 형태가 아니다 — **돌려보지 않는다.** \
                  매니페스트와 {SETTINGS} 는 대상 프로젝트 안의 평범한 파일이라 \
