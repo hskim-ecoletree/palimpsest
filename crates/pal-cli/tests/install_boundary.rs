@@ -154,3 +154,91 @@ fn 매니페스트가_적은_밖의_디렉터리를_안_지운다() {
     assert!(빈_디렉터리.is_dir(), "대상 밖의 디렉터리가 사라졌다");
     assert!(!out.status.success(), "밖을 가리키는 디렉터리를 보고도 성공을 냈다");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 심링크 — **안을 가리키는 것은 살리고 밖으로 나가는 것은 막는다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ★ **쓰기 대상이 심링크로 대상 밖을 가리키면 쓰지 않는다.**
+///
+/// 소유자가 쓴 문장은 이것이다 — *"`~/.claude/` 하위에 기대는 구조는 절대 있어서는
+/// 안 돼"*. `.claude → ~/.claude` 는 dotfiles 를 홈에 모으는 **흔한 형태**이고,
+/// 그때 설치가 그 밖에 쓰면 `[f24]` ⑦ 이 무너진다.
+#[test]
+#[cfg(unix)]
+fn 밖을_가리키는_심링크에는_안_쓴다() {
+    for (tag, 이름, 대상이_디렉터리인가) in
+        [("클로드디렉터리", ".claude", true), ("지시파일", "CLAUDE.md", false), ("무시목록", ".gitignore", false)]
+    {
+        let 방 = 방(tag);
+        let 밖의_자리 = 방.밖.join(format!("남의-{이름}"));
+        if 대상이_디렉터리인가 {
+            std::fs::create_dir_all(&밖의_자리).expect("밖 디렉터리");
+        } else {
+            std::fs::write(&밖의_자리, "남의 것\n").expect("밖 파일");
+        }
+        std::os::unix::fs::symlink(&밖의_자리, 방.안.join(이름)).expect("symlink");
+
+        let 밖_전 = 훑기(&방.밖);
+        let out = 돌린다(&방.안, &["install"]);
+        assert_eq!(훑기(&방.밖), 밖_전, "{tag}: 대상 밖이 바뀌었다");
+        assert!(
+            !out.status.success(),
+            "{tag}: 밖을 가리키는 심링크에 쓰고도 성공을 냈다\nstdout: {}",
+            String::from_utf8_lossy(&out.stdout)
+        );
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(stderr.contains("대상 밖"), "{tag}: 까닭을 안 적었다 — {stderr}");
+    }
+}
+
+/// **안을 가리키는 심링크는 살린다** — 그 구분이 이 회차가 세우는 것이다.
+#[test]
+#[cfg(unix)]
+fn 안을_가리키는_심링크는_살린다() {
+    let 방 = 방("안쪽심링크");
+    std::fs::write(방.안.join("진짜무시목록"), "node_modules/\n").expect("진짜");
+    std::os::unix::fs::symlink("진짜무시목록", 방.안.join(".gitignore")).expect("symlink");
+
+    성공(&방.안, &["install"]);
+
+    assert!(
+        std::fs::symlink_metadata(방.안.join(".gitignore"))
+            .expect("lstat")
+            .file_type()
+            .is_symlink(),
+        "심링크가 일반 파일로 바뀌었다"
+    );
+    assert!(
+        std::fs::read_to_string(방.안.join("진짜무시목록")).expect("읽기").contains("pal:begin"),
+        "심링크 대상에 안 쓰였다"
+    );
+}
+
+/// 트리 전체의 `(상대 경로 → 내용 표식)`. 디렉터리도 센다.
+fn 훑기(root: &Path) -> std::collections::BTreeMap<String, String> {
+    let mut out = std::collections::BTreeMap::new();
+    모은다(root, root, &mut out);
+    out
+}
+
+fn 모은다(root: &Path, dir: &Path, out: &mut std::collections::BTreeMap<String, String>) {
+    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let rel = path.strip_prefix(root).unwrap_or(&path).display().to_string();
+        if path.is_dir() {
+            out.insert(rel, "<디렉터리>".to_owned());
+            모은다(root, &path, out);
+        } else {
+            let bytes = std::fs::read(&path).unwrap_or_default();
+            out.insert(rel, format!("{}·{:x}", bytes.len(), 합(&bytes)));
+        }
+    }
+}
+
+fn 합(bytes: &[u8]) -> u64 {
+    bytes.iter().fold(1_469_598_103_934_665_603_u64, |h, b| {
+        (h ^ u64::from(*b)).wrapping_mul(1_099_511_628_211)
+    })
+}

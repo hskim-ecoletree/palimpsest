@@ -55,7 +55,8 @@ impl Root {
     /// 가리키고 있으면 그 매니페스트 전체를 사람이 봐야 한다.
     ///
     /// # Errors
-    /// 절대 경로거나, `..` 가 들어 있거나, 비어 있으면.
+    /// 절대 경로거나, `..` 가 들어 있거나, 비어 있거나, **심링크를 따라가면 대상
+    /// 밖으로 나가면.**
     pub fn join(&self, rel: &Rel) -> Result<PathBuf> {
         if let Some(까닭) = 글자로_벗어나나(&rel.0) {
             bail!(
@@ -64,7 +65,20 @@ impl Root {
                  가리키면 **아무것도 건드리지 않는다.** 사람이 봐야 한다"
             );
         }
-        Ok(self.0.join(&rel.0))
+        let candidate = self.0.join(&rel.0);
+        let real = 실제_경로(&candidate, 0)?;
+        if !real.starts_with(&self.0) {
+            bail!(
+                "`{rel}` 은 심링크를 따라가면 **대상 밖**으로 나간다 — {} 다. 대상은 \
+                 {self} 다.\n    소유자의 문장은 **\"`~/.claude/` 하위에 기대는 구조는 \
+                 절대 있어서는 안 돼\"** 였다. **안을 가리키는 심링크는 살리고 밖으로 \
+                 나가는 것은 막는다** — 여기서 멈춘다",
+                real.display()
+            );
+        }
+        // ★ **확정한 것이 아니라 원래 경로를 낸다.** 확정한 것을 쓰면 대상 **안**을
+        // 가리키는 심링크가 일반 파일로 바뀌고 모드·하드링크가 함께 소실된다.
+        Ok(candidate)
     }
 }
 
@@ -121,6 +135,37 @@ fn 글자로_벗어나나(rel: &str) -> Option<&'static str> {
         }
     }
     None
+}
+
+/// 심링크를 몇 겹까지 따라가나. **고리가 있으면 여기서 멈춘다.**
+const 심링크_한도: u32 = 40;
+
+/// 이 경로가 **실제로 앉는 자리.** 없는 자리는 있는 조상까지 확정하고 이름을 잇는다.
+///
+/// ⚠ **끊긴 심링크를 손으로 푼다.** `canonicalize` 는 끊긴 링크에서 실패하는데, 거기서
+/// 「없는 자리」로 넘기면 `settings.json → 밖/없는파일` 같은 형태가 **밖에 파일을
+/// 만든다** — 쓰기는 링크를 따라가기 때문이다.
+fn 실제_경로(p: &Path, 깊이: u32) -> Result<PathBuf> {
+    if 깊이 > 심링크_한도 {
+        bail!("심링크가 {심링크_한도}겹을 넘는다 — 고리일 수 있다: {}", p.display());
+    }
+    if let Ok(real) = p.canonicalize() {
+        return Ok(real);
+    }
+    if p.symlink_metadata().is_ok_and(|m| m.file_type().is_symlink()) {
+        let target = std::fs::read_link(p)
+            .with_context(|| format!("심링크를 읽지 못했다: {}", p.display()))?;
+        let joined = if target.is_absolute() {
+            target
+        } else {
+            p.parent().unwrap_or(Path::new("")).join(target)
+        };
+        return 실제_경로(&joined, 깊이 + 1);
+    }
+    match (p.parent(), p.file_name()) {
+        (Some(parent), Some(name)) => Ok(실제_경로(parent, 깊이 + 1)?.join(name)),
+        _ => bail!("경로를 확정하지 못했다: {}", p.display()),
+    }
 }
 
 #[cfg(test)]
