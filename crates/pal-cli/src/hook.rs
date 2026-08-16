@@ -34,6 +34,8 @@ use std::io::Read;
 
 use serde_json::{Value, json};
 
+pub use policy::EVENTS;
+
 /// 부르면 언제나 표준오류에 나오는 표식. **`pal doctor` 가 이것을 찾는다.**
 pub const ACK: &str = "pal hook";
 

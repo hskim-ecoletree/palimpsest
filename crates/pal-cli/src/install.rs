@@ -392,7 +392,11 @@ fn 마커(rel: &str) -> &'static layout::Markers {
 // 갱신 — **밟지 않는 것과 말하지 않는 것은 다르다**
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// 안 고친 것만 교체하고 고친 것은 **보고한다**(`[f24]` ④).
+/// 안 고친 것만 교체하고 고친 것은 **보고한다**(`[f24]` ④). 그리고 **훅 등록을
+/// 지금 실행 파일에 맞춘다.**
+///
+/// ★ 버전이 같아도 훅은 갱신한다. 실행 파일이 옮겨 가면 옛 등록이 죽은 경로를 가리키고,
+/// **그 실패(exit 127)는 완전히 침묵한다** — 버전만 보고 일찍 나가면 아무도 모른다.
 ///
 /// # Errors
 /// 설치를 못 찾거나, 못 읽거나, 못 쓰면.
@@ -404,8 +408,17 @@ pub fn update(target: &Path) -> Result<()> {
     }
     let mut m = manifest::read(&manifest_path)?;
 
+    // ── 1단계 · 검증. **여기까지 한 바이트도 안 쓴다** ──────────────────────
     let now = crate::version::describe();
-    if m.pal_version == now {
+    let settings_path = target.join(SETTINGS);
+    let read = settings::read(&settings_path)?;
+    let 훅_계획 = hooks::plan(
+        read.current.as_ref(),
+        &m.settings.as_ref().map(|e| e.hooks.clone()).unwrap_or_default(),
+        &hooks::desired(HOOK_EVENTS)?,
+    );
+    let 낡음 = m.pal_version != now;
+    if !낡음 && 훅_계획.is_empty() {
         println!();
         println!("■ 갱신 — {}", target.display());
         println!("  이미 최신입니다  ·  pal {now}");
@@ -413,9 +426,20 @@ pub fn update(target: &Path) -> Result<()> {
         return Ok(());
     }
 
+    // ── 2단계 · 적용 ────────────────────────────────────────────────────────
     let _lock = Lock::take(&target)?;
     let mut report = Report::new();
-    report.say("낡음", &format!("{} → {now}", m.pal_version));
+    if 낡음 {
+        report.say("낡음", &format!("{} → {now}", m.pal_version));
+    } else {
+        report.say("최신", &format!("pal {now}  (훅 등록만 갱신한다)"));
+    }
+    m.settings = 설정_병합(&settings_path, &read, Some(&m), &mut report)?;
+    if !낡음 {
+        manifest::write(&manifest_path, &m)?;
+        report.print(&format!("갱신 — {}", target.display()));
+        return Ok(());
+    }
 
     let 적힌 = m.recorded();
     let mut files = Vec::new();
