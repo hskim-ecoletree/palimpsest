@@ -379,7 +379,7 @@ pub fn walk(root: &Root, roots: &Roots, skip: &Rel) -> Result<BTreeMap<String, S
     for file in &roots.files {
         let path = root.join(file)?;
         if path.is_file() {
-            out.insert(file.to_string(), sha256::hex(&std::fs::read(&path)?));
+            out.insert(file.to_string(), sha256::내용(&std::fs::read(&path)?));
         }
     }
     out.remove(skip.as_str());
@@ -400,7 +400,7 @@ fn 훑기(target: &Path, dir: &Path, out: &mut BTreeMap<String, String>) -> Resu
                 .replace('\\', "/");
             let bytes = std::fs::read(&path)
                 .with_context(|| format!("읽지 못했다: {}", path.display()))?;
-            out.insert(rel, sha256::hex(&bytes));
+            out.insert(rel, sha256::내용(&bytes));
         }
     }
     Ok(())

@@ -429,12 +429,12 @@ fn 파일_놓기(root: &Root, 기록: &mut Journal, report: &mut Report) -> Resu
             report.say("놓았다", res.path);
         }
         // **실물에서 뜬다** — 매니페스트가 적는 값이 곧 디스크의 값이어야 ③ 이 선다.
-        let sha = sha256::hex(&guard::읽는다(&path)?);
+        let sha = sha256::내용(&guard::읽는다(&path)?);
         // ★ **적는 sha 는 언제나 「우리가 마지막으로 본 바이트」다.** 종류가 가르는
         // 것은 *"그 바이트가 우리 것인가"* 하나뿐이다 — 우리 바이트와 다르면 그것은
         // 사람의 것이고, 재설치가 그것을 「우리 것」으로 다시 도장 찍으면 다음
         // `update` 가 사람의 수정을 밟는다.
-        let origin = if sha == sha256::hex(res.body.as_bytes()) {
+        let origin = if sha == sha256::내용(res.body.as_bytes()) {
             Origin::Ours
         } else {
             Origin::UserModified
@@ -720,9 +720,9 @@ pub fn update(target: &Path) -> Result<()> {
     for res in PAYLOAD {
         let rel = Rel::new(res.path);
         let path = root.join(&rel)?;
-        let 새_sha = sha256::hex(res.body.as_bytes());
+        let 새_sha = sha256::내용(res.body.as_bytes());
         let 실물 =
-            if path.exists() { Some(sha256::hex(&guard::읽는다(&path)?)) } else { None };
+            if path.exists() { Some(sha256::내용(&guard::읽는다(&path)?)) } else { None };
 
         // ★ **사람의 것인가** — 종류로도 대고 sha 로도 댄다.
         //
@@ -973,7 +973,7 @@ fn 파일_하나_걷기(자리: &manifest::Places, f: &FileEntry, report: &mut R
         report.say("이미 없음", f.path.as_str());
         return Ok(());
     }
-    let 고쳤나 = sha256::hex(&guard::읽는다(path)?) != f.sha256;
+    let 고쳤나 = sha256::내용(&guard::읽는다(path)?) != f.sha256;
     std::fs::remove_file(path)
         .with_context(|| format!("지우지 못했다: {}", path.display()))?;
     if 고쳤나 {
