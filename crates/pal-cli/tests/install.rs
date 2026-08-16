@@ -920,6 +920,16 @@ fn 쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다() {
 }
 
 /// **동시 설치 8회 → 블록 8개**(실측 · check-then-act 경쟁). 여기서 하나여야 한다.
+///
+/// ★ **실패한 놈의 까닭까지 본다.** 옛 단언은 `성공수 >= 1` 뿐이었고, 그러면 일곱이
+/// **플랫폼 고유의 이유로 죽어도** 통과한다 — 그리고 그 형태가 실제로 하나 있었다:
+/// Windows 의 `remove_file` 은 삭제 예정만 걸어서, 앞 주인이 놓는 좁은 창에 같은
+/// 이름을 열면 `ACCESS_DENIED` 다. 그것은 *"기다리면 될 일"* 이지 실패가 아니다.
+///
+/// 실측(2026-08-17 · Windows): 8회 × 5회전 = **40 프로세스 전부 성공 · 블록 언제나 1개.**
+/// 그래도 단언은 「전부 성공」이 아니라 **「실패했다면 잠금 때문이어야 한다」**로 둔다 —
+/// 부하가 걸린 기계에서 상한을 넘는 것은 정상 경로이고, 그것까지 실패로 세면 이 시험이
+/// 재려는 것(배타)이 아니라 기계 속도를 재게 된다.
 #[test]
 fn 동시_설치_여덟이_블록을_하나만_만든다() {
     let root = 살고_있는_프로젝트("g-경쟁");
@@ -930,15 +940,23 @@ fn 동시_설치_여덟이_블록을_하나만_만든다() {
                 .current_dir(&root)
                 .env("PATH", path_앞에(&pal_dir()))
                 .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::piped())
                 .spawn()
                 .expect("spawn")
         })
         .collect();
     let mut 성공수 = 0;
-    for mut child in 아이들 {
-        if child.wait().expect("wait").success() {
+    for child in 아이들 {
+        let out = child.wait_with_output().expect("wait");
+        if out.status.success() {
             성공수 += 1;
+            continue;
         }
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            stderr.contains("쥐고 있다") || stderr.contains("잠금"),
+            "잠금 경합이 아닌 이유로 죽었다 — 플랫폼 고유의 실패다:\n{stderr}"
+        );
     }
     assert!(성공수 >= 1, "여덟이 전부 실패했다");
 

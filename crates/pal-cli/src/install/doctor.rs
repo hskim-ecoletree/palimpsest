@@ -30,7 +30,7 @@ use serde::Serialize;
 use super::inside::{Rel, Root};
 use super::layout::{DERIVED, MANIFEST, SETTINGS};
 use super::manifest::Manifest;
-use super::{exe, hooks, ignore, manifest, settings};
+use super::{exe, hooks, ignore, manifest, settings, winpath};
 
 /// 검사 하나의 결말.
 #[derive(Serialize)]
@@ -270,7 +270,8 @@ fn 루트(target: &Path, root: Option<&Path>) -> Outcome {
         Some(r) if r == target => Outcome::Ok("여기가 설치 루트다".to_owned()),
         Some(r) => Outcome::Failed(format!(
             "여기는 설치 루트가 아니다 — 설치는 {} 에 있다. 거기서 돌리십시오",
-            r.display()
+            // ★ 화면에 나가는 경로다 — `\\?\` 를 안 낸다([`super::winpath`]).
+            winpath::사람이_읽는(r)
         )),
     }
 }
@@ -292,7 +293,7 @@ fn 실행_파일() -> Outcome {
     // 배운다. 무엇이 실행되는 이름인지는 [`exe::명령을_찾는다`] 가 안다.
     for dir in std::env::split_paths(&path) {
         if let Some(found) = exe::명령을_찾는다(&dir, 명령_이름) {
-            return Outcome::Ok(format!("{}", found.display()));
+            return Outcome::Ok(winpath::사람이_읽는(&found));
         }
     }
     Outcome::Failed(format!(
