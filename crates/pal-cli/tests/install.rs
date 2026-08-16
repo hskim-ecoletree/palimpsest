@@ -517,6 +517,75 @@ fn 사용자가_되살린_경로를_안_뒤집는다() {
     );
 }
 
+/// ★ **디렉터리 경로의 되살림도 안 뒤집는다** — 네 위치 전부에서.
+///
+/// # 실측이 이 시험의 모양을 정했다 (git 2.50.1)
+///
+/// `check-ignore` 는 **디렉터리가 디스크에 있을 때만** 디렉터리 형태의 `!` 패턴을
+/// 낸다. 없으면 어떤 질의 형태로도 **패턴을 하나도 안 낸다**:
+///
+/// ```text
+/// .gitignore = "!.palimpsest/cache/"     디렉터리 없음
+///   check-ignore -v    -- '.palimpsest/cache/'   rc=1  출력 없음
+///   check-ignore -v    -- '.palimpsest/cache'    rc=1  출력 없음
+///   check-ignore -v -n -- '.palimpsest/cache/'   rc=1  "::\t.palimpsest/cache/"  ← 빈 패턴
+///                                        디렉터리 있음
+///   check-ignore -v    -- '.palimpsest/cache'    rc=0  "!.palimpsest/cache/"
+/// ```
+///
+/// **그래서 두 상태를 다 잰다.** 있는 쪽은 git 이 답하고, 없는 쪽은 답할 사람이
+/// 없어서 소스를 직접 읽어야 한다.
+#[test]
+fn 되살린_디렉터리_경로도_안_뒤집는다() {
+    for 위치 in ["gitignore", "exclude", "전역", "중첩"] {
+        for 디스크에 in [false, true] {
+            let tag = format!("g-되살림-{위치}-{디스크에}");
+            let root = 빈_프로젝트(&tag);
+            match 위치 {
+                "gitignore" => {
+                    std::fs::write(root.join(".gitignore"), "!.palimpsest/cache/\n").expect("쓰기");
+                }
+                "exclude" => {
+                    std::fs::write(root.join(".git/info/exclude"), "!.palimpsest/cache/\n")
+                        .expect("쓰기");
+                }
+                "전역" => {
+                    std::fs::write(root.join("전역무시"), "!.palimpsest/cache/\n").expect("쓰기");
+                    git(
+                        &root,
+                        &["config", "core.excludesFile", &root.join("전역무시").display().to_string()],
+                    );
+                }
+                _ => {
+                    std::fs::create_dir_all(root.join(".palimpsest")).expect("중첩 디렉터리");
+                    std::fs::write(root.join(".palimpsest/.gitignore"), "!cache/\n").expect("쓰기");
+                }
+            }
+            if 디스크에 {
+                std::fs::create_dir_all(root.join(".palimpsest/cache")).expect("cache");
+                std::fs::write(root.join(".palimpsest/cache/x"), "x\n").expect("x");
+            }
+
+            let report = 성공(&root, &["install"]);
+            assert!(
+                report.contains("되살렸다"),
+                "{tag}: 되살린 것을 못 알아봤다:\n{report}"
+            );
+            // ★ **git 의 답이 안 뒤집혔는가** — 이것이 이 시험의 하중이다.
+            let out = Command::new("git")
+                .args(["-C", &root.display().to_string()])
+                .args(["check-ignore", "-q", "--no-index", "--", ".palimpsest/cache/"])
+                .output()
+                .expect("git");
+            assert_eq!(
+                out.status.code(),
+                Some(1),
+                "{tag}: 사용자가 되살린 디렉터리가 다시 무시로 뒤집혔다"
+            );
+        }
+    }
+}
+
 /// **이미 덮여 있으면 더하지 않는다** — `cache/**` 형태가 슬래시 없는 질의를 속인 자리.
 #[test]
 fn 이미_덮인_경로는_안_더한다() {
