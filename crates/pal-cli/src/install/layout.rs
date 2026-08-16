@@ -50,6 +50,12 @@ pub const PAYLOAD: &[Resource] = &[
 /// 매니페스트의 자리.
 pub const MANIFEST: &str = ".claude/pal/manifest.json";
 
+/// 하네스가 프로젝트 설정을 두는 디렉터리 — **잠금도 여기 산다.**
+pub const CLAUDE_DIR: &str = ".claude";
+
+/// 잠금 디렉터리의 자리.
+pub const LOCK: &str = ".claude/.pal.lock";
+
 /// 대상 설정 파일의 자리.
 ///
 /// ⚠ **실측**: 이 파일은 **cwd 한 곳만** 탐색되고 상위로 안 올라간다.

@@ -27,6 +27,7 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
+use super::inside::Root;
 use super::layout::{DERIVED, MANIFEST, SETTINGS};
 use super::{hooks, ignore, manifest, settings};
 
@@ -111,7 +112,11 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
         Ok(m) => m,
         Err(e) => return Outcome::Failed(format!("{e}")),
     };
-    let actual = match manifest::walk(root, &m.roots, &m.own_path) {
+    let 뿌리 = match Root::세운다(root) {
+        Ok(r) => r,
+        Err(e) => return Outcome::Failed(format!("{e}")),
+    };
+    let actual = match manifest::walk(&뿌리, &m.roots, &m.own_path) {
         Ok(a) => a,
         Err(e) => return Outcome::Failed(format!("실물을 훑지 못했다 — {e}")),
     };

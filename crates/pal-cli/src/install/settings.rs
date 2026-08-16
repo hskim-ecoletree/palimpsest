@@ -22,6 +22,7 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use serde_json::{Map, Value};
 
+use super::inside::Rel;
 use super::manifest::SettingsEntry;
 use super::{blocks, hooks};
 
@@ -163,7 +164,7 @@ pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<bool> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Merged, Read, SettingsEntry, hooks, merge, read, unmerge};
+    use super::{Merged, Read, Rel, SettingsEntry, hooks, merge, read, unmerge};
     use crate::install::manifest::HookEntry;
     use serde_json::{Value, json};
     use std::collections::BTreeMap;
@@ -195,7 +196,7 @@ mod tests {
     /// 매니페스트가 지고 갈 항목 — 되돌리기가 이것 하나만 본다.
     fn 항목(m: &Merged, 훅: &[HookEntry]) -> SettingsEntry {
         SettingsEntry {
-            path: "settings.json".to_owned(),
+            path: Rel::new("settings.json"),
             added_keys: m.added_keys.clone(),
             hooks: 훅.to_vec(),
             hooks_key_created: m.hooks_key_created,

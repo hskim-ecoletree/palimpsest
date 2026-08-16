@@ -20,21 +20,22 @@ use std::path::Path;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
+use super::inside::{Rel, Root};
 use super::sha256;
 
 /// 훑을 뿌리.
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Roots {
     /// 통째로 우리 것인 디렉터리 — **재귀로 훑는다.**
-    pub dirs: Vec<String>,
+    pub dirs: Vec<Rel>,
     /// 남의 것이 함께 사는 곳의 파일 하나.
-    pub files: Vec<String>,
+    pub files: Vec<Rel>,
 }
 
 /// 우리가 통째로 소유하는 파일 하나.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FileEntry {
-    pub path: String,
+    pub path: Rel,
     /// **설치 시점에 실물에서 뜬 값**이다 — 실물과 다르면 사람이 고친 것이고,
     /// 그 차이가 곧 `update` 의 3분기다(`[f24]` ④).
     pub sha256: String,
@@ -43,7 +44,7 @@ pub struct FileEntry {
 /// 남의 파일에 더한 블록 하나.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct BlockEntry {
-    pub path: String,
+    pub path: Rel,
     /// **우리가 넣은 바이트열 그대로.** 제거는 이것과 정확히 일치할 때만 한다.
     pub inserted: String,
     /// 그 파일을 우리가 만들었는가.
@@ -65,7 +66,7 @@ pub struct HookEntry {
 /// 설정 파일에 더한 키들.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SettingsEntry {
-    pub path: String,
+    pub path: Rel,
     pub added_keys: Vec<String>,
     /// 우리가 등록한 훅. **`#[serde(default)]` 이라 옛 매니페스트도 읽힌다** — 못 읽으면
     /// *"무엇을 되돌려야 하는가"* 의 기록이 통째로 사라진다.
@@ -87,19 +88,19 @@ pub struct Manifest {
     /// **JSON 의 키 이름은 `manifest_path` 로 남긴다** — 이 파일은 우리 밖에서도
     /// 읽히고, 밖에서 읽는 이름을 안쪽 사정으로 바꾸지 않는다.
     #[serde(rename = "manifest_path")]
-    pub own_path: String,
+    pub own_path: Rel,
     pub files: Vec<FileEntry>,
     pub blocks: Vec<BlockEntry>,
     pub settings: Option<SettingsEntry>,
     /// **우리가 만든** 디렉터리. 만든 순서대로 들어 있고 제거는 역순으로 본다.
-    pub created_dirs: Vec<String>,
+    pub created_dirs: Vec<Rel>,
 }
 
 impl Manifest {
     /// 이 매니페스트가 적은 (경로 → sha256).
     #[must_use]
     pub fn recorded(&self) -> BTreeMap<String, String> {
-        self.files.iter().map(|f| (f.path.clone(), f.sha256.clone())).collect()
+        self.files.iter().map(|f| (f.path.to_string(), f.sha256.clone())).collect()
     }
 }
 
@@ -133,18 +134,18 @@ pub fn write(path: &Path, manifest: &Manifest) -> Result<()> {
 ///
 /// # Errors
 /// 파일을 읽지 못하면.
-pub fn walk(target: &Path, roots: &Roots, skip: &str) -> Result<BTreeMap<String, String>> {
+pub fn walk(root: &Root, roots: &Roots, skip: &Rel) -> Result<BTreeMap<String, String>> {
     let mut out = BTreeMap::new();
     for dir in &roots.dirs {
-        훑기(target, &target.join(dir), &mut out)?;
+        훑기(root.path(), &root.join(dir), &mut out)?;
     }
     for file in &roots.files {
-        let path = target.join(file);
+        let path = root.join(file);
         if path.is_file() {
-            out.insert(file.clone(), sha256::hex(&std::fs::read(&path)?));
+            out.insert(file.to_string(), sha256::hex(&std::fs::read(&path)?));
         }
     }
-    out.remove(skip);
+    out.remove(skip.as_str());
     Ok(out)
 }
 

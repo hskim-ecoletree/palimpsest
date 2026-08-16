@@ -25,6 +25,7 @@ mod blocks;
 mod doctor;
 mod hooks;
 mod ignore;
+mod inside;
 mod layout;
 mod manifest;
 mod settings;
@@ -38,9 +39,11 @@ use serde_json::{Value, json};
 
 pub use doctor::{Check, checks, print};
 
+use inside::{Rel, Root};
 use layout::{
-    AGENT_KEY, AGENT_VALUE, DERIVED, DIRS, HOOK_EVENTS, IGNORE_FILE, IGNORE_MARKERS, IMPORT_LINE,
-    MANIFEST, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD, ROOT_INSTRUCTION_FILE, SETTINGS,
+    AGENT_KEY, AGENT_VALUE, CLAUDE_DIR, DERIVED, DIRS, HOOK_EVENTS, IGNORE_FILE, IGNORE_MARKERS,
+    IMPORT_LINE, LOCK, MANIFEST, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD,
+    ROOT_INSTRUCTION_FILE, SETTINGS,
 };
 use manifest::{BlockEntry, FileEntry, Manifest, Roots, SettingsEntry};
 
@@ -59,8 +62,8 @@ struct Lock {
 }
 
 impl Lock {
-    fn take(target: &Path) -> Result<Self> {
-        let dir = target.join(".claude/.pal.lock");
+    fn take(root: &Root) -> Result<Self> {
+        let dir = root.join(&Rel::new(LOCK));
         let mut waited = 0;
         loop {
             match std::fs::create_dir(&dir) {
@@ -129,40 +132,41 @@ impl Report {
 /// # Errors
 /// 대상이 없거나, 설정이 안 읽히거나, 쓰지 못하면.
 pub fn install(target: &Path) -> Result<()> {
-    let target = 대상(target)?;
+    let root = Root::세운다(target)?;
 
     // ── 1단계 · 검증. **여기까지 한 바이트도 안 쓴다** ──────────────────────
-    let settings_path = target.join(SETTINGS);
+    let settings_path = root.join(&Rel::new(SETTINGS));
     let read = settings::read(&settings_path)?;
-    let manifest_path = target.join(MANIFEST);
+    let manifest_path = root.join(&Rel::new(MANIFEST));
     let 이전 = if manifest_path.exists() { Some(manifest::read(&manifest_path)?) } else { None };
 
     // ── 2단계 · 적용 ────────────────────────────────────────────────────────
     let mut created_dirs = 이전.as_ref().map(|m| m.created_dirs.clone()).unwrap_or_default();
     // 잠금은 `.claude/` 안에 산다 — 그래서 그것만 먼저 세운다. **없던 것만 적는다**:
     // 있던 디렉터리를 「우리가 만들었다」고 적으면 제거가 남의 자리를 노린다.
-    let claude = target.join(".claude");
+    let claude_rel = Rel::new(CLAUDE_DIR);
+    let claude = root.join(&claude_rel);
     let 우리가_만든다 = !claude.is_dir();
     std::fs::create_dir_all(&claude)
         .with_context(|| format!("만들지 못했다: {}", claude.display()))?;
-    if 우리가_만든다 && !created_dirs.iter().any(|d| d == ".claude") {
-        created_dirs.push(".claude".to_owned());
+    if 우리가_만든다 && !created_dirs.contains(&claude_rel) {
+        created_dirs.push(claude_rel);
     }
-    let _lock = Lock::take(&target)?;
+    let _lock = Lock::take(&root)?;
 
     let mut report = Report::new();
-    디렉터리_세우기(&target, &mut created_dirs)?;
-    let files = 파일_놓기(&target, &mut report)?;
+    디렉터리_세우기(&root, &mut created_dirs)?;
+    let files = 파일_놓기(&root, &mut report)?;
     let settings_entry = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
-    let blocks = 블록_넣기(&target, 이전.as_ref(), &mut report)?;
+    let blocks = 블록_넣기(&root, 이전.as_ref(), &mut report)?;
 
     let m = Manifest {
         pal_version: crate::version::describe().to_owned(),
         roots: Roots {
-            dirs: OWNED_DIRS.iter().map(|s| (*s).to_owned()).collect(),
-            files: OWNED_FILES.iter().map(|s| (*s).to_owned()).collect(),
+            dirs: OWNED_DIRS.iter().map(|s| Rel::new(s)).collect(),
+            files: OWNED_FILES.iter().map(|s| Rel::new(s)).collect(),
         },
-        own_path: MANIFEST.to_owned(),
+        own_path: Rel::new(MANIFEST),
         files,
         blocks,
         settings: settings_entry,
@@ -170,41 +174,32 @@ pub fn install(target: &Path) -> Result<()> {
     };
     manifest::write(&manifest_path, &m)?;
     report.say("매니페스트", &format!("{MANIFEST}  ·  pal {}", m.pal_version));
-    report.print(&format!("설치 — {}", target.display()));
+    report.print(&format!("설치 — {root}"));
     Ok(())
 }
 
-/// 대상 경로를 확정한다. **없으면 만들지 않는다** — 오타 하나로 남의 자리에 트리를
-/// 세우는 것이 이 명령의 가장 조용한 실패다.
-fn 대상(target: &Path) -> Result<PathBuf> {
-    if !target.is_dir() {
-        bail!("대상이 디렉터리가 아니다: {}", target.display());
-    }
-    target
-        .canonicalize()
-        .with_context(|| format!("대상 경로를 확정하지 못했다: {}", target.display()))
-}
-
-fn 디렉터리_세우기(target: &Path, created: &mut Vec<String>) -> Result<()> {
+fn 디렉터리_세우기(root: &Root, created: &mut Vec<Rel>) -> Result<()> {
     for dir in DIRS {
-        let path = target.join(dir);
+        let rel = Rel::new(dir);
+        let path = root.join(&rel);
         if path.is_dir() {
             continue;
         }
         std::fs::create_dir_all(&path)
             .with_context(|| format!("만들지 못했다: {}", path.display()))?;
-        if !created.iter().any(|d| d == dir) {
-            created.push((*dir).to_owned());
+        if !created.contains(&rel) {
+            created.push(rel);
         }
     }
     Ok(())
 }
 
 /// **대상에 없는 것만 쓴다**(`[f24]` ①). 있는 것은 안 건드리고 그 사실을 적는다.
-fn 파일_놓기(target: &Path, report: &mut Report) -> Result<Vec<FileEntry>> {
+fn 파일_놓기(root: &Root, report: &mut Report) -> Result<Vec<FileEntry>> {
     let mut files = Vec::new();
     for res in PAYLOAD {
-        let path = target.join(res.path);
+        let rel = Rel::new(res.path);
+        let path = root.join(&rel);
         if path.exists() {
             report.say("이미 있음", res.path);
         } else {
@@ -219,7 +214,7 @@ fn 파일_놓기(target: &Path, report: &mut Report) -> Result<Vec<FileEntry>> {
         // **실물에서 뜬다** — 매니페스트가 적는 값이 곧 디스크의 값이어야 ③ 이 선다.
         let bytes = std::fs::read(&path)
             .with_context(|| format!("읽지 못했다: {}", path.display()))?;
-        files.push(FileEntry { path: res.path.to_owned(), sha256: sha256::hex(&bytes) });
+        files.push(FileEntry { path: rel, sha256: sha256::hex(&bytes) });
     }
     Ok(files)
 }
@@ -269,7 +264,7 @@ fn 설정_병합(
         }
         None if merged.added_keys.is_empty() && 바라는_훅.is_empty() => None,
         None => Some(SettingsEntry {
-            path: SETTINGS.to_owned(),
+            path: Rel::new(SETTINGS),
             added_keys: merged.added_keys,
             hooks: 바라는_훅,
             hooks_key_created: merged.hooks_key_created,
@@ -290,7 +285,7 @@ fn 설정_병합(
 }
 
 fn 블록_넣기(
-    target: &Path,
+    root: &Root,
     이전: Option<&Manifest>,
     report: &mut Report,
 ) -> Result<Vec<BlockEntry>> {
@@ -299,16 +294,17 @@ fn 블록_넣기(
     //
     // ⚠ **`AGENTS.md` 에 규율을 담지 않는다. 자동 주입되지 않는다**(실측).
     let 지시 = blocks::compose(&MD_MARKERS, &[IMPORT_LINE.to_owned()]);
-    블록_하나(target, ROOT_INSTRUCTION_FILE, &지시, 이전, report, &mut out)?;
+    블록_하나(root, ROOT_INSTRUCTION_FILE, &지시, 이전, report, &mut out)?;
 
     // ── .gitignore — 파생 경로. **git 에게 물어서 정한다** ──────────────────
     //
     // ⚠ **우리 블록이 이미 있으면 다시 세지 않는다.** 세면 그 경로들이 이제 「덮여
     // 있음」이라 더할 것이 없어지고, 그러면 **블록 기록이 매니페스트에서 사라진다** —
     // 두 번째 설치가 첫 번째와 다른 상태를 내고 제거가 그 블록을 못 되돌린다.
-    let 옛_등재 = 이전.and_then(|m| m.blocks.iter().find(|b| b.path == IGNORE_FILE).cloned());
+    let ignore_rel = Rel::new(IGNORE_FILE);
+    let 옛_등재 = 이전.and_then(|m| m.blocks.iter().find(|b| b.path == ignore_rel).cloned());
     if let Some(old) = 옛_등재 {
-        if blocks::present(&target.join(IGNORE_FILE), &old.inserted)? {
+        if blocks::present(&root.join(&ignore_rel), &old.inserted)? {
             report.say("이미 있음", IGNORE_FILE);
             out.push(old);
             return Ok(out);
@@ -318,7 +314,7 @@ fn 블록_넣기(
     let mut 등재 = Vec::new();
     let mut worktree = true;
     for path in DERIVED {
-        match ignore::verdict(target, path)? {
+        match ignore::verdict(root.path(), path)? {
             ignore::Verdict::Covered => report.say("이미 등재됨", path),
             ignore::Verdict::NotAWorktree => {
                 worktree = false;
@@ -329,7 +325,7 @@ fn 블록_넣기(
                 report.say("건드리지 않음", &format!("{path}  (사용자가 `{pattern}` 로 되살렸다)"));
             }
             ignore::Verdict::Uncovered => {
-                if ignore::tracked(target, path)? {
+                if ignore::tracked(root.path(), path)? {
                     report.say(
                         "⚠ 추적 중",
                         &format!("{path}  (규칙만으로는 배제되지 않는다 — `git rm --cached` 가 필요하다)"),
@@ -344,7 +340,7 @@ fn 블록_넣기(
             report.say("건드리지 않음", &format!("{IGNORE_FILE}  (더할 것이 없다)"));
         } else {
             let block = blocks::compose(&IGNORE_MARKERS, &등재);
-            블록_하나(target, IGNORE_FILE, &block, 이전, report, &mut out)?;
+            블록_하나(root, IGNORE_FILE, &block, 이전, report, &mut out)?;
         }
     } else {
         // **rc=128 을 rc=1 과 뭉개면 저장소가 아닌 곳에 `.gitignore` 를 만든다.**
@@ -354,22 +350,23 @@ fn 블록_넣기(
 }
 
 fn 블록_하나(
-    target: &Path,
+    root: &Root,
     rel: &str,
     block: &str,
     이전: Option<&Manifest>,
     report: &mut Report,
     out: &mut Vec<BlockEntry>,
 ) -> Result<()> {
-    let path = target.join(rel);
+    let rel = Rel::new(rel);
+    let path = root.join(&rel);
     let 옛것 = 이전.and_then(|m| m.blocks.iter().find(|b| b.path == rel).cloned());
-    match blocks::add(&path, 마커(rel), block)? {
+    match blocks::add(&path, 마커(&rel), block)? {
         blocks::Added::Inserted { bytes, created } => {
-            report.say("블록", rel);
-            out.push(BlockEntry { path: rel.to_owned(), inserted: bytes, created });
+            report.say("블록", rel.as_str());
+            out.push(BlockEntry { path: rel, inserted: bytes, created });
         }
         blocks::Added::AlreadyThere => {
-            report.say("이미 있음", rel);
+            report.say("이미 있음", rel.as_str());
             // **옛 기록을 그대로 지고 간다** — 잃으면 제거가 못 되돌린다.
             if let Some(old) = 옛것 {
                 out.push(old);
@@ -384,8 +381,8 @@ fn 블록_하나(
     Ok(())
 }
 
-fn 마커(rel: &str) -> &'static layout::Markers {
-    if rel == IGNORE_FILE { &IGNORE_MARKERS } else { &MD_MARKERS }
+fn 마커(rel: &Rel) -> &'static layout::Markers {
+    if rel.as_str() == IGNORE_FILE { &IGNORE_MARKERS } else { &MD_MARKERS }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -401,8 +398,8 @@ fn 마커(rel: &str) -> &'static layout::Markers {
 /// # Errors
 /// 설치를 못 찾거나, 못 읽거나, 못 쓰면.
 pub fn update(target: &Path) -> Result<()> {
-    let target = 대상(target)?;
-    let manifest_path = target.join(MANIFEST);
+    let root = Root::세운다(target)?;
+    let manifest_path = root.join(&Rel::new(MANIFEST));
     if !manifest_path.exists() {
         bail!("설치를 찾지 못했다: {} 가 없다", manifest_path.display());
     }
@@ -410,7 +407,7 @@ pub fn update(target: &Path) -> Result<()> {
 
     // ── 1단계 · 검증. **여기까지 한 바이트도 안 쓴다** ──────────────────────
     let now = crate::version::describe();
-    let settings_path = target.join(SETTINGS);
+    let settings_path = root.join(&Rel::new(SETTINGS));
     let read = settings::read(&settings_path)?;
     let 훅_계획 = hooks::plan(
         read.current.as_ref(),
@@ -420,14 +417,14 @@ pub fn update(target: &Path) -> Result<()> {
     let 낡음 = m.pal_version != now;
     if !낡음 && 훅_계획.is_empty() {
         println!();
-        println!("■ 갱신 — {}", target.display());
+        println!("■ 갱신 — {root}");
         println!("  이미 최신입니다  ·  pal {now}");
         println!();
         return Ok(());
     }
 
     // ── 2단계 · 적용 ────────────────────────────────────────────────────────
-    let _lock = Lock::take(&target)?;
+    let _lock = Lock::take(&root)?;
     let mut report = Report::new();
     if 낡음 {
         report.say("낡음", &format!("{} → {now}", m.pal_version));
@@ -437,14 +434,15 @@ pub fn update(target: &Path) -> Result<()> {
     m.settings = 설정_병합(&settings_path, &read, Some(&m), &mut report)?;
     if !낡음 {
         manifest::write(&manifest_path, &m)?;
-        report.print(&format!("갱신 — {}", target.display()));
+        report.print(&format!("갱신 — {root}"));
         return Ok(());
     }
 
     let 적힌 = m.recorded();
     let mut files = Vec::new();
     for res in PAYLOAD {
-        let path = target.join(res.path);
+        let rel = Rel::new(res.path);
+        let path = root.join(&rel);
         let 실물 = if path.exists() {
             Some(sha256::hex(
                 &std::fs::read(&path).with_context(|| format!("읽지 못했다: {}", path.display()))?,
@@ -456,7 +454,7 @@ pub fn update(target: &Path) -> Result<()> {
             // 사람이 고쳤다 — **밟지 않고 말한다.** 적힌 sha 를 그대로 지고 간다.
             (Some(recorded), Some(actual)) if *recorded != actual => {
                 report.say(SKIPPED, res.path);
-                files.push(FileEntry { path: res.path.to_owned(), sha256: recorded.clone() });
+                files.push(FileEntry { path: rel, sha256: recorded.clone() });
                 continue;
             }
             _ => {}
@@ -468,17 +466,14 @@ pub fn update(target: &Path) -> Result<()> {
         std::fs::write(&path, res.body.as_bytes())
             .with_context(|| format!("쓰지 못했다: {}", path.display()))?;
         report.say("교체", res.path);
-        files.push(FileEntry {
-            path: res.path.to_owned(),
-            sha256: sha256::hex(res.body.as_bytes()),
-        });
+        files.push(FileEntry { path: rel, sha256: sha256::hex(res.body.as_bytes()) });
     }
 
     m.files = files;
     now.clone_into(&mut m.pal_version);
     manifest::write(&manifest_path, &m)?;
     report.say("매니페스트", &format!("{MANIFEST}  ·  pal {now}"));
-    report.print(&format!("갱신 — {}", target.display()));
+    report.print(&format!("갱신 — {root}"));
     Ok(())
 }
 
@@ -491,8 +486,8 @@ pub fn update(target: &Path) -> Result<()> {
 /// # Errors
 /// 설치를 못 찾거나, **리소스를 하나도 못 찾거나**(⑥-b), 블록이 손으로 고쳐졌으면.
 pub fn uninstall(target: &Path) -> Result<()> {
-    let target = 대상(target)?;
-    let manifest_path = target.join(MANIFEST);
+    let root = Root::세운다(target)?;
+    let manifest_path = root.join(&Rel::new(MANIFEST));
     if !manifest_path.exists() {
         bail!(
             "설치를 찾지 못했다: {} 가 없다 — **지울 게 없었으니 성공**은 거짓말이다",
@@ -502,7 +497,7 @@ pub fn uninstall(target: &Path) -> Result<()> {
     let m = manifest::read(&manifest_path)?;
 
     // ── 1단계 · 검증. **여기까지 한 바이트도 안 지운다** ────────────────────
-    let 찾은_파일 = m.files.iter().filter(|f| target.join(&f.path).exists()).count();
+    let 찾은_파일 = m.files.iter().filter(|f| root.join(&f.path).exists()).count();
     if 찾은_파일 == 0 {
         bail!(
             "매니페스트가 적은 리소스 {}개를 **하나도 못 찾았다** — 지울 게 없었으니 \
@@ -512,9 +507,9 @@ pub fn uninstall(target: &Path) -> Result<()> {
     }
     let mut 훼손 = Vec::new();
     for b in &m.blocks {
-        let path = target.join(&b.path);
+        let path = root.join(&b.path);
         if path.exists() && !blocks::present(&path, &b.inserted)? {
-            훼손.push(b.path.clone());
+            훼손.push(b.path.to_string());
         }
     }
     if !훼손.is_empty() {
@@ -526,18 +521,18 @@ pub fn uninstall(target: &Path) -> Result<()> {
     }
 
     // ── 2단계 · 적용 ────────────────────────────────────────────────────────
-    let lock = Lock::take(&target)?;
+    let lock = Lock::take(&root)?;
     let mut report = Report::new();
 
     for b in &m.blocks {
-        match blocks::remove(&target.join(&b.path), &b.inserted, b.created)? {
-            blocks::Removal::Block => report.say("블록 뺌", &b.path),
-            blocks::Removal::FileGone => report.say("지웠다", &b.path),
-            blocks::Removal::Missing => report.say("이미 없음", &b.path),
+        match blocks::remove(&root.join(&b.path), &b.inserted, b.created)? {
+            blocks::Removal::Block => report.say("블록 뺌", b.path.as_str()),
+            blocks::Removal::FileGone => report.say("지웠다", b.path.as_str()),
+            blocks::Removal::Missing => report.say("이미 없음", b.path.as_str()),
         }
     }
     if let Some(s) = &m.settings {
-        if settings::unmerge(&target.join(&s.path), s)? {
+        if settings::unmerge(&root.join(&s.path), s)? {
             let 뺀것 = s
                 .added_keys
                 .iter()
@@ -546,17 +541,17 @@ pub fn uninstall(target: &Path) -> Result<()> {
                 .collect::<Vec<_>>();
             report.say("키 뺌", &format!("{}  ({})", s.path, 뺀것.join(" · ")));
         } else {
-            report.say("이미 없음", &s.path);
+            report.say("이미 없음", s.path.as_str());
         }
     }
     for f in &m.files {
-        let path = target.join(&f.path);
+        let path = root.join(&f.path);
         if path.exists() {
             std::fs::remove_file(&path)
                 .with_context(|| format!("지우지 못했다: {}", path.display()))?;
-            report.say("지웠다", &f.path);
+            report.say("지웠다", f.path.as_str());
         } else {
-            report.say("이미 없음", &f.path);
+            report.say("이미 없음", f.path.as_str());
         }
     }
 
@@ -567,12 +562,12 @@ pub fn uninstall(target: &Path) -> Result<()> {
     // 잠금을 먼저 놓는다 — 안 놓으면 `.claude` 가 비어 있지 않아 안 지워진다.
     drop(lock);
     for dir in m.created_dirs.iter().rev() {
-        let path = target.join(dir);
+        let path = root.join(dir);
         // **빈 것만 지운다.** 남의 것이 들어와 있으면 그 자리는 이제 우리 것이 아니다.
         if path.is_dir() && std::fs::remove_dir(&path).is_ok() {
             report.say("지웠다", &format!("{dir}/"));
         }
     }
-    report.print(&format!("제거 — {}", target.display()));
+    report.print(&format!("제거 — {root}"));
     Ok(())
 }
