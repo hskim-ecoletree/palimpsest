@@ -27,7 +27,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{PAL, git};
+use common::{PAL, git, path_앞에, 상대_경로, 해시};
 
 /// `pal` 이 있는 디렉터리 — 설치 검사 4(`PATH` 에 `pal` 이 있는가)의 정상 조건.
 fn pal_dir() -> PathBuf {
@@ -35,11 +35,10 @@ fn pal_dir() -> PathBuf {
 }
 
 fn 돌린다(cwd: &Path, args: &[&str]) -> Output {
-    let path = std::env::var("PATH").unwrap_or_default();
     Command::new(PAL)
         .args(args)
         .current_dir(cwd)
-        .env("PATH", format!("{}:{path}", pal_dir().display()))
+        .env("PATH", path_앞에(&pal_dir()))
         .output()
         .expect("pal 을 못 돌렸다")
 }
@@ -117,9 +116,8 @@ fn 훑기(root: &Path, dir: &Path, out: &mut BTreeMap<String, String>) {
         if path.is_dir() {
             훑기(root, &path, out);
         } else {
-            let rel = path.strip_prefix(root).unwrap_or(&path).display().to_string();
             let bytes = std::fs::read(&path).unwrap_or_default();
-            out.insert(rel, format!("{:x}-{}", bytes.len(), 합(&bytes)));
+            out.insert(상대_경로(root, &path), format!("{:x}-{}", bytes.len(), 합(&bytes)));
         }
     }
 }
@@ -284,15 +282,6 @@ fn 나중에_생긴_파일이_대조에_걸린다() {
     assert!(매니페스트_검사["detail"].as_str().expect("detail").contains("나중것"));
 }
 
-fn 해시(path: &Path) -> String {
-    let out = Command::new("shasum")
-        .args(["-a", "256"])
-        .arg(path)
-        .output()
-        .expect("shasum 을 못 돌렸다");
-    String::from_utf8_lossy(&out.stdout).split_whitespace().next().unwrap_or_default().to_owned()
-}
-
 fn 훑어_해시(root: &Path, dir: &Path, out: &mut BTreeMap<String, String>) {
     let Ok(entries) = std::fs::read_dir(dir) else { return };
     for entry in entries.flatten() {
@@ -300,8 +289,7 @@ fn 훑어_해시(root: &Path, dir: &Path, out: &mut BTreeMap<String, String>) {
         if path.is_dir() {
             훑어_해시(root, &path, out);
         } else {
-            let rel = path.strip_prefix(root).unwrap_or(&path).display().to_string();
-            out.insert(rel, 해시(&path));
+            out.insert(상대_경로(root, &path), 해시(&path));
         }
     }
 }
@@ -511,7 +499,15 @@ fn 매니페스트_경로들(root: &Path) -> Vec<String> {
     out
 }
 
-/// ★ **왕복 후 바이트 동일** — `cmp` 로 재는 자리.
+/// ★ **왕복 후 바이트 동일** — 디스크에 뜬 사본과 실물을 바이트로 대는 자리.
+///
+/// ⚠ 옛 회차는 여기를 `Command::new("cmp")` 로 댔다. 그 도구는 유닉스 밖에 없어서
+/// **이 시험이 Windows 에서 `NotFound` 로 죽었고**, 그래서 왕복 동일성이 이 플랫폼에서
+/// 한 번도 안 재졌다. 바이트 대조에 바깥 프로세스가 필요하지 않다.
+///
+/// **사본은 그대로 둔다** — 메모리의 `원본` 만 대면 *"설치가 파일을 안 건드렸다"* 는
+/// 재지만 *"설치 중에 디스크에 뜬 것이 그대로다"* 는 못 잰다. 사본은 설치가 지나간
+/// 뒤에도 디스크에 살아 있는 **바깥 증인**이다.
 #[test]
 fn 왕복하면_사용자_파일이_바이트로_같다() {
     let root = 살고_있는_프로젝트("f-바이트");
@@ -519,7 +515,6 @@ fn 왕복하면_사용자_파일이_바이트로_같다() {
         .iter()
         .map(|p| (root.join(p), std::fs::read(root.join(p)).expect("읽기")))
         .collect();
-    // 사본을 떠 두고 `cmp` 로 대는 자리를 만든다.
     for (path, bytes) in &원본 {
         std::fs::write(path.with_extension("원본"), bytes).expect("사본");
     }
@@ -528,13 +523,10 @@ fn 왕복하면_사용자_파일이_바이트로_같다() {
     성공(&root, &["uninstall"]);
 
     for (path, bytes) in &원본 {
-        assert_eq!(&std::fs::read(path).expect("읽기"), bytes, "{} 가 원본과 다르다", path.display());
-        let out = Command::new("cmp")
-            .arg(path)
-            .arg(path.with_extension("원본"))
-            .output()
-            .expect("cmp 를 못 돌렸다");
-        assert!(out.status.success(), "cmp 가 갈랐다: {}", String::from_utf8_lossy(&out.stdout));
+        let 지금 = std::fs::read(path).expect("읽기");
+        assert_eq!(&지금, bytes, "{} 가 원본과 다르다", path.display());
+        let 사본 = std::fs::read(path.with_extension("원본")).expect("사본 읽기");
+        assert_eq!(지금, 사본, "{} 가 디스크의 사본과 갈렸다", path.display());
     }
 }
 
@@ -826,24 +818,42 @@ fn 끝_개행_없음과_널_바이트가_살아_있다() {
 /// (실측: 밖의 파일이 0바이트가 됐고 rc=0). **밖으로 새는 것을 막는 쪽을 이기게
 /// 했다** — 지금은 하드링크가 걸린 자리에 아예 안 쓰고 멈춘다. 그것을 재는 자리는
 /// `tests/install_hostile.rs` 다.
-#[test]
-#[cfg(unix)]
-fn 모드와_심링크가_살아_있다() {
-    use std::os::unix::fs::PermissionsExt;
+// ★ **여기 있던 `모드와_심링크가_살아_있다` 는 성질별로 갈라졌다** — 심링크 축은
+// 이식 가능해져서 `심링크가_살고_그_대상에_쓰인다` 로, 모드 축은 유닉스 인코딩만
+// 남아 `모드가_살아_있다` 로. 둘 다 아래에 산다. 하나로 묶여 있던 동안은 **이식
+// 가능한 절반이 못 재는 절반에 끌려 통째로 외침**이었다.
 
-    let root = 빈_프로젝트("g-메타");
-    // 모드 — `CLAUDE.md` 를 600 으로.
-    std::fs::write(root.join("CLAUDE.md"), "# 내 것\n").expect("CLAUDE.md");
-    std::fs::set_permissions(root.join("CLAUDE.md"), std::fs::Permissions::from_mode(0o600))
-        .expect("chmod");
-    // 심링크 — `.gitignore` 가 다른 파일을 가리킨다.
+/// ★ **심링크 축은 이제 어느 플랫폼에서나 재진다** — 앞 판의 외침이 여기서 사라졌다.
+///
+/// # 무엇이 바뀌었나
+///
+/// 앞 판은 `모드와_심링크_보존이_이_플랫폼에서는_안_재진다` 를 외치면서 세 가지를
+/// 한 덩어리로 묶었다. **성질을 갈라 보니 셋 중 둘이 이식 가능했다**:
+///
+/// | 성질 | 앞 판 | 지금 |
+/// |---|---|---|
+/// | 모드 600 이 살아 있다 | 외침 | **개념이 없다** — 위 `모드가_살아_있다` 가 유닉스 인코딩을 지고, 이식 가능한 문장(*"제자리 쓰기가 권한을 안 넓힌다"*)은 `쓸_수_없는_자리는_미리_끊는다` 가 잰다 |
+/// | 심링크가 일반 파일로 안 바뀐다 | 외침 | **여기서 잰다** |
+/// | 심링크 대상에 쓰인다 | 외침 | **여기서 잰다** |
+///
+/// 둘이 이식 가능해진 것은 fixture 가 열려서가 아니라 **제품이 바뀌었기 때문**이다.
+/// 앞 판의 `guard::제자리를_준비한다` 는 Windows 에서 **심링크 자체를 갈아끼워** 일반
+/// 파일로 만들었다(그래서 *"D34 가 포기한 값"* 이라고 적혀 있었다). 지금은 **끊을
+/// 대상이 이름이 아니라 실체**다 — 심링크는 살고, 그것이 가리키는 실체의 하드링크가
+/// 끊긴다. 두 플랫폼이 같은 방법과 같은 결과를 낸다.
+///
+/// ⚠ **fixture 는 특권을 요구한다.** 파일 심링크 생성은 개발자 모드나
+/// `SeCreateSymbolicLinkPrivilege` 가 있어야 한다. 없으면 [`파일_심링크`] 가 **시끄럽게
+/// 죽는다** — 그것은 「이 플랫폼에서 못 잰다」가 아니라 **「이 기계가 준비가 안 됐다」**
+/// 이고, 그 둘은 다르다. CI 의 세 runner 는 전부 만들 수 있다.
+#[test]
+fn 심링크가_살고_그_대상에_쓰인다() {
+    let root = 빈_프로젝트("g-심링크");
     std::fs::write(root.join("진짜무시목록"), "node_modules/\n").expect("진짜");
-    std::os::unix::fs::symlink("진짜무시목록", root.join(".gitignore")).expect("symlink");
+    파일_심링크("진짜무시목록", &root.join(".gitignore"));
 
     성공(&root, &["install"]);
 
-    let mode = std::fs::metadata(root.join("CLAUDE.md")).expect("stat").permissions().mode();
-    assert_eq!(mode & 0o777, 0o600, "모드가 소실됐다");
     assert!(
         std::fs::symlink_metadata(root.join(".gitignore")).expect("lstat").file_type().is_symlink(),
         "심링크가 일반 파일로 바뀌었다"
@@ -854,72 +864,619 @@ fn 모드와_심링크가_살아_있다() {
     );
 }
 
-/// ★ **유닉스 밖에서 이 성질은 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
+/// **모드가 살아 있다** — 유닉스에만 있는 축의 유닉스 인코딩.
 ///
-/// 소유자 결정(2026-08-16): *"windows 를 대응한다는 가정하에 앞으로 모든 설계와
-/// 개발이 되어야 해."* 짝 없는 `#[cfg(unix)]` 시험은 다른 플랫폼에서 **조용히
-/// 사라진다** — 위 시험은 모드 비트와 심링크 위에 서므로 짝을 단다.
+/// ⚠ **짝 없는 `cfg` 가 아니다.** 이 시험이 지는 성질(*"제자리 쓰기가 파일의 권한을
+/// 안 넓힌다"*)의 **이식 가능한 문장은 `쓸_수_없는_자리는_미리_끊는다` 가 잰다** —
+/// `Permissions::set_readonly` 가 두 플랫폼에서 다 서는 축이다. 여기서 더하는 것은
+/// *"유닉스에서는 그 권한이 **모드 비트**로 표현되고 `600` 이 `644` 로 안 넓어진다"*
+/// 라는 한 겹뿐이고, 그 겹은 다른 플랫폼에 **개념이 없다.**
 #[test]
-#[cfg(not(unix))]
-fn 모드와_심링크_보존이_이_플랫폼에서는_안_재진다() {
-    panic!(
-        "제자리 쓰기가 모드와 심링크를 살리는지를 이 플랫폼에서 아직 안 잰다 — \
-         fixture 가 `PermissionsExt` 와 `symlink` 위에 선다"
+#[cfg(unix)]
+fn 모드가_살아_있다() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let root = 빈_프로젝트("g-모드");
+    std::fs::write(root.join("CLAUDE.md"), "# 내 것\n").expect("CLAUDE.md");
+    std::fs::set_permissions(root.join("CLAUDE.md"), std::fs::Permissions::from_mode(0o600))
+        .expect("chmod");
+
+    성공(&root, &["install"]);
+
+    let mode = std::fs::metadata(root.join("CLAUDE.md")).expect("stat").permissions().mode();
+    assert_eq!(mode & 0o777, 0o600, "모드가 소실됐다");
+}
+
+/// 파일 심링크를 건다 — **못 만들면 시끄럽게 죽는다.**
+///
+/// 「이 플랫폼이 못 한다」가 아니라 **「이 기계가 준비가 안 됐다」**이므로 외침이
+/// 아니라 fixture 실패다. `mkfifo` 가 없는 기계에서 FIFO 시험이 죽는 것과 같은 급이다.
+fn 파일_심링크(대상: &str, 링크: &Path) {
+    #[cfg(unix)]
+    let r = std::os::unix::fs::symlink(대상, 링크);
+    #[cfg(windows)]
+    let r = std::os::windows::fs::symlink_file(대상, 링크);
+    #[cfg(not(any(unix, windows)))]
+    let r: std::io::Result<()> =
+        Err(std::io::Error::other("이 플랫폼에는 파일 심링크를 만드는 문이 없다"));
+
+    r.unwrap_or_else(|e| {
+        panic!(
+            "파일 심링크를 못 만들었다({e}) — **fixture 가 안 섰다.**\n    \
+             Windows 라면 개발자 모드를 켜거나(설정 > 시스템 > 개발자용) \
+             `SeCreateSymbolicLinkPrivilege` 가 있어야 한다. CI 의 세 runner 는 전부 \
+             만들 수 있으므로 여기서 빨간 것은 **이 기계의 준비 상태**다"
+        )
+    });
+}
+
+/// ★ **파일시스템이 답을 다르게 내는 자리에서 우리는 같은 답을 낸다** — `§3-C ①`.
+///
+/// # 이것이 다른 플랫폼 분기와 다른 점
+///
+/// 이 저장소의 다른 분기는 전부 **API 의 차이**였다(모드 비트·확장자·링크 수).
+/// 여기는 **같은 코드가 같은 호출을 하는데 파일시스템이 다른 답을 낸다**:
+///
+/// | `Claude.md` 가 있는데 `CLAUDE.md` 를 놓으면 | |
+/// |---|---|
+/// | Windows(NTFS) · macOS(APFS 기본) | **같은 파일** — 우리 블록이 `Claude.md` 에 들어간다 |
+/// | 리눅스(ext4) | **다른 파일** — `CLAUDE.md` 가 새로 생긴다 |
+///
+/// 둘 다 그 플랫폼에서는 맞고, 그래서 더 나쁘다 — **공유되는 저장소**가 clone 한
+/// 곳에 따라 다르게 선다. 그래서 [`install::casing`] 이 **양쪽에서 멈춘다.**
+///
+/// 이 시험은 `cfg` 가 없다. **rc·화면·트리가 세 플랫폼에서 같아야** 통과한다.
+#[test]
+fn 대소문자만_다른_이름이_있으면_어디서나_멈춘다() {
+    for (tag, 우리것, 남의것) in [
+        ("지시", "CLAUDE.md", "Claude.md"),
+        ("무시목록", ".gitignore", ".GitIgnore"),
+    ] {
+        let root = 빈_프로젝트(&format!("g-대소문자-{tag}"));
+        std::fs::write(root.join(남의것), "남이 쓴 것\n").expect("남의 것");
+        let 전 = 스냅샷(&root);
+
+        let stderr = 실패(&root, &["install"]);
+
+        // ① **까닭을 적었다** — 그리고 두 이름을 다 적었다. 사람이 할 일이 정해진다.
+        assert!(
+            stderr.contains("대소문자") && stderr.contains(남의것) && stderr.contains(우리것),
+            "{tag}: 무엇이 부딪혔는지 안 적었다 — {stderr}"
+        );
+        // ② **아무것도 안 남았다** — 1단계에서 끊었으므로 되감기 (a) 다.
+        assert_eq!(스냅샷(&root), 전, "{tag}: 부분 설치가 남았다");
+        // ③ 남의 파일은 한 바이트도 안 바뀌었다.
+        assert_eq!(
+            std::fs::read_to_string(root.join(남의것)).expect("읽기"),
+            "남이 쓴 것\n",
+            "{tag}: 남의 파일이 바뀌었다"
+        );
+    }
+}
+
+/// ★ **`MAX_PATH` 를 넘는 자리에서 라이프사이클 전체가 돈다** — `§3-C ②`.
+///
+/// # 왜 단위 시험으로 부족한가
+///
+/// [`install::winpath`] 에는 *"벗긴 결과가 260 안에 들어올 때만 `\\?\` 를 벗긴다"* 를
+/// 재는 단위 시험이 있다. 그것은 **문자열 함수 하나**를 잰다. 여기서 더하는 것은
+/// **그 길이의 실제 파일 위에서 네 명령이 전부 서는가**다 — 매니페스트 왕복 ·
+/// sha256 대조 · 블록 넣고 빼기 · 잠금이 전부 그 경로를 지난다.
+///
+/// # ★ 실측이 fixture 의 모양을 정했다 (2026-08-17 · Windows · `LongPathsEnabled=0`)
+///
+/// | | 365자 경로에서 |
+/// |---|---|
+/// | `std::fs::create_dir_all`·`read`·`write` | **선다.** Rust std 가 절대 경로에 `\\?\` 를 붙인다 |
+/// | `pal install --target <긴 경로>` | **rc=0.** 라이프사이클이 돈다 |
+/// | `Command::current_dir(<긴 경로>)` | **안 선다** — `Os { code: 267, NotADirectory }` |
+/// | `git -C <긴 경로> init` | **안 선다** — `fatal: … Filename too long` (`core.longpaths=true` 를 줘도 같다) |
+///
+/// 아래 둘은 **우리 코드 밖의 사실**이다. 프로세스의 작업 디렉터리에는 긴 경로 지원이
+/// 안 붙고(`CreateProcess` 의 `lpCurrentDirectory` 는 `MAX_PATH` 로 잘린다), `git` 은
+/// 그 자리로 `chdir` 부터 한다. 그래서 **Windows 에서 `MAX_PATH` 를 넘는 자리에 git
+/// 저장소를 둘 수 없다** — 「우리가 아직 안 했다」가 아니라 그 플랫폼의 사실이다.
+///
+/// 그러니 fixture 는 그 사실에 맞춘다: **git 없는 프로젝트**를 그 깊이에 두고
+/// `--target`·`--repo` 로 몬다. 그러면 세 플랫폼이 **같은 모양**을 잰다 — 리눅스에서
+/// `git init` 이 되더라도 여기서는 안 쓴다. 되는 쪽에 맞추면 fixture 가 갈리고,
+/// 그러면 이 시험이 플랫폼마다 다른 것을 재게 된다.
+///
+/// ⚠ `.gitignore` 등재는 그래서 이 시험의 모집단 밖이다 — git 프로젝트가 아니면
+/// 설치가 그 걸음을 **건너뛴다고 말하고** 지나간다. 그 경로는 다른 시험이 잰다.
+#[test]
+fn 긴_경로에서_라이프사이클이_전부_선다() {
+    let base = 방("g-긴경로");
+    // 40 자 × 8 겹 — `MAX_PATH`(260) 를 확실히 넘긴다. 이름 하나는 짧게 둔다:
+    // 255 를 넘으면 그것은 다른 축(`ENAMETOOLONG`)이고 여기서 재려는 것이 아니다.
+    let mut root = base.clone();
+    for i in 0..8 {
+        root = root.join(format!("깊이{i}-0123456789012345678901234567890"));
+    }
+    std::fs::create_dir_all(&root).expect("긴 경로 방");
+    let 길이 = root.display().to_string().len();
+    assert!(길이 > 260, "fixture 가 안 섰다 — 경로가 {길이}자뿐이다: {}", root.display());
+
+    std::fs::write(root.join("README.md"), "hello\n").expect("README");
+    let 원본 = "# 내 규칙\n지키자\n";
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("CLAUDE.md");
+
+    // ★ **`current_dir` 을 안 쓴다** — 위 실측이 그 문을 닫았다.
+    let 대상 = |args: &[&str]| -> Output {
+        let mut cmd = Command::new(PAL);
+        cmd.args(args).arg(&root).env("PATH", path_앞에(&pal_dir()));
+        cmd.output().expect("pal 을 못 돌렸다")
+    };
+    let 대상_성공 = |args: &[&str]| -> String {
+        let out = 대상(args);
+        assert!(
+            out.status.success(),
+            "pal {args:?} <긴 경로>\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).into_owned()
+    };
+
+    대상_성공(&["install", "--target"]);
+
+    // ★ **진단이 이 자리를 실제로 본다** — 「설치가 rc=0 이었다」로는 부족하다.
+    let out = 대상(&["doctor", "--install", "--json", "--repo"]);
+    let c: serde_json::Value =
+        serde_json::from_slice(&out.stdout).expect("긴 경로에서 진단이 JSON 을 안 냈다");
+    let 검사들 = c.as_array().expect("배열");
+    assert_eq!(검사들.len(), 6, "검사가 여섯이 아니다: {c}");
+    // 검사 5(`.gitignore` 등재)는 git 프로젝트가 아니라 여기서 모집단 밖이다 —
+    // **그 사실이 `residual` 로 나와야 하고 `failed` 면 안 된다.**
+    for 검사 in 검사들 {
+        assert_ne!(
+            검사["outcome"], "failed",
+            "긴 경로에서 검사 {}이 빨갛다: {검사}",
+            검사["number"]
+        );
+    }
+
+    대상_성공(&["update", "--target"]);
+    대상_성공(&["uninstall", "--target"]);
+
+    // ★ **왕복이 바이트 동일하다.** 긴 경로가 되쓰기를 흔들지 않는다.
+    assert_eq!(
+        std::fs::read_to_string(root.join("CLAUDE.md")).expect("읽기"),
+        원본,
+        "왕복이 원본과 다르다"
     );
+    // ★ **아무것도 안 남았다.**
+    assert!(!root.join(".claude/pal").exists(), "긴 경로에서 잔해가 남았다");
+
+    let _ = std::fs::remove_dir_all(&base);
+}
+
+/// ★ **`\\?\` 가 화면에 안 샌다 — 라이프사이클 전체와 오류 경로에서.**
+///
+/// # 왜 단위 시험도 「정상 설치 화면」도 부족한가
+///
+/// [`install::winpath`] 의 단위 시험은 **함수 하나**를 잰다. 그리고 정상 설치 화면은
+/// 뿌리를 `Root` 의 `Display` 로 내므로 **그 한 줄만 보면 언제나 깨끗하다.**
+///
+/// 실측(2026-08-17)이 그 사이의 구멍을 냈다 — `install/hooks.rs` 의 아홉 자리가
+/// `PathBuf::display()` 를 직접 불렀고, 그래서 이 줄이 나왔다:
+///
+/// ```text
+/// ⚠ 훅이 아직 안 뜬다   … `\\?\C:\dev\projects\palimpsest\target\debug\pal.exe` 을 `PATH` 에 넣으십시오
+/// ```
+///
+/// **50자짜리 경로다** — 벗겨야 하는 길이인데 안 벗겨졌다. 그리고 이 저장소는 같은
+/// 종류의 누출을 이미 한 번 고쳤다(`78b27dc`). 한 번 고치고 다시 난다는 것은
+/// **그 자리에 문이 없다**는 뜻이다. 그래서 문을 여기 세운다.
+///
+/// ⚠ **유닉스에서는 이 시험이 공짜로 통과한다** — 거기엔 그 접두사가 없다. 그래도
+/// `cfg` 를 안 단다: 공짜로 통과하는 것과 **안 재는 것**은 다르고, 여기서 재는 문장
+/// (*"우리가 내는 경로 문자열은 한 함수를 지난다"*)은 세 플랫폼에 다 있는 문장이다.
+#[test]
+fn 화면에_verbatim_접두사가_안_샌다() {
+    const VERBATIM: &str = r"\\?\";
+
+    let root = 살고_있는_프로젝트("g-verbatim");
+    let mut 본_것: Vec<(String, String)> = Vec::new();
+
+    // ① 정상 라이프사이클 넷 — `PATH` 에 `pal` 이 **없는** 상태로도 돌린다.
+    //    훅 안내 문구가 나오는 자리가 정확히 거기다(실측이 샌 자리).
+    for args in [&["install"][..], &["update"][..], &["doctor", "--install"][..]] {
+        for path_env in [None, Some("")] {
+            let mut cmd = Command::new(PAL);
+            cmd.args(args).current_dir(&root);
+            match path_env {
+                Some(p) => cmd.env("PATH", p),
+                None => cmd.env("PATH", path_앞에(&pal_dir())),
+            };
+            let out = cmd.output().expect("pal");
+            본_것.push((
+                format!("{args:?} PATH={}", if path_env.is_some() { "빔" } else { "정상" }),
+                format!(
+                    "{}{}",
+                    String::from_utf8_lossy(&out.stdout),
+                    String::from_utf8_lossy(&out.stderr)
+                ),
+            ));
+        }
+    }
+
+    // ② 오류 경로 — 여기가 경로 문자열이 가장 많이 나오는 자리다.
+    let 막힌 = 살고_있는_프로젝트("g-verbatim-오류");
+    성공(&막힌, &["install"]);
+    읽기_전용(&막힌.join("CLAUDE.md"), true);
+    let out = 돌린다(&막힌, &["update"]);
+    읽기_전용(&막힌.join("CLAUDE.md"), false);
+    본_것.push((
+        "읽기 전용".to_owned(),
+        format!(
+            "{}{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        ),
+    ));
+
+    let out = 돌린다(&root, &["uninstall"]);
+    본_것.push((
+        "uninstall".to_owned(),
+        format!(
+            "{}{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        ),
+    ));
+
+    for (tag, 화면) in &본_것 {
+        assert!(
+            !화면.contains(VERBATIM),
+            "{tag}: `{VERBATIM}` 가 화면에 샜다 — 그 경로가 \
+             `install::winpath::사람이_읽는` 을 안 지났다:\n{화면}"
+        );
+    }
+    // ★ **아무것도 안 본 채로 통과하지 않는다.** 화면이 비었으면 위가 공짜다.
+    assert!(
+        본_것.iter().any(|(_, 화면)| 화면.contains("설치") || 화면.contains("검사")),
+        "화면을 하나도 못 모았다 — 이 시험이 아무것도 안 잰다"
+    );
+}
+
+/// ★ **`git` 이 없으면 1단계에서 멈춘다 — 반쯤 설치하지 않는다** — `§3-C ⑥`.
+///
+/// [`install::ignore`] 는 `.gitignore` 등재를 **git 에게 물어서** 판정한다(텍스트로 안
+/// 읽는다 — `!` 부정 패턴이 `.git/info/exclude`·전역 `core.excludesFile`·중첩
+/// `.gitignore` 에도 살기 때문이다). 그러니 git 이 없으면 그 걸음이 **원리상 안 선다.**
+///
+/// 물을 것은 *"git 없이도 되는가"* 가 아니라 **"없을 때 무엇이 되는가"** 다:
+///
+/// | 재는 것 | 왜 |
+/// |---|---|
+/// | rc≠0 | 조용한 rc=0 은 「등재됐다」는 거짓말이 된다 |
+/// | **잔해 0** | `[f24]` ② — 부분 설치 금지. 이 검사는 1단계에 있으므로 되감기 (a) 다 |
+/// | 무엇을 하라고 적는다 | 실측(2026-08-17): 옛 문구는 `program not found` 하나뿐이었다 |
+///
+/// ⚠ **`PATH` 를 통째로 갈아끼운다** — `path_앞에` 는 기존 `PATH` 를 뒤에 붙이므로
+/// git 을 못 없앤다. 그리고 `pal` 자신은 절대 경로로 띄우므로 `PATH` 가 비어도 돈다.
+#[test]
+fn git_이_없으면_1단계에서_멈춘다() {
+    let root = 살고_있는_프로젝트("g-git없음");
+    let 전 = 스냅샷(&root);
+
+    // `PATH` 에 아무것도 없다 — git 도, pal 도. pal 은 절대 경로로 띄운다.
+    let out = Command::new(PAL)
+        .args(["install"])
+        .current_dir(&root)
+        .env("PATH", "")
+        .output()
+        .expect("pal 을 못 돌렸다");
+
+    assert!(!out.status.success(), "git 이 없는데 rc=0 을 냈다");
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        stderr.contains("git") && stderr.contains("PATH"),
+        "무엇이 없고 무엇을 하라는지 안 적었다 — {stderr}"
+    );
+    assert_eq!(스냅샷(&root), 전, "부분 설치가 남았다");
+    assert!(!root.join(".claude/pal").exists(), "디렉터리가 남았다");
+}
+
+/// ★ **경로가 유효한 UTF-8 이 아니어도 라이프사이클이 선다** — `§3-C ③`.
+///
+/// # 무엇이 위험이었나
+///
+/// Windows 의 경로는 UTF-16 이고 유닉스의 경로는 **바이트열**이다. 둘 다 UTF-8 이
+/// 아닌 값을 담을 수 있고, 우리 코드에는 [`std::path::Path::to_string_lossy`] 가 있다.
+/// 손실이 나면 **조용히 틀린 문자열**이 나가고, 그것이 매니페스트나 등록에 실리면
+/// 그 저장소는 되돌릴 수 없게 된다.
+///
+/// # 왜 지금은 안 실리는가 — 그리고 그 사실이 여기서 잠긴다
+///
+/// | 나가는 값 | 무엇으로 만들어지나 |
+/// |---|---|
+/// | 매니페스트의 경로 | **`Rel` — 우리가 정한 ASCII 상수**(`.claude/pal/…`). 대상 경로가 안 들어간다 |
+/// | 훅 등록 문자열 | **`PATH` 의 이름 하나**(`pal`). 절대 경로가 안 들어간다 |
+/// | 파일 조작 | `Path`/`OsStr` 로만 나른다 — 문자열로 안 바꾼다 |
+///
+/// `to_string_lossy` 가 남은 자리는 **화면**뿐이고, 거기서 U+FFFD 가 나오는 것은
+/// 손실이 아니라 **표시**다. 이 시험은 그 구조가 유지되는지를 rc 와 왕복으로 잰다 —
+/// 누가 나중에 대상 경로를 산출물에 실으면 여기서 걸린다.
+///
+/// # ⚠ fixture 는 플랫폼마다 다른 축으로 만든다 — **사건은 같다**
+///
+/// | 플랫폼 | UTF-8 이 아닌 이름을 어떻게 만드나 |
+/// |---|---|
+/// | Windows | **짝 없는 서로게이트**(`U+D800`) — UTF-16 으로는 되고 UTF-8 로는 안 된다 |
+/// | 유닉스 | **바이트 `0xFF`** — 어떤 UTF-8 시퀀스에도 안 나오는 값 |
+///
+/// 실측(2026-08-17 · Windows · NTFS): 그 이름의 디렉터리가 **만들어지고**
+/// `to_str()` 은 `None` 이며 `install`·`update`·`uninstall` 이 **전부 rc=0** 이다.
+/// 그리고 `git` 은 그 자리에 **못 간다**(`No such file or directory`) — git 이 UTF-8 로
+/// 바꿔 찾기 때문이다. 그래서 여기도 긴 경로와 같이 **git 없는 프로젝트**로 잰다.
+/// # ★ 갈래가 둘이고 **둘 다 단언한다** — 「못 만든다」는 「안 잰다」가 아니다
+///
+/// 실측(2026-08-17 · CI): **macOS(APFS)는 그 이름을 아예 거부한다.** 그러면 그
+/// 플랫폼에는 이 위험이 **존재할 수 없다** — 사용자가 그 상태에 들어갈 방법이 없다.
+///
+/// | 파일시스템이 그 이름을 | 이 시험이 무엇을 단언하나 |
+/// |---|---|
+/// | **받는다**(NTFS · ext4) | 라이프사이클 넷이 rc=0 · 왕복 바이트 동일 · 산출물에 U+FFFD 0 |
+/// | **거부한다**(APFS) | **거부한다는 것 자체**를 단언한다 — 그 자리에 위험이 없다는 증거다 |
+///
+/// ★ 「fixture 가 없다」와 「그 위험이 없다」는 다르다. 여기서 둘째 갈래가 재는 것은
+/// **후자**이고, 그것은 실제 단언이다: 언젠가 그 플랫폼이 그 이름을 받기 시작하면
+/// 이 시험이 **첫째 갈래로 넘어가서** 라이프사이클을 재기 시작한다. 조용히 통과하는
+/// 자리가 없다.
+#[test]
+fn 유효한_utf8_이_아닌_경로에서도_라이프사이클이_선다() {
+    let base = 방("g-비utf8");
+    let 이름 = 비utf8_이름();
+    let root = base.join(&이름);
+    if let Err(e) = std::fs::create_dir(&root) {
+        // ── 갈래 ② 파일시스템이 그 이름을 거부한다 — **위험이 원리상 없다** ──
+        assert!(
+            !root.exists(),
+            "만들기가 실패했다는데 그 자리가 존재한다 — 어느 쪽도 아닌 상태다: {e}"
+        );
+        // 「거부」가 「부모가 없다」가 아니어야 한다. 부모는 우리가 방금 만들었다.
+        assert!(base.is_dir(), "부모가 없어서 실패한 것이면 이 시험이 딴것을 잰다");
+        println!(
+            "이 파일시스템은 UTF-8 이 아닌 이름을 거부한다({e}) — \
+             그래서 이 플랫폼에는 이 위험이 **존재할 수 없다.** \
+             fixture 가 없는 것이 아니라 재야 할 상태가 없는 것이다"
+        );
+        let _ = std::fs::remove_dir_all(&base);
+        return;
+    }
+    // ── 갈래 ① 받는다 — 라이프사이클을 잰다 ──────────────────────────────────
+    assert!(root.to_str().is_none(), "fixture 가 안 섰다 — 이 경로는 유효한 UTF-8 이다");
+
+    std::fs::write(root.join("README.md"), "hello\n").expect("README");
+    let 원본 = "# 내 규칙\n지키자\n";
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("CLAUDE.md");
+
+    let 대상 = |args: &[&str]| -> Output {
+        Command::new(PAL)
+            .args(args)
+            .arg(&root)
+            .env("PATH", path_앞에(&pal_dir()))
+            .output()
+            .expect("pal 을 못 돌렸다")
+    };
+    for args in [
+        &["install", "--target"][..],
+        &["update", "--target"][..],
+        &["uninstall", "--target"][..],
+    ] {
+        let out = 대상(args);
+        assert!(
+            out.status.success(),
+            "pal {args:?} <비 UTF-8 경로>\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    // ★ **왕복이 바이트 동일하다.**
+    assert_eq!(
+        std::fs::read_to_string(root.join("CLAUDE.md")).expect("읽기"),
+        원본,
+        "왕복이 원본과 다르다"
+    );
+    assert!(!root.join(".claude/pal").exists(), "잔해가 남았다");
+
+    // ★ **산출물에 손실된 문자열이 안 실린다.** 설치 상태에서 매니페스트를 읽어
+    // **대체 문자(U+FFFD)가 한 글자도 없는지** 본다 — 그것이 실리면 그 저장소는
+    // 되돌릴 수 없게 된다.
+    assert!(대상(&["install", "--target"]).status.success());
+    let 매니페스트 =
+        std::fs::read_to_string(root.join(".claude/pal/manifest.json")).expect("매니페스트");
+    assert!(
+        !매니페스트.contains('\u{FFFD}'),
+        "매니페스트에 손실된 문자열이 실렸다:\n{매니페스트}"
+    );
+    let 설정 = std::fs::read_to_string(root.join(".claude/settings.json")).expect("설정");
+    assert!(!설정.contains('\u{FFFD}'), "설정에 손실된 문자열이 실렸다:\n{설정}");
+    assert!(대상(&["uninstall", "--target"]).status.success());
+
+    let _ = std::fs::remove_dir_all(&base);
+}
+
+/// **이 플랫폼에서 UTF-8 이 아닌 파일 이름** — 축이 다르고 사건은 같다.
+fn 비utf8_이름() -> std::ffi::OsString {
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::OsStringExt;
+        // `pal` + 짝 없는 상위 서로게이트 + `z`. UTF-16 으로는 유효하고 UTF-8 로는 아니다.
+        std::ffi::OsString::from_wide(&[0x0070, 0x0061, 0x006C, 0xD800, 0x007A])
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStringExt;
+        // `0xFF` 는 어떤 UTF-8 시퀀스에도 안 나오는 바이트다.
+        std::ffi::OsString::from_vec(vec![b'p', b'a', b'l', 0xFF, b'z'])
+    }
+    #[cfg(not(any(windows, unix)))]
+    {
+        panic!("이 플랫폼에서 UTF-8 이 아닌 이름을 만드는 문을 모른다")
+    }
+}
+
+/// ★ **정확히 같은 이름은 안 막는다** — 이 줄이 없으면 위 문이 두 번째 설치를 막는다.
+///
+/// 대소문자를 안 가리는 파일시스템도 **이름은 보존한다**(NTFS·APFS). 그래서 우리가
+/// 만든 `CLAUDE.md` 는 다음 회차에서도 `CLAUDE.md` 로 보이고 그 문을 그냥 지난다.
+/// 그 사실을 여기서 못 박는다 — 안 그러면 멱등이 조용히 깨진다.
+#[test]
+fn 우리가_놓은_이름_위에서는_다시_설치된다() {
+    let root = 살고_있는_프로젝트("g-대소문자-멱등");
+    성공(&root, &["install"]);
+    성공(&root, &["install"]);
+    성공(&root, &["update"]);
+    성공(&root, &["uninstall"]);
 }
 
 /// **쓰기 실패를 검사하지 않으면 쓰기 불가 디렉터리에서 rc=0 이 난다.**
-#[test]
-#[cfg(unix)]
-fn 쓰기_불가_디렉터리에서_거짓_성공하지_않는다() {
-    use std::os::unix::fs::PermissionsExt;
-
-    let root = 빈_프로젝트("g-읽기전용");
-    std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o555)).expect("chmod");
-    let out = 돌린다(&root, &["install"]);
-    // 되돌려 놓지 않으면 시험 방을 못 지운다.
-    std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o755)).expect("chmod");
-
-    assert!(!out.status.success(), "쓰기 불가 디렉터리에서 rc=0 을 냈다");
-}
-
-/// ★ **유닉스 밖에서 「거짓 성공 금지」가 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
 ///
-/// 소유자 결정(2026-08-16): *"windows 를 대응한다는 가정하에 앞으로 모든 설계와
-/// 개발이 되어야 해."* 짝 없는 `#[cfg(unix)]` 시험은 다른 플랫폼에서 **조용히
-/// 사라진다** — 초록을 내면서 아무것도 안 재는 상태가 된다.
+/// ★ **모든 플랫폼에서 잰다** — 앞 판은 여기에 `쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다`
+/// 외침이 걸려 있었다. 그 외침이 적은 까닭은 **맞았지만 결론이 틀렸다**: Windows 에서
+/// 디렉터리의 `FILE_ATTRIBUTE_READONLY` 가 쓰기를 안 막는 것은 사실이고(실측
+/// 2026-08-17), 그래서 *"진짜 쓰기 불가 디렉터리는 ACL 이고 std 밖이다"* 까지도 맞다.
+/// 틀린 것은 **「std 밖이면 못 잰다」**는 결론이다 — 이 저장소는 junction fixture 에서
+/// 이미 `cmd` 를 쓰면서 *"플랫폼의 일부인 도구는 정당하다"* 를 인정했고,
+/// **`icacls` 도 같은 자격**이다. 재려는 대상이 그 플랫폼의 ACL 그 자체다.
+///
+/// 실측(2026-08-17 · 이 기계): `icacls DIR /deny USER:(WD,AD)` 뒤
+/// **파일 생성과 mkdir 이 둘 다 `UnauthorizedAccessException`**, `/remove:d USER` 로
+/// 되돌아온다.
+///
+/// ⚠ **되돌림이 `Drop` 에 걸려 있다**([`쓰기를_막은_자리`]). 단언이 죽어도 ACL 이
+/// 안 남는다 — 남으면 시험 방을 아무도 못 지운다.
 #[test]
-#[cfg(not(unix))]
-fn 쓰기_불가에서의_거짓_성공_금지가_이_플랫폼에서는_안_재진다() {
-    panic!(
-        "쓸 수 없는 자리에서 rc=0 을 내는지를 이 플랫폼에서 아직 안 잰다 — fixture 가 \
-         `PermissionsExt::from_mode` 위에 선다. Windows 에는 그 비트가 없고 쓰기 거부가 \
-         ACL(`icacls`)과 읽기 전용 속성으로 정해진다. 그 fixture 를 세우기 전까지 \
-         `[f24]` ②(부분 설치 금지)의 트리거를 **이 플랫폼에서는 못 만든다**"
-    );
+fn 쓰기_불가_디렉터리에서_거짓_성공하지_않는다() {
+    let root = 빈_프로젝트("g-쓰기불가");
+    let 막음 = 쓰기를_막은_자리::세운다(&root);
+
+    let out = 돌린다(&root, &["install"]);
+    assert!(!out.status.success(), "쓰기 불가 디렉터리에서 rc=0 을 냈다");
+
+    drop(막음);
+    // 되감기 (a) — 아무것도 안 남았다. **되돌린 뒤에 본다**(막힌 채로는 못 훑는다).
+    assert!(!root.join(".claude/pal").exists(), "부분 설치가 남았다");
 }
+
+/// 디렉터리에 **쓰기를 막고**, `Drop` 에서 되돌린다.
+///
+/// | 플랫폼 | 막는 문 | 되돌리는 문 |
+/// |---|---|---|
+/// | 유닉스 | 모드 `0o555` | 모드 `0o755` |
+/// | Windows | `icacls /deny USER:(WD,AD)` | `icacls /remove:d USER` |
+///
+/// **읽기 전용 속성이 아니라 ACL 인 이유**는 위 시험의 문서에 있다.
+struct 쓰기를_막은_자리(PathBuf);
+
+impl 쓰기를_막은_자리 {
+    fn 세운다(dir: &Path) -> Self {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o555)).expect("chmod");
+        }
+        #[cfg(windows)]
+        {
+            let u = 나() ;
+            let out = Command::new("icacls")
+                .arg(dir)
+                .arg("/deny")
+                .arg(format!("{u}:(WD,AD)"))
+                .output()
+                .expect("icacls 를 못 돌렸다 — 이 플랫폼의 도구가 없다");
+            assert!(
+                out.status.success(),
+                "icacls /deny 가 실패했다 — fixture 가 안 섰다: {}{}",
+                String::from_utf8_lossy(&out.stdout),
+                String::from_utf8_lossy(&out.stderr)
+            );
+            // ★ **fixture 가 실제로 막는지 확인한다.** 안 막는데 통과하면 이 시험은
+            // 아무것도 안 재면서 초록이다 — 그것이 이 저장소가 금지한 상태다.
+            let 탐침 = dir.join("acl-탐침.tmp");
+            assert!(
+                std::fs::write(&탐침, b"x").is_err(),
+                "ACL 을 걸었는데 파일이 그대로 만들어졌다 — fixture 가 안 섰다"
+            );
+        }
+        Self(dir.to_path_buf())
+    }
+}
+
+/// 이 프로세스의 계정 이름 — `icacls` 의 주체.
+#[cfg(windows)]
+fn 나() -> String {
+    std::env::var("USERNAME").expect("USERNAME 이 없다 — icacls 에 줄 주체가 없다")
+}
+
+impl Drop for 쓰기를_막은_자리 {
+    fn drop(&mut self) {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(&self.0, std::fs::Permissions::from_mode(0o755));
+        }
+        #[cfg(windows)]
+        {
+            let _ = Command::new("icacls").arg(&self.0).arg("/remove:d").arg(나()).output();
+        }
+    }
+}
+
+// ★ **여기 있던 `쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다` 는 없어졌다.**
+//
+// 그 외침의 관측은 맞았다 — Windows 에서 디렉터리의 `FILE_ATTRIBUTE_READONLY` 는
+// 쓰기를 안 막고(`dir create file = Ok(())`), 그 속성은 *"쓰지 마라"* 가 아니라
+// *"커스터마이즈된 폴더다"* 를 뜻한다. 그 관측은 제품 쪽 결함도 하나 냈고
+// (`install.rs` 의 `읽기_전용이_쓰기를_막는_종류인가`) 그것은 그대로 산다.
+//
+// 틀린 것은 **결론**이었다: *"진짜 쓰기 불가 디렉터리는 ACL 이고 **std 밖이다**"* 에서
+// 「std 밖이다」가 「못 잰다」로 넘어간 자리. std 밖이라는 것은 fixture 를 std 로 못
+// 만든다는 뜻이지 **재려는 성질이 없다**는 뜻이 아니다. `icacls` 로 세운다 —
+// 위 `쓰기_불가_디렉터리에서_거짓_성공하지_않는다` 가 그 자리다.
 
 /// **동시 설치 8회 → 블록 8개**(실측 · check-then-act 경쟁). 여기서 하나여야 한다.
+///
+/// ★ **실패한 놈의 까닭까지 본다.** 옛 단언은 `성공수 >= 1` 뿐이었고, 그러면 일곱이
+/// **플랫폼 고유의 이유로 죽어도** 통과한다 — 그리고 그 형태가 실제로 하나 있었다:
+/// Windows 의 `remove_file` 은 삭제 예정만 걸어서, 앞 주인이 놓는 좁은 창에 같은
+/// 이름을 열면 `ACCESS_DENIED` 다. 그것은 *"기다리면 될 일"* 이지 실패가 아니다.
+///
+/// 실측(2026-08-17 · Windows): 8회 × 5회전 = **40 프로세스 전부 성공 · 블록 언제나 1개.**
+/// 그래도 단언은 「전부 성공」이 아니라 **「실패했다면 잠금 때문이어야 한다」**로 둔다 —
+/// 부하가 걸린 기계에서 상한을 넘는 것은 정상 경로이고, 그것까지 실패로 세면 이 시험이
+/// 재려는 것(배타)이 아니라 기계 속도를 재게 된다.
 #[test]
 fn 동시_설치_여덟이_블록을_하나만_만든다() {
     let root = 살고_있는_프로젝트("g-경쟁");
-    let path = std::env::var("PATH").unwrap_or_default();
     let 아이들: Vec<_> = (0..8)
         .map(|_| {
             Command::new(PAL)
                 .args(["install"])
                 .current_dir(&root)
-                .env("PATH", format!("{}:{path}", pal_dir().display()))
+                .env("PATH", path_앞에(&pal_dir()))
                 .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::piped())
                 .spawn()
                 .expect("spawn")
         })
         .collect();
     let mut 성공수 = 0;
-    for mut child in 아이들 {
-        if child.wait().expect("wait").success() {
+    for child in 아이들 {
+        let out = child.wait_with_output().expect("wait");
+        if out.status.success() {
             성공수 += 1;
+            continue;
         }
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(
+            stderr.contains("쥐고 있다") || stderr.contains("잠금"),
+            "잠금 경합이 아닌 이유로 죽었다 — 플랫폼 고유의 실패다:\n{stderr}"
+        );
     }
     assert!(성공수 >= 1, "여덟이 전부 실패했다");
 
@@ -938,13 +1495,12 @@ fn 동시_설치_여덟이_블록을_하나만_만든다() {
 #[test]
 fn 동시_설치가_되돌리기_기록을_안_잃는다() {
     let root = 살고_있는_프로젝트("g-기록");
-    let path = std::env::var("PATH").unwrap_or_default();
     let 아이들: Vec<_> = (0..8)
         .map(|_| {
             Command::new(PAL)
                 .args(["install"])
                 .current_dir(&root)
-                .env("PATH", format!("{}:{path}", pal_dir().display()))
+                .env("PATH", path_앞에(&pal_dir()))
                 .stdout(std::process::Stdio::null())
                 .stderr(std::process::Stdio::null())
                 .spawn()
@@ -989,8 +1545,7 @@ fn 검사들(root: &Path, path_env: Option<&str>) -> serde_json::Value {
     if let Some(p) = path_env {
         cmd.env("PATH", p);
     } else {
-        let path = std::env::var("PATH").unwrap_or_default();
-        cmd.env("PATH", format!("{}:{path}", pal_dir().display()));
+        cmd.env("PATH", path_앞에(&pal_dir()));
     }
     let out = cmd.output().expect("pal doctor");
     serde_json::from_slice(&out.stdout).expect("JSON")
@@ -1094,19 +1649,30 @@ fn 설치가_없으면_잔여로_낸다() {
 ///
 /// 관측된 트리거 셋 — `.gitignore` 444 · `CLAUDE.md` 444 · `settings.json` 444.
 /// 셋 다 **읽기는 성공하고 쓰기만 실패해서** 옛 검증(`settings::read` 하나)을 통과했다.
+/// ★ **모든 플랫폼에서 잰다** — fixture 를 모드 비트에서 **읽기 전용 속성**으로 옮겼다.
+///
+/// 옛 회차는 `PermissionsExt::from_mode(0o444)` 로 만들어서 `#[cfg(unix)]` 였고,
+/// 다른 플랫폼에는 *"안 재진다"* 외침만 있었다. 그런데 [`std::fs::Permissions`] 의
+/// `set_readonly` 는 **이식 가능**하고, 실측(2026-08-17)이 그것으로 충분함을 보였다:
+///
+/// | | `readonly()` 가 참이 되나 | 쓰기가 실제로 막히나 |
+/// |---|---|---|
+/// | 유닉스 (`0o644` → `0o444`) | 된다 | **막힌다** |
+/// | Windows (`FILE_ATTRIBUTE_READONLY`) | 된다 | **막힌다** |
+///
+/// ⚠ **디렉터리는 이 fixture 로 못 만든다** — 같은 실측에서 Windows 는 디렉터리에
+/// 속성이 붙어도 파일이 그대로 만들어졌다. 그쪽은 아래 짝이 계속 외친다.
 #[test]
-#[cfg(unix)]
 fn 쓸_수_없는_자리는_미리_끊는다() {
-    use std::os::unix::fs::PermissionsExt;
-
     for 이름 in [".gitignore", "CLAUDE.md", ".claude/settings.json"] {
         let root = 살고_있는_프로젝트(&format!("h-{}", 이름.replace(['/', '.'], "-")));
         let path = root.join(이름);
-        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o444)).expect("chmod");
+        읽기_전용(&path, true);
 
         let 전 = 스냅샷(&root);
         let stderr = 실패(&root, &["install"]);
-        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+        // 되돌려 놓지 않으면 시험 방을 못 지운다.
+        읽기_전용(&path, false);
 
         assert_eq!(스냅샷(&root), 전, "{이름}: 부분 설치가 남았다");
         assert!(!root.join(".claude/pal").exists(), "{이름}: 디렉터리가 남았다");
@@ -1114,21 +1680,17 @@ fn 쓸_수_없는_자리는_미리_끊는다() {
     }
 }
 
-/// ★ **유닉스 밖에서 「미리 끊는다」가 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
-///
-/// 위 시험은 관측된 트리거 셋(`.gitignore` · `CLAUDE.md` · `settings.json` 을 444 로)
-/// 위에 서고, 그 fixture 는 **모드 비트**다. 짝 없는 `#[cfg(unix)]` 은 다른
-/// 플랫폼에서 조용히 사라진다.
-#[test]
-#[cfg(not(unix))]
-fn 되감기_미리끊기가_이_플랫폼에서는_안_재진다() {
-    panic!(
-        "쓸 수 없는 자리를 1단계에서 미리 끊는지를 이 플랫폼에서 아직 안 잰다 — \
-         fixture 가 `PermissionsExt::from_mode(0o444)` 위에 선다. 이 플랫폼의 \
-         등가(읽기 전용 속성 · ACL)로 fixture 를 세우기 전까지 되감기 (a) 는 \
-         **안 재진다**"
-    );
+/// 읽기 전용을 켜고 끈다 — **이식 가능한 유일한 축.**
+fn 읽기_전용(path: &Path, 켤까: bool) {
+    let mut p = std::fs::metadata(path).expect("stat").permissions();
+    p.set_readonly(켤까);
+    std::fs::set_permissions(path, p).expect("권한");
 }
+
+// ⚠ **디렉터리 축은 여기가 아니라 `쓰기_불가_디렉터리에서_거짓_성공하지_않는다` 가
+// 진다.** 이 시험이 쓰는 축은 **파일의 읽기 전용 속성**(`set_readonly`)이고, 그것은
+// Windows 에서 디렉터리에는 안 먹는다(같은 실측). 디렉터리는 ACL 이 필요하고 그
+// fixture 는 저쪽에 산다 — 같은 성질을 두 곳에서 세우면 그것이 곧 drift 다(진행 규칙 4).
 
 /// ★ **아무것도 아직 못 놓은 자리에서 죽어도 걷어낼 수 있다.**
 ///

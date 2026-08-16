@@ -23,6 +23,69 @@ use std::process::Command;
 
 pub const PAL: &str = env!("CARGO_BIN_EXE_pal");
 
+// ── 매니페스트의 sha 를 대는 자리 ─────────────────────────────────────────────
+//
+// `pal-cli` 는 바이너리 크레이트라 통합 시험이 `use` 로 들어갈 lib 가 없다. 그래서
+// **소스를 그대로 끌어온다** — 사본이 아니라 같은 파일이다.
+//
+// # 왜 바깥 도구(`shasum`)를 안 쓰나
+//
+// 옛 회차는 `Command::new("shasum")` 으로 댔고, 그것이 **유닉스 밖에서 `NotFound`** 였다
+// (Windows 실측 2026-08-16: 이 자리 하나가 시험 넷을 통째로 죽였다). 그런데 더 중요한
+// 것은 **`shasum` 이 애초에 틀린 오라클**이라는 점이다 — 매니페스트가 적는 값은
+// [`sha256::내용`], 즉 **줄바꿈을 정규화한 뒤의** sha256 이다. `core.autocrlf` 가 켜진
+// 워킹트리에서 둘은 다른 값이고, `shasum` 으로 대면 CRLF 파일마다 거짓 실패가 난다.
+//
+// # 그러면 오라클은 무엇인가
+//
+// **FIPS 180-4 의 공개 시험 벡터.** `sha256.rs` 안의 `공개_시험_벡터` · `패딩_경계` 가
+// 이 include 를 타고 **이 시험 바이너리 안에서 함께 돈다** — 그래서 여기서 쓰는 sha256
+// 이 진짜 sha256 이라는 것을 이 바이너리가 스스로 증명한다. `shasum` 은 명세가 아니라
+// 또 하나의 구현이었고, 공개 벡터가 그보다 강하다.
+//
+// 이 시험들이 재는 것은 *"sha256 이 맞나"* 가 아니라 **"매니페스트가 어느 바이트의 sha 를
+// 적었나"** 다 — 그 물음에는 같은 함수를 쓰는 것이 맞다.
+#[path = "../../src/install/eol.rs"]
+pub mod eol;
+#[path = "../../src/install/sha256.rs"]
+pub mod sha256;
+
+/// 등록 문자열의 경로 표기 — **시험이 자기 규칙을 갖지 않게 한다.**
+///
+/// `pal` 은 훅에 등록할 경로에서 Windows 의 verbatim 접두사(`\\?\`)를 조건부로 벗긴다.
+/// 시험이 기대값을 자기 손으로 만들면 그 조건을 **두 번째 목록**으로 옮겨 적는 것이고,
+/// 둘이 어긋나는 순간 시험이 제품이 아니라 자기 사본을 잰다.
+#[path = "../../src/install/winpath.rs"]
+pub mod winpath;
+
+/// 이 파일의 **내용**의 sha256 — 매니페스트가 적는 값과 같은 함수를 지난다.
+pub fn 해시(path: &Path) -> String {
+    sha256::내용(&std::fs::read(path).expect("읽기"))
+}
+
+/// 저장소 루트 기준 상대 경로 — **구분자를 언제나 `/` 로 낸다.**
+///
+/// ★ 스냅샷의 **키**가 되는 값이다. `read_dir` 이 낸 경로는 Windows 에서 `\` 를 쓰는데
+/// 대조 상수(`.claude/settings.json` 따위)와 매니페스트의 `path` 는 전부 `/` 다 —
+/// 맞춰 두지 않으면 `remove(".claude/settings.json")` 이 아무것도 안 지우고,
+/// **그래서 왕복 동일성·기존 파일 불가침·매니페스트 대조가 이 플랫폼에서 한 번도
+/// 안 재진다.** 초록인 채로 아무것도 안 재는 상태다.
+pub fn 상대_경로(root: &Path, path: &Path) -> String {
+    path.strip_prefix(root).unwrap_or(path).to_string_lossy().replace('\\', "/")
+}
+
+/// `PATH` 에 디렉터리 하나를 앞에 붙인다 — **구분자는 플랫폼이 정한다.**
+///
+/// 유닉스는 `:` 이고 Windows 는 `;` 다. `:` 로 붙이면 Windows 에서 `C` 드라이브 문자가
+/// 경로를 쪼개서 **`PATH` 가 통째로 망가진다** — 그러면 설치 검사 4(`PATH` 에 `pal` 이
+/// 있는가)의 정상 조건이 서지 않는다.
+pub fn path_앞에(dir: &Path) -> String {
+    let 기존 = std::env::var_os("PATH").unwrap_or_default();
+    let mut 앞 = vec![dir.to_path_buf()];
+    앞.extend(std::env::split_paths(&기존));
+    std::env::join_paths(앞).expect("PATH 를 못 만들었다").to_string_lossy().into_owned()
+}
+
 /// 저장소 하나를 세운다 — TypeScript 셋 · Kotlin 하나.
 ///
 /// 이름은 **저장소 안에서 유일**해야 한다. `pal bind` 가 후보가 여럿이면 멈추고,

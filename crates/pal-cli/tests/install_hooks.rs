@@ -14,10 +14,27 @@
 //! | **옛 형태를 새 형태로 옮기는가** | 손으로 shell form 을 심고 `update` 뒤에 남은 것을 센다 |
 //! | **옛 형태도 걷어내는가** | 같은 fixture 에서 `uninstall` 뒤 사용자 설정과 바이트 비교 |
 //!
-//! **못 재는 것**: 하네스가 그 바이트를 받아 실제로 서브에이전트를 막는 마지막 한 칸.
-//! 그것은 `claude` 세션을 실제로 돌려야 보이고 **이 회차는 안 했다.** 그래서 그 한 칸은
-//! 통과로도 반증으로도 세지 않는다 — 이 파일이 재는 것은 **우리가 내는 바이트가 실측된
-//! 규약과 같은가**까지다.
+//! # ★ 마지막 한 칸은 이제 **쟀다** (2026-08-17 · 실제 `claude` 2.1.233 세션)
+//!
+//! 앞 판은 여기에 *"하네스가 그 바이트를 받아 실제로 서브에이전트를 막는 마지막 한
+//! 칸은 이 회차는 안 했다"* 를 적어 두었다. **했다.** 그 측정은 이 파일이 아니라
+//! 게이트 문서([F24-크로스플랫폼](../../../docs/gates/F24-cross-platform.md))에 산다 —
+//! 실제 세션은 시험 스위트가 될 수 없기 때문이다(모델 응답이 결정적이지 않고,
+//! 토큰이 든다). 관측된 사슬:
+//!
+//! ```text
+//! Hooks: Parsed initial response: {"decision":"block","reason":…}
+//! Hook SubagentStop (…) returned permissionDecision: deny
+//! Hook SubagentStop … success: …  ·  통과 — 반복 회차다      ← 2회차가 왔다
+//! ```
+//!
+//! 마지막 줄이 차단이 **먹었다**는 증거다 — 서브에이전트가 재개됐다. 그리고 그것이
+//! `hook/policy.rs` 의 *"반복 회차에서는 절대 차단하지 않는다"* 가 **실제로 필요했다**는
+//! 증거이기도 하다.
+//!
+//! **그래서 이 파일이 지는 것은 바뀌지 않는다** — 여기는 *"우리가 내는 바이트가 실측된
+//! 규약과 같은가"* 를 **매 커밋마다** 잰다. 그 바이트가 하네스에서 무슨 일을 하는지는
+//! 게이트가 한 번 재고 문서로 남는다. 둘은 주기가 다르고, 그래서 사는 곳도 다르다.
 //!
 //! # ★ 왜 공백이 든 경로에 바이너리를 복사해서 설치하는가
 //!
@@ -32,7 +49,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
-use common::{PAL, git};
+use common::{PAL, git, path_앞에};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // fixture
@@ -56,11 +73,20 @@ fn 프로젝트(tag: &str) -> PathBuf {
     root
 }
 
+/// 이 플랫폼에서 **실제로 띄울 수 있는 파일 이름** — Windows 는 `.exe` 가 붙는다.
+///
+/// ★ 옛 fixture 는 `dir.join("pal")` 로 확장자 없는 사본을 만들었다. 그것은 Windows 에서
+/// **애초에 실행되지 않는 파일**이라(실측: `Executable not found`) *"정상 설치"* 를 재는
+/// 자리가 정상이 아니었다.
+fn 실행_이름(stem: &str) -> String {
+    format!("{stem}{}", std::env::consts::EXE_SUFFIX)
+}
+
 /// **공백이 든 디렉터리**에 `pal` 을 복사한다 — 따옴표를 재는 자리.
 fn 공백이_든_곳의_pal(root: &Path, 이름: &str) -> PathBuf {
     let dir = root.join(format!("도구 {이름}"));
     std::fs::create_dir_all(&dir).expect("도구 방");
-    let exe = dir.join("pal");
+    let exe = dir.join(실행_이름("pal"));
     std::fs::copy(PAL, &exe).expect("복사");
     실행_권한(&exe);
     exe
@@ -75,13 +101,56 @@ fn 실행_권한(exe: &Path) {
 #[cfg(not(unix))]
 fn 실행_권한(_exe: &Path) {}
 
-/// 등록에 실리는 경로 — **설치가 심링크를 푼다**(`hooks::실행_파일`).
-fn 실제(exe: &Path) -> String {
-    exe.canonicalize().expect("canonicalize").display().to_string()
+/// 등록에 실리는 문자열 — **`PATH` 의 이름 하나.**
+///
+/// ★ 이름을 손으로 안 적는다. **빌드된 바이너리의 이름에서 유도한다** — 그것이
+/// `layout::COMMAND_NAME` 이 뜻하는 바로 그 값이고(*"`PATH` 에서 우리를 부르는 이름"*),
+/// 여기 `"pal"` 을 박으면 그것이 두 번째 목록이 된다. 확장자는 플랫폼이 붙이므로 뗀다.
+fn 등록되는_이름() -> String {
+    Path::new(PAL)
+        .file_stem()
+        .expect("pal 의 이름")
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// **방금 복사한 실행 파일을 띄운다** — `ETXTBSY` 는 기다렸다 다시 한다.
+///
+/// # ★ 이것은 제품의 결함이 아니라 **fixture 의 경쟁**이다 (실측 2026-08-17 · CI · 리눅스)
+///
+/// ```text
+/// pal 을 못 돌렸다: Os { code: 26, kind: ExecutableFileBusy, message: "Text file busy" }
+/// ```
+///
+/// 리눅스는 **누군가 쓰기로 연 파일을 실행하지 못한다**(`ETXTBSY`). 이 파일의 시험들은
+/// 저마다 `pal` 을 복사해 두고(공백이 든 경로를 재려고) 그것을 띄우는데, `cargo test` 가
+/// 그것들을 **병렬로** 돌린다. 한 스레드가 복사하는 사이에 다른 스레드가 프로세스를
+/// 띄우면 그 `fork` 가 열린 쓰기 기술자를 물려받고, 원래 스레드가 닫아도 **자식이
+/// 아직 쥐고 있다.** 그 창에서 실행하면 `ETXTBSY` 다.
+///
+/// Windows·macOS 에는 이 축이 없다 — Windows 는 실행 중인 파일을 못 지우는 반대쪽
+/// 제약이고, macOS 는 `ETXTBSY` 를 이 형태로 안 낸다. **그래서 리눅스에서만 났다.**
+///
+/// ⚠ **재시도를 여기 하나로 모은다.** 시험마다 흩어 놓으면 어느 자리가 무엇 때문에
+/// 다시 도는지 알 수 없게 되고, 그러면 **진짜 실패도 재시도로 덮인다.** 여기서는
+/// `ETXTBSY` **하나만** 다시 하고 나머지 오류는 그대로 올린다.
+fn 띄운다(cmd: &mut Command) -> Output {
+    const 상한_MS: u64 = 5_000;
+    let mut 기다린 = 0;
+    loop {
+        match cmd.output() {
+            Ok(out) => return out,
+            Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && 기다린 < 상한_MS => {
+                std::thread::sleep(std::time::Duration::from_millis(25));
+                기다린 += 25;
+            }
+            Err(e) => panic!("pal 을 못 돌렸다: {e:?}"),
+        }
+    }
 }
 
 fn 성공(exe: &Path, cwd: &Path, args: &[&str]) -> String {
-    let out = Command::new(exe).args(args).current_dir(cwd).output().expect("pal 을 못 돌렸다");
+    let out = 띄운다(Command::new(exe).args(args).current_dir(cwd));
     assert!(
         out.status.success(),
         "pal {args:?}\nstdout: {}\nstderr: {}",
@@ -131,7 +200,7 @@ fn 우리_항목(root: &Path) -> serde_json::Value {
 // 그래서 이 자리도 `/bin/sh -c` 를 안 쓴다. **따옴표를 붙이면 오히려 못 찾는다.**
 // ─────────────────────────────────────────────────────────────────────────────
 
-fn 하네스처럼(항목: &serde_json::Value, payload: &str) -> Output {
+fn 하네스처럼(exe: &Path, 항목: &serde_json::Value, payload: &str) -> Output {
     let command = 항목["command"].as_str().expect("command 가 문자열이 아니다");
     let args: Vec<&str> = 항목["args"]
         .as_array()
@@ -139,13 +208,33 @@ fn 하네스처럼(항목: &serde_json::Value, payload: &str) -> Output {
         .iter()
         .map(|a| a.as_str().expect("인자가 문자열이 아니다"))
         .collect();
-    let mut child = Command::new(command)
-        .args(&args)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("등록된 실행 파일을 못 돌렸다");
+    // ★ **`PATH` 를 얹고 띄운다 — 하네스가 하는 그대로.**
+    //
+    // 등록 문자열은 이제 `PATH` 의 **이름 하나**다(`install/hooks.rs` 머리말). 하네스는
+    // 사용자 환경의 `PATH` 로 그 이름을 푼다. 그래서 이 fixture 도 pal 이 사는 곳을
+    // `PATH` 에 얹어야 「하네스가 하는 일」과 같은 모양이 된다 — 안 얹으면 이 시험은
+    // 하네스가 안 겪는 조건을 재게 된다.
+    // ⚠ 여기도 [`띄운다`] 와 같은 `ETXTBSY` 창을 지난다 — 다만 표준입력을 물려야
+    // 해서 `output()` 을 못 쓴다. 재시도 조건은 같고 **그 하나만** 다시 한다.
+    const 상한_MS: u64 = 5_000;
+    let mut 기다린 = 0;
+    let mut child = loop {
+        let r = Command::new(command)
+            .args(&args)
+            .env("PATH", path_앞에(exe.parent().expect("pal 의 부모")))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn();
+        match r {
+            Ok(c) => break c,
+            Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && 기다린 < 상한_MS => {
+                std::thread::sleep(std::time::Duration::from_millis(25));
+                기다린 += 25;
+            }
+            Err(e) => panic!("등록된 실행 파일을 못 돌렸다: {e:?}"),
+        }
+    };
     child.stdin.as_mut().expect("stdin").write_all(payload.as_bytes()).expect("쓰기");
     child.wait_with_output().expect("wait")
 }
@@ -185,8 +274,8 @@ fn 등록된_명령이_돌고_차단을_낸다() {
     let 항목 = 우리_항목(&root);
     assert_eq!(
         항목["command"].as_str(),
-        Some(실제(&exe).as_str()),
-        "`command` 가 실행 파일 경로 그 자체가 아니다 — exec form 은 셸을 안 거친다: {항목}"
+        Some(등록되는_이름().as_str()),
+        "`command` 가 `PATH` 의 이름이 아니다 — 경로를 실으면 다른 기계에서 반드시 틀린다: {항목}"
     );
     assert_eq!(
         항목["args"],
@@ -203,7 +292,7 @@ fn 등록된_명령이_돌고_차단을_낸다() {
     assert!(항목.get("shell").is_none(), "`shell` 키를 썼다: {항목}");
 
     // (a) 발화 — 부르면 흔적이 남는다.
-    let out = 하네스처럼(&항목, &페이로드("다 했다", false));
+    let out = 하네스처럼(&exe, &항목, &페이로드("다 했다", false));
     assert!(out.status.success(), "등록된 명령이 exit 0 을 안 냈다");
     assert!(
         String::from_utf8_lossy(&out.stderr).contains("pal hook"),
@@ -213,14 +302,14 @@ fn 등록된_명령이_돌고_차단을_낸다() {
     assert!(out.stdout.is_empty(), "통과인데 표준출력이 있다");
 
     // (b) 차단 — 실측된 규약 그대로의 바이트가 나온다.
-    let out = 하네스처럼(&항목, &페이로드("", false));
+    let out = 하네스처럼(&exe, &항목, &페이로드("", false));
     assert!(out.status.success(), "차단인데 exit 0 이 아니다");
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("표준출력이 JSON 이 아니다");
     assert_eq!(v["decision"], "block", "차단 결정이 안 나왔다: {v}");
     assert!(!v["reason"].as_str().expect("reason").trim().is_empty());
 
     // 그리고 반복 회차에서는 같은 페이로드가 통과다.
-    let out = 하네스처럼(&항목, &페이로드("", true));
+    let out = 하네스처럼(&exe, &항목, &페이로드("", true));
     assert!(out.stdout.is_empty(), "반복 회차에서 또 차단했다");
 }
 
@@ -267,31 +356,48 @@ fn 남의_훅은_왕복해도_그대로다() {
     assert_eq!(설정(&root), 원본, "왕복이 사용자 설정을 바꿨다");
 }
 
-/// ★ **실행 파일이 옮겨 가면 `update` 가 따라간다.**
+/// ★ **실행 파일이 어디 있든 등록은 안 바뀐다 — 그리고 그것이 요점이다.**
 ///
-/// 안 따라가면 옛 경로가 그대로 남고, 그 경로가 사라진 뒤에는 **exit 127 이 완전히
-/// 침묵한다** — 아무도 훅이 죽은 것을 모른다. 버전이 같아도 이 갱신은 일어나야 한다.
+/// ⚠ **옛 회차는 여기서 정반대를 쟀다**: *"실행 파일이 옮겨 가면 `update` 가 따라간다"*.
+/// 그 시험이 통과한다는 것은 곧 **등록이 그 기계의 경로를 지고 있다**는 뜻이었고,
+/// 그것이 다른 기계에서 훅을 확정적으로 죽였다(`install/hooks.rs` 머리말의 실측 표).
+///
+/// 지금 등록은 `PATH` 의 **이름 하나**다. 그래서 같은 상황에서:
+///
+/// - 등록 문자열은 **안 움직인다** — 그러니 추적 파일에 diff 가 안 생긴다
+/// - 두 사람이 각자 다른 자리에 pal 을 두어도 **같은 문자열**을 쓴다
+/// - 그 이름이 무엇을 가리키는지는 **그 기계의 `PATH`** 가 정한다
 #[test]
-fn 갱신이_옮겨간_실행_파일을_따라간다() {
+fn 실행_파일이_옮겨_가도_등록이_안_흔들린다() {
     let root = 프로젝트("이사");
     let 부모 = root.parent().expect("부모").to_path_buf();
     let 옛 = 공백이_든_곳의_pal(&부모, "옛");
     성공(&옛, &root, &["install"]);
     let 옛_항목 = 우리_항목(&root);
+    let 옛_설정 = std::fs::read(root.join(".claude/settings.json")).expect("읽기");
+    let 옛_매니페스트 = std::fs::read(root.join(".claude/pal/manifest.json")).expect("읽기");
 
+    // **다른 자리의 pal** 로 갱신한다 — 다른 사람의 기계를 흉내 내는 자리다.
     let 새 = 공백이_든_곳의_pal(&부모, "새");
-    let report = 성공(&새, &root, &["update"]);
-    assert!(report.contains("훅"), "훅을 갱신했다고 말하지 않았다:\n{report}");
+    성공(&새, &root, &["update"]);
 
     let 지금 = 우리_항목(&root);
-    assert_ne!(지금, 옛_항목, "옛 등록을 그대로 뒀다");
-    assert_eq!(지금["command"].as_str(), Some(실제(&새).as_str()));
+    assert_eq!(지금, 옛_항목, "등록이 기계를 탔다: {옛_항목} → {지금}");
+    assert_eq!(지금["command"].as_str(), Some(등록되는_이름().as_str()));
     assert_eq!(걸린_명령(&설정(&root), "SubagentStop").len(), 1, "죽은 등록이 남았다");
 
-    // 그리고 매니페스트가 지금 걸린 것을 적고 있다 — 안 적으면 제거가 못 되돌린다.
-    let m = 매니페스트(&root);
-    assert_eq!(m["settings"]["hooks"][0]["command"], 지금["command"]);
-    assert_eq!(m["settings"]["hooks"][0]["args"], 지금["args"]);
+    // ★ **추적 파일이 바이트로 안 움직인다.** 이 줄이 이 회차가 고친 것의 전부다 —
+    // 움직이면 두 사람이 서로의 diff 를 되돌리는 핑퐁이 시작된다.
+    assert_eq!(
+        std::fs::read(root.join(".claude/settings.json")).expect("읽기"),
+        옛_설정,
+        "다른 자리의 pal 로 갱신했더니 `settings.json` 이 바뀌었다"
+    );
+    assert_eq!(
+        std::fs::read(root.join(".claude/pal/manifest.json")).expect("읽기"),
+        옛_매니페스트,
+        "다른 자리의 pal 로 갱신했더니 매니페스트가 바뀌었다"
+    );
 
     성공(&새, &root, &["uninstall"]);
     assert!(!root.join(".claude/settings.json").exists(), "우리가 만든 설정이 남았다");
@@ -361,7 +467,7 @@ fn 갱신이_옛_형태를_새_형태로_옮긴다() {
     assert!(!전부.contains(&옛_명령), "옛 형태가 그대로다: {전부:?}");
 
     let 지금 = 우리_항목(&root);
-    assert_eq!(지금["command"].as_str(), Some(실제(&exe).as_str()));
+    assert_eq!(지금["command"].as_str(), Some(등록되는_이름().as_str()));
     assert_eq!(지금["args"], serde_json::json!(["hook", "SubagentStop"]));
 
     // 매니페스트도 새 형태를 적었다 — 안 적으면 제거가 새 형태를 못 되돌린다.
@@ -369,7 +475,7 @@ fn 갱신이_옛_형태를_새_형태로_옮긴다() {
     assert_eq!(m["settings"]["hooks"][0]["args"], serde_json::json!(["hook", "SubagentStop"]));
 
     // 그리고 옮긴 뒤에도 그 항목이 실제로 돈다.
-    let out = 하네스처럼(&지금, &페이로드("", false));
+    let out = 하네스처럼(&exe, &지금, &페이로드("", false));
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("표준출력이 JSON 이 아니다");
     assert_eq!(v["decision"], "block");
 }
@@ -407,18 +513,32 @@ fn 제거가_옛_형태도_걷어낸다() {
 // `doctor` — **「적혀 있다」로는 부족하다**
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// 설치 검사를 JSON 으로 뜬다.
-fn 검사들(cwd: &Path) -> serde_json::Value {
-    let out = Command::new(PAL)
-        .args(["doctor", "--install", "--json"])
-        .current_dir(cwd)
-        .output()
-        .expect("pal doctor");
+/// 설치 검사를 JSON 으로 뜬다 — **`PATH` 를 얹고**.
+///
+/// # ★ 이 한 줄이 없어서 Windows 만 초록이었다 (실측 2026-08-17 · CI 1회차)
+///
+/// 등록 문자열은 `PATH` 의 **이름 하나**이므로 검사 4·6 은 그 이름을 `PATH` 에서
+/// 푼다. 그런데 여기는 `PATH` 를 안 얹었고, 그래도 **Windows 에서는 통과했다** —
+/// `cargo test` 가 동적 라이브러리 탐색 경로에 `target/debug` 를 얹는데 **그 변수가
+/// 이 플랫폼에서는 `PATH` 자신**이기 때문이다. 유닉스에서 같은 값은
+/// `LD_LIBRARY_PATH`(리눅스)·`DYLD_FALLBACK_LIBRARY_PATH`(macOS) 로 가고 `PATH` 는
+/// 안 건드린다. 그래서 **같은 fixture 구멍이 한쪽에서만 빨갰다.**
+///
+/// ⚠ 그때 Windows 가 통과한 것은 **재려던 것을 잰 결과가 아니다.** 「하네스가 이
+/// 이름을 풀 수 있는가」가 아니라 「cargo 가 마침 그 디렉터리를 얹어 줬는가」를
+/// 쟀다. 얹어야 [`하네스처럼`] 과 같은 모양이 되고, 그것이 이 파일의 규율이다.
+fn 검사들(exe: &Path, cwd: &Path) -> serde_json::Value {
+    let out = 띄운다(
+        Command::new(PAL)
+            .args(["doctor", "--install", "--json"])
+            .current_dir(cwd)
+            .env("PATH", path_앞에(exe.parent().expect("pal 의 부모"))),
+    );
     serde_json::from_slice(&out.stdout).expect("JSON")
 }
 
-fn 훅_검사(cwd: &Path) -> serde_json::Value {
-    let c = 검사들(cwd);
+fn 훅_검사(exe: &Path, cwd: &Path) -> serde_json::Value {
+    let c = 검사들(exe, cwd);
     let 배열 = c.as_array().expect("배열").clone();
     let 마지막 = 배열.last().expect("검사가 하나도 없다").clone();
     assert_eq!(마지막["number"], 6, "훅 검사가 여섯째가 아니다: {c}");
@@ -436,7 +556,7 @@ fn 진단이_등록된_훅을_실제로_돌려본다() {
     let root = 프로젝트("진단-정상");
     let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "진단");
     성공(&exe, &root, &["install"]);
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "ok", "정상인데 초록이 아니다: {c}");
 
     // ── 등록이 사라졌다 — 빨강 ──────────────────────────────────────────────
@@ -448,19 +568,29 @@ fn 진단이_등록된_훅을_실제로_돌려본다() {
         serde_json::to_string_pretty(&v).expect("직렬화"),
     )
     .expect("쓰기");
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "등록이 사라졌는데 안 걸렸다: {c}");
     std::fs::write(root.join(".claude/settings.json"), &원래_설정).expect("되돌리기");
 
-    // ── 실행 권한을 잃었다 — 빨강 (exit 126) ───────────────────────────────
-    권한을_뺀다(&exe);
-    let c = 훅_검사(&root);
-    assert_eq!(c["outcome"], "failed", "실행 권한이 없는데 안 걸렸다: {c}");
-    실행_권한(&exe);
+    // ── 있는데 안 열린다 — 빨강 (exit 126) ─────────────────────────────────
+    //
+    // 유닉스는 모드 비트로, Windows 는 확장자로 만든다 — **축이 다르고 사건은 같다.**
+    let 막힌 = 못_열리게_한다(&root, &exe);
+    assert!(막힌.is_file(), "등록된 자리에 파일이 없다 — 그러면 재려는 것이 「없다」가 된다");
+    let c = 훅_검사(&exe, &root);
+    assert_eq!(c["outcome"], "failed", "실행될 수 없는데 안 걸렸다: {c}");
+    // ★ **어느 겹이 걸었는지까지 못 박는다.** 「빨갛다」만 재면 바이트 대조가 대신
+    // 걸어도 통과하고, 그러면 이 칸은 자기가 재려던 것을 안 잰다.
+    assert!(
+        c["detail"].as_str().expect("detail").contains("실행될 수 없다"),
+        "다른 겹이 걸었다 — 실행 가능성 겹이 안 섰다: {c}"
+    );
+    다시_열리게_한다(&root, &exe, &막힌);
+    assert_eq!(훅_검사(&exe, &root)["outcome"], "ok", "되돌렸는데 초록이 아니다");
 
     // ── 파일이 사라졌다 — 빨강 (exit 127) ──────────────────────────────────
     std::fs::remove_file(&exe).expect("지우기");
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "실행 파일이 없는데 안 걸렸다: {c}");
     assert!(
         c["detail"].as_str().expect("detail").contains("127"),
@@ -479,7 +609,7 @@ fn 진단이_옛_형태를_지목한다() {
     성공(&exe, &root, &["install"]);
     옛_형태로_되돌린다(&root);
 
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "옛 형태인데 초록이다: {c}");
     let detail = c["detail"].as_str().expect("detail");
     assert!(detail.contains("update"), "무엇을 하라고 안 적었다: {detail}");
@@ -519,7 +649,7 @@ fn 진단이_남이_심은_항목을_안_돌린다() {
     }]);
     매니페스트_쓰기(&root, &m);
 
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "남이 심은 항목을 초록으로 냈다: {c}");
     assert!(!흔적.exists(), "진단이 남이 심은 명령을 실행했다: {}", 흔적.display());
     let _ = std::fs::remove_file(&흔적);
@@ -557,7 +687,10 @@ fn 진단이_대상_밖_실행_파일을_초록으로_안_낸다() {
     // 그 셋이 `실행할_수_있나` 가 보는 전부라 옛 코드는 여기서 초록이었다.
     let 밖 = root.parent().expect("부모").join("밖");
     std::fs::create_dir_all(&밖).expect("밖");
-    let 심은것 = 밖.join("남의것");
+    // ⚠ **이 플랫폼에서 실제로 띄울 수 있는 이름이어야 한다.** 확장자 없는 이름으로
+    // 심으면 Windows 에서는 **바깥 겹(실행 가능한가)이 먼저 걸려서** 이 시험이 재려는
+    // 겹(「우리가 등록한 그것인가」)에 닿지도 못한다 — 빨강은 나지만 다른 이유로 난다.
+    let 심은것 = 밖.join(실행_이름("남의것"));
     std::fs::write(&심은것, format!("#!/bin/sh\ntouch {}\n", 흔적.display())).expect("심기");
     실행_권한(&심은것);
 
@@ -577,7 +710,7 @@ fn 진단이_대상_밖_실행_파일을_초록으로_안_낸다() {
     }]);
     매니페스트_쓰기(&root, &m);
 
-    let c = 훅_검사(&root);
+    let c = 훅_검사(Path::new(PAL), &root);
     assert_eq!(c["outcome"], "failed", "대상 밖 실행 파일을 초록으로 냈다: {c}");
     let detail = c["detail"].as_str().expect("detail");
     assert!(detail.contains("update"), "무엇을 하라고 안 적었다: {detail}");
@@ -591,14 +724,93 @@ fn 진단이_대상_밖_실행_파일을_초록으로_안_낸다() {
 #[test]
 fn 설치가_없으면_훅_검사가_잔여다() {
     let root = 프로젝트("진단-잔여");
-    assert_eq!(훅_검사(&root)["outcome"], "residual");
+    assert_eq!(훅_검사(Path::new(PAL), &root)["outcome"], "residual");
 }
 
-#[cfg(unix)]
-fn 권한을_뺀다(exe: &Path) {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(exe, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+// ─────────────────────────────────────────────────────────────────────────────
+// ★ 「있는데 안 열린다」 — **축은 플랫폼마다 다르고, 사건은 같다**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 재려는 상태 하나: **등록된 자리에 파일이 있고 바이트도 우리 것인데, OS 가 그것을
+// 못 띄운다.** 하네스는 그 실패를 완전히 삼키므로 `pal doctor` 가 유일한 문이다.
+//
+// | 플랫폼 | 그 상태를 어떻게 만드나 |
+// |---|---|
+// | 유닉스 | `chmod -x` — 모드 비트가 실행을 정한다 |
+// | Windows | **확장자를 뗀다** — 확장자가 실행을 정한다(실측: 옆에 `.exe` 가 없는 확장자 없는 이름은 `Executable not found`) |
+//
+// ⚠ 옛 회차는 Windows 쪽을 **무동작 stub** 으로 뒀고, 그 뒤의 단언은 *"빨개져야 한다"*
+// 였다. 아무것도 안 바꾸고 빨강을 요구했으니 **이 시험은 Windows 에서 언제나 실패**했다 —
+// 그리고 그 실패는 제품의 결함이 아니라 fixture 의 결함이었다. 무동작 stub 은 짝이
+// 아니다. 짝이 없으면 그 자리는 **초록을 내며 아무것도 안 재거나, 빨강을 내며 아무것도
+// 안 가리킨다.**
+
+/// 등록된 자리를 **있지만 안 열리는 상태**로 만든다. 반환은 **지금 등록된 자리**.
+///
+/// # ★ **등록을 절대 경로로 옮기는 것이 두 축에 다 필요하다** (실측 2026-08-17 · CI 2회차)
+///
+/// 앞 판은 Windows 쪽만 [`등록을_옮긴다`] 를 불렀다. 유닉스 쪽은 `chmod -x` 만 하고
+/// 등록을 **이름 하나(`pal`)로 둔 채**였고, 그래서 그 플랫폼에서는 **다른 겹이 먼저
+/// 걸렸다**:
+///
+/// ```text
+/// 유닉스 (앞 판)  →  "PATH 어디에도 `pal` 이 없다"     ← 이름 해석 겹
+/// Windows        →  "등록된 자리가 실행될 수 없다"      ← 실행 가능성 겹  ← 재려던 것
+/// ```
+///
+/// 까닭은 `exe::명령을_찾는다` 가 유닉스에서 **실행 비트를 보고 거른다**는 것이다 —
+/// 실행 비트를 떼는 순간 그 이름은 `PATH` 에서 아예 안 잡힌다. 그러니 「등록된 자리에
+/// 파일이 있는데 안 열린다」를 재려면 **등록이 그 자리를 직접 가리켜야** 한다.
+///
+/// 두 플랫폼이 **같은 겹**을 재게 맞춘다. 축은 여전히 다르다(모드 비트 대 확장자) —
+/// 그것은 없앨 수 없는 차이이고, 없앨 수 있었던 것은 **fixture 의 모양**이었다.
+fn 못_열리게_한다(root: &Path, exe: &Path) -> PathBuf {
+    #[cfg(unix)]
+    let 막힌 = {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(exe, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+        exe.to_path_buf()
+    };
+    // Windows — 확장자를 뗀다. 파일은 그 자리에 있고 OS 만 그것을 못 띄운다.
+    #[cfg(windows)]
+    let 막힌 = {
+        let 확장자없음 = exe.with_extension("");
+        std::fs::rename(exe, &확장자없음).expect("확장자 떼기");
+        확장자없음
+    };
+    // ★ **등록을 그 자리로 옮긴다.** 안 옮기면 이름 해석 겹이 먼저 걸려서 이 시험이
+    // 재려는 겹에 닿지도 못한다 — 위 실측이 그것이다.
+    등록을_옮긴다(root, &막힌);
+    막힌
 }
 
-#[cfg(not(unix))]
-fn 권한을_뺀다(_exe: &Path) {}
+fn 다시_열리게_한다(root: &Path, exe: &Path, 막힌: &Path) {
+    #[cfg(unix)]
+    {
+        let _ = 막힌;
+        실행_권한(exe);
+    }
+    #[cfg(windows)]
+    std::fs::rename(막힌, exe).expect("확장자 되붙이기");
+    등록을_옮긴다(root, exe);
+}
+
+/// 설정과 매니페스트의 `command` 를 함께 옮긴다 — **둘이 어긋나면 앞 겹이 먼저 걸린다.**
+fn 등록을_옮긴다(root: &Path, 자리: &Path) {
+    let 자리 = 자리.display().to_string();
+    let mut s = 설정(root);
+    s["hooks"]["SubagentStop"] = serde_json::json!([{
+        "hooks": [{"type": "command", "command": 자리, "args": ["hook", "SubagentStop"]}]
+    }]);
+    std::fs::write(
+        root.join(".claude/settings.json"),
+        serde_json::to_string_pretty(&s).expect("직렬화"),
+    )
+    .expect("쓰기");
+
+    let mut m = 매니페스트(root);
+    m["settings"]["hooks"] = serde_json::json!([{
+        "event": "SubagentStop", "command": 자리, "args": ["hook", "SubagentStop"]
+    }]);
+    매니페스트_쓰기(root, &m);
+}

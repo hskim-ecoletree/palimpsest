@@ -17,15 +17,14 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{PAL, git};
+use common::{PAL, git, path_앞에};
 
 fn 돌린다(cwd: &Path, args: &[&str]) -> Output {
-    let path = std::env::var("PATH").unwrap_or_default();
     let pal_dir = Path::new(PAL).parent().expect("pal 의 부모");
     Command::new(PAL)
         .args(args)
         .current_dir(cwd)
-        .env("PATH", format!("{}:{path}", pal_dir.display()))
+        .env("PATH", path_앞에(pal_dir))
         .output()
         .expect("pal 을 못 돌렸다")
 }
@@ -158,10 +157,55 @@ fn 매니페스트가_적은_밖의_디렉터리를_안_지운다() {
 // ─────────────────────────────────────────────────────────────────────────────
 // 심링크 — **안을 가리키는 것은 살리고 밖으로 나가는 것은 막는다**
 //
-// ★ **유닉스 전용 가정이 여기 있다.** 링크를 거는 것(`std::os::unix::fs::symlink`)도
-// 그것이 경계를 넘는 것도 유닉스 형태로 fixture 를 만든다. 그래서 **짝 없는
-// `#[cfg(unix)]` 을 안 단다** — 아래 짝이 다른 플랫폼에서 **시끄럽게 실패한다.**
+// ★ **여기에는 이제 `cfg` 가 없다.** 앞 판은 이 절 전체가 유닉스 전용이었고 다른
+// 플랫폼에는 외침(`파일_심링크_경계가_이_플랫폼에서는_안_재진다`) 하나가 걸려 있었다.
+// 그 외침이 적은 까닭은 **fixture 였다** — *"파일 심링크는 개발자 모드나
+// `SeCreateSymbolicLinkPrivilege` 가 있어야 만들어진다"*.
+//
+// 그것은 **플랫폼의 한계가 아니라 기계의 준비 상태**였다. 소유자가 이 기계의 개발자
+// 모드를 켰고(2026-08-17), `std::os::windows::fs::symlink_file` 이 그 자리에서 바로
+// 섰다(실측). CI 의 세 runner 도 전부 만들 수 있다. 그래서 fixture 를 [`심링크`] 하나로
+// 모으고 **세 플랫폼에서 같은 단언을 돌린다.**
+//
+// 못 만드는 기계에서는 [`심링크`] 가 **시끄럽게 죽는다** — 「이 플랫폼에서 못 잰다」가
+// 아니라 「이 기계가 준비가 안 됐다」이므로 외침이 아니라 fixture 실패다. `mkfifo` 가
+// 없는 기계에서 FIFO 시험이 죽는 것과 같은 급이다.
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// 심링크를 건다 — **종류를 갈라서**. Windows 는 파일과 디렉터리의 문이 다르다.
+///
+/// 유닉스의 `symlink` 는 대상 종류를 안 묻지만 Windows 의 `CreateSymbolicLinkW` 는
+/// 플래그로 그것을 받는다. 틀리게 주면 링크는 만들어지고 **따라갈 때 깨진다** —
+/// 그래서 이 fixture 가 종류를 인자로 받는다.
+fn 심링크(대상: &Path, 링크: &Path, 대상이_디렉터리인가: bool) {
+    #[cfg(unix)]
+    let r = {
+        let _ = 대상이_디렉터리인가;
+        std::os::unix::fs::symlink(대상, 링크)
+    };
+    #[cfg(windows)]
+    let r = if 대상이_디렉터리인가 {
+        std::os::windows::fs::symlink_dir(대상, 링크)
+    } else {
+        std::os::windows::fs::symlink_file(대상, 링크)
+    };
+    #[cfg(not(any(unix, windows)))]
+    let r: std::io::Result<()> = {
+        let _ = 대상이_디렉터리인가;
+        Err(std::io::Error::other("이 플랫폼에는 심링크를 만드는 문이 없다"))
+    };
+
+    r.unwrap_or_else(|e| {
+        panic!(
+            "심링크를 못 만들었다({e}): {} → {} — **fixture 가 안 섰다.**\n    \
+             Windows 라면 개발자 모드를 켜거나(설정 > 시스템 > 개발자용) \
+             `SeCreateSymbolicLinkPrivilege` 가 있어야 한다. CI 의 세 runner 는 전부 \
+             만들 수 있으므로 여기서 빨간 것은 **이 기계의 준비 상태**다",
+            링크.display(),
+            대상.display()
+        )
+    });
+}
 
 /// ★ **쓰기 대상이 심링크로 대상 밖을 가리키면 쓰지 않는다.**
 ///
@@ -169,7 +213,6 @@ fn 매니페스트가_적은_밖의_디렉터리를_안_지운다() {
 /// 안 돼"*. `.claude → ~/.claude` 는 dotfiles 를 홈에 모으는 **흔한 형태**이고,
 /// 그때 설치가 그 밖에 쓰면 `[f24]` ⑦ 이 무너진다.
 #[test]
-#[cfg(unix)]
 fn 밖을_가리키는_심링크에는_안_쓴다() {
     for (tag, 이름, 대상이_디렉터리인가) in
         [("클로드디렉터리", ".claude", true), ("지시파일", "CLAUDE.md", false), ("무시목록", ".gitignore", false)]
@@ -181,7 +224,7 @@ fn 밖을_가리키는_심링크에는_안_쓴다() {
         } else {
             std::fs::write(&밖의_자리, "남의 것\n").expect("밖 파일");
         }
-        std::os::unix::fs::symlink(&밖의_자리, 방.안.join(이름)).expect("symlink");
+        심링크(&밖의_자리, &방.안.join(이름), 대상이_디렉터리인가);
 
         let 밖_전 = 훑기(&방.밖);
         let out = 돌린다(&방.안, &["install"]);
@@ -198,11 +241,10 @@ fn 밖을_가리키는_심링크에는_안_쓴다() {
 
 /// **안을 가리키는 심링크는 살린다** — 그 구분이 이 회차가 세우는 것이다.
 #[test]
-#[cfg(unix)]
 fn 안을_가리키는_심링크는_살린다() {
     let 방 = 방("안쪽심링크");
     std::fs::write(방.안.join("진짜무시목록"), "node_modules/\n").expect("진짜");
-    std::os::unix::fs::symlink("진짜무시목록", 방.안.join(".gitignore")).expect("symlink");
+    심링크(Path::new("진짜무시목록"), &방.안.join(".gitignore"), false);
 
     성공(&방.안, &["install"]);
 
@@ -227,7 +269,6 @@ fn 안을_가리키는_심링크는_살린다() {
 /// 파싱 오류가 화면에 났다). **쓰기는 안 일어난다** — 그래서 게이트 ⑦ 은 초록이었고
 /// 이 자리는 ⑦ 의 뒷면인 **읽기 경계**다.
 #[test]
-#[cfg(unix)]
 fn 진단이_대상_밖을_안_읽는다() {
     for (tag, 안의_자리, 밖의_내용) in [
         ("설정", ".claude/settings.json", "{\"밖의키\": 1}\n"),
@@ -239,7 +280,7 @@ fn 진단이_대상_밖을_안_읽는다() {
         std::fs::write(&밖의_자리, 밖의_내용).expect("밖 파일");
         let 안 = 방.안.join(안의_자리);
         std::fs::create_dir_all(안.parent().expect("부모")).expect("부모 만들기");
-        std::os::unix::fs::symlink(&밖의_자리, &안).expect("symlink");
+        심링크(&밖의_자리, &안, false);
 
         let out = 돌린다(&방.안, &["doctor", "--install", "--json"]);
         let 화면 = String::from_utf8_lossy(&out.stdout).into_owned();
@@ -252,26 +293,81 @@ fn 진단이_대상_밖을_안_읽는다() {
     }
 }
 
-/// ★ **유닉스 밖에서 이 경계 방어는 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
+// ─────────────────────────────────────────────────────────────────────────────
+// Windows — **junction 이 경계를 넘는 유일한 문이다**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 앞 회차는 여기 전체를 *"이 플랫폼에서는 안 재진다"* 외침 하나로 뒀다. 그 외침이
+// 적은 이유는 **절반만 맞았다** — 심링크(`symlink_dir`/`symlink_file`)는 정말로
+// 개발자 모드나 `SeCreateSymbolicLinkPrivilege` 를 요구한다. 그런데 **디렉터리
+// junction 은 일반 사용자 권한으로 만들어진다**(실측 2026-08-16). 그리고 `.claude`
+// 를 밖으로 빼는 형태가 정확히 소유자가 금지한 그 구조다 —
+// *"`~/.claude/` 하위에 기대는 구조는 절대 있어서는 안 돼"*.
+//
+// 그래서 **디렉터리 축은 승격하고, 파일 축만 외침으로 남긴다.**
+
+/// junction 을 건다 — **`cmd` 를 쓰는 것을 여기서 정당화한다.**
 ///
-/// 소유자 결정(2026-08-16): *"windows 를 대응한다는 가정하에 앞으로 모든 설계와
-/// 개발이 되어야 해."* 짝 없는 `#[cfg(unix)]` 시험은 다른 플랫폼에서 **조용히
-/// 사라진다** — 초록을 내면서 아무것도 안 재는 상태가 되고, **경계 탈출 방어가
-/// 사라진 줄도 모른다.** 그래서 짝은 통과가 아니라 **실패**다.
-#[test]
-#[cfg(not(unix))]
-fn 심링크_경계_방어가_이_플랫폼에서는_안_재진다() {
-    panic!(
-        "밖을 가리키는 심링크에 쓰는지(`밖을_가리키는_심링크에는_안_쓴다`) · 안을 \
-         가리키는 심링크를 살리는지(`안을_가리키는_심링크는_살린다`) · 진단이 밖을 \
-         읽는지(`진단이_대상_밖을_안_읽는다`)를 이 플랫폼에서 \
-         아직 안 잰다 — fixture 가 `std::os::unix::fs::symlink` 위에 선다.\n    \
-         Windows 의 등가 개념(`std::os::windows::fs::symlink_dir`/`symlink_file` · \
-         디렉터리 junction)은 만들려면 개발자 모드나 `SeCreateSymbolicLinkPrivilege` \
-         가 필요해서 fixture 조건 자체가 다르다. 그 자리를 세우기 전까지 `[f24]` ⑦ 의 \
-         **가장 센 줄이 이 플랫폼에서는 안 재진다**"
+/// junction 은 std 로 못 만든다(`CreateFile` + `FSCTL_SET_REPARSE_POINT` 는 raw FFI
+/// 이고 `unsafe 금지` 게이트가 막는다). `mklink` 는 `cmd.exe` 의 내장 명령이고
+/// **`cmd.exe` 는 이 플랫폼의 일부**다 — 걷어낸 `shasum`·`cmp` 와 다르다. 그것들은
+/// 이 플랫폼에 **없는** 도구였고, 이것은 **재려는 대상이 플랫폼 기능 그 자체**다.
+#[cfg(windows)]
+fn junction(링크: &Path, 대상: &Path) {
+    let out = Command::new("cmd")
+        .args(["/C", "mklink", "/J"])
+        .arg(링크)
+        .arg(대상)
+        .output()
+        .expect("cmd 를 못 돌렸다");
+    assert!(
+        out.status.success(),
+        "junction 을 못 걸었다 — fixture 가 안 섰다: {}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
     );
 }
+
+/// ★ **`.claude` 가 junction 으로 대상 밖을 가리키면 쓰지 않는다.**
+///
+/// 유닉스의 `밖을_가리키는_심링크에는_안_쓴다` 와 **같은 문장을 같은 단언으로** 잰다 —
+/// `Root::join` 이 `canonicalize` 로 신원을 풀어 밖이라고 판정하는 자리이고, junction
+/// 도 심링크와 마찬가지로 그 해석을 지난다.
+#[test]
+#[cfg(windows)]
+fn 밖을_가리키는_junction_에는_안_쓴다() {
+    let 방 = 방("junction");
+    let 밖의_자리 = 방.밖.join("남의-claude");
+    std::fs::create_dir_all(&밖의_자리).expect("밖 디렉터리");
+    junction(&방.안.join(".claude"), &밖의_자리);
+
+    let 밖_전 = 훑기(&방.밖);
+    let out = 돌린다(&방.안, &["install"]);
+
+    // ① 밖이 한 바이트도 안 바뀌었다 — ⑦ 이 여기서 선다.
+    assert_eq!(훑기(&방.밖), 밖_전, "대상 밖이 바뀌었다");
+    // ② 그리고 **성공을 안 냈다.** 조용히 아무것도 안 하는 것과 다르다.
+    assert!(
+        !out.status.success(),
+        "밖을 가리키는 junction 에 쓰고도 성공을 냈다\nstdout: {}",
+        String::from_utf8_lossy(&out.stdout)
+    );
+    // ③ 까닭을 적었다.
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(stderr.contains("대상 밖"), "까닭을 안 적었다 — {stderr}");
+}
+
+// ★ **여기 있던 `파일_심링크_경계가_이_플랫폼에서는_안_재진다` 는 없어졌다.**
+//
+// 그 외침이 적은 까닭(*"파일 심링크는 특권이 있어야 만들어진다"*)은 **플랫폼의
+// 한계가 아니라 기계의 준비 상태**였다. 개발자 모드가 켜지면 그 자리에서 바로 서고,
+// 그러면 위의 심링크 절 셋이 **세 플랫폼에서 같은 단언으로** 돈다.
+//
+// 위 `밖을_가리키는_junction_에는_안_쓴다` 는 **남긴다.** 그것은 없어진 외침의
+// 대체물이 아니라 **이 플랫폼에만 있는 또 하나의 형태**다 — junction 은 심링크와
+// 다른 재파스 종류이고 **특권 없이** 만들어져서 실제 사용자 환경에 더 흔하다.
+// 성질(*"밖을 가리키면 안 쓴다"*)은 이식 가능한 시험이 지고, 이것은 그 성질이
+// **이 플랫폼의 두 번째 문에서도** 서는지를 더한다.
 
 /// 트리 전체의 `(상대 경로 → 내용 표식)`. 디렉터리도 센다.
 fn 훑기(root: &Path) -> std::collections::BTreeMap<String, String> {

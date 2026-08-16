@@ -55,10 +55,166 @@ fn main() -> Result<()> {
             println!("  냈다  {}", out.display());
             Ok(())
         }
+        // ★ 시험을 돌리고 **남는 실패가 등록된 외침과 정확히 같은지** 판정한다.
+        Some("test") => test(&root),
         Some(other) => {
-            bail!("모르는 명령이다: {other} — `check` · `schema-doc` · `query-doc`")
+            bail!("모르는 명령이다: {other} — `check` · `test` · `schema-doc` · `query-doc`")
         }
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `cargo xtask test` — **외침을 세는 자리**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// # 왜 `cargo test` 를 그냥 안 부르나
+//
+// 이 저장소에는 **일부러 실패하는 시험**이 있다. 짝 없는 `#[cfg(unix)]` 시험은 다른
+// 플랫폼에서 조용히 사라지고, 그러면 방어가 사라진 줄도 모른다 — 그래서 그 자리마다
+// **시끄럽게 실패하는 짝**을 단다(AGENTS.md · 소유자 지시 2026-08-16).
+//
+// 그 규율과 CI 는 정면으로 부딪힌다. CI 가 `cargo test` 를 그대로 돌리면 Windows 는
+// **영구히 빨갛고**, 그러면 사람이 **CI 의 빨강을 무시하는 법을 배운다** — 이 회차가
+// `doctor` 검사 4 에서 고친 것이 정확히 그 형태다.
+//
+// # 그래서 무엇을 세는가 — **집합이 같은가**
+//
+// 실패를 「없어야 하는 것」으로 안 본다. **등록된 외침 집합과 실제 실패 집합이 같은가**
+// 를 본다. 그러면 셋 다 잡힌다:
+//
+// | 일어난 일 | 여기서 무엇이 나나 |
+// |---|---|
+// | 새 시험이 깨졌다 | **등록 안 된 실패** — 빨강 |
+// | 외침이 승격돼 이제 통과한다 | **등록됐는데 안 났다** — 빨강. 등록을 지우라고 말한다 |
+// | 그대로다 | 초록. 외침의 수와 까닭을 화면에 낸다 |
+//
+// 둘째 줄이 이 설계의 값이다 — **승격을 하고 등록을 안 지우면 걸린다.** 목록이 조용히
+// 낡는 경로를 막는다.
+
+/// **이 플랫폼에서 안 재지는 것** — `(cfg 이름, 시험 이름, 왜 못 재나)`.
+///
+/// ⚠ 여기 있는 것은 전부 **제품의 결함이 아니라 fixture 의 한계**다. 결함이면 고치지
+/// 등록하지 않는다.
+/// ★ **비어 있다** (2026-08-17). 그리고 비어 있는 것이 이 목록의 목표 상태다.
+///
+/// # 다섯이 어떻게 없어졌는가 — **하나도 「고쳐서」가 아니라 「갈라서」였다**
+///
+/// | 없어진 등록 | 무엇이었나 | 어디로 갔나 |
+/// |---|---|---|
+/// | `모드와_심링크_보존이_…` | 성질 **셋이 한 덩어리**였다. 이식 가능한 둘이 못 재는 하나에 끌려 통째로 외침이었다 | 심링크 축은 `심링크가_살고_그_대상에_쓰인다`(이식) · 모드 축은 `모드가_살아_있다`(유닉스 인코딩) |
+/// | `쓰기_불가_디렉터리가_…` | *"진짜 쓰기 불가 디렉터리는 ACL 이고 **std 밖이다**"* — 관측은 맞았고 **결론이 틀렸다** | `icacls` fixture. junction 이 `cmd` 를 쓰는 것과 같은 자격이다 |
+/// | `파일_심링크_경계가_…` | **플랫폼의 한계가 아니라 기계의 준비 상태**였다 | 개발자 모드를 켜니 `symlink_file` 이 그 자리에서 섰다. fixture 를 `심링크()` 하나로 모았다 |
+/// | `파이프_방어가_…` | 재려는 성질은 「FIFO」가 아니라 **「일반 파일이 아닌 자리」**였다 | 디렉터리로 이식(`일반_파일이_아닌_자리에서_매달리지_않고_실패한다`). FIFO 시험은 **더 센 사실**(매달림)을 위해 남는다 |
+/// | `끊었다는_말이_…` | 결과는 이미 같았고 **말할 것이 더 많은 쪽이 침묵**했다 | 못 세는 플랫폼이 *"모르니 늘 끊는다"* 를 자리 목록과 함께 낸다 |
+///
+/// 다섯 중 **넷이 「안 한 것」이었고 하나(모드 비트)만 「없는 것」**이다. 그리고 그
+/// 하나조차 이 목록에 안 남는다 — 성질을 갈라 보니 그 축의 이식 가능한 문장이
+/// 이미 다른 시험에 있었다.
+///
+/// # 그래도 이 목록을 안 지우는 이유
+///
+/// 다음에 짝 없는 `cfg` 가 생기면 **여기 등록되지 않은 실패**로 걸린다. 목록이 빈
+/// 것과 장치가 없는 것은 다르다.
+///
+/// ⚠ **여기 들어올 자격**: 「이 플랫폼에서 **원리상** 못 잰다」뿐이다. 「아직 안
+/// 했다」는 자격이 없고, [`등록은_원리상_불가능한_것만_담는다`] 가 그것을 판정한다.
+const 외침: &[(&str, &str, &str)] = &[];
+
+/// 지금 플랫폼에서 등록된 외침.
+fn 등록된_외침() -> Vec<(&'static str, &'static str)> {
+    let 여기 = if cfg!(windows) {
+        "windows"
+    } else if cfg!(unix) {
+        "unix"
+    } else {
+        "그밖"
+    };
+    외침.iter().filter(|(p, ..)| *p == 여기).map(|(_, n, w)| (*n, *w)).collect()
+}
+
+fn test(root: &Path) -> Result<()> {
+    println!("■ 시험 — 그리고 남는 실패가 등록된 외침과 같은지 본다");
+    let out = Command::new(env!("CARGO"))
+        .args(["test", "--workspace", "--all-targets", "--no-fail-fast"])
+        .current_dir(root)
+        .output()
+        .context("cargo test 를 돌리지 못했다")?;
+
+    // **stdout 과 stderr 를 그대로 흘린다.** 이 명령이 무엇을 감췄는지 사람이 볼 수
+    // 있어야 한다 — 판정만 내고 증거를 숨기면 그것이 곧 조용한 실패다.
+    print!("{}", String::from_utf8_lossy(&out.stdout));
+    eprint!("{}", String::from_utf8_lossy(&out.stderr));
+
+    // **같은 이름이 여러 시험 바이너리에서 날 수 있다** — 집합으로 센다.
+    let 화면 = String::from_utf8_lossy(&out.stdout);
+    let mut 실패: Vec<String> =
+        실패한_시험들(&화면).into_iter().map(str::to_owned).collect();
+    실패.sort();
+    실패.dedup();
+    let 등록 = 등록된_외침();
+    let problems = 등록과_댄다(&실패, &등록);
+
+    if !problems.is_empty() {
+        bail!(
+            "시험 결과가 등록과 다르다:\n    {}",
+            problems.join("\n    ")
+        );
+    }
+
+    println!();
+    if 등록.is_empty() {
+        println!("시험 통과 — 이 플랫폼에는 안 재지는 것이 없다");
+    } else {
+        println!("시험 통과 — 이 플랫폼에서 안 재지는 것 {}개(전부 등록됨):", 등록.len());
+        for (name, 왜) in &등록 {
+            println!("  · {name}\n      {왜}");
+        }
+    }
+    Ok(())
+}
+
+/// 실제 실패와 등록된 외침을 **양방향으로** 댄다 — 어긋난 것마다 한 문장.
+///
+/// ★ **방향이 둘이어야 한다.** 한 방향만 보면 목록이 조용히 낡는다:
+///
+/// | 방향 | 무엇을 막나 |
+/// |---|---|
+/// | 실패 → 등록 | 새로 깨진 것을 「원래 빨갛던 것」으로 흘려보내는 것 |
+/// | 등록 → 실패 | **승격을 하고 등록을 안 지우는 것.** 그러면 목록이 없는 사실을 계속 주장한다 |
+///
+/// **순수 함수다** — 그래야 음성 대조를 시험으로 세울 수 있다(`check_budget_constants`
+/// 의 `looks_like_a_budget` 과 같은 규율).
+fn 등록과_댄다(실패: &[String], 등록: &[(&'static str, &'static str)]) -> Vec<String> {
+    let mut problems = Vec::new();
+    for name in 실패 {
+        if !등록.iter().any(|(n, _)| n == name) {
+            problems.push(format!("등록되지 않은 실패: `{name}` — 진짜로 깨졌다"));
+        }
+    }
+    for (name, 왜) in 등록 {
+        if !실패.iter().any(|n| n == name) {
+            problems.push(format!(
+                "`{name}` 이 등록됐는데 **안 났다** — 승격됐으면 `xtask` 의 `외침` 목록에서 \
+                 지우십시오(등록된 까닭: {왜})"
+            ));
+        }
+    }
+    problems
+}
+
+/// `cargo test` 의 출력에서 **실패한 시험 이름**을 뽑는다.
+///
+/// 한 줄 형태 하나만 본다: `test <이름> ... FAILED`. 요약 블록(`failures:`)은 **안 본다** —
+/// 같은 이름이 두 번 세지고, 그러면 이 함수가 무엇을 세는지 흐려진다.
+///
+/// **순수 함수다** — 파일도 프로세스도 안 건드린다. 그래야 아래 시험이 선다.
+fn 실패한_시험들(stdout: &str) -> Vec<&str> {
+    stdout
+        .lines()
+        .filter_map(|l| l.strip_prefix("test ")?.strip_suffix(" ... FAILED"))
+        .map(str::trim)
+        .filter(|n| !n.is_empty())
+        .collect()
 }
 
 fn check(root: &Path) -> Result<()> {
@@ -168,8 +324,7 @@ fn check_optional_fields(root: &Path) -> Result<String> {
                 continue;
             }
             if t.starts_with("pub ") && t.contains("Option<") {
-                let rel = file.strip_prefix(root).unwrap_or(&file);
-                hits.push(format!("{}:{}  {t}", rel.display(), n + 1));
+                hits.push(format!("{}:{}  {t}", 상대_경로(root, &file), n + 1));
             }
         }
     }
@@ -438,6 +593,31 @@ fn rust_sources(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(out)
 }
 
+/// 저장소 루트 기준 상대 경로 — **구분자를 언제나 `/` 로 낸다.**
+///
+/// ★ `read_dir` 이 낸 경로는 Windows 에서 `\` 를 쓰고, `root.join("crates/pal-core/src")`
+/// 의 `/` 와 섞이면 `crates/pal-core/src\binding.rs` 같은 **혼종**이 나온다. 그것을
+/// 등록된 자리(전부 `/`)와 `starts_with` 로 대면 절대 안 맞고, 검사는 *"자리가 늘었다"* 를
+/// 외친다 — **플랫폼이 판정을 뒤집는 자리다.**
+///
+/// 화면에 내는 자리에도 같이 쓴다. 진단 문구가 플랫폼마다 다르면 그 문구를 기대하는
+/// 시험이 한쪽에서만 선다.
+fn 상대_경로(root: &Path, file: &Path) -> String {
+    file.strip_prefix(root).unwrap_or(file).to_string_lossy().replace('\\', "/")
+}
+
+/// 파생 문서 대조 — **줄바꿈을 정규화해서 댄다.**
+///
+/// ★ `core.autocrlf=true` 인 워킹트리에서 체크아웃된 문서는 CRLF 이고 `render_*_doc()` 은
+/// LF 를 낸다. 바이트로 대면 Windows 에서 **언제나** 실패하고, `cargo xtask schema-doc`
+/// 으로 "고쳐도" 다음 체크아웃이 되돌린다 — 손쓸 수 없는 빨강이다.
+///
+/// `install/eol.rs` 가 같은 문제를 푼 자리이고 그 규율을 그대로 빌린다:
+/// **판정은 내용으로 하고 바이트는 있던 대로 둔다.** 홑 `\r` 은 안 건드린다.
+fn 줄바꿈_같은가(have: &str, want: &str) -> bool {
+    have.replace("\r\n", "\n") == want.replace("\r\n", "\n")
+}
+
 // ── 검사 7 — 스키마 정합 (stack §4.3 단계 2 · DESIGN §1.2) ────────────────────
 
 /// `schema/graph.toml` ↔ 코드. **양방향이다.**
@@ -543,7 +723,7 @@ fn check_schema(root: &Path) -> Result<String> {
     let doc_path = root.join("docs/graph-schema.md");
     let want = render_schema_doc(&schema);
     match std::fs::read_to_string(&doc_path) {
-        Ok(have) if have == want => {}
+        Ok(have) if 줄바꿈_같은가(&have, &want) => {}
         Ok(_) => problems.push(
             "docs/graph-schema.md 가 스키마와 다르다 — `cargo xtask schema-doc` 으로 다시 낸다"
                 .to_owned(),
@@ -678,7 +858,7 @@ fn check_catalog(root: &Path) -> Result<String> {
                 problems.push(format!(
                     "{} 에 질의 이름 `{name}` 이 리터럴로 있다 — 표면은 \
                      `QueryName::ALL` 에서 렌더링해야 하고, 리터럴은 두 번째 목록이다",
-                    file.strip_prefix(root).unwrap_or(&file).display()
+                    상대_경로(root, &file)
                 ));
             }
         }
@@ -688,7 +868,7 @@ fn check_catalog(root: &Path) -> Result<String> {
     let doc_path = root.join("docs/query-catalog.md");
     let want = render_catalog_doc(&catalog);
     match std::fs::read_to_string(&doc_path) {
-        Ok(have) if have == want => {}
+        Ok(have) if 줄바꿈_같은가(&have, &want) => {}
         Ok(_) => problems.push(
             "docs/query-catalog.md 가 카탈로그와 다르다 — `cargo xtask query-doc` 으로 다시 낸다"
                 .to_owned(),
@@ -981,6 +1161,14 @@ const NOT_A_BUDGET: &[(&str, &str)] = &[
     ("BUDGET_WORDS", "이 검사의 규칙 표 — 예산이 아니다"),
     ("NOT_A_BUDGET", "이 검사의 예외 표 — 예산이 아니다"),
     ("BUDGET_ESCAPES", "「벗어나는 경로 부재」 검사의 낱말 표 — 예산이 아니다"),
+    // ★ **OS 가 정한 상수다. 우리가 고를 수 있는 값이 아니다.**
+    //
+    // 예산은 *"우리가 정한 한계이고, 넘으면 능력이 아니라 예산을 먼저 의심한다"*
+    // (stack §5.5 · D16)이다. `MAX_PATH` 는 그 성질이 하나도 없다 — Windows 의 전통적
+    // 경로 길이 한계 260 이고, 값을 바꾸면 그것은 조정이 아니라 **틀린 값**이 된다.
+    // `pal-core::budget` 으로 옮기면 코어가 플랫폼 상수를 지게 되고(stack §4.1 의
+    // 의존 방향), 그 자리에서 *"이 숫자를 늘려 볼까"* 라는 물음이 성립해 버린다.
+    ("MAX_PATH", "Windows 가 정한 경로 길이 한계 — 우리가 고르는 값이 아니다"),
 ];
 
 /// `budget.rs` 의 이름들과, 그 밖에서 태어난 예산 후보.
@@ -1224,8 +1412,7 @@ fn check_anchor_is_measured(root: &Path) -> Result<String> {
                 let code = line.split("//").next().unwrap_or("");
                 // 선언(`pub struct WatchEntry {`)은 리터럴이 아니다.
                 if code.contains("WatchEntry {") && !code.contains("struct WatchEntry") {
-                    let rel = file.strip_prefix(root).unwrap_or(&file).display().to_string();
-                    sites.push(format!("{rel}:{}", n + 1));
+                    sites.push(format!("{}:{}", 상대_경로(root, &file), n + 1));
                 }
             }
         }
@@ -1489,4 +1676,117 @@ fn check_install_never_reaches_home(root: &Path) -> Result<String> {
         );
     }
     Ok(format!("설치 소스 {센_파일}개 · 홈 낱말 {}개에 0건", HOME_REACHING.len()))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod 외침_판정_tests {
+    use super::{등록과_댄다, 등록된_외침, 실패한_시험들, 외침};
+
+    /// `cargo test` 의 실제 출력 형태에서 이름만 뽑는다.
+    #[test]
+    fn 실패한_이름만_뽑는다() {
+        let out = "\
+running 3 tests
+test 통과하는것 ... ok
+test 파이프_방어가_이_플랫폼에서는_안_재진다 ... FAILED
+test common::eol::tests::맞추면_왕복한다 ... ok
+test 또_깨진것 ... FAILED
+
+failures:
+
+---- 또_깨진것 stdout ----
+test result: FAILED. 2 passed; 2 failed; 0 ignored
+";
+        assert_eq!(
+            실패한_시험들(out),
+            vec!["파이프_방어가_이_플랫폼에서는_안_재진다", "또_깨진것"]
+        );
+    }
+
+    /// ★ **요약 블록을 두 번 안 센다.** 위 입력의 `---- 또_깨진것 stdout ----` 과
+    /// `failures:` 목록은 `test … ... FAILED` 형태가 아니므로 안 걸려야 한다 — 걸리면
+    /// 같은 이름이 두 번 세지고, 그러면 등록 대조가 뜻을 잃는다.
+    #[test]
+    fn 통과만_있으면_비어_있다() {
+        let out = "test a ... ok\ntest b ... ok\ntest result: ok. 2 passed;\n";
+        assert!(실패한_시험들(out).is_empty());
+        // 그리고 「무시됨」도 실패가 아니다.
+        assert!(실패한_시험들("test c ... ignored\n").is_empty());
+    }
+
+    /// ★ **어느 플랫폼에도 안 재지는 것이 없다.**
+    ///
+    /// 앞 판은 이 단언이 `#[cfg(unix)]` 였다 — Windows 에 다섯이 등록돼 있었기 때문이다.
+    /// **그 다섯이 없어졌으므로 이제 `cfg` 가 필요 없다**(2026-08-17). 그리고 `cfg` 를
+    /// 떼는 것이 이 시험의 값이다: 어느 플랫폼에서든 새 외침이 등록되면 **거기서**
+    /// 빨개진다. 앞 판은 Windows 에 무엇이 등록되든 이 시험이 아무 말도 안 했다.
+    #[test]
+    fn 어느_플랫폼에도_안_재지는_것이_없다() {
+        assert!(
+            등록된_외침().is_empty(),
+            "안 재지는 것이 등록됐다 — 그것은 등록할 것이 아니라 **고칠 것**이다.\n    \
+             정말로 원리상 불가능하면 등록하되, 이 단언을 그때 함께 움직여라: {:?}",
+            등록된_외침()
+        );
+    }
+
+    /// ★ **음성 대조 ① — 등록 안 된 것이 깨지면 걸린다.**
+    ///
+    /// 이 줄이 없으면 이 명령은 *"언제나 통과"* 일 수 있고, 그러면 CI 가 아무것도 안 센다.
+    #[test]
+    fn 등록_안_된_실패가_걸린다() {
+        let 등록 = [("외침A", "까닭")];
+        let 문제 = 등록과_댄다(&["외침A".to_owned(), "새로깨진것".to_owned()], &등록);
+        assert_eq!(문제.len(), 1, "{문제:?}");
+        assert!(문제[0].contains("새로깨진것"), "{문제:?}");
+    }
+
+    /// ★ **음성 대조 ② — 승격하고 등록을 안 지우면 걸린다.**
+    ///
+    /// 이쪽이 더 조용한 실패 경로다. 시험이 초록이 됐는데 목록이 *"이건 안 재진다"* 를
+    /// 계속 주장하면 **없는 사실이 문서로 산다.**
+    #[test]
+    fn 승격됐는데_등록이_남으면_걸린다() {
+        let 등록 = [("외침A", "까닭"), ("이제통과", "옛 까닭")];
+        let 문제 = 등록과_댄다(&["외침A".to_owned()], &등록);
+        assert_eq!(문제.len(), 1, "{문제:?}");
+        assert!(문제[0].contains("이제통과") && 문제[0].contains("지우십시오"), "{문제:?}");
+    }
+
+    /// 같으면 아무 말도 안 한다 — 그리고 둘 다 비어도 조용하다(유닉스가 그 상태다).
+    #[test]
+    fn 같으면_조용하다() {
+        let 등록 = [("외침A", "까닭"), ("외침B", "까닭")];
+        assert!(등록과_댄다(&["외침A".to_owned(), "외침B".to_owned()], &등록).is_empty());
+        assert!(등록과_댄다(&[], &[]).is_empty());
+    }
+
+    /// ★ **등록에는 언제나 까닭이 붙고, 그 까닭은 「원리상 불가능」이어야 한다.**
+    ///
+    /// ⚠ 앞 판은 여기서 `assert!(!외침.is_empty())` 를 했다 — *"목록이 비었으면 이
+    /// 대조가 아무것도 안 센다"* 는 이유로. **그 단언은 이제 틀렸다.** 빈 목록은
+    /// 「대조가 죽었다」가 아니라 **「안 재지는 것이 하나도 없다」**이고, 그것이 이
+    /// 저장소가 가려던 자리다. 대조가 살아 있다는 것은 [`등록_안_된_실패가_걸린다`] 와
+    /// [`승격됐는데_등록이_남으면_걸린다`] 가 **순수 함수 위에서** 잰다 — 목록의
+    /// 길이에 안 기댄다.
+    ///
+    /// 대신 **자격**을 잰다: 「아직」·「나중에」로 끝나는 까닭은 등록될 자격이 없다.
+    /// 그것은 **할 일이지 사실이 아니고**, 목록에 넣는 순간 CI 가 그것을 초록으로
+    /// 세어 준다.
+    #[test]
+    fn 등록은_원리상_불가능한_것만_담는다() {
+        for (플랫폼, 이름, 왜) in 외침 {
+            assert!(!플랫폼.is_empty() && !이름.is_empty(), "빈 등록이 있다");
+            assert!(왜.len() > 20, "`{이름}` 의 까닭이 너무 짧다: {왜}");
+            for 금지 in ["아직", "나중에", "다음 회차", "미측정"] {
+                assert!(
+                    !왜.contains(금지),
+                    "`{이름}` 의 까닭에 「{금지}」가 있다 — 그것은 **할 일이지 사실이 \
+                     아니다.** 등록은 「원리상 못 잰다」만 담는다: {왜}"
+                );
+            }
+        }
+    }
 }

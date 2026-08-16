@@ -30,7 +30,7 @@ use serde::Serialize;
 use super::inside::{Rel, Root};
 use super::layout::{DERIVED, MANIFEST, SETTINGS};
 use super::manifest::Manifest;
-use super::{hooks, ignore, manifest, settings};
+use super::{exe, hooks, ignore, manifest, settings, winpath};
 
 /// 검사 하나의 결말.
 #[derive(Serialize)]
@@ -270,23 +270,35 @@ fn 루트(target: &Path, root: Option<&Path>) -> Outcome {
         Some(r) if r == target => Outcome::Ok("여기가 설치 루트다".to_owned()),
         Some(r) => Outcome::Failed(format!(
             "여기는 설치 루트가 아니다 — 설치는 {} 에 있다. 거기서 돌리십시오",
-            r.display()
+            // ★ 화면에 나가는 경로다 — `\\?\` 를 안 낸다([`super::winpath`]).
+            winpath::사람이_읽는(r)
         )),
     }
 }
+
+/// `PATH` 에서 찾는 명령 이름 — **확장자를 여기 안 적는다.**
+///
+/// 확장자를 붙이는 규칙은 플랫폼이 정하고 그 결정은 [`exe`] 한 자리에 산다.
+const 명령_이름: &str = "pal";
 
 fn 실행_파일() -> Outcome {
     // ⚠ **홈을 안 읽는다.** `PATH` 만 본다 — `[f24]` ⑦.
     let Some(path) = std::env::var_os("PATH") else {
         return Outcome::Residual("`PATH` 가 없다".to_owned());
     };
+    // ★ **이름 그대로 찾지 않는다.** 옛 코드는 `dir.join("pal")` 이었고, Windows 에서는
+    // 그 이름의 파일이 있어도 OS 가 안 띄운다 — 그래서 **정상 설치(`pal.exe`)가 빨강**
+    // 이고 실행조차 안 되는 배치만 초록이었다. 검사 4~6 은 **침묵하는 훅 실패를 잡는
+    // 유일한 문**인데, 그 문이 뒤집혀 있으면 사용자는 이 도구의 빨강을 무시하는 법을
+    // 배운다. 무엇이 실행되는 이름인지는 [`exe::명령을_찾는다`] 가 안다.
     for dir in std::env::split_paths(&path) {
-        let candidate = dir.join("pal");
-        if candidate.is_file() {
-            return Outcome::Ok(format!("{}", candidate.display()));
+        if let Some(found) = exe::명령을_찾는다(&dir, 명령_이름) {
+            return Outcome::Ok(winpath::사람이_읽는(&found));
         }
     }
-    Outcome::Failed("`PATH` 어디에도 `pal` 이 없다 — 설치된 커맨드가 못 돈다".to_owned())
+    Outcome::Failed(format!(
+        "`PATH` 어디에도 `{명령_이름}` 이 없다 — 설치된 커맨드가 못 돈다"
+    ))
 }
 
 fn 등재(target: &Path) -> Outcome {
@@ -300,8 +312,8 @@ fn 등재(target: &Path) -> Outcome {
     for path in DERIVED {
         match ignore::verdict(&뿌리, path) {
             Ok(ignore::Verdict::Covered) => {}
-            Ok(ignore::Verdict::NotAWorktree) => {
-                return Outcome::Residual("git worktree 가 아니다 — 등재를 물을 수 없다".to_owned());
+            Ok(ignore::Verdict::NotAWorktree { 까닭 }) => {
+                return Outcome::Residual(까닭.to_owned());
             }
             Ok(ignore::Verdict::Revived { pattern }) => {
                 빠진.push(format!("{path} (사용자가 `{pattern}` 로 되살렸다)"));
@@ -374,7 +386,7 @@ fn 훅(root: Option<&Path>) -> Outcome {
                 h.event
             ));
         }
-        let Some(등록된_자리) = hooks::되읽는다(h) else {
+        let Some(등록된_문자열) = hooks::되읽는다(h) else {
             return Outcome::Failed(format!(
                 "{} 에 걸린 항목이 우리 형태가 아니다 — **돌려보지 않는다.** \
                  매니페스트와 {SETTINGS} 는 대상 프로젝트 안의 평범한 파일이라 \
@@ -382,6 +394,14 @@ fn 훅(root: Option<&Path>) -> Outcome {
                  그 자체**다. `pal install` 을 다시 돌리십시오",
                 h.event
             ));
+        };
+        // ★ **등록 문자열을 자리로 푸는 겹이 먼저다.** 지금 형태는 `PATH` 의 이름
+        // 하나이므로(`hooks` 머리말), 그 이름이 안 풀리면 하네스도 못 찾고 그 실패는
+        // 침묵한다. 옛 설치본의 절대 경로도 여기를 지난다 — 풀어야 「없다」와
+        // 「우리 것이 아니다」를 가를 수 있다.
+        let 등록된_자리 = match hooks::자리를_찾는다(&등록된_문자열) {
+            Ok(p) => p,
+            Err(e) => return Outcome::Failed(format!("{} 이 안 돈다 — {e:#}", h.event)),
         };
         if let Err(e) = hooks::실행할_수_있나(&등록된_자리) {
             return Outcome::Failed(format!("{} 이 안 돈다 — {e:#}", h.event));
@@ -403,9 +423,23 @@ fn 훅(root: Option<&Path>) -> Outcome {
     Outcome::Ok(format!(
         "등록된 {}개가 설정과 맞고, 그 자리가 실행될 수 있고, **지금 도는 이 실행 파일과 \
          같은 프로그램이다**(바이트 대조). 훅 규약은 그 실행 파일로 확인했다 — \
-         **적힌 문자열은 안 돌린다**",
-        적힌.len()
+         **적힌 문자열은 안 돌린다**{}",
+        적힌.len(),
+        사각지대()
     ))
+}
+
+/// 이 플랫폼에서 **이 검사가 못 보는 것** — 있으면 초록에도 덧붙인다.
+///
+/// `남의_에이전트` 와 같은 형태이고 같은 이유다: **판정은 안 바꾸고 말만 더한다.**
+/// 사각지대가 조용하면 사용자는 이 검사가 재지 않는 것을 쟀다고 믿는다.
+fn 사각지대() -> String {
+    match exe::못_재는_겹() {
+        None => String::new(),
+        Some(겹) => format!(
+            " / ★ **이 플랫폼에서 못 재는 겹이 하나 있다**(고장이 아니다): {겹}"
+        ),
+    }
 }
 
 /// 사람이 읽는 화면.

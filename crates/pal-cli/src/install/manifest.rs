@@ -357,10 +357,21 @@ pub fn read(path: &Path) -> Result<Manifest> {
 ///
 /// # Errors
 /// 쓰지 못하면.
+/// ★ **되쓸 때는 그 파일이 쓰던 줄바꿈으로 쓴다** — `settings.json`·블록과 같은 규율.
+///
+/// 매니페스트도 **커밋되고 clone 과 함께 이동한다.** `core.autocrlf=true` 로 받은
+/// 워킹트리에서는 CRLF 로 앉는데 `to_string_pretty` 는 언제나 LF 를 내므로, 안 맞추면
+/// **`pal` 을 돌릴 때마다 파일 전체가 바뀐 것으로 보인다**(실측 2026-08-17: clone 한
+/// 쪽에서 `install` 한 번에 `M .claude/pal/manifest.json`).
+///
+/// 그 diff 는 내용이 아니라 줄바꿈이므로 **사람이 볼 것이 하나도 없다** — 그리고
+/// 그런 diff 가 매번 생기면 사용자는 이 파일의 변화를 무시하는 법을 배운다.
 pub fn write(path: &Path, manifest: &Manifest) -> Result<()> {
     let mut text = serde_json::to_string_pretty(manifest).context("매니페스트 직렬화")?;
     text.push('\n');
-    super::guard::쓴다(path, text.as_bytes())
+    let 기존 = std::fs::read(path).ok();
+    let crlf = super::eol::그_파일의_줄바꿈(기존.as_deref());
+    super::guard::쓴다(path, &super::eol::맞춘다(text.as_bytes(), crlf))
         .with_context(|| format!("매니페스트를 쓰지 못했다: {}", path.display()))
 }
 

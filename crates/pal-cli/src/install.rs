@@ -22,9 +22,11 @@
 //! 등록이 답을 정한다.**
 
 mod blocks;
+mod casing;
 mod child;
 mod doctor;
 mod eol;
+mod exe;
 mod guard;
 mod hooks;
 mod ignore;
@@ -33,6 +35,7 @@ mod layout;
 mod manifest;
 mod settings;
 mod sha256;
+mod winpath;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -98,12 +101,44 @@ impl Lock {
         guard::일반_파일이거나_없나(&path)?;
         let mut waited = 0;
         loop {
-            let file = std::fs::OpenOptions::new()
+            let 열기 = std::fs::OpenOptions::new()
                 .create(true)
                 .write(true)
                 .truncate(false)
-                .open(&path)
-                .with_context(|| format!("잠금을 열지 못했다: {}", path.display()))?;
+                .open(&path);
+            let file = match 열기 {
+                Ok(f) => f,
+                // ★ **여는 것 자체가 경합일 수 있다 — 그리고 그것은 플랫폼마다 다르다.**
+                //
+                // 유닉스에서 `unlink` 뒤의 이름은 즉시 비고, 그 자리에 새 파일이 언제나
+                // 만들어진다. Windows 에서는 `remove_file` 이 **삭제 예정**만 걸고 마지막
+                // 핸들이 닫힐 때까지 이름이 남는다 — 그 사이에 같은 이름을 열면
+                // `ACCESS_DENIED` 다. 앞 주인의 [`Lock::drop`] 이 지우고 닫는 사이의
+                // **좁은 창**이고, 거기서 우리는 *"기다리면 될 일"* 에 대해 hard fail 을
+                // 냈다. 유닉스에서는 안 나는 실패다.
+                //
+                // ⚠ **실측(2026-08-17): 동시 8회 × 5회전 = 40 프로세스에서 한 번도 안
+                // 났다.** 그래도 막는다 — 안 났다는 것은 창이 좁다는 뜻이지 없다는 뜻이
+                // 아니고, 났을 때 사용자가 보는 것은 *"잠금을 열지 못했다"* 라는
+                // **손쓸 데 없는 문구**다.
+                //
+                // 상한을 넘으면 그때 **그 오류 그대로** 사람에게 넘긴다 — 진짜 못 여는
+                // 자리(권한·읽기 전용)를 영원히 삼키지 않는다.
+                Err(e) => {
+                    if waited >= LOCK_WAIT_MS {
+                        return Err(e).with_context(|| {
+                            format!(
+                                "잠금을 열지 못했다: {} — {LOCK_WAIT_MS}ms 동안 다시 열어 \
+                                 봤고 계속 같은 이유였다",
+                                path.display()
+                            )
+                        });
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(LOCK_POLL_MS));
+                    waited += LOCK_POLL_MS;
+                    continue;
+                }
+            };
             match file.try_lock() {
                 Ok(()) => {
                     // ★ **잡고 나서 그 자리가 아직 그 파일인지 다시 본다.** 앞 주인이
@@ -136,10 +171,24 @@ impl Lock {
 
     /// 우리가 쥔 파일이 **아직 그 경로에 앉아 있는가.**
     ///
-    /// ⚠ **유닉스 전용 가정**(소유자 결정 2026-08-16 · windows 대응 가정): 장치·inode
-    /// 번호로 댄다. Windows 에는 std 로 여는 등가 문이 없고 — 그쪽은 열려 있는 파일을
-    /// 지우는 것 자체가 기본적으로 막혀 이 경합이 거의 안 난다 — 그래서 그 플랫폼에서는
-    /// **재확인 없이 통과**시킨다. 여기가 그 사실을 적는 자리다.
+    /// # 왜 이 재확인이 필요한가 — 그리고 왜 Windows 에는 필요 없는가
+    ///
+    /// 유닉스: `unlink` 는 이름만 지운다. 앞 주인이 놓으면서 지운 뒤 다른 회차가 같은
+    /// 이름으로 **새 inode** 를 만들면, 우리가 쥔 것은 이미 **이름 없는 옛 inode** 이고
+    /// 둘이 동시에 들어온다. 그래서 장치·inode 번호로 다시 댄다.
+    ///
+    /// Windows: **그 상태가 원리상 안 생긴다.** `remove_file` 은 **삭제 예정**만 걸고
+    /// 마지막 핸들이 닫힐 때까지 이름이 살아 있다 — 그 사이에 같은 이름으로 새 파일이
+    /// **안 만들어진다**(열기가 `ACCESS_DENIED` 로 튕긴다. 그 튕김은 [`Lock::take`] 가
+    /// 재시도로 받는다). 이름이 사라지는 시점에는 이미 모든 핸들이 닫혔으므로 「이름
+    /// 없는 옛 핸들을 쥔 채 남이 새것을 잡는」 겹침이 없다.
+    ///
+    /// ⚠ **실측(2026-08-17)**: 동시 설치 8회 × 5회전 = 40 프로세스에서 **성공 40 · 블록
+    /// 언제나 1개.** 배타가 이 플랫폼에서 실제로 선다 — 앞 회차가 *"거의 안 난다"* 로
+    /// 적어 둔 것이 이제 **잰 것**이다.
+    ///
+    /// 그러니 여기서 `true` 를 내는 것은 「못 재서 통과」가 아니라 **「그 경합이 없다」**
+    /// 다. 그 둘은 다르고, 앞 주석은 앞의 것처럼 읽혔다.
     fn 같은_자리인가(file: &std::fs::File, path: &Path) -> bool {
         #[cfg(unix)]
         {
@@ -226,7 +275,7 @@ pub fn install(target: &Path) -> Result<()> {
     // 없었다. 데이터 손상이 아니라 **거짓 성공 + 되돌림 봉쇄**가 문제다.
     // ★ **되돌릴 수 없는 블록 위에 설치하지 않는다 — 그리고 그 판정이 1단계에 선다.**
     되돌릴_수_있나(&root, 이전을_믿기_전에(&root, &manifest_path)?.as_ref())?;
-    쓸_수_있나(&root)?;
+    let 하드링크_알림 = 쓸_수_있나(&root)?;
 
     // ── 2단계 · 잠금 ────────────────────────────────────────────────────────
     //
@@ -283,6 +332,12 @@ pub fn install(target: &Path) -> Result<()> {
     };
     기록.적는다()?;
 
+    // ★ **끊기 전에 말한다.** 아래 쓰기가 이 자리들의 하드링크를 끊는다 —
+    // 조용히 끊으면 사용자는 자기 파일 구조가 언제 갈렸는지 알 방법이 없다.
+    for 말 in &하드링크_알림 {
+        report.say("⚠ 하드링크", 말);
+    }
+
     디렉터리_세우기(&root, &mut 기록)?;
     파일_놓기(&root, &mut 기록, &mut report)?;
     기록.m.settings = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
@@ -321,8 +376,15 @@ impl Journal {
 ///
 /// ⚠ **이 검사가 못 보는 것**: 모드 비트만 본다. 남의 소유라 못 쓰는 자리·ACL·읽기
 /// 전용 마운트는 여기를 통과하고, 그때는 기록([`Journal`])이 받는다.
-fn 쓸_수_있나(root: &Root) -> Result<()> {
+fn 쓸_수_있나(root: &Root) -> Result<Vec<String>> {
     쓸_수_있는가(root.path())?;
+    // ★ **끊을 자리를 여기서 모은다.** 쓰기 경로가 조용히 끊고 지나가면 사용자는
+    // 자기 링크가 언제 갈렸는지 모른다 — 볼 수 있는 플랫폼에서는 말한다.
+    let mut 알림 = Vec::new();
+    // ★ **못 세는 플랫폼은 「늘 끊는다」를 한 줄로 낸다.** 자리마다 내면 평범한 설치가
+    // 매번 네댓 줄의 경고를 뱉고, 그러면 사람이 그 줄을 읽지 않는 법을 배운다 —
+    // `doctor` 검사 4 에서 이미 고친 형태다. 한 줄에 자리를 모아 싣는다.
+    let mut 끊길_자리: Vec<String> = Vec::new();
     // ⚠ **잠금(`LOCK`)이 이 목록에 없었다.** 그 한 칸이 비어서 FIFO 하나가
     // `install`·`update`·`uninstall` 을 전부 매달았다. 여는 자리
     // ([`Lock::take`])에도 문을 세웠고, 여기 드는 것은 **1단계에서 미리 보기** 위해서다.
@@ -330,18 +392,49 @@ fn 쓸_수_있나(root: &Root) -> Result<()> {
         .into_iter()
         .chain(DIRS.iter().copied())
     {
-        쓸_수_있는가(&root.join(&Rel::new(rel))?)?;
+        let path = root.join(&Rel::new(rel))?;
+        // ★ **파일시스템이 답을 다르게 내는 자리는 1단계에서 끊는다.** 대소문자만 다른
+        // 이름이 이미 있으면 우리 블록이 어디로 들어가는지가 **플랫폼마다 다르고**,
+        // 그러면 공유되는 저장소가 clone 한 곳에 따라 다르게 선다([`casing`]).
+        if let Some(말) = casing::부딪힘(&path) {
+            bail!("{말}");
+        }
+        쓸_수_있는가(&path)?;
+        if let Some(말) = guard::하드링크_알림(&path) {
+            알림.push(말);
+        } else if guard::언제나_끊나() && guard::끊길_자리인가(&path) {
+            끊길_자리.push(rel.to_owned());
+        }
+    }
+    // ★ **어느 플랫폼도 끊으면서 침묵하지 않는다.** 셀 수 있는 쪽은 위에서 자리마다
+    // 말했고, 못 세는 쪽은 여기서 한 줄로 말한다. **문구는 다르다** — 셀 수 있는 쪽은
+    // *"이 파일에 링크가 걸려 있다"* 를, 못 세는 쪽은 *"걸렸는지 모르므로 늘 끊는다"* 를
+    // 말한다. 같은 말을 못 하는 것은 **보이는 것이 다르기 때문**이고, 그 차이를 없애려고
+    // 볼 수 있는 쪽에서 입을 다무는 것은 대칭이 아니라 정보를 버리는 것이다(ADR-0023).
+    if !끊길_자리.is_empty() {
+        알림.push(format!(
+            "이 플랫폼은 **하드링크 수를 셀 수 없다**(`number_of_links()` 는 unstable · \
+             rust#63010, raw FFI 는 `unsafe 금지` 게이트가 막는다) — 그래서 아래 자리에 \
+             제자리로 안 쓰고 **늘 끊고 쓴다**:\n      {}\n      \
+             하드링크가 걸려 있었다면 그것은 여기서 끊긴다(저쪽 파일의 내용은 그대로다). \
+             안 걸려 있었다면 바뀌는 것은 **파일 신원뿐**이다 — 명시적으로 걸어 둔 ACL 은 \
+             사라지고 상속된 것은 다시 붙는다",
+            끊길_자리.join(" · ")
+        ));
     }
     // ★ **우리 대신 읽는 프로세스의 자리도 여기서 본다.** `git check-ignore` 는
     // 중첩 `.gitignore` 와 `.git/info/exclude` 도 읽고, 그중 하나가 FIFO 면 **git 이**
     // 매달린다. 1단계에서 끊어야 반쯤 설치된 프로젝트가 안 남는다.
     ignore::점검(root)?;
-    Ok(())
+    Ok(알림)
 }
 
 fn 쓸_수_있는가(path: &Path) -> Result<()> {
-    // **하드링크가 걸린 자리는 제자리 쓰기가 밖으로 샌다** — 1단계에서 끊는다.
-    guard::제자리에_써도_되나(path)?;
+    // ⚠ **하드링크는 여기서 더 이상 안 막는다.** 옛 판은 여기서 실패를 냈고, 그것이
+    // **유닉스만 rc=1 을 내던 자리**였다(`guard::제자리를_준비한다` 머리말 · ADR-0023).
+    // 지금은 쓰기 경로가 **양쪽 다 끊고 쓴다.** 여기서는 **말만 한다** —
+    // [`하드링크_알림`] 을 [`쓸_수_있나`] 가 모아서 화면에 낸다.
+    //
     // **일반 파일이 아닌 자리는 열자마자 매달린다** — 여기서도 1단계에서 끊는다.
     // ⚠ 디렉터리 목록(`DIRS`)도 이 함수를 지나므로 디렉터리는 아래에서 갈라 본다.
     if !path.is_dir() {
@@ -349,7 +442,7 @@ fn 쓸_수_있는가(path: &Path) -> Result<()> {
     }
     // 없는 자리는 못 본다 — 그 부모는 위에서 이미 봤다.
     let Ok(meta) = std::fs::metadata(path) else { return Ok(()) };
-    if meta.permissions().readonly() {
+    if meta.permissions().readonly() && 읽기_전용이_쓰기를_막는_종류인가(&meta) {
         bail!(
             "{} 에 **쓸 수 없다**(읽기 전용) — 설치는 여기서 멈춘다.\n    \
              읽기는 되고 쓰기만 안 되는 자리라 예전에는 **반쯤 설치하고 나갔다.** \
@@ -358,6 +451,29 @@ fn 쓸_수_있는가(path: &Path) -> Result<()> {
         );
     }
     Ok(())
+}
+
+/// 이 종류의 자리에서 `readonly()` 가 **정말로 쓰기 불가를 뜻하는가.**
+///
+/// # ★ Windows 에서 디렉터리의 읽기 전용 속성은 쓰기를 안 막는다 (실측 2026-08-17)
+///
+/// ```text
+/// dir readonly attr  = true      ← 속성은 붙었고 std 도 그렇게 읽는다
+/// dir create file    = Ok(())    ← 그런데 파일이 그대로 만들어진다
+/// ```
+///
+/// Windows 에서 디렉터리의 `FILE_ATTRIBUTE_READONLY` 는 *"쓰지 마라"* 가 아니라
+/// *"이 폴더는 커스터마이즈됐다"*(`desktop.ini`) 를 뜻하고, 흔한 폴더에 흔히 붙어
+/// 있다. 그것을 「쓸 수 없다」로 읽으면 **멀쩡한 프로젝트에서 설치가 거부된다** —
+/// 플랫폼이 판정을 뒤집는 자리다. **파일 쪽은 실제로 막는다**(같은 실측:
+/// `file write after ro = false`). 그래서 종류로 가른다.
+///
+/// 잃는 것: Windows 에서 **정말로 못 쓰는 디렉터리를 1단계에서 미리 못 본다.** 그것은
+/// ACL 의 일이고 std 에 문이 없다 — 이 함수의 호출자가 이미 적어 둔 사각지대
+/// (*"남의 소유라 못 쓰는 자리·ACL·읽기 전용 마운트는 여기를 통과하고, 그때는
+/// 기록이 받는다"*)와 같은 자리로 들어간다.
+fn 읽기_전용이_쓰기를_막는_종류인가(meta: &std::fs::Metadata) -> bool {
+    if cfg!(windows) { !meta.is_dir() } else { true }
 }
 
 /// 이전 매니페스트를 읽되 **경계 검사를 지난 것만 낸다.**
@@ -532,6 +648,14 @@ fn 설정_병합(
     if plan.is_empty() && !바라는_훅.is_empty() {
         report.say("이미 등록됨", &format!("훅 {}개", 바라는_훅.len()));
     }
+    // ★ **침묵하기 전에 말한다.** 등록 문자열은 `PATH` 의 이름이므로(`hooks` 머리말),
+    // 그 이름이 우리를 안 가리키면 훅은 안 뜨고 **그 실패는 어느 채널에도 안 나온다.**
+    // 판정은 안 바꾼다 — 설치는 성공이고 `doctor` 검사 4·6 이 그 뒤를 계속 지킨다.
+    if !바라는_훅.is_empty() {
+        if let Some(까닭) = hooks::이름이_우리를_가리키나() {
+            report.say("⚠ 훅이 아직 안 뜬다", &까닭);
+        }
+    }
 
     let merged = settings::merge(path, read, &want, &plan)?;
 
@@ -623,12 +747,12 @@ fn 블록_넣기(
     }
 
     let mut 등재 = Vec::new();
-    let mut worktree = true;
+    let mut 못_묻는_까닭: Option<&'static str> = None;
     for path in DERIVED {
         match ignore::verdict(root, path)? {
             ignore::Verdict::Covered => report.say("이미 등재됨", path),
-            ignore::Verdict::NotAWorktree => {
-                worktree = false;
+            ignore::Verdict::NotAWorktree { 까닭 } => {
+                못_묻는_까닭 = Some(까닭);
                 break;
             }
             ignore::Verdict::Revived { pattern } => {
@@ -646,16 +770,15 @@ fn 블록_넣기(
             }
         }
     }
-    if worktree {
-        if 등재.is_empty() {
-            report.say("건드리지 않음", &format!("{IGNORE_FILE}  (더할 것이 없다)"));
-        } else {
-            let block = blocks::compose(&IGNORE_MARKERS, &등재);
-            블록_하나(root, IGNORE_FILE, &block, 이전, 기록, report)?;
-        }
-    } else {
+    if let Some(까닭) = 못_묻는_까닭 {
         // **rc=128 을 rc=1 과 뭉개면 저장소가 아닌 곳에 `.gitignore` 를 만든다.**
-        report.say("건너뜀", &format!("{IGNORE_FILE}  (git worktree 가 아니다)"));
+        // 그리고 그 rc 안에도 갈래가 둘이다 — 까닭은 [`ignore::왜_답이_없나`] 가 낸다.
+        report.say("건너뜀", &format!("{IGNORE_FILE}  ({까닭})"));
+    } else if 등재.is_empty() {
+        report.say("건드리지 않음", &format!("{IGNORE_FILE}  (더할 것이 없다)"));
+    } else {
+        let block = blocks::compose(&IGNORE_MARKERS, &등재);
+        블록_하나(root, IGNORE_FILE, &block, 이전, 기록, report)?;
     }
     Ok(())
 }

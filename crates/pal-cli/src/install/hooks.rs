@@ -40,12 +40,65 @@
 //!   (shell form 의 126/127 이 안 나온다). `pal doctor` 가 유일한 문이라는 사실이
 //!   여기서 한 겹 더 세진다.
 //!
-//! # ★ PATH 이름으로 등록하지 않는다
+//! # ★ PATH 이름으로 등록한다 — **앞 회차의 결정을 뒤집는다** (2026-08-17)
 //!
-//! 실측상 PATH 이름 등록도 동작한다(exec form 에서도 이름 탐색이 된다). 그런데
-//! **실행 파일을 못 찾으면 그 실패가 완전히 침묵한다** — `claude -p` 의 stdout·
-//! stderr·종료 코드 어디에도 안 나온다. 그래서 **설치 시점에 해석한 절대 경로**로
-//! 등록한다.
+//! 앞 회차는 절대 경로로 등록했고 근거는 이랬다: *"PATH 이름 등록도 동작하지만
+//! 실행 파일을 못 찾으면 그 실패가 완전히 침묵한다. 그래서 설치 시점에 해석한 절대
+//! 경로로 등록한다."*
+//!
+//! **그 근거는 한 기계만 볼 때만 선다.** `settings.json` 과 매니페스트는 **커밋되고
+//! clone 과 함께 이동한다** — 그것이 이 파일의 위협 모델이 이미 적어 둔 사실이다.
+//! 그러면 절대 경로는 다른 기계에서 **반드시** 없다.
+//!
+//! 실측 (2026-08-17 · 같은 저장소를 두 자리에 clone):
+//!
+//! | | 절대 경로로 등록했을 때 |
+//! |---|---|
+//! | 받는 쪽 `doctor` 검사 6 | **빨강** — 등록된 실행 파일이 없다 |
+//! | 받는 쪽의 훅 | **안 뜬다. 그리고 그 실패는 침묵한다** |
+//! | 받는 쪽이 `pal install` 로 고치면 | 추적 파일 **둘이 바뀐다**(`settings.json`·매니페스트) |
+//! | 그것을 커밋하면 | 준 쪽이 다시 빨개진다 — **핑퐁이고, 매 pull 마다 충돌한다** |
+//!
+//! 즉 옛 결정은 *"못 찾으면 침묵한다"* 는 위험을 피하려다 **모든 협업자에게 그 침묵을
+//! 확정적으로 안겨 준다.** 한쪽은 가능성이고 다른 쪽은 필연이다.
+//!
+//! ★ **그리고 그 침묵은 이제 문을 지난다.** `doctor` 검사 4 가 *"`PATH` 에 `pal` 이
+//! 있는가"* 를 이미 **등록된 합격선**으로 묻고 있다(`[f24]` ⑤). 즉 이 저장소는
+//! **`pal` 이 `PATH` 에 있을 것을 이미 요구한다** — 이름으로 등록하는 것은 그 요구를
+//! 훅 쪽에도 그대로 쓰는 것이지 새 요구가 아니다. 설치도 그 자리에서 말한다
+//! ([`이름이_우리를_가리키나`]).
+//!
+//! # 무엇을 안 골랐는가
+//!
+//! | 후보 | 왜 안 골랐나 |
+//! |---|---|
+//! | 등록을 `.claude/settings.local.json` 으로 옮긴다 | **쟀다. 발화한다. 그런데 안 옮긴다** — 아래 |
+//! | 매니페스트를 `.gitignore` 에 넣는다 | 매니페스트가 커밋된다는 사실 위에 이 파일의 위협 모델 전체가 서 있다([ADR-0022]). 그 전제를 이 자리에서 바꾸면 그 위의 판정이 전부 움직인다 |
+//! | 절대 경로를 두고 `update` 가 조용히 고치게 둔다 | **고치는 것이 곧 추적 파일의 변경**이다. 조용할수록 나쁘다 — 사용자가 안 만든 diff 가 매번 생긴다 |
+//!
+//! [ADR-0022]: ../../../../docs/adr/0022-what-the-target-says-is-input-not-authority.md
+//!
+//! # ★ `settings.local.json` — **쟀고, 그래서 안 옮긴다** (2026-08-17)
+//!
+//! 앞 판은 이 자리를 *"구조로는 이쪽이 더 맞은데 그 층의 훅이 실제로 발화하는지를 안
+//! 쟀다. **안 잰 것 위에 경계를 세우지 않는다**"* 로 뒀다. 그 문장은 이제 안 쓴다 —
+//! 실제 `claude` 2.1.233 세션으로 쟀다:
+//!
+//! ```text
+//! Hooks: Parsed initial response: {"decision":"block","reason":…}
+//! Hook SubagentStop (…) returned permissionDecision: deny
+//! Hook SubagentStop … success: …  ·  통과 — 반복 회차다
+//! ```
+//!
+//! **그 층의 훅은 `settings.json` 과 똑같이 발화한다.** 그러니 이제 남은 것은 「되는가」가
+//! 아니라 「해야 하는가」이고, 답은 **아니다**. 이유 둘:
+//!
+//! | | |
+//! |---|---|
+//! | 옮길 **이유가 사라졌다** | 옮기자던 근거는 *"기계 고유의 사실은 기계 고유의 파일에"* 였다. 그런데 등록은 이제 **`PATH` 의 이름 하나**이고 기계 고유의 값이 **아니다.** 근거가 먼저 없어졌다 |
+//! | 옮기면 **깨진다** | `settings.local.json` 은 관습상 커밋되지 않는다. 옮기면 clone 한 동료에게 **훅이 아예 안 간다** — 이 층의 소비자가 공유되는 프로젝트라는 것과 정면으로 부딪힌다 |
+//!
+//! 둘째 줄이 결정적이다. 첫째가 없었어도 둘째만으로 안 옮긴다.
 //!
 //! # 남의 구조를 고치려 들지 않는다
 //!
@@ -83,8 +136,53 @@ pub fn desired(events: &[&str]) -> Result<Vec<HookEntry>> {
     if events.is_empty() {
         return Ok(Vec::new());
     }
-    let exe = 실행_파일()?;
-    Ok(events.iter().map(|e| entry(&exe, e)).collect())
+    // **자기 실행 파일을 여전히 확인한다** — 등록 문자열에 안 실을 뿐이다.
+    // 여기가 실패하면 우리가 무엇인지도 모르는 상태이고, 그때는 아무것도 등록하지 않는다.
+    let _ = 실행_파일()?;
+    Ok(events.iter().map(|e| entry(e)).collect())
+}
+
+/// `PATH` 의 그 이름이 **지금 도는 이 프로그램을 가리키나** — 아니면 그 까닭.
+///
+/// ★ **설치가 이것을 말한다.** 등록 문자열이 이름이므로, 그 이름이 우리를 안 가리키면
+/// 훅은 **안 뜨고 그 실패는 침묵한다.** 그래서 침묵하기 전에 화면에서 말한다 —
+/// `doctor` 검사 4·6 이 그 뒤를 계속 지킨다.
+///
+/// **설치를 막지는 않는다.** `PATH` 에 아직 안 넣은 것은 고칠 수 있는 준비 상태이지
+/// 설치가 틀린 것이 아니고, 여기서 멈추면 사용자가 `pal` 을 쓰기도 전에 벽을 만난다.
+#[must_use]
+pub fn 이름이_우리를_가리키나() -> Option<String> {
+    let Ok(지금) = 실행_파일() else {
+        return Some("자기 실행 파일의 경로를 못 알아냈다".to_owned());
+    };
+    let Some(path) = std::env::var_os("PATH") else {
+        return Some("`PATH` 가 없다".to_owned());
+    };
+    let mut 찾은 = None;
+    for dir in std::env::split_paths(&path) {
+        if let Some(p) = super::exe::명령을_찾는다(&dir, super::layout::COMMAND_NAME) {
+            찾은 = Some(p);
+            break;
+        }
+    }
+    let Some(찾은) = 찾은 else {
+        return Some(format!(
+            "`PATH` 어디에도 `{}` 이 없다 — 등록은 그 이름을 가리키므로 지금은 훅이 안 \
+             뜬다(그리고 그 실패는 침묵한다). `{}` 을 `PATH` 에 넣으십시오",
+            super::layout::COMMAND_NAME,
+            super::winpath::사람이_읽는(&지금)
+        ));
+    };
+    match 다른_점(&찾은, &지금) {
+        Ok(None) => None,
+        Ok(Some(까닭)) => Some(format!(
+            "`PATH` 의 `{}` ({})이 지금 도는 이 프로그램과 **다르다** — {까닭}. \
+             훅은 그쪽이 뜬다",
+            super::layout::COMMAND_NAME,
+            super::winpath::사람이_읽는(&찾은)
+        )),
+        Err(e) => Some(format!("`PATH` 의 `{}` 을 못 읽었다 — {e}", super::layout::COMMAND_NAME)),
+    }
 }
 
 /// **지금 도는 이 바이너리**의 절대 경로.
@@ -100,13 +198,22 @@ fn 실행_파일() -> Result<PathBuf> {
 
 /// 등록 항목 하나 — **exec form.**
 ///
-/// `command` 는 실행 파일 경로 **그 자체**다. 따옴표도 이스케이프도 안 붙인다 —
-/// 셸을 안 거치므로 붙이면 오히려 그 글자가 경로의 일부가 된다.
+/// 따옴표도 이스케이프도 안 붙인다 — 셸을 안 거치므로 붙이면 오히려 그 글자가
+/// 이름의 일부가 된다.
+///
+/// ★ **`command` 는 기계 고유의 값이 아니다.** [`super::layout::COMMAND_NAME`] 그대로다.
+///
+/// 이 문자열은 `settings.json` 과 매니페스트에 실려 **커밋되고 clone 과 함께 이동한다.**
+/// 그러니 여기 절대 경로를 실으면 그 값은 **다른 기계에서 반드시 틀린다** — 머리말의
+/// 실측 표가 그 결과다. 이름은 어느 기계에서도 그 기계의 `pal` 로 풀린다.
+///
+/// 부수 효과 하나: **`settings.json` 과 매니페스트에 기계 고유의 글자가 하나도 안 남는다.**
+/// 그래서 두 사람이 같은 프로젝트에서 각자 `install` 을 돌려도 diff 가 안 난다.
 #[must_use]
-pub fn entry(exe: &Path, event: &str) -> HookEntry {
+pub fn entry(event: &str) -> HookEntry {
     HookEntry {
         event: event.to_owned(),
-        command: exe.to_string_lossy().into_owned(),
+        command: super::layout::COMMAND_NAME.to_owned(),
         args: Some(vec![SUBCOMMAND.to_owned(), event.to_owned()]),
     }
 }
@@ -151,6 +258,45 @@ pub fn 되읽는다(entry: &HookEntry) -> Option<PathBuf> {
     Some(PathBuf::from(&entry.command))
 }
 
+/// 등록 문자열을 **디스크의 자리로 푼다.** ⚠ **안 돌린다 — 찾기만 한다.**
+///
+/// # 두 형태를 받는다
+///
+/// | 형태 | 어떻게 푸나 | 언제 나오나 |
+/// |---|---|---|
+/// | 이름 하나(`pal`) | `PATH` 를 훑는다 — 셸이 하는 일 그대로 | **지금 우리가 쓰는 형태** |
+/// | 경로(`/usr/local/bin/pal`·`C:\...\pal.exe`) | 그대로 쓴다 | **옛 설치본**, 그리고 남이 손으로 넣은 것 |
+///
+/// 옛 형태를 계속 푸는 이유는 호환이 아니라 **판정**이다 — 못 풀면 `doctor` 가
+/// *"우리 형태가 아니다"* 로 뭉개고, 그러면 **무엇이 잘못됐는지 사람이 못 본다.**
+/// 풀어야 「없다」·「우리 것이 아니다」·「옮겨야 한다」를 각각 말할 수 있다.
+/// 그리고 `update` 가 옛 등록을 지우고 새 이름으로 다시 건다([`plan`]).
+///
+/// # Errors
+/// 이름인데 `PATH` 어디에도 없으면.
+pub fn 자리를_찾는다(command: &Path) -> Result<PathBuf> {
+    // 구분자가 있거나 절대 경로면 **경로다.** `Path::components` 로 세지 않고
+    // 글자로 본다 — 이 문자열은 남의 기계에서 왔을 수 있고, 그 기계의 구분자가
+    // 우리 것과 다르다.
+    let s = command.to_string_lossy();
+    if command.is_absolute() || s.contains('/') || s.contains('\\') {
+        return Ok(command.to_path_buf());
+    }
+    let Some(path) = std::env::var_os("PATH") else {
+        bail!("`PATH` 가 없어서 `{s}` 을 찾을 수 없다");
+    };
+    for dir in std::env::split_paths(&path) {
+        if let Some(p) = super::exe::명령을_찾는다(&dir, &s) {
+            return Ok(p);
+        }
+    }
+    bail!(
+        "`PATH` 어디에도 `{s}` 이 없다 — 등록은 이 이름을 가리키므로 하네스도 못 찾는다. \
+         하네스는 그 실패를 **완전히 삼키므로** 여기가 유일한 문이다. \
+         `{s}` 을 `PATH` 에 넣은 뒤 다시 보십시오"
+    )
+}
+
 /// 등록된 자리가 **실행될 수 있는가** — `stat` 으로만 본다. **안 돌린다.**
 ///
 /// 실행 파일이 사라지면 하네스는 exit **127**, 실행 권한을 잃으면 exit **126** 을 내고
@@ -165,30 +311,34 @@ pub fn 실행할_수_있나(path: &Path) -> Result<()> {
         anyhow::anyhow!(
             "등록된 실행 파일이 없다: {} ({e}) — 하네스는 여기서 exit 127 을 내고 \
              그 실패를 완전히 삼킨다. `pal update` 가 등록을 지금 실행 파일로 맞춘다",
-            path.display()
+            super::winpath::사람이_읽는(path)
         )
     })?;
     if !meta.is_file() {
         bail!(
             "등록된 자리가 일반 파일이 아니다: {} — 하네스는 여기서 exit 126/127 을 내고 \
              그 실패를 완전히 삼킨다",
-            path.display()
+            super::winpath::사람이_읽는(path)
         );
     }
-    // ⚠ **유닉스 전용 가정**(소유자 결정 2026-08-16 · windows 대응 가정): 실행 권한을
-    // **모드 비트**로 본다. Windows 에는 그 비트가 없고 「실행 가능한가」가 확장자와
-    // ACL 로 정해진다 — 그쪽에서는 위의 「있고 일반 파일인가」까지만 서고 이 한 겹이
-    // **빠진다.** 지금 분기를 만들지 않고 그 사실만 여기 적는다.
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        if meta.permissions().mode() & 0o111 == 0 {
-            bail!(
-                "등록된 파일에 실행 권한이 없다: {} — 하네스는 여기서 exit 126 을 내고 \
-                 그 실패를 완전히 삼킨다",
-                path.display()
-            );
-        }
+    // ★ **이 겹이 플랫폼마다 축이 다르다 — 그러나 어느 쪽에도 있다.**
+    //
+    // 유닉스에서 「실행될 수 있는가」를 정하는 것은 **모드 비트**이고, Windows 에서
+    // 그것을 정하는 것은 **확장자**다(실측: `PATH` 의 확장자 없는 사본은
+    // `Executable not found`, 등록된 절대 경로는 확장자가 없으면 `.exe` 가 붙는다).
+    // 파일이 있고 바이트도 우리 것인데 **OS 가 못 띄우고 하네스가 그 실패를 삼킨다** —
+    // 두 축에서 일어나는 사건이 같다.
+    //
+    // ⚠ 옛 코드는 모드 비트 검사를 `#[cfg(unix)]` 로 감싸고 *"다른 플랫폼에서는 이
+    // 한 겹이 빠진다"* 를 주석으로만 적었다. 그 주석은 **초록을 내면서 아무것도 안
+    // 재는 상태**였다. 분기는 [`super::exe`] 한 자리에 있고 여기서는 묻기만 한다.
+    if super::exe::자리가_열리나(path).is_none() {
+        bail!(
+            "등록된 자리가 실행될 수 없다: {} — {}. 하네스는 여기서 exit 126 을 내고 \
+             그 실패를 완전히 삼킨다",
+            super::winpath::사람이_읽는(path),
+            super::exe::안_열리는_까닭(path)
+        );
     }
     Ok(())
 }
@@ -233,8 +383,8 @@ pub fn 우리가_등록한_것인가(path: &Path) -> Result<()> {
          확인할 때 실제로 돌려 본 것은 **지금 이 실행 파일**이라, 둘이 다르면 그 확인이 \
          등록된 것에 대해 아무것도 말하지 않는다.\n    \
          `pal update` 가 등록을 지금 실행 파일로 되돌린다",
-        path.display(),
-        지금.display()
+        super::winpath::사람이_읽는(path),
+        super::winpath::사람이_읽는(&지금)
     )
 }
 
@@ -248,7 +398,7 @@ fn 다른_점(a: &Path, b: &Path) -> Result<Option<String>> {
     }
     let 크기 = |p: &Path| -> Result<u64> {
         Ok(std::fs::metadata(p)
-            .with_context(|| format!("크기를 못 읽었다: {}", p.display()))?
+            .with_context(|| format!("크기를 못 읽었다: {}", super::winpath::사람이_읽는(p)))?
             .len())
     };
     let (가, 나) = (크기(a)?, 크기(b)?);
@@ -304,7 +454,7 @@ pub fn probe(event: &str) -> Result<()> {
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
-        .with_context(|| format!("{} 를 못 돌렸다", exe.display()))?;
+        .with_context(|| format!("{} 를 못 돌렸다", super::winpath::사람이_읽는(&exe)))?;
     if let Some(mut sink) = child.stdin.take() {
         use std::io::Write;
         // 상대가 표준입력을 안 읽고 죽으면 여기가 깨진 파이프다 — 그것도 대답의 일부다.
@@ -522,9 +672,21 @@ mod tests {
         v.as_object().expect("객체").clone()
     }
 
-    /// 새 형태 하나.
-    fn 하나(exe: &str) -> HookEntry {
-        entry(Path::new(exe), "SubagentStop")
+    /// 새 형태 하나 — **경로를 안 받는다.** `command` 는 이제 기계 고유의 값이 아니다.
+    fn 하나() -> HookEntry {
+        entry("SubagentStop")
+    }
+
+    /// 우리 **형태**이되 `command` 가 임의인 항목 — **남의 기계나 옛 설치본에서 온 것.**
+    ///
+    /// 우리가 만드는 것은 이제 이름 하나뿐이지만, `settings.json` 은 커밋되고 이동하므로
+    /// **읽는 쪽은 여전히 온갖 문자열을 만난다.** 그 형태를 여기서 만든다.
+    fn 경로로(command: &str) -> HookEntry {
+        HookEntry {
+            event: "SubagentStop".to_owned(),
+            command: command.to_owned(),
+            args: Some(vec!["hook".to_owned(), "SubagentStop".to_owned()]),
+        }
     }
 
     /// **옛 형태 하나** — 이 회차 이전의 설치본이 지고 있는 것.
@@ -532,8 +694,8 @@ mod tests {
         HookEntry { event: "SubagentStop".to_owned(), command: command.to_owned(), args: None }
     }
 
-    fn 바람(exe: &str) -> Vec<HookEntry> {
-        vec![하나(exe)]
+    fn 바람() -> Vec<HookEntry> {
+        vec![하나()]
     }
 
     /// 적어 둔 것 없이 새로 건다 — 시험마다 두 줄이 되는 자리를 접는다.
@@ -554,10 +716,36 @@ mod tests {
             .collect()
     }
 
-    /// ★ **공백·따옴표·`$`·백틱이 든 경로가 그대로 간다** — exec form 은 셸을 안 거치므로
-    /// 인용이 필요 없고, **붙이면 오히려 그 글자가 경로의 일부가 된다.**
+    /// ★ **등록 문자열에 기계 고유의 글자가 하나도 없다.**
+    ///
+    /// 이것이 이 회차가 뒤집은 결정의 전부다(머리말). `settings.json` 과 매니페스트는
+    /// **커밋되고 clone 과 함께 이동하므로**, 여기 절대 경로가 실리면 그 값은 **다른
+    /// 기계에서 반드시 틀린다** — 그리고 그 실패는 침묵한다.
+    ///
+    /// 그래서 못박을 것은 *"경로가 그대로 간다"* 가 아니라 **"경로가 아예 안 간다"** 다.
     #[test]
-    fn 인용_없이_경로가_그대로_간다() {
+    fn 등록_문자열에_기계_고유의_값이_없다() {
+        let e = 하나();
+        assert_eq!(e.command, super::super::layout::COMMAND_NAME);
+        assert!(!e.command.contains('/') && !e.command.contains('\\'), "경로가 실렸다: {}", e.command);
+        assert!(!e.command.contains(':'), "드라이브 문자가 실렸다: {}", e.command);
+        assert_eq!(
+            e.args.as_deref(),
+            Some(["hook".to_owned(), "SubagentStop".to_owned()].as_slice())
+        );
+        // ★ **두 번 만들어도 같다.** 기계 상태가 섞이면 여기가 갈린다.
+        let 또 = entry("SubagentStop");
+        assert!(e.command == 또.command && e.args == 또.args && e.event == 또.event);
+    }
+
+    /// ★ **읽는 쪽은 여전히 온갖 문자열을 만난다** — 공백·따옴표·`$`·백틱이 든 경로가
+    /// 그대로 되읽힌다. exec form 은 셸을 안 거치므로 인용이 필요 없고, **붙이면 오히려
+    /// 그 글자가 경로의 일부가 된다.**
+    ///
+    /// 우리가 **만드는** 것은 이름 하나뿐이지만 **받는** 것은 남의 기계·옛 설치본에서
+    /// 온다. 그 둘을 갈라 재는 자리다.
+    #[test]
+    fn 남의_기계에서_온_경로도_그대로_되읽힌다() {
         for 경로 in [
             "/bin/pal",
             "/opt/pal 도구/pal",
@@ -566,10 +754,11 @@ mod tests {
             "/opt/$PWD `whoami`/pal",
             "/opt/a;b|c/pal",
             "/한글/경로/pal",
+            // 다른 플랫폼에서 온 것.
+            r"C:\tools\pal.exe",
         ] {
-            let e = 하나(경로);
-            assert_eq!(e.command, 경로, "경로에 무엇이 덧붙었다");
-            assert_eq!(e.args.as_deref(), Some(["hook".to_owned(), "SubagentStop".to_owned()].as_slice()));
+            let e = 경로로(경로);
+            assert_eq!(되읽는다(&e).as_deref(), Some(Path::new(경로)), "왕복이 안 됐다: {경로}");
         }
     }
 
@@ -580,14 +769,14 @@ mod tests {
     #[test]
     fn 설정에_실리는_모양이_exec_form_이다() {
         let mut map = Map::new();
-        건다(&mut map, &바람("/opt/pal 도구/pal"));
+        건다(&mut map, &바람());
         let 항목들 = 걸린(&map, "SubagentStop");
         assert_eq!(항목들.len(), 1);
         assert_eq!(
             항목들[0],
             json!({
                 "type": "command",
-                "command": "/opt/pal 도구/pal",
+                "command": "pal",
                 "args": ["hook", "SubagentStop"],
             })
         );
@@ -607,13 +796,13 @@ mod tests {
         assert!(apply(&mut map, &p).is_err(), "빈 인자 배열을 그대로 걸었다");
     }
 
-    /// ★ **우리가 만든 항목만 되읽힌다** — 되읽히지 않는 것은 우리 것이 아니다.
+    /// ★ **우리가 만든 항목이 되읽힌다** — 되읽히지 않는 것은 우리 것이 아니다.
     #[test]
     fn 우리가_만든_항목만_되읽힌다() {
-        for 경로 in ["/bin/pal", "/opt/pal 도구/pal", "/opt/it's/pal", "/한글/경로/pal"] {
-            let e = 하나(경로);
-            assert_eq!(되읽는다(&e).as_deref(), Some(Path::new(경로)), "왕복이 안 됐다: {경로}");
-        }
+        assert_eq!(
+            되읽는다(&하나()).as_deref(),
+            Some(Path::new(super::super::layout::COMMAND_NAME))
+        );
     }
 
     /// ★ **남이 심은 항목은 우리 형태가 아니다.** 되읽기가 그것을 가른다 —
@@ -655,7 +844,7 @@ mod tests {
     #[test]
     fn 옛_형태를_종류로_가른다() {
         assert!(옛_형태인가(&옛것("'/bin/pal' hook SubagentStop")));
-        assert!(!옛_형태인가(&하나("/bin/pal")));
+        assert!(!옛_형태인가(&하나()));
     }
 
     /// ★ **항목 동등성은 `command` 와 `args` 둘 다 본다.**
@@ -665,11 +854,14 @@ mod tests {
     #[test]
     fn 인자가_다르면_다른_등록이다() {
         let mut map = Map::new();
-        건다(&mut map, &바람("/bin/pal"));
+        건다(&mut map, &바람());
 
-        assert!(registered(Some(&map), &하나("/bin/pal")));
-        assert!(!registered(Some(&map), &인자("/bin/pal", &["hook", "SessionStart"])));
-        assert!(!registered(Some(&map), &옛것("/bin/pal")), "`args` 없는 항목을 같다고 읽었다");
+        let 이름 = super::super::layout::COMMAND_NAME;
+        assert!(registered(Some(&map), &하나()));
+        assert!(!registered(Some(&map), &인자(이름, &["hook", "SessionStart"])));
+        assert!(!registered(Some(&map), &옛것(이름)), "`args` 없는 항목을 같다고 읽었다");
+        // ★ **절대 경로는 이제 다른 등록이다** — 옛 설치본이 여기 걸리고 `update` 가 옮긴다.
+        assert!(!registered(Some(&map), &경로로("/bin/pal")), "옛 절대 경로를 같다고 읽었다");
     }
 
     /// ★ **`update` 가 옛 형태를 빼고 새 형태를 건다.** 안 빼면 같은 훅이 두 번 돌고,
@@ -680,7 +872,7 @@ mod tests {
         let 옛 = vec![옛것("'/bin/pal' hook SubagentStop")];
         건다(&mut map, &옛);
 
-        let 새 = 바람("/bin/pal");
+        let 새 = 바람();
         let p = plan(Some(&map), &옛, &새);
         assert_eq!(p.add.len(), 1, "새 형태를 안 걸려 한다");
         assert_eq!(p.remove.len(), 1, "옛 형태를 안 빼려 한다");
@@ -706,7 +898,7 @@ mod tests {
     #[test]
     fn 두_번째_계획은_비어_있다() {
         let mut map = Map::new();
-        let 바람 = 바람("/bin/pal");
+        let 바람 = 바람();
         let p = plan(Some(&map), &[], &바람);
         assert_eq!(p.add.len(), 1);
         apply(&mut map, &p).expect("적용");
@@ -715,14 +907,19 @@ mod tests {
         assert!(p2.is_empty(), "두 번째가 또 등록하려 한다");
     }
 
-    /// **실행 파일이 옮겨 가면 옛 등록을 뺀다** — 안 빼면 죽은 등록이 침묵으로 남는다.
+    /// **등록 문자열이 바뀌면 옛 등록을 뺀다** — 안 빼면 죽은 등록이 침묵으로 남는다.
+    ///
+    /// ★ 이제 그 변화는 「실행 파일이 옮겨 갔다」가 아니라 **「옛 설치본의 절대 경로에서
+    /// 이름으로 옮긴다」**다. 그것이 이 회차의 마이그레이션 경로이고, 여기가 그것을 잰다 —
+    /// 이 줄이 없으면 다른 기계에서 온 등록이 **그대로 남아 계속 침묵한다.**
     #[test]
     fn 옮겨_가면_옛_등록을_뺀다() {
         let mut map = Map::new();
-        let 옛 = 바람("/옛/pal");
+        // 남의 기계에서 온 절대 경로 등록.
+        let 옛 = vec![경로로("/옛/pal")];
         건다(&mut map, &옛);
 
-        let 새 = 바람("/새/pal");
+        let 새 = 바람();
         let p = plan(Some(&map), &옛, &새);
         assert_eq!(p.add.len(), 1);
         assert_eq!(p.remove.len(), 1);
@@ -742,7 +939,7 @@ mod tests {
             }
         });
         let mut map = 지도(&남의것);
-        let 바람 = 바람("/bin/pal");
+        let 바람 = 바람();
         건다(&mut map, &바람);
         assert_eq!(map["hooks"]["SubagentStop"].as_array().expect("배열").len(), 2);
 
@@ -753,7 +950,7 @@ mod tests {
     /// **우리가 만든 `hooks` 키는 비면 사라진다.** 사용자가 만든 것은 안 사라진다.
     #[test]
     fn 우리가_만든_훅_키만_사라진다() {
-        let 바람 = 바람("/bin/pal");
+        let 바람 = 바람();
 
         let mut 우리것 = Map::new();
         let 만들었나 = 건다(&mut 우리것, &바람);
@@ -773,7 +970,7 @@ mod tests {
     fn 모양이_다르면_멈춘다() {
         for 이상한 in [json!({"hooks": "문자열"}), json!({"hooks": {"SubagentStop": 1}})] {
             let mut map = 지도(&이상한);
-            let 바람 = 바람("/bin/pal");
+            let 바람 = 바람();
             let p = plan(Some(&map), &[], &바람);
             assert!(apply(&mut map, &p).is_err(), "{이상한} 에서 안 멈췄다");
         }
@@ -783,7 +980,7 @@ mod tests {
     #[test]
     fn 우리만_있던_사건_자리는_통째로_사라진다() {
         let mut map = Map::new();
-        let 바람 = 바람("/bin/pal");
+        let 바람 = 바람();
         let 만들었나 = 건다(&mut map, &바람);
         strip(&mut map, &바람, 만들었나);
         assert!(map.is_empty());
