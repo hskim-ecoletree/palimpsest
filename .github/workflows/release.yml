@@ -96,7 +96,34 @@ jobs:
           out="pal-${{ matrix.target }}"
           mkdir -p "$out"
           cp "target/${{ matrix.target }}/release/${{ matrix.bin }}" "$out/"
-          cp README.md LICENSE* "$out/" 2>/dev/null || true
+          # ⚠ **저장소에 `README.md` 도 `LICENSE` 도 없다**(실측 2026-08-17). 없는 것을
+          # 복사하는 줄을 두면 그 줄이 조용히 아무것도 안 하고, 그러면 아카이브에
+          # **바이너리 하나만** 들어간 채로 「README 를 넣었다」고 믿게 된다.
+          # 대신 **받는 사람이 지금 필요한 것**을 여기서 만든다.
+          # ⚠ here-doc 본문은 **이 블록의 들여쓰기에 딱 맞춘다.** YAML 이 블록 공통
+          # 들여쓰기를 떼므로 셸에는 왼쪽에 붙은 채로 간다 — `sed` 로 들여쓰기를 떼는
+          # 후처리는 안 쓴다(GNU 와 BSD 의 `-i` 문법이 갈려서 그 자체가 플랫폼 축이다).
+          cat > "$out/README.txt" <<TXT
+          pal — ${{ matrix.target }}
+          $(git rev-parse --short HEAD)
+
+          놓기
+            같이 든 실행 파일을 PATH 위의 아무 디렉터리에 두십시오.
+            ★ 이름을 바꾸지 마십시오 — 훅 등록이 PATH 의 이름 'pal' 을 가리킵니다.
+            유닉스에서는 실행 비트도 필요합니다:  chmod +x pal
+
+          쓰기
+            pal install            이 프로젝트에 놓는다
+            pal doctor --install   여섯 검사를 본다   <- 놓은 뒤 반드시 한 번
+            pal update             놓은 것을 갱신한다
+            pal uninstall          놓은 것을 걷어낸다 (매니페스트에 적힌 것만)
+
+          이 빌드가 요구하는 것
+            git 이 PATH 에 있어야 합니다. .gitignore 등재를 git 에게 물어서
+            판정하므로(텍스트로 안 읽습니다) 없으면 설치가 1단계에서 멈춥니다.
+
+          서명이 없습니다. 릴리스에 같이 올라온 SHA256SUMS 로 대조하십시오.
+          TXT
           # 유닉스는 tar.gz — **실행 비트를 지고 간다.** zip 은 그것을 못 지고,
           # 그러면 받는 사람의 `pal` 이 `PATH` 에 있어도 안 뜬다(`exe.rs` 의 그 축).
           if [ "${{ runner.os }}" = "Windows" ]; then
