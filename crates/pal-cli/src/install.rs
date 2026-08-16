@@ -102,6 +102,10 @@ impl Drop for Lock {
 /// 사용자 수정을 건너뛴 줄의 **정확한 낱말**. 게이트 ④ 가 보고에서 이것을 찾는다.
 const SKIPPED: &str = "사용자 수정 — 건너뜀";
 
+/// 제거가 사용자 수정을 **지우면서 말하는** 줄. 갱신은 지키고 제거는 지운다 —
+/// 그 차이를 사용자가 화면에서 봐야 한다.
+const 지운_사용자_수정: &str = "사용자 수정 — 지웠다";
+
 struct Report {
     lines: Vec<String>,
 }
@@ -664,12 +668,26 @@ pub fn uninstall(target: &Path) -> Result<()> {
     }
     for f in &m.files {
         let path = 자리.자리(&f.path)?;
-        if path.exists() {
-            std::fs::remove_file(path)
-                .with_context(|| format!("지우지 못했다: {}", path.display()))?;
-            report.say("지웠다", f.path.as_str());
-        } else {
+        if !path.exists() {
             report.say("이미 없음", f.path.as_str());
+            continue;
+        }
+        // ★ **말없이 지우지 않는다.** `update` 가 「사용자 수정 — 건너뜀」으로 지킨
+        // 파일을 제거는 sha 대조 없이 지웠다. 게이트 ④ 가 세운 *"밟지 않는 것과 말하지
+        // 않는 것은 다르다"* 를 여기에도 세운다.
+        //
+        // ⚠ **지우는 것 자체는 그대로다** — ⑥ 이 `S2 == S0` 을 요구하므로 남기면 그것이
+        // 반증이다. 여기서 더하는 것은 **말**이다. sha 로 대는 이유는 기록의 종류
+        // (`Origin`)만 보면 설치 뒤에 손댄 것을 놓치기 때문이다.
+        let 고쳤나 = std::fs::read(path)
+            .map(|b| sha256::hex(&b) != f.sha256)
+            .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+        std::fs::remove_file(path)
+            .with_context(|| format!("지우지 못했다: {}", path.display()))?;
+        if 고쳤나 {
+            report.say(지운_사용자_수정, f.path.as_str());
+        } else {
+            report.say("지웠다", f.path.as_str());
         }
     }
 

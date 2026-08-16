@@ -498,6 +498,42 @@ fn 리소스를_하나도_못_찾으면_실패한다() {
     assert!(stderr.contains("설치를 찾지 못했다"), "{stderr}");
 }
 
+/// ★ **제거가 사용자 수정 파일을 말없이 지우지 않는다.**
+///
+/// `update` 는 손으로 고친 파일을 「사용자 수정 — 건너뜀」으로 지키는데 `uninstall` 은
+/// 같은 파일을 sha 대조 없이 지웠다. 게이트 ④ 가 세운 *"밟지 않는 것과 말하지 않는
+/// 것은 다르다"* 를 **제거 쪽에도** 세운다.
+///
+/// ⚠ **지우는 것 자체는 그대로다** — ⑥ 이 `S2 == S0` 을 요구하므로 남기면 그것이 반증이다.
+/// 여기서 더하는 것은 **말**이다.
+#[test]
+fn 제거는_사용자_수정을_말하고_지운다() {
+    let root = 살고_있는_프로젝트("f-사용자수정");
+    let s0 = 스냅샷(&root);
+    성공(&root, &["install"]);
+
+    let 고친것 = root.join(".claude/commands/pal/touch.md");
+    std::fs::write(&고친것, "# 내가 고쳤다\n").expect("사람의 수정");
+
+    let report = 성공(&root, &["uninstall"]);
+    assert!(
+        report.lines().any(|l| l.contains("사용자 수정") && l.contains("touch.md")),
+        "고친 파일을 말없이 지웠다:\n{report}"
+    );
+    // **안 고친 것은 그 말이 안 붙는다** — 붙으면 이 시험은 아무것도 안 가른다.
+    assert!(
+        !report.lines().any(|l| l.contains("사용자 수정") && l.contains("INSTRUCTIONS.md")),
+        "안 고친 것에도 같은 말을 붙였다:\n{report}"
+    );
+
+    // 그리고 ⑥ 은 그대로 선다 — 제거 후가 설치 전이다.
+    let mut s2 = 스냅샷(&root);
+    let mut s0v = s0.clone();
+    s2.remove(".claude/settings.json");
+    s0v.remove(".claude/settings.json");
+    assert_eq!(s2, s0v, "제거 후가 설치 전과 다르다");
+}
+
 /// 블록이 **손으로 고쳐졌으면** 아무것도 안 지우고 거부한다.
 #[test]
 fn 손으로_고친_블록이_있으면_아무것도_안_지운다() {
