@@ -13,7 +13,7 @@
 |---|---|
 | **제약을 타입으로 옮길 수 있다** | 이 설계의 핵심 규칙 다섯(선택 필드 금지 / `evidence_refs` 빈 값 저장 거부 / 출처 필드 불변 / `clean` 부재 / 절단 기록 필수)이 전부 *"그런 값은 애초에 만들 수 없다"*로 표현될 때만 규율에서 벗어난다. Rust의 뉴타입·private 생성자·소유권·비-exhaustive 열거가 이것을 컴파일 타임으로 옮긴다. Go·TypeScript에서는 같은 것이 런타임 검사, 즉 규율로 남는다 |
 | **파서 생태계** | tree-sitter가 Rust 네이티브다. 문법은 C이지만 `cc` 크레이트로 정적 링크되며 별도 런타임이 없다. Go 바인딩은 CGO를 요구해 "단일 정적 바이너리"의 비용이 오른다 |
-| **단일 정적 바이너리** | `x86_64-unknown-linux-musl` / `aarch64-apple-darwin` 정적 링크. 사용자 머신에 런타임을 요구하지 않는다 — 설치 실패율이 곧 채택률이다 |
+| **단일 정적 바이너리** | 사용자 머신에 런타임을 요구하지 않는다 — 설치 실패율이 곧 채택률이다. 릴리스가 실제로 내는 타깃은 **넷**이다 — `x86_64-pc-windows-msvc` · `x86_64-unknown-linux-gnu` · `aarch64-apple-darwin` · `x86_64-apple-darwin`(`.github/workflows/release.yml:57-72` 의 matrix). ⚠ **리눅스는 `musl` 이 아니라 `gnu` 다** — `zstd-sys` 와 tree-sitter 문법들이 C 컴파일러를 타서 `musl-gcc` 축이 하나 더 늘기 때문이고, 그래서 리눅스 바이너리는 glibc 를 탄다(같은 워크플로 `:23` 이 그 까닭을 적는다) |
 | **git 접근이 순수 Rust로 가능** | `gix`(gitoxide)가 libgit2 없이 blob·트리·커밋을 읽는다 |
 
 ### 기각한 것
@@ -450,7 +450,7 @@ direction = "consume"          # observation.intake 만 "provide"
 | 항목 | 값 |
 |---|---|
 | MSRV | 최신 stable − 2 (edition 2024 요구) |
-| 타깃 | `aarch64-apple-darwin`(개발) · `x86_64-unknown-linux-musl`(배포) · **`x86_64-pc-windows-msvc`(지원 대상 · 아직 미검증 — 아래를 볼 것)** |
+| 타깃 | 개발 `aarch64-apple-darwin` · **배포는 넷** — `x86_64-pc-windows-msvc` · `x86_64-unknown-linux-gnu` · `aarch64-apple-darwin` · `x86_64-apple-darwin`(`.github/workflows/release.yml:57-72` 의 matrix 이고 릴리스 자산이 그 넷이다). ⚠ **`x86_64-unknown-linux-musl` 은 배포 타깃이 아니다** — 이 표가 그렇게 적고 있었고, 실제 산출과 어긋났다. **`x86_64-pc-windows-msvc`(지원 대상 · 아직 미검증 — 아래를 볼 것)** |
 | 바이너리 | `pal`(CLI, 1급) · `pal serve`(MCP 어댑터, P1). 실제로는 하나의 바이너리 + 서브커맨드 |
 | 설치 데이터 위치 | 대상 저장소의 `.palimpsest/` — `cache/`·`index.redb`·**`intent.redb`는 gitignore**(전부 파생), **`intent/*.jsonl`은 커밋**(정본, §2.2) |
 | 릴리스 | **P2까지 릴리스 아티팩트를 만들지 않는다.** 자기 저장소와 코퍼스에서만 돈다 |
