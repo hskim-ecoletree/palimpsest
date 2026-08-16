@@ -101,8 +101,15 @@ pub const IGNORE_MARKERS: Markers = Markers {
 /// `CLAUDE.md` 에 넣는 한 줄. **`@` 임포트가 실제로 파일을 끌어온다**(실측).
 pub const IMPORT_LINE: &str = "@.claude/pal/INSTRUCTIONS.md";
 
-/// 설정에 더하는 최상위 키 — **이 회차는 훅을 등록하지 않는다.**
+/// 설정에 더하는 최상위 키.
 pub const AGENT_KEY: &str = "agent";
 
 /// 그 키의 값.
 pub const AGENT_VALUE: &str = "pal-orchestrator";
+
+/// 등록할 훅 사건.
+///
+/// **아직 비어 있다** — 이 커밋은 배관을 세우는 구조적 변경이고, 여기를 채우는 것이
+/// 동작적 변경이다. 채울 때는 [`crate::hook::EVENTS`] 를 그대로 쓴다: **판정하는 목록과
+/// 등록하는 목록이 갈리면 「등록만 남고 판정이 사라진 훅」이 조용히 돈다.**
+pub const HOOK_EVENTS: &[&str] = &[];

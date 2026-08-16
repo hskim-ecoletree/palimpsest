@@ -50,11 +50,30 @@ pub struct BlockEntry {
     pub created: bool,
 }
 
+/// 설정 파일에 등록한 훅 하나.
+///
+/// **`command` 는 등록 문자열 원문이다.** 실측: 하네스의 중복 제거는 이 문자열의
+/// **완전 일치** 기준이라 공백 하나만 달라도 두 번 돈다 — 그래서 제거도 완전 일치로만
+/// 하고, 그러려면 우리가 넣은 바이트를 그대로 지고 있어야 한다(블록의 `inserted` 와
+/// 같은 판단).
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct HookEntry {
+    pub event: String,
+    pub command: String,
+}
+
 /// 설정 파일에 더한 키들.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SettingsEntry {
     pub path: String,
     pub added_keys: Vec<String>,
+    /// 우리가 등록한 훅. **`#[serde(default)]` 이라 옛 매니페스트도 읽힌다** — 못 읽으면
+    /// *"무엇을 되돌려야 하는가"* 의 기록이 통째로 사라진다.
+    #[serde(default)]
+    pub hooks: Vec<HookEntry>,
+    /// `hooks` 최상위 키를 **우리가** 만들었는가. 사용자가 만든 것은 비어도 안 지운다.
+    #[serde(default)]
+    pub hooks_key_created: bool,
     pub created: bool,
 }
 

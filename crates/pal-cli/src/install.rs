@@ -23,6 +23,7 @@
 
 mod blocks;
 mod doctor;
+mod hooks;
 mod ignore;
 mod layout;
 mod manifest;
@@ -38,8 +39,8 @@ use serde_json::{Value, json};
 pub use doctor::{Check, checks, print};
 
 use layout::{
-    AGENT_KEY, AGENT_VALUE, DERIVED, DIRS, IGNORE_FILE, IGNORE_MARKERS, IMPORT_LINE, MANIFEST,
-    MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD, ROOT_INSTRUCTION_FILE, SETTINGS,
+    AGENT_KEY, AGENT_VALUE, DERIVED, DIRS, HOOK_EVENTS, IGNORE_FILE, IGNORE_MARKERS, IMPORT_LINE,
+    MANIFEST, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD, ROOT_INSTRUCTION_FILE, SETTINGS,
 };
 use manifest::{BlockEntry, FileEntry, Manifest, Roots, SettingsEntry};
 
@@ -152,7 +153,7 @@ pub fn install(target: &Path) -> Result<()> {
     let mut report = Report::new();
     디렉터리_세우기(&target, &mut created_dirs)?;
     let files = 파일_놓기(&target, &mut report)?;
-    let settings_entry = 설정_병합(&target, &settings_path, &read, 이전.as_ref(), &mut report)?;
+    let settings_entry = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
     let blocks = 블록_넣기(&target, 이전.as_ref(), &mut report)?;
 
     let m = Manifest {
@@ -224,7 +225,6 @@ fn 파일_놓기(target: &Path, report: &mut Report) -> Result<Vec<FileEntry>> {
 }
 
 fn 설정_병합(
-    target: &Path,
     path: &Path,
     read: &settings::Read,
     이전: Option<&Manifest>,
@@ -233,10 +233,29 @@ fn 설정_병합(
     let mut want: BTreeMap<String, Value> = BTreeMap::new();
     want.insert(AGENT_KEY.to_owned(), json!(AGENT_VALUE));
 
-    let merged = settings::merge(path, read, &want)?;
     let 옛것 = 이전.and_then(|m| m.settings.clone());
+    // **적어 둔 것과 바라는 것을 대서 계획을 낸다.** 실행 파일이 옮겨 갔으면 옛 등록이
+    // 여기서 빠진다 — 안 빼면 죽은 등록이 남고 그 실패는 침묵한다.
+    let 적힌_훅 = 옛것.as_ref().map(|e| e.hooks.clone()).unwrap_or_default();
+    let 바라는_훅 = hooks::desired(HOOK_EVENTS)?;
+    let plan = hooks::plan(read.current.as_ref(), &적힌_훅, &바라는_훅);
+    for entry in &plan.remove {
+        report.say("훅 뺌", &format!("{}  ·  {}", entry.event, entry.command));
+    }
+    for entry in &plan.add {
+        report.say("훅 등록", &format!("{}  ·  {}", entry.event, entry.command));
+    }
+    if plan.is_empty() && !바라는_훅.is_empty() {
+        report.say("이미 등록됨", &format!("훅 {}개", 바라는_훅.len()));
+    }
+
+    let merged = settings::merge(path, read, &want, &plan)?;
 
     // **이미 우리가 더해 둔 것이면 그 기록을 잃지 않는다** — 잃으면 제거가 못 되돌린다.
+    //
+    // ⚠ 훅은 **바라는 것 전부**를 적는다(더한 것만이 아니다). 사용자가 우연히 똑같은
+    // 절대 경로 문자열을 손으로 걸어 뒀다면 제거가 그것을 걷는데, 그 문자열은 이
+    // 설치본의 절대 경로 + 우리 인자 형태라 실질적으로 우리 것이다.
     let entry = match 옛것 {
         Some(mut old) => {
             for key in merged.added_keys {
@@ -244,24 +263,29 @@ fn 설정_병합(
                     old.added_keys.push(key);
                 }
             }
+            old.hooks = 바라는_훅;
+            old.hooks_key_created |= merged.hooks_key_created;
             Some(old)
         }
-        None if merged.added_keys.is_empty() => None,
+        None if merged.added_keys.is_empty() && 바라는_훅.is_empty() => None,
         None => Some(SettingsEntry {
             path: SETTINGS.to_owned(),
             added_keys: merged.added_keys,
+            hooks: 바라는_훅,
+            hooks_key_created: merged.hooks_key_created,
             created: merged.created,
         }),
     };
 
     match &entry {
         Some(e) if merged.wrote => {
-            report.say("병합", &format!("{SETTINGS}  (더한 키: {})", e.added_keys.join(" · ")));
+            let 키 =
+                if e.added_keys.is_empty() { "없음".to_owned() } else { e.added_keys.join(" · ") };
+            report.say("병합", &format!("{SETTINGS}  (더한 키: {키})"));
         }
         Some(_) => report.say("이미 병합됨", SETTINGS),
         None => report.say("건드리지 않음", &format!("{SETTINGS}  (이미 자기 값이 있다)")),
     }
-    let _ = target;
     Ok(entry)
 }
 
@@ -489,8 +513,14 @@ pub fn uninstall(target: &Path) -> Result<()> {
         }
     }
     if let Some(s) = &m.settings {
-        if settings::unmerge(&target.join(&s.path), &s.added_keys, s.created)? {
-            report.say("키 뺌", &format!("{}  ({})", s.path, s.added_keys.join(" · ")));
+        if settings::unmerge(&target.join(&s.path), s)? {
+            let 뺀것 = s
+                .added_keys
+                .iter()
+                .cloned()
+                .chain(s.hooks.iter().map(|h| format!("훅 {}", h.event)))
+                .collect::<Vec<_>>();
+            report.say("키 뺌", &format!("{}  ({})", s.path, 뺀것.join(" · ")));
         } else {
             report.say("이미 없음", &s.path);
         }

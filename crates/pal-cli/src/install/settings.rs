@@ -11,10 +11,10 @@
 //! 1. **읽는다.** 못 읽으면 **어느 파일의 몇 번째 줄이 왜** 안 읽혔는지 적고 멈춘다.
 //! 2. 그 다음에야 쓴다.
 //!
-//! # 이 회차는 훅을 등록하지 않는다
+//! # 두 가지를 더한다 — 최상위 키와 훅 등록
 //!
-//! 훅 규약 측정이 아직 서지 않았다(`[f24]` ⑧ 이 *"형태를 합격선에 안 박는다"* 로
-//! 남겨 둔 자리). 지금 다루는 것은 **최상위 `agent` 키 하나**다.
+//! 최상위 키는 **없는 것만** 더한다. 훅 구역은 모양이 달라서 [`super::hooks`] 가
+//! 따로 진다 — 거기는 **남의 등록이 함께 사는 배열**이고, 더하고 빼는 규칙이 키와 다르다.
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -22,7 +22,8 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use serde_json::{Map, Value};
 
-use super::blocks;
+use super::manifest::SettingsEntry;
+use super::{blocks, hooks};
 
 /// 병합하기 **전에** 읽어 둔 것. 이것을 만드는 데 실패하면 아무것도 안 쓴다.
 pub struct Read {
@@ -80,17 +81,25 @@ fn 종류(v: &Value) -> &'static str {
 pub struct Merged {
     /// 우리가 **더한** 키. 없던 것만 든다 — 있던 것은 안 건드린다.
     pub added_keys: Vec<String>,
+    /// `hooks` 최상위 키를 우리가 만들었는가.
+    pub hooks_key_created: bool,
     /// 파일을 우리가 만들었는가.
     pub created: bool,
     /// 실제로 쓰기가 일어났는가. 안 일어나면 바이트가 그대로다(**멱등**).
     pub wrote: bool,
 }
 
-/// 없는 키만 더한다. **있던 키·값은 하나도 안 건드린다**(`[f24]` ① 의 부분집합 검사).
+/// 없는 키만 더하고 훅 계획을 적용한다. **있던 키·값은 하나도 안 건드린다**
+/// (`[f24]` ① 의 부분집합 검사).
 ///
 /// # Errors
-/// 쓰지 못하면.
-pub fn merge(path: &Path, read: &Read, want: &BTreeMap<String, Value>) -> Result<Merged> {
+/// 훅 구역의 모양이 다르거나 쓰지 못하면.
+pub fn merge(
+    path: &Path,
+    read: &Read,
+    want: &BTreeMap<String, Value>,
+    plan: &hooks::Plan,
+) -> Result<Merged> {
     let mut map = read.current.clone().unwrap_or_default();
     let mut added = Vec::new();
     for (key, value) in want {
@@ -99,9 +108,12 @@ pub fn merge(path: &Path, read: &Read, want: &BTreeMap<String, Value>) -> Result
             added.push(key.clone());
         }
     }
+    let hooks_key_created = hooks::apply(&mut map, plan)?;
 
-    if added.is_empty() && read.current.is_some() {
-        return Ok(Merged { added_keys: added, created: false, wrote: false });
+    // **더할 것도 뺄 것도 없으면 한 바이트도 안 쓴다** — 두 번째 설치가 첫 번째와 같은
+    // 상태를 내야 한다(`[f24]` ① 의 멱등).
+    if added.is_empty() && plan.is_empty() && read.current.is_some() {
+        return Ok(Merged { added_keys: added, hooks_key_created, created: false, wrote: false });
     }
 
     let mut text = serde_json::to_string_pretty(&Value::Object(map))
@@ -116,24 +128,28 @@ pub fn merge(path: &Path, read: &Read, want: &BTreeMap<String, Value>) -> Result
         // **제자리로 쓴다** — 모드·심링크·하드링크를 살린다.
         blocks::write_in_place(path, text.as_bytes())?;
     }
-    Ok(Merged { added_keys: added, created, wrote: true })
+    Ok(Merged { added_keys: added, hooks_key_created, created, wrote: true })
 }
 
-/// 우리가 더한 키만 뺀다.
+/// 우리가 더한 키와 우리가 등록한 훅만 뺀다.
+///
+/// **손잡이를 매니페스트 항목으로 든다** — 위치 인자 넷 중 둘이 `bool` 이면 부르는
+/// 자리에서 어느 것이 무엇인지 안 보인다.
 ///
 /// # Errors
 /// 못 읽거나(파싱 실패 포함) 못 쓰면.
-pub fn unmerge(path: &Path, added_keys: &[String], created: bool) -> Result<bool> {
+pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<bool> {
     if !path.exists() {
         return Ok(false);
     }
     let read = read(path)?;
     let Some(mut map) = read.current else { return Ok(false) };
-    for key in added_keys {
+    for key in &entry.added_keys {
         map.remove(key);
     }
+    hooks::strip(&mut map, &entry.hooks, entry.hooks_key_created);
 
-    if created && map.is_empty() {
+    if entry.created && map.is_empty() {
         std::fs::remove_file(path)
             .with_context(|| format!("지우지 못했다: {}", path.display()))?;
         return Ok(true);
@@ -147,7 +163,8 @@ pub fn unmerge(path: &Path, added_keys: &[String], created: bool) -> Result<bool
 
 #[cfg(test)]
 mod tests {
-    use super::{merge, read, unmerge};
+    use super::{Merged, Read, SettingsEntry, hooks, merge, read, unmerge};
+    use crate::install::manifest::HookEntry;
     use serde_json::{Value, json};
     use std::collections::BTreeMap;
 
@@ -162,6 +179,28 @@ mod tests {
         let mut want = BTreeMap::new();
         want.insert("agent".to_owned(), json!("pal-orchestrator"));
         want
+    }
+
+    fn 훅() -> Vec<HookEntry> {
+        vec![HookEntry {
+            event: "SubagentStop".to_owned(),
+            command: "'/bin/pal' hook SubagentStop".to_owned(),
+        }]
+    }
+
+    fn 계획(r: &Read, 훅: &[HookEntry]) -> hooks::Plan {
+        hooks::plan(r.current.as_ref(), &[], 훅)
+    }
+
+    /// 매니페스트가 지고 갈 항목 — 되돌리기가 이것 하나만 본다.
+    fn 항목(m: &Merged, 훅: &[HookEntry]) -> SettingsEntry {
+        SettingsEntry {
+            path: "settings.json".to_owned(),
+            added_keys: m.added_keys.clone(),
+            hooks: 훅.to_vec(),
+            hooks_key_created: m.hooks_key_created,
+            created: m.created,
+        }
     }
 
     /// **깨진 JSON 은 읽기에서 멈춘다** — 쓰기 경로에 못 간다.
@@ -196,7 +235,7 @@ mod tests {
         std::fs::write(&path, serde_json::to_string_pretty(&원본).expect("직렬화")).expect("쓰기");
 
         let r = read(&path).expect("읽기");
-        let m = merge(&path, &r, &바람()).expect("병합");
+        let m = merge(&path, &r, &바람(), &hooks::Plan::default()).expect("병합");
         assert!(m.added_keys.is_empty(), "이미 있는 키를 더했다고 적었다");
         assert!(!m.wrote, "안 더했는데 썼다");
 
@@ -204,6 +243,7 @@ mod tests {
         assert_eq!(뒤, 원본, "사용자 키·값이 달라졌다");
     }
 
+    /// **키도 훅도 왕복하면 사용자 값이 그대로 돌아온다.**
     #[test]
     fn 없던_키만_더하고_왕복하면_값이_돌아온다() {
         let dir = 방("왕복");
@@ -212,10 +252,14 @@ mod tests {
         std::fs::write(&path, serde_json::to_string_pretty(&원본).expect("직렬화")).expect("쓰기");
 
         let r = read(&path).expect("읽기");
-        let m = merge(&path, &r, &바람()).expect("병합");
+        let m = merge(&path, &r, &바람(), &계획(&r, &훅())).expect("병합");
         assert_eq!(m.added_keys, vec!["agent".to_owned()]);
+        assert!(m.hooks_key_created, "훅 구역을 우리가 만들었는데 안 적었다");
 
-        unmerge(&path, &m.added_keys, m.created).expect("되돌리기");
+        let 중간: Value = serde_json::from_slice(&std::fs::read(&path).expect("읽기")).expect("JSON");
+        assert!(중간["hooks"]["SubagentStop"].is_array(), "훅이 안 걸렸다: {중간}");
+
+        unmerge(&path, &항목(&m, &훅())).expect("되돌리기");
         let 뒤: Value = serde_json::from_slice(&std::fs::read(&path).expect("읽기")).expect("JSON");
         assert_eq!(뒤, 원본);
     }
@@ -225,9 +269,9 @@ mod tests {
         let dir = 방("생성");
         let path = dir.join("settings.json");
         let r = read(&path).expect("읽기");
-        let m = merge(&path, &r, &바람()).expect("병합");
+        let m = merge(&path, &r, &바람(), &계획(&r, &훅())).expect("병합");
         assert!(m.created);
-        unmerge(&path, &m.added_keys, m.created).expect("되돌리기");
+        unmerge(&path, &항목(&m, &훅())).expect("되돌리기");
         assert!(!path.exists());
     }
 }
