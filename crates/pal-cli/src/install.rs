@@ -42,7 +42,7 @@ pub use doctor::{Check, checks, print};
 use inside::{Rel, Root};
 use layout::{
     AGENT_KEY, AGENT_VALUE, CLAUDE_DIR, DERIVED, DIRS, HOOK_EVENTS, IGNORE_FILE, IGNORE_MARKERS,
-    IMPORT_LINE, LOCK, MANIFEST, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD,
+    IMPORT_LINE, LOCK, MANIFEST, MANIFEST_HOME, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD,
     ROOT_INSTRUCTION_FILE, SETTINGS,
 };
 use manifest::{BlockEntry, FileEntry, Manifest, Origin, Roots, SettingsEntry, 자리들};
@@ -168,8 +168,12 @@ pub fn install(target: &Path) -> Result<()> {
     }
 
     // ── 3단계 · 적용. **기록이 걸음마다 앞선다** ────────────────────────────
+    //
+    // ★ **기록이 살 자리를 먼저 세우고 그 다음 아무것도 안 한다.** 디렉터리 다섯을 다
+    // 세우고 적으면 그 사이에 죽었을 때 **기록 없는 빈 디렉터리 다섯**이 남는다.
+    // 여기서 남을 수 있는 것은 매니페스트의 집 둘(`.claude/`·`.claude/pal/`)뿐이다.
     let mut report = Report::new();
-    디렉터리_세우기(&root, &mut created_dirs)?;
+    집을_세운다(&root, &mut created_dirs)?;
 
     // 옛 기록을 지고 시작한다 — 다시 설치하다 죽어도 **먼젓번 것을 되돌릴 수 있어야**
     // 한다. 새 설치면 비어 있고, 한 걸음마다 찬다.
@@ -190,6 +194,7 @@ pub fn install(target: &Path) -> Result<()> {
     };
     기록.적는다()?;
 
+    디렉터리_세우기(&root, &mut 기록)?;
     파일_놓기(&root, 이전.as_ref(), &mut 기록, &mut report)?;
     기록.m.settings = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
     기록.적는다()?;
@@ -252,8 +257,10 @@ fn 쓸_수_있는가(path: &Path) -> Result<()> {
     Ok(())
 }
 
-fn 디렉터리_세우기(root: &Root, created: &mut Vec<Rel>) -> Result<()> {
-    for dir in DIRS {
+/// **기록의 집** — 여기가 서기 전에는 적을 자리가 없다. 그래서 이 둘만은 적기 전에
+/// 만들고, 그 창(디렉터리 둘)이 이 설계가 못 덮는 유일한 잔해다.
+fn 집을_세운다(root: &Root, created: &mut Vec<Rel>) -> Result<()> {
+    for dir in MANIFEST_HOME {
         let rel = Rel::new(dir);
         let path = root.join(&rel)?;
         if path.is_dir() {
@@ -264,6 +271,28 @@ fn 디렉터리_세우기(root: &Root, created: &mut Vec<Rel>) -> Result<()> {
         if !created.contains(&rel) {
             created.push(rel);
         }
+    }
+    Ok(())
+}
+
+/// 나머지 디렉터리 — ★ **적고 나서 만든다.**
+///
+/// 만들고 적는 사이에 죽으면 그 디렉터리는 **기록에 없고** 제거가 못 걷어낸다.
+/// 반대 순서의 사고(적었는데 못 만듦)는 제거가 `is_dir()` 로 걸러서 무해하다.
+/// **두 사고의 값이 다르므로 순서가 정해진다.**
+fn 디렉터리_세우기(root: &Root, 기록: &mut Journal) -> Result<()> {
+    for dir in DIRS {
+        let rel = Rel::new(dir);
+        let path = root.join(&rel)?;
+        if path.is_dir() {
+            continue;
+        }
+        if !기록.m.created_dirs.contains(&rel) {
+            기록.m.created_dirs.push(rel);
+            기록.적는다()?;
+        }
+        std::fs::create_dir_all(&path)
+            .with_context(|| format!("만들지 못했다: {}", path.display()))?;
     }
     Ok(())
 }
@@ -620,7 +649,14 @@ pub fn uninstall(target: &Path) -> Result<()> {
             찾은_파일 += 1;
         }
     }
-    if 찾은_파일 == 0 {
+    // ⑥-b — **지울 게 없었으니 성공**은 거짓말이다.
+    //
+    // ⚠ **적은 것이 0 개인 자리는 이 문장의 모집단이 아니다**(ADR-0002 · 「모집단이 0 인
+    // 자리는 통과로도 반증으로도 안 센다」). 그때 매니페스트는 *"놓았다"* 고 주장한 적이
+    // 없다 — 기록의 집만 세우고 죽은 부분 설치가 바로 그 모양이고, 여기서 거부하면
+    // 사용자에게 **잔해만 남고 걷어낼 길이 없다.** 적은 것이 하나라도 있는데 하나도
+    // 못 찾은 자리는 그대로 실패다.
+    if !m.files.is_empty() && 찾은_파일 == 0 {
         bail!(
             "매니페스트가 적은 리소스 {}개를 **하나도 못 찾았다** — 지울 게 없었으니 \
              성공이라고 적지 않는다. 사람이 봐야 한다",

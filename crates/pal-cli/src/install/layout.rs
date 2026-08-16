@@ -79,6 +79,12 @@ pub const OWNED_FILES: &[&str] = &[".claude/agents/pal-orchestrator.md"];
 pub const DIRS: &[&str] =
     &[".claude", ".claude/pal", ".claude/agents", ".claude/commands", ".claude/commands/pal"];
 
+/// **매니페스트가 사는 집** — 나머지보다 먼저 세운다.
+///
+/// 기록이 살 자리가 없으면 기록을 못 쓰고, 그 사이에 죽으면 **기록 없는 잔해**가
+/// 남는다. 그 창을 이 둘로 줄인다(`[f24]` ② · 부분 설치).
+pub const MANIFEST_HOME: &[&str] = &[".claude", ".claude/pal"];
+
 /// `.gitignore` 에 등재할 파생 경로.
 ///
 /// stack §7 이 가른 셋이다 — `cache/`·`index.redb`·`intent.redb` 는 파생이고

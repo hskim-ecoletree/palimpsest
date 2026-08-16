@@ -975,6 +975,35 @@ fn 쓸_수_없는_자리는_미리_끊는다() {
     }
 }
 
+/// ★ **아무것도 아직 못 놓은 자리에서 죽어도 걷어낼 수 있다.**
+///
+/// 기록이 살 집(`.claude/` · `.claude/pal/`)을 세운 직후가 가장 이른 실패 지점이다.
+/// 그때 매니페스트는 `files: []` 이고, ⑥-b 의 *"하나도 못 찾았다"* 를 **적은 것이 0
+/// 개인 자리에까지** 적용하면 제거가 거부되어 사용자에게 잔해만 남는다.
+///
+/// ⚠ **⑥-b 는 안 낮춘다.** 매니페스트가 리소스를 **적었는데** 하나도 못 찾은 자리는
+/// 그대로 rc≠0 이다 — `리소스를_하나도_못_찾으면_실패한다` 가 그것을 계속 잰다.
+#[test]
+fn 아직_아무것도_못_놓은_잔해도_걷어낸다() {
+    let root = 빈_프로젝트("h-이른죽음");
+    let s0 = 스냅샷(&root);
+    // `.claude/agents` 가 **파일**이면 디렉터리 세우기가 깨진다 — 권한 검사로는 못 보는
+    // 자리이고, 그때는 기록의 집만 서 있고 놓인 것이 하나도 없다.
+    std::fs::create_dir_all(root.join(".claude")).expect(".claude");
+    std::fs::write(root.join(".claude/agents"), "걸림돌\n").expect("걸림돌");
+
+    실패(&root, &["install"]);
+    let m = 값(&root.join(".claude/pal/manifest.json"));
+    assert!(m["files"].as_array().expect("files").is_empty(), "이 시험이 재려는 상태가 아니다: {m}");
+
+    std::fs::remove_file(root.join(".claude/agents")).expect("걸림돌 치우기");
+    성공(&root, &["uninstall"]);
+    assert_eq!(스냅샷(&root), s0, "제거 후가 설치 전과 다르다");
+    // **우리가 만든 것만 지운다** — `.claude/` 는 이 시험이 걸림돌을 놓으려고 먼저
+    // 만들었으니 남는 것이 맞다. 우리가 만든 `.claude/pal/` 은 사라져야 한다.
+    assert!(!root.join(".claude/pal").exists(), "우리가 만든 빈 디렉터리가 남았다");
+}
+
 /// ★ **미리 못 보는 자리에서 실패해도 `uninstall` 이 걷어낼 수 있다**(기록 (b)).
 ///
 /// `CLAUDE.md` 가 **디렉터리**면 블록 단계에서 읽기가 깨진다 — 권한 검사로는 못 보는
