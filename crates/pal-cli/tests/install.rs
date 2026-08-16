@@ -910,6 +910,250 @@ fn 파일_심링크(대상: &str, 링크: &Path) {
     });
 }
 
+/// ★ **파일시스템이 답을 다르게 내는 자리에서 우리는 같은 답을 낸다** — `§3-C ①`.
+///
+/// # 이것이 다른 플랫폼 분기와 다른 점
+///
+/// 이 저장소의 다른 분기는 전부 **API 의 차이**였다(모드 비트·확장자·링크 수).
+/// 여기는 **같은 코드가 같은 호출을 하는데 파일시스템이 다른 답을 낸다**:
+///
+/// | `Claude.md` 가 있는데 `CLAUDE.md` 를 놓으면 | |
+/// |---|---|
+/// | Windows(NTFS) · macOS(APFS 기본) | **같은 파일** — 우리 블록이 `Claude.md` 에 들어간다 |
+/// | 리눅스(ext4) | **다른 파일** — `CLAUDE.md` 가 새로 생긴다 |
+///
+/// 둘 다 그 플랫폼에서는 맞고, 그래서 더 나쁘다 — **공유되는 저장소**가 clone 한
+/// 곳에 따라 다르게 선다. 그래서 [`install::casing`] 이 **양쪽에서 멈춘다.**
+///
+/// 이 시험은 `cfg` 가 없다. **rc·화면·트리가 세 플랫폼에서 같아야** 통과한다.
+#[test]
+fn 대소문자만_다른_이름이_있으면_어디서나_멈춘다() {
+    for (tag, 우리것, 남의것) in [
+        ("지시", "CLAUDE.md", "Claude.md"),
+        ("무시목록", ".gitignore", ".GitIgnore"),
+    ] {
+        let root = 빈_프로젝트(&format!("g-대소문자-{tag}"));
+        std::fs::write(root.join(남의것), "남이 쓴 것\n").expect("남의 것");
+        let 전 = 스냅샷(&root);
+
+        let stderr = 실패(&root, &["install"]);
+
+        // ① **까닭을 적었다** — 그리고 두 이름을 다 적었다. 사람이 할 일이 정해진다.
+        assert!(
+            stderr.contains("대소문자") && stderr.contains(남의것) && stderr.contains(우리것),
+            "{tag}: 무엇이 부딪혔는지 안 적었다 — {stderr}"
+        );
+        // ② **아무것도 안 남았다** — 1단계에서 끊었으므로 되감기 (a) 다.
+        assert_eq!(스냅샷(&root), 전, "{tag}: 부분 설치가 남았다");
+        // ③ 남의 파일은 한 바이트도 안 바뀌었다.
+        assert_eq!(
+            std::fs::read_to_string(root.join(남의것)).expect("읽기"),
+            "남이 쓴 것\n",
+            "{tag}: 남의 파일이 바뀌었다"
+        );
+    }
+}
+
+/// ★ **`MAX_PATH` 를 넘는 자리에서 라이프사이클 전체가 돈다** — `§3-C ②`.
+///
+/// # 왜 단위 시험으로 부족한가
+///
+/// [`install::winpath`] 에는 *"벗긴 결과가 260 안에 들어올 때만 `\\?\` 를 벗긴다"* 를
+/// 재는 단위 시험이 있다. 그것은 **문자열 함수 하나**를 잰다. 여기서 더하는 것은
+/// **그 길이의 실제 파일 위에서 네 명령이 전부 서는가**다 — 매니페스트 왕복 ·
+/// sha256 대조 · 블록 넣고 빼기 · 잠금이 전부 그 경로를 지난다.
+///
+/// # ★ 실측이 fixture 의 모양을 정했다 (2026-08-17 · Windows · `LongPathsEnabled=0`)
+///
+/// | | 365자 경로에서 |
+/// |---|---|
+/// | `std::fs::create_dir_all`·`read`·`write` | **선다.** Rust std 가 절대 경로에 `\\?\` 를 붙인다 |
+/// | `pal install --target <긴 경로>` | **rc=0.** 라이프사이클이 돈다 |
+/// | `Command::current_dir(<긴 경로>)` | **안 선다** — `Os { code: 267, NotADirectory }` |
+/// | `git -C <긴 경로> init` | **안 선다** — `fatal: … Filename too long` (`core.longpaths=true` 를 줘도 같다) |
+///
+/// 아래 둘은 **우리 코드 밖의 사실**이다. 프로세스의 작업 디렉터리에는 긴 경로 지원이
+/// 안 붙고(`CreateProcess` 의 `lpCurrentDirectory` 는 `MAX_PATH` 로 잘린다), `git` 은
+/// 그 자리로 `chdir` 부터 한다. 그래서 **Windows 에서 `MAX_PATH` 를 넘는 자리에 git
+/// 저장소를 둘 수 없다** — 「우리가 아직 안 했다」가 아니라 그 플랫폼의 사실이다.
+///
+/// 그러니 fixture 는 그 사실에 맞춘다: **git 없는 프로젝트**를 그 깊이에 두고
+/// `--target`·`--repo` 로 몬다. 그러면 세 플랫폼이 **같은 모양**을 잰다 — 리눅스에서
+/// `git init` 이 되더라도 여기서는 안 쓴다. 되는 쪽에 맞추면 fixture 가 갈리고,
+/// 그러면 이 시험이 플랫폼마다 다른 것을 재게 된다.
+///
+/// ⚠ `.gitignore` 등재는 그래서 이 시험의 모집단 밖이다 — git 프로젝트가 아니면
+/// 설치가 그 걸음을 **건너뛴다고 말하고** 지나간다. 그 경로는 다른 시험이 잰다.
+#[test]
+fn 긴_경로에서_라이프사이클이_전부_선다() {
+    let base = 방("g-긴경로");
+    // 40 자 × 8 겹 — `MAX_PATH`(260) 를 확실히 넘긴다. 이름 하나는 짧게 둔다:
+    // 255 를 넘으면 그것은 다른 축(`ENAMETOOLONG`)이고 여기서 재려는 것이 아니다.
+    let mut root = base.clone();
+    for i in 0..8 {
+        root = root.join(format!("깊이{i}-0123456789012345678901234567890"));
+    }
+    std::fs::create_dir_all(&root).expect("긴 경로 방");
+    let 길이 = root.display().to_string().len();
+    assert!(길이 > 260, "fixture 가 안 섰다 — 경로가 {길이}자뿐이다: {}", root.display());
+
+    std::fs::write(root.join("README.md"), "hello\n").expect("README");
+    let 원본 = "# 내 규칙\n지키자\n";
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("CLAUDE.md");
+
+    // ★ **`current_dir` 을 안 쓴다** — 위 실측이 그 문을 닫았다.
+    let 대상 = |args: &[&str]| -> Output {
+        let mut cmd = Command::new(PAL);
+        cmd.args(args).arg(&root).env("PATH", path_앞에(&pal_dir()));
+        cmd.output().expect("pal 을 못 돌렸다")
+    };
+    let 대상_성공 = |args: &[&str]| -> String {
+        let out = 대상(args);
+        assert!(
+            out.status.success(),
+            "pal {args:?} <긴 경로>\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).into_owned()
+    };
+
+    대상_성공(&["install", "--target"]);
+
+    // ★ **진단이 이 자리를 실제로 본다** — 「설치가 rc=0 이었다」로는 부족하다.
+    let out = 대상(&["doctor", "--install", "--json", "--repo"]);
+    let c: serde_json::Value =
+        serde_json::from_slice(&out.stdout).expect("긴 경로에서 진단이 JSON 을 안 냈다");
+    let 검사들 = c.as_array().expect("배열");
+    assert_eq!(검사들.len(), 6, "검사가 여섯이 아니다: {c}");
+    // 검사 5(`.gitignore` 등재)는 git 프로젝트가 아니라 여기서 모집단 밖이다 —
+    // **그 사실이 `residual` 로 나와야 하고 `failed` 면 안 된다.**
+    for 검사 in 검사들 {
+        assert_ne!(
+            검사["outcome"], "failed",
+            "긴 경로에서 검사 {}이 빨갛다: {검사}",
+            검사["number"]
+        );
+    }
+
+    대상_성공(&["update", "--target"]);
+    대상_성공(&["uninstall", "--target"]);
+
+    // ★ **왕복이 바이트 동일하다.** 긴 경로가 되쓰기를 흔들지 않는다.
+    assert_eq!(
+        std::fs::read_to_string(root.join("CLAUDE.md")).expect("읽기"),
+        원본,
+        "왕복이 원본과 다르다"
+    );
+    // ★ **아무것도 안 남았다.**
+    assert!(!root.join(".claude/pal").exists(), "긴 경로에서 잔해가 남았다");
+
+    let _ = std::fs::remove_dir_all(&base);
+}
+
+/// ★ **`\\?\` 가 화면에 안 샌다 — 라이프사이클 전체와 오류 경로에서.**
+///
+/// # 왜 단위 시험도 「정상 설치 화면」도 부족한가
+///
+/// [`install::winpath`] 의 단위 시험은 **함수 하나**를 잰다. 그리고 정상 설치 화면은
+/// 뿌리를 `Root` 의 `Display` 로 내므로 **그 한 줄만 보면 언제나 깨끗하다.**
+///
+/// 실측(2026-08-17)이 그 사이의 구멍을 냈다 — `install/hooks.rs` 의 아홉 자리가
+/// `PathBuf::display()` 를 직접 불렀고, 그래서 이 줄이 나왔다:
+///
+/// ```text
+/// ⚠ 훅이 아직 안 뜬다   … `\\?\C:\dev\projects\palimpsest\target\debug\pal.exe` 을 `PATH` 에 넣으십시오
+/// ```
+///
+/// **50자짜리 경로다** — 벗겨야 하는 길이인데 안 벗겨졌다. 그리고 이 저장소는 같은
+/// 종류의 누출을 이미 한 번 고쳤다(`78b27dc`). 한 번 고치고 다시 난다는 것은
+/// **그 자리에 문이 없다**는 뜻이다. 그래서 문을 여기 세운다.
+///
+/// ⚠ **유닉스에서는 이 시험이 공짜로 통과한다** — 거기엔 그 접두사가 없다. 그래도
+/// `cfg` 를 안 단다: 공짜로 통과하는 것과 **안 재는 것**은 다르고, 여기서 재는 문장
+/// (*"우리가 내는 경로 문자열은 한 함수를 지난다"*)은 세 플랫폼에 다 있는 문장이다.
+#[test]
+fn 화면에_verbatim_접두사가_안_샌다() {
+    const VERBATIM: &str = r"\\?\";
+
+    let root = 살고_있는_프로젝트("g-verbatim");
+    let mut 본_것: Vec<(String, String)> = Vec::new();
+
+    // ① 정상 라이프사이클 넷 — `PATH` 에 `pal` 이 **없는** 상태로도 돌린다.
+    //    훅 안내 문구가 나오는 자리가 정확히 거기다(실측이 샌 자리).
+    for args in [&["install"][..], &["update"][..], &["doctor", "--install"][..]] {
+        for path_env in [None, Some("")] {
+            let mut cmd = Command::new(PAL);
+            cmd.args(args).current_dir(&root);
+            match path_env {
+                Some(p) => cmd.env("PATH", p),
+                None => cmd.env("PATH", path_앞에(&pal_dir())),
+            };
+            let out = cmd.output().expect("pal");
+            본_것.push((
+                format!("{args:?} PATH={}", if path_env.is_some() { "빔" } else { "정상" }),
+                format!(
+                    "{}{}",
+                    String::from_utf8_lossy(&out.stdout),
+                    String::from_utf8_lossy(&out.stderr)
+                ),
+            ));
+        }
+    }
+
+    // ② 오류 경로 — 여기가 경로 문자열이 가장 많이 나오는 자리다.
+    let 막힌 = 살고_있는_프로젝트("g-verbatim-오류");
+    성공(&막힌, &["install"]);
+    읽기_전용(&막힌.join("CLAUDE.md"), true);
+    let out = 돌린다(&막힌, &["update"]);
+    읽기_전용(&막힌.join("CLAUDE.md"), false);
+    본_것.push((
+        "읽기 전용".to_owned(),
+        format!(
+            "{}{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        ),
+    ));
+
+    let out = 돌린다(&root, &["uninstall"]);
+    본_것.push((
+        "uninstall".to_owned(),
+        format!(
+            "{}{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        ),
+    ));
+
+    for (tag, 화면) in &본_것 {
+        assert!(
+            !화면.contains(VERBATIM),
+            "{tag}: `{VERBATIM}` 가 화면에 샜다 — 그 경로가 \
+             `install::winpath::사람이_읽는` 을 안 지났다:\n{화면}"
+        );
+    }
+    // ★ **아무것도 안 본 채로 통과하지 않는다.** 화면이 비었으면 위가 공짜다.
+    assert!(
+        본_것.iter().any(|(_, 화면)| 화면.contains("설치") || 화면.contains("검사")),
+        "화면을 하나도 못 모았다 — 이 시험이 아무것도 안 잰다"
+    );
+}
+
+/// ★ **정확히 같은 이름은 안 막는다** — 이 줄이 없으면 위 문이 두 번째 설치를 막는다.
+///
+/// 대소문자를 안 가리는 파일시스템도 **이름은 보존한다**(NTFS·APFS). 그래서 우리가
+/// 만든 `CLAUDE.md` 는 다음 회차에서도 `CLAUDE.md` 로 보이고 그 문을 그냥 지난다.
+/// 그 사실을 여기서 못 박는다 — 안 그러면 멱등이 조용히 깨진다.
+#[test]
+fn 우리가_놓은_이름_위에서는_다시_설치된다() {
+    let root = 살고_있는_프로젝트("g-대소문자-멱등");
+    성공(&root, &["install"]);
+    성공(&root, &["install"]);
+    성공(&root, &["update"]);
+    성공(&root, &["uninstall"]);
+}
+
 /// **쓰기 실패를 검사하지 않으면 쓰기 불가 디렉터리에서 rc=0 이 난다.**
 ///
 /// ★ **모든 플랫폼에서 잰다** — 앞 판은 여기에 `쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다`

@@ -681,39 +681,56 @@ fn 설치가_없으면_훅_검사가_잔여다() {
 // 안 가리킨다.**
 
 /// 등록된 자리를 **있지만 안 열리는 상태**로 만든다. 반환은 **지금 등록된 자리**.
-#[cfg(unix)]
-fn 못_열리게_한다(_root: &Path, exe: &Path) -> PathBuf {
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(exe, std::fs::Permissions::from_mode(0o644)).expect("chmod");
-    exe.to_path_buf()
-}
-
-#[cfg(unix)]
-fn 다시_열리게_한다(_root: &Path, exe: &Path, _막힌: &Path) {
-    실행_권한(exe);
-}
-
-/// Windows — 확장자를 떼고 **등록도 그 자리로 옮긴다.**
 ///
-/// 등록을 같이 옮기는 이유: 안 옮기면 `.exe` 가 사라진 것이 되어 **「없다」(exit 127)**
-/// 가 되고, 그것은 바로 다음 칸이 따로 재는 사건이다. 여기서 재려는 것은 **「있는데
-/// 안 열린다」(exit 126)** 이므로 등록된 자리에 파일이 실제로 있어야 한다.
-#[cfg(windows)]
+/// # ★ **등록을 절대 경로로 옮기는 것이 두 축에 다 필요하다** (실측 2026-08-17 · CI 2회차)
+///
+/// 앞 판은 Windows 쪽만 [`등록을_옮긴다`] 를 불렀다. 유닉스 쪽은 `chmod -x` 만 하고
+/// 등록을 **이름 하나(`pal`)로 둔 채**였고, 그래서 그 플랫폼에서는 **다른 겹이 먼저
+/// 걸렸다**:
+///
+/// ```text
+/// 유닉스 (앞 판)  →  "PATH 어디에도 `pal` 이 없다"     ← 이름 해석 겹
+/// Windows        →  "등록된 자리가 실행될 수 없다"      ← 실행 가능성 겹  ← 재려던 것
+/// ```
+///
+/// 까닭은 `exe::명령을_찾는다` 가 유닉스에서 **실행 비트를 보고 거른다**는 것이다 —
+/// 실행 비트를 떼는 순간 그 이름은 `PATH` 에서 아예 안 잡힌다. 그러니 「등록된 자리에
+/// 파일이 있는데 안 열린다」를 재려면 **등록이 그 자리를 직접 가리켜야** 한다.
+///
+/// 두 플랫폼이 **같은 겹**을 재게 맞춘다. 축은 여전히 다르다(모드 비트 대 확장자) —
+/// 그것은 없앨 수 없는 차이이고, 없앨 수 있었던 것은 **fixture 의 모양**이었다.
 fn 못_열리게_한다(root: &Path, exe: &Path) -> PathBuf {
-    let 확장자없음 = exe.with_extension("");
-    std::fs::rename(exe, &확장자없음).expect("확장자 떼기");
-    등록을_옮긴다(root, &확장자없음);
-    확장자없음
+    #[cfg(unix)]
+    let 막힌 = {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(exe, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+        exe.to_path_buf()
+    };
+    // Windows — 확장자를 뗀다. 파일은 그 자리에 있고 OS 만 그것을 못 띄운다.
+    #[cfg(windows)]
+    let 막힌 = {
+        let 확장자없음 = exe.with_extension("");
+        std::fs::rename(exe, &확장자없음).expect("확장자 떼기");
+        확장자없음
+    };
+    // ★ **등록을 그 자리로 옮긴다.** 안 옮기면 이름 해석 겹이 먼저 걸려서 이 시험이
+    // 재려는 겹에 닿지도 못한다 — 위 실측이 그것이다.
+    등록을_옮긴다(root, &막힌);
+    막힌
 }
 
-#[cfg(windows)]
 fn 다시_열리게_한다(root: &Path, exe: &Path, 막힌: &Path) {
+    #[cfg(unix)]
+    {
+        let _ = 막힌;
+        실행_권한(exe);
+    }
+    #[cfg(windows)]
     std::fs::rename(막힌, exe).expect("확장자 되붙이기");
     등록을_옮긴다(root, exe);
 }
 
 /// 설정과 매니페스트의 `command` 를 함께 옮긴다 — **둘이 어긋나면 앞 겹이 먼저 걸린다.**
-#[cfg(windows)]
 fn 등록을_옮긴다(root: &Path, 자리: &Path) {
     let 자리 = 자리.display().to_string();
     let mut s = 설정(root);

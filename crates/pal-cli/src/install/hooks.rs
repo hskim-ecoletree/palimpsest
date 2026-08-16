@@ -148,7 +148,7 @@ pub fn 이름이_우리를_가리키나() -> Option<String> {
             "`PATH` 어디에도 `{}` 이 없다 — 등록은 그 이름을 가리키므로 지금은 훅이 안 \
              뜬다(그리고 그 실패는 침묵한다). `{}` 을 `PATH` 에 넣으십시오",
             super::layout::COMMAND_NAME,
-            지금.display()
+            super::winpath::사람이_읽는(&지금)
         ));
     };
     match 다른_점(&찾은, &지금) {
@@ -157,7 +157,7 @@ pub fn 이름이_우리를_가리키나() -> Option<String> {
             "`PATH` 의 `{}` ({})이 지금 도는 이 프로그램과 **다르다** — {까닭}. \
              훅은 그쪽이 뜬다",
             super::layout::COMMAND_NAME,
-            찾은.display()
+            super::winpath::사람이_읽는(&찾은)
         )),
         Err(e) => Some(format!("`PATH` 의 `{}` 을 못 읽었다 — {e}", super::layout::COMMAND_NAME)),
     }
@@ -289,14 +289,14 @@ pub fn 실행할_수_있나(path: &Path) -> Result<()> {
         anyhow::anyhow!(
             "등록된 실행 파일이 없다: {} ({e}) — 하네스는 여기서 exit 127 을 내고 \
              그 실패를 완전히 삼킨다. `pal update` 가 등록을 지금 실행 파일로 맞춘다",
-            path.display()
+            super::winpath::사람이_읽는(path)
         )
     })?;
     if !meta.is_file() {
         bail!(
             "등록된 자리가 일반 파일이 아니다: {} — 하네스는 여기서 exit 126/127 을 내고 \
              그 실패를 완전히 삼킨다",
-            path.display()
+            super::winpath::사람이_읽는(path)
         );
     }
     // ★ **이 겹이 플랫폼마다 축이 다르다 — 그러나 어느 쪽에도 있다.**
@@ -314,7 +314,7 @@ pub fn 실행할_수_있나(path: &Path) -> Result<()> {
         bail!(
             "등록된 자리가 실행될 수 없다: {} — {}. 하네스는 여기서 exit 126 을 내고 \
              그 실패를 완전히 삼킨다",
-            path.display(),
+            super::winpath::사람이_읽는(path),
             super::exe::안_열리는_까닭(path)
         );
     }
@@ -361,8 +361,8 @@ pub fn 우리가_등록한_것인가(path: &Path) -> Result<()> {
          확인할 때 실제로 돌려 본 것은 **지금 이 실행 파일**이라, 둘이 다르면 그 확인이 \
          등록된 것에 대해 아무것도 말하지 않는다.\n    \
          `pal update` 가 등록을 지금 실행 파일로 되돌린다",
-        path.display(),
-        지금.display()
+        super::winpath::사람이_읽는(path),
+        super::winpath::사람이_읽는(&지금)
     )
 }
 
@@ -376,7 +376,7 @@ fn 다른_점(a: &Path, b: &Path) -> Result<Option<String>> {
     }
     let 크기 = |p: &Path| -> Result<u64> {
         Ok(std::fs::metadata(p)
-            .with_context(|| format!("크기를 못 읽었다: {}", p.display()))?
+            .with_context(|| format!("크기를 못 읽었다: {}", super::winpath::사람이_읽는(p)))?
             .len())
     };
     let (가, 나) = (크기(a)?, 크기(b)?);
@@ -432,7 +432,7 @@ pub fn probe(event: &str) -> Result<()> {
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
-        .with_context(|| format!("{} 를 못 돌렸다", exe.display()))?;
+        .with_context(|| format!("{} 를 못 돌렸다", super::winpath::사람이_읽는(&exe)))?;
     if let Some(mut sink) = child.stdin.take() {
         use std::io::Write;
         // 상대가 표준입력을 안 읽고 죽으면 여기가 깨진 파이프다 — 그것도 대답의 일부다.

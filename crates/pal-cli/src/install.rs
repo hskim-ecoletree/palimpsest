@@ -22,6 +22,7 @@
 //! 등록이 답을 정한다.**
 
 mod blocks;
+mod casing;
 mod child;
 mod doctor;
 mod eol;
@@ -392,6 +393,12 @@ fn 쓸_수_있나(root: &Root) -> Result<Vec<String>> {
         .chain(DIRS.iter().copied())
     {
         let path = root.join(&Rel::new(rel))?;
+        // ★ **파일시스템이 답을 다르게 내는 자리는 1단계에서 끊는다.** 대소문자만 다른
+        // 이름이 이미 있으면 우리 블록이 어디로 들어가는지가 **플랫폼마다 다르고**,
+        // 그러면 공유되는 저장소가 clone 한 곳에 따라 다르게 선다([`casing`]).
+        if let Some(말) = casing::부딪힘(&path) {
+            bail!("{말}");
+        }
         쓸_수_있는가(&path)?;
         if let Some(말) = guard::하드링크_알림(&path) {
             알림.push(말);
