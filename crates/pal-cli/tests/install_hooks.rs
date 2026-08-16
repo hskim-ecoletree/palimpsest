@@ -56,11 +56,20 @@ fn 프로젝트(tag: &str) -> PathBuf {
     root
 }
 
+/// 이 플랫폼에서 **실제로 띄울 수 있는 파일 이름** — Windows 는 `.exe` 가 붙는다.
+///
+/// ★ 옛 fixture 는 `dir.join("pal")` 로 확장자 없는 사본을 만들었다. 그것은 Windows 에서
+/// **애초에 실행되지 않는 파일**이라(실측: `Executable not found`) *"정상 설치"* 를 재는
+/// 자리가 정상이 아니었다.
+fn 실행_이름(stem: &str) -> String {
+    format!("{stem}{}", std::env::consts::EXE_SUFFIX)
+}
+
 /// **공백이 든 디렉터리**에 `pal` 을 복사한다 — 따옴표를 재는 자리.
 fn 공백이_든_곳의_pal(root: &Path, 이름: &str) -> PathBuf {
     let dir = root.join(format!("도구 {이름}"));
     std::fs::create_dir_all(&dir).expect("도구 방");
-    let exe = dir.join("pal");
+    let exe = dir.join(실행_이름("pal"));
     std::fs::copy(PAL, &exe).expect("복사");
     실행_권한(&exe);
     exe
@@ -452,11 +461,21 @@ fn 진단이_등록된_훅을_실제로_돌려본다() {
     assert_eq!(c["outcome"], "failed", "등록이 사라졌는데 안 걸렸다: {c}");
     std::fs::write(root.join(".claude/settings.json"), &원래_설정).expect("되돌리기");
 
-    // ── 실행 권한을 잃었다 — 빨강 (exit 126) ───────────────────────────────
-    권한을_뺀다(&exe);
+    // ── 있는데 안 열린다 — 빨강 (exit 126) ─────────────────────────────────
+    //
+    // 유닉스는 모드 비트로, Windows 는 확장자로 만든다 — **축이 다르고 사건은 같다.**
+    let 막힌 = 못_열리게_한다(&root, &exe);
+    assert!(막힌.is_file(), "등록된 자리에 파일이 없다 — 그러면 재려는 것이 「없다」가 된다");
     let c = 훅_검사(&root);
-    assert_eq!(c["outcome"], "failed", "실행 권한이 없는데 안 걸렸다: {c}");
-    실행_권한(&exe);
+    assert_eq!(c["outcome"], "failed", "실행될 수 없는데 안 걸렸다: {c}");
+    // ★ **어느 겹이 걸었는지까지 못 박는다.** 「빨갛다」만 재면 바이트 대조가 대신
+    // 걸어도 통과하고, 그러면 이 칸은 자기가 재려던 것을 안 잰다.
+    assert!(
+        c["detail"].as_str().expect("detail").contains("실행될 수 없다"),
+        "다른 겹이 걸었다 — 실행 가능성 겹이 안 섰다: {c}"
+    );
+    다시_열리게_한다(&root, &exe, &막힌);
+    assert_eq!(훅_검사(&root)["outcome"], "ok", "되돌렸는데 초록이 아니다");
 
     // ── 파일이 사라졌다 — 빨강 (exit 127) ──────────────────────────────────
     std::fs::remove_file(&exe).expect("지우기");
@@ -557,7 +576,10 @@ fn 진단이_대상_밖_실행_파일을_초록으로_안_낸다() {
     // 그 셋이 `실행할_수_있나` 가 보는 전부라 옛 코드는 여기서 초록이었다.
     let 밖 = root.parent().expect("부모").join("밖");
     std::fs::create_dir_all(&밖).expect("밖");
-    let 심은것 = 밖.join("남의것");
+    // ⚠ **이 플랫폼에서 실제로 띄울 수 있는 이름이어야 한다.** 확장자 없는 이름으로
+    // 심으면 Windows 에서는 **바깥 겹(실행 가능한가)이 먼저 걸려서** 이 시험이 재려는
+    // 겹(「우리가 등록한 그것인가」)에 닿지도 못한다 — 빨강은 나지만 다른 이유로 난다.
+    let 심은것 = 밖.join(실행_이름("남의것"));
     std::fs::write(&심은것, format!("#!/bin/sh\ntouch {}\n", 흔적.display())).expect("심기");
     실행_권한(&심은것);
 
@@ -594,11 +616,73 @@ fn 설치가_없으면_훅_검사가_잔여다() {
     assert_eq!(훅_검사(&root)["outcome"], "residual");
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ★ 「있는데 안 열린다」 — **축은 플랫폼마다 다르고, 사건은 같다**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 재려는 상태 하나: **등록된 자리에 파일이 있고 바이트도 우리 것인데, OS 가 그것을
+// 못 띄운다.** 하네스는 그 실패를 완전히 삼키므로 `pal doctor` 가 유일한 문이다.
+//
+// | 플랫폼 | 그 상태를 어떻게 만드나 |
+// |---|---|
+// | 유닉스 | `chmod -x` — 모드 비트가 실행을 정한다 |
+// | Windows | **확장자를 뗀다** — 확장자가 실행을 정한다(실측: 옆에 `.exe` 가 없는 확장자 없는 이름은 `Executable not found`) |
+//
+// ⚠ 옛 회차는 Windows 쪽을 **무동작 stub** 으로 뒀고, 그 뒤의 단언은 *"빨개져야 한다"*
+// 였다. 아무것도 안 바꾸고 빨강을 요구했으니 **이 시험은 Windows 에서 언제나 실패**했다 —
+// 그리고 그 실패는 제품의 결함이 아니라 fixture 의 결함이었다. 무동작 stub 은 짝이
+// 아니다. 짝이 없으면 그 자리는 **초록을 내며 아무것도 안 재거나, 빨강을 내며 아무것도
+// 안 가리킨다.**
+
+/// 등록된 자리를 **있지만 안 열리는 상태**로 만든다. 반환은 **지금 등록된 자리**.
 #[cfg(unix)]
-fn 권한을_뺀다(exe: &Path) {
+fn 못_열리게_한다(_root: &Path, exe: &Path) -> PathBuf {
     use std::os::unix::fs::PermissionsExt;
     std::fs::set_permissions(exe, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+    exe.to_path_buf()
 }
 
-#[cfg(not(unix))]
-fn 권한을_뺀다(_exe: &Path) {}
+#[cfg(unix)]
+fn 다시_열리게_한다(_root: &Path, exe: &Path, _막힌: &Path) {
+    실행_권한(exe);
+}
+
+/// Windows — 확장자를 떼고 **등록도 그 자리로 옮긴다.**
+///
+/// 등록을 같이 옮기는 이유: 안 옮기면 `.exe` 가 사라진 것이 되어 **「없다」(exit 127)**
+/// 가 되고, 그것은 바로 다음 칸이 따로 재는 사건이다. 여기서 재려는 것은 **「있는데
+/// 안 열린다」(exit 126)** 이므로 등록된 자리에 파일이 실제로 있어야 한다.
+#[cfg(windows)]
+fn 못_열리게_한다(root: &Path, exe: &Path) -> PathBuf {
+    let 확장자없음 = exe.with_extension("");
+    std::fs::rename(exe, &확장자없음).expect("확장자 떼기");
+    등록을_옮긴다(root, &확장자없음);
+    확장자없음
+}
+
+#[cfg(windows)]
+fn 다시_열리게_한다(root: &Path, exe: &Path, 막힌: &Path) {
+    std::fs::rename(막힌, exe).expect("확장자 되붙이기");
+    등록을_옮긴다(root, exe);
+}
+
+/// 설정과 매니페스트의 `command` 를 함께 옮긴다 — **둘이 어긋나면 앞 겹이 먼저 걸린다.**
+#[cfg(windows)]
+fn 등록을_옮긴다(root: &Path, 자리: &Path) {
+    let 자리 = 자리.display().to_string();
+    let mut s = 설정(root);
+    s["hooks"]["SubagentStop"] = serde_json::json!([{
+        "hooks": [{"type": "command", "command": 자리, "args": ["hook", "SubagentStop"]}]
+    }]);
+    std::fs::write(
+        root.join(".claude/settings.json"),
+        serde_json::to_string_pretty(&s).expect("직렬화"),
+    )
+    .expect("쓰기");
+
+    let mut m = 매니페스트(root);
+    m["settings"]["hooks"] = serde_json::json!([{
+        "event": "SubagentStop", "command": 자리, "args": ["hook", "SubagentStop"]
+    }]);
+    매니페스트_쓰기(root, &m);
+}

@@ -25,6 +25,7 @@ mod blocks;
 mod child;
 mod doctor;
 mod eol;
+mod exe;
 mod guard;
 mod hooks;
 mod ignore;
