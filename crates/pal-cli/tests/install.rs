@@ -730,10 +730,16 @@ fn 끝_개행_없음과_널_바이트가_살아_있다() {
     }
 }
 
-/// **모드 · 심링크 · 하드링크가 살아 있다.**
+/// **모드 · 심링크가 살아 있다.**
+///
+/// ⚠ **하드링크는 여기서 빠졌다.** 옛 회차는 *"하드링크가 안 끊긴다"* 를 여기서
+/// 쟀는데, 그 성질과 **하드링크를 통해 대상 밖이 새는 것**은 같은 동작의 앞뒷면이다
+/// (실측: 밖의 파일이 0바이트가 됐고 rc=0). **밖으로 새는 것을 막는 쪽을 이기게
+/// 했다** — 지금은 하드링크가 걸린 자리에 아예 안 쓰고 멈춘다. 그것을 재는 자리는
+/// `tests/install_hostile.rs` 다.
 #[test]
 #[cfg(unix)]
-fn 모드와_심링크와_하드링크가_살아_있다() {
+fn 모드와_심링크가_살아_있다() {
     use std::os::unix::fs::PermissionsExt;
 
     let root = 빈_프로젝트("g-메타");
@@ -741,8 +747,6 @@ fn 모드와_심링크와_하드링크가_살아_있다() {
     std::fs::write(root.join("CLAUDE.md"), "# 내 것\n").expect("CLAUDE.md");
     std::fs::set_permissions(root.join("CLAUDE.md"), std::fs::Permissions::from_mode(0o600))
         .expect("chmod");
-    // 하드링크 — 같은 inode 를 가리키는 둘째 이름.
-    std::fs::hard_link(root.join("CLAUDE.md"), root.join("굳은링크.md")).expect("hard_link");
     // 심링크 — `.gitignore` 가 다른 파일을 가리킨다.
     std::fs::write(root.join("진짜무시목록"), "node_modules/\n").expect("진짜");
     std::os::unix::fs::symlink("진짜무시목록", root.join(".gitignore")).expect("symlink");
@@ -758,11 +762,6 @@ fn 모드와_심링크와_하드링크가_살아_있다() {
     assert!(
         std::fs::read_to_string(root.join("진짜무시목록")).expect("읽기").contains("pal:begin"),
         "심링크 대상에 안 쓰였다"
-    );
-    assert_eq!(
-        std::fs::read(root.join("CLAUDE.md")).expect("읽기"),
-        std::fs::read(root.join("굳은링크.md")).expect("읽기"),
-        "하드링크가 끊겼다"
     );
 }
 

@@ -23,6 +23,7 @@
 
 mod blocks;
 mod doctor;
+mod guard;
 mod hooks;
 mod ignore;
 mod inside;
@@ -244,6 +245,8 @@ fn 쓸_수_있나(root: &Root) -> Result<()> {
 }
 
 fn 쓸_수_있는가(path: &Path) -> Result<()> {
+    // **하드링크가 걸린 자리는 제자리 쓰기가 밖으로 샌다** — 1단계에서 끊는다.
+    guard::제자리에_써도_되나(path)?;
     // 없는 자리는 못 본다 — 그 부모는 위에서 이미 봤다.
     let Ok(meta) = std::fs::metadata(path) else { return Ok(()) };
     if meta.permissions().readonly() {

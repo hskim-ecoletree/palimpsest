@@ -9,6 +9,7 @@
 //! | 재는 것 | 왜 |
 //! |---|---|
 //! | 저장소에서 읽은 문자열을 **실행하지 않는다** | 임의 코드 실행. `pal doctor` 한 번이 남의 문자열을 셸에 넘겼다 |
+//! | **하드링크**로 대상 밖이 안 샌다 | 심링크는 `canonicalize` 가 막지만 하드링크는 「밖」이라는 신원이 없다 |
 
 mod common;
 
@@ -18,22 +19,26 @@ use std::process::{Command, Output, Stdio};
 use common::{PAL, git};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 방 — 대상 프로젝트 하나
+// 방 — `밖/` 과 `안/` 이 형제로 산다
 // ─────────────────────────────────────────────────────────────────────────────
 
 struct 방 {
     base: PathBuf,
+    밖: PathBuf,
     안: PathBuf,
 }
 
 fn 방(tag: &str) -> 방 {
     let base = std::env::temp_dir().join(format!("pal-f24-적대-{tag}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&base);
+    let 밖 = base.join("밖");
     let 안 = base.join("안");
+    std::fs::create_dir_all(&밖).expect("밖");
     std::fs::create_dir_all(&안).expect("안");
+    std::fs::write(밖.join("희생양.txt"), "건드리면 안 된다\n").expect("희생양");
     std::fs::write(안.join("README.md"), "hello\n").expect("README");
     git(&안, &["init", "-q", "."]);
-    방 { base, 안 }
+    방 { base, 밖, 안 }
 }
 
 impl Drop for 방 {
@@ -198,5 +203,76 @@ fn 진단이_조상의_매니페스트를_찾아가지_않는다() {
         "경계 밖의 설치를 찾아갔다:\n{화면}"
     );
     let _ = std::fs::remove_file(&흔적);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. **하드링크로 대상 밖이 새지 않는다**
+//
+// ★ **유닉스 전용 가정이 여기 있다.** 링크를 거는 것도(`std::fs::hard_link` 는 이식
+// 가능하지만 이 시험이 재는 성질은 `nlink` 위에 선다) 세는 것도 유닉스 형태다. 그래서
+// **짝 없는 `#[cfg(unix)]` 을 안 단다** — 짝이 없으면 다른 플랫폼에서 이 방어가
+// **조용히 사라지고**, 사라졌다는 사실조차 안 보인다. 아래 `#[cfg(not(unix))]` 짝이
+// 그 자리에서 **시끄럽게** 실패한다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ★ **하드링크는 「밖」이라는 신원이 없다.** 심링크는 `canonicalize` 가 푸는데
+/// 하드링크는 원리상 못 본다 — 그래서 **제자리 쓰기 자체를 안 한다.**
+///
+/// 관측(고치기 전): 밖의 `희생양.txt` 가 0바이트가 됐고 **rc=0**.
+#[test]
+#[cfg(unix)]
+fn 설치가_하드링크를_통해_밖을_안_고친다() {
+    let 방 = 방("하드-설치");
+    let 희생양 = 방.밖.join("희생양.txt");
+    let 원본 = std::fs::read(&희생양).expect("읽기");
+    // 대상 **안**의 `CLAUDE.md` 가 밖의 파일과 **같은 inode** 다.
+    std::fs::hard_link(&희생양, 방.안.join("CLAUDE.md")).expect("hard_link");
+
+    let out = 돌린다(&방.안, &["install"]);
+    assert_eq!(std::fs::read(&희생양).expect("읽기"), 원본, "밖의 파일이 바뀌었다");
+    assert!(
+        !out.status.success(),
+        "하드링크를 보고도 성공을 냈다\nstdout: {}",
+        String::from_utf8_lossy(&out.stdout)
+    );
+    assert!(
+        String::from_utf8_lossy(&out.stderr).contains("하드링크"),
+        "까닭을 안 적었다 — {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}
+
+/// **제거 쪽도 같은 문**을 지난다.
+#[test]
+#[cfg(unix)]
+fn 제거가_하드링크를_통해_밖을_안_고친다() {
+    let 방 = 방("하드-제거");
+    std::fs::write(방.안.join("CLAUDE.md"), "내 지시\n").expect("CLAUDE.md");
+    성공(&방.안, &["install"]);
+
+    // 설치가 끝난 뒤 사용자가(혹은 남이) 밖에서 링크를 걸었다.
+    let 링크 = 방.밖.join("링크.txt");
+    std::fs::hard_link(방.안.join("CLAUDE.md"), &링크).expect("hard_link");
+    let 밖_전 = std::fs::read(&링크).expect("읽기");
+
+    let out = 돌린다(&방.안, &["uninstall"]);
+    assert_eq!(std::fs::read(&링크).expect("읽기"), 밖_전, "밖의 파일이 바뀌었다");
+    assert!(!out.status.success(), "하드링크를 보고도 성공을 냈다");
+}
+
+/// ★ **유닉스 밖에서 이 방어는 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
+///
+/// 소유자 결정(2026-08-16): *"windows 를 대응한다는 가정하에 앞으로 모든 설계와
+/// 개발이 되어야 해."* 짝 없는 `#[cfg(unix)]` 시험은 다른 플랫폼에서 **조용히
+/// 사라지고**, 그러면 경계 방어가 사라진 줄도 모른다. 그래서 짝을 단다.
+#[test]
+#[cfg(not(unix))]
+fn 하드링크_방어가_이_플랫폼에서는_안_재진다() {
+    panic!(
+        "하드링크로 대상 밖이 새는지를 이 플랫폼에서 아직 안 잰다 — \
+         `install/guard.rs` 의 링크 수 검사가 `#[cfg(unix)]` 안에 있다. \
+         이 플랫폼의 등가 개념(NTFS 하드링크 · `GetFileInformationByHandle` 의 \
+         `nNumberOfLinks`)으로 재는 자리를 세우기 전까지 이 방어는 **없다**"
+    );
 }
 
