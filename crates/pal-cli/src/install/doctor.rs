@@ -312,8 +312,8 @@ fn 등재(target: &Path) -> Outcome {
     for path in DERIVED {
         match ignore::verdict(&뿌리, path) {
             Ok(ignore::Verdict::Covered) => {}
-            Ok(ignore::Verdict::NotAWorktree) => {
-                return Outcome::Residual("git worktree 가 아니다 — 등재를 물을 수 없다".to_owned());
+            Ok(ignore::Verdict::NotAWorktree { 까닭 }) => {
+                return Outcome::Residual(까닭.to_owned());
             }
             Ok(ignore::Verdict::Revived { pattern }) => {
                 빠진.push(format!("{path} (사용자가 `{pattern}` 로 되살렸다)"));

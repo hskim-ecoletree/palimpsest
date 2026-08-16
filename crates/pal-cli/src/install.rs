@@ -747,12 +747,12 @@ fn 블록_넣기(
     }
 
     let mut 등재 = Vec::new();
-    let mut worktree = true;
+    let mut 못_묻는_까닭: Option<&'static str> = None;
     for path in DERIVED {
         match ignore::verdict(root, path)? {
             ignore::Verdict::Covered => report.say("이미 등재됨", path),
-            ignore::Verdict::NotAWorktree => {
-                worktree = false;
+            ignore::Verdict::NotAWorktree { 까닭 } => {
+                못_묻는_까닭 = Some(까닭);
                 break;
             }
             ignore::Verdict::Revived { pattern } => {
@@ -770,16 +770,15 @@ fn 블록_넣기(
             }
         }
     }
-    if worktree {
-        if 등재.is_empty() {
-            report.say("건드리지 않음", &format!("{IGNORE_FILE}  (더할 것이 없다)"));
-        } else {
-            let block = blocks::compose(&IGNORE_MARKERS, &등재);
-            블록_하나(root, IGNORE_FILE, &block, 이전, 기록, report)?;
-        }
-    } else {
+    if let Some(까닭) = 못_묻는_까닭 {
         // **rc=128 을 rc=1 과 뭉개면 저장소가 아닌 곳에 `.gitignore` 를 만든다.**
-        report.say("건너뜀", &format!("{IGNORE_FILE}  (git worktree 가 아니다)"));
+        // 그리고 그 rc 안에도 갈래가 둘이다 — 까닭은 [`ignore::왜_답이_없나`] 가 낸다.
+        report.say("건너뜀", &format!("{IGNORE_FILE}  ({까닭})"));
+    } else if 등재.is_empty() {
+        report.say("건드리지 않음", &format!("{IGNORE_FILE}  (더할 것이 없다)"));
+    } else {
+        let block = blocks::compose(&IGNORE_MARKERS, &등재);
+        블록_하나(root, IGNORE_FILE, &block, 이전, 기록, report)?;
     }
     Ok(())
 }

@@ -88,8 +88,25 @@ pub enum Verdict {
     Uncovered,
     /// 사용자가 `!` 로 되살렸다 — **더하면 그 결정을 조용히 뒤집는다. 거부한다.**
     Revived { pattern: String },
-    /// worktree 가 아니다 — **`.gitignore` 를 만들지 않는다.**
-    NotAWorktree,
+    /// git 이 이 자리에 대해 **답을 안 냈다**(rc=128) — **`.gitignore` 를 만들지 않는다.**
+    ///
+    /// `까닭` 은 그 rc 를 **두 갈래로 가른 것**이다. 둘은 사용자가 할 일이 다르다:
+    ///
+    /// | 어떤 상태 | 무슨 뜻 | 할 일 |
+    /// |---|---|---|
+    /// | `.git` 이 **없다** | 정말로 worktree 가 아니다 | 없다. `.gitignore` 는 뜻이 없는 자리다 |
+    /// | `.git` 이 **있는데** rc=128 | **git 이 이 경로를 못 다룬다** | 프로젝트를 git 이 다룰 수 있는 자리로 옮긴다 |
+    ///
+    /// ★ 둘째 줄은 이 회차의 실측이 낸 것이다(2026-08-17 · Windows):
+    ///
+    /// ```text
+    /// 365자 경로     git -C … : fatal: … Filename too long
+    /// 비 UTF-8 경로   git -C … : fatal: … No such file or directory
+    /// ```
+    ///
+    /// 둘 다 `.git` 이 있어도 날 수 있고, 그때 *"worktree 가 아니다"* 는 **틀린 말**이다.
+    /// 틀린 진단은 침묵보다 나쁘다 — 사용자가 없는 문제를 고치러 간다.
+    NotAWorktree { 까닭: &'static str },
 }
 
 /// **git 이 읽을 자리를 전부 먼저 본다** — 우리가 등재를 물어야 하는 경로 전부에 대해.
@@ -140,7 +157,7 @@ pub fn verdict(root: &Root, path: &str) -> Result<Verdict> {
     match code {
         Some(0) => Ok(Verdict::Covered),
         // **rc=128 을 rc=1 과 뭉개지 않는다.**
-        Some(128) | None => Ok(Verdict::NotAWorktree),
+        Some(128) | None => Ok(Verdict::NotAWorktree { 까닭: 왜_답이_없나(root) }),
         _ => match negation(root, path)? {
             Some(pattern) => Ok(Verdict::Revived { pattern }),
             // git 이 침묵했다 — 그때만 소스를 읽는다.
@@ -149,6 +166,25 @@ pub fn verdict(root: &Root, path: &str) -> Result<Verdict> {
                 None => Ok(Verdict::Uncovered),
             },
         },
+    }
+}
+
+/// git 이 rc=128 을 낸 자리에서 **왜 그런지** — `.git` 의 유무 하나로 가른다.
+///
+/// ⚠ **`.git` 을 「저장소인가」의 근거로 쓰지 않는다.** 여기서 그것이 뜻하는 것은
+/// 딱 하나다: *"사용자는 여기가 저장소라고 생각하고 있다."* 그 믿음과 git 의 답이
+/// 어긋난 자리를 지목하는 것이 이 함수의 전부다. 판정은 여전히 git 이 한다.
+///
+/// `.git` 은 디렉터리일 수도 파일(worktree·submodule 의 `gitdir:` 한 줄)일 수도
+/// 있으므로 [`Path::exists`] 로 본다.
+fn 왜_답이_없나(root: &Root) -> &'static str {
+    if root.path().join(".git").exists() {
+        "`.git` 은 있는데 git 이 이 자리에 대해 답을 안 냈다 — **git 이 이 경로를 못 \
+         다룬다.** 실측된 형태 둘: 경로가 `MAX_PATH`(260)를 넘거나(Windows: \
+         `Filename too long`), 경로가 유효한 UTF-8 이 아니거나(git 이 UTF-8 로 바꿔 \
+         찾다가 못 찾는다). 프로젝트를 git 이 다룰 수 있는 자리로 옮기십시오"
+    } else {
+        "git worktree 가 아니다 — 등재를 물을 자리가 없다"
     }
 }
 
@@ -312,7 +348,24 @@ fn git(root: &Root, args: &[&str]) -> Result<child::대답> {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .with_context(|| format!("git {args:?} 을 돌리지 못했다"))?;
+        // ★ **못 띄운 까닭과 사람이 할 일을 가른다.** 실측(2026-08-17): `git` 이
+        // `PATH` 에 없으면 여기서 `program not found` 하나만 나왔다 — 맞는 말이지만
+        // **다음에 무엇을 하라는 말이 없다.** 이 저장소의 다른 실패는 전부 그것을
+        // 적는다(`doctor` 검사 4·6 · 잠금 · 읽기 전용). 여기만 안 적고 있었다.
+        //
+        // ⚠ 「없다」와 「있는데 못 띄운다」를 안 가른다 — [`std::io::ErrorKind`] 가
+        // 그 둘을 플랫폼마다 다르게 낸다(`NotFound` 대 `PermissionDenied` 대
+        // `Uncategorized`). **가를 수 없는 것을 가른 척하지 않는다.** 대신 둘 다에
+        // 맞는 한 문장을 낸다.
+        .with_context(|| {
+            format!(
+                "git 을 못 띄웠다(`git {args:?}`) — 이 명령은 `.gitignore` 등재를 \
+                 **git 에게 물어서** 판정한다(텍스트로 안 읽는다). 그래서 git 없이는 \
+                 그 걸음이 **아예 안 선다.**\n    \
+                 `git` 을 `PATH` 에 넣은 뒤 다시 돌리십시오. \
+                 ⚠ 이 실패는 **1단계에서 난다** — 아직 한 바이트도 안 썼다"
+            )
+        })?;
     child::기다린다(child, child::기본_상한, &format!("git {args:?}"))
 }
 

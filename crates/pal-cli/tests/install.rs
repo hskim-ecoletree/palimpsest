@@ -1140,6 +1140,161 @@ fn 화면에_verbatim_접두사가_안_샌다() {
     );
 }
 
+/// ★ **`git` 이 없으면 1단계에서 멈춘다 — 반쯤 설치하지 않는다** — `§3-C ⑥`.
+///
+/// [`install::ignore`] 는 `.gitignore` 등재를 **git 에게 물어서** 판정한다(텍스트로 안
+/// 읽는다 — `!` 부정 패턴이 `.git/info/exclude`·전역 `core.excludesFile`·중첩
+/// `.gitignore` 에도 살기 때문이다). 그러니 git 이 없으면 그 걸음이 **원리상 안 선다.**
+///
+/// 물을 것은 *"git 없이도 되는가"* 가 아니라 **"없을 때 무엇이 되는가"** 다:
+///
+/// | 재는 것 | 왜 |
+/// |---|---|
+/// | rc≠0 | 조용한 rc=0 은 「등재됐다」는 거짓말이 된다 |
+/// | **잔해 0** | `[f24]` ② — 부분 설치 금지. 이 검사는 1단계에 있으므로 되감기 (a) 다 |
+/// | 무엇을 하라고 적는다 | 실측(2026-08-17): 옛 문구는 `program not found` 하나뿐이었다 |
+///
+/// ⚠ **`PATH` 를 통째로 갈아끼운다** — `path_앞에` 는 기존 `PATH` 를 뒤에 붙이므로
+/// git 을 못 없앤다. 그리고 `pal` 자신은 절대 경로로 띄우므로 `PATH` 가 비어도 돈다.
+#[test]
+fn git_이_없으면_1단계에서_멈춘다() {
+    let root = 살고_있는_프로젝트("g-git없음");
+    let 전 = 스냅샷(&root);
+
+    // `PATH` 에 아무것도 없다 — git 도, pal 도. pal 은 절대 경로로 띄운다.
+    let out = Command::new(PAL)
+        .args(["install"])
+        .current_dir(&root)
+        .env("PATH", "")
+        .output()
+        .expect("pal 을 못 돌렸다");
+
+    assert!(!out.status.success(), "git 이 없는데 rc=0 을 냈다");
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        stderr.contains("git") && stderr.contains("PATH"),
+        "무엇이 없고 무엇을 하라는지 안 적었다 — {stderr}"
+    );
+    assert_eq!(스냅샷(&root), 전, "부분 설치가 남았다");
+    assert!(!root.join(".claude/pal").exists(), "디렉터리가 남았다");
+}
+
+/// ★ **경로가 유효한 UTF-8 이 아니어도 라이프사이클이 선다** — `§3-C ③`.
+///
+/// # 무엇이 위험이었나
+///
+/// Windows 의 경로는 UTF-16 이고 유닉스의 경로는 **바이트열**이다. 둘 다 UTF-8 이
+/// 아닌 값을 담을 수 있고, 우리 코드에는 [`std::path::Path::to_string_lossy`] 가 있다.
+/// 손실이 나면 **조용히 틀린 문자열**이 나가고, 그것이 매니페스트나 등록에 실리면
+/// 그 저장소는 되돌릴 수 없게 된다.
+///
+/// # 왜 지금은 안 실리는가 — 그리고 그 사실이 여기서 잠긴다
+///
+/// | 나가는 값 | 무엇으로 만들어지나 |
+/// |---|---|
+/// | 매니페스트의 경로 | **`Rel` — 우리가 정한 ASCII 상수**(`.claude/pal/…`). 대상 경로가 안 들어간다 |
+/// | 훅 등록 문자열 | **`PATH` 의 이름 하나**(`pal`). 절대 경로가 안 들어간다 |
+/// | 파일 조작 | `Path`/`OsStr` 로만 나른다 — 문자열로 안 바꾼다 |
+///
+/// `to_string_lossy` 가 남은 자리는 **화면**뿐이고, 거기서 U+FFFD 가 나오는 것은
+/// 손실이 아니라 **표시**다. 이 시험은 그 구조가 유지되는지를 rc 와 왕복으로 잰다 —
+/// 누가 나중에 대상 경로를 산출물에 실으면 여기서 걸린다.
+///
+/// # ⚠ fixture 는 플랫폼마다 다른 축으로 만든다 — **사건은 같다**
+///
+/// | 플랫폼 | UTF-8 이 아닌 이름을 어떻게 만드나 |
+/// |---|---|
+/// | Windows | **짝 없는 서로게이트**(`U+D800`) — UTF-16 으로는 되고 UTF-8 로는 안 된다 |
+/// | 유닉스 | **바이트 `0xFF`** — 어떤 UTF-8 시퀀스에도 안 나오는 값 |
+///
+/// 실측(2026-08-17 · Windows · NTFS): 그 이름의 디렉터리가 **만들어지고**
+/// `to_str()` 은 `None` 이며 `install`·`update`·`uninstall` 이 **전부 rc=0** 이다.
+/// 그리고 `git` 은 그 자리에 **못 간다**(`No such file or directory`) — git 이 UTF-8 로
+/// 바꿔 찾기 때문이다. 그래서 여기도 긴 경로와 같이 **git 없는 프로젝트**로 잰다.
+#[test]
+fn 유효한_utf8_이_아닌_경로에서도_라이프사이클이_선다() {
+    let base = 방("g-비utf8");
+    let 이름 = 비utf8_이름();
+    let root = base.join(&이름);
+    let Ok(()) = std::fs::create_dir(&root) else {
+        panic!(
+            "UTF-8 이 아닌 이름의 디렉터리를 못 만들었다 — **fixture 가 안 섰다.** \
+             이 파일시스템이 그 이름을 거부한다면 그것 자체가 재야 할 사실이다"
+        )
+    };
+    assert!(root.to_str().is_none(), "fixture 가 안 섰다 — 이 경로는 유효한 UTF-8 이다");
+
+    std::fs::write(root.join("README.md"), "hello\n").expect("README");
+    let 원본 = "# 내 규칙\n지키자\n";
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("CLAUDE.md");
+
+    let 대상 = |args: &[&str]| -> Output {
+        Command::new(PAL)
+            .args(args)
+            .arg(&root)
+            .env("PATH", path_앞에(&pal_dir()))
+            .output()
+            .expect("pal 을 못 돌렸다")
+    };
+    for args in [
+        &["install", "--target"][..],
+        &["update", "--target"][..],
+        &["uninstall", "--target"][..],
+    ] {
+        let out = 대상(args);
+        assert!(
+            out.status.success(),
+            "pal {args:?} <비 UTF-8 경로>\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    // ★ **왕복이 바이트 동일하다.**
+    assert_eq!(
+        std::fs::read_to_string(root.join("CLAUDE.md")).expect("읽기"),
+        원본,
+        "왕복이 원본과 다르다"
+    );
+    assert!(!root.join(".claude/pal").exists(), "잔해가 남았다");
+
+    // ★ **산출물에 손실된 문자열이 안 실린다.** 설치 상태에서 매니페스트를 읽어
+    // **대체 문자(U+FFFD)가 한 글자도 없는지** 본다 — 그것이 실리면 그 저장소는
+    // 되돌릴 수 없게 된다.
+    assert!(대상(&["install", "--target"]).status.success());
+    let 매니페스트 =
+        std::fs::read_to_string(root.join(".claude/pal/manifest.json")).expect("매니페스트");
+    assert!(
+        !매니페스트.contains('\u{FFFD}'),
+        "매니페스트에 손실된 문자열이 실렸다:\n{매니페스트}"
+    );
+    let 설정 = std::fs::read_to_string(root.join(".claude/settings.json")).expect("설정");
+    assert!(!설정.contains('\u{FFFD}'), "설정에 손실된 문자열이 실렸다:\n{설정}");
+    assert!(대상(&["uninstall", "--target"]).status.success());
+
+    let _ = std::fs::remove_dir_all(&base);
+}
+
+/// **이 플랫폼에서 UTF-8 이 아닌 파일 이름** — 축이 다르고 사건은 같다.
+fn 비utf8_이름() -> std::ffi::OsString {
+    #[cfg(windows)]
+    {
+        use std::os::windows::ffi::OsStringExt;
+        // `pal` + 짝 없는 상위 서로게이트 + `z`. UTF-16 으로는 유효하고 UTF-8 로는 아니다.
+        std::ffi::OsString::from_wide(&[0x0070, 0x0061, 0x006C, 0xD800, 0x007A])
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::ffi::OsStringExt;
+        // `0xFF` 는 어떤 UTF-8 시퀀스에도 안 나오는 바이트다.
+        std::ffi::OsString::from_vec(vec![b'p', b'a', b'l', 0xFF, b'z'])
+    }
+    #[cfg(not(any(windows, unix)))]
+    {
+        panic!("이 플랫폼에서 UTF-8 이 아닌 이름을 만드는 문을 모른다")
+    }
+}
+
 /// ★ **정확히 같은 이름은 안 막는다** — 이 줄이 없으면 위 문이 두 번째 설치를 막는다.
 ///
 /// 대소문자를 안 가리는 파일시스템도 **이름은 보존한다**(NTFS·APFS). 그래서 우리가
