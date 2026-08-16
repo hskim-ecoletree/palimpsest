@@ -81,16 +81,43 @@ pub fn checks(target: &Path) -> Vec<Check> {
     ]
 }
 
-/// 이 자리에서 위로 올라가며 설치를 찾는다.
+/// 이 자리에서 위로 올라가며 설치를 찾는다 — **경계를 넘지 않는다.**
+///
+/// # ★ `/` 까지 올라가면 `--repo` 가 경계가 아니다
+///
+/// 옛 탐색은 조상을 끝까지 훑었다. 그래서 조상 디렉터리에 매니페스트를 심어 두면
+/// **아무 관계 없는 하위 디렉터리에서 `pal doctor --repo .` 를 돌려도** 그것을 찾았고,
+/// 그 매니페스트가 적은 것을 진단이 그대로 믿었다. 매니페스트는 **남이 커밋해 보내는
+/// 파일**이므로 그것을 어디까지 찾을지가 곧 신뢰 경계다.
 fn 설치_루트(from: &Path) -> Option<PathBuf> {
+    let 경계 = 경계(from);
     let mut here = Some(from);
     while let Some(dir) = here {
         if dir.join(MANIFEST).is_file() {
             return Some(dir.to_path_buf());
         }
+        if dir == 경계 {
+            return None;
+        }
         here = dir.parent();
     }
     None
+}
+
+/// 탐색이 멈추는 자리 — **대상이 속한 worktree 의 뿌리**, 없으면 대상 자신.
+///
+/// 검사 3 이 *"하위 디렉터리에서 실행"* 을 지목하려면 위로 한 칸은 봐야 한다. 그
+/// 「한 칸」의 상한을 프로젝트 경계로 못박는다 — 그 밖의 매니페스트는 **우리 대상의
+/// 것이 아니다.**
+fn 경계(from: &Path) -> PathBuf {
+    let mut here = Some(from);
+    while let Some(dir) = here {
+        if dir.join(".git").exists() {
+            return dir.to_path_buf();
+        }
+        here = dir.parent();
+    }
+    from.to_path_buf()
 }
 
 fn 설정(target: &Path) -> Outcome {
@@ -196,11 +223,17 @@ fn 등재(target: &Path) -> Outcome {
     }
 }
 
-/// ★ **등록된 명령을 실제로 실행해서 대답을 본다.**
+/// ★ **적힌 것은 대조하고, 실행은 우리가 아는 것만 한다.**
 ///
-/// 두 겹이다 — 매니페스트가 적은 등록이 **설정에 그대로 있는가**, 그리고 그 문자열이
-/// **실제로 도는가.** 첫째만 보면 실행 파일이 사라진 자리를 못 보고, 둘째만 보면
-/// 사용자가 등록을 지운 자리를 못 본다.
+/// 세 겹이다 —
+///
+/// 1. 매니페스트가 적은 등록이 **설정에 그대로 있는가**(문자열 대조)
+/// 2. 그 문자열이 **우리 형태인가**, 그리고 그 자리가 **실행될 수 있는가**(`stat`)
+/// 3. **훅 규약이 실제로 서는가** — [`hooks::probe`] 가 **지금 도는 이 실행 파일**을
+///    셸 없이 띄운다
+///
+/// ⚠ **2 에서 되읽은 경로를 3 이 안 쓴다.** 그 경로는 남이 커밋해 보낸 파일에서 왔고,
+/// 옛 코드는 그것을 `/bin/sh -c` 로 돌려서 `pal doctor` 한 번이 임의 코드 실행이었다.
 fn 훅(root: Option<&Path>) -> Outcome {
     let Some(root) = root else {
         return Outcome::Residual("설치를 찾지 못했다 — 등록된 훅이 없다".to_owned());
@@ -225,11 +258,26 @@ fn 훅(root: Option<&Path>) -> Outcome {
                 h.event
             ));
         }
-        if let Err(e) = hooks::probe(&h.event, &h.command) {
+        let Some(등록된_자리) = hooks::되읽는다(&h.command, &h.event) else {
+            return Outcome::Failed(format!(
+                "{} 에 걸린 문자열이 우리 형태가 아니다 — **돌려보지 않는다.** \
+                 매니페스트와 {SETTINGS} 는 대상 프로젝트 안의 평범한 파일이라 \
+                 남이 커밋해 보낼 수 있다. `pal install` 을 다시 돌리십시오",
+                h.event
+            ));
+        };
+        if let Err(e) = hooks::실행할_수_있나(&등록된_자리) {
             return Outcome::Failed(format!("{} 이 안 돈다 — {e:#}", h.event));
         }
+        if let Err(e) = hooks::probe(&h.event) {
+            return Outcome::Failed(format!("{} 의 훅 규약이 안 선다 — {e:#}", h.event));
+        }
     }
-    Outcome::Ok(format!("등록된 {}개가 실제로 돌고 우리 표식으로 대답했다", 적힌.len()))
+    Outcome::Ok(format!(
+        "등록된 {}개가 설정과 맞고 그 자리가 실행될 수 있다. 훅 규약은 지금 이 실행 \
+         파일로 확인했다 — **적힌 문자열은 안 돌린다**",
+        적힌.len()
+    ))
 }
 
 /// 사람이 읽는 화면.

@@ -81,20 +81,98 @@ fn 홑따옴표(s: &str) -> String {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ★ 탐침 — **「적혀 있다」로는 부족하다**
+// ★ 탐침 — **「적혀 있다」로는 부족하다. 그러나 남의 문자열을 돌리지는 않는다**
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// 하네스가 훅을 실행하는 방식 그대로.
-const SHELL: &str = "/bin/sh";
+/// 등록 문자열을 **우리 형태로 되읽는다.** 실패하면 우리가 쓴 것이 아니다.
+///
+/// # ★ 이 함수의 결과를 실행에 쓰지 않는다
+///
+/// `.claude/pal/manifest.json` 과 `.claude/settings.json` 은 **대상 프로젝트 안의
+/// 평범한 파일**이고 `.gitignore` 에 없어서 **커밋되고 clone 과 함께 이동한다.**
+/// 그 안의 문자열은 **입력이지 사실이 아니다** — 서명도 소유 확인도 없다. 그래서
+/// 여기서 되읽은 경로는 **존재와 실행 권한을 `stat` 으로 보는 데만** 쓰고, 프로세스를
+/// 띄우는 데는 [`probe`] 가 **지금 도는 이 실행 파일**만 쓴다.
+///
+/// 되읽는 형태는 [`command`] 가 만드는 것 하나뿐이다 — `'<경로>' hook <사건>`.
+#[must_use]
+pub fn 되읽는다(command: &str, event: &str) -> Option<PathBuf> {
+    let rest = command.strip_prefix('\'')?;
+    let mut path = String::new();
+    let mut chars = rest.char_indices();
+    let 꼬리 = loop {
+        let (i, c) = chars.next()?;
+        if c != '\'' {
+            path.push(c);
+            continue;
+        }
+        // `'\''` 는 홑따옴표 하나를 뜻한다 — 그것만 이어 읽는다.
+        if rest[i..].starts_with(r"'\''") {
+            path.push('\'');
+            chars.next()?;
+            chars.next()?;
+            chars.next()?;
+            continue;
+        }
+        break &rest[i + 1..];
+    };
+    if 꼬리 != format!(" hook {event}") || path.is_empty() {
+        return None;
+    }
+    Some(PathBuf::from(path))
+}
 
-/// 등록된 명령을 **실제로 실행해서** 대답을 확인한다.
+/// 등록된 자리가 **실행될 수 있는가** — `stat` 으로만 본다. **안 돌린다.**
 ///
-/// # 왜 실행까지 하는가
+/// 실행 파일이 사라지면 하네스는 exit **127**, 실행 권한을 잃으면 exit **126** 을 내고
+/// 그 실패를 **완전히 삼킨다** — 세션은 계속되고 `claude` 의 종료 코드는 0 이며
+/// 트랜스크립트에도 대화형 화면에도 한 글자도 안 나온다. 그래서 *"`settings.json` 에
+/// 적혀 있다"* 는 **아무것도 보증하지 않는다.**
 ///
-/// 실행 파일이 사라지면 exit **127**, 실행 권한을 잃으면 exit **126** 인데 하네스는
-/// 그것을 **완전히 삼킨다** — 세션은 계속되고 `claude` 의 종료 코드는 0 이며
-/// 트랜스크립트에도 대화형 화면에도 한 글자도 안 나온다. `--debug` 를 켜야만 보인다.
-/// 그래서 *"`settings.json` 에 적혀 있다"* 는 **아무것도 보증하지 않는다.**
+/// # Errors
+/// 그 자리에 파일이 없거나 실행 권한이 없으면.
+pub fn 실행할_수_있나(path: &Path) -> Result<()> {
+    let meta = std::fs::metadata(path).map_err(|e| {
+        anyhow::anyhow!(
+            "등록된 실행 파일이 없다: {} ({e}) — 하네스는 여기서 exit 127 을 내고 \
+             그 실패를 완전히 삼킨다. `pal update` 가 등록을 지금 실행 파일로 맞춘다",
+            path.display()
+        )
+    })?;
+    if !meta.is_file() {
+        bail!(
+            "등록된 자리가 일반 파일이 아니다: {} — 하네스는 여기서 exit 126/127 을 내고 \
+             그 실패를 완전히 삼킨다",
+            path.display()
+        );
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if meta.permissions().mode() & 0o111 == 0 {
+            bail!(
+                "등록된 파일에 실행 권한이 없다: {} — 하네스는 여기서 exit 126 을 내고 \
+                 그 실패를 완전히 삼킨다",
+                path.display()
+            );
+        }
+    }
+    Ok(())
+}
+
+/// **훅 규약이 실제로 서는가** — 지금 도는 이 실행 파일을 **셸 없이** 직접 띄워 본다.
+///
+/// # ★ 저장소에서 읽은 문자열을 어떤 경로로도 실행하지 않는다
+///
+/// 옛 탐침은 `settings.json`·매니페스트의 `command` 를 `/bin/sh -c` 로 돌렸다. 그
+/// 두 파일은 **남이 커밋해 보내는 파일**이고, *"우리 훅이 아니다"* 라는 판정은 **실행
+/// 뒤에** 났다 — 즉 `pal doctor` 한 번이 임의 코드 실행이었다. 그래서 지금은
+/// **우리가 아는 것만 실행한다**: [`std::env::current_exe`] 와 우리가 정한 인자.
+/// 파일에서 읽은 문자열은 [`registered`]·[`되읽는다`] 의 **대조에만** 쓴다.
+///
+/// ⚠ 하네스는 여전히 등록 문자열을 `/bin/sh -c` 로 돌린다. 그래서 **등록 문자열은
+/// 셸 규칙을 타야 한다**([`홑따옴표`]). 그것과 **우리 진단이 셸을 쓰는 것**은 다른
+/// 문제이고, 여기서 둘을 갈랐다.
 ///
 /// # 탐침은 무슨 정책이 걸려 있어도 차단을 못 낸다
 ///
@@ -103,7 +181,7 @@ const SHELL: &str = "/bin/sh";
 ///
 /// # Errors
 /// 못 돌리거나, 종료 코드가 0 이 아니거나, 대답에 우리 표식이 없으면.
-pub fn probe(event: &str, command: &str) -> Result<()> {
+pub fn probe(event: &str) -> Result<()> {
     let payload = json!({
         "session_id": "pal-doctor-probe",
         "transcript_path": "",
@@ -113,14 +191,16 @@ pub fn probe(event: &str, command: &str) -> Result<()> {
     })
     .to_string();
 
-    let mut child = std::process::Command::new(SHELL)
-        .arg("-c")
-        .arg(command)
+    let exe = 실행_파일()?;
+    // **인자는 우리가 정한다.** 셸을 안 거치므로 따옴표도 메타문자도 없다.
+    let mut child = std::process::Command::new(&exe)
+        .arg("hook")
+        .arg(event)
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
-        .with_context(|| format!("`{SHELL} -c` 를 못 돌렸다"))?;
+        .with_context(|| format!("{} 를 못 돌렸다", exe.display()))?;
     if let Some(mut sink) = child.stdin.take() {
         use std::io::Write;
         // 상대가 표준입력을 안 읽고 죽으면 여기가 깨진 파이프다 — 그것도 대답의 일부다.
@@ -131,20 +211,15 @@ pub fn probe(event: &str, command: &str) -> Result<()> {
     let stderr = String::from_utf8_lossy(&out.stderr);
     match out.status.code() {
         Some(0) => {}
-        Some(127) => bail!("exit 127 — 등록된 실행 파일이 없다. 하네스는 이 실패를 삼킨다"),
-        Some(126) => bail!("exit 126 — 등록된 파일에 실행 권한이 없다. 하네스는 이 실패를 삼킨다"),
         Some(code) => bail!("exit {code} — {}", stderr.trim()),
         None => bail!("신호로 죽었다 — {}", stderr.trim()),
     }
     if !stderr.contains(crate::hook::ACK) {
-        bail!("대답에 `{}` 표식이 없다 — 등록된 것이 우리 훅이 아니다", crate::hook::ACK);
+        bail!("대답에 `{}` 표식이 없다", crate::hook::ACK);
     }
     let 지금 = crate::version::describe();
     if !stderr.contains(지금) {
-        bail!(
-            "다른 빌드가 대답했다 — 지금은 pal {지금} 인데 등록된 것은 아니다. \
-             `pal update` 가 등록을 지금 실행 파일로 맞춘다"
-        );
+        bail!("대답이 pal {지금} 을 안 적었다");
     }
     Ok(())
 }
@@ -284,7 +359,7 @@ fn 치운다(map: &mut Map<String, Value>, 우리가_만들었나: bool) {
 
 #[cfg(test)]
 mod tests {
-    use super::{HookEntry, apply, command, plan, registered, strip};
+    use super::{HookEntry, apply, command, plan, registered, strip, 되읽는다};
     use serde_json::{Map, Value, json};
     use std::path::Path;
 
@@ -315,6 +390,37 @@ mod tests {
     fn 홑따옴표가_든_경로도_한_낱말이다() {
         let c = command(Path::new("/opt/it's/pal"), "SubagentStop");
         assert_eq!(c, r"'/opt/it'\''s/pal' hook SubagentStop");
+    }
+
+    /// ★ **우리가 만든 문자열만 되읽힌다** — 되읽히지 않는 것은 우리 것이 아니다.
+    #[test]
+    fn 우리가_만든_문자열만_되읽힌다() {
+        for 경로 in ["/bin/pal", "/opt/pal 도구/pal", "/opt/it's/pal", "/한글/경로/pal"] {
+            let c = command(Path::new(경로), "SubagentStop");
+            assert_eq!(
+                되읽는다(&c, "SubagentStop").as_deref(),
+                Some(Path::new(경로)),
+                "왕복이 안 됐다: {c}"
+            );
+        }
+    }
+
+    /// ★ **남이 심은 문자열은 우리 형태가 아니다.** 되읽기가 그것을 가른다 —
+    /// 그리고 되읽은 경로는 `stat` 에만 쓰이지 실행에는 안 쓰인다.
+    #[test]
+    fn 남이_심은_문자열은_안_되읽힌다() {
+        for 남의것 in [
+            "touch /tmp/PWNED",
+            "'/bin/pal' hook SubagentStop; touch /tmp/PWNED",
+            "'/bin/pal' hook SessionStart",
+            "/bin/pal hook SubagentStop",
+            "'/bin/sh' -c 'touch /tmp/PWNED'",
+            "'' hook SubagentStop",
+            "'미완성 hook SubagentStop",
+            "",
+        ] {
+            assert!(되읽는다(남의것, "SubagentStop").is_none(), "`{남의것}` 를 우리 것으로 읽었다");
+        }
     }
 
     /// ★ **같은 설치에서 두 번 등록하면 두 번 돈다** — 중복 제거가 완전 일치 기준이므로
