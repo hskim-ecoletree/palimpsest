@@ -64,7 +64,11 @@ pub struct Manifest {
     pub pal_version: String,
     pub roots: Roots,
     /// 매니페스트 자신의 자리 — 대조는 이 경로 하나만 뺀다.
-    pub manifest_path: String,
+    ///
+    /// **JSON 의 키 이름은 `manifest_path` 로 남긴다** — 이 파일은 우리 밖에서도
+    /// 읽히고, 밖에서 읽는 이름을 안쪽 사정으로 바꾸지 않는다.
+    #[serde(rename = "manifest_path")]
+    pub own_path: String,
     pub files: Vec<FileEntry>,
     pub blocks: Vec<BlockEntry>,
     pub settings: Option<SettingsEntry>,

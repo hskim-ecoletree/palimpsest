@@ -161,7 +161,7 @@ pub fn install(target: &Path) -> Result<()> {
             dirs: OWNED_DIRS.iter().map(|s| (*s).to_owned()).collect(),
             files: OWNED_FILES.iter().map(|s| (*s).to_owned()).collect(),
         },
-        manifest_path: MANIFEST.to_owned(),
+        own_path: MANIFEST.to_owned(),
         files,
         blocks,
         settings: settings_entry,
@@ -427,7 +427,7 @@ pub fn update(target: &Path) -> Result<()> {
     }
 
     m.files = files;
-    m.pal_version = now.to_owned();
+    now.clone_into(&mut m.pal_version);
     manifest::write(&manifest_path, &m)?;
     report.say("매니페스트", &format!("{MANIFEST}  ·  pal {now}"));
     report.print(&format!("갱신 — {}", target.display()));
@@ -478,14 +478,14 @@ pub fn uninstall(target: &Path) -> Result<()> {
     }
 
     // ── 2단계 · 적용 ────────────────────────────────────────────────────────
-    let _lock = Lock::take(&target)?;
+    let lock = Lock::take(&target)?;
     let mut report = Report::new();
 
     for b in &m.blocks {
         match blocks::remove(&target.join(&b.path), &b.inserted, b.created)? {
-            blocks::Removed::Removed => report.say("블록 뺌", &b.path),
-            blocks::Removed::FileGone => report.say("지웠다", &b.path),
-            blocks::Removed::Missing => report.say("이미 없음", &b.path),
+            blocks::Removal::Block => report.say("블록 뺌", &b.path),
+            blocks::Removal::FileGone => report.say("지웠다", &b.path),
+            blocks::Removal::Missing => report.say("이미 없음", &b.path),
         }
     }
     if let Some(s) = &m.settings {
@@ -511,7 +511,7 @@ pub fn uninstall(target: &Path) -> Result<()> {
     report.say("지웠다", MANIFEST);
 
     // 잠금을 먼저 놓는다 — 안 놓으면 `.claude` 가 비어 있지 않아 안 지워진다.
-    drop(_lock);
+    drop(lock);
     for dir in m.created_dirs.iter().rev() {
         let path = target.join(dir);
         // **빈 것만 지운다.** 남의 것이 들어와 있으면 그 자리는 이제 우리 것이 아니다.

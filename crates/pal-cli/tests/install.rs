@@ -126,8 +126,8 @@ fn 훑기(root: &Path, dir: &Path, out: &mut BTreeMap<String, String>) {
 
 /// 시험 안의 값 — **바이트가 같은지만** 가르면 되므로 길이와 합으로 충분하다.
 fn 합(bytes: &[u8]) -> u64 {
-    bytes.iter().fold(1469598103934665603u64, |h, b| {
-        (h ^ u64::from(*b)).wrapping_mul(1099511628211)
+    bytes.iter().fold(1_469_598_103_934_665_603_u64, |h, b| {
+        (h ^ u64::from(*b)).wrapping_mul(1_099_511_628_211)
     })
 }
 
@@ -163,7 +163,8 @@ fn 설치는_기존_파일을_안_밟는다() {
         }
         // **사용자 바이트가 접두사로 그대로 남는다** — 블록은 뒤에 붙는다.
         for (path, bytes) in &원본 {
-            if path.ends_with(".json") {
+            // `settings.json` 은 병합이라 접두사가 안 남는다 — 그쪽은 값 단위로 잰다.
+            if path == ".claude/settings.json" {
                 continue;
             }
             let 지금 = std::fs::read(root.join(path)).expect("읽기");
@@ -642,14 +643,11 @@ fn 동시_설치_여덟이_블록을_하나만_만든다() {
 fn 검사들(root: &Path, path_env: Option<&str>) -> serde_json::Value {
     let mut cmd = Command::new(PAL);
     cmd.args(["doctor", "--install", "--json"]).current_dir(root);
-    match path_env {
-        Some(p) => {
-            cmd.env("PATH", p);
-        }
-        None => {
-            let path = std::env::var("PATH").unwrap_or_default();
-            cmd.env("PATH", format!("{}:{path}", pal_dir().display()));
-        }
+    if let Some(p) = path_env {
+        cmd.env("PATH", p);
+    } else {
+        let path = std::env::var("PATH").unwrap_or_default();
+        cmd.env("PATH", format!("{}:{path}", pal_dir().display()));
     }
     let out = cmd.output().expect("pal doctor");
     serde_json::from_slice(&out.stdout).expect("JSON")

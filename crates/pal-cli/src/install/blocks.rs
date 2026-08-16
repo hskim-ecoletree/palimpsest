@@ -78,9 +78,9 @@ pub fn add(path: &Path, markers: &Markers, block: &str) -> Result<Added> {
 }
 
 /// 블록을 뺀 결과.
-pub enum Removed {
-    /// 뺐다.
-    Removed,
+pub enum Removal {
+    /// 블록만 뺐다.
+    Block,
     /// 파일을 통째로 지웠다 — 우리가 만들었고 나머지가 비었다.
     FileGone,
     /// 파일이 이미 없다.
@@ -92,9 +92,9 @@ pub enum Removed {
 /// # Errors
 /// 파일은 있는데 그 바이트열이 안 보이면 — **손으로 고쳐졌다.** 고치려 들지 않고
 /// 거부한다.
-pub fn remove(path: &Path, inserted: &str, created: bool) -> Result<Removed> {
+pub fn remove(path: &Path, inserted: &str, created: bool) -> Result<Removal> {
     if !path.exists() {
-        return Ok(Removed::Missing);
+        return Ok(Removal::Missing);
     }
     let existing = std::fs::read(path)
         .with_context(|| format!("읽지 못했다: {}", path.display()))?;
@@ -112,10 +112,10 @@ pub fn remove(path: &Path, inserted: &str, created: bool) -> Result<Removed> {
     if created && next.is_empty() {
         std::fs::remove_file(path)
             .with_context(|| format!("지우지 못했다: {}", path.display()))?;
-        return Ok(Removed::FileGone);
+        return Ok(Removal::FileGone);
     }
     write_in_place(path, &next)?;
-    Ok(Removed::Removed)
+    Ok(Removal::Block)
 }
 
 /// 우리 블록이 지금 파일에 있는가 — **제거 전 검증에 쓴다.**
@@ -169,7 +169,7 @@ fn finish(file: &mut std::fs::File, bytes: &[u8], path: &Path) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Added, Removed, add, compose, remove};
+    use super::{Added, Removal, add, compose, remove};
     use crate::install::layout::IGNORE_MARKERS;
 
     fn 방(tag: &str) -> std::path::PathBuf {
@@ -231,7 +231,7 @@ mod tests {
             panic!("이미 있다고 나왔다");
         };
         assert!(created);
-        assert!(matches!(remove(&path, &bytes, created).expect("빼기"), Removed::FileGone));
+        assert!(matches!(remove(&path, &bytes, created).expect("빼기"), Removal::FileGone));
         assert!(!path.exists());
     }
 

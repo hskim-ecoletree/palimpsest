@@ -103,7 +103,7 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
         Ok(m) => m,
         Err(e) => return Outcome::Failed(format!("{e}")),
     };
-    let actual = match manifest::walk(root, &m.roots, &m.manifest_path) {
+    let actual = match manifest::walk(root, &m.roots, &m.own_path) {
         Ok(a) => a,
         Err(e) => return Outcome::Failed(format!("실물을 훑지 못했다 — {e}")),
     };

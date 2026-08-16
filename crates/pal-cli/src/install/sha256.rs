@@ -70,6 +70,9 @@ fn digest(bytes: &[u8]) -> [u8; 32] {
     out
 }
 
+// **FIPS 180-4 §6.2.2 의 이름을 그대로 쓴다.** `a`..`h`·`w`·`t1`·`t2` 를 길게 바꾸면
+// 명세와 한 줄씩 대 볼 수 없게 되고, 손으로 쓴 압축 함수에서 그것이 유일한 감사 수단이다.
+#[allow(clippy::many_single_char_names)]
 fn compress(h: &mut [u32; 8], block: &[u8]) {
     let mut w = [0u32; 64];
     for (slot, four) in w[..16].iter_mut().zip(block.chunks_exact(4)) {

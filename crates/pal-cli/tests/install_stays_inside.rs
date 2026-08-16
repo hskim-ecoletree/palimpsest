@@ -144,8 +144,8 @@ fn 훑기(root: &Path, dir: &Path, 이름: &str, 뺄것: &Path, out: &mut Snapsh
 }
 
 fn 합(bytes: &[u8]) -> u64 {
-    bytes.iter().fold(1469598103934665603u64, |h, b| {
-        (h ^ u64::from(*b)).wrapping_mul(1099511628211)
+    bytes.iter().fold(1_469_598_103_934_665_603_u64, |h, b| {
+        (h ^ u64::from(*b)).wrapping_mul(1_099_511_628_211)
     })
 }
 

@@ -24,7 +24,7 @@ pub fn describe() -> &'static str {
 
 /// **순수 함수다** — 그래서 *"두 빌드가 갈리는가"* 를 시험으로 잴 수 있다.
 ///
-/// SemVer 의 빌드 메타데이터 형태(`+`)를 쓴다. 비교에 안 쓰이는 자리이고, 우리가 그것을
+/// `SemVer` 의 빌드 메타데이터 형태(`+`)를 쓴다. 비교에 안 쓰이는 자리이고, 우리가 그것을
 /// 비교에 쓰지도 않는다 — 설치 경로는 이 문자열을 **같다/다르다**로만 본다.
 fn compose(package: &str, commit: Option<&str>) -> String {
     match commit {
