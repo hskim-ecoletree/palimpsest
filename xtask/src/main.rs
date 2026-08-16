@@ -168,8 +168,7 @@ fn check_optional_fields(root: &Path) -> Result<String> {
                 continue;
             }
             if t.starts_with("pub ") && t.contains("Option<") {
-                let rel = file.strip_prefix(root).unwrap_or(&file);
-                hits.push(format!("{}:{}  {t}", rel.display(), n + 1));
+                hits.push(format!("{}:{}  {t}", 상대_경로(root, &file), n + 1));
             }
         }
     }
@@ -438,6 +437,31 @@ fn rust_sources(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(out)
 }
 
+/// 저장소 루트 기준 상대 경로 — **구분자를 언제나 `/` 로 낸다.**
+///
+/// ★ `read_dir` 이 낸 경로는 Windows 에서 `\` 를 쓰고, `root.join("crates/pal-core/src")`
+/// 의 `/` 와 섞이면 `crates/pal-core/src\binding.rs` 같은 **혼종**이 나온다. 그것을
+/// 등록된 자리(전부 `/`)와 `starts_with` 로 대면 절대 안 맞고, 검사는 *"자리가 늘었다"* 를
+/// 외친다 — **플랫폼이 판정을 뒤집는 자리다.**
+///
+/// 화면에 내는 자리에도 같이 쓴다. 진단 문구가 플랫폼마다 다르면 그 문구를 기대하는
+/// 시험이 한쪽에서만 선다.
+fn 상대_경로(root: &Path, file: &Path) -> String {
+    file.strip_prefix(root).unwrap_or(file).to_string_lossy().replace('\\', "/")
+}
+
+/// 파생 문서 대조 — **줄바꿈을 정규화해서 댄다.**
+///
+/// ★ `core.autocrlf=true` 인 워킹트리에서 체크아웃된 문서는 CRLF 이고 `render_*_doc()` 은
+/// LF 를 낸다. 바이트로 대면 Windows 에서 **언제나** 실패하고, `cargo xtask schema-doc`
+/// 으로 "고쳐도" 다음 체크아웃이 되돌린다 — 손쓸 수 없는 빨강이다.
+///
+/// `install/eol.rs` 가 같은 문제를 푼 자리이고 그 규율을 그대로 빌린다:
+/// **판정은 내용으로 하고 바이트는 있던 대로 둔다.** 홑 `\r` 은 안 건드린다.
+fn 줄바꿈_같은가(have: &str, want: &str) -> bool {
+    have.replace("\r\n", "\n") == want.replace("\r\n", "\n")
+}
+
 // ── 검사 7 — 스키마 정합 (stack §4.3 단계 2 · DESIGN §1.2) ────────────────────
 
 /// `schema/graph.toml` ↔ 코드. **양방향이다.**
@@ -543,7 +567,7 @@ fn check_schema(root: &Path) -> Result<String> {
     let doc_path = root.join("docs/graph-schema.md");
     let want = render_schema_doc(&schema);
     match std::fs::read_to_string(&doc_path) {
-        Ok(have) if have == want => {}
+        Ok(have) if 줄바꿈_같은가(&have, &want) => {}
         Ok(_) => problems.push(
             "docs/graph-schema.md 가 스키마와 다르다 — `cargo xtask schema-doc` 으로 다시 낸다"
                 .to_owned(),
@@ -678,7 +702,7 @@ fn check_catalog(root: &Path) -> Result<String> {
                 problems.push(format!(
                     "{} 에 질의 이름 `{name}` 이 리터럴로 있다 — 표면은 \
                      `QueryName::ALL` 에서 렌더링해야 하고, 리터럴은 두 번째 목록이다",
-                    file.strip_prefix(root).unwrap_or(&file).display()
+                    상대_경로(root, &file)
                 ));
             }
         }
@@ -688,7 +712,7 @@ fn check_catalog(root: &Path) -> Result<String> {
     let doc_path = root.join("docs/query-catalog.md");
     let want = render_catalog_doc(&catalog);
     match std::fs::read_to_string(&doc_path) {
-        Ok(have) if have == want => {}
+        Ok(have) if 줄바꿈_같은가(&have, &want) => {}
         Ok(_) => problems.push(
             "docs/query-catalog.md 가 카탈로그와 다르다 — `cargo xtask query-doc` 으로 다시 낸다"
                 .to_owned(),
@@ -1224,8 +1248,7 @@ fn check_anchor_is_measured(root: &Path) -> Result<String> {
                 let code = line.split("//").next().unwrap_or("");
                 // 선언(`pub struct WatchEntry {`)은 리터럴이 아니다.
                 if code.contains("WatchEntry {") && !code.contains("struct WatchEntry") {
-                    let rel = file.strip_prefix(root).unwrap_or(&file).display().to_string();
-                    sites.push(format!("{rel}:{}", n + 1));
+                    sites.push(format!("{}:{}", 상대_경로(root, &file), n + 1));
                 }
             }
         }

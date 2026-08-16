@@ -27,7 +27,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{PAL, git};
+use common::{PAL, git, path_앞에, 상대_경로, 해시};
 
 /// `pal` 이 있는 디렉터리 — 설치 검사 4(`PATH` 에 `pal` 이 있는가)의 정상 조건.
 fn pal_dir() -> PathBuf {
@@ -35,11 +35,10 @@ fn pal_dir() -> PathBuf {
 }
 
 fn 돌린다(cwd: &Path, args: &[&str]) -> Output {
-    let path = std::env::var("PATH").unwrap_or_default();
     Command::new(PAL)
         .args(args)
         .current_dir(cwd)
-        .env("PATH", format!("{}:{path}", pal_dir().display()))
+        .env("PATH", path_앞에(&pal_dir()))
         .output()
         .expect("pal 을 못 돌렸다")
 }
@@ -117,9 +116,8 @@ fn 훑기(root: &Path, dir: &Path, out: &mut BTreeMap<String, String>) {
         if path.is_dir() {
             훑기(root, &path, out);
         } else {
-            let rel = path.strip_prefix(root).unwrap_or(&path).display().to_string();
             let bytes = std::fs::read(&path).unwrap_or_default();
-            out.insert(rel, format!("{:x}-{}", bytes.len(), 합(&bytes)));
+            out.insert(상대_경로(root, &path), format!("{:x}-{}", bytes.len(), 합(&bytes)));
         }
     }
 }
@@ -284,15 +282,6 @@ fn 나중에_생긴_파일이_대조에_걸린다() {
     assert!(매니페스트_검사["detail"].as_str().expect("detail").contains("나중것"));
 }
 
-fn 해시(path: &Path) -> String {
-    let out = Command::new("shasum")
-        .args(["-a", "256"])
-        .arg(path)
-        .output()
-        .expect("shasum 을 못 돌렸다");
-    String::from_utf8_lossy(&out.stdout).split_whitespace().next().unwrap_or_default().to_owned()
-}
-
 fn 훑어_해시(root: &Path, dir: &Path, out: &mut BTreeMap<String, String>) {
     let Ok(entries) = std::fs::read_dir(dir) else { return };
     for entry in entries.flatten() {
@@ -300,8 +289,7 @@ fn 훑어_해시(root: &Path, dir: &Path, out: &mut BTreeMap<String, String>) {
         if path.is_dir() {
             훑어_해시(root, &path, out);
         } else {
-            let rel = path.strip_prefix(root).unwrap_or(&path).display().to_string();
-            out.insert(rel, 해시(&path));
+            out.insert(상대_경로(root, &path), 해시(&path));
         }
     }
 }
@@ -511,7 +499,15 @@ fn 매니페스트_경로들(root: &Path) -> Vec<String> {
     out
 }
 
-/// ★ **왕복 후 바이트 동일** — `cmp` 로 재는 자리.
+/// ★ **왕복 후 바이트 동일** — 디스크에 뜬 사본과 실물을 바이트로 대는 자리.
+///
+/// ⚠ 옛 회차는 여기를 `Command::new("cmp")` 로 댔다. 그 도구는 유닉스 밖에 없어서
+/// **이 시험이 Windows 에서 `NotFound` 로 죽었고**, 그래서 왕복 동일성이 이 플랫폼에서
+/// 한 번도 안 재졌다. 바이트 대조에 바깥 프로세스가 필요하지 않다.
+///
+/// **사본은 그대로 둔다** — 메모리의 `원본` 만 대면 *"설치가 파일을 안 건드렸다"* 는
+/// 재지만 *"설치 중에 디스크에 뜬 것이 그대로다"* 는 못 잰다. 사본은 설치가 지나간
+/// 뒤에도 디스크에 살아 있는 **바깥 증인**이다.
 #[test]
 fn 왕복하면_사용자_파일이_바이트로_같다() {
     let root = 살고_있는_프로젝트("f-바이트");
@@ -519,7 +515,6 @@ fn 왕복하면_사용자_파일이_바이트로_같다() {
         .iter()
         .map(|p| (root.join(p), std::fs::read(root.join(p)).expect("읽기")))
         .collect();
-    // 사본을 떠 두고 `cmp` 로 대는 자리를 만든다.
     for (path, bytes) in &원본 {
         std::fs::write(path.with_extension("원본"), bytes).expect("사본");
     }
@@ -528,13 +523,10 @@ fn 왕복하면_사용자_파일이_바이트로_같다() {
     성공(&root, &["uninstall"]);
 
     for (path, bytes) in &원본 {
-        assert_eq!(&std::fs::read(path).expect("읽기"), bytes, "{} 가 원본과 다르다", path.display());
-        let out = Command::new("cmp")
-            .arg(path)
-            .arg(path.with_extension("원본"))
-            .output()
-            .expect("cmp 를 못 돌렸다");
-        assert!(out.status.success(), "cmp 가 갈랐다: {}", String::from_utf8_lossy(&out.stdout));
+        let 지금 = std::fs::read(path).expect("읽기");
+        assert_eq!(&지금, bytes, "{} 가 원본과 다르다", path.display());
+        let 사본 = std::fs::read(path.with_extension("원본")).expect("사본 읽기");
+        assert_eq!(지금, 사본, "{} 가 디스크의 사본과 갈렸다", path.display());
     }
 }
 
