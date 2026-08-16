@@ -15,9 +15,9 @@
 //! 센다 — 그래서 그쪽만 **파일 하나짜리 뿌리**다.
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
 
 use super::inside::{Rel, Root};
@@ -97,11 +97,64 @@ pub struct Manifest {
 }
 
 impl Manifest {
+    /// **이 매니페스트에서 유도되는 모든 경로.**
+    ///
+    /// ★ **경로 필드를 더하는 사람은 여기도 더해야 한다.** 안 더하면 그 경로는
+    /// [`자리들`] 에 안 실리고 [`Places::자리`] 가 **실패한다** — 조용히 통과하지
+    /// 않는다. 아래 `경로를_하나도_안_빠뜨린다` 가 그 빠뜨림을 시험으로 잡는다.
+    #[must_use]
+    pub fn 경로들(&self) -> Vec<&Rel> {
+        let mut out = vec![&self.own_path];
+        out.extend(&self.roots.dirs);
+        out.extend(&self.roots.files);
+        out.extend(self.files.iter().map(|f| &f.path));
+        out.extend(self.blocks.iter().map(|b| &b.path));
+        out.extend(self.settings.iter().map(|s| &s.path));
+        out.extend(&self.created_dirs);
+        out
+    }
+
     /// 이 매니페스트가 적은 (경로 → sha256).
     #[must_use]
     pub fn recorded(&self) -> BTreeMap<String, String> {
         self.files.iter().map(|f| (f.path.to_string(), f.sha256.clone())).collect()
     }
+}
+
+/// 매니페스트가 가리키는 **실제 자리들.**
+///
+/// ★ **대상 안임이 확인된 것만 든다.** 하나라도 밖을 가리키면 여기서 통째로 실패하고,
+/// 그러면 부르는 쪽은 **아직 아무것도 안 건드린 상태**다.
+pub struct Places(BTreeMap<Rel, PathBuf>);
+
+impl Places {
+    /// 이 경로의 실제 자리.
+    ///
+    /// # Errors
+    /// 등록되지 않은 경로면 — **새 필드를 더한 사람이 [`Manifest::경로들`] 을
+    /// 빠뜨렸다는 뜻이다.** 조용히 통과시키지 않는다.
+    pub fn 자리(&self, rel: &Rel) -> Result<&Path> {
+        match self.0.get(rel) {
+            Some(p) => Ok(p.as_path()),
+            None => bail!(
+                "`{rel}` 이 매니페스트의 경로 목록에 없다 — `Manifest::경로들` 에 \
+                 안 실린 필드가 있다. 경계 검사를 못 지났으므로 건드리지 않는다"
+            ),
+        }
+    }
+}
+
+/// 매니페스트의 **모든** 경로를 대상 안으로 확정한다.
+///
+/// # Errors
+/// 하나라도 대상 밖을 가리키면.
+pub fn 자리들(root: &Root, m: &Manifest) -> Result<Places> {
+    let mut out = BTreeMap::new();
+    for rel in m.경로들() {
+        let path = root.join(rel)?;
+        out.insert(rel.clone(), path);
+    }
+    Ok(Places(out))
 }
 
 /// 매니페스트를 읽는다.
@@ -137,10 +190,10 @@ pub fn write(path: &Path, manifest: &Manifest) -> Result<()> {
 pub fn walk(root: &Root, roots: &Roots, skip: &Rel) -> Result<BTreeMap<String, String>> {
     let mut out = BTreeMap::new();
     for dir in &roots.dirs {
-        훑기(root.path(), &root.join(dir), &mut out)?;
+        훑기(root.path(), &root.join(dir)?, &mut out)?;
     }
     for file in &roots.files {
-        let path = root.join(file);
+        let path = root.join(file)?;
         if path.is_file() {
             out.insert(file.to_string(), sha256::hex(&std::fs::read(&path)?));
         }
@@ -205,8 +258,68 @@ pub fn diff(recorded: &BTreeMap<String, String>, actual: &BTreeMap<String, Strin
 
 #[cfg(test)]
 mod tests {
-    use super::diff;
+    use super::{
+        BlockEntry, FileEntry, Manifest, Rel, Roots, SettingsEntry, diff,
+    };
     use std::collections::BTreeMap;
+
+    /// 경로 필드에만 붙이는 표식 — 아래 시험이 이것으로 샌 필드를 찾는다.
+    const 표식: &str = "경계시험/";
+
+    /// ★ **경로 필드를 더하고 [`Manifest::경로들`] 을 안 고치면 여기서 걸린다.**
+    ///
+    /// 아래 리터럴은 `..` 를 안 쓴다 — 필드를 더하면 **컴파일이 먼저 깨지고**, 그때
+    /// 이웃을 따라 `표식` 이 붙은 값을 넣으면 이 시험이 빠뜨림을 잡는다.
+    ///
+    /// ⚠ 한계: 새 필드에 표식이 안 붙은 값을 넣으면 못 잡는다. 그 자리를 메우는 것은
+    /// **`Rel` 타입 자체**다 — `Root::join` 말고는 파일시스템 경로가 되는 길이 없다.
+    #[test]
+    fn 경로를_하나도_안_빠뜨린다() {
+        let m = Manifest {
+            pal_version: "0.0.0".to_owned(),
+            roots: Roots {
+                dirs: vec![Rel::new(&format!("{표식}뿌리디렉터리"))],
+                files: vec![Rel::new(&format!("{표식}뿌리파일"))],
+            },
+            own_path: Rel::new(&format!("{표식}자기자신")),
+            files: vec![FileEntry {
+                path: Rel::new(&format!("{표식}파일")),
+                sha256: "0".repeat(64),
+            }],
+            blocks: vec![BlockEntry {
+                path: Rel::new(&format!("{표식}블록")),
+                inserted: "x".to_owned(),
+                created: false,
+            }],
+            settings: Some(SettingsEntry {
+                path: Rel::new(&format!("{표식}설정")),
+                added_keys: Vec::new(),
+                hooks: Vec::new(),
+                hooks_key_created: false,
+                created: false,
+            }),
+            created_dirs: vec![Rel::new(&format!("{표식}만든디렉터리"))],
+        };
+
+        let 적힌: std::collections::BTreeSet<String> =
+            m.경로들().into_iter().map(ToString::to_string).collect();
+        let mut 실린 = std::collections::BTreeSet::new();
+        표식_모으기(&serde_json::to_value(&m).expect("직렬화"), &mut 실린);
+
+        assert!(!실린.is_empty(), "이 시험이 아무것도 안 세고 있다");
+        assert_eq!(실린, 적힌, "직렬화에는 있는데 `경로들` 이 안 내는 경로가 있다");
+    }
+
+    fn 표식_모으기(v: &serde_json::Value, out: &mut std::collections::BTreeSet<String>) {
+        match v {
+            serde_json::Value::String(s) if s.starts_with(표식) => {
+                out.insert(s.clone());
+            }
+            serde_json::Value::Array(a) => a.iter().for_each(|x| 표식_모으기(x, out)),
+            serde_json::Value::Object(o) => o.values().for_each(|x| 표식_모으기(x, out)),
+            _ => {}
+        }
+    }
 
     #[test]
     fn 양쪽이_같으면_차집합이_비어_있다() {

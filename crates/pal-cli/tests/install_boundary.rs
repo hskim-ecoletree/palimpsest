@@ -1,0 +1,156 @@
+//! ★ **매니페스트가 적은 경로가 대상 밖을 가리키면 건드리지 않는다** — `[f24]` ⑥⑦.
+//!
+//! # 왜 이것이 매니페스트의 문제인가
+//!
+//! 매니페스트는 **대상 프로젝트 안에 사는 파일**이다. 남의 저장소에
+//! `.claude/pal/manifest.json` 이 커밋돼 있으면 `pal uninstall` 한 번이 **그 파일이 적은
+//! 아무 경로나** 지운다. `Path::join` 은 **절대 경로를 받으면 base 를 통째로 버리고**,
+//! `..` 하나면 경계가 사라진다.
+//!
+//! # 희생양은 전부 시험 방 안에 산다
+//!
+//! 탈출을 재려면 **탈출당할 자리**가 있어야 한다. 그 자리는 시험 방의 형제 디렉터리로
+//! 만든다 — 실제로 지워지면 안 되는 곳을 대상으로 삼지 않는다.
+
+mod common;
+
+use std::path::{Path, PathBuf};
+use std::process::{Command, Output};
+
+use common::{PAL, git};
+
+fn 돌린다(cwd: &Path, args: &[&str]) -> Output {
+    let path = std::env::var("PATH").unwrap_or_default();
+    let pal_dir = Path::new(PAL).parent().expect("pal 의 부모");
+    Command::new(PAL)
+        .args(args)
+        .current_dir(cwd)
+        .env("PATH", format!("{}:{path}", pal_dir.display()))
+        .output()
+        .expect("pal 을 못 돌렸다")
+}
+
+fn 성공(cwd: &Path, args: &[&str]) -> String {
+    let out = 돌린다(cwd, args);
+    assert!(
+        out.status.success(),
+        "pal {args:?}\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    String::from_utf8_lossy(&out.stdout).into_owned()
+}
+
+/// 방 하나 — `밖/` 과 `안/` 이 형제로 산다.
+struct 방 {
+    base: PathBuf,
+    밖: PathBuf,
+    안: PathBuf,
+}
+
+fn 방(tag: &str) -> 방 {
+    let base = std::env::temp_dir().join(format!("pal-f24-경계-{tag}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    let 밖 = base.join("밖");
+    let 안 = base.join("안");
+    std::fs::create_dir_all(&밖).expect("밖");
+    std::fs::create_dir_all(&안).expect("안");
+    std::fs::write(밖.join("희생양.txt"), "건드리면 안 된다\n").expect("희생양");
+    std::fs::write(안.join("README.md"), "hello\n").expect("README");
+    git(&안, &["init", "-q", "."]);
+    방 { base, 밖, 안 }
+}
+
+impl Drop for 방 {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.base);
+    }
+}
+
+fn 매니페스트(안: &Path) -> serde_json::Value {
+    serde_json::from_slice(&std::fs::read(안.join(".claude/pal/manifest.json")).expect("읽기"))
+        .expect("JSON")
+}
+
+fn 매니페스트_쓰기(안: &Path, m: &serde_json::Value) {
+    std::fs::write(
+        안.join(".claude/pal/manifest.json"),
+        serde_json::to_string_pretty(m).expect("직렬화"),
+    )
+    .expect("쓰기");
+}
+
+/// ★ **`files` 가 밖을 가리키면 지우지 않는다.** 상대(`..`)와 절대 둘 다.
+#[test]
+fn 매니페스트가_적은_밖의_파일을_안_지운다() {
+    for (tag, 만든다) in [
+        ("상대", (|밖: &Path| {
+            let _ = 밖;
+            "../밖/희생양.txt".to_owned()
+        }) as fn(&Path) -> String),
+        ("절대", |밖: &Path| 밖.join("희생양.txt").display().to_string()),
+    ] {
+        let 방 = 방(tag);
+        성공(&방.안, &["install"]);
+
+        let mut m = 매니페스트(&방.안);
+        let 밖의_경로 = 만든다(&방.밖);
+        m["files"].as_array_mut().expect("files").push(serde_json::json!({
+            "path": 밖의_경로,
+            "sha256": "0".repeat(64),
+        }));
+        매니페스트_쓰기(&방.안, &m);
+
+        let out = 돌린다(&방.안, &["uninstall"]);
+        let 희생양 = 방.밖.join("희생양.txt");
+        assert!(희생양.exists(), "{tag}: 대상 밖의 파일이 사라졌다 — {}", 희생양.display());
+        assert!(
+            !out.status.success(),
+            "{tag}: 밖을 가리키는 항목을 보고도 성공을 냈다\nstdout: {}",
+            String::from_utf8_lossy(&out.stdout)
+        );
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        assert!(stderr.contains("대상 밖"), "{tag}: 까닭을 안 적었다 — {stderr}");
+    }
+}
+
+/// **`blocks` 는 파일 내용을 다시 쓴다** — 같은 경계가 필요하다.
+#[test]
+fn 매니페스트가_적은_밖의_블록을_안_고친다() {
+    let 방 = 방("블록");
+    성공(&방.안, &["install"]);
+
+    let 희생양 = 방.밖.join("희생양.txt");
+    let 원본 = std::fs::read(&희생양).expect("읽기");
+
+    let mut m = 매니페스트(&방.안);
+    m["blocks"].as_array_mut().expect("blocks").push(serde_json::json!({
+        "path": "../밖/희생양.txt",
+        "inserted": "건드리면 안 된다\n",
+        "created": true,
+    }));
+    매니페스트_쓰기(&방.안, &m);
+
+    let out = 돌린다(&방.안, &["uninstall"]);
+    assert!(희생양.exists(), "대상 밖의 파일이 사라졌다");
+    assert_eq!(std::fs::read(&희생양).expect("읽기"), 원본, "대상 밖의 파일이 고쳐졌다");
+    assert!(!out.status.success(), "밖을 가리키는 블록을 보고도 성공을 냈다");
+}
+
+/// **`created_dirs` 는 디렉터리를 지운다** — 같은 경계가 필요하다.
+#[test]
+fn 매니페스트가_적은_밖의_디렉터리를_안_지운다() {
+    let 방 = 방("디렉터리");
+    성공(&방.안, &["install"]);
+
+    let 빈_디렉터리 = 방.밖.join("빈방");
+    std::fs::create_dir_all(&빈_디렉터리).expect("빈방");
+
+    let mut m = 매니페스트(&방.안);
+    m["created_dirs"].as_array_mut().expect("created_dirs").push(serde_json::json!("../밖/빈방"));
+    매니페스트_쓰기(&방.안, &m);
+
+    let out = 돌린다(&방.안, &["uninstall"]);
+    assert!(빈_디렉터리.is_dir(), "대상 밖의 디렉터리가 사라졌다");
+    assert!(!out.status.success(), "밖을 가리키는 디렉터리를 보고도 성공을 냈다");
+}

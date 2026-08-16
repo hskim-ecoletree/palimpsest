@@ -22,7 +22,6 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use serde_json::{Map, Value};
 
-use super::inside::Rel;
 use super::manifest::SettingsEntry;
 use super::{blocks, hooks};
 
@@ -164,7 +163,8 @@ pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<bool> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Merged, Read, Rel, SettingsEntry, hooks, merge, read, unmerge};
+    use super::{Merged, Read, SettingsEntry, hooks, merge, read, unmerge};
+    use crate::install::inside::Rel;
     use crate::install::manifest::HookEntry;
     use serde_json::{Value, json};
     use std::collections::BTreeMap;

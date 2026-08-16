@@ -18,7 +18,7 @@
 //! 경계가 아니다.
 
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
@@ -49,9 +49,22 @@ impl Root {
     }
 
     /// 대상 안의 자리 하나.
-    #[must_use]
-    pub fn join(&self, rel: &Rel) -> PathBuf {
-        self.0.join(&rel.0)
+    ///
+    /// **밖으로 나가면 실패한다.** 나가는 항목은 **건드리지 않고** 그 사실을 낸다 —
+    /// 「그 항목만 건너뛰고 나머지는 계속」이 아니다. 매니페스트 하나가 남의 자리를
+    /// 가리키고 있으면 그 매니페스트 전체를 사람이 봐야 한다.
+    ///
+    /// # Errors
+    /// 절대 경로거나, `..` 가 들어 있거나, 비어 있으면.
+    pub fn join(&self, rel: &Rel) -> Result<PathBuf> {
+        if let Some(까닭) = 글자로_벗어나나(&rel.0) {
+            bail!(
+                "`{rel}` 은 **대상 밖**이다 ({까닭}) — 대상은 {self} 다.\n    \
+                 매니페스트는 대상 프로젝트 안에 사는 파일이고, 그것이 적은 경로가 밖을 \
+                 가리키면 **아무것도 건드리지 않는다.** 사람이 봐야 한다"
+            );
+        }
+        Ok(self.0.join(&rel.0))
     }
 }
 
@@ -85,5 +98,46 @@ impl Rel {
 impl fmt::Display for Rel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.0)
+    }
+}
+
+/// 이 상대 경로가 **글자만으로** 대상을 벗어나는가.
+///
+/// 절대 경로 · `..` · 빈 경로 셋이다. 파일시스템에 물어보기도 전에 답이 나오는 것들이라
+/// 여기서 먼저 끊는다.
+fn 글자로_벗어나나(rel: &str) -> Option<&'static str> {
+    if rel.is_empty() {
+        return Some("빈 경로다");
+    }
+    let path = Path::new(rel);
+    if path.is_absolute() {
+        return Some("절대 경로다 — `Path::join` 은 절대 경로를 받으면 base 를 통째로 버린다");
+    }
+    for c in path.components() {
+        match c {
+            Component::ParentDir => return Some("`..` 가 들어 있다"),
+            Component::RootDir | Component::Prefix(_) => return Some("뿌리에서 시작한다"),
+            Component::CurDir | Component::Normal(_) => {}
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::글자로_벗어나나;
+
+    #[test]
+    fn 절대_경로와_상위_참조를_글자로_끊는다() {
+        for 나쁜 in ["/etc/passwd", "../밖", "a/../../밖", "a/..", ""] {
+            assert!(글자로_벗어나나(나쁜).is_some(), "`{나쁜}` 를 안 끊었다");
+        }
+    }
+
+    #[test]
+    fn 안쪽_경로는_안_끊는다() {
+        for 좋은 in [".claude/pal/manifest.json", "CLAUDE.md", "./a/b"] {
+            assert!(글자로_벗어나나(좋은).is_none(), "`{좋은}` 를 끊었다");
+        }
     }
 }
