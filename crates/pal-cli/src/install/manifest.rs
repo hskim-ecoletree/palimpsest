@@ -114,6 +114,14 @@ pub struct HookEntry {
 pub struct SettingsEntry {
     pub path: Rel,
     pub added_keys: Vec<String>,
+    /// ★ **우리가 더한 키의 값.** 되돌릴 때 *"그 값이 아직 우리가 넣은 그것인가"* 를
+    /// 대는 자리다 — 사용자가 자기 값으로 바꿨는데 조용히 지우면, 파일 쪽에는 붙인
+    /// `사용자 수정 — 지웠다` 가 설정 쪽에만 없는 셈이 된다.
+    ///
+    /// **`#[serde(default)]` 이라 옛 매니페스트는 빈 지도로 읽힌다** — 그때는 댈 값이
+    /// 없으니 「모른다」이고, 없던 것을 있었다고 읽지 않는다.
+    #[serde(default)]
+    pub added_values: BTreeMap<String, serde_json::Value>,
     /// 우리가 등록한 훅. **`#[serde(default)]` 이라 옛 매니페스트도 읽힌다** — 못 읽으면
     /// *"무엇을 되돌려야 하는가"* 의 기록이 통째로 사라진다.
     #[serde(default)]
@@ -424,6 +432,7 @@ mod tests {
             settings: Some(SettingsEntry {
                 path: Rel::new(&format!("{표식}설정")),
                 added_keys: Vec::new(),
+                added_values: BTreeMap::new(),
                 hooks: Vec::new(),
                 hooks_key_created: false,
                 created: false,

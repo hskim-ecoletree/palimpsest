@@ -443,6 +443,13 @@ fn 설정_병합(
     // ⚠ 훅은 **바라는 것 전부**를 적는다(더한 것만이 아니다). 사용자가 우연히 똑같은
     // 절대 경로 문자열을 손으로 걸어 뒀다면 제거가 그것을 걷는데, 그 문자열은 이
     // 설치본의 절대 경로 + 우리 인자 형태라 실질적으로 우리 것이다.
+    // **우리가 넣은 값**을 함께 적는다 — 되돌릴 때 *"그 값이 아직 우리 것인가"* 를
+    // 대는 자리이고, 안 적으면 사용자가 바꾼 값을 **조용히** 지운다.
+    let 더한_값: BTreeMap<String, Value> = merged
+        .added_keys
+        .iter()
+        .filter_map(|k| want.get(k).map(|v| (k.clone(), v.clone())))
+        .collect();
     let entry = match 옛것 {
         Some(mut old) => {
             for key in merged.added_keys {
@@ -450,6 +457,7 @@ fn 설정_병합(
                     old.added_keys.push(key);
                 }
             }
+            old.added_values.extend(더한_값);
             old.hooks = 바라는_훅;
             old.hooks_key_created |= merged.hooks_key_created;
             Some(old)
@@ -458,6 +466,7 @@ fn 설정_병합(
         None => Some(SettingsEntry {
             path: Rel::new(SETTINGS),
             added_keys: merged.added_keys,
+            added_values: 더한_값,
             hooks: 바라는_훅,
             hooks_key_created: merged.hooks_key_created,
             created: merged.created,
@@ -905,16 +914,33 @@ fn 설정_되돌리기(
     s: &SettingsEntry,
     report: &mut Report,
 ) -> Result<()> {
-    if settings::unmerge(자리.자리(&s.path)?, s)? {
-        let 뺀것 = s
-            .added_keys
-            .iter()
-            .cloned()
-            .chain(s.hooks.iter().map(|h| format!("훅 {}", h.event)))
-            .collect::<Vec<_>>();
-        report.say("키 뺌", &format!("{}  ({})", s.path, 뺀것.join(" · ")));
-    } else {
+    let 결과 = settings::unmerge(자리.자리(&s.path)?, s)?;
+    if !결과.뺐다 {
         report.say("이미 없음", s.path.as_str());
+        return Ok(());
+    }
+    let 뺀것 = s
+        .added_keys
+        .iter()
+        .cloned()
+        .chain(s.hooks.iter().map(|h| format!("훅 {}", h.event)))
+        .collect::<Vec<_>>();
+    report.say("키 뺌", &format!("{}  ({})", s.path, 뺀것.join(" · ")));
+    // ★ **설정 키의 「사용자 수정」도 말한다.** 파일 쪽에만 붙어 있던 대칭을 여기에도
+    // 세운다 — 사용자가 자기 값으로 바꿔 둔 키를 조용히 지우면 화면은 `키 뺌` 한 줄뿐이다.
+    if !결과.사용자가_바꾼_키.is_empty() {
+        report.say(
+            지운_사용자_수정,
+            &format!(
+                "{}  (우리가 넣은 값이 아니었다: {})",
+                s.path,
+                결과.사용자가_바꾼_키.join(" · ")
+            ),
+        );
+    }
+    // 그리고 **파일까지 지웠으면** 그것도 말한다 — 키만 뺐다고 읽히면 안 된다.
+    if 결과.파일째_지웠다 {
+        report.say("파일째 지웠다", &format!("{}  (우리가 만들었고 나머지가 비었다)", s.path));
     }
     Ok(())
 }

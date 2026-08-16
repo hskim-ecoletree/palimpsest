@@ -129,6 +129,18 @@ pub fn merge(
     Ok(Merged { added_keys: added, hooks_key_created, created, wrote: true })
 }
 
+/// 되돌리기가 **무엇을 했는지.** `bool` 하나로는 화면에 적을 것이 없다.
+#[derive(Default)]
+pub struct Unmerged {
+    /// 실제로 뺀 것이 있는가.
+    pub 뺐다: bool,
+    /// ★ **우리가 넣은 값이 아니었던 키.** 사용자가 자기 값으로 바꿔 둔 자리다 —
+    /// 지우는 것은 그대로이고(⑥ 이 `S2 == S0` 을 요구한다) 여기서 더하는 것은 **말**이다.
+    pub 사용자가_바꾼_키: Vec<String>,
+    /// 파일을 통째로 지웠는가 — 우리가 만들었고 나머지가 비었을 때.
+    pub 파일째_지웠다: bool,
+}
+
 /// 우리가 더한 키와 우리가 등록한 훅만 뺀다.
 ///
 /// **손잡이를 매니페스트 항목으로 든다** — 위치 인자 넷 중 둘이 `bool` 이면 부르는
@@ -136,13 +148,21 @@ pub fn merge(
 ///
 /// # Errors
 /// 못 읽거나(파싱 실패 포함) 못 쓰면.
-pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<bool> {
+pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<Unmerged> {
     if !path.exists() {
-        return Ok(false);
+        return Ok(Unmerged::default());
     }
     let read = read(path)?;
-    let Some(mut map) = read.current else { return Ok(false) };
+    let Some(mut map) = read.current else { return Ok(Unmerged::default()) };
+    let mut out = Unmerged { 뺐다: true, ..Unmerged::default() };
     for key in &entry.added_keys {
+        // ★ **우리가 넣은 값과 다른가.** 옛 매니페스트에는 값이 안 실려 있어서
+        // (`added_values` 가 비어 있어서) 그때는 「모른다」이고 말하지 않는다.
+        if let (Some(넣은), Some(지금)) = (entry.added_values.get(key), map.get(key)) {
+            if 넣은 != 지금 {
+                out.사용자가_바꾼_키.push(key.clone());
+            }
+        }
         map.remove(key);
     }
     hooks::strip(&mut map, &entry.hooks, entry.hooks_key_created);
@@ -150,13 +170,14 @@ pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<bool> {
     if entry.created && map.is_empty() {
         std::fs::remove_file(path)
             .with_context(|| format!("지우지 못했다: {}", path.display()))?;
-        return Ok(true);
+        out.파일째_지웠다 = true;
+        return Ok(out);
     }
     let mut text = serde_json::to_string_pretty(&Value::Object(map))
         .context("설정을 직렬화하지 못했다")?;
     text.push('\n');
     blocks::write_in_place(path, text.as_bytes())?;
-    Ok(true)
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -196,6 +217,10 @@ mod tests {
         SettingsEntry {
             path: Rel::new("settings.json"),
             added_keys: m.added_keys.clone(),
+            added_values: 바람()
+                .into_iter()
+                .filter(|(k, _)| m.added_keys.contains(k))
+                .collect(),
             hooks: 훅.to_vec(),
             hooks_key_created: m.hooks_key_created,
             created: m.created,

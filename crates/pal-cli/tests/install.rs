@@ -593,6 +593,36 @@ fn 제거는_사용자_수정을_말하고_지운다() {
     assert_eq!(s2, s0v, "제거 후가 설치 전과 다르다");
 }
 
+/// ★ **설정 키의 「사용자 수정」도 말한다.**
+///
+/// 파일에는 `사용자 수정 — 지웠다` 를 붙였는데 `settings.json` 의 키에는 그 대칭이
+/// 없었다. 사용자가 `agent` 값을 자기 것으로 바꿔도 키를 통째로 지우고, 우리가 만든
+/// 파일이면 **파일까지 지우면서** 화면은 `키 뺌` 한 줄이었다.
+///
+/// ⚠ **지우는 것 자체는 그대로다** — ⑥ 이 `S2 == S0` 을 요구한다. 더하는 것은 **말**이다.
+#[test]
+fn 제거가_설정_키의_사용자_수정도_말한다() {
+    let root = 빈_프로젝트("f-설정수정");
+    성공(&root, &["install"]);
+
+    // 사용자가 **우리가 더한 키의 값**을 자기 것으로 바꿨다.
+    let path = root.join(".claude/settings.json");
+    let mut v = 값(&path);
+    v["agent"] = serde_json::json!("내 오케스트레이터");
+    std::fs::write(&path, serde_json::to_string_pretty(&v).expect("직렬화")).expect("쓰기");
+
+    let report = 성공(&root, &["uninstall"]);
+    assert!(!path.exists(), "우리가 만든 파일이 안 지워졌다");
+    assert!(
+        report.contains("사용자 수정") && report.contains("agent"),
+        "사용자가 바꾼 값을 지우면서 말하지 않았다:\n{report}"
+    );
+    assert!(
+        report.contains(".claude/settings.json") && report.contains("파일째"),
+        "파일까지 지운 것을 말하지 않았다:\n{report}"
+    );
+}
+
 /// 블록이 **손으로 고쳐졌으면** 아무것도 안 지우고 거부한다.
 #[test]
 fn 손으로_고친_블록이_있으면_아무것도_안_지운다() {
