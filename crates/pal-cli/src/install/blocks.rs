@@ -169,13 +169,24 @@ pub fn remove(path: &Path, markers: &Markers, inserted: &str, created: bool) -> 
 pub fn 훼손_문구(path: &Path, markers: &Markers) -> String {
     format!(
         "{} 의 palimpsest 블록이 우리가 넣은 것과 다르다 — **손으로 고쳐졌다.** \
-         고치려 들지 않는다(안에 사람이 쓴 줄이 있을 수 있다).\n    \
-         빠져나오는 길: 아래 **두 줄과 그 사이 전부**를 손으로 지운 뒤 \
-         `pal uninstall` 을 다시 돌리십시오. **마커까지 지워야 한다** — 마커만 남으면 \
-         같은 자리에 또 걸린다.\n      {}\n      {}",
+         고치려 들지 않는다(안에 사람이 쓴 줄이 있을 수 있다).\n    {}",
         path.display(),
-        markers.begin,
-        markers.end
+        빠져나오는_길(markers, "pal uninstall")
+    )
+}
+
+/// **무엇을 지워야 하는지 이름으로 말한다** — 문구의 하중은 이 두 줄이 진다.
+///
+/// 빠져나오는 길을 말해야 하는 자리가 하나가 아니라 조각으로 세운다. `다시` 는 그
+/// 자리에서 **다시 돌릴 명령**이다 — 제거가 걸린 자리와 설치가 걸린 자리는 사람이
+/// 이어서 할 일이 다르다.
+#[must_use]
+pub fn 빠져나오는_길(markers: &Markers, 다시: &str) -> String {
+    format!(
+        "빠져나오는 길: 아래 **두 줄과 그 사이 전부**를 손으로 지운 뒤 \
+         `{다시}` 을 다시 돌리십시오. **마커까지 지워야 한다** — 마커만 남으면 \
+         같은 자리에 또 걸린다.\n      {}\n      {}",
+        markers.begin, markers.end
     )
 }
 

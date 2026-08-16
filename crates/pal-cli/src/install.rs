@@ -828,15 +828,15 @@ pub fn uninstall(target: &Path) -> Result<()> {
     // ★ **「없다」와 「고쳐졌다」를 가른다.** 옛 코드는 *"우리 바이트가 안 보인다"*
     // 하나로 판정해서, 사용자가 **블록을 통째로 지운** 자리도 훼손으로 읽었다 —
     // 그러면 오류 문구가 시킨 그대로 해도 영영 rc=1 이다.
-    let mut 훼손 = Vec::new();
+    let mut 막힌_자리 = Vec::new();
     for b in &m.blocks {
         let path = 자리.자리(&b.path)?;
         if blocks::상태(path, 마커(&b.path), &b.inserted)? == blocks::상태::훼손 {
-            훼손.push(blocks::훼손_문구(path, 마커(&b.path)));
+            막힌_자리.push(blocks::훼손_문구(path, 마커(&b.path)));
         }
     }
-    if !훼손.is_empty() {
-        bail!("아무것도 지우지 않았다.\n\n{}", 훼손.join("\n\n"));
+    if !막힌_자리.is_empty() {
+        bail!("아무것도 지우지 않았다.\n\n{}", 막힌_자리.join("\n\n"));
     }
 
     // ── 2단계 · 적용. ★ **기록이 걸음마다 앞선다 — 그러나 걸음마다 쓰지는 않는다** ──
