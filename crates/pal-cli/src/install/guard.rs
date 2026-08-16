@@ -26,7 +26,78 @@
 
 use std::path::Path;
 
-use anyhow::{Result, bail};
+use anyhow::{Context, Result, bail};
+
+/// **우리가 읽고 쓰는 자리는 일반 파일이거나 없거나 둘 중 하나다.**
+///
+/// # 왜 종류를 먼저 묻는가
+///
+/// `std::fs::read` 는 **여는 순간 매달린다.** writer 없는 FIFO 를 열면 `open(2)` 이
+/// 거기서 잠기고, 시간 상한도 취소도 없다. 실측: `.claude/settings.json` 을 FIFO 로
+/// 두면 `pal install` 과 `pal doctor` 가 **영원히** 매달렸다.
+///
+/// `.claude/pal` 이 FIFO 인 경우는 `create_dir_all` 이 이미 막고 있었다 — **같은
+/// 규율을 나머지 자리에도 세운다.**
+///
+/// ⚠ 이 문은 `stat` 이라 안 매달린다. 그리고 [`std::fs::metadata`] 는 심링크를
+/// 따라가므로, 「안을 가리키는 심링크」는 그 **대상의 종류**로 판정된다 — 경계는
+/// [`super::inside::Root::join`] 이 이미 봤다.
+///
+/// # Errors
+/// 그 자리가 있는데 일반 파일이 아니면.
+pub fn 일반_파일이거나_없나(path: &Path) -> Result<()> {
+    let Ok(meta) = std::fs::metadata(path) else { return Ok(()) };
+    if meta.is_file() {
+        return Ok(());
+    }
+    bail!(
+        "{} 가 **일반 파일이 아니다**({}) — 읽지도 쓰지도 않는다.\n    \
+         이름 있는 파이프·장치·소켓을 열면 그 자리에서 **매달리고**(실측: 영원히), \
+         디렉터리면 우리가 쓸 자리가 아예 없다. 사람이 봐야 한다",
+        path.display(),
+        종류(&meta)
+    );
+}
+
+fn 종류(meta: &std::fs::Metadata) -> &'static str {
+    if meta.is_dir() {
+        return "디렉터리다";
+    }
+    #[cfg(unix)]
+    {
+        // ⚠ **유닉스 전용 가정** — `FileTypeExt` 가 가르는 넷은 유닉스의 종류다.
+        use std::os::unix::fs::FileTypeExt;
+        let t = meta.file_type();
+        if t.is_fifo() {
+            return "이름 있는 파이프(FIFO)다";
+        }
+        if t.is_socket() {
+            return "소켓이다";
+        }
+        if t.is_block_device() || t.is_char_device() {
+            return "장치 파일이다";
+        }
+    }
+    "일반 파일이 아니다"
+}
+
+/// 종류를 먼저 묻고 읽는다. **읽는 자리는 전부 이 문을 지난다.**
+///
+/// # Errors
+/// 일반 파일이 아니거나 못 읽으면.
+pub fn 읽는다(path: &Path) -> Result<Vec<u8>> {
+    일반_파일이거나_없나(path)?;
+    std::fs::read(path).with_context(|| format!("읽지 못했다: {}", path.display()))
+}
+
+/// 종류를 먼저 묻고 통째로 쓴다(없으면 만든다).
+///
+/// # Errors
+/// 일반 파일이 아니거나 못 쓰면.
+pub fn 쓴다(path: &Path, bytes: &[u8]) -> Result<()> {
+    일반_파일이거나_없나(path)?;
+    std::fs::write(path, bytes).with_context(|| format!("쓰지 못했다: {}", path.display()))
+}
 
 /// **제자리 쓰기를 해도 되는 자리인가.**
 ///

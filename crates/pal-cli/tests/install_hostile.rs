@@ -11,6 +11,7 @@
 //! | 저장소에서 읽은 문자열을 **실행하지 않는다** | 임의 코드 실행. `pal doctor` 한 번이 남의 문자열을 셸에 넘겼다 |
 //! | **하드링크**로 대상 밖이 안 샌다 | 심링크는 `canonicalize` 가 막지만 하드링크는 「밖」이라는 신원이 없다 |
 //! | 매니페스트가 대상 **안**의 아무 파일이나 못 지운다 | 악성 PR 하나 + `pal uninstall` 한 번 |
+//! | FIFO 에서 **안 매달린다** | writer 없는 FIFO 는 `fs::read` 를 영원히 잡는다 |
 
 mod common;
 
@@ -348,3 +349,58 @@ fn 매니페스트가_적은_안의_남의_디렉터리를_안_지운다() {
     assert!(!out.status.success(), "남의 디렉터리를 보고도 성공을 냈다");
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. **FIFO 에서 안 매달린다**
+//
+// ★ **유닉스 전용 가정이 여기 있다.** 이름 있는 파이프는 `mkfifo` 로 만들고, 그것이
+// `fs::read` 를 잡는 것도 유닉스 형태다. Windows 의 등가 개념(named pipe ·
+// `\\.\pipe\`)은 이 자리에 파일 이름으로 앉지 않는다. **짝 없는 `#[cfg(unix)]` 을
+// 안 단다** — 아래 짝이 다른 플랫폼에서 시끄럽게 실패한다.
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[cfg(unix)]
+fn 이름있는_파이프(path: &Path) {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).expect("부모");
+    }
+    let out = Command::new("mkfifo").arg(path).output().expect("mkfifo 를 못 돌렸다");
+    assert!(out.status.success(), "mkfifo: {}", String::from_utf8_lossy(&out.stderr));
+}
+
+/// ★ **우리가 읽고 쓰는 자리는 일반 파일이거나 없거나 둘 중 하나다.**
+///
+/// 관측(고치기 전): `settings.json` 이 FIFO 면 `install` 과 `doctor` 가 **영원히**
+/// 매달렸다. 파일 종류 검사도 시간 상한도 없었다.
+#[test]
+#[cfg(unix)]
+fn 파이프가_있으면_매달리지_않고_실패한다() {
+    for (tag, 자리) in [
+        ("설정", ".claude/settings.json"),
+        ("지시", "CLAUDE.md"),
+        ("무시목록", ".gitignore"),
+    ] {
+        let 방 = 방(&format!("파이프-{tag}"));
+        이름있는_파이프(&방.안.join(자리));
+
+        let out = 시간_안에(&방.안, &["install"], 15_000);
+        assert!(
+            !out.status.success(),
+            "{tag}: FIFO 를 보고도 성공을 냈다\nstdout: {}",
+            String::from_utf8_lossy(&out.stdout)
+        );
+        // `doctor` 도 같은 자리를 읽는다 — 여기서도 안 매달린다.
+        시간_안에(&방.안, &["doctor", "--install", "--json"], 15_000);
+    }
+}
+
+/// ★ **유닉스 밖에서 이 방어는 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
+#[test]
+#[cfg(not(unix))]
+fn 파이프_방어가_이_플랫폼에서는_안_재진다() {
+    panic!(
+        "일반 파일이 아닌 자리에서 매달리는지를 이 플랫폼에서 아직 안 잰다 — \
+         fixture 가 `mkfifo` 위에 선다. `install/guard.rs` 의 종류 검사 자체는 \
+         `Metadata::is_file` 이라 플랫폼을 안 가리지만, **그것이 실제로 매달림을 \
+         막는지는 이 플랫폼에서 안 쟀다**"
+    );
+}

@@ -7,16 +7,18 @@
 //! | 텍스트 필터로 재작성해 **NUL 바이트에서 사용자 줄이 잘렸다** | 줄로 안 읽는다. `Vec<u8>` 로 읽고 바이트로 이어 붙인다 |
 //! | **모드가 600/755 → 644 로 소실**됐다 | 임시 파일 + rename 을 **안 쓴다.** 있는 파일을 열어 **제자리에** 쓴다 |
 //! | **심링크가 일반 파일로 바뀌었다** | 같은 이유로 안 바뀐다 — 열어서 쓰면 링크 대상에 쓰인다 |
-//!
-//! ⚠ **심링크를 살리는 것과 심링크를 따라 나가는 것은 다르다.** 위 줄은 프로젝트
-//! **안**을 가리키는 링크를 일반 파일로 만들지 않겠다는 것이고, **밖**으로 나가는 링크
-//! (`.claude → ~/.claude` 처럼)는 여기 오기 전에 [`super::inside::Root::join`] 이
-//! 막는다. 이 파일은 **경계를 판단하지 않는다** — 이미 확정된 자리에 쓴다.
 //! | **하드링크가 걸린 자리에서 밖이 샜다** | 쓰기 전에 링크 수를 보고 **안 쓴다**([`super::guard`]) |
+//! | **FIFO 에서 영원히 매달렸다** | 열기 전에 종류를 묻는다 — 일반 파일이거나 없거나 둘 중 하나 |
 //! | **쓰기 실패를 안 검사해 거짓 성공(rc=0)** | 모든 쓰기가 `?` 를 지고, 마지막에 `sync_all` 까지 본다 |
 //! | **끝 개행 없는 파일에 그냥 append 해 마지막 규칙과 우리 규칙이 둘 다 파괴** | 끝이 개행이 아니면 개행을 **먼저 넣고**, 넣었다는 사실을 매니페스트가 진다 |
 //! | 마커 없이 내용 일치로 지워 **사용자가 먼저 써 둔 같은 줄을 지웠다** | 지우는 단위는 **우리가 넣은 바이트열 그대로**다. 한 줄씩 안 본다 |
 //! | **stale 마커가 사용자가 나중에 만든 파일을 지웠다** | 파일을 지우는 조건은 *"우리가 만들었고"* **그리고** *"우리 블록을 뺀 나머지가 비었고"* 둘 다다 |
+//!
+//! ⚠ **심링크를 살리는 것과 심링크를 따라 나가는 것은 다르다.** 위 표의 셋째 줄은
+//! 프로젝트 **안**을 가리키는 링크를 일반 파일로 만들지 않겠다는 것이고, **밖**으로
+//! 나가는 링크(`.claude → ~/.claude` 처럼)는 여기 오기 전에
+//! [`super::inside::Root::join`] 이 막는다. 이 파일은 **경계를 판단하지 않는다** —
+//! 이미 확정된 자리에 쓴다.
 //!
 //! # 손으로 고쳤으면 **고치려 들지 않는다**
 //!
@@ -65,8 +67,7 @@ pub fn add(path: &Path, markers: &Markers, block: &str) -> Result<Added> {
         return Ok(Added::Inserted { bytes: block.to_owned(), created: true });
     }
 
-    let existing = std::fs::read(path)
-        .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+    let existing = super::guard::읽는다(path)?;
     if find(&existing, markers.begin.as_bytes()).is_some() {
         return Ok(Added::AlreadyThere);
     }
@@ -101,8 +102,7 @@ pub fn remove(path: &Path, inserted: &str, created: bool) -> Result<Removal> {
     if !path.exists() {
         return Ok(Removal::Missing);
     }
-    let existing = std::fs::read(path)
-        .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+    let existing = super::guard::읽는다(path)?;
     let Some(at) = find(&existing, inserted.as_bytes()) else {
         bail!(
             "{} 의 palimpsest 블록이 우리가 넣은 것과 다르다 — **손으로 고쳐졌거나 마커가 \
@@ -131,8 +131,7 @@ pub fn present(path: &Path, inserted: &str) -> Result<bool> {
     if !path.exists() {
         return Ok(false);
     }
-    let existing = std::fs::read(path)
-        .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+    let existing = super::guard::읽는다(path)?;
     Ok(find(&existing, inserted.as_bytes()).is_some())
 }
 
@@ -146,6 +145,7 @@ fn find(hay: &[u8], needle: &[u8]) -> Option<usize> {
 
 /// 없던 파일을 만든다. **부모 디렉터리는 부르는 쪽이 만든다.**
 fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
+    super::guard::일반_파일이거나_없나(path)?;
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -163,6 +163,7 @@ fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
 /// # Errors
 /// 열지 못하거나, 쓰지 못하거나, **하드링크가 걸려 있으면.**
 pub fn write_in_place(path: &Path, bytes: &[u8]) -> Result<()> {
+    super::guard::일반_파일이거나_없나(path)?;
     super::guard::제자리에_써도_되나(path)?;
     let mut file = OpenOptions::new()
         .write(true)

@@ -39,8 +39,7 @@ pub fn read(path: &Path) -> Result<Read> {
     if !path.exists() {
         return Ok(Read { current: None });
     }
-    let bytes = std::fs::read(path)
-        .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+    let bytes = super::guard::읽는다(path)?;
     let text = String::from_utf8(bytes).map_err(|e| {
         anyhow::anyhow!("{}: UTF-8 이 아니다 — {e}", path.display())
     })?;
@@ -122,8 +121,7 @@ pub fn merge(
 
     let created = read.current.is_none();
     if created {
-        std::fs::write(path, text.as_bytes())
-            .with_context(|| format!("쓰지 못했다: {}", path.display()))?;
+        super::guard::쓴다(path, text.as_bytes())?;
     } else {
         // **제자리로 쓴다** — 모드·심링크·하드링크를 살린다.
         blocks::write_in_place(path, text.as_bytes())?;

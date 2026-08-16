@@ -247,7 +247,7 @@ pub fn 우리_자리인가(종류: 종류, rel: &Rel) -> Result<()> {
 /// 없거나, 못 읽거나, JSON 이 아니면. **손상된 매니페스트를 조용히 덮지 않는다** —
 /// 그것을 덮으면 *"무엇을 되돌려야 하는가"* 의 기록이 사라진다.
 pub fn read(path: &Path) -> Result<Manifest> {
-    let bytes = std::fs::read(path)
+    let bytes = super::guard::읽는다(path)
         .with_context(|| format!("매니페스트를 읽지 못했다: {}", path.display()))?;
     serde_json::from_slice(&bytes)
         .with_context(|| format!("매니페스트가 JSON 이 아니다: {}", path.display()))
@@ -260,7 +260,7 @@ pub fn read(path: &Path) -> Result<Manifest> {
 pub fn write(path: &Path, manifest: &Manifest) -> Result<()> {
     let mut text = serde_json::to_string_pretty(manifest).context("매니페스트 직렬화")?;
     text.push('\n');
-    std::fs::write(path, text.as_bytes())
+    super::guard::쓴다(path, text.as_bytes())
         .with_context(|| format!("매니페스트를 쓰지 못했다: {}", path.display()))
 }
 

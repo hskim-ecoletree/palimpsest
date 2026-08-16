@@ -247,6 +247,11 @@ fn 쓸_수_있나(root: &Root) -> Result<()> {
 fn 쓸_수_있는가(path: &Path) -> Result<()> {
     // **하드링크가 걸린 자리는 제자리 쓰기가 밖으로 샌다** — 1단계에서 끊는다.
     guard::제자리에_써도_되나(path)?;
+    // **일반 파일이 아닌 자리는 열자마자 매달린다** — 여기서도 1단계에서 끊는다.
+    // ⚠ 디렉터리 목록(`DIRS`)도 이 함수를 지나므로 디렉터리는 아래에서 갈라 본다.
+    if !path.is_dir() {
+        guard::일반_파일이거나_없나(path)?;
+    }
     // 없는 자리는 못 본다 — 그 부모는 위에서 이미 봤다.
     let Ok(meta) = std::fs::metadata(path) else { return Ok(()) };
     if meta.permissions().readonly() {
@@ -317,13 +322,11 @@ fn 파일_놓기(
                 std::fs::create_dir_all(parent)
                     .with_context(|| format!("만들지 못했다: {}", parent.display()))?;
             }
-            std::fs::write(&path, res.body.as_bytes())
-                .with_context(|| format!("쓰지 못했다: {}", path.display()))?;
+            guard::쓴다(&path, res.body.as_bytes())?;
             report.say("놓았다", res.path);
         }
         // **실물에서 뜬다** — 매니페스트가 적는 값이 곧 디스크의 값이어야 ③ 이 선다.
-        let bytes = std::fs::read(&path)
-            .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+        let bytes = guard::읽는다(&path)?;
         // ★ **사용자 수정이라는 사실을 재설치가 지우지 않는다.** 실물 sha 로 덮으면
         // 그 파일이 다시 「우리 것」이 되고, 다음 `update` 가 사람의 수정을 밟는다.
         let 옛_사용자_수정 = 이전.and_then(|m| {
@@ -582,13 +585,8 @@ pub fn update(target: &Path) -> Result<()> {
     for res in PAYLOAD {
         let rel = Rel::new(res.path);
         let path = root.join(&rel)?;
-        let 실물 = if path.exists() {
-            Some(sha256::hex(
-                &std::fs::read(&path).with_context(|| format!("읽지 못했다: {}", path.display()))?,
-            ))
-        } else {
-            None
-        };
+        let 실물 =
+            if path.exists() { Some(sha256::hex(&guard::읽는다(&path)?)) } else { None };
         match (적힌.get(res.path), 실물) {
             // 사람이 고쳤다 — **밟지 않고 말한다.** 적힌 sha 를 그대로 지고 간다.
             (Some(recorded), Some(actual)) if *recorded != actual => {
@@ -609,8 +607,7 @@ pub fn update(target: &Path) -> Result<()> {
             std::fs::create_dir_all(parent)
                 .with_context(|| format!("만들지 못했다: {}", parent.display()))?;
         }
-        std::fs::write(&path, res.body.as_bytes())
-            .with_context(|| format!("쓰지 못했다: {}", path.display()))?;
+        guard::쓴다(&path, res.body.as_bytes())?;
         report.say("교체", res.path);
         files.push(FileEntry {
             path: rel,
@@ -723,9 +720,7 @@ pub fn uninstall(target: &Path) -> Result<()> {
         // ⚠ **지우는 것 자체는 그대로다** — ⑥ 이 `S2 == S0` 을 요구하므로 남기면 그것이
         // 반증이다. 여기서 더하는 것은 **말**이다. sha 로 대는 이유는 기록의 종류
         // (`Origin`)만 보면 설치 뒤에 손댄 것을 놓치기 때문이다.
-        let 고쳤나 = std::fs::read(path)
-            .map(|b| sha256::hex(&b) != f.sha256)
-            .with_context(|| format!("읽지 못했다: {}", path.display()))?;
+        let 고쳤나 = sha256::hex(&guard::읽는다(path)?) != f.sha256;
         std::fs::remove_file(path)
             .with_context(|| format!("지우지 못했다: {}", path.display()))?;
         if 고쳤나 {

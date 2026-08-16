@@ -92,9 +92,17 @@ pub enum Verdict {
 
 /// 이 경로를 규칙이 덮는가. **판정 명령은 하나다.**
 ///
+/// # ★ git 에게 묻기 전에 `.gitignore` 의 **종류**를 먼저 본다
+///
+/// 실측: `.gitignore` 가 이름 있는 파이프(FIFO)면 **`git check-ignore` 자체가 영원히
+/// 매달린다.** 우리 코드에 `fs::read` 가 하나도 없어도 매달린다 — 매다는 것이 우리가
+/// 아니라 우리가 부른 프로세스이기 때문이다. *"우리가 읽고 쓰는 자리는 일반 파일이거나
+/// 없거나"* 라는 규율은 **우리 대신 읽는 프로세스에도** 선다.
+///
 /// # Errors
-/// `git` 을 못 돌리면.
+/// `git` 을 못 돌리거나, `.gitignore` 가 일반 파일이 아니면.
 pub fn verdict(dir: &Path, path: &str) -> Result<Verdict> {
+    super::guard::일반_파일이거나_없나(&dir.join(IGNORE_FILE))?;
     let slashed = with_slash(path);
     let code = run_code(dir, &["check-ignore", "-q", "--no-index", "--", &slashed])?;
     match code {
