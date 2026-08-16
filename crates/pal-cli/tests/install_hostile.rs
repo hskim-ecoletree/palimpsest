@@ -10,6 +10,7 @@
 //! |---|---|
 //! | 저장소에서 읽은 문자열을 **실행하지 않는다** | 임의 코드 실행. `pal doctor` 한 번이 남의 문자열을 셸에 넘겼다 |
 //! | **하드링크**로 대상 밖이 안 샌다 | 심링크는 `canonicalize` 가 막지만 하드링크는 「밖」이라는 신원이 없다 |
+//! | 매니페스트가 대상 **안**의 아무 파일이나 못 지운다 | 악성 PR 하나 + `pal uninstall` 한 번 |
 
 mod common;
 
@@ -274,5 +275,76 @@ fn 하드링크_방어가_이_플랫폼에서는_안_재진다() {
          이 플랫폼의 등가 개념(NTFS 하드링크 · `GetFileInformationByHandle` 의 \
          `nNumberOfLinks`)으로 재는 자리를 세우기 전까지 이 방어는 **없다**"
     );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. **매니페스트가 대상 안의 아무 파일이나 못 지운다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ★ **우리가 되돌릴 수 있는 것은 우리가 놓을 수 있는 자리뿐이다.**
+///
+/// 관측(고치기 전): `.git/config` 와 `README.md` 를 각각 지웠다(**rc=0**).
+#[test]
+fn 매니페스트가_적은_안의_남의_파일을_안_지운다() {
+    for 노린_것 in [".git/config", "README.md"] {
+        let 방 = 방(&format!("안쪽-{}", 노린_것.replace(['/', '.'], "-")));
+        성공(&방.안, &["install"]);
+
+        let mp = 매니페스트_자리(&방.안);
+        let mut m = 값(&mp);
+        m["files"].as_array_mut().expect("files").push(serde_json::json!({
+            "path": 노린_것,
+            "sha256": "0".repeat(64),
+        }));
+        쓴다(&mp, &m);
+
+        let out = 돌린다(&방.안, &["uninstall"]);
+        assert!(
+            방.안.join(노린_것).exists(),
+            "{노린_것} 이 사라졌다 — 매니페스트가 대상 안의 남의 파일을 지웠다"
+        );
+        assert!(
+            !out.status.success(),
+            "{노린_것}: 우리가 놓을 수 없는 자리를 보고도 성공을 냈다\nstdout: {}",
+            String::from_utf8_lossy(&out.stdout)
+        );
+    }
+}
+
+/// **블록에도 같은 문이 선다.**
+#[test]
+fn 매니페스트가_적은_안의_남의_블록을_안_건드린다() {
+    let 방 = 방("안쪽-블록");
+    성공(&방.안, &["install"]);
+    let 원본 = std::fs::read(방.안.join("README.md")).expect("읽기");
+
+    let mp = 매니페스트_자리(&방.안);
+    let mut m = 값(&mp);
+    m["blocks"].as_array_mut().expect("blocks").push(serde_json::json!({
+        "path": "README.md",
+        "inserted": "hello\n",
+        "created": true,
+    }));
+    쓴다(&mp, &m);
+    let out = 돌린다(&방.안, &["uninstall"]);
+    assert!(방.안.join("README.md").exists(), "남의 파일이 사라졌다");
+    assert_eq!(std::fs::read(방.안.join("README.md")).expect("읽기"), 원본, "남의 파일이 바뀌었다");
+    assert!(!out.status.success(), "남의 블록을 보고도 성공을 냈다");
+}
+
+/// **디렉터리에도 같은 문이 선다.**
+#[test]
+fn 매니페스트가_적은_안의_남의_디렉터리를_안_지운다() {
+    let 방 = 방("안쪽-디렉터리");
+    성공(&방.안, &["install"]);
+    let 남의_방 = 방.안.join("남의방");
+    std::fs::create_dir_all(&남의_방).expect("남의방");
+    let mp = 매니페스트_자리(&방.안);
+    let mut m = 값(&mp);
+    m["created_dirs"].as_array_mut().expect("created_dirs").push(serde_json::json!("남의방"));
+    쓴다(&mp, &m);
+    let out = 돌린다(&방.안, &["uninstall"]);
+    assert!(남의_방.is_dir(), "남의 디렉터리가 사라졌다");
+    assert!(!out.status.success(), "남의 디렉터리를 보고도 성공을 냈다");
 }
 

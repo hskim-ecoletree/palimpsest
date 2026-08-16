@@ -189,15 +189,56 @@ impl Places {
 
 /// 매니페스트의 **모든** 경로를 대상 안으로 확정한다.
 ///
+/// **문이 둘이다** — *"대상 안인가"*([`Root::join`])와 *"우리가 놓을 수 있는
+/// 자리인가"*([`우리_자리인가`]). 앞의 것만으로는 **대상 안의 남의 파일**을 못
+/// 가른다.
+///
 /// # Errors
-/// 하나라도 대상 밖을 가리키면.
+/// 하나라도 대상 밖을 가리키거나, **우리가 놓을 수 없는 자리를 가리키면.**
 pub fn 자리들(root: &Root, m: &Manifest) -> Result<Places> {
     let mut out = BTreeMap::new();
-    for (_종류, rel) in m.경로들() {
+    for (종류, rel) in m.경로들() {
         let path = root.join(rel)?;
+        우리_자리인가(종류, rel)?;
         out.insert(rel.clone(), path);
     }
     Ok(Places(out))
+}
+
+/// ★ **되돌릴 수 있는 것은 놓을 수 있는 자리뿐이다.**
+///
+/// 상한을 **매니페스트가 아니라 컴파일된 상수**([`super::layout`])로 잡는다.
+/// 매니페스트의 `roots` 를 상한으로 쓰면 그것도 남이 쓴 값이라 상한이 아니다.
+///
+/// # Errors
+/// 그 종류로 우리가 만들 수 없는 자리면.
+pub fn 우리_자리인가(종류: 종류, rel: &Rel) -> Result<()> {
+    use super::layout;
+
+    let s = rel.as_str();
+    if layout::절대_안_건드리나(s) {
+        bail!(
+            "`{rel}` 은 **어떤 경우에도 안 건드린다** — 매니페스트가 그것을 적었다는 \
+             사실 자체가 이 매니페스트를 사람이 봐야 한다는 뜻이다.\n    \
+             매니페스트는 대상 프로젝트 안에 사는 파일이고 커밋과 함께 이동한다"
+        );
+    }
+    let 된다 = match 종류 {
+        self::종류::파일 => layout::놓을_수_있는_파일인가(s),
+        self::종류::디렉터리 => layout::만들_수_있는_디렉터리인가(s),
+        self::종류::블록 => layout::블록을_넣을_수_있는_파일인가(s),
+        self::종류::설정 => layout::설정_파일인가(s),
+    };
+    if !된다 {
+        bail!(
+            "`{rel}` 은 **우리가 놓을 수 있는 자리가 아니다**({종류:?} 로 적혔다) — \
+             건드리지 않는다.\n    \
+             매니페스트는 대상 프로젝트 안에 사는 평범한 파일이라 남이 커밋해 보낼 수 \
+             있다. **되돌릴 수 있는 것은 놓을 수 있는 자리뿐이고**, 그 상한은 \
+             매니페스트가 아니라 이 바이너리가 진다. 사람이 봐야 한다"
+        );
+    }
+    Ok(())
 }
 
 /// 매니페스트를 읽는다.
@@ -370,6 +411,72 @@ mod tests {
             serde_json::Value::Array(a) => a.iter().for_each(|x| 표식_모으기(x, out)),
             serde_json::Value::Object(o) => o.values().for_each(|x| 표식_모으기(x, out)),
             _ => {}
+        }
+    }
+
+    /// ★ **우리가 실제로 놓는 것은 전부 통과한다.**
+    ///
+    /// 이 시험이 없으면 상한이 조여질 때 **설치가 조용히 자기 것을 못 되돌리게** 된다.
+    /// 리소스를 더하는 사람은 여기서 먼저 걸린다.
+    #[test]
+    fn 우리가_놓는_자리는_전부_통과한다() {
+        use super::super::layout;
+        use super::우리_자리인가;
+
+        for res in layout::PAYLOAD {
+            우리_자리인가(super::종류::파일, &Rel::new(res.path))
+                .unwrap_or_else(|e| panic!("{}: {e}", res.path));
+        }
+        for r in [layout::MANIFEST].iter().chain(layout::OWNED_FILES) {
+            우리_자리인가(super::종류::파일, &Rel::new(r)).unwrap_or_else(|e| panic!("{r}: {e}"));
+        }
+        for d in layout::DIRS.iter().chain(layout::OWNED_DIRS) {
+            우리_자리인가(super::종류::디렉터리, &Rel::new(d))
+                .unwrap_or_else(|e| panic!("{d}: {e}"));
+        }
+        for b in [layout::ROOT_INSTRUCTION_FILE, layout::IGNORE_FILE] {
+            우리_자리인가(super::종류::블록, &Rel::new(b)).unwrap_or_else(|e| panic!("{b}: {e}"));
+        }
+        우리_자리인가(super::종류::설정, &Rel::new(layout::SETTINGS)).expect("설정");
+    }
+
+    /// ★ **대상 안이어도 우리 자리가 아니면 막힌다.** `Root::join` 은 여기를 못 본다.
+    #[test]
+    fn 대상_안의_남의_자리는_막힌다() {
+        use super::우리_자리인가;
+
+        for 남의것 in [".git/config", ".git", "README.md", "src/main.rs", ".claude/settings.json"] {
+            assert!(
+                우리_자리인가(super::종류::파일, &Rel::new(남의것)).is_err(),
+                "`{남의것}` 을 우리 파일로 읽었다"
+            );
+        }
+        for 남의것 in [".git", "src", ".claude/agents/남의것.md"] {
+            assert!(
+                우리_자리인가(super::종류::디렉터리, &Rel::new(남의것)).is_err(),
+                "`{남의것}` 을 우리 디렉터리로 읽었다"
+            );
+        }
+        for 남의것 in ["README.md", ".git/config", ".claude/settings.json"] {
+            assert!(
+                우리_자리인가(super::종류::블록, &Rel::new(남의것)).is_err(),
+                "`{남의것}` 을 우리 블록 자리로 읽었다"
+            );
+        }
+        assert!(우리_자리인가(super::종류::설정, &Rel::new("CLAUDE.md")).is_err());
+    }
+
+    /// **`.git/` 은 어떤 종류로 적혀도 막힌다** — 목록의 부수효과가 아니라 못박은 줄이다.
+    #[test]
+    fn git_디렉터리는_어떤_종류로도_막힌다() {
+        use super::우리_자리인가;
+
+        for 종류 in
+            [super::종류::파일, super::종류::디렉터리, super::종류::블록, super::종류::설정]
+        {
+            for rel in [".git", ".git/config", ".git/hooks/pre-commit"] {
+                assert!(우리_자리인가(종류, &Rel::new(rel)).is_err(), "{종류:?} {rel}");
+            }
         }
     }
 

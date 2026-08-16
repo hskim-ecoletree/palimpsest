@@ -143,6 +143,12 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
         Ok(r) => r,
         Err(e) => return Outcome::Failed(format!("{e}")),
     };
+    // ★ **대조하기 전에 매니페스트가 우리 자리만 적었는지 본다.** 매니페스트는 남이
+    // 커밋해 보낼 수 있는 파일이고, 진단이 그것을 그대로 믿으면 `uninstall` 이
+    // 무엇을 할지도 화면에서 안 보인다.
+    if let Err(e) = manifest::자리들(&뿌리, &m) {
+        return Outcome::Failed(format!("{e:#}"));
+    }
     let actual = match manifest::walk(&뿌리, &m.roots, &m.own_path) {
         Ok(a) => a,
         Err(e) => return Outcome::Failed(format!("실물을 훑지 못했다 — {e}")),

@@ -119,6 +119,65 @@ pub const AGENT_KEY: &str = "agent";
 /// 그 키의 값.
 pub const AGENT_VALUE: &str = "pal-orchestrator";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ★ **우리가 놓을 수 있는 자리** — 되돌리기의 상한
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 매니페스트는 **대상 프로젝트 안에 사는 파일**이고 `.gitignore` 에 없어서 커밋되고
+// clone 과 함께 이동한다. 그 안의 경로는 **입력이지 사실이 아니다** — 악성 PR 하나가
+// `files: [".git/config"]` 을 적어 두면 `pal uninstall` 한 번이 저장소를 부순다
+// (실측: `.git/config` 와 `README.md` 를 각각 지웠고 **rc=0** 이었다).
+//
+// 그래서 상한을 **매니페스트가 아니라 여기 컴파일된 상수**로 잡는다. 매니페스트의
+// `roots` 를 상한으로 쓰면 그것도 남이 쓴 값이라 상한이 아니다.
+//
+// ⚠ **경로 구분자 가정**: [`crate::install::inside::Rel`] 은 언제나 `/` 로 갈린다 —
+// 여기 상수도 그렇고, 실물을 훑어 만드는 자리도 `\` 를 `/` 로 바꾼다
+// ([`crate::install::manifest::walk`]). Windows 에서도 이 규칙 하나만 선다.
+
+/// 첫 조각이 이것이면 **무슨 종류로 적혔든** 안 건드린다.
+///
+/// 위 목록들이 이미 `.git/` 을 안 덮지만, *"최소한 `.git/` 은 어떤 경우에도"* 를
+/// 목록의 부수효과로 두지 않고 **따로 못박는다.** 목록이 자라도 이 줄은 안 움직인다.
+pub const 절대_금지: &[&str] = &[".git"];
+
+/// 그 경로의 첫 조각.
+fn 첫_조각(rel: &str) -> &str {
+    rel.split('/').next().unwrap_or(rel)
+}
+
+/// **우리가 놓을 수 있는 파일**인가 — 통째로 소유하는 디렉터리 아래이거나,
+/// 남의 것이 함께 사는 곳의 **그 파일 하나**.
+#[must_use]
+pub fn 놓을_수_있는_파일인가(rel: &str) -> bool {
+    OWNED_FILES.contains(&rel)
+        || OWNED_DIRS.iter().any(|d| rel.strip_prefix(d).is_some_and(|r| r.starts_with('/')))
+}
+
+/// **우리가 만들 수 있는 디렉터리**인가.
+#[must_use]
+pub fn 만들_수_있는_디렉터리인가(rel: &str) -> bool {
+    DIRS.contains(&rel)
+}
+
+/// **우리가 블록을 넣을 수 있는 남의 파일**인가.
+#[must_use]
+pub fn 블록을_넣을_수_있는_파일인가(rel: &str) -> bool {
+    rel == ROOT_INSTRUCTION_FILE || rel == IGNORE_FILE
+}
+
+/// **대상 설정 파일**인가.
+#[must_use]
+pub fn 설정_파일인가(rel: &str) -> bool {
+    rel == SETTINGS
+}
+
+/// 어떤 종류로도 못 건드리는 자리인가.
+#[must_use]
+pub fn 절대_안_건드리나(rel: &str) -> bool {
+    절대_금지.contains(&첫_조각(rel))
+}
+
 /// 등록할 훅 사건.
 ///
 /// ★ **판정하는 목록을 그대로 쓴다.** 등록하는 자리와 판정하는 자리가 갈리면

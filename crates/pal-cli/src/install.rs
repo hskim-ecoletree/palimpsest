@@ -540,6 +540,11 @@ pub fn update(target: &Path) -> Result<()> {
     let mut m = manifest::read(&manifest_path)?;
 
     // ── 1단계 · 검증. **여기까지 한 바이트도 안 쓴다** ──────────────────────
+    //
+    // ★ **경로 봉쇄를 갱신에도 세운다.** 갱신이 쓰는 자리는 컴파일된 목록이지만,
+    // 매니페스트가 밖이나 남의 자리를 적고 있으면 그 매니페스트를 **이어서 쓰는 것**
+    // 자체가 다음 `uninstall` 에 그 항목을 넘기는 일이다.
+    자리들(&root, &m)?;
     let now = crate::version::describe();
     let settings_path = root.join(&Rel::new(SETTINGS))?;
     let read = settings::read(&settings_path)?;
