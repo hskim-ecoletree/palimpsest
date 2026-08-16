@@ -231,9 +231,16 @@ jobs:
           git add -A && git commit -qm 첫
 
           "${{ matrix.bin }}" install --target .
-          "${{ matrix.bin }}" doctor --install --json > d.json
-          cat d.json
-          if grep -q '"outcome": *"failed"' d.json; then
+          # ⚠ **진단 산출을 대상 **밖**에 쓴다.** 처음 판은 이것을 `proj/d.json` 으로
+          # 썼고, 그래서 마지막 검사(`git status --porcelain` 이 비었는가)를 **측정
+          # 자신이 깨뜨렸다** — `?? d.json`. 제거는 완벽했고 더럽힌 것은 우리였다.
+          #
+          # ★ 이 저장소가 제품에 요구하는 것(*"대상 바깥은 안 건드린다"*)의 뒷면이다:
+          # **측정도 대상 안에 자기 흔적을 남기면 안 된다.** 남기면 그 측정은 자기가
+          # 만든 상태를 제품의 결함으로 읽는다.
+          "${{ matrix.bin }}" doctor --install --json > ../doctor.json
+          cat ../doctor.json
+          if grep -q '"outcome": *"failed"' ../doctor.json; then
             echo "받은 바이너리로 설치했는데 진단에 빨강이 있다" >&2
             exit 1
           fi
