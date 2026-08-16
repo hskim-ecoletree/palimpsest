@@ -363,6 +363,8 @@ fn 이름있는_파이프(path: &Path) {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).expect("부모");
     }
+    // `git init` 이 이미 만들어 두는 자리가 있다(`.git/info/exclude`).
+    let _ = std::fs::remove_file(path);
     let out = Command::new("mkfifo").arg(path).output().expect("mkfifo 를 못 돌렸다");
     assert!(out.status.success(), "mkfifo: {}", String::from_utf8_lossy(&out.stderr));
 }
@@ -371,6 +373,9 @@ fn 이름있는_파이프(path: &Path) {
 ///
 /// 관측(고치기 전): `settings.json` 이 FIFO 면 `install` 과 `doctor` 가 **영원히**
 /// 매달렸다. 파일 종류 검사도 시간 상한도 없었다.
+///
+/// ★ **목록에 잠금 경로만 없었다.** `.claude/.pal.lock` 은 [`Lock::take`] 가 직접
+/// 여는 자리인데 `쓸_수_있나` 의 목록에도 없고 여는 자리에도 문이 없었다.
 #[test]
 #[cfg(unix)]
 fn 파이프가_있으면_매달리지_않고_실패한다() {
@@ -378,6 +383,8 @@ fn 파이프가_있으면_매달리지_않고_실패한다() {
         ("설정", ".claude/settings.json"),
         ("지시", "CLAUDE.md"),
         ("무시목록", ".gitignore"),
+        // 우리가 직접 여는 자리인데 목록에 없었다.
+        ("잠금", ".claude/.pal.lock"),
     ] {
         let 방 = 방(&format!("파이프-{tag}"));
         이름있는_파이프(&방.안.join(자리));
@@ -390,6 +397,25 @@ fn 파이프가_있으면_매달리지_않고_실패한다() {
         );
         // `doctor` 도 같은 자리를 읽는다 — 여기서도 안 매달린다.
         시간_안에(&방.안, &["doctor", "--install", "--json"], 15_000);
+    }
+}
+
+/// ★ **잠금은 세 경로가 전부 여는 자리다** — 설치된 프로젝트에서 `update` 와
+/// `uninstall` 도 여기서 매달렸다.
+#[test]
+#[cfg(unix)]
+fn 잠금이_파이프면_세_경로가_전부_안_매달린다() {
+    let 방 = 방("파이프-잠금-셋");
+    성공(&방.안, &["install"]);
+    이름있는_파이프(&방.안.join(".claude/.pal.lock"));
+
+    for args in [&["install"][..], &["update"][..], &["uninstall"][..]] {
+        let out = 시간_안에(&방.안, args, 15_000);
+        assert!(
+            !out.status.success(),
+            "pal {args:?}: 잠금이 FIFO 인데 성공을 냈다\nstdout: {}",
+            String::from_utf8_lossy(&out.stdout)
+        );
     }
 }
 

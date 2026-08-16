@@ -89,6 +89,11 @@ impl Lock {
         if path.is_dir() {
             let _ = std::fs::remove_dir(&path);
         }
+        // ★ **여는 자리는 전부 종류를 먼저 묻는다 — 여기도.** 잠금은 `쓸_수_있나` 의
+        // 목록에 없었고([`쓸_수_있나`] 가 이제 든다) 여는 자리에도 문이 없었다.
+        // 그래서 이 경로가 FIFO 면 아래 `open` 이 **영원히** 매달렸고, 잠금은
+        // `install`·`update`·`uninstall` **셋 다** 지나는 자리다.
+        guard::일반_파일이거나_없나(&path)?;
         let mut waited = 0;
         loop {
             let file = std::fs::OpenOptions::new()
@@ -308,7 +313,10 @@ impl Journal {
 /// 전용 마운트는 여기를 통과하고, 그때는 기록([`Journal`])이 받는다.
 fn 쓸_수_있나(root: &Root) -> Result<()> {
     쓸_수_있는가(root.path())?;
-    for rel in [CLAUDE_DIR, SETTINGS, ROOT_INSTRUCTION_FILE, IGNORE_FILE]
+    // ⚠ **잠금(`LOCK`)이 이 목록에 없었다.** 그 한 칸이 비어서 FIFO 하나가
+    // `install`·`update`·`uninstall` 을 전부 매달았다. 여는 자리
+    // ([`Lock::take`])에도 문을 세웠고, 여기 드는 것은 **1단계에서 미리 보기** 위해서다.
+    for rel in [CLAUDE_DIR, SETTINGS, ROOT_INSTRUCTION_FILE, IGNORE_FILE, LOCK]
         .into_iter()
         .chain(DIRS.iter().copied())
     {
