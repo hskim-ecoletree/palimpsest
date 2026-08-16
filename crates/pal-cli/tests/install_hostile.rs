@@ -512,3 +512,50 @@ fn 상한_안의_큰_매니페스트도_빠르게_걷힌다() {
     );
     assert!(!방.안.join(".claude").exists(), "`.claude/` 가 남았다");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. **설치도 이전 매니페스트를 믿지 않는다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ★ **`install` 만 이전 매니페스트에 경계 검사를 안 걸었다.**
+///
+/// 관측(고치기 전): `settings.path = ".git/config"` 를 심으면 `install` 이 그 값을
+/// **새 매니페스트로 그대로 실어 나르면서 rc=0** 「설치」 화면을 냈다. 그 뒤
+/// `update`·`uninstall` 은 영원히 rc=1 이고 **되돌릴 수 있는 `pal` 명령이 하나도
+/// 없다.** 데이터 손상은 없다 — **거짓 성공 + 되돌림 봉쇄**가 문제다.
+#[test]
+fn 설치도_오염된_매니페스트를_거부한다() {
+    for (tag, 오염) in [
+        ("설정", &(|m: &mut serde_json::Value| m["settings"]["path"] = serde_json::json!(".git/config"))
+            as &dyn Fn(&mut serde_json::Value)),
+        ("파일", &|m: &mut serde_json::Value| {
+            m["files"].as_array_mut().expect("files").push(serde_json::json!({
+                "path": "README.md", "sha256": "0".repeat(64), "origin": "ours",
+            }));
+        }),
+        ("디렉터리", &|m: &mut serde_json::Value| {
+            m["created_dirs"].as_array_mut().expect("created_dirs").push(serde_json::json!(".git"));
+        }),
+    ] {
+        let 방 = 방(&format!("오염-{tag}"));
+        성공(&방.안, &["install"]);
+
+        let mp = 매니페스트_자리(&방.안);
+        let mut m = 값(&mp);
+        오염(&mut m);
+        쓴다(&mp, &m);
+        let 심은_바이트 = std::fs::read(&mp).expect("읽기");
+
+        let out = 돌린다(&방.안, &["install"]);
+        assert!(
+            !out.status.success(),
+            "{tag}: 오염된 매니페스트를 보고도 rc=0 「설치」 화면을 냈다\nstdout: {}",
+            String::from_utf8_lossy(&out.stdout)
+        );
+        assert_eq!(
+            std::fs::read(&mp).expect("읽기"),
+            심은_바이트,
+            "{tag}: 거부했는데 매니페스트를 되썼다 — 오염이 새 기록으로 실려 나간다"
+        );
+    }
+}

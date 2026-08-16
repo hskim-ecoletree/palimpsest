@@ -219,6 +219,11 @@ pub fn install(target: &Path) -> Result<()> {
     let settings_path = root.join(&Rel::new(SETTINGS))?;
     let manifest_path = root.join(&Rel::new(MANIFEST))?;
     settings::read(&settings_path)?;
+    // ★ **설치도 이전 매니페스트를 믿지 않는다.** `update`·`uninstall` 은 이미 이 문을
+    // 지나는데 `install` 만 안 지났다 — 그래서 오염된 항목이 **새 매니페스트로 그대로
+    // 실려 나가면서** 화면에는 정상 설치가 떴고, 그 뒤 되돌릴 수 있는 명령이 하나도
+    // 없었다. 데이터 손상이 아니라 **거짓 성공 + 되돌림 봉쇄**가 문제다.
+    이전을_믿기_전에(&root, &manifest_path)?;
     쓸_수_있나(&root)?;
 
     // ── 2단계 · 잠금 ────────────────────────────────────────────────────────
@@ -236,7 +241,8 @@ pub fn install(target: &Path) -> Result<()> {
         .with_context(|| format!("만들지 못했다: {}", claude.display()))?;
     let _lock = Lock::take(&root)?;
 
-    let 이전 = if manifest_path.exists() { Some(manifest::read(&manifest_path)?) } else { None };
+    // 잠금 밖에서 본 매니페스트는 이미 남이 바꿨을 수 있다 — **안에서 다시 댄다.**
+    let 이전 = 이전을_믿기_전에(&root, &manifest_path)?;
     // 잠금 밖에서 읽은 설정은 이미 남이 바꿨을 수 있다 — **안에서 다시 읽는다.**
     let read = settings::read(&settings_path)?;
     let mut created_dirs = 이전.as_ref().map(|m| m.created_dirs.clone()).unwrap_or_default();
@@ -349,6 +355,22 @@ fn 쓸_수_있는가(path: &Path) -> Result<()> {
         );
     }
     Ok(())
+}
+
+/// 이전 매니페스트를 읽되 **경계 검사를 지난 것만 낸다.**
+///
+/// 없으면 `None`. 하나라도 밖이나 남의 자리를 가리키면 **아무것도 안 하고** 실패한다 —
+/// 이 함수를 부른 쪽은 그때 **아직 한 바이트도 안 쓴 상태**다.
+///
+/// # Errors
+/// 못 읽거나, 경로 하나라도 우리 자리가 아니면.
+fn 이전을_믿기_전에(root: &Root, manifest_path: &Path) -> Result<Option<Manifest>> {
+    if !manifest_path.exists() {
+        return Ok(None);
+    }
+    let m = manifest::read(manifest_path)?;
+    자리들(root, &m)?;
+    Ok(Some(m))
 }
 
 /// **기록의 집** — 여기가 서기 전에는 적을 자리가 없다. 그래서 이 둘만은 적기 전에
