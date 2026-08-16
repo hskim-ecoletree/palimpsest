@@ -212,3 +212,85 @@ fn 못_지운_디렉터리를_말한다() {
         "못 지웠는데 말하지 않았다:\n{report}"
     );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. **기록이 걸음마다 앞선다 — 제거 쪽에도**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ★ **파일 루프 중간에서 실패한 `uninstall` 이 다시 돌 수 있어야 한다.**
+///
+/// 관측(고치기 전): 이미 `CLAUDE.md`·`.gitignore`·파일 몇 개를 지운 뒤 같은 항목에서
+/// **매번 rc=1**. 매니페스트는 그대로 남고 오류 문구가 회복 방법을 안 줬다.
+/// **「기록이 걸음마다 앞선다」가 `install` 에는 있고 `uninstall` 에는 없었다** —
+/// 지운 것을 매니페스트에서 빼지 않았다.
+///
+/// 그리고 걸림돌을 치운 뒤에도 못 돌았다: 남은 것이 전부 이미 없으니 ⑥-b 의
+/// *"하나도 못 찾았다"* 가 **자기가 지운 자리를 보고** 거짓 경보를 냈다.
+#[test]
+fn 중간에서_실패한_제거가_이어서_끝난다() {
+    let root = 프로젝트("이어서");
+    let s0 = 스냅샷(&root);
+    성공(&root, &["install"]);
+
+    // 걸림돌 — 페이로드 파일 하나가 **비어 있지 않은 디렉터리**가 됐다.
+    let 걸림돌 = root.join(".claude/commands/pal/plan.md");
+    std::fs::remove_file(&걸림돌).expect("지우기");
+    std::fs::create_dir(&걸림돌).expect("걸림돌");
+    std::fs::write(걸림돌.join("남의것"), "x\n").expect("안의 것");
+
+    let out = 돌린다(&root, &["uninstall"]);
+    assert!(!out.status.success(), "걸림돌을 보고도 성공을 냈다");
+
+    // ① **진행한 만큼 기록이 줄었다.**
+    let m: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(root.join(".claude/pal/manifest.json")).expect("읽기"))
+            .expect("JSON");
+    assert!(m["blocks"].as_array().expect("blocks").is_empty(), "걷은 블록이 기록에 남았다: {m}");
+    let 남은: Vec<&str> =
+        m["files"].as_array().expect("files").iter().map(|f| f["path"].as_str().expect("p")).collect();
+    assert!(!남은.is_empty(), "이 시험이 재려는 상태가 아니다 — 남은 것이 없다");
+    assert!(
+        남은.contains(&".claude/commands/pal/plan.md") && !남은.contains(&".claude/pal/INSTRUCTIONS.md"),
+        "지운 것이 기록에서 안 빠졌다: {남은:?}"
+    );
+
+    // ② 오류 문구가 **회복 방법**을 준다.
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert!(stderr.contains("다시 돌리"), "회복 방법을 안 줬다:\n{stderr}");
+
+    // ③ 걸림돌을 치우면 **이어서 끝낸다.**
+    std::fs::remove_dir_all(&걸림돌).expect("걸림돌 치우기");
+    성공(&root, &["uninstall"]);
+    assert_eq!(스냅샷(&root), s0, "제거 후가 설치 전과 다르다");
+}
+
+/// 트리 전체의 `(상대 경로 → 길이·합)`. **`.git/` 은 뺀다.**
+fn 스냅샷(root: &Path) -> std::collections::BTreeMap<String, String> {
+    let mut out = std::collections::BTreeMap::new();
+    훑기(root, root, &mut out);
+    out
+}
+
+fn 훑기(root: &Path, dir: &Path, out: &mut std::collections::BTreeMap<String, String>) {
+    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let rel = path.strip_prefix(root).unwrap_or(&path).display().to_string();
+        if rel.starts_with(".git/") || rel == ".git" {
+            continue;
+        }
+        if path.is_dir() {
+            out.insert(rel, "<디렉터리>".to_owned());
+            훑기(root, &path, out);
+        } else {
+            let bytes = std::fs::read(&path).unwrap_or_default();
+            out.insert(rel, format!("{}·{:x}", bytes.len(), 합(&bytes)));
+        }
+    }
+}
+
+fn 합(bytes: &[u8]) -> u64 {
+    bytes.iter().fold(1_469_598_103_934_665_603_u64, |h, b| {
+        (h ^ u64::from(*b)).wrapping_mul(1_099_511_628_211)
+    })
+}

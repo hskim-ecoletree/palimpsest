@@ -138,8 +138,18 @@ pub struct Manifest {
     pub files: Vec<FileEntry>,
     pub blocks: Vec<BlockEntry>,
     pub settings: Option<SettingsEntry>,
-    /// **우리가 만든** 디렉터리. 만든 순서대로 들어 있고 제거는 역순으로 본다.
+    /// **우리가 만든** 디렉터리. 순서는 안 믿는다 — 제거는 **깊은 것부터** 본다.
     pub created_dirs: Vec<Rel>,
+    /// ★ **제거가 시작됐다.** `uninstall` 이 첫 걸음을 떼기 전에 참으로 적고, 걷은
+    /// 항목을 걸음마다 위 목록에서 뺀다.
+    ///
+    /// 이 한 줄이 없으면 다음 회차가 **줄어든 목록**을 보고 ⑥-b 의 *"리소스를 하나도
+    /// 못 찾았다"* 를 낸다 — 자기가 지운 자리를 보고 내는 거짓 경보이고, 그것이
+    /// 「중간에서 실패한 제거가 다시 못 도는」 형태였다.
+    ///
+    /// **`#[serde(default)]` 이라 옛 매니페스트는 전부 거짓으로 읽힌다.**
+    #[serde(default)]
+    pub removing: bool,
 }
 
 /// 매니페스트가 지는 경로의 **종류.**
@@ -419,6 +429,7 @@ mod tests {
                 created: false,
             }),
             created_dirs: vec![Rel::new(&format!("{표식}만든디렉터리"))],
+            removing: false,
         };
 
         let 적힌: std::collections::BTreeSet<String> =

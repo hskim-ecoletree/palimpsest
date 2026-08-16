@@ -261,6 +261,9 @@ pub fn install(target: &Path) -> Result<()> {
             blocks: 이전.as_ref().map(|m| m.blocks.clone()).unwrap_or_default(),
             settings: 이전.as_ref().and_then(|m| m.settings.clone()),
             created_dirs,
+            // 설치는 제거 중이 아니다. 앞선 제거가 걸린 채로 남았어도 이 설치가
+            // 그 상태를 덮으므로 여기서 거짓으로 되돌린다.
+            removing: false,
         },
     };
     기록.적는다()?;
@@ -718,7 +721,7 @@ pub fn uninstall(target: &Path) -> Result<()> {
             manifest_path.display()
         );
     }
-    let m = manifest::read(&manifest_path)?;
+    let mut m = manifest::read(&manifest_path)?;
 
     // ── 1단계 · 검증. **여기까지 한 바이트도 안 지운다** ────────────────────
     // ★ **경로 봉쇄를 여기서 한 번에 세운다** — 파일·블록·설정·디렉터리·매니페스트
@@ -738,7 +741,12 @@ pub fn uninstall(target: &Path) -> Result<()> {
     // 없다 — 기록의 집만 세우고 죽은 부분 설치가 바로 그 모양이고, 여기서 거부하면
     // 사용자에게 **잔해만 남고 걷어낼 길이 없다.** 적은 것이 하나라도 있는데 하나도
     // 못 찾은 자리는 그대로 실패다.
-    if !m.files.is_empty() && 찾은_파일 == 0 {
+    //
+    // ⚠ **이미 제거가 시작된 매니페스트도 모집단이 아니다.** 그 목록에 남은 것은 앞
+    // 회차가 **아직 못 지운 것**이고, 그중 일부가 이미 없는 것은 정상이다. 그 자리에
+    // 이 문장을 적용하면 **자기가 지운 자리를 보고 거짓 경보**를 내며 이어서 도는 길을
+    // 막는다(실측: 걸림돌을 치운 뒤에도 영영 rc=1).
+    if !m.removing && !m.files.is_empty() && 찾은_파일 == 0 {
         bail!(
             "매니페스트가 적은 리소스 {}개를 **하나도 못 찾았다** — 지울 게 없었으니 \
              성공이라고 적지 않는다. 사람이 봐야 한다",
@@ -760,51 +768,46 @@ pub fn uninstall(target: &Path) -> Result<()> {
         );
     }
 
-    // ── 2단계 · 적용 ────────────────────────────────────────────────────────
+    // ── 2단계 · 적용. ★ **기록이 걸음마다 앞선다 — 여기에도** ───────────────
+    //
+    // `install` 은 걸음마다 매니페스트를 다시 썼는데 `uninstall` 은 안 썼다. 그래서
+    // 파일 루프 중간에서 실패하면 **이미 지운 것이 기록에 그대로 남고**, 다시 돌려도
+    // 같은 자리에서 같은 실패를 반복했다. 이제 한 항목을 걷을 때마다 그 항목을 기록에서
+    // 뺀다 — 다시 돌리면 **이어서 끝난다.**
     let lock = Lock::take(&root)?;
     let mut report = Report::new();
+    // **제거가 시작됐다는 사실 자체를 먼저 적는다.** 이 한 줄이 없으면 다음 회차가
+    // 줄어든 목록을 「하나도 못 찾았다」로 읽는다(⑥-b 의 거짓 경보).
+    m.removing = true;
+    manifest::write(&manifest_path, &m)?;
 
-    for b in &m.blocks {
+    while let Some(b) = m.blocks.first().cloned() {
         match blocks::remove(자리.자리(&b.path)?, &b.inserted, b.created)? {
             blocks::Removal::Block => report.say("블록 뺌", b.path.as_str()),
             blocks::Removal::FileGone => report.say("지웠다", b.path.as_str()),
             blocks::Removal::Missing => report.say("이미 없음", b.path.as_str()),
         }
+        m.blocks.remove(0);
+        manifest::write(&manifest_path, &m)?;
     }
-    if let Some(s) = &m.settings {
-        if settings::unmerge(자리.자리(&s.path)?, s)? {
-            let 뺀것 = s
-                .added_keys
-                .iter()
-                .cloned()
-                .chain(s.hooks.iter().map(|h| format!("훅 {}", h.event)))
-                .collect::<Vec<_>>();
-            report.say("키 뺌", &format!("{}  ({})", s.path, 뺀것.join(" · ")));
-        } else {
-            report.say("이미 없음", s.path.as_str());
-        }
+    if let Some(s) = m.settings.clone() {
+        설정_되돌리기(&자리, &s, &mut report)?;
+        m.settings = None;
+        manifest::write(&manifest_path, &m)?;
     }
-    for f in &m.files {
-        let path = 자리.자리(&f.path)?;
-        if !path.exists() {
-            report.say("이미 없음", f.path.as_str());
-            continue;
-        }
-        // ★ **말없이 지우지 않는다.** `update` 가 「사용자 수정 — 건너뜀」으로 지킨
-        // 파일을 제거는 sha 대조 없이 지웠다. 게이트 ④ 가 세운 *"밟지 않는 것과 말하지
-        // 않는 것은 다르다"* 를 여기에도 세운다.
-        //
-        // ⚠ **지우는 것 자체는 그대로다** — ⑥ 이 `S2 == S0` 을 요구하므로 남기면 그것이
-        // 반증이다. 여기서 더하는 것은 **말**이다. sha 로 대는 이유는 기록의 종류
-        // (`Origin`)만 보면 설치 뒤에 손댄 것을 놓치기 때문이다.
-        let 고쳤나 = sha256::hex(&guard::읽는다(path)?) != f.sha256;
-        std::fs::remove_file(path)
-            .with_context(|| format!("지우지 못했다: {}", path.display()))?;
-        if 고쳤나 {
-            report.say(지운_사용자_수정, f.path.as_str());
-        } else {
-            report.say("지웠다", f.path.as_str());
-        }
+    while let Some(f) = m.files.first().cloned() {
+        // **회복 방법을 문구가 준다.** 기록이 걸음마다 앞서므로, 걸린 자리를 손으로
+        // 치운 뒤 다시 돌리면 나머지를 이어서 걷는다.
+        파일_하나_걷기(&자리, &f, &mut report).with_context(|| {
+            format!(
+                "{} 에서 멈췄다 — 여기까지 걷은 것은 매니페스트에서 이미 빠졌다. \
+                 이 자리를 손으로 치운 뒤 `pal uninstall` 을 **다시 돌리면** 나머지를 \
+                 이어서 걷는다",
+                f.path
+            )
+        })?;
+        m.files.remove(0);
+        manifest::write(&manifest_path, &m)?;
     }
 
     std::fs::remove_file(&manifest_path)
@@ -869,4 +872,49 @@ fn 왜_못_지웠나(path: &Path, e: &std::io::Error) -> String {
     let 몇 = 남은.len();
     남은.truncate(5);
     format!("비어 있지 않다 — 남의 것 {몇}개가 산다: {}", 남은.join(" · "))
+}
+
+/// 파일 하나를 걷는다 — **말없이 지우지 않는다.**
+///
+/// `update` 가 「사용자 수정 — 건너뜀」으로 지킨 파일을 제거는 sha 대조 없이 지웠다.
+/// 게이트 ④ 가 세운 *"밟지 않는 것과 말하지 않는 것은 다르다"* 를 여기에도 세운다.
+///
+/// ⚠ **지우는 것 자체는 그대로다** — ⑥ 이 `S2 == S0` 을 요구하므로 남기면 그것이
+/// 반증이다. 여기서 더하는 것은 **말**이다. sha 로 대는 이유는 기록의 종류
+/// (`Origin`)만 보면 설치 뒤에 손댄 것을 놓치기 때문이다.
+fn 파일_하나_걷기(자리: &manifest::Places, f: &FileEntry, report: &mut Report) -> Result<()> {
+    let path = 자리.자리(&f.path)?;
+    if !path.exists() {
+        report.say("이미 없음", f.path.as_str());
+        return Ok(());
+    }
+    let 고쳤나 = sha256::hex(&guard::읽는다(path)?) != f.sha256;
+    std::fs::remove_file(path)
+        .with_context(|| format!("지우지 못했다: {}", path.display()))?;
+    if 고쳤나 {
+        report.say(지운_사용자_수정, f.path.as_str());
+    } else {
+        report.say("지웠다", f.path.as_str());
+    }
+    Ok(())
+}
+
+/// 설정에서 우리가 더한 것만 뺀다.
+fn 설정_되돌리기(
+    자리: &manifest::Places,
+    s: &SettingsEntry,
+    report: &mut Report,
+) -> Result<()> {
+    if settings::unmerge(자리.자리(&s.path)?, s)? {
+        let 뺀것 = s
+            .added_keys
+            .iter()
+            .cloned()
+            .chain(s.hooks.iter().map(|h| format!("훅 {}", h.event)))
+            .collect::<Vec<_>>();
+        report.say("키 뺌", &format!("{}  ({})", s.path, 뺀것.join(" · ")));
+    } else {
+        report.say("이미 없음", s.path.as_str());
+    }
+    Ok(())
 }
