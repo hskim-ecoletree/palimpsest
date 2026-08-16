@@ -504,16 +504,17 @@ fn 블록_넣기(
     기록: &mut Journal,
     report: &mut Report,
 ) -> Result<()> {
-    // 옛 기록을 비우고 이 회차가 다시 채운다 — **한 걸음마다 적으므로** 중간에 죽어도
-    // 그 시점까지의 진실이 남는다.
-    let mut out = Vec::new();
-    기록.m.blocks.clear();
-    기록.적는다()?;
+    // ★ **옛 기록을 비우지 않는다.** 옛 코드는 목록을 `clear()` 하고 매니페스트에
+    // 적은 **다음** 하나씩 다시 채웠다. 그 사이에 죽거나 실패하면 **파일에는 블록이
+    // 있는데 기록에는 없는** 상태가 남고, 그러면 `uninstall` 이 그 블록을 영영 못
+    // 걷어낸다(이 회차의 실측: CLAUDE.md 에서 실패한 설치가 `.gitignore` 의 기록을
+    // 함께 잃었다). 이제 [`블록_하나`] 가 **경로 단위로 갈아 끼운다.**
+    //
     // ── CLAUDE.md — `@` 임포트 한 줄 ────────────────────────────────────────
     //
     // ⚠ **`AGENTS.md` 에 규율을 담지 않는다. 자동 주입되지 않는다**(실측).
     let 지시 = blocks::compose(&MD_MARKERS, &[IMPORT_LINE.to_owned()]);
-    블록_하나(root, ROOT_INSTRUCTION_FILE, &지시, 이전, 기록, report, &mut out)?;
+    블록_하나(root, ROOT_INSTRUCTION_FILE, &지시, 이전, 기록, report)?;
 
     // ── .gitignore — 파생 경로. **git 에게 물어서 정한다** ──────────────────
     //
@@ -523,12 +524,17 @@ fn 블록_넣기(
     let ignore_rel = Rel::new(IGNORE_FILE);
     let 옛_등재 = 이전.and_then(|m| m.blocks.iter().find(|b| b.path == ignore_rel).cloned());
     if let Some(old) = 옛_등재 {
-        if blocks::present(&root.join(&ignore_rel)?, &old.inserted)? {
-            report.say("이미 있음", IGNORE_FILE);
-            out.push(old);
-            기록.m.blocks.clone_from(&out);
-            기록.적는다()?;
-            return Ok(());
+        let path = root.join(&ignore_rel)?;
+        match blocks::상태(&path, 마커(&ignore_rel), &old.inserted)? {
+            // 기록은 이미 [`Journal`] 이 옛 매니페스트에서 지고 왔다 — 적을 것이 없다.
+            blocks::상태::그대로 => {
+                report.say("이미 있음", IGNORE_FILE);
+                return Ok(());
+            }
+            // **거짓 성공을 안 낸다.** 마커가 남았는데 우리 바이트가 아니면 제거가
+            // 걸리는 자리이고, 그 사실을 설치가 조용히 지나가면 아무도 모른다.
+            blocks::상태::훼손 => bail!("{}", blocks::훼손_문구(&path, 마커(&ignore_rel))),
+            blocks::상태::사라짐 => {}
         }
     }
 
@@ -561,7 +567,7 @@ fn 블록_넣기(
             report.say("건드리지 않음", &format!("{IGNORE_FILE}  (더할 것이 없다)"));
         } else {
             let block = blocks::compose(&IGNORE_MARKERS, &등재);
-            블록_하나(root, IGNORE_FILE, &block, 이전, 기록, report, &mut out)?;
+            블록_하나(root, IGNORE_FILE, &block, 이전, 기록, report)?;
         }
     } else {
         // **rc=128 을 rc=1 과 뭉개면 저장소가 아닌 곳에 `.gitignore` 를 만든다.**
@@ -577,7 +583,6 @@ fn 블록_하나(
     이전: Option<&Manifest>,
     기록: &mut Journal,
     report: &mut Report,
-    out: &mut Vec<BlockEntry>,
 ) -> Result<()> {
     let rel = Rel::new(rel);
     let path = root.join(&rel)?;
@@ -585,7 +590,7 @@ fn 블록_하나(
     match blocks::add(&path, 마커(&rel), block)? {
         blocks::Added::Inserted { bytes, created } => {
             report.say("블록", rel.as_str());
-            out.push(BlockEntry { path: rel, inserted: bytes, created });
+            갈아_끼운다(기록, BlockEntry { path: rel, inserted: bytes, created });
         }
         blocks::Added::AlreadyThere => {
             // **옛 기록을 그대로 지고 간다** — 잃으면 제거가 못 되돌린다.
@@ -600,13 +605,24 @@ fn 블록_하나(
                      기록이 살아 있는 매니페스트를 되살리십시오"
                 );
             };
+            // ★ **기록은 있는데 실물이 다르면 그것도 거짓 성공이다.** 옛 코드는 이
+            // 자리에서 rc=0 「설치」 화면을 내면서 **아무것도 안 고쳤고**, 그 뒤
+            // `uninstall` 은 영영 rc=1 이었다. 무엇을 지워야 하는지 여기서 말한다.
+            if blocks::상태(&path, 마커(&rel), &old.inserted)? == blocks::상태::훼손 {
+                bail!("{}", blocks::훼손_문구(&path, 마커(&rel)));
+            }
             report.say("이미 있음", rel.as_str());
-            out.push(old);
+            갈아_끼운다(기록, old);
         }
     }
     // **넣자마자 적는다** — 넣고 죽으면 그 블록은 아무도 못 걷어낸다.
-    기록.m.blocks.clone_from(out);
     기록.적는다()
+}
+
+/// 이 경로의 기록을 **갈아 끼운다** — 목록을 통째로 비웠다 다시 채우지 않는다.
+fn 갈아_끼운다(기록: &mut Journal, entry: BlockEntry) {
+    기록.m.blocks.retain(|b| b.path != entry.path);
+    기록.m.blocks.push(entry);
 }
 
 fn 마커(rel: &Rel) -> &'static layout::Markers {
@@ -775,19 +791,18 @@ pub fn uninstall(target: &Path) -> Result<()> {
             m.files.len()
         );
     }
+    // ★ **「없다」와 「고쳐졌다」를 가른다.** 옛 코드는 *"우리 바이트가 안 보인다"*
+    // 하나로 판정해서, 사용자가 **블록을 통째로 지운** 자리도 훼손으로 읽었다 —
+    // 그러면 오류 문구가 시킨 그대로 해도 영영 rc=1 이다.
     let mut 훼손 = Vec::new();
     for b in &m.blocks {
         let path = 자리.자리(&b.path)?;
-        if path.exists() && !blocks::present(path, &b.inserted)? {
-            훼손.push(b.path.to_string());
+        if blocks::상태(path, 마커(&b.path), &b.inserted)? == blocks::상태::훼손 {
+            훼손.push(blocks::훼손_문구(path, 마커(&b.path)));
         }
     }
     if !훼손.is_empty() {
-        bail!(
-            "블록이 손으로 고쳐졌거나 마커가 훼손됐다 — **고치려 들지 않는다.** \
-             아무것도 지우지 않았다:\n    {}",
-            훼손.join("\n    ")
-        );
+        bail!("아무것도 지우지 않았다.\n\n{}", 훼손.join("\n\n"));
     }
 
     // ── 2단계 · 적용. ★ **기록이 걸음마다 앞선다 — 여기에도** ───────────────
@@ -804,7 +819,7 @@ pub fn uninstall(target: &Path) -> Result<()> {
     manifest::write(&manifest_path, &m)?;
 
     while let Some(b) = m.blocks.first().cloned() {
-        match blocks::remove(자리.자리(&b.path)?, &b.inserted, b.created)? {
+        match blocks::remove(자리.자리(&b.path)?, 마커(&b.path), &b.inserted, b.created)? {
             blocks::Removal::Block => report.say("블록 뺌", b.path.as_str()),
             blocks::Removal::FileGone => report.say("지웠다", b.path.as_str()),
             blocks::Removal::Missing => report.say("이미 없음", b.path.as_str()),

@@ -83,6 +83,34 @@ pub fn add(path: &Path, markers: &Markers, block: &str) -> Result<Added> {
     Ok(Added::Inserted { bytes: inserted, created: false })
 }
 
+/// 우리 블록이 지금 그 파일에서 **어떤 상태인가.**
+///
+/// # ★ 「없다」와 「고쳐졌다」는 다르다 — 그 둘을 뭉개면 빠져나올 길이 사라진다
+///
+/// 옛 코드는 *"우리가 넣은 바이트가 안 보인다"* 하나로 판정했다. 그래서 사용자가
+/// **블록을 통째로 지운** 자리도 「훼손」으로 읽었고, 오류 문구가 시킨 *"그 블록을 손으로
+/// 지운 뒤 다시 돌리십시오"* 를 **그대로 해도 여전히 rc=1** 이었다 — 문구가 말한 길이
+/// 실제로는 없는 길이었다.
+///
+/// 가르는 것은 **마커가 아직 있는가** 하나다:
+///
+/// | 우리 바이트 | 우리 마커 | 판정 | 무엇을 하나 |
+/// |---|---|---|---|
+/// | 있다 | — | [`상태::그대로`] | 뺀다 |
+/// | 없다 | **있다** | [`상태::훼손`] | **거부한다** — 안에 사람이 쓴 줄이 있을 수 있다 |
+/// | 없다 | 없다 | [`상태::사라짐`] | 뺄 것이 없다. 이미 걷혔다 |
+///
+/// **「고치려 들지 않는다」는 그대로다.** 우리가 안 넣은 바이트는 여전히 안 지운다.
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+pub enum 상태 {
+    /// 우리가 넣은 바이트열이 그대로 있다.
+    그대로,
+    /// 우리 것도 우리 마커도 없다 — **뺄 것이 없다.**
+    사라짐,
+    /// 마커는 있는데 바이트가 다르다 — **손으로 고쳐졌다.**
+    훼손,
+}
+
 /// 블록을 뺀 결과.
 pub enum Removal {
     /// 블록만 뺐다.
@@ -96,23 +124,23 @@ pub enum Removal {
 /// 우리가 넣은 바이트열 **그대로**를 뺀다.
 ///
 /// # Errors
-/// 파일은 있는데 그 바이트열이 안 보이면 — **손으로 고쳐졌다.** 고치려 들지 않고
-/// 거부한다.
-pub fn remove(path: &Path, inserted: &str, created: bool) -> Result<Removal> {
+/// 마커는 있는데 그 바이트열이 안 보이면 — **손으로 고쳐졌다.** 고치려 들지 않고
+/// 거부한다. 마커까지 없으면 [`Removal::Missing`] 이다(이미 걷혔다).
+pub fn remove(path: &Path, markers: &Markers, inserted: &str, created: bool) -> Result<Removal> {
     if !path.exists() {
         return Ok(Removal::Missing);
     }
     let existing = super::guard::읽는다(path)?;
-    let Some(at) = find(&existing, inserted.as_bytes()) else {
-        bail!(
-            "{} 의 palimpsest 블록이 우리가 넣은 것과 다르다 — **손으로 고쳐졌거나 마커가 \
-             훼손됐다.** 고치려 들지 않는다: 그 블록을 손으로 지운 뒤 다시 돌리십시오",
-            path.display()
-        );
+    let Some((at, 끝)) = 자리(&existing, inserted.as_bytes()) else {
+        if 마커가_있나(&existing, markers) {
+            bail!("{}", 훼손_문구(path, markers));
+        }
+        // **뺄 것이 없다.** 사용자가 이미 지웠거나 우리가 앞 회차에 걷었다.
+        return Ok(Removal::Missing);
     };
 
     let mut next = existing;
-    next.drain(at..at + inserted.len());
+    next.drain(at..끝);
 
     if created && next.is_empty() {
         std::fs::remove_file(path)
@@ -123,16 +151,47 @@ pub fn remove(path: &Path, inserted: &str, created: bool) -> Result<Removal> {
     Ok(Removal::Block)
 }
 
-/// 우리 블록이 지금 파일에 있는가 — **제거 전 검증에 쓴다.**
+/// **손으로 고쳐진 블록에서 빠져나오는 길** — 문구가 그 길을 그대로 말한다.
+///
+/// 옛 문구는 *"그 블록을 손으로 지운 뒤 다시 돌리십시오"* 였는데 **무엇이 「그
+/// 블록」인지 안 알려 줬고**, 마커를 남긴 채 안쪽만 지우면 같은 자리에 또 걸렸다.
+#[must_use]
+pub fn 훼손_문구(path: &Path, markers: &Markers) -> String {
+    format!(
+        "{} 의 palimpsest 블록이 우리가 넣은 것과 다르다 — **손으로 고쳐졌다.** \
+         고치려 들지 않는다(안에 사람이 쓴 줄이 있을 수 있다).\n    \
+         빠져나오는 길: 아래 **두 줄과 그 사이 전부**를 손으로 지운 뒤 \
+         `pal uninstall` 을 다시 돌리십시오. **마커까지 지워야 한다** — 마커만 남으면 \
+         같은 자리에 또 걸린다.\n      {}\n      {}",
+        path.display(),
+        markers.begin,
+        markers.end
+    )
+}
+
+/// 우리 블록이 지금 파일에서 어떤 상태인가 — **제거 전 검증과 멱등 판정에 쓴다.**
 ///
 /// # Errors
 /// 읽지 못하면.
-pub fn present(path: &Path, inserted: &str) -> Result<bool> {
+pub fn 상태(path: &Path, markers: &Markers, inserted: &str) -> Result<상태> {
     if !path.exists() {
-        return Ok(false);
+        return Ok(상태::사라짐);
     }
     let existing = super::guard::읽는다(path)?;
-    Ok(find(&existing, inserted.as_bytes()).is_some())
+    if 자리(&existing, inserted.as_bytes()).is_some() {
+        return Ok(상태::그대로);
+    }
+    Ok(if 마커가_있나(&existing, markers) { 상태::훼손 } else { 상태::사라짐 })
+}
+
+fn 마커가_있나(existing: &[u8], markers: &Markers) -> bool {
+    find(existing, markers.begin.as_bytes()).is_some()
+}
+
+/// 우리 바이트열이 앉은 **원본에서의 구간**.
+fn 자리(existing: &[u8], inserted: &[u8]) -> Option<(usize, usize)> {
+    let at = find(existing, inserted)?;
+    Some((at, at + inserted.len()))
 }
 
 /// 바이트열 안에서 바늘의 첫 자리.
@@ -218,7 +277,7 @@ mod tests {
             };
             assert!(!created, "있는 파일을 새로 만들었다고 적었다");
             assert!(std::fs::read(&path).expect("읽기").starts_with(원본), "사용자 바이트가 깨졌다");
-            remove(&path, &bytes, false).expect("빼기");
+            remove(&path, &IGNORE_MARKERS, &bytes, false).expect("빼기");
             assert_eq!(std::fs::read(&path).expect("읽기"), 원본, "왕복이 원본과 다르다");
         }
     }
@@ -245,7 +304,7 @@ mod tests {
             panic!("이미 있다고 나왔다");
         };
         assert!(created);
-        assert!(matches!(remove(&path, &bytes, created).expect("빼기"), Removal::FileGone));
+        assert!(matches!(remove(&path, &IGNORE_MARKERS, &bytes, created).expect("빼기"), Removal::FileGone));
         assert!(!path.exists());
     }
 
@@ -264,7 +323,7 @@ mod tests {
         std::fs::write(&path, 사용자_것).expect("사용자 파일");
 
         // 우리 바이트열이 안 보이므로 **거부한다** — 지우지 않는다.
-        assert!(remove(&path, &bytes, created).is_err());
+        assert!(remove(&path, &IGNORE_MARKERS, &bytes, created).is_err());
         assert_eq!(std::fs::read_to_string(&path).expect("읽기"), 사용자_것);
     }
 
@@ -280,7 +339,7 @@ mod tests {
         };
         let 훼손 = std::fs::read_to_string(&path).expect("읽기").replace("/x/", "/y/");
         std::fs::write(&path, &훼손).expect("훼손");
-        assert!(remove(&path, &bytes, false).is_err());
+        assert!(remove(&path, &IGNORE_MARKERS, &bytes, false).is_err());
         assert_eq!(std::fs::read_to_string(&path).expect("읽기"), 훼손, "거부했는데 파일이 바뀌었다");
     }
 
@@ -294,7 +353,7 @@ mod tests {
         else {
             panic!("이미 있다고 나왔다");
         };
-        remove(&path, &bytes, false).expect("빼기");
+        remove(&path, &IGNORE_MARKERS, &bytes, false).expect("빼기");
         assert_eq!(std::fs::read(&path).expect("읽기"), b"/x/\n");
     }
 }

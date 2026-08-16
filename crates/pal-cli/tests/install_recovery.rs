@@ -294,3 +294,55 @@ fn 합(bytes: &[u8]) -> u64 {
         (h ^ u64::from(*b)).wrapping_mul(1_099_511_628_211)
     })
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. **문구가 말한 길이 실제로 있는 길이어야 한다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// ★ **블록 안을 한 글자 고치면 영구히 못 돌던 자리.**
+///
+/// 관측(고치기 전): `uninstall` 이 `훼손` 으로 rc=1 이고, `install` 은 rc=0 「설치」
+/// 화면을 내면서 **아무것도 안 고쳤다.** 오류 문구는 *"그 블록을 손으로 지운 뒤 다시
+/// 돌리십시오"* 였는데 **블록만 지워도 여전히 rc=1** 이었다 — 「우리 바이트가 안
+/// 보인다」와 「우리 마커가 남아 있다」를 안 갈랐기 때문이다.
+///
+/// **「고치려 들지 않는다」는 그대로다.** 우리가 안 넣은 바이트는 여전히 안 지운다.
+/// 바뀌는 것은 **없는 것을 훼손으로 읽지 않는다**뿐이다.
+#[test]
+fn 블록을_고쳐도_문구대로_하면_빠져나온다() {
+    let root = 프로젝트("블록훼손");
+    let 원본 = "# 내 지시\n";
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("CLAUDE.md");
+    let s0 = 스냅샷(&root);
+    성공(&root, &["install"]);
+
+    // 블록 **안**을 한 글자 고친다.
+    let 고침 = std::fs::read_to_string(root.join("CLAUDE.md"))
+        .expect("읽기")
+        .replace("@.claude/pal/INSTRUCTIONS.md", "@.claude/pal/INSTRUCTIONS.mdX");
+    std::fs::write(root.join("CLAUDE.md"), &고침).expect("쓰기");
+
+    // ① 고쳐진 블록은 거부한다 — **고치려 들지 않는다.**
+    let out = 돌린다(&root, &["uninstall"]);
+    assert!(!out.status.success(), "훼손된 블록을 보고도 성공을 냈다");
+    let 문구 = String::from_utf8_lossy(&out.stderr).into_owned();
+    // ★ **문구가 실제로 되는 경로를 말한다** — 지울 두 줄을 이름으로 준다.
+    assert!(
+        문구.contains("pal:begin") && 문구.contains("pal:end"),
+        "무엇을 지우라는지 안 적었다:\n{문구}"
+    );
+    assert_eq!(std::fs::read_to_string(root.join("CLAUDE.md")).expect("읽기"), 고침, "거부했는데 고쳤다");
+
+    // ② `install` 도 **거짓 성공을 안 낸다.**
+    let out = 돌린다(&root, &["install"]);
+    assert!(
+        !out.status.success(),
+        "고쳐진 블록을 보고도 rc=0 「설치」 화면을 냈다\nstdout: {}",
+        String::from_utf8_lossy(&out.stdout)
+    );
+
+    // ③ **문구대로 — 마커까지 통째로 지운다.** 그러면 나머지가 이어서 걷힌다.
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("블록 지우기");
+    성공(&root, &["uninstall"]);
+    assert_eq!(스냅샷(&root), s0, "제거 후가 설치 전과 다르다");
+}
