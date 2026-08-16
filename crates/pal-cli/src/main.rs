@@ -18,6 +18,7 @@ mod defect;
 mod doctor;
 mod evidence;
 mod export;
+mod hook;
 mod install;
 mod intent;
 mod ledger;
@@ -253,6 +254,14 @@ enum Command {
         #[arg(long, default_value = ".")]
         target: PathBuf,
     },
+    /// 하네스의 훅이 부르는 자리 — **표준입력으로 페이로드를 받는다**
+    ///
+    /// 사람이 손으로 부를 일이 없다. `pal install` 이 이 커맨드를 대상 프로젝트의
+    /// `settings.json` 에 등록하고, 하네스가 `/bin/sh -c` 로 실행한다.
+    Hook {
+        /// 사건 이름. **모르는 것은 조용히 통과시킨다**
+        event: String,
+    },
     /// 의도 저장소를 JSONL 로 내고 되읽는다 — **재구축 불가한 것의 유일한 복구 경로**
     Intent {
         #[command(subcommand)]
@@ -466,6 +475,11 @@ fn main() -> Result<()> {
         Command::Install { target } => install::install(&target),
         Command::Update { target } => install::update(&target),
         Command::Uninstall { target } => install::uninstall(&target),
+        // **훅은 실패를 안 낸다** — 그 사실이 `hook::run` 의 타입에 적혀 있다.
+        Command::Hook { event } => {
+            hook::run(&event);
+            Ok(())
+        }
         Command::Intent { what } => match what {
             IntentCommand::Export { repo, intent, out } => intent::export(&repo, intent, out),
             IntentCommand::Import { file, repo, intent, json } => {
