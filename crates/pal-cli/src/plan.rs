@@ -63,9 +63,13 @@ fn 계획을_읽는다(a: &Args) -> Result<Plan> {
     let text = std::fs::read_to_string(a.plan)
         .with_context(|| format!("계획 문서를 읽지 못했다: {}", a.plan.display()))?;
     // **경로는 정체성이 아니라 추적용이다** — 저장소 안이면 상대 경로로 적는다.
+    //
+    // ⚠ **[`RepoPath::from_fs`] 를 지난다.** 옛 코드는 `to_string_lossy` 를 그대로
+    // `RepoPath::new` 에 넘겼고, 그러면 Windows 에서 `docs\plan\x.md` 가 좌표가 된다 —
+    // 같은 계획 문서가 플랫폼마다 다른 이름을 갖는다. `install/manifest.rs` 의 훑기는
+    // 이 정규화를 이미 하고 있었고 여기만 안 하고 있었다. **비대칭이었다.**
     let rel = a.plan.strip_prefix(a.repo).unwrap_or(a.plan);
-    pal_extract::ingest_plan(&RepoPath::new(rel.to_string_lossy().into_owned()), &text)
-        .map_err(|e| anyhow::anyhow!("{e}"))
+    pal_extract::ingest_plan(&RepoPath::from_fs(rel), &text).map_err(|e| anyhow::anyhow!("{e}"))
 }
 
 /// `pal plan <문서>` — **계획을 읽고 지금 스냅샷에 대 본다.**

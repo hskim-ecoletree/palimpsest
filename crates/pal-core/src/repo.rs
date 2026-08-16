@@ -46,6 +46,22 @@ impl RepoPath {
         Self(path.into())
     }
 
+    /// **파일시스템 경로에서 만드는 유일한 문.**
+    ///
+    /// 위 불변식(*"Windows 에서 만든 대장과 macOS 에서 만든 대장이 달라지면 대조가
+    /// 성립하지 않는다"*)은 [`RepoPath::new`] 가 **혼자 지지 못한다** — 그것은 문자열을
+    /// 그대로 받고, `std::path::Path` 의 구분자는 플랫폼마다 다르다. 그래서
+    /// 파일시스템 경로가 좌표가 되는 자리는 전부 이 문을 지난다.
+    ///
+    /// ⚠ **`\` 를 무조건 `/` 로 바꾼다.** 유닉스에서는 파일 이름에 `\` 가 들어갈 수
+    /// 있으므로 그런 이름은 여기서 갈린다. 그 값을 이기게 한 이유는 이 타입이 지는
+    /// 것이 **파일 이름이 아니라 기계 사이를 오가는 좌표**이기 때문이다 — 같은 판단을
+    /// `pal-cli` 의 매니페스트 훑기가 이미 하고 있고, 여기가 그 짝이다.
+    #[must_use]
+    pub fn from_fs(path: &std::path::Path) -> Self {
+        Self(path.to_string_lossy().replace('\\', "/"))
+    }
+
     #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
@@ -357,6 +373,28 @@ mod tests {
     #[test]
     fn 디렉터리의_점은_파일_확장자가_아니다() {
         assert_eq!(RepoPath::new("v1.2/README").extension(), "");
+    }
+
+    /// ★ **파일시스템 경로가 좌표가 될 때 구분자가 하나로 모인다.**
+    ///
+    /// 이 타입의 머리말이 적은 불변식 — *"Windows 에서 만든 대장과 macOS 에서 만든
+    /// 대장이 달라지면 대조가 성립하지 않는다"* — 은 **문자열을 그대로 받는
+    /// [`RepoPath::new`] 로는 안 선다.** Windows 의 `Path` 는 `\` 를 내고, 그 값이
+    /// 그대로 좌표가 되면 같은 파일이 두 이름을 갖는다.
+    ///
+    /// 리터럴을 쓰는 이유: `Path::new(r"a\b")` 는 유닉스에서 **성분 하나**라 플랫폼
+    /// 분기 없이도 「구분자가 아닌 `\`」를 그대로 재현한다.
+    #[test]
+    fn 파일시스템_경로는_구분자를_한쪽으로_모은다() {
+        use std::path::Path;
+        assert_eq!(RepoPath::from_fs(Path::new(r"docs\plan\00-stack.md")).as_str(), "docs/plan/00-stack.md");
+        // 이미 `/` 인 것은 그대로다 — 유닉스에서 만든 값이 안 움직인다.
+        assert_eq!(RepoPath::from_fs(Path::new("docs/plan/00-stack.md")).as_str(), "docs/plan/00-stack.md");
+        // 그리고 두 플랫폼의 산출이 **같은 값**이 된다. 이것이 재려는 문장이다.
+        assert_eq!(
+            RepoPath::from_fs(Path::new(r"docs\plan\00-stack.md")),
+            RepoPath::from_fs(Path::new("docs/plan/00-stack.md"))
+        );
     }
 
     #[test]
