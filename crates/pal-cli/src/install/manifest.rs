@@ -122,21 +122,38 @@ pub struct Manifest {
     pub created_dirs: Vec<Rel>,
 }
 
+/// 매니페스트가 지는 경로의 **종류.**
+///
+/// 경로마다 **우리가 그 자리에 무엇을 할 수 있는지**가 다르다 — 파일은 지우고,
+/// 디렉터리는 비었을 때만 지우고, 블록은 남의 파일 안의 바이트열만 뺀다. 그러니
+/// 「대상 안인가」 하나로는 부족하고, **어느 종류로 적혔는가**가 함께 다녀야 한다.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum 종류 {
+    /// 우리가 통째로 소유하는 파일 하나.
+    파일,
+    /// 우리가 만들 수 있는 디렉터리 하나.
+    디렉터리,
+    /// 남의 파일 — 우리가 넣은 블록만 뺀다.
+    블록,
+    /// 대상 설정 파일 — 우리가 더한 키만 뺀다.
+    설정,
+}
+
 impl Manifest {
-    /// **이 매니페스트에서 유도되는 모든 경로.**
+    /// **이 매니페스트에서 유도되는 모든 경로**와 그 종류.
     ///
     /// ★ **경로 필드를 더하는 사람은 여기도 더해야 한다.** 안 더하면 그 경로는
     /// [`자리들`] 에 안 실리고 [`Places::자리`] 가 **실패한다** — 조용히 통과하지
     /// 않는다. 아래 `경로를_하나도_안_빠뜨린다` 가 그 빠뜨림을 시험으로 잡는다.
     #[must_use]
-    pub fn 경로들(&self) -> Vec<&Rel> {
-        let mut out = vec![&self.own_path];
-        out.extend(&self.roots.dirs);
-        out.extend(&self.roots.files);
-        out.extend(self.files.iter().map(|f| &f.path));
-        out.extend(self.blocks.iter().map(|b| &b.path));
-        out.extend(self.settings.iter().map(|s| &s.path));
-        out.extend(&self.created_dirs);
+    pub fn 경로들(&self) -> Vec<(종류, &Rel)> {
+        let mut out = vec![(종류::파일, &self.own_path)];
+        out.extend(self.roots.dirs.iter().map(|r| (종류::디렉터리, r)));
+        out.extend(self.roots.files.iter().map(|r| (종류::파일, r)));
+        out.extend(self.files.iter().map(|f| (종류::파일, &f.path)));
+        out.extend(self.blocks.iter().map(|b| (종류::블록, &b.path)));
+        out.extend(self.settings.iter().map(|s| (종류::설정, &s.path)));
+        out.extend(self.created_dirs.iter().map(|r| (종류::디렉터리, r)));
         out
     }
 
@@ -176,7 +193,7 @@ impl Places {
 /// 하나라도 대상 밖을 가리키면.
 pub fn 자리들(root: &Root, m: &Manifest) -> Result<Places> {
     let mut out = BTreeMap::new();
-    for rel in m.경로들() {
+    for (_종류, rel) in m.경로들() {
         let path = root.join(rel)?;
         out.insert(rel.clone(), path);
     }
@@ -337,7 +354,7 @@ mod tests {
         };
 
         let 적힌: std::collections::BTreeSet<String> =
-            m.경로들().into_iter().map(ToString::to_string).collect();
+            m.경로들().into_iter().map(|(_, r)| r.to_string()).collect();
         let mut 실린 = std::collections::BTreeSet::new();
         표식_모으기(&serde_json::to_value(&m).expect("직렬화"), &mut 실린);
 
