@@ -80,7 +80,21 @@ pub struct Args<'a> {
     pub index: Option<PathBuf>,
     pub intent: Option<PathBuf>,
     pub scope: DoctorScope,
+    /// **설치 검사만** 본다 — 저장소 그래프를 안 세운다.
+    pub install_only: bool,
     pub json: bool,
+}
+
+/// 봉투 옆에 설치 검사를 **나란히** 싣는다.
+///
+/// 봉투 안에 넣지 않는 이유: [`Diagnosis`] 는 `schema/graph.toml` 이 정한 불변식의
+/// 자리이고 설치는 그 스키마의 라벨이 아니다. 안에 넣으면 `[f22.4]` 의 모집단이
+/// 움직인다 — **재는 것이 달라지지 않게 옆에 둔다.**
+#[derive(serde::Serialize)]
+struct Joined<'a> {
+    #[serde(flatten)]
+    envelope: &'a Envelope<Diagnosis>,
+    install: &'a [crate::install::Check],
 }
 
 /// `pal doctor` 를 돌린다.
@@ -88,8 +102,32 @@ pub struct Args<'a> {
 /// # Errors
 /// 스키마가 읽히지 않거나, 저장소·캐시·2층·의도 저장소 중 하나에 닿지 못하면.
 pub fn run(args: Args) -> Result<()> {
-    let Args { repo: repo_path, rev, cache_dir, index: index_path, intent: intent_path, scope, json } =
-        args;
+    let Args {
+        repo: repo_path,
+        rev,
+        cache_dir,
+        index: index_path,
+        intent: intent_path,
+        scope,
+        install_only,
+        json,
+    } = args;
+
+    let install =
+        crate::install::checks(&repo_path.canonicalize().unwrap_or_else(|_| repo_path.to_owned()));
+
+    // **설치 검사는 그래프 없이도 선다.** 하위 디렉터리에서 부르는 것이 검사 3 의
+    // 고장 fixture 인데, 그 자리에서 그래프를 세우려 들면 재려는 것과 무관한 실패가 난다.
+    if install_only {
+        if json {
+            println!("{}", serde_json::to_string_pretty(&install)?);
+        } else {
+            crate::install::print(&install);
+            println!();
+        }
+        return Ok(());
+    }
+
     let schema = GraphSchema::parse(SCHEMA).map_err(|e| anyhow::anyhow!("{e}"))?;
 
     let report = ledger::compute(repo_path, rev, cache_dir)?;
@@ -140,9 +178,12 @@ pub fn run(args: Args) -> Result<()> {
     );
 
     if json {
-        println!("{}", serde_json::to_string_pretty(&envelope)?);
+        let joined = Joined { envelope: &envelope, install: &install };
+        println!("{}", serde_json::to_string_pretty(&joined)?);
     } else {
         print_screen(&envelope);
+        crate::install::print(&install);
+        println!();
     }
     Ok(())
 }

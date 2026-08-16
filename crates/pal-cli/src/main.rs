@@ -18,6 +18,7 @@ mod defect;
 mod doctor;
 mod evidence;
 mod export;
+mod install;
 mod intent;
 mod ledger;
 mod narrative;
@@ -224,9 +225,33 @@ enum Command {
         /// 불변식마다 볼 단위 수의 상한. `--full` 과 함께 쓰면 `--full` 이 이긴다
         #[arg(long)]
         sample: Option<usize>,
+        /// **설치 검사 다섯만** 본다 — 저장소 그래프를 안 세운다.
+        ///
+        /// 안 주면 둘 다 나온다. 설치 검사는 그래프가 없어도 서므로 이 손잡이가
+        /// 있는 자리와 없는 자리가 다르다.
+        #[arg(long)]
+        install: bool,
         /// 사람이 읽는 화면 대신 JSON 으로 낸다
         #[arg(long)]
         json: bool,
+    },
+    /// 이 프로젝트에 palimpsest 를 놓는다 — **대상 바깥은 안 건드린다**
+    Install {
+        /// 대상 프로젝트. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        target: PathBuf,
+    },
+    /// 놓은 것을 갱신한다 — **사람이 고친 것은 밟지 않고 보고한다**
+    Update {
+        /// 대상 프로젝트. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        target: PathBuf,
+    },
+    /// 놓은 것을 걷어낸다 — **매니페스트에 적힌 것만**
+    Uninstall {
+        /// 대상 프로젝트. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        target: PathBuf,
     },
     /// 의도 저장소를 JSONL 로 내고 되읽는다 — **재구축 불가한 것의 유일한 복구 경로**
     Intent {
@@ -421,7 +446,7 @@ fn main() -> Result<()> {
         Command::Touch { name, repo, at, cache_dir, index, intent, binding_max, timing, json } =>
             touch::run(touch::Args { repo: &repo, rev: at.as_deref(), cache_dir, index, intent,
                                      name: &name, binding_max, timing, json }),
-        Command::Doctor { repo, at, cache_dir, index, intent, full, sample, json } => {
+        Command::Doctor { repo, at, cache_dir, index, intent, full, sample, install, json } => {
             let scope = if full {
                 pal_core::DoctorScope::Full
             } else {
@@ -434,9 +459,13 @@ fn main() -> Result<()> {
                 index,
                 intent,
                 scope,
+                install_only: install,
                 json,
             })
         }
+        Command::Install { target } => install::install(&target),
+        Command::Update { target } => install::update(&target),
+        Command::Uninstall { target } => install::uninstall(&target),
         Command::Intent { what } => match what {
             IntentCommand::Export { repo, intent, out } => intent::export(&repo, intent, out),
             IntentCommand::Import { file, repo, intent, json } => {
