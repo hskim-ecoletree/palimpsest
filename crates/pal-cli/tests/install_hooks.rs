@@ -253,3 +253,84 @@ fn 갱신이_옮겨간_실행_파일을_따라간다() {
     성공(&새, &root, &["uninstall"]);
     assert!(!root.join(".claude/settings.json").exists(), "우리가 만든 설정이 남았다");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// `doctor` — **「적혀 있다」로는 부족하다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 설치 검사를 JSON 으로 뜬다.
+fn 검사들(cwd: &Path) -> serde_json::Value {
+    let out = Command::new(PAL)
+        .args(["doctor", "--install", "--json"])
+        .current_dir(cwd)
+        .output()
+        .expect("pal doctor");
+    serde_json::from_slice(&out.stdout).expect("JSON")
+}
+
+fn 훅_검사(cwd: &Path) -> serde_json::Value {
+    let c = 검사들(cwd);
+    let 배열 = c.as_array().expect("배열").clone();
+    let 마지막 = 배열.last().expect("검사가 하나도 없다").clone();
+    assert_eq!(마지막["number"], 6, "훅 검사가 여섯째가 아니다: {c}");
+    마지막
+}
+
+/// ★ **등록된 명령을 실제로 실행해서 응답을 확인한다.**
+///
+/// 파일이 사라지거나 실행 권한을 잃으면 `/bin/sh` 가 exit 127·126 을 내는데, 하네스는
+/// 그것을 **완전히 삼킨다** — 세션은 계속되고 `claude` 의 종료 코드는 0 이며 트랜스크립트
+/// 에도 대화형 화면에도 한 글자도 안 나온다. 그래서 **여기가 유일한 문이다.**
+#[test]
+fn 진단이_등록된_훅을_실제로_돌려본다() {
+    // ── 정상 — 초록 ─────────────────────────────────────────────────────────
+    let root = 프로젝트("진단-정상");
+    let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "진단");
+    성공(&exe, &root, &["install"]);
+    let c = 훅_검사(&root);
+    assert_eq!(c["outcome"], "ok", "정상인데 초록이 아니다: {c}");
+
+    // ── 등록이 사라졌다 — 빨강 ──────────────────────────────────────────────
+    let 원래_설정 = std::fs::read(root.join(".claude/settings.json")).expect("읽기");
+    let mut v: serde_json::Value = serde_json::from_slice(&원래_설정).expect("JSON");
+    v.as_object_mut().expect("객체").remove("hooks");
+    std::fs::write(
+        root.join(".claude/settings.json"),
+        serde_json::to_string_pretty(&v).expect("직렬화"),
+    )
+    .expect("쓰기");
+    let c = 훅_검사(&root);
+    assert_eq!(c["outcome"], "failed", "등록이 사라졌는데 안 걸렸다: {c}");
+    std::fs::write(root.join(".claude/settings.json"), &원래_설정).expect("되돌리기");
+
+    // ── 실행 권한을 잃었다 — 빨강 (exit 126) ───────────────────────────────
+    권한을_뺀다(&exe);
+    let c = 훅_검사(&root);
+    assert_eq!(c["outcome"], "failed", "실행 권한이 없는데 안 걸렸다: {c}");
+    실행_권한(&exe);
+
+    // ── 파일이 사라졌다 — 빨강 (exit 127) ──────────────────────────────────
+    std::fs::remove_file(&exe).expect("지우기");
+    let c = 훅_검사(&root);
+    assert_eq!(c["outcome"], "failed", "실행 파일이 없는데 안 걸렸다: {c}");
+    assert!(
+        c["detail"].as_str().expect("detail").contains("127"),
+        "왜인지 안 적었다: {c}"
+    );
+}
+
+/// 설치가 없으면 **`Residual`** 이다 — 검사하지 못한 것은 「이상 없음」이 아니다.
+#[test]
+fn 설치가_없으면_훅_검사가_잔여다() {
+    let root = 프로젝트("진단-잔여");
+    assert_eq!(훅_검사(&root)["outcome"], "residual");
+}
+
+#[cfg(unix)]
+fn 권한을_뺀다(exe: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(exe, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+}
+
+#[cfg(not(unix))]
+fn 권한을_뺀다(_exe: &Path) {}

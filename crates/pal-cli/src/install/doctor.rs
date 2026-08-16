@@ -1,4 +1,11 @@
-//! 설치 검사 **다섯** — `[f24]` ⑤.
+//! 설치 검사 — `[f24]` ⑤ 의 **다섯**과, 훅이 실제로 도는지 보는 **여섯째**.
+//!
+//! # 여섯째가 왜 여기 붙는가
+//!
+//! ⑤ 가 등록한 다섯은 그대로 있고 하나가 **더해졌다.** ⑧ 이 *"등록된 훅 명령이
+//! 발화한다"* 를 요구하는데, 「`settings.json` 에 적혀 있다」로는 그것을 못 보증한다 —
+//! 실행 파일이 사라지면 exit **127**, 권한을 잃으면 exit **126** 이고 하네스는 그 실패를
+//! **완전히 삼킨다.** 그래서 여섯째는 **등록된 명령을 실제로 실행해서** 대답을 본다.
 //!
 //! # 왜 이 다섯이 `pal doctor` 에 합류하는가
 //!
@@ -21,7 +28,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 
 use super::layout::{DERIVED, MANIFEST, SETTINGS};
-use super::{ignore, manifest, settings};
+use super::{hooks, ignore, manifest, settings};
 
 /// 검사 하나의 결말.
 #[derive(Serialize)]
@@ -59,7 +66,7 @@ pub struct Check {
     pub outcome: Outcome,
 }
 
-/// 다섯을 센다.
+/// 센다.
 #[must_use]
 pub fn checks(target: &Path) -> Vec<Check> {
     let root = 설치_루트(target);
@@ -69,6 +76,7 @@ pub fn checks(target: &Path) -> Vec<Check> {
         Check { number: 3, name: "여기가 설치 루트인가", outcome: 루트(target, root.as_deref()) },
         Check { number: 4, name: "`pal` 실행 파일을 찾을 수 있는가", outcome: 실행_파일() },
         Check { number: 5, name: "`.gitignore` 에 파생이 등재됐는가", outcome: 등재(target) },
+        Check { number: 6, name: "등록된 훅이 실제로 도는가", outcome: 훅(root.as_deref()) },
     ]
 }
 
@@ -171,10 +179,46 @@ fn 등재(target: &Path) -> Outcome {
     }
 }
 
+/// ★ **등록된 명령을 실제로 실행해서 대답을 본다.**
+///
+/// 두 겹이다 — 매니페스트가 적은 등록이 **설정에 그대로 있는가**, 그리고 그 문자열이
+/// **실제로 도는가.** 첫째만 보면 실행 파일이 사라진 자리를 못 보고, 둘째만 보면
+/// 사용자가 등록을 지운 자리를 못 본다.
+fn 훅(root: Option<&Path>) -> Outcome {
+    let Some(root) = root else {
+        return Outcome::Residual("설치를 찾지 못했다 — 등록된 훅이 없다".to_owned());
+    };
+    let m = match manifest::read(&root.join(MANIFEST)) {
+        Ok(m) => m,
+        Err(e) => return Outcome::Failed(format!("{e}")),
+    };
+    let 적힌: &[manifest::HookEntry] = match &m.settings {
+        Some(s) if !s.hooks.is_empty() => &s.hooks,
+        _ => return Outcome::Residual("매니페스트에 등록된 훅이 없다".to_owned()),
+    };
+
+    let read = match settings::read(&root.join(SETTINGS)) {
+        Ok(r) => r,
+        Err(e) => return Outcome::Failed(format!("설정을 못 읽어 등록을 확인할 수 없다 — {e}")),
+    };
+    for h in 적힌 {
+        if !hooks::registered(read.current.as_ref(), &h.event, &h.command) {
+            return Outcome::Failed(format!(
+                "{} 의 등록이 {SETTINGS} 에서 사라졌다 — `pal install` 을 다시 돌리십시오",
+                h.event
+            ));
+        }
+        if let Err(e) = hooks::probe(&h.event, &h.command) {
+            return Outcome::Failed(format!("{} 이 안 돈다 — {e:#}", h.event));
+        }
+    }
+    Outcome::Ok(format!("등록된 {}개가 실제로 돌고 우리 표식으로 대답했다", 적힌.len()))
+}
+
 /// 사람이 읽는 화면.
 pub fn print(checks: &[Check]) {
     println!();
-    println!("■ 설치 검사 다섯");
+    println!("■ 설치 검사 {}개", checks.len());
     for c in checks {
         println!("  {} {}  {}", c.outcome.mark(), c.number, c.name);
         println!("      {}", c.outcome.detail());

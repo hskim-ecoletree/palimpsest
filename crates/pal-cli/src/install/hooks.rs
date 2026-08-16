@@ -81,6 +81,75 @@ fn 홑따옴표(s: &str) -> String {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ★ 탐침 — **「적혀 있다」로는 부족하다**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 하네스가 훅을 실행하는 방식 그대로.
+const SHELL: &str = "/bin/sh";
+
+/// 등록된 명령을 **실제로 실행해서** 대답을 확인한다.
+///
+/// # 왜 실행까지 하는가
+///
+/// 실행 파일이 사라지면 exit **127**, 실행 권한을 잃으면 exit **126** 인데 하네스는
+/// 그것을 **완전히 삼킨다** — 세션은 계속되고 `claude` 의 종료 코드는 0 이며
+/// 트랜스크립트에도 대화형 화면에도 한 글자도 안 나온다. `--debug` 를 켜야만 보인다.
+/// 그래서 *"`settings.json` 에 적혀 있다"* 는 **아무것도 보증하지 않는다.**
+///
+/// # 탐침은 무슨 정책이 걸려 있어도 차단을 못 낸다
+///
+/// `stop_hook_active` 를 **참**으로 보낸다 — 그 한 줄이 정책보다 먼저 서므로, 정책이
+/// 갈아끼워져도 이 검사는 안 움직인다.
+///
+/// # Errors
+/// 못 돌리거나, 종료 코드가 0 이 아니거나, 대답에 우리 표식이 없으면.
+pub fn probe(event: &str, command: &str) -> Result<()> {
+    let payload = json!({
+        "session_id": "pal-doctor-probe",
+        "transcript_path": "",
+        "cwd": "",
+        "hook_event_name": event,
+        "stop_hook_active": true,
+    })
+    .to_string();
+
+    let mut child = std::process::Command::new(SHELL)
+        .arg("-c")
+        .arg(command)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .with_context(|| format!("`{SHELL} -c` 를 못 돌렸다"))?;
+    if let Some(mut sink) = child.stdin.take() {
+        use std::io::Write;
+        // 상대가 표준입력을 안 읽고 죽으면 여기가 깨진 파이프다 — 그것도 대답의 일부다.
+        let _ = sink.write_all(payload.as_bytes());
+    }
+    let out = child.wait_with_output().context("훅의 대답을 못 받았다")?;
+
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    match out.status.code() {
+        Some(0) => {}
+        Some(127) => bail!("exit 127 — 등록된 실행 파일이 없다. 하네스는 이 실패를 삼킨다"),
+        Some(126) => bail!("exit 126 — 등록된 파일에 실행 권한이 없다. 하네스는 이 실패를 삼킨다"),
+        Some(code) => bail!("exit {code} — {}", stderr.trim()),
+        None => bail!("신호로 죽었다 — {}", stderr.trim()),
+    }
+    if !stderr.contains(crate::hook::ACK) {
+        bail!("대답에 `{}` 표식이 없다 — 등록된 것이 우리 훅이 아니다", crate::hook::ACK);
+    }
+    let 지금 = crate::version::describe();
+    if !stderr.contains(지금) {
+        bail!(
+            "다른 빌드가 대답했다 — 지금은 pal {지금} 인데 등록된 것은 아니다. \
+             `pal update` 가 등록을 지금 실행 파일로 맞춘다"
+        );
+    }
+    Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 무엇을 더하고 무엇을 뺄 것인가 — **순수 함수. 그래서 시험이 잡는다**
 // ─────────────────────────────────────────────────────────────────────────────
 
