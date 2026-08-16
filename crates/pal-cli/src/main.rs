@@ -24,9 +24,14 @@ mod narrative;
 mod plan;
 mod query;
 mod touch;
+mod version;
 
 #[derive(Parser)]
-#[command(name = "pal", version, about = "환경에 종속되지 않는 코드 이해의 큐레이터")]
+#[command(
+    name = "pal",
+    version = version::describe(),
+    about = "환경에 종속되지 않는 코드 이해의 큐레이터"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
