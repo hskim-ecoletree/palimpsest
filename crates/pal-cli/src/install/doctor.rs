@@ -27,8 +27,9 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
-use super::inside::Root;
+use super::inside::{Rel, Root};
 use super::layout::{DERIVED, MANIFEST, SETTINGS};
+use super::manifest::Manifest;
 use super::{hooks, ignore, manifest, settings};
 
 /// 검사 하나의 결말.
@@ -154,21 +155,26 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
         Err(e) => return Outcome::Failed(format!("실물을 훑지 못했다 — {e}")),
     };
     let d = manifest::diff(&m.files, &actual);
+    // ★ **사각지대를 초록 안에서도 말한다.** 아래 [`남의_에이전트`] 를 볼 것.
+    let 사각지대 = 남의_에이전트(&뿌리, &m);
     if d.is_clean() {
         // ★ **사용자 수정은 고장이 아니다.** 그런데 「이상 없음」으로 뭉개지도 않는다 —
         // 무엇이 왜 다른지를 초록 안에서 말한다(`[f24]` ④ 의 *"밟지 않는 것과 말하지
         // 않는 것은 다르다"* 를 진단 쪽에도 세운다).
-        if d.user_modified.is_empty() {
-            return Outcome::Ok(format!("적힌 {}개가 실물과 sha256 까지 같다", m.files.len()));
-        }
-        return Outcome::Ok(format!(
-            "적힌 {}개가 전부 sha256 까지 같다. 그중 {}개는 **사용자 수정**이다 \
-             (`update` 가 밟지 않고 지나갔고, 그 시점의 sha 를 적어 두었다 — 그 뒤 또 \
-             바뀌면 여기가 빨개진다): {}",
-            m.files.len(),
-            d.user_modified.len(),
-            d.user_modified.join(" · ")
-        ));
+        let mut 말 = if d.user_modified.is_empty() {
+            format!("적힌 {}개가 실물과 sha256 까지 같다", m.files.len())
+        } else {
+            format!(
+                "적힌 {}개가 전부 sha256 까지 같다. 그중 {}개는 **사용자 수정**이다 \
+                 (`update` 가 밟지 않고 지나갔고, 그 시점의 sha 를 적어 두었다 — 그 뒤 또 \
+                 바뀌면 여기가 빨개진다): {}",
+                m.files.len(),
+                d.user_modified.len(),
+                d.user_modified.join(" · ")
+            )
+        };
+        말.push_str(&사각지대);
+        return Outcome::Ok(말);
     }
     let mut says = Vec::new();
     if !d.missing.is_empty() {
@@ -191,7 +197,54 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
             &there[..8]
         ));
     }
-    Outcome::Failed(says.join(" / "))
+    Outcome::Failed(format!("{}{사각지대}", says.join(" / ")))
+}
+
+/// ★ **대조 밖에 무엇이 사는지 말한다** — `.claude/agents/` 는 **사각지대다.**
+///
+/// 그 디렉터리는 **남의 에이전트가 함께 사는 곳**이라 매니페스트가 그쪽만 「파일
+/// 하나짜리 뿌리」로 잡는다([`manifest`] 머리말). 통째로 훑으면 남의 것을 우리 것으로
+/// 세게 되므로 **그 설계는 그대로 둔다.**
+///
+/// 바꾸는 것은 **말하는가**뿐이다. 사각지대가 조용하면 사각지대인 줄 모르고, 그러면
+/// 남이 그 자리에 무엇을 놓아도 진단은 초록만 낸다. 그 파일들은 하네스가 에이전트
+/// 정의로 읽는 것들이다.
+///
+/// 판정은 **안 바꾼다** — 이 문장은 초록에도 빨강에도 똑같이 덧붙는다.
+fn 남의_에이전트(뿌리: &Root, m: &Manifest) -> String {
+    // 우리 것으로 적힌 자리는 뺀다. **이름을 손에 안 쥔다** — 매니페스트가 선언한
+    // 뿌리에서 그 디렉터리를 유도한다.
+    let mut 우리것: std::collections::BTreeSet<&str> = std::collections::BTreeSet::new();
+    let mut 볼_곳: std::collections::BTreeSet<&str> = std::collections::BTreeSet::new();
+    for rel in &m.roots.files {
+        우리것.insert(rel.as_str());
+        if let Some((dir, _)) = rel.as_str().rsplit_once('/') {
+            볼_곳.insert(dir);
+        }
+    }
+    let mut 남의것 = Vec::new();
+    for dir in 볼_곳 {
+        let Ok(path) = 뿌리.join(&Rel::new(dir)) else { continue };
+        let Ok(entries) = std::fs::read_dir(&path) else { continue };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            // ⚠ **경로 구분자 가정**: `Rel` 은 언제나 `/` 로 갈린다.
+            let rel = format!("{dir}/{name}");
+            if !우리것.contains(rel.as_str()) {
+                남의것.push(rel);
+            }
+        }
+    }
+    if 남의것.is_empty() {
+        return String::new();
+    }
+    남의것.sort();
+    format!(
+        " / ★ **대조 밖**: 남의 에이전트가 함께 사는 자리라 이 검사가 안 보는 것이 \
+         {}개 있다(설계대로다. 고장이 아니다): {}",
+        남의것.len(),
+        남의것.join(" · ")
+    )
 }
 
 fn 루트(target: &Path, root: Option<&Path>) -> Outcome {

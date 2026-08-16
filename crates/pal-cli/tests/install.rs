@@ -1026,6 +1026,27 @@ fn 고장_다섯을_각각_지목한다() {
     assert_eq!(결말(&c, 5), "failed", "{}", c[4]);
 }
 
+/// ★ **사각지대가 조용하면 사각지대인 줄 모른다.**
+///
+/// `.claude/agents/` 는 **남의 에이전트가 함께 사는 곳**이라 매니페스트가 그쪽만
+/// 「파일 하나짜리 뿌리」로 잡는다. 그래서 남의 파일이 들어와도 대조가 못 본다 —
+/// **그것은 의도된 설계이고 안 바꾼다.** 바꾸는 것은 **말하는가**뿐이다.
+#[test]
+fn 진단이_에이전트_디렉터리의_남의_것을_보여준다() {
+    let root = 살고_있는_프로젝트("e-남의에이전트");
+    성공(&root, &["install"]);
+    std::fs::write(root.join(".claude/agents/남의것.md"), "남의 에이전트\n").expect("남의 것");
+
+    let c = 검사들(&root, None);
+    // 설계대로 **고장이 아니다.**
+    assert_eq!(결말(&c, 2), "ok", "의도된 설계인데 빨개졌다: {}", c[1]);
+    let detail = c[1]["detail"].as_str().expect("detail");
+    assert!(
+        detail.contains("남의것.md") && detail.contains(".claude/agents"),
+        "사각지대가 조용하다 — 남의 것이 들어온 사실이 화면에 없다: {detail}"
+    );
+}
+
 /// 검사할 수 없는 것은 **`Residual`** 로 낸다 — `pal doctor` 가 이미 쓰는 어휘다.
 #[test]
 fn 설치가_없으면_잔여로_낸다() {
