@@ -351,6 +351,39 @@ fn 갱신은_고친_것을_밟지_않고_말한다() {
     assert_eq!(적힌[".claude/pal/INSTRUCTIONS.md"], 해시(&안고친것));
 }
 
+/// ★ **정상적인 `update` 뒤에 `doctor` 가 빨개지지 않는다.**
+///
+/// `update` 는 사용자가 고친 파일을 안 밟고 매니페스트에 **옛 sha 를 그대로 둔다**(④ 가
+/// 요구하는 것이다). 그런데 그 다음 `doctor` 검사 2 가 그 차이를 **고장**으로 읽으면,
+/// 사용자는 정상 경로를 따랐는데 진단이 빨간 채로 굳고 **지울 방법이 없다.**
+///
+/// ADR-0005 — *"부재는 종류를 싣는다. 상태를 늘리는 대신 이유를 값으로 둔다."*
+/// 여기서는 **다름의 종류**를 매니페스트가 싣고, `doctor` 가 그것으로 고장과 사용자
+/// 수정을 가른다. 검사의 수(칸)는 안 늘린다.
+#[test]
+fn 갱신_뒤에_진단이_빨개지지_않는다() {
+    let root = 살고_있는_프로젝트("d-진단");
+    성공(&root, &["install"]);
+
+    let 고친것 = root.join(".claude/commands/pal/touch.md");
+    std::fs::write(&고친것, "# 내가 고쳤다\n").expect("사람의 수정");
+    낡게_만든다(&root);
+    let report = 성공(&root, &["update"]);
+    assert!(report.contains("사용자 수정 — 건너뜀"), "밟지 않았지만 말하지 않았다:\n{report}");
+
+    // ① 진단이 초록이고, **무엇 때문에 다른지를 말한다.**
+    let c = 검사들(&root, None);
+    assert_eq!(결말(&c, 2), "ok", "정상 경로를 따랐는데 진단이 빨갛다: {}", c[1]);
+    let detail = c[1]["detail"].as_str().expect("detail");
+    assert!(detail.contains("사용자 수정"), "왜 다른지를 안 말했다: {detail}");
+
+    // ② 그런데 **진짜 고장은 여전히 빨갛다** — 이 줄이 없으면 위가 공짜로 선다.
+    std::fs::write(root.join(".claude/pal/INSTRUCTIONS.md"), "망가뜨렸다\n").expect("고장");
+    let c = 검사들(&root, None);
+    assert_eq!(결말(&c, 2), "failed", "고장을 못 봤다: {}", c[1]);
+    assert!(c[1]["detail"].as_str().expect("detail").contains("INSTRUCTIONS.md"));
+}
+
 /// **버전만으로 「이미 최신」과 「낡음」이 갈리는가**(⑨ 의 뒷문장).
 #[test]
 fn 이미_최신이면_아무것도_안_한다() {

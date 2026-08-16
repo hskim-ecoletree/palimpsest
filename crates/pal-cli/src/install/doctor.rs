@@ -120,9 +120,21 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
         Ok(a) => a,
         Err(e) => return Outcome::Failed(format!("실물을 훑지 못했다 — {e}")),
     };
-    let d = manifest::diff(&m.recorded(), &actual);
+    let d = manifest::diff(&m.files, &actual);
     if d.is_clean() {
-        return Outcome::Ok(format!("적힌 {}개가 실물과 sha256 까지 같다", m.files.len()));
+        // ★ **사용자 수정은 고장이 아니다.** 그런데 「이상 없음」으로 뭉개지도 않는다 —
+        // 무엇이 왜 다른지를 초록 안에서 말한다(`[f24]` ④ 의 *"밟지 않는 것과 말하지
+        // 않는 것은 다르다"* 를 진단 쪽에도 세운다).
+        if d.user_modified.is_empty() {
+            return Outcome::Ok(format!("적힌 {}개가 실물과 sha256 까지 같다", m.files.len()));
+        }
+        return Outcome::Ok(format!(
+            "적힌 {}개 중 {}개가 sha256 까지 같고, 나머지는 **사용자 수정**이다 (`update` 가 \
+             밟지 않고 지나갔다): {}",
+            m.files.len(),
+            m.files.len() - d.user_modified.len(),
+            d.user_modified.join(" · ")
+        ));
     }
     let mut says = Vec::new();
     if !d.missing.is_empty() {

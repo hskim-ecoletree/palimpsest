@@ -32,6 +32,27 @@ pub struct Roots {
     pub files: Vec<Rel>,
 }
 
+/// 이 항목의 sha256 이 실물과 **다를 때 그것이 무엇인가.**
+///
+/// # ADR-0005 를 그대로 따른다
+///
+/// *"부재는 종류를 싣는다. 상태를 늘리는 대신 이유를 값으로 둔다."* 여기서도 칸(=
+/// `doctor` 의 검사 목록)을 **안 늘린다.** 검사 2 는 그대로 하나이고, **다름의 이유**를
+/// 값으로 실어 고장과 사용자 수정을 가른다.
+///
+/// 판별식도 그 ADR 의 것이다 — *"집계 표에서 따로 세어야 하면 칸, 같은 칸 안에서
+/// 다르게 **행동**해야 하면 이유."* 여기서 갈리는 행동은 **빨강이냐 초록이냐**이고,
+/// 검사의 수는 안 갈린다. 그러니 이유다.
+#[derive(Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum Origin {
+    /// 우리가 놓은 바이트 그대로. **다르면 고장이다.**
+    #[default]
+    Ours,
+    /// `update` 가 밟지 않고 지나간 자리 — **사람이 고쳤다.** 다른 것이 정상이다.
+    UserModified,
+}
+
 /// 우리가 통째로 소유하는 파일 하나.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FileEntry {
@@ -39,6 +60,11 @@ pub struct FileEntry {
     /// **설치 시점에 실물에서 뜬 값**이다 — 실물과 다르면 사람이 고친 것이고,
     /// 그 차이가 곧 `update` 의 3분기다(`[f24]` ④).
     pub sha256: String,
+    /// 이 sha 가 실물과 다를 때 그것이 무엇인가. **`#[serde(default)]` 이라 옛
+    /// 매니페스트는 전부 `Ours` 로 읽힌다** — 옛 기록에는 사용자 수정이 안 실려 있었고,
+    /// 없던 것을 있었다고 읽지 않는다.
+    #[serde(default)]
+    pub origin: Origin,
 }
 
 /// 남의 파일에 더한 블록 하나.
@@ -228,8 +254,10 @@ pub struct Diff {
     pub missing: Vec<String>,
     /// 생겼는데 안 적힌 것.
     pub unrecorded: Vec<String>,
-    /// 있는데 sha 가 다른 것 — (경로, 적힌 값, 실물 값).
+    /// 있는데 sha 가 다른 것 — (경로, 적힌 값, 실물 값). **고장이다.**
     pub changed: Vec<(String, String, String)>,
+    /// 다른데 **사람이 고친 것**이다. 고장이 아니다 — `update` 가 안 밟고 지나갔다.
+    pub user_modified: Vec<String>,
 }
 
 impl Diff {
@@ -240,27 +268,33 @@ impl Diff {
 }
 
 /// 매니페스트와 실물을 **양방향**으로 뺀다.
+///
+/// **항목을 통째로 받는다** — sha 만 받으면 다름의 **종류**가 여기 못 온다.
 #[must_use]
-pub fn diff(recorded: &BTreeMap<String, String>, actual: &BTreeMap<String, String>) -> Diff {
+pub fn diff(recorded: &[FileEntry], actual: &BTreeMap<String, String>) -> Diff {
     let mut missing = Vec::new();
     let mut changed = Vec::new();
-    for (path, sha) in recorded {
-        match actual.get(path) {
-            None => missing.push(path.clone()),
-            Some(there) if there != sha => changed.push((path.clone(), sha.clone(), there.clone())),
+    let mut user_modified = Vec::new();
+    for entry in recorded {
+        let path = entry.path.to_string();
+        match actual.get(&path) {
+            None => missing.push(path),
+            Some(there) if *there != entry.sha256 => match entry.origin {
+                Origin::Ours => changed.push((path, entry.sha256.clone(), there.clone())),
+                Origin::UserModified => user_modified.push(path),
+            },
             Some(_) => {}
         }
     }
-    let unrecorded =
-        actual.keys().filter(|p| !recorded.contains_key(*p)).cloned().collect::<Vec<_>>();
-    Diff { missing, unrecorded, changed }
+    let 적힌: std::collections::BTreeSet<String> =
+        recorded.iter().map(|e| e.path.to_string()).collect();
+    let unrecorded = actual.keys().filter(|p| !적힌.contains(*p)).cloned().collect::<Vec<_>>();
+    Diff { missing, unrecorded, changed, user_modified }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        BlockEntry, FileEntry, Manifest, Rel, Roots, SettingsEntry, diff,
-    };
+    use super::{BlockEntry, FileEntry, Manifest, Origin, Rel, Roots, SettingsEntry, diff};
     use std::collections::BTreeMap;
 
     /// 경로 필드에만 붙이는 표식 — 아래 시험이 이것으로 샌 필드를 찾는다.
@@ -285,6 +319,7 @@ mod tests {
             files: vec![FileEntry {
                 path: Rel::new(&format!("{표식}파일")),
                 sha256: "0".repeat(64),
+                origin: Origin::Ours,
             }],
             blocks: vec![BlockEntry {
                 path: Rel::new(&format!("{표식}블록")),
@@ -323,14 +358,15 @@ mod tests {
 
     #[test]
     fn 양쪽이_같으면_차집합이_비어_있다() {
-        let a = 실험용(&[("x", "1"), ("y", "2")]);
-        assert!(diff(&a, &a).is_clean());
+        let recorded = 적힌(&[("x", "1"), ("y", "2")]);
+        let actual = 실험용(&[("x", "1"), ("y", "2")]);
+        assert!(diff(&recorded, &actual).is_clean());
     }
 
     /// **적혔는데 없는 것**과 **생겼는데 안 적힌 것**을 갈라 센다.
     #[test]
     fn 양방향을_갈라_센다() {
-        let recorded = 실험용(&[("x", "1")]);
+        let recorded = 적힌(&[("x", "1")]);
         let actual = 실험용(&[("y", "2")]);
         let d = diff(&recorded, &actual);
         assert_eq!(d.missing, vec!["x".to_owned()]);
@@ -341,18 +377,49 @@ mod tests {
     /// ★ **다음에 생기는 파일** — 이름으로 세면 여기가 안 걸린다.
     #[test]
     fn 나중에_생긴_파일이_걸린다() {
-        let recorded = 실험용(&[("x", "1")]);
-        let mut actual = recorded.clone();
+        let recorded = 적힌(&[("x", "1")]);
+        let mut actual = 실험용(&[("x", "1")]);
         actual.insert("나중것".to_owned(), "9".to_owned());
         assert!(!diff(&recorded, &actual).is_clean());
     }
 
     #[test]
     fn sha_가_다르면_바뀐_것으로_센다() {
-        let recorded = 실험용(&[("x", "1")]);
+        let recorded = 적힌(&[("x", "1")]);
         let actual = 실험용(&[("x", "2")]);
         let d = diff(&recorded, &actual);
         assert_eq!(d.changed.len(), 1);
+        assert!(d.user_modified.is_empty());
+    }
+
+    /// ★ **같은 「다름」인데 종류가 갈린다** — 고장은 빨갛고 사용자 수정은 아니다.
+    #[test]
+    fn 사용자_수정은_고장으로_안_센다() {
+        let mut recorded = 적힌(&[("x", "1")]);
+        recorded[0].origin = Origin::UserModified;
+        let d = diff(&recorded, &실험용(&[("x", "2")]));
+        assert!(d.changed.is_empty(), "사용자 수정을 고장으로 셌다");
+        assert_eq!(d.user_modified, vec!["x".to_owned()]);
+        assert!(d.is_clean());
+    }
+
+    /// **사용자 수정이라도 사라지면 그것은 고장이다.**
+    #[test]
+    fn 사용자_수정이라도_없으면_걸린다() {
+        let mut recorded = 적힌(&[("x", "1")]);
+        recorded[0].origin = Origin::UserModified;
+        assert!(!diff(&recorded, &실험용(&[])).is_clean());
+    }
+
+    fn 적힌(pairs: &[(&str, &str)]) -> Vec<FileEntry> {
+        pairs
+            .iter()
+            .map(|(a, b)| FileEntry {
+                path: Rel::new(a),
+                sha256: (*b).to_owned(),
+                origin: Origin::Ours,
+            })
+            .collect()
     }
 
     fn 실험용(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {

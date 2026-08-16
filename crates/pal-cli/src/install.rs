@@ -45,7 +45,7 @@ use layout::{
     IMPORT_LINE, LOCK, MANIFEST, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD,
     ROOT_INSTRUCTION_FILE, SETTINGS,
 };
-use manifest::{BlockEntry, FileEntry, Manifest, Roots, SettingsEntry, 자리들};
+use manifest::{BlockEntry, FileEntry, Manifest, Origin, Roots, SettingsEntry, 자리들};
 
 /// 잠금을 기다리는 시간(밀리초)과 간격.
 ///
@@ -186,7 +186,7 @@ pub fn install(target: &Path) -> Result<()> {
     };
     기록.적는다()?;
 
-    파일_놓기(&root, &mut 기록, &mut report)?;
+    파일_놓기(&root, 이전.as_ref(), &mut 기록, &mut report)?;
     기록.m.settings = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
     기록.적는다()?;
     블록_넣기(&root, 이전.as_ref(), &mut 기록, &mut report)?;
@@ -265,7 +265,12 @@ fn 디렉터리_세우기(root: &Root, created: &mut Vec<Rel>) -> Result<()> {
 }
 
 /// **대상에 없는 것만 쓴다**(`[f24]` ①). 있는 것은 안 건드리고 그 사실을 적는다.
-fn 파일_놓기(root: &Root, 기록: &mut Journal, report: &mut Report) -> Result<()> {
+fn 파일_놓기(
+    root: &Root,
+    이전: Option<&Manifest>,
+    기록: &mut Journal,
+    report: &mut Report,
+) -> Result<()> {
     for res in PAYLOAD {
         let rel = Rel::new(res.path);
         let path = root.join(&rel)?;
@@ -283,7 +288,15 @@ fn 파일_놓기(root: &Root, 기록: &mut Journal, report: &mut Report) -> Resu
         // **실물에서 뜬다** — 매니페스트가 적는 값이 곧 디스크의 값이어야 ③ 이 선다.
         let bytes = std::fs::read(&path)
             .with_context(|| format!("읽지 못했다: {}", path.display()))?;
-        기록.m.files.push(FileEntry { path: rel, sha256: sha256::hex(&bytes) });
+        // ★ **사용자 수정이라는 사실을 재설치가 지우지 않는다.** 실물 sha 로 덮으면
+        // 그 파일이 다시 「우리 것」이 되고, 다음 `update` 가 사람의 수정을 밟는다.
+        let 옛_사용자_수정 = 이전.and_then(|m| {
+            m.files.iter().find(|f| f.path == rel && f.origin == Origin::UserModified)
+        });
+        기록.m.files.push(옛_사용자_수정.map_or_else(
+            || FileEntry { path: rel.clone(), sha256: sha256::hex(&bytes), origin: Origin::Ours },
+            Clone::clone,
+        ));
         // **한 걸음마다 적는다.** 다섯을 다 놓고 적으면 셋째에서 죽었을 때 기록이 없다.
         기록.적는다()?;
     }
@@ -539,7 +552,14 @@ pub fn update(target: &Path) -> Result<()> {
             // 사람이 고쳤다 — **밟지 않고 말한다.** 적힌 sha 를 그대로 지고 간다.
             (Some(recorded), Some(actual)) if *recorded != actual => {
                 report.say(SKIPPED, res.path);
-                files.push(FileEntry { path: rel, sha256: recorded.clone() });
+                // ★ **옛 sha 를 그대로 지고 가되 그것이 무엇인지 함께 싣는다.**
+                // 안 실으면 `doctor` 검사 2 가 이 차이를 **고장**으로 읽고, 정상 경로를
+                // 따른 사용자에게 진단이 영영 빨갛다.
+                files.push(FileEntry {
+                    path: rel,
+                    sha256: recorded.clone(),
+                    origin: Origin::UserModified,
+                });
                 continue;
             }
             _ => {}
@@ -551,7 +571,11 @@ pub fn update(target: &Path) -> Result<()> {
         std::fs::write(&path, res.body.as_bytes())
             .with_context(|| format!("쓰지 못했다: {}", path.display()))?;
         report.say("교체", res.path);
-        files.push(FileEntry { path: rel, sha256: sha256::hex(res.body.as_bytes()) });
+        files.push(FileEntry {
+            path: rel,
+            sha256: sha256::hex(res.body.as_bytes()),
+            origin: Origin::Ours,
+        });
     }
 
     m.files = files;
