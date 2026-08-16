@@ -448,18 +448,32 @@ fn 제거가_옛_형태도_걷어낸다() {
 // `doctor` — **「적혀 있다」로는 부족하다**
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// 설치 검사를 JSON 으로 뜬다.
-fn 검사들(cwd: &Path) -> serde_json::Value {
+/// 설치 검사를 JSON 으로 뜬다 — **`PATH` 를 얹고**.
+///
+/// # ★ 이 한 줄이 없어서 Windows 만 초록이었다 (실측 2026-08-17 · CI 1회차)
+///
+/// 등록 문자열은 `PATH` 의 **이름 하나**이므로 검사 4·6 은 그 이름을 `PATH` 에서
+/// 푼다. 그런데 여기는 `PATH` 를 안 얹었고, 그래도 **Windows 에서는 통과했다** —
+/// `cargo test` 가 동적 라이브러리 탐색 경로에 `target/debug` 를 얹는데 **그 변수가
+/// 이 플랫폼에서는 `PATH` 자신**이기 때문이다. 유닉스에서 같은 값은
+/// `LD_LIBRARY_PATH`(리눅스)·`DYLD_FALLBACK_LIBRARY_PATH`(macOS) 로 가고 `PATH` 는
+/// 안 건드린다. 그래서 **같은 fixture 구멍이 한쪽에서만 빨갰다.**
+///
+/// ⚠ 그때 Windows 가 통과한 것은 **재려던 것을 잰 결과가 아니다.** 「하네스가 이
+/// 이름을 풀 수 있는가」가 아니라 「cargo 가 마침 그 디렉터리를 얹어 줬는가」를
+/// 쟀다. 얹어야 [`하네스처럼`] 과 같은 모양이 되고, 그것이 이 파일의 규율이다.
+fn 검사들(exe: &Path, cwd: &Path) -> serde_json::Value {
     let out = Command::new(PAL)
         .args(["doctor", "--install", "--json"])
         .current_dir(cwd)
+        .env("PATH", path_앞에(exe.parent().expect("pal 의 부모")))
         .output()
         .expect("pal doctor");
     serde_json::from_slice(&out.stdout).expect("JSON")
 }
 
-fn 훅_검사(cwd: &Path) -> serde_json::Value {
-    let c = 검사들(cwd);
+fn 훅_검사(exe: &Path, cwd: &Path) -> serde_json::Value {
+    let c = 검사들(exe, cwd);
     let 배열 = c.as_array().expect("배열").clone();
     let 마지막 = 배열.last().expect("검사가 하나도 없다").clone();
     assert_eq!(마지막["number"], 6, "훅 검사가 여섯째가 아니다: {c}");
@@ -477,7 +491,7 @@ fn 진단이_등록된_훅을_실제로_돌려본다() {
     let root = 프로젝트("진단-정상");
     let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "진단");
     성공(&exe, &root, &["install"]);
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "ok", "정상인데 초록이 아니다: {c}");
 
     // ── 등록이 사라졌다 — 빨강 ──────────────────────────────────────────────
@@ -489,7 +503,7 @@ fn 진단이_등록된_훅을_실제로_돌려본다() {
         serde_json::to_string_pretty(&v).expect("직렬화"),
     )
     .expect("쓰기");
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "등록이 사라졌는데 안 걸렸다: {c}");
     std::fs::write(root.join(".claude/settings.json"), &원래_설정).expect("되돌리기");
 
@@ -498,7 +512,7 @@ fn 진단이_등록된_훅을_실제로_돌려본다() {
     // 유닉스는 모드 비트로, Windows 는 확장자로 만든다 — **축이 다르고 사건은 같다.**
     let 막힌 = 못_열리게_한다(&root, &exe);
     assert!(막힌.is_file(), "등록된 자리에 파일이 없다 — 그러면 재려는 것이 「없다」가 된다");
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "실행될 수 없는데 안 걸렸다: {c}");
     // ★ **어느 겹이 걸었는지까지 못 박는다.** 「빨갛다」만 재면 바이트 대조가 대신
     // 걸어도 통과하고, 그러면 이 칸은 자기가 재려던 것을 안 잰다.
@@ -507,11 +521,11 @@ fn 진단이_등록된_훅을_실제로_돌려본다() {
         "다른 겹이 걸었다 — 실행 가능성 겹이 안 섰다: {c}"
     );
     다시_열리게_한다(&root, &exe, &막힌);
-    assert_eq!(훅_검사(&root)["outcome"], "ok", "되돌렸는데 초록이 아니다");
+    assert_eq!(훅_검사(&exe, &root)["outcome"], "ok", "되돌렸는데 초록이 아니다");
 
     // ── 파일이 사라졌다 — 빨강 (exit 127) ──────────────────────────────────
     std::fs::remove_file(&exe).expect("지우기");
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "실행 파일이 없는데 안 걸렸다: {c}");
     assert!(
         c["detail"].as_str().expect("detail").contains("127"),
@@ -530,7 +544,7 @@ fn 진단이_옛_형태를_지목한다() {
     성공(&exe, &root, &["install"]);
     옛_형태로_되돌린다(&root);
 
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "옛 형태인데 초록이다: {c}");
     let detail = c["detail"].as_str().expect("detail");
     assert!(detail.contains("update"), "무엇을 하라고 안 적었다: {detail}");
@@ -570,7 +584,7 @@ fn 진단이_남이_심은_항목을_안_돌린다() {
     }]);
     매니페스트_쓰기(&root, &m);
 
-    let c = 훅_검사(&root);
+    let c = 훅_검사(&exe, &root);
     assert_eq!(c["outcome"], "failed", "남이 심은 항목을 초록으로 냈다: {c}");
     assert!(!흔적.exists(), "진단이 남이 심은 명령을 실행했다: {}", 흔적.display());
     let _ = std::fs::remove_file(&흔적);
@@ -631,7 +645,7 @@ fn 진단이_대상_밖_실행_파일을_초록으로_안_낸다() {
     }]);
     매니페스트_쓰기(&root, &m);
 
-    let c = 훅_검사(&root);
+    let c = 훅_검사(Path::new(PAL), &root);
     assert_eq!(c["outcome"], "failed", "대상 밖 실행 파일을 초록으로 냈다: {c}");
     let detail = c["detail"].as_str().expect("detail");
     assert!(detail.contains("update"), "무엇을 하라고 안 적었다: {detail}");
@@ -645,7 +659,7 @@ fn 진단이_대상_밖_실행_파일을_초록으로_안_낸다() {
 #[test]
 fn 설치가_없으면_훅_검사가_잔여다() {
     let root = 프로젝트("진단-잔여");
-    assert_eq!(훅_검사(&root)["outcome"], "residual");
+    assert_eq!(훅_검사(Path::new(PAL), &root)["outcome"], "residual");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -818,24 +818,42 @@ fn 끝_개행_없음과_널_바이트가_살아_있다() {
 /// (실측: 밖의 파일이 0바이트가 됐고 rc=0). **밖으로 새는 것을 막는 쪽을 이기게
 /// 했다** — 지금은 하드링크가 걸린 자리에 아예 안 쓰고 멈춘다. 그것을 재는 자리는
 /// `tests/install_hostile.rs` 다.
-#[test]
-#[cfg(unix)]
-fn 모드와_심링크가_살아_있다() {
-    use std::os::unix::fs::PermissionsExt;
+// ★ **여기 있던 `모드와_심링크가_살아_있다` 는 성질별로 갈라졌다** — 심링크 축은
+// 이식 가능해져서 `심링크가_살고_그_대상에_쓰인다` 로, 모드 축은 유닉스 인코딩만
+// 남아 `모드가_살아_있다` 로. 둘 다 아래에 산다. 하나로 묶여 있던 동안은 **이식
+// 가능한 절반이 못 재는 절반에 끌려 통째로 외침**이었다.
 
-    let root = 빈_프로젝트("g-메타");
-    // 모드 — `CLAUDE.md` 를 600 으로.
-    std::fs::write(root.join("CLAUDE.md"), "# 내 것\n").expect("CLAUDE.md");
-    std::fs::set_permissions(root.join("CLAUDE.md"), std::fs::Permissions::from_mode(0o600))
-        .expect("chmod");
-    // 심링크 — `.gitignore` 가 다른 파일을 가리킨다.
+/// ★ **심링크 축은 이제 어느 플랫폼에서나 재진다** — 앞 판의 외침이 여기서 사라졌다.
+///
+/// # 무엇이 바뀌었나
+///
+/// 앞 판은 `모드와_심링크_보존이_이_플랫폼에서는_안_재진다` 를 외치면서 세 가지를
+/// 한 덩어리로 묶었다. **성질을 갈라 보니 셋 중 둘이 이식 가능했다**:
+///
+/// | 성질 | 앞 판 | 지금 |
+/// |---|---|---|
+/// | 모드 600 이 살아 있다 | 외침 | **개념이 없다** — 위 `모드가_살아_있다` 가 유닉스 인코딩을 지고, 이식 가능한 문장(*"제자리 쓰기가 권한을 안 넓힌다"*)은 `쓸_수_없는_자리는_미리_끊는다` 가 잰다 |
+/// | 심링크가 일반 파일로 안 바뀐다 | 외침 | **여기서 잰다** |
+/// | 심링크 대상에 쓰인다 | 외침 | **여기서 잰다** |
+///
+/// 둘이 이식 가능해진 것은 fixture 가 열려서가 아니라 **제품이 바뀌었기 때문**이다.
+/// 앞 판의 `guard::제자리를_준비한다` 는 Windows 에서 **심링크 자체를 갈아끼워** 일반
+/// 파일로 만들었다(그래서 *"D34 가 포기한 값"* 이라고 적혀 있었다). 지금은 **끊을
+/// 대상이 이름이 아니라 실체**다 — 심링크는 살고, 그것이 가리키는 실체의 하드링크가
+/// 끊긴다. 두 플랫폼이 같은 방법과 같은 결과를 낸다.
+///
+/// ⚠ **fixture 는 특권을 요구한다.** 파일 심링크 생성은 개발자 모드나
+/// `SeCreateSymbolicLinkPrivilege` 가 있어야 한다. 없으면 [`파일_심링크`] 가 **시끄럽게
+/// 죽는다** — 그것은 「이 플랫폼에서 못 잰다」가 아니라 **「이 기계가 준비가 안 됐다」**
+/// 이고, 그 둘은 다르다. CI 의 세 runner 는 전부 만들 수 있다.
+#[test]
+fn 심링크가_살고_그_대상에_쓰인다() {
+    let root = 빈_프로젝트("g-심링크");
     std::fs::write(root.join("진짜무시목록"), "node_modules/\n").expect("진짜");
-    std::os::unix::fs::symlink("진짜무시목록", root.join(".gitignore")).expect("symlink");
+    파일_심링크("진짜무시목록", &root.join(".gitignore"));
 
     성공(&root, &["install"]);
 
-    let mode = std::fs::metadata(root.join("CLAUDE.md")).expect("stat").permissions().mode();
-    assert_eq!(mode & 0o777, 0o600, "모드가 소실됐다");
     assert!(
         std::fs::symlink_metadata(root.join(".gitignore")).expect("lstat").file_type().is_symlink(),
         "심링크가 일반 파일로 바뀌었다"
@@ -846,78 +864,156 @@ fn 모드와_심링크가_살아_있다() {
     );
 }
 
-/// ★ **유닉스 밖에서 이 성질은 안 선다 — 그 사실이 시끄러워야 한다.**
+/// **모드가 살아 있다** — 유닉스에만 있는 축의 유닉스 인코딩.
 ///
-/// ⚠ **여기는 「아직 안 쟀다」가 아니다.** 셋 중 둘은 **일부러 안 지킨다**:
-///
-/// | 성질 | 이 플랫폼에서 |
-/// |---|---|
-/// | 모드 600 이 살아 있다 | **개념이 없다.** Windows 에 모드 비트가 없다 |
-/// | 심링크가 일반 파일로 안 바뀐다 | **fixture 를 못 세운다**(파일 심링크는 개발자 모드/`SeCreateSymbolicLinkPrivilege` 필요) **그리고 지키지도 않는다** — D34 가 이 플랫폼의 제자리 쓰기를 「끊고 쓰기」로 바꿨다 |
-/// | 심링크 대상에 쓰인다 | 위와 같다 |
-///
-/// **그래도 초록을 안 낸다.** 통과로 바꾸면 이 자리는 *"아무것도 안 재면서 초록"* 이
-/// 되고, 그것이 이 저장소가 짝 없는 `cfg` 에 대해 금지한 바로 그 상태다. 성질을
-/// 되찾거나(안정 채널이 심링크 생성을 열거나) 포기 결정을 뒤집을 때 이 자리가 움직인다.
+/// ⚠ **짝 없는 `cfg` 가 아니다.** 이 시험이 지는 성질(*"제자리 쓰기가 파일의 권한을
+/// 안 넓힌다"*)의 **이식 가능한 문장은 `쓸_수_없는_자리는_미리_끊는다` 가 잰다** —
+/// `Permissions::set_readonly` 가 두 플랫폼에서 다 서는 축이다. 여기서 더하는 것은
+/// *"유닉스에서는 그 권한이 **모드 비트**로 표현되고 `600` 이 `644` 로 안 넓어진다"*
+/// 라는 한 겹뿐이고, 그 겹은 다른 플랫폼에 **개념이 없다.**
 #[test]
-#[cfg(not(unix))]
-fn 모드와_심링크_보존이_이_플랫폼에서는_안_재진다() {
-    panic!(
-        "제자리 쓰기가 모드와 심링크를 살리는지를 이 플랫폼에서 **안 잰다. 그리고 \
-         일부는 일부러 안 지킨다** — ① 모드 비트는 이 플랫폼에 개념이 없다 \
-         ② 파일 심링크는 개발자 모드나 `SeCreateSymbolicLinkPrivilege` 없이 못 만들어 \
-         fixture 가 안 선다(junction 은 디렉터리에만 걸린다) ③ **D34**(DESIGN §12.9)가 \
-         이 플랫폼의 제자리 쓰기를 「끊고 쓰기」로 바꿨으므로 파일 정체성 보존은 \
-         **포기한 값**이다 — 하드링크로 대상 밖이 새는 것을 막는 대가다"
-    );
+#[cfg(unix)]
+fn 모드가_살아_있다() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let root = 빈_프로젝트("g-모드");
+    std::fs::write(root.join("CLAUDE.md"), "# 내 것\n").expect("CLAUDE.md");
+    std::fs::set_permissions(root.join("CLAUDE.md"), std::fs::Permissions::from_mode(0o600))
+        .expect("chmod");
+
+    성공(&root, &["install"]);
+
+    let mode = std::fs::metadata(root.join("CLAUDE.md")).expect("stat").permissions().mode();
+    assert_eq!(mode & 0o777, 0o600, "모드가 소실됐다");
+}
+
+/// 파일 심링크를 건다 — **못 만들면 시끄럽게 죽는다.**
+///
+/// 「이 플랫폼이 못 한다」가 아니라 **「이 기계가 준비가 안 됐다」**이므로 외침이
+/// 아니라 fixture 실패다. `mkfifo` 가 없는 기계에서 FIFO 시험이 죽는 것과 같은 급이다.
+fn 파일_심링크(대상: &str, 링크: &Path) {
+    #[cfg(unix)]
+    let r = std::os::unix::fs::symlink(대상, 링크);
+    #[cfg(windows)]
+    let r = std::os::windows::fs::symlink_file(대상, 링크);
+    #[cfg(not(any(unix, windows)))]
+    let r: std::io::Result<()> =
+        Err(std::io::Error::other("이 플랫폼에는 파일 심링크를 만드는 문이 없다"));
+
+    r.unwrap_or_else(|e| {
+        panic!(
+            "파일 심링크를 못 만들었다({e}) — **fixture 가 안 섰다.**\n    \
+             Windows 라면 개발자 모드를 켜거나(설정 > 시스템 > 개발자용) \
+             `SeCreateSymbolicLinkPrivilege` 가 있어야 한다. CI 의 세 runner 는 전부 \
+             만들 수 있으므로 여기서 빨간 것은 **이 기계의 준비 상태**다"
+        )
+    });
 }
 
 /// **쓰기 실패를 검사하지 않으면 쓰기 불가 디렉터리에서 rc=0 이 난다.**
+///
+/// ★ **모든 플랫폼에서 잰다** — 앞 판은 여기에 `쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다`
+/// 외침이 걸려 있었다. 그 외침이 적은 까닭은 **맞았지만 결론이 틀렸다**: Windows 에서
+/// 디렉터리의 `FILE_ATTRIBUTE_READONLY` 가 쓰기를 안 막는 것은 사실이고(실측
+/// 2026-08-17), 그래서 *"진짜 쓰기 불가 디렉터리는 ACL 이고 std 밖이다"* 까지도 맞다.
+/// 틀린 것은 **「std 밖이면 못 잰다」**는 결론이다 — 이 저장소는 junction fixture 에서
+/// 이미 `cmd` 를 쓰면서 *"플랫폼의 일부인 도구는 정당하다"* 를 인정했고,
+/// **`icacls` 도 같은 자격**이다. 재려는 대상이 그 플랫폼의 ACL 그 자체다.
+///
+/// 실측(2026-08-17 · 이 기계): `icacls DIR /deny USER:(WD,AD)` 뒤
+/// **파일 생성과 mkdir 이 둘 다 `UnauthorizedAccessException`**, `/remove:d USER` 로
+/// 되돌아온다.
+///
+/// ⚠ **되돌림이 `Drop` 에 걸려 있다**([`쓰기를_막은_자리`]). 단언이 죽어도 ACL 이
+/// 안 남는다 — 남으면 시험 방을 아무도 못 지운다.
 #[test]
-#[cfg(unix)]
 fn 쓰기_불가_디렉터리에서_거짓_성공하지_않는다() {
-    use std::os::unix::fs::PermissionsExt;
+    let root = 빈_프로젝트("g-쓰기불가");
+    let 막음 = 쓰기를_막은_자리::세운다(&root);
 
-    let root = 빈_프로젝트("g-읽기전용");
-    std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o555)).expect("chmod");
     let out = 돌린다(&root, &["install"]);
-    // 되돌려 놓지 않으면 시험 방을 못 지운다.
-    std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o755)).expect("chmod");
-
     assert!(!out.status.success(), "쓰기 불가 디렉터리에서 rc=0 을 냈다");
+
+    drop(막음);
+    // 되감기 (a) — 아무것도 안 남았다. **되돌린 뒤에 본다**(막힌 채로는 못 훑는다).
+    assert!(!root.join(".claude/pal").exists(), "부분 설치가 남았다");
 }
 
-/// ★ **쓰기 불가 「디렉터리」는 이 플랫폼에서 아직 fixture 가 안 선다.**
+/// 디렉터리에 **쓰기를 막고**, `Drop` 에서 되돌린다.
 ///
-/// ⚠ **파일 축은 이제 재진다** — `쓸_수_없는_자리는_미리_끊는다` 가 `set_readonly`
-/// 로 이식되어 이 플랫폼에서도 `[f24]` ②(부분 설치 금지)의 트리거를 실제로 만든다.
-/// 그래서 여기 남은 것은 **디렉터리 하나**다.
+/// | 플랫폼 | 막는 문 | 되돌리는 문 |
+/// |---|---|---|
+/// | 유닉스 | 모드 `0o555` | 모드 `0o755` |
+/// | Windows | `icacls /deny USER:(WD,AD)` | `icacls /remove:d USER` |
 ///
-/// 실측(2026-08-17) — Windows 에서 디렉터리의 읽기 전용 속성은 쓰기를 안 막는다:
-///
-/// ```text
-/// dir readonly attr  = true      ← 속성은 붙는다
-/// dir create file    = Ok(())    ← 그런데 파일이 그대로 만들어진다
-/// ```
-///
-/// 그 속성은 *"쓰지 마라"* 가 아니라 *"커스터마이즈된 폴더다"* 를 뜻한다. 그래서
-/// 진짜 쓰기 불가 디렉터리는 **ACL(`icacls`)의 일**이고 std 밖이다.
-/// 같은 실측이 제품 쪽 결함 하나도 냈다 — `install.rs` 의 `읽기_전용이_쓰기를_막는_종류인가`.
-///
-/// ★ **하나의 미측정 사실은 한 곳에서만 외친다.** 앞 회차는 이것을 두 자리에서
-/// 외쳤고(되감기 쪽 · 거짓 성공 쪽), 같은 것을 두 곳에 적는 것이 곧 drift 다
-/// (진행 규칙 4).
-#[test]
-#[cfg(not(unix))]
-fn 쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다() {
-    panic!(
-        "**쓰기 불가 디렉터리**에서 rc=0 을 내는지 · 그때 되감기 (a) 가 서는지를 이 \
-         플랫폼에서 아직 안 잰다 — 실측(2026-08-17): 디렉터리에 \
-         `FILE_ATTRIBUTE_READONLY` 를 붙여도 `dir create file = Ok(())` 라 fixture 가 \
-         안 선다. 진짜 쓰기 불가 디렉터리는 ACL(`icacls`)이고 std 밖이다.\n    \
-         ★ **파일 축은 이제 재진다** — `쓸_수_없는_자리는_미리_끊는다`"
-    );
+/// **읽기 전용 속성이 아니라 ACL 인 이유**는 위 시험의 문서에 있다.
+struct 쓰기를_막은_자리(PathBuf);
+
+impl 쓰기를_막은_자리 {
+    fn 세운다(dir: &Path) -> Self {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o555)).expect("chmod");
+        }
+        #[cfg(windows)]
+        {
+            let u = 나() ;
+            let out = Command::new("icacls")
+                .arg(dir)
+                .arg("/deny")
+                .arg(format!("{u}:(WD,AD)"))
+                .output()
+                .expect("icacls 를 못 돌렸다 — 이 플랫폼의 도구가 없다");
+            assert!(
+                out.status.success(),
+                "icacls /deny 가 실패했다 — fixture 가 안 섰다: {}{}",
+                String::from_utf8_lossy(&out.stdout),
+                String::from_utf8_lossy(&out.stderr)
+            );
+            // ★ **fixture 가 실제로 막는지 확인한다.** 안 막는데 통과하면 이 시험은
+            // 아무것도 안 재면서 초록이다 — 그것이 이 저장소가 금지한 상태다.
+            let 탐침 = dir.join("acl-탐침.tmp");
+            assert!(
+                std::fs::write(&탐침, b"x").is_err(),
+                "ACL 을 걸었는데 파일이 그대로 만들어졌다 — fixture 가 안 섰다"
+            );
+        }
+        Self(dir.to_path_buf())
+    }
 }
+
+/// 이 프로세스의 계정 이름 — `icacls` 의 주체.
+#[cfg(windows)]
+fn 나() -> String {
+    std::env::var("USERNAME").expect("USERNAME 이 없다 — icacls 에 줄 주체가 없다")
+}
+
+impl Drop for 쓰기를_막은_자리 {
+    fn drop(&mut self) {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(&self.0, std::fs::Permissions::from_mode(0o755));
+        }
+        #[cfg(windows)]
+        {
+            let _ = Command::new("icacls").arg(&self.0).arg("/remove:d").arg(나()).output();
+        }
+    }
+}
+
+// ★ **여기 있던 `쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다` 는 없어졌다.**
+//
+// 그 외침의 관측은 맞았다 — Windows 에서 디렉터리의 `FILE_ATTRIBUTE_READONLY` 는
+// 쓰기를 안 막고(`dir create file = Ok(())`), 그 속성은 *"쓰지 마라"* 가 아니라
+// *"커스터마이즈된 폴더다"* 를 뜻한다. 그 관측은 제품 쪽 결함도 하나 냈고
+// (`install.rs` 의 `읽기_전용이_쓰기를_막는_종류인가`) 그것은 그대로 산다.
+//
+// 틀린 것은 **결론**이었다: *"진짜 쓰기 불가 디렉터리는 ACL 이고 **std 밖이다**"* 에서
+// 「std 밖이다」가 「못 잰다」로 넘어간 자리. std 밖이라는 것은 fixture 를 std 로 못
+// 만든다는 뜻이지 **재려는 성질이 없다**는 뜻이 아니다. `icacls` 로 세운다 —
+// 위 `쓰기_불가_디렉터리에서_거짓_성공하지_않는다` 가 그 자리다.
 
 /// **동시 설치 8회 → 블록 8개**(실측 · check-then-act 경쟁). 여기서 하나여야 한다.
 ///
@@ -1167,8 +1263,10 @@ fn 읽기_전용(path: &Path, 켤까: bool) {
     std::fs::set_permissions(path, p).expect("권한");
 }
 
-// ⚠ **디렉터리 축의 외침은 여기 없다** — `쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다`
-// 하나가 그 사실을 진다. 같은 미측정을 두 곳에서 외치면 그것이 곧 drift 다(진행 규칙 4).
+// ⚠ **디렉터리 축은 여기가 아니라 `쓰기_불가_디렉터리에서_거짓_성공하지_않는다` 가
+// 진다.** 이 시험이 쓰는 축은 **파일의 읽기 전용 속성**(`set_readonly`)이고, 그것은
+// Windows 에서 디렉터리에는 안 먹는다(같은 실측). 디렉터리는 ACL 이 필요하고 그
+// fixture 는 저쪽에 산다 — 같은 성질을 두 곳에서 세우면 그것이 곧 drift 다(진행 규칙 4).
 
 /// ★ **아무것도 아직 못 놓은 자리에서 죽어도 걷어낼 수 있다.**
 ///
