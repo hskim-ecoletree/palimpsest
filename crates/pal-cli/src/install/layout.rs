@@ -50,6 +50,14 @@ pub const PAYLOAD: &[Resource] = &[
 /// 매니페스트의 자리.
 pub const MANIFEST: &str = ".claude/pal/manifest.json";
 
+/// **`PATH` 에서 우리를 부르는 이름.** 확장자는 안 적는다 — 붙이는 규칙은 플랫폼이
+/// 정하고 그 결정은 [`super::exe`] 한 자리에 산다.
+///
+/// 이 이름을 지나는 자리 둘: `doctor` 검사 4 의 `PATH` 탐색과, **훅에 등록하는
+/// 문자열**([`super::hooks::entry`]). 둘이 같은 이름을 써야 *"검사 4 가 초록이면 훅이
+/// 뜬다"* 가 성립한다.
+pub const COMMAND_NAME: &str = "pal";
+
 /// 하네스가 프로젝트 설정을 두는 디렉터리 — **잠금도 여기 산다.**
 pub const CLAUDE_DIR: &str = ".claude";
 

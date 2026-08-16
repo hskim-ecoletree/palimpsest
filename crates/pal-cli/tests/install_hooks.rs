@@ -32,7 +32,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
-use common::{PAL, git};
+use common::{PAL, git, path_앞에};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // fixture
@@ -84,13 +84,17 @@ fn 실행_권한(exe: &Path) {
 #[cfg(not(unix))]
 fn 실행_권한(_exe: &Path) {}
 
-/// 등록에 실리는 경로 — **설치가 심링크를 푼다**(`hooks::실행_파일`), 그리고
-/// **Windows 의 verbatim 접두사를 조건부로 벗긴다**(`install/winpath.rs`).
+/// 등록에 실리는 문자열 — **`PATH` 의 이름 하나.**
 ///
-/// 그 조건을 여기서 다시 쓰지 않는다 — 제품과 같은 함수를 지난다. 손으로 옮겨 적으면
-/// 그것이 두 번째 목록이고, 어긋나는 순간 이 시험은 제품이 아니라 자기 사본을 잰다.
-fn 실제(exe: &Path) -> String {
-    common::winpath::사람이_읽는(&exe.canonicalize().expect("canonicalize"))
+/// ★ 이름을 손으로 안 적는다. **빌드된 바이너리의 이름에서 유도한다** — 그것이
+/// `layout::COMMAND_NAME` 이 뜻하는 바로 그 값이고(*"`PATH` 에서 우리를 부르는 이름"*),
+/// 여기 `"pal"` 을 박으면 그것이 두 번째 목록이 된다. 확장자는 플랫폼이 붙이므로 뗀다.
+fn 등록되는_이름() -> String {
+    Path::new(PAL)
+        .file_stem()
+        .expect("pal 의 이름")
+        .to_string_lossy()
+        .into_owned()
 }
 
 fn 성공(exe: &Path, cwd: &Path, args: &[&str]) -> String {
@@ -144,7 +148,7 @@ fn 우리_항목(root: &Path) -> serde_json::Value {
 // 그래서 이 자리도 `/bin/sh -c` 를 안 쓴다. **따옴표를 붙이면 오히려 못 찾는다.**
 // ─────────────────────────────────────────────────────────────────────────────
 
-fn 하네스처럼(항목: &serde_json::Value, payload: &str) -> Output {
+fn 하네스처럼(exe: &Path, 항목: &serde_json::Value, payload: &str) -> Output {
     let command = 항목["command"].as_str().expect("command 가 문자열이 아니다");
     let args: Vec<&str> = 항목["args"]
         .as_array()
@@ -152,8 +156,15 @@ fn 하네스처럼(항목: &serde_json::Value, payload: &str) -> Output {
         .iter()
         .map(|a| a.as_str().expect("인자가 문자열이 아니다"))
         .collect();
+    // ★ **`PATH` 를 얹고 띄운다 — 하네스가 하는 그대로.**
+    //
+    // 등록 문자열은 이제 `PATH` 의 **이름 하나**다(`install/hooks.rs` 머리말). 하네스는
+    // 사용자 환경의 `PATH` 로 그 이름을 푼다. 그래서 이 fixture 도 pal 이 사는 곳을
+    // `PATH` 에 얹어야 「하네스가 하는 일」과 같은 모양이 된다 — 안 얹으면 이 시험은
+    // 하네스가 안 겪는 조건을 재게 된다.
     let mut child = Command::new(command)
         .args(&args)
+        .env("PATH", path_앞에(exe.parent().expect("pal 의 부모")))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -198,8 +209,8 @@ fn 등록된_명령이_돌고_차단을_낸다() {
     let 항목 = 우리_항목(&root);
     assert_eq!(
         항목["command"].as_str(),
-        Some(실제(&exe).as_str()),
-        "`command` 가 실행 파일 경로 그 자체가 아니다 — exec form 은 셸을 안 거친다: {항목}"
+        Some(등록되는_이름().as_str()),
+        "`command` 가 `PATH` 의 이름이 아니다 — 경로를 실으면 다른 기계에서 반드시 틀린다: {항목}"
     );
     assert_eq!(
         항목["args"],
@@ -216,7 +227,7 @@ fn 등록된_명령이_돌고_차단을_낸다() {
     assert!(항목.get("shell").is_none(), "`shell` 키를 썼다: {항목}");
 
     // (a) 발화 — 부르면 흔적이 남는다.
-    let out = 하네스처럼(&항목, &페이로드("다 했다", false));
+    let out = 하네스처럼(&exe, &항목, &페이로드("다 했다", false));
     assert!(out.status.success(), "등록된 명령이 exit 0 을 안 냈다");
     assert!(
         String::from_utf8_lossy(&out.stderr).contains("pal hook"),
@@ -226,14 +237,14 @@ fn 등록된_명령이_돌고_차단을_낸다() {
     assert!(out.stdout.is_empty(), "통과인데 표준출력이 있다");
 
     // (b) 차단 — 실측된 규약 그대로의 바이트가 나온다.
-    let out = 하네스처럼(&항목, &페이로드("", false));
+    let out = 하네스처럼(&exe, &항목, &페이로드("", false));
     assert!(out.status.success(), "차단인데 exit 0 이 아니다");
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("표준출력이 JSON 이 아니다");
     assert_eq!(v["decision"], "block", "차단 결정이 안 나왔다: {v}");
     assert!(!v["reason"].as_str().expect("reason").trim().is_empty());
 
     // 그리고 반복 회차에서는 같은 페이로드가 통과다.
-    let out = 하네스처럼(&항목, &페이로드("", true));
+    let out = 하네스처럼(&exe, &항목, &페이로드("", true));
     assert!(out.stdout.is_empty(), "반복 회차에서 또 차단했다");
 }
 
@@ -280,31 +291,48 @@ fn 남의_훅은_왕복해도_그대로다() {
     assert_eq!(설정(&root), 원본, "왕복이 사용자 설정을 바꿨다");
 }
 
-/// ★ **실행 파일이 옮겨 가면 `update` 가 따라간다.**
+/// ★ **실행 파일이 어디 있든 등록은 안 바뀐다 — 그리고 그것이 요점이다.**
 ///
-/// 안 따라가면 옛 경로가 그대로 남고, 그 경로가 사라진 뒤에는 **exit 127 이 완전히
-/// 침묵한다** — 아무도 훅이 죽은 것을 모른다. 버전이 같아도 이 갱신은 일어나야 한다.
+/// ⚠ **옛 회차는 여기서 정반대를 쟀다**: *"실행 파일이 옮겨 가면 `update` 가 따라간다"*.
+/// 그 시험이 통과한다는 것은 곧 **등록이 그 기계의 경로를 지고 있다**는 뜻이었고,
+/// 그것이 다른 기계에서 훅을 확정적으로 죽였다(`install/hooks.rs` 머리말의 실측 표).
+///
+/// 지금 등록은 `PATH` 의 **이름 하나**다. 그래서 같은 상황에서:
+///
+/// - 등록 문자열은 **안 움직인다** — 그러니 추적 파일에 diff 가 안 생긴다
+/// - 두 사람이 각자 다른 자리에 pal 을 두어도 **같은 문자열**을 쓴다
+/// - 그 이름이 무엇을 가리키는지는 **그 기계의 `PATH`** 가 정한다
 #[test]
-fn 갱신이_옮겨간_실행_파일을_따라간다() {
+fn 실행_파일이_옮겨_가도_등록이_안_흔들린다() {
     let root = 프로젝트("이사");
     let 부모 = root.parent().expect("부모").to_path_buf();
     let 옛 = 공백이_든_곳의_pal(&부모, "옛");
     성공(&옛, &root, &["install"]);
     let 옛_항목 = 우리_항목(&root);
+    let 옛_설정 = std::fs::read(root.join(".claude/settings.json")).expect("읽기");
+    let 옛_매니페스트 = std::fs::read(root.join(".claude/pal/manifest.json")).expect("읽기");
 
+    // **다른 자리의 pal** 로 갱신한다 — 다른 사람의 기계를 흉내 내는 자리다.
     let 새 = 공백이_든_곳의_pal(&부모, "새");
-    let report = 성공(&새, &root, &["update"]);
-    assert!(report.contains("훅"), "훅을 갱신했다고 말하지 않았다:\n{report}");
+    성공(&새, &root, &["update"]);
 
     let 지금 = 우리_항목(&root);
-    assert_ne!(지금, 옛_항목, "옛 등록을 그대로 뒀다");
-    assert_eq!(지금["command"].as_str(), Some(실제(&새).as_str()));
+    assert_eq!(지금, 옛_항목, "등록이 기계를 탔다: {옛_항목} → {지금}");
+    assert_eq!(지금["command"].as_str(), Some(등록되는_이름().as_str()));
     assert_eq!(걸린_명령(&설정(&root), "SubagentStop").len(), 1, "죽은 등록이 남았다");
 
-    // 그리고 매니페스트가 지금 걸린 것을 적고 있다 — 안 적으면 제거가 못 되돌린다.
-    let m = 매니페스트(&root);
-    assert_eq!(m["settings"]["hooks"][0]["command"], 지금["command"]);
-    assert_eq!(m["settings"]["hooks"][0]["args"], 지금["args"]);
+    // ★ **추적 파일이 바이트로 안 움직인다.** 이 줄이 이 회차가 고친 것의 전부다 —
+    // 움직이면 두 사람이 서로의 diff 를 되돌리는 핑퐁이 시작된다.
+    assert_eq!(
+        std::fs::read(root.join(".claude/settings.json")).expect("읽기"),
+        옛_설정,
+        "다른 자리의 pal 로 갱신했더니 `settings.json` 이 바뀌었다"
+    );
+    assert_eq!(
+        std::fs::read(root.join(".claude/pal/manifest.json")).expect("읽기"),
+        옛_매니페스트,
+        "다른 자리의 pal 로 갱신했더니 매니페스트가 바뀌었다"
+    );
 
     성공(&새, &root, &["uninstall"]);
     assert!(!root.join(".claude/settings.json").exists(), "우리가 만든 설정이 남았다");
@@ -374,7 +402,7 @@ fn 갱신이_옛_형태를_새_형태로_옮긴다() {
     assert!(!전부.contains(&옛_명령), "옛 형태가 그대로다: {전부:?}");
 
     let 지금 = 우리_항목(&root);
-    assert_eq!(지금["command"].as_str(), Some(실제(&exe).as_str()));
+    assert_eq!(지금["command"].as_str(), Some(등록되는_이름().as_str()));
     assert_eq!(지금["args"], serde_json::json!(["hook", "SubagentStop"]));
 
     // 매니페스트도 새 형태를 적었다 — 안 적으면 제거가 새 형태를 못 되돌린다.
@@ -382,7 +410,7 @@ fn 갱신이_옛_형태를_새_형태로_옮긴다() {
     assert_eq!(m["settings"]["hooks"][0]["args"], serde_json::json!(["hook", "SubagentStop"]));
 
     // 그리고 옮긴 뒤에도 그 항목이 실제로 돈다.
-    let out = 하네스처럼(&지금, &페이로드("", false));
+    let out = 하네스처럼(&exe, &지금, &페이로드("", false));
     let v: serde_json::Value = serde_json::from_slice(&out.stdout).expect("표준출력이 JSON 이 아니다");
     assert_eq!(v["decision"], "block");
 }

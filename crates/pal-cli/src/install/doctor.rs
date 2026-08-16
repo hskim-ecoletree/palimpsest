@@ -386,7 +386,7 @@ fn 훅(root: Option<&Path>) -> Outcome {
                 h.event
             ));
         }
-        let Some(등록된_자리) = hooks::되읽는다(h) else {
+        let Some(등록된_문자열) = hooks::되읽는다(h) else {
             return Outcome::Failed(format!(
                 "{} 에 걸린 항목이 우리 형태가 아니다 — **돌려보지 않는다.** \
                  매니페스트와 {SETTINGS} 는 대상 프로젝트 안의 평범한 파일이라 \
@@ -394,6 +394,14 @@ fn 훅(root: Option<&Path>) -> Outcome {
                  그 자체**다. `pal install` 을 다시 돌리십시오",
                 h.event
             ));
+        };
+        // ★ **등록 문자열을 자리로 푸는 겹이 먼저다.** 지금 형태는 `PATH` 의 이름
+        // 하나이므로(`hooks` 머리말), 그 이름이 안 풀리면 하네스도 못 찾고 그 실패는
+        // 침묵한다. 옛 설치본의 절대 경로도 여기를 지난다 — 풀어야 「없다」와
+        // 「우리 것이 아니다」를 가를 수 있다.
+        let 등록된_자리 = match hooks::자리를_찾는다(&등록된_문자열) {
+            Ok(p) => p,
+            Err(e) => return Outcome::Failed(format!("{} 이 안 돈다 — {e:#}", h.event)),
         };
         if let Err(e) = hooks::실행할_수_있나(&등록된_자리) {
             return Outcome::Failed(format!("{} 이 안 돈다 — {e:#}", h.event));
