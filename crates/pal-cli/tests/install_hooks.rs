@@ -14,10 +14,27 @@
 //! | **옛 형태를 새 형태로 옮기는가** | 손으로 shell form 을 심고 `update` 뒤에 남은 것을 센다 |
 //! | **옛 형태도 걷어내는가** | 같은 fixture 에서 `uninstall` 뒤 사용자 설정과 바이트 비교 |
 //!
-//! **못 재는 것**: 하네스가 그 바이트를 받아 실제로 서브에이전트를 막는 마지막 한 칸.
-//! 그것은 `claude` 세션을 실제로 돌려야 보이고 **이 회차는 안 했다.** 그래서 그 한 칸은
-//! 통과로도 반증으로도 세지 않는다 — 이 파일이 재는 것은 **우리가 내는 바이트가 실측된
-//! 규약과 같은가**까지다.
+//! # ★ 마지막 한 칸은 이제 **쟀다** (2026-08-17 · 실제 `claude` 2.1.233 세션)
+//!
+//! 앞 판은 여기에 *"하네스가 그 바이트를 받아 실제로 서브에이전트를 막는 마지막 한
+//! 칸은 이 회차는 안 했다"* 를 적어 두었다. **했다.** 그 측정은 이 파일이 아니라
+//! 게이트 문서([F24-크로스플랫폼](../../../docs/gates/F24-cross-platform.md))에 산다 —
+//! 실제 세션은 시험 스위트가 될 수 없기 때문이다(모델 응답이 결정적이지 않고,
+//! 토큰이 든다). 관측된 사슬:
+//!
+//! ```text
+//! Hooks: Parsed initial response: {"decision":"block","reason":…}
+//! Hook SubagentStop (…) returned permissionDecision: deny
+//! Hook SubagentStop … success: …  ·  통과 — 반복 회차다      ← 2회차가 왔다
+//! ```
+//!
+//! 마지막 줄이 차단이 **먹었다**는 증거다 — 서브에이전트가 재개됐다. 그리고 그것이
+//! `hook/policy.rs` 의 *"반복 회차에서는 절대 차단하지 않는다"* 가 **실제로 필요했다**는
+//! 증거이기도 하다.
+//!
+//! **그래서 이 파일이 지는 것은 바뀌지 않는다** — 여기는 *"우리가 내는 바이트가 실측된
+//! 규약과 같은가"* 를 **매 커밋마다** 잰다. 그 바이트가 하네스에서 무슨 일을 하는지는
+//! 게이트가 한 번 재고 문서로 남는다. 둘은 주기가 다르고, 그래서 사는 곳도 다르다.
 //!
 //! # ★ 왜 공백이 든 경로에 바이너리를 복사해서 설치하는가
 //!
@@ -97,8 +114,43 @@ fn 등록되는_이름() -> String {
         .into_owned()
 }
 
+/// **방금 복사한 실행 파일을 띄운다** — `ETXTBSY` 는 기다렸다 다시 한다.
+///
+/// # ★ 이것은 제품의 결함이 아니라 **fixture 의 경쟁**이다 (실측 2026-08-17 · CI · 리눅스)
+///
+/// ```text
+/// pal 을 못 돌렸다: Os { code: 26, kind: ExecutableFileBusy, message: "Text file busy" }
+/// ```
+///
+/// 리눅스는 **누군가 쓰기로 연 파일을 실행하지 못한다**(`ETXTBSY`). 이 파일의 시험들은
+/// 저마다 `pal` 을 복사해 두고(공백이 든 경로를 재려고) 그것을 띄우는데, `cargo test` 가
+/// 그것들을 **병렬로** 돌린다. 한 스레드가 복사하는 사이에 다른 스레드가 프로세스를
+/// 띄우면 그 `fork` 가 열린 쓰기 기술자를 물려받고, 원래 스레드가 닫아도 **자식이
+/// 아직 쥐고 있다.** 그 창에서 실행하면 `ETXTBSY` 다.
+///
+/// Windows·macOS 에는 이 축이 없다 — Windows 는 실행 중인 파일을 못 지우는 반대쪽
+/// 제약이고, macOS 는 `ETXTBSY` 를 이 형태로 안 낸다. **그래서 리눅스에서만 났다.**
+///
+/// ⚠ **재시도를 여기 하나로 모은다.** 시험마다 흩어 놓으면 어느 자리가 무엇 때문에
+/// 다시 도는지 알 수 없게 되고, 그러면 **진짜 실패도 재시도로 덮인다.** 여기서는
+/// `ETXTBSY` **하나만** 다시 하고 나머지 오류는 그대로 올린다.
+fn 띄운다(cmd: &mut Command) -> Output {
+    const 상한_MS: u64 = 5_000;
+    let mut 기다린 = 0;
+    loop {
+        match cmd.output() {
+            Ok(out) => return out,
+            Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && 기다린 < 상한_MS => {
+                std::thread::sleep(std::time::Duration::from_millis(25));
+                기다린 += 25;
+            }
+            Err(e) => panic!("pal 을 못 돌렸다: {e:?}"),
+        }
+    }
+}
+
 fn 성공(exe: &Path, cwd: &Path, args: &[&str]) -> String {
-    let out = Command::new(exe).args(args).current_dir(cwd).output().expect("pal 을 못 돌렸다");
+    let out = 띄운다(Command::new(exe).args(args).current_dir(cwd));
     assert!(
         out.status.success(),
         "pal {args:?}\nstdout: {}\nstderr: {}",
@@ -162,14 +214,27 @@ fn 하네스처럼(exe: &Path, 항목: &serde_json::Value, payload: &str) -> Out
     // 사용자 환경의 `PATH` 로 그 이름을 푼다. 그래서 이 fixture 도 pal 이 사는 곳을
     // `PATH` 에 얹어야 「하네스가 하는 일」과 같은 모양이 된다 — 안 얹으면 이 시험은
     // 하네스가 안 겪는 조건을 재게 된다.
-    let mut child = Command::new(command)
-        .args(&args)
-        .env("PATH", path_앞에(exe.parent().expect("pal 의 부모")))
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .expect("등록된 실행 파일을 못 돌렸다");
+    // ⚠ 여기도 [`띄운다`] 와 같은 `ETXTBSY` 창을 지난다 — 다만 표준입력을 물려야
+    // 해서 `output()` 을 못 쓴다. 재시도 조건은 같고 **그 하나만** 다시 한다.
+    const 상한_MS: u64 = 5_000;
+    let mut 기다린 = 0;
+    let mut child = loop {
+        let r = Command::new(command)
+            .args(&args)
+            .env("PATH", path_앞에(exe.parent().expect("pal 의 부모")))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn();
+        match r {
+            Ok(c) => break c,
+            Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && 기다린 < 상한_MS => {
+                std::thread::sleep(std::time::Duration::from_millis(25));
+                기다린 += 25;
+            }
+            Err(e) => panic!("등록된 실행 파일을 못 돌렸다: {e:?}"),
+        }
+    };
     child.stdin.as_mut().expect("stdin").write_all(payload.as_bytes()).expect("쓰기");
     child.wait_with_output().expect("wait")
 }
@@ -463,12 +528,12 @@ fn 제거가_옛_형태도_걷어낸다() {
 /// 이름을 풀 수 있는가」가 아니라 「cargo 가 마침 그 디렉터리를 얹어 줬는가」를
 /// 쟀다. 얹어야 [`하네스처럼`] 과 같은 모양이 되고, 그것이 이 파일의 규율이다.
 fn 검사들(exe: &Path, cwd: &Path) -> serde_json::Value {
-    let out = Command::new(PAL)
-        .args(["doctor", "--install", "--json"])
-        .current_dir(cwd)
-        .env("PATH", path_앞에(exe.parent().expect("pal 의 부모")))
-        .output()
-        .expect("pal doctor");
+    let out = 띄운다(
+        Command::new(PAL)
+            .args(["doctor", "--install", "--json"])
+            .current_dir(cwd)
+            .env("PATH", path_앞에(exe.parent().expect("pal 의 부모"))),
+    );
     serde_json::from_slice(&out.stdout).expect("JSON")
 }
 
