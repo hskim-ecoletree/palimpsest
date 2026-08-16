@@ -196,7 +196,7 @@ pub fn install(target: &Path) -> Result<()> {
     기록.적는다()?;
 
     디렉터리_세우기(&root, &mut 기록)?;
-    파일_놓기(&root, 이전.as_ref(), &mut 기록, &mut report)?;
+    파일_놓기(&root, &mut 기록, &mut report)?;
     기록.m.settings = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
     기록.적는다()?;
     블록_넣기(&root, 이전.as_ref(), &mut 기록, &mut report)?;
@@ -306,12 +306,7 @@ fn 디렉터리_세우기(root: &Root, 기록: &mut Journal) -> Result<()> {
 }
 
 /// **대상에 없는 것만 쓴다**(`[f24]` ①). 있는 것은 안 건드리고 그 사실을 적는다.
-fn 파일_놓기(
-    root: &Root,
-    이전: Option<&Manifest>,
-    기록: &mut Journal,
-    report: &mut Report,
-) -> Result<()> {
+fn 파일_놓기(root: &Root, 기록: &mut Journal, report: &mut Report) -> Result<()> {
     for res in PAYLOAD {
         let rel = Rel::new(res.path);
         let path = root.join(&rel)?;
@@ -326,16 +321,17 @@ fn 파일_놓기(
             report.say("놓았다", res.path);
         }
         // **실물에서 뜬다** — 매니페스트가 적는 값이 곧 디스크의 값이어야 ③ 이 선다.
-        let bytes = guard::읽는다(&path)?;
-        // ★ **사용자 수정이라는 사실을 재설치가 지우지 않는다.** 실물 sha 로 덮으면
-        // 그 파일이 다시 「우리 것」이 되고, 다음 `update` 가 사람의 수정을 밟는다.
-        let 옛_사용자_수정 = 이전.and_then(|m| {
-            m.files.iter().find(|f| f.path == rel && f.origin == Origin::UserModified)
-        });
-        기록.m.files.push(옛_사용자_수정.map_or_else(
-            || FileEntry { path: rel.clone(), sha256: sha256::hex(&bytes), origin: Origin::Ours },
-            Clone::clone,
-        ));
+        let sha = sha256::hex(&guard::읽는다(&path)?);
+        // ★ **적는 sha 는 언제나 「우리가 마지막으로 본 바이트」다.** 종류가 가르는
+        // 것은 *"그 바이트가 우리 것인가"* 하나뿐이다 — 우리 바이트와 다르면 그것은
+        // 사람의 것이고, 재설치가 그것을 「우리 것」으로 다시 도장 찍으면 다음
+        // `update` 가 사람의 수정을 밟는다.
+        let origin = if sha == sha256::hex(res.body.as_bytes()) {
+            Origin::Ours
+        } else {
+            Origin::UserModified
+        };
+        기록.m.files.push(FileEntry { path: rel.clone(), sha256: sha, origin });
         // **한 걸음마다 적는다.** 다섯을 다 놓고 적으면 셋째에서 죽었을 때 기록이 없다.
         기록.적는다()?;
     }
@@ -580,28 +576,38 @@ pub fn update(target: &Path) -> Result<()> {
         return Ok(());
     }
 
-    let 적힌 = m.recorded();
+    let 적힌: BTreeMap<String, FileEntry> =
+        m.files.iter().map(|f| (f.path.to_string(), f.clone())).collect();
     let mut files = Vec::new();
     for res in PAYLOAD {
         let rel = Rel::new(res.path);
         let path = root.join(&rel)?;
+        let 새_sha = sha256::hex(res.body.as_bytes());
         let 실물 =
             if path.exists() { Some(sha256::hex(&guard::읽는다(&path)?)) } else { None };
-        match (적힌.get(res.path), 실물) {
-            // 사람이 고쳤다 — **밟지 않고 말한다.** 적힌 sha 를 그대로 지고 간다.
-            (Some(recorded), Some(actual)) if *recorded != actual => {
-                report.say(SKIPPED, res.path);
-                // ★ **옛 sha 를 그대로 지고 가되 그것이 무엇인지 함께 싣는다.**
-                // 안 실으면 `doctor` 검사 2 가 이 차이를 **고장**으로 읽고, 정상 경로를
-                // 따른 사용자에게 진단이 영영 빨갛다.
-                files.push(FileEntry {
-                    path: rel,
-                    sha256: recorded.clone(),
-                    origin: Origin::UserModified,
-                });
-                continue;
+
+        // ★ **사람의 것인가** — 종류로도 대고 sha 로도 댄다.
+        //
+        // - 종류만 보면 **설치 뒤에 손댄 것**을 놓친다(그 항목은 `Ours` 로 적혀 있다).
+        // - sha 만 보면, 우리가 사람의 sha 를 적어 둔 다음 회차에서 **기록과 실물이
+        //   같아지고** 그 순간 그 파일이 다시 「우리 것」이 되어 갱신이 밟는다.
+        //
+        // 그리고 실물이 **새 본문과 같으면** 사람이 우리 쪽으로 맞춘 것이니 우리 것이다.
+        let 사람의_것 = match (적힌.get(res.path), 실물.as_ref()) {
+            (_, None) => None,
+            (_, Some(지금)) if *지금 == 새_sha => None,
+            (Some(옛), Some(지금)) if 옛.origin == Origin::UserModified || 옛.sha256 != *지금 => {
+                Some(지금.clone())
             }
-            _ => {}
+            _ => None,
+        };
+        if let Some(지금) = 사람의_것 {
+            // **밟지 않고 말한다.** 그리고 **지금 내용의 sha 를 적는다** — 옛 sha 를
+            // 지고 가면 그 경로의 내용 대조가 통째로 꺼지고, 그 뒤 무엇으로 갈아
+            // 끼워져도 `doctor` 가 초록이다.
+            report.say(SKIPPED, res.path);
+            files.push(FileEntry { path: rel, sha256: 지금, origin: Origin::UserModified });
+            continue;
         }
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)
@@ -609,11 +615,7 @@ pub fn update(target: &Path) -> Result<()> {
         }
         guard::쓴다(&path, res.body.as_bytes())?;
         report.say("교체", res.path);
-        files.push(FileEntry {
-            path: rel,
-            sha256: sha256::hex(res.body.as_bytes()),
-            origin: Origin::Ours,
-        });
+        files.push(FileEntry { path: rel, sha256: 새_sha, origin: Origin::Ours });
     }
 
     m.files = files;

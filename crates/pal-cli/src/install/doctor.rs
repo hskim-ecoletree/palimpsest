@@ -162,10 +162,11 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
             return Outcome::Ok(format!("적힌 {}개가 실물과 sha256 까지 같다", m.files.len()));
         }
         return Outcome::Ok(format!(
-            "적힌 {}개 중 {}개가 sha256 까지 같고, 나머지는 **사용자 수정**이다 (`update` 가 \
-             밟지 않고 지나갔다): {}",
+            "적힌 {}개가 전부 sha256 까지 같다. 그중 {}개는 **사용자 수정**이다 \
+             (`update` 가 밟지 않고 지나갔고, 그 시점의 sha 를 적어 두었다 — 그 뒤 또 \
+             바뀌면 여기가 빨개진다): {}",
             m.files.len(),
-            m.files.len() - d.user_modified.len(),
+            d.user_modified.len(),
             d.user_modified.join(" · ")
         ));
     }
@@ -178,6 +179,17 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
     }
     for (path, recorded, there) in &d.changed {
         says.push(format!("{path} 의 sha256 이 다르다 ({}… → {}…)", &recorded[..8], &there[..8]));
+    }
+    // ★ **「우리 것과 다르다」와 「무슨 내용인지 안 본다」는 다르다.** 사용자 수정으로
+    // 적힌 자리라도 **우리가 마지막으로 본 뒤 또 바뀌면** 그 사실은 나온다.
+    for (path, recorded, there) in &d.drifted {
+        says.push(format!(
+            "{path} 는 **사용자 수정**으로 적힌 자리인데 우리가 마지막으로 본 뒤 또 \
+             바뀌었다 ({}… → {}…) — 사람이 또 고쳤으면 `pal update` 가 지금 내용을 \
+             적는다",
+            &recorded[..8],
+            &there[..8]
+        ));
     }
     Outcome::Failed(says.join(" / "))
 }

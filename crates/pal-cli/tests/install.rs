@@ -336,19 +336,19 @@ fn 갱신은_고친_것을_밟지_않고_말한다() {
     // ③ 안 고친 것은 교체됐다 — 그리고 매니페스트 sha 가 실물과 같다.
     assert_eq!(std::fs::read(&안고친것).expect("읽기"), 안고친것_원본);
 
-    let m = 값(&root.join(".claude/pal/manifest.json"));
-    let 적힌: BTreeMap<&str, &str> = m["files"]
-        .as_array()
-        .expect("files")
-        .iter()
-        .map(|f| (f["path"].as_str().expect("path"), f["sha256"].as_str().expect("sha")))
-        .collect();
-    assert_ne!(
-        적힌[".claude/commands/pal/touch.md"],
-        해시(&고친것),
-        "고친 파일의 sha 가 매니페스트와 같아졌다 — 차이가 안 보이게 됐다"
-    );
-    assert_eq!(적힌[".claude/pal/INSTRUCTIONS.md"], 해시(&안고친것));
+    // ④ **차이는 sha 가 아니라 종류가 진다.**
+    //
+    // ⚠ 옛 회차는 여기서 *"매니페스트의 sha 가 실물과 **다르다**"* 를 요구했다. 그것이
+    // 곧 `doctor` 를 속이는 형태였고 — 그 차이를 무마하려고 넣은 `Origin::UserModified`
+    // 가 **그 경로의 내용 검사를 통째로 껐다**(`사용자_수정_뒤에도_내용을_계속_본다`).
+    // 지금은 sha 가 **그 시점의 사람 내용**이고, *"우리 것이 아니다"* 는 종류가 진다.
+    let 고친것_항목 = 항목(&root, ".claude/commands/pal/touch.md");
+    assert_eq!(고친것_항목["sha256"], serde_json::json!(해시(&고친것)), "그 시점의 sha 를 안 적었다");
+    assert_eq!(고친것_항목["origin"], serde_json::json!("user_modified"), "종류를 안 적었다");
+
+    let 안고친것_항목 = 항목(&root, ".claude/pal/INSTRUCTIONS.md");
+    assert_eq!(안고친것_항목["sha256"], serde_json::json!(해시(&안고친것)));
+    assert_eq!(안고친것_항목["origin"], serde_json::json!("ours"));
 }
 
 /// ★ **정상적인 `update` 뒤에 `doctor` 가 빨개지지 않는다.**
@@ -382,6 +382,65 @@ fn 갱신_뒤에_진단이_빨개지지_않는다() {
     let c = 검사들(&root, None);
     assert_eq!(결말(&c, 2), "failed", "고장을 못 봤다: {}", c[1]);
     assert!(c[1]["detail"].as_str().expect("detail").contains("INSTRUCTIONS.md"));
+}
+
+/// ★ **「사용자가 고쳤다」와 「내용을 모른다」는 다르다.**
+///
+/// 앞 회차가 `갱신_뒤에_진단이_빨개지지_않는다` 를 세우려고 넣은 `Origin::UserModified`
+/// 가 그 경로의 **sha 대조를 통째로 껐다.** 관측: 그 파일을 통째로 다른 내용으로
+/// 바꿔도, 0바이트로 비워도 `doctor` 는 **초록**이었다 — 없어지면 잡히는데 **바뀌면
+/// 안 잡혔다.**
+///
+/// 그 파일들은 `.claude/commands/pal/*.md` — **에이전트에게 그대로 먹이는 지시문**이다.
+/// 「우리 것과 다르다」를 고장으로 안 세는 것과 **「무슨 내용인지 안 본다」는 다르다.**
+#[test]
+fn 사용자_수정_뒤에도_내용을_계속_본다() {
+    let root = 살고_있는_프로젝트("d-계속본다");
+    성공(&root, &["install"]);
+
+    let 고친것 = root.join(".claude/commands/pal/touch.md");
+    let 사람의_내용 = "# 내가 고쳤다\n";
+    std::fs::write(&고친것, 사람의_내용).expect("사람의 수정");
+    낡게_만든다(&root);
+    성공(&root, &["update"]);
+
+    // ① **고친 시점의 sha 가 기록됐다** — 종류와 함께.
+    let e = 항목(&root, ".claude/commands/pal/touch.md");
+    assert_eq!(e["sha256"], serde_json::json!(해시(&고친것)), "그 시점의 sha 를 안 적었다: {e}");
+    assert_eq!(e["origin"], serde_json::json!("user_modified"), "종류를 안 적었다: {e}");
+
+    // ② 그리고 진단은 초록이다 — 정상 경로를 따른 사용자가 빨간 화면을 안 본다.
+    let c = 검사들(&root, None);
+    assert_eq!(결말(&c, 2), "ok", "정상 경로를 따랐는데 진단이 빨갛다: {}", c[1]);
+
+    // ③ ★ **그 뒤 또 바뀌면 진단이 말한다.** 통째로 갈아끼워도 · 0바이트로 비워도.
+    for 나중 in ["# 남이 갈아끼운 지시\n", ""] {
+        std::fs::write(&고친것, 나중).expect("또 바뀜");
+        let c = 검사들(&root, None);
+        assert_eq!(결말(&c, 2), "failed", "사용자 수정 뒤의 변화를 못 봤다: {}", c[1]);
+        assert!(
+            c[1]["detail"].as_str().expect("detail").contains("touch.md"),
+            "어느 파일인지 안 적었다: {}",
+            c[1]
+        );
+    }
+
+    // ④ 그래도 **갱신은 여전히 밟지 않는다** — ④ 를 안 깬다.
+    낡게_만든다(&root);
+    let report = 성공(&root, &["update"]);
+    assert_eq!(std::fs::read_to_string(&고친것).expect("읽기"), "", "사용자 수정이 밟혔다");
+    assert!(report.contains("사용자 수정 — 건너뜀"), "밟지 않았지만 말하지 않았다:\n{report}");
+}
+
+/// 매니페스트의 파일 항목 하나.
+fn 항목(root: &Path, rel: &str) -> serde_json::Value {
+    값(&root.join(".claude/pal/manifest.json"))["files"]
+        .as_array()
+        .expect("files")
+        .iter()
+        .find(|f| f["path"] == serde_json::json!(rel))
+        .unwrap_or_else(|| panic!("{rel} 이 매니페스트에 없다"))
+        .clone()
 }
 
 /// **버전만으로 「이미 최신」과 「낡음」이 갈리는가**(⑨ 의 뒷문장).

@@ -43,13 +43,31 @@ pub struct Roots {
 /// 판별식도 그 ADR 의 것이다 — *"집계 표에서 따로 세어야 하면 칸, 같은 칸 안에서
 /// 다르게 **행동**해야 하면 이유."* 여기서 갈리는 행동은 **빨강이냐 초록이냐**이고,
 /// 검사의 수는 안 갈린다. 그러니 이유다.
+///
+/// # ★ 「사용자가 고쳤다」와 「내용을 모른다」는 다르다
+///
+/// 앞 회차는 사용자 수정 자리에 **우리 옛 sha** 를 적고, 실물이 그것과 다르면 종류를
+/// 보고 **고장이 아니다** 로 넘겼다. 그러면 그 파일은 **어떤 내용이어도 초록**이다 —
+/// 통째로 갈아끼워도, 0바이트로 비워도. 없어지면 잡히는데 **바뀌면 안 잡혔다.**
+/// 그 파일들은 `.claude/commands/pal/*.md`, 즉 **에이전트에게 그대로 먹이는 지시문**이다.
+///
+/// 그래서 규칙을 하나로 세운다 — **[`FileEntry::sha256`] 은 언제나 「우리가 마지막으로
+/// 본 바이트」다.** 종류가 가르는 것은 *"그 바이트가 우리 것인가"* 뿐이고, **실물이
+/// 기록과 다르다는 사실은 종류와 무관하게 언제나 말한다.**
+///
+/// | 기록 | 실물 | 판정 |
+/// |---|---|---|
+/// | `Ours` | 같다 | 초록 |
+/// | `Ours` | 다르다 | **빨강** — 우리 것이 밟혔다 |
+/// | `UserModified` | 같다 | 초록. 그리고 *"사용자 수정"* 이라고 **말한다** |
+/// | `UserModified` | 다르다 | **빨강** — 우리가 본 뒤 또 바뀌었다 |
 #[derive(Serialize, Deserialize, Clone, Copy, Default, PartialEq, Eq, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Origin {
-    /// 우리가 놓은 바이트 그대로. **다르면 고장이다.**
+    /// 우리가 놓은 바이트 그대로.
     #[default]
     Ours,
-    /// `update` 가 밟지 않고 지나간 자리 — **사람이 고쳤다.** 다른 것이 정상이다.
+    /// `update` 가 밟지 않고 지나간 자리 — **사람이 고쳤다.**
     UserModified,
 }
 
@@ -57,10 +75,12 @@ pub enum Origin {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FileEntry {
     pub path: Rel,
-    /// **설치 시점에 실물에서 뜬 값**이다 — 실물과 다르면 사람이 고친 것이고,
-    /// 그 차이가 곧 `update` 의 3분기다(`[f24]` ④).
+    /// ★ **우리가 마지막으로 본 바이트의 sha256.** 우리가 놓은 것이면 우리 본문의
+    /// sha 이고, 사람이 고친 것이면 **그 시점의 사람 내용**의 sha 다.
+    ///
+    /// 실물이 이것과 다르면 **종류와 무관하게 말한다** — [`Origin`] 의 표를 볼 것.
     pub sha256: String,
-    /// 이 sha 가 실물과 다를 때 그것이 무엇인가. **`#[serde(default)]` 이라 옛
+    /// 이 sha 의 바이트가 **우리 것인가.** **`#[serde(default)]` 이라 옛
     /// 매니페스트는 전부 `Ours` 로 읽힌다** — 옛 기록에는 사용자 수정이 안 실려 있었고,
     /// 없던 것을 있었다고 읽지 않는다.
     #[serde(default)]
@@ -155,12 +175,6 @@ impl Manifest {
         out.extend(self.settings.iter().map(|s| (종류::설정, &s.path)));
         out.extend(self.created_dirs.iter().map(|r| (종류::디렉터리, r)));
         out
-    }
-
-    /// 이 매니페스트가 적은 (경로 → sha256).
-    #[must_use]
-    pub fn recorded(&self) -> BTreeMap<String, String> {
-        self.files.iter().map(|f| (f.path.to_string(), f.sha256.clone())).collect()
     }
 }
 
@@ -312,16 +326,24 @@ pub struct Diff {
     pub missing: Vec<String>,
     /// 생겼는데 안 적힌 것.
     pub unrecorded: Vec<String>,
-    /// 있는데 sha 가 다른 것 — (경로, 적힌 값, 실물 값). **고장이다.**
+    /// 우리가 놓은 바이트와 다른 것 — (경로, 적힌 값, 실물 값). **고장이다.**
     pub changed: Vec<(String, String, String)>,
-    /// 다른데 **사람이 고친 것**이다. 고장이 아니다 — `update` 가 안 밟고 지나갔다.
+    /// 사람이 고친 자리이고 **우리가 본 뒤로 안 바뀌었다.** 고장이 아니다 —
+    /// `update` 가 안 밟고 지나갔다. 그래도 **말한다.**
     pub user_modified: Vec<String>,
+    /// 사람이 고친 자리인데 **우리가 마지막으로 본 뒤 또 바뀌었다.**
+    /// 「우리 것과 다르다」가 아니라 **「우리가 본 것과 다르다」**이고, 그것은 말해야
+    /// 한다 — (경로, 적힌 값, 실물 값).
+    pub drifted: Vec<(String, String, String)>,
 }
 
 impl Diff {
     #[must_use]
     pub fn is_clean(&self) -> bool {
-        self.missing.is_empty() && self.unrecorded.is_empty() && self.changed.is_empty()
+        self.missing.is_empty()
+            && self.unrecorded.is_empty()
+            && self.changed.is_empty()
+            && self.drifted.is_empty()
     }
 }
 
@@ -333,21 +355,26 @@ pub fn diff(recorded: &[FileEntry], actual: &BTreeMap<String, String>) -> Diff {
     let mut missing = Vec::new();
     let mut changed = Vec::new();
     let mut user_modified = Vec::new();
+    let mut drifted = Vec::new();
     for entry in recorded {
         let path = entry.path.to_string();
         match actual.get(&path) {
             None => missing.push(path),
+            // **기록과 다르다는 사실은 종류와 무관하게 언제나 나온다.** 종류가 가르는
+            // 것은 그것을 무엇이라 부르느냐다.
             Some(there) if *there != entry.sha256 => match entry.origin {
                 Origin::Ours => changed.push((path, entry.sha256.clone(), there.clone())),
-                Origin::UserModified => user_modified.push(path),
+                Origin::UserModified => drifted.push((path, entry.sha256.clone(), there.clone())),
             },
+            // 같은데 사람의 것이면 — 초록이되 **말한다.**
+            Some(_) if entry.origin == Origin::UserModified => user_modified.push(path),
             Some(_) => {}
         }
     }
     let 적힌: std::collections::BTreeSet<String> =
         recorded.iter().map(|e| e.path.to_string()).collect();
     let unrecorded = actual.keys().filter(|p| !적힌.contains(*p)).cloned().collect::<Vec<_>>();
-    Diff { missing, unrecorded, changed, user_modified }
+    Diff { missing, unrecorded, changed, user_modified, drifted }
 }
 
 #[cfg(test)]
@@ -516,15 +543,31 @@ mod tests {
         assert!(d.user_modified.is_empty());
     }
 
-    /// ★ **같은 「다름」인데 종류가 갈린다** — 고장은 빨갛고 사용자 수정은 아니다.
+    /// ★ **사용자 수정은 고장이 아니다 — 그러나 그것은 「우리가 본 그 바이트일 때」다.**
     #[test]
-    fn 사용자_수정은_고장으로_안_센다() {
+    fn 우리가_본_사용자_파일은_고장이_아니다() {
+        let mut recorded = 적힌(&[("x", "1")]);
+        recorded[0].origin = Origin::UserModified;
+        let d = diff(&recorded, &실험용(&[("x", "1")]));
+        assert!(d.changed.is_empty(), "사용자 수정을 고장으로 셌다");
+        assert!(d.drifted.is_empty());
+        assert_eq!(d.user_modified, vec!["x".to_owned()], "초록이지만 말은 해야 한다");
+        assert!(d.is_clean());
+    }
+
+    /// ★ **「우리 것과 다르다」와 「무슨 내용인지 안 본다」는 다르다.**
+    ///
+    /// 사용자 수정으로 적힌 자리가 **그 뒤 또 바뀌면** 그것은 나온다. 이 줄이 없으면
+    /// 그 경로는 **어떤 내용이어도 초록**이 되고, 그 파일들은 에이전트에게 그대로
+    /// 먹이는 지시문이다.
+    #[test]
+    fn 사용자_수정_뒤에_또_바뀌면_말한다() {
         let mut recorded = 적힌(&[("x", "1")]);
         recorded[0].origin = Origin::UserModified;
         let d = diff(&recorded, &실험용(&[("x", "2")]));
-        assert!(d.changed.is_empty(), "사용자 수정을 고장으로 셌다");
-        assert_eq!(d.user_modified, vec!["x".to_owned()]);
-        assert!(d.is_clean());
+        assert!(d.changed.is_empty(), "사용자 수정을 「우리 것이 밟혔다」로 셌다");
+        assert_eq!(d.drifted.len(), 1, "사용자 수정 뒤의 변화를 못 봤다");
+        assert!(!d.is_clean());
     }
 
     /// **사용자 수정이라도 사라지면 그것은 고장이다.**
