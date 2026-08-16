@@ -346,3 +346,121 @@ fn 블록을_고쳐도_문구대로_하면_빠져나온다() {
     성공(&root, &["uninstall"]);
     assert_eq!(스냅샷(&root), s0, "제거 후가 설치 전과 다르다");
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. **걷어냈다는 말과 걷어냈다는 사실** — 마커가 하나 더 있는 자리
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// 설치본에서 **여는 마커 한 줄을 떠 온다.**
+///
+/// ⚠ **상수를 시험이 손에 안 쥔다.** 마커 문구를 여기 베껴 두면 산출이 바뀔 때 시험이
+/// **낡은 것을 재고도 초록**이 된다 — F04 가 *"이름으로 세면 낡은 검사는 통과한다"* 로
+/// 적은 것과 같은 형태다.
+fn 여는_마커(root: &Path) -> String {
+    std::fs::read_to_string(root.join("CLAUDE.md"))
+        .expect("CLAUDE.md")
+        .lines()
+        .find(|l| l.contains("pal:begin"))
+        .expect("설치본에 여는 마커가 없다")
+        .to_owned()
+}
+
+/// ★ **rc=0 「블록 뺌」을 찍고 블록을 남기던 자리.**
+///
+/// 관측(고치기 전): 제거는 우리 바이트열의 **첫 일치 하나만** 지우고 그 항목을
+/// 매니페스트에서 뺐다. 그래서 —
+///
+/// | 걸음 | 옛 결과 |
+/// |---|---|
+/// | `pal uninstall` | **rc=0** · 화면에 *"블록 뺌  CLAUDE.md"* · 파일에는 마커가 남았다 |
+/// | 다시 `pal uninstall` | rc=1 *"설치를 찾지 못했다"* — 기록이 이미 지워졌다 |
+/// | `pal install` | rc=1 인데 **새 부분 설치를 또 만들었다** |
+///
+/// 「고치려 들지 않는다」는 그대로다 — **우리가 안 넣은 바이트는 안 지운다.** 바뀌는
+/// 것은 **성공을 보고하지 않는다**뿐이다.
+#[test]
+fn 걷어내도_마커가_남으면_제거가_성공을_안_낸다() {
+    let root = 프로젝트("남은마커");
+    let 원본 = "# 내 지시\n";
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("CLAUDE.md");
+    let s0 = 스냅샷(&root);
+    성공(&root, &["install"]);
+
+    // **여는 마커만 하나 더** — 이것으로도 재현된다.
+    let 마커 = 여는_마커(&root);
+    let 전 = format!("{}{마커}\n", std::fs::read_to_string(root.join("CLAUDE.md")).expect("읽기"));
+    std::fs::write(root.join("CLAUDE.md"), &전).expect("쓰기");
+
+    // ① **성공을 보고하지 않는다. 그리고 아무것도 안 지운다.**
+    let out = 돌린다(&root, &["uninstall"]);
+    assert!(
+        !out.status.success(),
+        "블록을 남기고 rc=0 을 냈다\nstdout: {}",
+        String::from_utf8_lossy(&out.stdout)
+    );
+    let 문구 = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert!(
+        문구.contains("pal:begin") && 문구.contains("pal:end"),
+        "무엇을 지우라는지 안 적었다:\n{문구}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(root.join("CLAUDE.md")).expect("읽기"),
+        전,
+        "거부했는데 파일이 바뀌었다"
+    );
+
+    // ② **되돌리기 기록을 안 잃었다.** 잃으면 그 블록은 다시는 못 걷힌다.
+    let m: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(root.join(".claude/pal/manifest.json")).expect("읽기"))
+            .expect("JSON");
+    let 적힌: Vec<&str> = m["blocks"]
+        .as_array()
+        .expect("blocks")
+        .iter()
+        .map(|b| b["path"].as_str().expect("path"))
+        .collect();
+    assert!(적힌.contains(&"CLAUDE.md"), "블록 기록이 사라졌다: {m}");
+
+    // ③ **문구대로 — 마커가 나오는 자리를 전부 지우면** 나머지가 이어서 걷힌다.
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("블록 지우기");
+    성공(&root, &["uninstall"]);
+    assert_eq!(스냅샷(&root), s0, "제거 후가 설치 전과 다르다");
+}
+
+/// ★ **기록 없는 마커 위에서 설치가 부분 설치를 또 만들던 자리.**
+///
+/// 같은 판정(*"우리 마커가 있는데 매니페스트에 그 기록이 없다"*)이 이미 있었는데
+/// **너무 늦게** 서 있었다 — 거기까지 오면 디렉터리·파일 다섯·설정이 이미 쓰인 뒤라
+/// rc=1 을 내면서 **새 부분 설치가 남았다**(실측).
+#[test]
+fn 기록_없는_마커_위에는_한_바이트도_안_쓴다() {
+    let root = 프로젝트("기록없는마커");
+    let 원본 = "# 내 지시\n";
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("CLAUDE.md");
+    let s0 = 스냅샷(&root);
+
+    // 마커를 시험이 손에 안 쥐므로 한 번 설치해서 떠 오고 다시 걷는다.
+    성공(&root, &["install"]);
+    let 마커 = 여는_마커(&root);
+    성공(&root, &["uninstall"]);
+    assert_eq!(스냅샷(&root), s0, "이 시험이 재려는 상태가 아니다");
+
+    // **마커는 있는데 매니페스트가 없다** — 옛 제거가 남기고 가던 모양.
+    std::fs::write(root.join("CLAUDE.md"), format!("{원본}{마커}\n")).expect("쓰기");
+    let s마커 = 스냅샷(&root);
+
+    let out = 돌린다(&root, &["install"]);
+    assert!(!out.status.success(), "되돌릴 수 없는 블록을 보고도 설치를 성공시켰다");
+    let 문구 = String::from_utf8_lossy(&out.stderr).into_owned();
+    assert!(
+        문구.contains("pal:begin") && 문구.contains("pal:end"),
+        "무엇을 지우라는지 안 적었다:\n{문구}"
+    );
+    assert_eq!(스냅샷(&root), s마커, "부분 설치가 남았다");
+
+    // **문구대로 하면 빠져나온다.**
+    std::fs::write(root.join("CLAUDE.md"), 원본).expect("마커 지우기");
+    성공(&root, &["install"]);
+    성공(&root, &["uninstall"]);
+    assert_eq!(스냅샷(&root), s0, "제거 후가 설치 전과 다르다");
+}

@@ -13,6 +13,7 @@
 //! | **끝 개행 없는 파일에 그냥 append 해 마지막 규칙과 우리 규칙이 둘 다 파괴** | 끝이 개행이 아니면 개행을 **먼저 넣고**, 넣었다는 사실을 매니페스트가 진다 |
 //! | 마커 없이 내용 일치로 지워 **사용자가 먼저 써 둔 같은 줄을 지웠다** | 지우는 단위는 **우리가 넣은 바이트열 그대로**다. 한 줄씩 안 본다 |
 //! | **stale 마커가 사용자가 나중에 만든 파일을 지웠다** | 파일을 지우는 조건은 *"우리가 만들었고"* **그리고** *"우리 블록을 뺀 나머지가 비었고"* 둘 다다 |
+//! | 마커가 둘인 파일에서 **첫 일치만 지우고 rc=0 「블록 뺌」을 찍었다** | 걷어낸 **결과**에 마커가 남으면 **안 쓰고 거부한다**([`남은_마커_문구`]) |
 //!
 //! ⚠ **심링크를 살리는 것과 심링크를 따라 나가는 것은 다르다.** 위 표의 셋째 줄은
 //! 프로젝트 **안**을 가리키는 링크를 일반 파일로 만들지 않겠다는 것이고, **밖**으로
@@ -141,7 +142,7 @@ pub fn remove(path: &Path, markers: &Markers, inserted: &str, created: bool) -> 
         return Ok(Removal::Missing);
     }
     let existing = super::guard::읽는다(path)?;
-    let Some((at, 끝)) = 자리(&existing, inserted.as_bytes()) else {
+    let Some(next) = 걷은_뒤(&existing, inserted) else {
         if 마커가_있나(&existing, markers) {
             bail!("{}", 훼손_문구(path, markers));
         }
@@ -149,8 +150,20 @@ pub fn remove(path: &Path, markers: &Markers, inserted: &str, created: bool) -> 
         return Ok(Removal::Missing);
     };
 
-    let mut next = existing;
-    next.drain(at..끝);
+    // ★ **걷어낸 결과를 쓰기 전에 본다** — 우리 마커가 남으면 걷은 것이 아니다.
+    //
+    // 우리가 지우는 단위는 **우리가 넣은 바이트열 그대로 하나**다. 그래서 같은 파일에
+    // 블록이 둘 있으면 첫 일치만 지우고 [`Removal::Block`] 을 냈고, `uninstall` 은
+    // **rc=0 으로 「블록 뺌」을 찍으면서 완전한 블록을 남겼다**(실측). 그 항목은 곧
+    // 매니페스트에서 빠지므로 그 뒤로는 **아무도 그것을 못 걷는다.**
+    //
+    // 남은 것을 우리가 해석해서 지우지는 않는다 — 그것이 이 파일이 막으려는 형태다.
+    // 그래서 **안 쓰고 사람에게 넘긴다.** 안 쓰는 쪽을 고른 이유는 기록과 실물이
+    // 갈리지 않기 때문이다: 우리 바이트는 그대로 있고 매니페스트도 그대로라, 사람이
+    // 남은 것을 치우면 그 자리에서 이어서 걷힌다.
+    if 마커가_있나(&next, markers) {
+        bail!("{}", 남은_마커_문구(path, markers));
+    }
 
     if created && next.is_empty() {
         std::fs::remove_file(path)
@@ -180,13 +193,34 @@ pub fn 훼손_문구(path: &Path, markers: &Markers) -> String {
 /// 빠져나오는 길을 말해야 하는 자리가 하나가 아니라 조각으로 세운다. `다시` 는 그
 /// 자리에서 **다시 돌릴 명령**이다 — 제거가 걸린 자리와 설치가 걸린 자리는 사람이
 /// 이어서 할 일이 다르다.
+///
+/// ★ **「나오는 자리마다」가 이 문장의 하중이다.** 마커가 두 벌 있는 파일에서 한 벌만
+/// 지우면 남은 벌이 같은 판정을 또 낸다 — 그러면 문구가 말한 길이 **실제로는 없는
+/// 길**이 된다. 그 형태를 앞 회차가 이미 한 번 만들었다([`상태`] 의 표).
 #[must_use]
 pub fn 빠져나오는_길(markers: &Markers, 다시: &str) -> String {
     format!(
-        "빠져나오는 길: 아래 **두 줄과 그 사이 전부**를 손으로 지운 뒤 \
+        "빠져나오는 길: 아래 **두 줄과 그 사이 전부**를 **나오는 자리마다** 손으로 지운 뒤 \
          `{다시}` 을 다시 돌리십시오. **마커까지 지워야 한다** — 마커만 남으면 \
          같은 자리에 또 걸린다.\n      {}\n      {}",
         markers.begin, markers.end
+    )
+}
+
+/// **걷어내도 우리 마커가 남는 자리에서 빠져나오는 길.**
+///
+/// 「우리 것이 고쳐졌다」([`훼손_문구`])와 **다른 사실**이다 — 우리 것은 그대로 있고,
+/// 그 파일에 **우리가 안 넣은 블록이 하나 더** 있다. 사람이 할 일은 같지만 무엇을 보고
+/// 있는지가 다르므로 그 사실을 그대로 말한다.
+#[must_use]
+pub fn 남은_마커_문구(path: &Path, markers: &Markers) -> String {
+    format!(
+        "{} 에서 우리 블록을 걷어내도 **우리 마커가 남는다** — 우리가 안 넣은 블록이 \
+         그 파일에 하나 더 있다. 고치려 들지 않는다(안에 사람이 쓴 줄이 있을 수 있다).\n    \
+         **아무것도 안 지웠다**: 여기서 걷었다고 적으면 rc=0 뒤에 블록이 남고, 그 기록은 \
+         매니페스트에서 빠져 **다시는 못 걷힌다.**\n    {}",
+        path.display(),
+        빠져나오는_길(markers, "pal uninstall")
     )
 }
 
@@ -203,6 +237,47 @@ pub fn 상태(path: &Path, markers: &Markers, inserted: &str) -> Result<상태> 
         return Ok(상태::그대로);
     }
     Ok(if 마커가_있나(&existing, markers) { 상태::훼손 } else { 상태::사라짐 })
+}
+
+/// 그 파일에 **우리 마커가 있는가** — 기록이 없을 때 물을 수 있는 유일한 것.
+///
+/// [`상태`] 는 *"우리가 넣은 바이트열"* 을 손에 쥐고 있어야 답한다. 매니페스트에 그
+/// 기록이 없는 자리에서는 쥘 것이 없고, 그때도 **되돌릴 수 없는 블록이 있는가**는
+/// 물을 수 있어야 한다.
+///
+/// # Errors
+/// 읽지 못하면.
+pub fn 마커가_남았나(path: &Path, markers: &Markers) -> Result<bool> {
+    if !path.exists() {
+        return Ok(false);
+    }
+    Ok(마커가_있나(&super::guard::읽는다(path)?, markers))
+}
+
+/// 우리 것을 걷어내면 **우리 마커가 남는가** — 제거가 첫 걸음을 떼기 전에 묻는다.
+///
+/// [`remove`] 안에도 같은 문이 서 있다. 그 문은 **쓰기 직전**에 서므로 하중을 지고,
+/// 이것은 **아무것도 안 건드린 1단계**에서 같은 것을 미리 봐서 *"아무것도 지우지
+/// 않았다"* 를 실제로 참으로 만든다.
+///
+/// # Errors
+/// 읽지 못하면.
+pub fn 걷어도_남나(path: &Path, markers: &Markers, inserted: &str) -> Result<bool> {
+    if !path.exists() {
+        return Ok(false);
+    }
+    let existing = super::guard::읽는다(path)?;
+    // 우리 바이트가 안 보이면 걷을 것이 없다 — 「훼손」은 [`상태`] 가 가른다.
+    let Some(next) = 걷은_뒤(&existing, inserted) else { return Ok(false) };
+    Ok(마커가_있나(&next, markers))
+}
+
+/// 우리 바이트열을 뺀 **결과.** 우리 것이 안 보이면 `None`.
+fn 걷은_뒤(existing: &[u8], inserted: &str) -> Option<Vec<u8>> {
+    let (at, 끝) = 자리(existing, inserted.as_bytes())?;
+    let mut next = existing.to_vec();
+    next.drain(at..끝);
+    Some(next)
 }
 
 fn 마커가_있나(existing: &[u8], markers: &Markers) -> bool {
@@ -421,6 +496,43 @@ mod tests {
             b"a\r\n",
             "블록 밖의 바이트가 움직였다"
         );
+    }
+
+    /// ★ **걷어내도 우리 마커가 남을 자리에서는 성공을 보고하지 않는다.**
+    ///
+    /// 관측(고치기 전): 우리 바이트열의 **첫 일치 하나만** 지우고 [`Removal::Block`] 을
+    /// 냈다. 그래서 `uninstall` 이 rc=0 으로 *"블록 뺌"* 을 찍으면서 **완전한 블록을
+    /// 그대로 남겼고**, 그 항목은 매니페스트에서 빠져 다시는 못 걷혔다.
+    ///
+    /// **「고치려 들지 않는다」는 그대로다** — 우리가 안 넣은 바이트는 안 지운다.
+    #[test]
+    fn 마커가_남을_거면_안_걷는다() {
+        for 남는_것 in [
+            // 여는 마커만 하나 더 — 이것으로도 재현된다.
+            format!("{}\n", IGNORE_MARKERS.begin),
+            // 완전한 블록이 통째로 하나 더.
+            블록(),
+        ] {
+            let dir = 방("남은마커");
+            let path = dir.join("f");
+            std::fs::write(&path, b"a\n").expect("원본");
+            let Added::Inserted { bytes, .. } = add(&path, &IGNORE_MARKERS, &블록()).expect("더하기")
+            else {
+                panic!("이미 있다고 나왔다");
+            };
+            let 전 = format!("{}{남는_것}", std::fs::read_to_string(&path).expect("읽기"));
+            std::fs::write(&path, &전).expect("쓰기");
+
+            assert!(
+                remove(&path, &IGNORE_MARKERS, &bytes, false).is_err(),
+                "마커를 남기고 성공을 냈다"
+            );
+            assert_eq!(
+                std::fs::read_to_string(&path).expect("읽기"),
+                전,
+                "거부했는데 파일이 바뀌었다"
+            );
+        }
     }
 
     /// ★ **사용자가 우리보다 먼저 써 둔 같은 줄을 안 지운다.**
