@@ -69,19 +69,27 @@ fn 접힌_대장(report: &ledger::LedgerReport) -> Fold {
     fold
 }
 
+/// `pal doctor` 의 손잡이들 — **평탄화해서 하나로 든다.**
+///
+/// 위치 인자 일곱은 부르는 쪽에서 순서를 틀려도 타입이 안 잡는다(`Option<PathBuf>` 가
+/// 셋 연속이다). `NarrativeArgs`·`PlanArgs` 가 이미 같은 판단을 했고, 여기가 셋째다.
+pub struct Args<'a> {
+    pub repo: &'a Path,
+    pub rev: Option<&'a str>,
+    pub cache_dir: Option<PathBuf>,
+    pub index: Option<PathBuf>,
+    pub intent: Option<PathBuf>,
+    pub scope: DoctorScope,
+    pub json: bool,
+}
+
 /// `pal doctor` 를 돌린다.
 ///
 /// # Errors
 /// 스키마가 읽히지 않거나, 저장소·캐시·2층·의도 저장소 중 하나에 닿지 못하면.
-pub fn run(
-    repo_path: &Path,
-    rev: Option<&str>,
-    cache_dir: Option<PathBuf>,
-    index_path: Option<PathBuf>,
-    intent_path: Option<PathBuf>,
-    scope: DoctorScope,
-    json: bool,
-) -> Result<()> {
+pub fn run(args: Args) -> Result<()> {
+    let Args { repo: repo_path, rev, cache_dir, index: index_path, intent: intent_path, scope, json } =
+        args;
     let schema = GraphSchema::parse(SCHEMA).map_err(|e| anyhow::anyhow!("{e}"))?;
 
     let report = ledger::compute(repo_path, rev, cache_dir)?;

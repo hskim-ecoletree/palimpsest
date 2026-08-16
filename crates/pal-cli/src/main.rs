@@ -427,7 +427,15 @@ fn main() -> Result<()> {
             } else {
                 pal_core::DoctorScope::Sample { max: sample.unwrap_or(pal_core::PROVISIONAL_SAMPLE_MAX) }
             };
-            doctor::run(&repo, at.as_deref(), cache_dir, index, intent, scope, json)
+            doctor::run(doctor::Args {
+                repo: &repo,
+                rev: at.as_deref(),
+                cache_dir,
+                index,
+                intent,
+                scope,
+                json,
+            })
         }
         Command::Intent { what } => match what {
             IntentCommand::Export { repo, intent, out } => intent::export(&repo, intent, out),
