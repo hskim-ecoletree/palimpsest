@@ -102,11 +102,19 @@ fn 실행_파일() -> Result<PathBuf> {
 ///
 /// `command` 는 실행 파일 경로 **그 자체**다. 따옴표도 이스케이프도 안 붙인다 —
 /// 셸을 안 거치므로 붙이면 오히려 그 글자가 경로의 일부가 된다.
+/// ★ **`\\?\` 를 여기서 벗긴다** — 이 문자열은 커밋되고 사람이 읽는다.
+///
+/// `settings.json` 은 대상 프로젝트 안의 평범한 파일이고 사람이 열어 본다. verbatim
+/// 접두사는 [`std::fs::canonicalize`] 의 내부 사정이지 사용자에게 뜻이 있는 글자가
+/// 아니다. **화면과 같은 함수를 지나게** 해서 둘이 안 갈리게 한다 — 갈리면 사람이
+/// 화면에서 본 것과 파일에 적힌 것이 다르고, 그 차이를 설명할 자리가 없다.
+///
+/// ⚠ **길면 안 벗긴다**([`super::winpath`]) — `\\?\` 는 `MAX_PATH` 를 푸는 표기다.
 #[must_use]
 pub fn entry(exe: &Path, event: &str) -> HookEntry {
     HookEntry {
         event: event.to_owned(),
-        command: exe.to_string_lossy().into_owned(),
+        command: super::winpath::사람이_읽는(exe),
         args: Some(vec![SUBCOMMAND.to_owned(), event.to_owned()]),
     }
 }

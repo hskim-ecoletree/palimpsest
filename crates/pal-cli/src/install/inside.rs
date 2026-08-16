@@ -100,9 +100,13 @@ impl Root {
     }
 }
 
+/// ★ **화면에는 `\\?\` 를 안 낸다.** [`Root::세운다`] 가 `canonicalize` 를 지나므로
+/// Windows 에서 안쪽 값은 verbatim 형태이고, 그것을 그대로 내면 화면 한 줄이 유닉스와
+/// 다르게 생긴다. 무엇을 벗기고 무엇을 못 벗기는지는 [`super::winpath`] 가 안다 —
+/// **경로를 판정에 쓰는 자리는 계속 [`Root::path`] 를 쓴다.** 이 impl 은 표시 전용이다.
 impl fmt::Display for Root {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0.display())
+        write!(f, "{}", super::winpath::사람이_읽는(&self.0))
     }
 }
 

@@ -50,6 +50,14 @@ pub mod eol;
 #[path = "../../src/install/sha256.rs"]
 pub mod sha256;
 
+/// 등록 문자열의 경로 표기 — **시험이 자기 규칙을 갖지 않게 한다.**
+///
+/// `pal` 은 훅에 등록할 경로에서 Windows 의 verbatim 접두사(`\\?\`)를 조건부로 벗긴다.
+/// 시험이 기대값을 자기 손으로 만들면 그 조건을 **두 번째 목록**으로 옮겨 적는 것이고,
+/// 둘이 어긋나는 순간 시험이 제품이 아니라 자기 사본을 잰다.
+#[path = "../../src/install/winpath.rs"]
+pub mod winpath;
+
 /// 이 파일의 **내용**의 sha256 — 매니페스트가 적는 값과 같은 함수를 지난다.
 pub fn 해시(path: &Path) -> String {
     sha256::내용(&std::fs::read(path).expect("읽기"))

@@ -188,3 +188,50 @@ fn crlf_파일에_넣은_블록도_crlf_다() {
         "# 내 지시\r\n".as_bytes()
     );
 }
+
+/// ★ **`settings.json` 도 그 파일의 줄바꿈으로 되쓴다.**
+///
+/// 블록(`CLAUDE.md`·`.gitignore`)에는 이 규율이 이미 서 있었는데 `settings.json` 만
+/// 문 밖에 있었다 — `serde_json::to_string_pretty` 는 언제나 LF 를 낸다. 그래서
+/// `core.autocrlf=true` 워킹트리에서는 **되쓸 때마다 파일의 모든 줄이 바뀌고**, git 이
+/// *"LF will be replaced by CRLF"* 를 매번 냈다.
+///
+/// **플랫폼 때문에 결과가 갈리는 자리다** — 유닉스 워킹트리에서는 아무 일도 안 난다.
+///
+/// ⚠ **직렬화 「형태」는 여기서 안 잰다.** 들여쓰기·키 순서가 우리 것이 되는 것은
+/// 플랫폼 무관한 기존 결정이고(`install.rs` 의 ⑥ 이 `settings.json` 을 값 단위로 재는
+/// 이유가 그것이다), 이 시험이 못 박는 것은 **줄바꿈 하나**다.
+#[test]
+fn crlf_설정도_crlf_로_되쓴다() {
+    let base = 방("설정줄바꿈");
+    let root = base.join("repo");
+    std::fs::create_dir_all(root.join(".claude")).expect("repo");
+    git(&root, &["init", "-q", "."]);
+    std::fs::write(root.join("README.md"), "hello\r\n").expect("README");
+    // 사용자의 설정이 **이미 CRLF** 이고, 형태는 이미 우리 직렬화와 같다 —
+    // 그래야 이 시험이 **줄바꿈만** 가른다.
+    let 원본 = "{\r\n  \"env\": {\r\n    \"A\": \"1\"\r\n  }\r\n}\r\n";
+    std::fs::write(root.join(".claude/settings.json"), 원본).expect("settings");
+
+    성공(&root, &["install"]);
+
+    let bytes = std::fs::read(root.join(".claude/settings.json")).expect("읽기");
+    // ① 홑 LF 가 하나도 없다 — 우리가 더한 줄도 CRLF 다.
+    let 홑lf = bytes
+        .iter()
+        .enumerate()
+        .filter(|(i, b)| **b == b'\n' && (*i == 0 || bytes[i - 1] != b'\r'))
+        .count();
+    assert_eq!(홑lf, 0, "되쓴 설정에 LF 줄이 {홑lf}개 남았다");
+    // ② 그리고 실제로 우리가 뭔가 더했다 — 이 줄이 없으면 ① 이 공짜로 통과한다.
+    let 텍스트 = String::from_utf8(bytes).expect("UTF-8");
+    assert!(텍스트.contains("hooks"), "설정에 아무것도 안 더했다:\n{텍스트}");
+
+    // ③ 왕복하면 **바이트로 원본이다.** 줄바꿈도 형태도 그대로 돌아온다.
+    성공(&root, &["uninstall"]);
+    assert_eq!(
+        std::fs::read(root.join(".claude/settings.json")).expect("읽기"),
+        원본.as_bytes(),
+        "왕복 뒤 설정이 원본 바이트와 다르다"
+    );
+}

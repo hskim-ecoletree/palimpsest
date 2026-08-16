@@ -34,6 +34,7 @@ mod layout;
 mod manifest;
 mod settings;
 mod sha256;
+mod winpath;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

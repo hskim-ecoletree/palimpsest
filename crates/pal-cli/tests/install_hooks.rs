@@ -84,9 +84,13 @@ fn 실행_권한(exe: &Path) {
 #[cfg(not(unix))]
 fn 실행_권한(_exe: &Path) {}
 
-/// 등록에 실리는 경로 — **설치가 심링크를 푼다**(`hooks::실행_파일`).
+/// 등록에 실리는 경로 — **설치가 심링크를 푼다**(`hooks::실행_파일`), 그리고
+/// **Windows 의 verbatim 접두사를 조건부로 벗긴다**(`install/winpath.rs`).
+///
+/// 그 조건을 여기서 다시 쓰지 않는다 — 제품과 같은 함수를 지난다. 손으로 옮겨 적으면
+/// 그것이 두 번째 목록이고, 어긋나는 순간 이 시험은 제품이 아니라 자기 사본을 잰다.
 fn 실제(exe: &Path) -> String {
-    exe.canonicalize().expect("canonicalize").display().to_string()
+    common::winpath::사람이_읽는(&exe.canonicalize().expect("canonicalize"))
 }
 
 fn 성공(exe: &Path, cwd: &Path, args: &[&str]) -> String {

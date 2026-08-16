@@ -121,10 +121,10 @@ pub fn merge(
 
     let created = read.current.is_none();
     if created {
-        super::guard::쓴다(path, text.as_bytes())?;
+        super::guard::쓴다(path, &그_파일의_줄바꿈으로(path, &text))?;
     } else {
         // **제자리로 쓴다** — 모드·심링크·하드링크를 살린다.
-        blocks::write_in_place(path, text.as_bytes())?;
+        blocks::write_in_place(path, &그_파일의_줄바꿈으로(path, &text))?;
     }
     Ok(Merged { added_keys: added, hooks_key_created, created, wrote: true })
 }
@@ -176,8 +176,31 @@ pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<Unmerged> {
     let mut text = serde_json::to_string_pretty(&Value::Object(map))
         .context("설정을 직렬화하지 못했다")?;
     text.push('\n');
-    blocks::write_in_place(path, text.as_bytes())?;
+    blocks::write_in_place(path, &그_파일의_줄바꿈으로(path, &text))?;
     Ok(out)
+}
+
+/// 직렬화한 본문을 **그 파일이 쓰던 줄바꿈에 맞춘다.**
+///
+/// # 왜 여기에도 [`super::eol`] 이 필요한가
+///
+/// `serde_json::to_string_pretty` 는 언제나 LF 를 낸다. `core.autocrlf=true` 로 클론한
+/// 워킹트리에서 `settings.json` 은 CRLF 인데, 우리가 LF 로 되쓰면 **파일 전체의 모든
+/// 줄이 바뀐다** — 사용자의 `git status` 에 우리 파일이 매번 뜨고, git 이 되쓰기마다
+/// *"LF will be replaced by CRLF"* 를 낸다.
+///
+/// 블록(`CLAUDE.md`·`.gitignore`)에는 이 규율이 이미 서 있었다(소유자 결정 2026-08-16:
+/// **판정은 정규화해서, 되쓰기는 있던 대로**). `settings.json` 만 그 문 밖에 있었고,
+/// 그것이 **플랫폼 때문에 결과가 갈리는 자리**였다 — 유닉스 워킹트리에서는 아무 일도
+/// 안 일어나고 Windows 에서만 매번 파일이 통째로 더러워진다.
+///
+/// ⚠ **직렬화 「형태」는 여기서 안 고친다.** 들여쓰기·키 순서가 우리 것이 되는 것은
+/// 플랫폼과 무관한 기존 결정이고(`tests/install.rs` 의 ⑥ 이 `settings.json` 을 값
+/// 단위로 재는 이유가 그것이다), 이 회차의 범위가 아니다.
+fn 그_파일의_줄바꿈으로(path: &Path, text: &str) -> Vec<u8> {
+    let 기존 = std::fs::read(path).ok();
+    let crlf = super::eol::그_파일의_줄바꿈(기존.as_deref());
+    super::eol::맞춘다(text.as_bytes(), crlf)
 }
 
 #[cfg(test)]
