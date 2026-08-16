@@ -55,44 +55,114 @@ const LOCK_WAIT_MS: u64 = 20_000;
 const LOCK_POLL_MS: u64 = 25;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 잠금 — 디렉터리 하나. `create_dir` 이 원자적이라는 사실 위에 선다
+// 잠금 — 파일 하나에 건 **권고 잠금**. 커널이 소유를 판정한다
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// # ★ 「누가 쥐고 있는가」를 어떻게 식별하기로 정했는가
+//
+// 앞 회차가 *"잠금 소유를 어떻게 식별할지는 설계 결정이라 안 정했다"* 로 남긴 자리다.
+// **정했다: 커널의 권고 파일 잠금([`std::fs::File::try_lock`])이 소유를 진다.**
+//
+// | 후보 | 왜 안 골랐나 |
+// |---|---|
+// | 디렉터리(옛것) | `create_dir` 이 원자적이라 배타는 되는데 **죽음을 못 본다.** `SIGKILL` 8지점 전부에서 잔해가 남았다 |
+// | 잠금 안에 **PID** 를 적는다 | PID 는 **재사용된다.** 「그 PID 가 살아 있다」와 「그 잠금의 주인이 살아 있다」가 다르고, 시작 시각까지 실어 좁히려면 플랫폼마다 다른 문을 열어야 한다 |
+// | 만료 시각(임대) | 시계에 기댄다. 느린 디스크에서 **산 잠금을 걷는다** |
+// | **권고 파일 잠금** ← 고른 것 | 판정을 **커널이 한다.** 프로세스가 어떻게 죽든(`SIGKILL` 포함) fd 가 닫히며 잠금이 풀린다. 우리가 「죽었나」를 추측할 자리가 없다 |
+//
+// 마지막 줄이 이 결정의 전부다 — **죽음의 판정을 우리가 하지 않는다.**
+//
+// ⚠ **이식성**: `File::try_lock` 은 유닉스(`flock`)와 Windows(`LockFileEx`) 양쪽에
+// 있다. 이 자리에 `#[cfg(unix)]` 가 하나도 없는 것은 그래서다 — 아래 **동일성 재확인**
+// 하나만 유닉스 전용이고, 그 사실을 [`Lock::같은_자리인가`] 가 적고 있다.
 
 struct Lock {
-    dir: PathBuf,
+    path: PathBuf,
+    file: std::fs::File,
 }
 
 impl Lock {
     fn take(root: &Root) -> Result<Self> {
-        let dir = root.join(&Rel::new(LOCK))?;
+        let path = root.join(&Rel::new(LOCK))?;
+        // **옛 빌드가 남긴 디렉터리 잔해**를 먼저 치운다. 비어 있을 때만 지워지고,
+        // 안 비었으면 아래 열기가 실패해 사람에게 넘어간다.
+        if path.is_dir() {
+            let _ = std::fs::remove_dir(&path);
+        }
         let mut waited = 0;
         loop {
-            match std::fs::create_dir(&dir) {
-                Ok(()) => return Ok(Self { dir }),
-                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+            let file = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(false)
+                .open(&path)
+                .with_context(|| format!("잠금을 열지 못했다: {}", path.display()))?;
+            match file.try_lock() {
+                Ok(()) => {
+                    // ★ **잡고 나서 그 자리가 아직 그 파일인지 다시 본다.** 앞 주인이
+                    // 놓으면서 파일을 지우고 다른 회차가 새로 만들었으면 우리가 쥔 것은
+                    // **이미 이름 없는 옛 inode** 이고, 그러면 둘이 동시에 들어온다.
+                    if Self::같은_자리인가(&file, &path) {
+                        return Ok(Self { path, file });
+                    }
+                    continue;
+                }
+                Err(std::fs::TryLockError::WouldBlock) => {
                     if waited >= LOCK_WAIT_MS {
                         bail!(
-                            "다른 `pal` 이 {} 를 잡고 있다. 아무도 안 돌고 있으면 그 \
-                             디렉터리를 지우십시오",
-                            dir.display()
+                            "다른 `pal` 이 {} 를 쥐고 있다 — **살아 있는 프로세스다**(커널이 \
+                             그렇게 답했다). 그것이 끝나기를 기다리십시오.\n    \
+                             죽은 잠금은 이 명령이 스스로 걷으므로 손으로 지울 일이 없다",
+                            path.display()
                         );
                     }
                     std::thread::sleep(std::time::Duration::from_millis(LOCK_POLL_MS));
                     waited += LOCK_POLL_MS;
                 }
-                Err(e) => {
+                Err(std::fs::TryLockError::Error(e)) => {
                     return Err(e)
-                        .with_context(|| format!("잠금을 잡지 못했다: {}", dir.display()));
+                        .with_context(|| format!("잠금을 잡지 못했다: {}", path.display()));
                 }
             }
+        }
+    }
+
+    /// 우리가 쥔 파일이 **아직 그 경로에 앉아 있는가.**
+    ///
+    /// ⚠ **유닉스 전용 가정**(소유자 결정 2026-08-16 · windows 대응 가정): 장치·inode
+    /// 번호로 댄다. Windows 에는 std 로 여는 등가 문이 없고 — 그쪽은 열려 있는 파일을
+    /// 지우는 것 자체가 기본적으로 막혀 이 경합이 거의 안 난다 — 그래서 그 플랫폼에서는
+    /// **재확인 없이 통과**시킨다. 여기가 그 사실을 적는 자리다.
+    fn 같은_자리인가(file: &std::fs::File, path: &Path) -> bool {
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            let (Ok(a), Ok(b)) = (file.metadata(), std::fs::metadata(path)) else {
+                return false;
+            };
+            return a.dev() == b.dev() && a.ino() == b.ino();
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = (file, path);
+            true
         }
     }
 }
 
 impl Drop for Lock {
+    /// **잠금 파일까지 치운다** — `.claude/` 를 비우려면 이것이 남으면 안 되고,
+    /// 남기면 사용자의 `git status` 에 우리 잔해가 매번 뜬다.
+    ///
+    /// 지우는 것과 놓는 것의 순서가 중요하다: **지운 뒤에 놓는다.** 반대로 하면 놓는
+    /// 순간부터 지우기 전까지 남이 그 inode 를 잡고, 그 뒤 우리가 지워서 **그 남이
+    /// 이름 없는 잠금을 쥔 채로 돌게** 된다. 그래도 남는 틈은
+    /// [`Lock::같은_자리인가`] 가 받는다.
     fn drop(&mut self) {
-        // 실패해도 할 수 있는 것이 없다 — 다음 실행이 위에서 사람에게 말한다.
-        let _ = std::fs::remove_dir(&self.dir);
+        let _ = std::fs::remove_file(&self.path);
+        // fd 가 닫히면 커널이 푼다. 명시적으로 한 번 더 부르는 것은 **의도를 적기
+        // 위해서**이고, 실패해도 할 수 있는 것이 없다.
+        let _ = self.file.unlock();
     }
 }
 
@@ -536,6 +606,12 @@ pub fn update(target: &Path) -> Result<()> {
     if !manifest_path.exists() {
         bail!("설치를 찾지 못했다: {} 가 없다", manifest_path.display());
     }
+    // ★ **잠금을 판정보다 먼저 잡는다.**
+    //
+    // 옛 코드는 *"이미 최신"* 을 잠금 **밖에서** 판정하고 rc=0 으로 나갔다. 그래서
+    // 반쯤 설치되고 잠긴 프로젝트에 `update` **만** 0초에 *"이미 최신"* 이라고
+    // 답했다 — 세 경로 중 하나만 잠긴 프로젝트를 **못 보는** 상태였다.
+    let _lock = Lock::take(&root)?;
     let mut m = manifest::read(&manifest_path)?;
 
     // ── 1단계 · 검증. **여기까지 한 바이트도 안 쓴다** ──────────────────────
@@ -562,7 +638,6 @@ pub fn update(target: &Path) -> Result<()> {
     }
 
     // ── 2단계 · 적용 ────────────────────────────────────────────────────────
-    let _lock = Lock::take(&root)?;
     let mut report = Report::new();
     if 낡음 {
         report.say("낡음", &format!("{} → {now}", m.pal_version));
