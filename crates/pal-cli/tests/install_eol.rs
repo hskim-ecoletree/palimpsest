@@ -31,7 +31,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::PAL;
+use common::{PAL, path_앞에};
 
 /// 지시 파일의 원본 — 설치 전의 유일한 내용.
 const 지시_원본: &str = "# 내 지시\n";
@@ -58,12 +58,11 @@ fn 커밋(cwd: &Path, 말: &str) {
 }
 
 fn 돌린다(cwd: &Path, args: &[&str]) -> Output {
-    let path = std::env::var("PATH").unwrap_or_default();
     let pal_dir = Path::new(PAL).parent().expect("pal 의 부모");
     Command::new(PAL)
         .args(args)
         .current_dir(cwd)
-        .env("PATH", format!("{}:{path}", pal_dir.display()))
+        .env("PATH", path_앞에(pal_dir))
         .output()
         .expect("pal 을 못 돌렸다")
 }

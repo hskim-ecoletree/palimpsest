@@ -18,7 +18,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
-use common::{PAL, git};
+use common::{PAL, git, path_앞에};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 방 — `밖/` 과 `안/` 이 형제로 산다
@@ -50,12 +50,11 @@ impl Drop for 방 {
 }
 
 fn 돌린다(cwd: &Path, args: &[&str]) -> Output {
-    let path = std::env::var("PATH").unwrap_or_default();
     let pal_dir = Path::new(PAL).parent().expect("pal 의 부모");
     Command::new(PAL)
         .args(args)
         .current_dir(cwd)
-        .env("PATH", format!("{}:{path}", pal_dir.display()))
+        .env("PATH", path_앞에(pal_dir))
         .output()
         .expect("pal 을 못 돌렸다")
 }
@@ -73,12 +72,11 @@ fn 성공(cwd: &Path, args: &[&str]) -> String {
 
 /// ★ **매달릴 수 있는 자리는 시간 상한을 걸고 돌린다.** 이 기계에 `timeout` 이 없다.
 fn 시간_안에(cwd: &Path, args: &[&str], 상한_ms: u64) -> Output {
-    let path = std::env::var("PATH").unwrap_or_default();
     let pal_dir = Path::new(PAL).parent().expect("pal 의 부모");
     let mut child = Command::new(PAL)
         .args(args)
         .current_dir(cwd)
-        .env("PATH", format!("{}:{path}", pal_dir.display()))
+        .env("PATH", path_앞에(pal_dir))
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

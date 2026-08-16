@@ -846,17 +846,29 @@ fn 모드와_심링크가_살아_있다() {
     );
 }
 
-/// ★ **유닉스 밖에서 이 성질은 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
+/// ★ **유닉스 밖에서 이 성질은 안 선다 — 그 사실이 시끄러워야 한다.**
 ///
-/// 소유자 결정(2026-08-16): *"windows 를 대응한다는 가정하에 앞으로 모든 설계와
-/// 개발이 되어야 해."* 짝 없는 `#[cfg(unix)]` 시험은 다른 플랫폼에서 **조용히
-/// 사라진다** — 위 시험은 모드 비트와 심링크 위에 서므로 짝을 단다.
+/// ⚠ **여기는 「아직 안 쟀다」가 아니다.** 셋 중 둘은 **일부러 안 지킨다**:
+///
+/// | 성질 | 이 플랫폼에서 |
+/// |---|---|
+/// | 모드 600 이 살아 있다 | **개념이 없다.** Windows 에 모드 비트가 없다 |
+/// | 심링크가 일반 파일로 안 바뀐다 | **fixture 를 못 세운다**(파일 심링크는 개발자 모드/`SeCreateSymbolicLinkPrivilege` 필요) **그리고 지키지도 않는다** — D34 가 이 플랫폼의 제자리 쓰기를 「끊고 쓰기」로 바꿨다 |
+/// | 심링크 대상에 쓰인다 | 위와 같다 |
+///
+/// **그래도 초록을 안 낸다.** 통과로 바꾸면 이 자리는 *"아무것도 안 재면서 초록"* 이
+/// 되고, 그것이 이 저장소가 짝 없는 `cfg` 에 대해 금지한 바로 그 상태다. 성질을
+/// 되찾거나(안정 채널이 심링크 생성을 열거나) 포기 결정을 뒤집을 때 이 자리가 움직인다.
 #[test]
 #[cfg(not(unix))]
 fn 모드와_심링크_보존이_이_플랫폼에서는_안_재진다() {
     panic!(
-        "제자리 쓰기가 모드와 심링크를 살리는지를 이 플랫폼에서 아직 안 잰다 — \
-         fixture 가 `PermissionsExt` 와 `symlink` 위에 선다"
+        "제자리 쓰기가 모드와 심링크를 살리는지를 이 플랫폼에서 **안 잰다. 그리고 \
+         일부는 일부러 안 지킨다** — ① 모드 비트는 이 플랫폼에 개념이 없다 \
+         ② 파일 심링크는 개발자 모드나 `SeCreateSymbolicLinkPrivilege` 없이 못 만들어 \
+         fixture 가 안 선다(junction 은 디렉터리에만 걸린다) ③ **D34**(DESIGN §12.9)가 \
+         이 플랫폼의 제자리 쓰기를 「끊고 쓰기」로 바꿨으므로 파일 정체성 보존은 \
+         **포기한 값**이다 — 하드링크로 대상 밖이 새는 것을 막는 대가다"
     );
 }
 
@@ -875,19 +887,35 @@ fn 쓰기_불가_디렉터리에서_거짓_성공하지_않는다() {
     assert!(!out.status.success(), "쓰기 불가 디렉터리에서 rc=0 을 냈다");
 }
 
-/// ★ **유닉스 밖에서 「거짓 성공 금지」가 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
+/// ★ **쓰기 불가 「디렉터리」는 이 플랫폼에서 아직 fixture 가 안 선다.**
 ///
-/// 소유자 결정(2026-08-16): *"windows 를 대응한다는 가정하에 앞으로 모든 설계와
-/// 개발이 되어야 해."* 짝 없는 `#[cfg(unix)]` 시험은 다른 플랫폼에서 **조용히
-/// 사라진다** — 초록을 내면서 아무것도 안 재는 상태가 된다.
+/// ⚠ **파일 축은 이제 재진다** — `쓸_수_없는_자리는_미리_끊는다` 가 `set_readonly`
+/// 로 이식되어 이 플랫폼에서도 `[f24]` ②(부분 설치 금지)의 트리거를 실제로 만든다.
+/// 그래서 여기 남은 것은 **디렉터리 하나**다.
+///
+/// 실측(2026-08-17) — Windows 에서 디렉터리의 읽기 전용 속성은 쓰기를 안 막는다:
+///
+/// ```text
+/// dir readonly attr  = true      ← 속성은 붙는다
+/// dir create file    = Ok(())    ← 그런데 파일이 그대로 만들어진다
+/// ```
+///
+/// 그 속성은 *"쓰지 마라"* 가 아니라 *"커스터마이즈된 폴더다"* 를 뜻한다. 그래서
+/// 진짜 쓰기 불가 디렉터리는 **ACL(`icacls`)의 일**이고 std 밖이다.
+/// 같은 실측이 제품 쪽 결함 하나도 냈다 — `install.rs` 의 `읽기_전용이_쓰기를_막는_종류인가`.
+///
+/// ★ **하나의 미측정 사실은 한 곳에서만 외친다.** 앞 회차는 이것을 두 자리에서
+/// 외쳤고(되감기 쪽 · 거짓 성공 쪽), 같은 것을 두 곳에 적는 것이 곧 drift 다
+/// (진행 규칙 4).
 #[test]
 #[cfg(not(unix))]
-fn 쓰기_불가에서의_거짓_성공_금지가_이_플랫폼에서는_안_재진다() {
+fn 쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다() {
     panic!(
-        "쓸 수 없는 자리에서 rc=0 을 내는지를 이 플랫폼에서 아직 안 잰다 — fixture 가 \
-         `PermissionsExt::from_mode` 위에 선다. Windows 에는 그 비트가 없고 쓰기 거부가 \
-         ACL(`icacls`)과 읽기 전용 속성으로 정해진다. 그 fixture 를 세우기 전까지 \
-         `[f24]` ②(부분 설치 금지)의 트리거를 **이 플랫폼에서는 못 만든다**"
+        "**쓰기 불가 디렉터리**에서 rc=0 을 내는지 · 그때 되감기 (a) 가 서는지를 이 \
+         플랫폼에서 아직 안 잰다 — 실측(2026-08-17): 디렉터리에 \
+         `FILE_ATTRIBUTE_READONLY` 를 붙여도 `dir create file = Ok(())` 라 fixture 가 \
+         안 선다. 진짜 쓰기 불가 디렉터리는 ACL(`icacls`)이고 std 밖이다.\n    \
+         ★ **파일 축은 이제 재진다** — `쓸_수_없는_자리는_미리_끊는다`"
     );
 }
 
@@ -895,13 +923,12 @@ fn 쓰기_불가에서의_거짓_성공_금지가_이_플랫폼에서는_안_재
 #[test]
 fn 동시_설치_여덟이_블록을_하나만_만든다() {
     let root = 살고_있는_프로젝트("g-경쟁");
-    let path = std::env::var("PATH").unwrap_or_default();
     let 아이들: Vec<_> = (0..8)
         .map(|_| {
             Command::new(PAL)
                 .args(["install"])
                 .current_dir(&root)
-                .env("PATH", format!("{}:{path}", pal_dir().display()))
+                .env("PATH", path_앞에(&pal_dir()))
                 .stdout(std::process::Stdio::null())
                 .spawn()
                 .expect("spawn")
@@ -930,13 +957,12 @@ fn 동시_설치_여덟이_블록을_하나만_만든다() {
 #[test]
 fn 동시_설치가_되돌리기_기록을_안_잃는다() {
     let root = 살고_있는_프로젝트("g-기록");
-    let path = std::env::var("PATH").unwrap_or_default();
     let 아이들: Vec<_> = (0..8)
         .map(|_| {
             Command::new(PAL)
                 .args(["install"])
                 .current_dir(&root)
-                .env("PATH", format!("{}:{path}", pal_dir().display()))
+                .env("PATH", path_앞에(&pal_dir()))
                 .stdout(std::process::Stdio::null())
                 .stderr(std::process::Stdio::null())
                 .spawn()
@@ -981,8 +1007,7 @@ fn 검사들(root: &Path, path_env: Option<&str>) -> serde_json::Value {
     if let Some(p) = path_env {
         cmd.env("PATH", p);
     } else {
-        let path = std::env::var("PATH").unwrap_or_default();
-        cmd.env("PATH", format!("{}:{path}", pal_dir().display()));
+        cmd.env("PATH", path_앞에(&pal_dir()));
     }
     let out = cmd.output().expect("pal doctor");
     serde_json::from_slice(&out.stdout).expect("JSON")
@@ -1086,19 +1111,30 @@ fn 설치가_없으면_잔여로_낸다() {
 ///
 /// 관측된 트리거 셋 — `.gitignore` 444 · `CLAUDE.md` 444 · `settings.json` 444.
 /// 셋 다 **읽기는 성공하고 쓰기만 실패해서** 옛 검증(`settings::read` 하나)을 통과했다.
+/// ★ **모든 플랫폼에서 잰다** — fixture 를 모드 비트에서 **읽기 전용 속성**으로 옮겼다.
+///
+/// 옛 회차는 `PermissionsExt::from_mode(0o444)` 로 만들어서 `#[cfg(unix)]` 였고,
+/// 다른 플랫폼에는 *"안 재진다"* 외침만 있었다. 그런데 [`std::fs::Permissions`] 의
+/// `set_readonly` 는 **이식 가능**하고, 실측(2026-08-17)이 그것으로 충분함을 보였다:
+///
+/// | | `readonly()` 가 참이 되나 | 쓰기가 실제로 막히나 |
+/// |---|---|---|
+/// | 유닉스 (`0o644` → `0o444`) | 된다 | **막힌다** |
+/// | Windows (`FILE_ATTRIBUTE_READONLY`) | 된다 | **막힌다** |
+///
+/// ⚠ **디렉터리는 이 fixture 로 못 만든다** — 같은 실측에서 Windows 는 디렉터리에
+/// 속성이 붙어도 파일이 그대로 만들어졌다. 그쪽은 아래 짝이 계속 외친다.
 #[test]
-#[cfg(unix)]
 fn 쓸_수_없는_자리는_미리_끊는다() {
-    use std::os::unix::fs::PermissionsExt;
-
     for 이름 in [".gitignore", "CLAUDE.md", ".claude/settings.json"] {
         let root = 살고_있는_프로젝트(&format!("h-{}", 이름.replace(['/', '.'], "-")));
         let path = root.join(이름);
-        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o444)).expect("chmod");
+        읽기_전용(&path, true);
 
         let 전 = 스냅샷(&root);
         let stderr = 실패(&root, &["install"]);
-        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+        // 되돌려 놓지 않으면 시험 방을 못 지운다.
+        읽기_전용(&path, false);
 
         assert_eq!(스냅샷(&root), 전, "{이름}: 부분 설치가 남았다");
         assert!(!root.join(".claude/pal").exists(), "{이름}: 디렉터리가 남았다");
@@ -1106,21 +1142,15 @@ fn 쓸_수_없는_자리는_미리_끊는다() {
     }
 }
 
-/// ★ **유닉스 밖에서 「미리 끊는다」가 아직 안 재진다 — 그 사실이 시끄러워야 한다.**
-///
-/// 위 시험은 관측된 트리거 셋(`.gitignore` · `CLAUDE.md` · `settings.json` 을 444 로)
-/// 위에 서고, 그 fixture 는 **모드 비트**다. 짝 없는 `#[cfg(unix)]` 은 다른
-/// 플랫폼에서 조용히 사라진다.
-#[test]
-#[cfg(not(unix))]
-fn 되감기_미리끊기가_이_플랫폼에서는_안_재진다() {
-    panic!(
-        "쓸 수 없는 자리를 1단계에서 미리 끊는지를 이 플랫폼에서 아직 안 잰다 — \
-         fixture 가 `PermissionsExt::from_mode(0o444)` 위에 선다. 이 플랫폼의 \
-         등가(읽기 전용 속성 · ACL)로 fixture 를 세우기 전까지 되감기 (a) 는 \
-         **안 재진다**"
-    );
+/// 읽기 전용을 켜고 끈다 — **이식 가능한 유일한 축.**
+fn 읽기_전용(path: &Path, 켤까: bool) {
+    let mut p = std::fs::metadata(path).expect("stat").permissions();
+    p.set_readonly(켤까);
+    std::fs::set_permissions(path, p).expect("권한");
 }
+
+// ⚠ **디렉터리 축의 외침은 여기 없다** — `쓰기_불가_디렉터리가_이_플랫폼에서는_안_재진다`
+// 하나가 그 사실을 진다. 같은 미측정을 두 곳에서 외치면 그것이 곧 drift 다(진행 규칙 4).
 
 /// ★ **아무것도 아직 못 놓은 자리에서 죽어도 걷어낼 수 있다.**
 ///

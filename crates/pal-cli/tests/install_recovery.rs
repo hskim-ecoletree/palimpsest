@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 use std::time::{Duration, Instant};
 
-use common::{PAL, git};
+use common::{PAL, git, path_앞에};
 
 fn 프로젝트(tag: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("pal-f24-회복-{tag}-{}", std::process::id()));
@@ -27,12 +27,11 @@ fn 프로젝트(tag: &str) -> PathBuf {
 }
 
 fn 돌린다(cwd: &Path, args: &[&str]) -> Output {
-    let path = std::env::var("PATH").unwrap_or_default();
     let pal_dir = Path::new(PAL).parent().expect("pal 의 부모");
     Command::new(PAL)
         .args(args)
         .current_dir(cwd)
-        .env("PATH", format!("{}:{path}", pal_dir.display()))
+        .env("PATH", path_앞에(pal_dir))
         .output()
         .expect("pal 을 못 돌렸다")
 }
@@ -132,12 +131,11 @@ fn 산_잠금은_기다린다() {
         .expect("잠금 파일");
     held.try_lock().expect("이 시험이 잠금을 못 쥐었다");
 
-    let path = std::env::var("PATH").unwrap_or_default();
     let pal_dir = Path::new(PAL).parent().expect("pal 의 부모");
     let mut child = Command::new(PAL)
         .args(["install"])
         .current_dir(&root)
-        .env("PATH", format!("{}:{path}", pal_dir.display()))
+        .env("PATH", path_앞에(pal_dir))
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
