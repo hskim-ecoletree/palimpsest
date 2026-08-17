@@ -5,7 +5,7 @@
 //!
 //! # 이 모듈이 결박을 만들지 않는다 — 그리고 그것이 이 모듈의 가장 무거운 결정이다
 //!
-//! [F12 §3.1] 의 표는 *"기존 심볼 → 즉시 해소 → **결박**"* 이라고 적었다.
+//! [옛 F12 §3.1] 의 표는 *"기존 심볼 → 즉시 해소 → **결박**"* 이라고 적었다.
 //! **이 구현은 그 줄을 따르지 않고, 안 따르는 이유를 적는다.**
 //!
 //! [ADR-0015] 가 F10 의 반증에서 나왔다 — *"**기계가 확인한 것은 이름의 유일성이지
@@ -17,7 +17,7 @@
 //! 항목이 그 좌표를 건드릴 것이라는 것은 다른 문장이다. 그러므로 여기서 `asserted`
 //! 결박을 만들면 그것이 정확히 F10 이 반증당한 형태다.
 //!
-//! [F12 §4] 가 이 기능의 성질을 이미 적었으므로 어긋나지 않는다:
+//! [옛 F12 §4] 가 이 기능의 성질을 이미 적었으므로 어긋나지 않는다:
 //!
 //! > `unplanned` 가 나쁜 것이 아니다. **판정이 아니라 관측이다.** 분류만 하고
 //! > 평가하지 않는다.
@@ -28,7 +28,7 @@
 //!
 //! # `pending` 이 [`crate::Binding`] 이 아닌 이유
 //!
-//! [F03 §3.3] 이 *"L0 에서 결박을 만들 수 없다"* 를 **타입으로** 세웠다 —
+//! [옛 F03 §3.3] 이 *"L0 에서 결박을 만들 수 없다"* 를 **타입으로** 세웠다 —
 //! [`crate::NewBinding`] 이 [`crate::SymbolId`] 를 요구하고, 그래서 **좌표 없는 결박은
 //! 이 빌드에서 타입상 존재할 수 없다.** `[f09].freshness_boundary` ⓐ 가 그것을 적고
 //! *"`subject` 만 있고 `target` 이 없는 결박은 F10·F12 의 것"* 이라고 넘겼다.
@@ -48,9 +48,9 @@
 //! [ADR-0012]: ../../../docs/adr/0012-a-single-truth-file-declares-only-what-has-a-counterpart-in-code.md
 //! [ADR-0015]: ../../../docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
 //! [ADR-0019]: ../../../docs/adr/0019-the-site-of-the-repair-is-not-the-site-of-the-defect.md
-//! [F03 §3.3]: ../../../docs/plan/disposal-map.md
-//! [F12 §3.1]: ../../../docs/plan/disposal-map.md
-//! [F12 §4]: ../../../docs/plan/disposal-map.md
+//! [옛 F03 §3.3]: ../../../docs/plan/disposal-map.md
+//! [옛 F12 §3.1]: ../../../docs/plan/disposal-map.md
+//! [옛 F12 §4]: ../../../docs/plan/disposal-map.md
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -132,7 +132,7 @@ fn digest16(domain: &[u8], parts: &[&[u8]]) -> String {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 예상 좌표 — **세 형태**([F12 §3.1] 의 표)
+// 예상 좌표 — **세 형태**([옛 F12 §3.1] 의 표)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// **무엇이** 이 후보를 냈나 — 산출에 실린다.
@@ -147,7 +147,7 @@ fn digest16(domain: &[u8], parts: &[&[u8]]) -> String {
 pub enum PatternSource {
     /// 계획이 좌표를 **명시**했다 — `좌표:` 줄. 사람이 적은 것이라 가장 강하다.
     ///
-    /// [F12 §4] 가 이슈의 대응 ③ 으로 적은 *"계획 작성 시 좌표를 요구하는 템플릿"* 이
+    /// [옛 F12 §4] 가 이슈의 대응 ③ 으로 적은 *"계획 작성 시 좌표를 요구하는 템플릿"* 이
     /// 이 신호를 낸다. ⚠ **실 코퍼스에서 0 일 수 있고, 0 이면 그 사실을 적는다** —
     /// ditto 의 계획 항목은 이 표기를 안 쓴다.
     Declared,
@@ -191,7 +191,7 @@ pub enum CoordPattern {
     /// 문장에 우연히 나온 낱말이 나중에 심볼이 되기만 해도 「계획대로」가 공짜로 는다 —
     /// **답을 보고 분류하는 것**이다.
     NewSymbol { name: String, by: PatternSource },
-    /// **경로 패턴.** 정밀도는 낮지만 `unmeasurable` 보다 낫다([F12 §3.1]).
+    /// **경로 패턴.** 정밀도는 낮지만 `unmeasurable` 보다 낫다([옛 F12 §3.1]).
     Paths { glob: Glob },
 }
 
@@ -254,7 +254,7 @@ pub struct PlanItem {
     pub verification: VerificationStep,
 }
 
-/// 이 계획의 **기준선**([F12 §4]).
+/// 이 계획의 **기준선**([옛 F12 §4]).
 ///
 /// > **base 커밋 선택** — 어디부터가 이 계획의 변경인가 …
 /// > **계획 승인 시점의 Snapshot 을 계획에 기록**
@@ -365,7 +365,7 @@ pub enum UnresolvedWhy {
     NotAtBaseline,
     /// 여럿으로 해소된다 — **하나를 고르지 않는다.**
     Many,
-    /// 패턴이 맞추는 파일이 상한을 넘었다 — *"좁히십시오"*([F12 §4]).
+    /// 패턴이 맞추는 파일이 상한을 넘었다 — *"좁히십시오"*([옛 F12 §4]).
     PatternTooBroad,
 }
 
@@ -390,12 +390,12 @@ impl UnresolvedWhy {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "state")]
 pub enum PlanBindingState {
-    /// 좌표가 섰다. **[F12 §3.1] 의 `live` 가 이 상태다** — 새 이름이 아니라
+    /// 좌표가 섰다. **[옛 F12 §3.1] 의 `live` 가 이 상태다** — 새 이름이 아니라
     /// *"상태를 계산할 자격을 얻었다"* 이고, 그 계산은 [`crate::BindingStatus`] 의 것이다.
     Bound { targets: Vec<SymbolId> },
     /// ★ **기준선에 아직 없다** — 계획이 코드를 선행한 자리.
     ///
-    /// [F12 §3.1]: *"신생 프로젝트에서는 의도가 코드를 선행하므로 결박할 좌표가 없다.
+    /// [옛 F12 §3.1]: *"신생 프로젝트에서는 의도가 코드를 선행하므로 결박할 좌표가 없다.
     /// **「아직 만들지 않았다」와 「만든 뒤 어긋났다」를 구별하는 것**이 F09 가 5 상태를
     /// 가진 이유다."*
     Pending { why: PendingReason },
@@ -481,7 +481,7 @@ impl ItemResolution {
         out
     }
 
-    /// ★ **계획이 자리를 적었는데 그 자리가 아직 없는가** — [F12 §4] 의 한 줄이다.
+    /// ★ **계획이 자리를 적었는데 그 자리가 아직 없는가** — [옛 F12 §4] 의 한 줄이다.
     ///
     /// > **`pending` 이 영원히 안 풀림** | 계획했는데 안 만듦 | 정상이다.
     /// > **`unimplemented` 로 잡히는 것이 이 기능의 산출**
@@ -797,7 +797,7 @@ pub struct Deviation {
     pub plan: PlanId,
     /// 계획대로 — **짝마다 한 줄**이다.
     pub as_planned: Vec<Planned>,
-    /// 계획에 없던 변경. ⚠ **나쁜 것이 아니다**([F12 §4]) — 관측이다.
+    /// 계획에 없던 변경. ⚠ **나쁜 것이 아니다**([옛 F12 §4]) — 관측이다.
     pub unplanned: Vec<SymbolId>,
     /// 계획했으나 그 좌표가 안 변했다.
     pub unimplemented: Vec<PlanItemId>,
@@ -832,7 +832,7 @@ impl Deviation {
     /// 분자는 `as_planned ∪ unimplemented` 의 항목 수, 즉 **`unmeasurable` 이 아닌 것**이다.
     /// ⚠ **「좌표가 걸렸다」와 같지 않다** — 계획이 자리를 적었는데 그 자리가 아직 없는
     /// 항목([`ItemResolution::still_pending`])도 여기 든다. 그 항목에 대해 우리는
-    /// *"계획했고 안 만들었다"* 를 **말할 수 있고**, 그것이 [F12 §4] 가 요구한 산출이다.
+    /// *"계획했고 안 만들었다"* 를 **말할 수 있고**, 그것이 [옛 F12 §4] 가 요구한 산출이다.
     ///
     /// **분모는 계획 항목 전부다.** `unmeasurable` 을 빼면 이 값이 정의상 1.0 이 된다.
     #[must_use]
@@ -913,7 +913,7 @@ pub fn deviate(plan: &Plan, resolutions: &[ItemResolution], delta: &SymbolDelta)
         let e = r.expected_coords();
         if e.is_empty() {
             if r.still_pending() {
-                // ★ **[F12 §4]** — *"계획했는데 안 만듦. 정상이다. `unimplemented` 로
+                // ★ **[옛 F12 §4]** — *"계획했는데 안 만듦. 정상이다. `unimplemented` 로
                 // 잡히는 것이 이 기능의 산출."* 좌표가 없는 것은 아래와 같지만
                 // **사건이 다르다.**
                 unimplemented.push(r.item.clone());
@@ -1118,7 +1118,7 @@ mod tests {
 
     #[test]
     fn 넓은_패턴은_거부된다() {
-        // [F12 §4] — *"`src/**` 는 무의미. 매칭 파일 수에 상한."*
+        // [옛 F12 §4] — *"`src/**` 는 무의미. 매칭 파일 수에 상한."*
         let files: Vec<RepoPath> =
             (0..40).map(|i| RepoPath::new(format!("src/f{i}.ts"))).collect();
         let symbols: Vec<SymbolNode> = Vec::new();
@@ -1201,7 +1201,7 @@ mod tests {
 
     #[test]
     fn 계획한_자리를_끝내_안_만들면_미구현이다() {
-        // ★ [F12 §4] — *"`pending` 이 영원히 안 풀림 … **`unimplemented` 로 잡히는
+        // ★ [옛 F12 §4] — *"`pending` 이 영원히 안 풀림 … **`unimplemented` 로 잡히는
         // 것이 이 기능의 산출**"*. `unmeasurable` 로 접으면 *"못 알아냈다"* 와
         // *"안 만들었다"* 가 같은 줄이 된다.
         let base = vec![심볼("a", "src/a.ts", 1)];

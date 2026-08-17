@@ -9,12 +9,12 @@
 //!
 //! # `--base <ref>` 가 없다 — **[F23] 의 것이다**
 //!
-//! [F23 §7] 의 완료 체크리스트가 `--base <ref>` 를 `briefing · conformance ·
+//! [옛 F23 §7] 의 완료 체크리스트가 `--base <ref>` 를 `briefing · conformance ·
 //! **deviation**` 셋에 대해 한 줄로 적었고 소유자가 거기다. [F12 §4] 는 그것 없이
 //! 서는 길을 이미 적었다 — *"계획 승인 시점의 Snapshot 을 계획에 기록"*.
 //! **그래서 기준선은 계획 문서의 프론트매터가 진다**([`PlanBaseline`]).
 //!
-//! [F23 §7]: ../../../docs/plan/disposal-map.md
+//! [옛 F23 §7]: ../../../docs/plan/disposal-map.md
 
 use std::path::{Path, PathBuf};
 

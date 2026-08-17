@@ -144,7 +144,7 @@ impl BodyDigest {
 
 /// 심볼 하나의 좌표 — **그리고 그것이 없을 수 있다는 사실.**
 ///
-/// # 왜 `(SymbolId, IdentityGrade)` 쌍이 아닌가 ([F03 §3.3])
+/// # 왜 `(SymbolId, IdentityGrade)` 쌍이 아닌가 ([옛 F03 §3.3])
 ///
 /// [`IdentityGrade`] 에는 [`Unavailable`] 이 있는데 `SymbolId` 에는 그런 값이 없다.
 /// 둘을 나란히 두면 **`Unavailable` 인데 `SymbolId` 가 있는 상태**를 타입이 허용하고,
@@ -193,7 +193,7 @@ impl BodyDigest {
 /// });
 /// ```
 ///
-/// [F03 §3.3]: ../../../docs/plan/disposal-map.md
+/// [옛 F03 §3.3]: ../../../docs/plan/disposal-map.md
 /// [`Unavailable`]: IdentityGrade::Unavailable
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "grade", content = "id")]
