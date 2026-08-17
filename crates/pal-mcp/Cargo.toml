@@ -1,0 +1,36 @@
+[package]
+name = "pal-mcp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# **`pal-core` 하나만 우리 것에 의존한다.** 질의를 *돌리는* 쪽은 여기 없다 —
+# 조립은 `pal-cli` 에 있고 이 크레이트는 `pal-cli` 에 의존할 수 없다
+# (`cargo xtask check` 의 의존 방향 규칙 3 · `[f06b.pass]` ⑦). 그래서 답을 내는 쪽을
+# [`Answers`] 트레이트로 받는다.
+pal-core.workspace = true
+
+# ── rmcp — 왜 이것인가 (stack §3.4: 신규 크레이트는 근거를 남긴다) ────────────
+#
+# · **공식 Rust SDK 다**(`modelcontextprotocol/rust-sdk`). F06 §5 가 *"rmcp 스펙 변동"* 을
+#   이슈로 적고 대응을 *"`pal-mcp` 크레이트에 격리"* 로 정했다 — 이 크레이트가 그 격리다
+# · 라이선스 **Apache-2.0**. `deny.toml` 의 허용 목록을 **하나도 늘리지 않는다**
+#   (착수 전 `cargo deny check licenses` 로 의존 트리 전체를 재서 확인했다)
+# · `default-features = false` 가 필수다 — 기본은 `base64`·`macros` 를 켜는데 **둘 다
+#   안 쓴다.** 툴 목록을 매크로로 만들지 않기 때문이다(`[f06b]` judges)
+# · `server` 가 `schemars`·`uuid` 를 끌고 온다. 줄일 수 없다 — 서버 역할 자체의 의존이다
+rmcp = { workspace = true }
+
+# rmcp 의 트랜스포트가 async 다. **런타임은 이 크레이트가 세우고 밖으로 안 샌다** —
+# `pal-cli` 는 동기이고 그대로 둔다(`serve_stdio` 가 동기 함수인 이유).
+# `rt` 는 현재 스레드 하나면 된다. stdio 서버에 워커 풀이 필요 없다.
+tokio = { workspace = true }
+
+serde_json.workspace = true
+anyhow.workspace = true
+
+[lints]
+workspace = true

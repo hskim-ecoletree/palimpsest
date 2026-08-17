@@ -25,6 +25,8 @@ mod ledger;
 mod narrative;
 mod plan;
 mod query;
+#[cfg(feature = "mcp")]
+mod serve;
 mod touch;
 mod version;
 
@@ -312,6 +314,36 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// MCP 어댑터를 stdio 로 세운다 — **능력을 하나도 안 더한다** (F06 §4b)
+    ///
+    /// 사람이 손으로 부를 일이 없다. 호스트가 이 프로세스를 띄우고 표준입출력으로
+    /// JSON-RPC 를 주고받는다. **여기서 나가는 답은 `pal query` 와 같은 조립을
+    /// 지난다** — 표면이 둘이어도 답은 하나다.
+    #[cfg(feature = "mcp")]
+    Serve {
+        /// 저장소 경로. 기본값은 현재 디렉터리
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        /// 어느 커밋인가. 기본값은 워킹트리
+        #[arg(long)]
+        at: Option<String>,
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        #[arg(long)]
+        index: Option<PathBuf>,
+        /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
+        #[arg(long)]
+        intent: Option<PathBuf>,
+        /// 몇 홉까지 — **낮추면 절단이 답에 실린다.** 기본값은 자리표시 3
+        #[arg(long)]
+        depth_max: Option<usize>,
+        /// 답이 담는 노드 수의 상한. 기본값은 자리표시 500
+        #[arg(long)]
+        node_max: Option<usize>,
+        /// **2층에 읽기 전용으로 붙는다** — 질의 로그를 못 남기고 그 사실이 봉투에 실린다
+        #[arg(long)]
+        read_only: bool,
+    },
     /// 2층을 우리 밖 도구가 읽는 형식으로 낸다 — **못 낸 라벨을 함께 적는다**
     Export {
         /// 저장소 경로. 기본값은 현재 디렉터리
@@ -513,6 +545,26 @@ fn main() -> Result<()> {
             node_max,
             read_only,
             json,
+        }),
+        #[cfg(feature = "mcp")]
+        Command::Serve {
+            repo,
+            at,
+            cache_dir,
+            index,
+            intent: intent_path,
+            depth_max,
+            node_max,
+            read_only,
+        } => serve::run(serve::Args {
+            repo,
+            rev: at,
+            cache_dir,
+            index,
+            intent: intent_path,
+            depth_max,
+            node_max,
+            read_only,
         }),
         Command::Export { repo, at, cache_dir, index, format, out, json } => {
             export::run(export::Args { repo, rev: at, cache_dir, index, format, out, json })

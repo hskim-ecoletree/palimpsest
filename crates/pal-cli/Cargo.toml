@@ -18,14 +18,36 @@ pal-git.workspace = true
 pal-intent.workspace = true
 pal-query.workspace = true
 pal-store.workspace = true
+
+# ── 어댑터 — **선택이다.** `[f06b.pass]` ⑥ 이 빼고 돌려서 잰다 ────────────────
+#
+# 기본으로 켠다. 받는 사람에게 값이 있는 쪽이 기본이어야 하고, *"없어도 아무것도 안
+# 죽는다"* 는 **꺼서** 재는 문장이지 꺼 두어야 참인 문장이 아니다(F06 §4b).
+pal-mcp = { workspace = true, optional = true }
+
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
 rayon.workspace = true
 
+[features]
+default = ["mcp"]
+# 이 feature 가 끄는 것은 **경로 하나**다 — 질의도 답도 그대로다.
+mcp = ["dep:pal-mcp"]
+
 [dev-dependencies]
 pal-intent.workspace = true
+
+# ── 실 MCP 클라이언트 — `[f06b.pass]` ① 이 이것을 요구한다 ────────────────────
+#
+# *"손으로 만든 JSON 을 파이프에 붓는 것으로 갈음하지 않는다 — 그것은 프로토콜이 아니라
+# 우리가 그 프로토콜이라고 믿는 것을 재는 것이다."* 그래서 **같은 SDK 의 클라이언트**로
+# 자식 프로세스를 몰아 세션을 완주시킨다.
+#
+# **`dev-dependencies` 다. 산출 바이너리에 안 들어간다** (`proptest` 와 같은 자격).
+rmcp = { workspace = true, features = ["client", "transport-child-process"] }
+tokio = { workspace = true, features = ["rt", "macros", "process", "io-util"] }
 
 [lints]
 workspace = true
