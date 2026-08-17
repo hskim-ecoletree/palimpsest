@@ -2567,12 +2567,12 @@ fn 트리거가_참인가(root: &Path, glob: &str) -> Result<Vec<String>> {
         if !dir.is_dir() {
             continue;
         }
-        for e2 in std::fs::read_dir(&dir)? {
-            let f = e2?.path();
-            if f.extension().and_then(|e| e.to_str()) == Some(ext) {
-                찾음.push(상대_경로(root, &f));
-            }
-        }
+        // ★ **깊이를 안 묶는다** (독립 리뷰 2026-08-18). 앞 판은 `rounds/<회차>/` 바로
+        //   아래만 봤는데, **이 회차 자신이 이미 `rounds/<회차>/effect/` 를 만들었다.**
+        //   `pal` 이 레코드를 한 단계 안쪽에 쓰면 트리거가 **영영 안 뜨고**, 그러면
+        //   검사는 초록인 채로 아무것도 안 지킨다 — 「꺼진 대조는 `–` 가 아니라 실패다」.
+        //   이름을 안 묶은 것과 같은 이유로 깊이도 안 묶는다.
+        아래_전부(&dir, ext, root, &mut 찾음)?;
     }
     찾음.sort();
     Ok(찾음)
@@ -2705,4 +2705,17 @@ fn 파일_경로인가(대상: &str) -> bool {
         return false;
     }
     대상.contains('/') || 확장자.iter().any(|e| 대상.ends_with(e))
+}
+
+/// 디렉터리 아래에서 그 확장자를 가진 파일을 **깊이 상관없이** 모은다.
+fn 아래_전부(dir: &Path, ext: &str, root: &Path, out: &mut Vec<String>) -> Result<()> {
+    for e in std::fs::read_dir(dir).with_context(|| format!("읽지 못했다: {}", dir.display()))? {
+        let p = e?.path();
+        if p.is_dir() {
+            아래_전부(&p, ext, root, out)?;
+        } else if p.extension().and_then(|x| x.to_str()) == Some(ext) {
+            out.push(상대_경로(root, &p));
+        }
+    }
+    Ok(())
 }

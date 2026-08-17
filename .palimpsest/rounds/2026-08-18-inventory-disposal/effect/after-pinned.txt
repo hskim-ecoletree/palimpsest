@@ -1,0 +1,25 @@
+저장소 문서만 읽고 답한다.
+
+## (1) 에이전트에 물리려면?
+
+**표면은 넷뿐이다** — 스킬 · 에이전트 정의 · 훅 · `pal` CLI(코드, 상태 관리자로서 "대화하지 않는다"). 그 이상은 없다.
+근거: `docs/adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md:62-69` · `docs/plan/00-goals.md:322`
+
+⚠ **절차는 아직 안 적혀 있다.** "완성되면 실제로 어떻게 쓰이나"가 명시적으로 **비어 있고**(옛 완성 장면 `how-it-works.md` 는 MCP 전제라 2026-08-18에 삭제), 사용자 프로젝트에 스킬·에이전트·훅을 어떻게 얹는지는 다음 회차(B)의 일이다.
+근거: `AGENTS.md:33` · `NEXT-B-plan-for-harness.md:53` · `docs/plan/disposal-map.md:95`
+
+## (2) P7 — "환경에 종속되지 않는다", **뒤집혔다(부분)**
+
+`00-goals.md:230` 이 P7 을 취소선으로 싣는다. ADR-0025 §3 이 호스트 중립을 초석에서 내리고 **Claude Code 전용**으로 갔다. 근거는 표현력 — "스킬은 절차를 줄 수 있고 MCP 는 도구만 줄 수 있다".
+
+단, **내려간 것은 하네스 층뿐이다.** 코어는 여전히 호스트 없이 서고("다른 호스트 사용자는 코어만 쓴다"), 그 계약을 재는 것이 `crates/pal-cli/tests/host_free.rs` 다.
+근거: `docs/plan/00-goals.md:230` · `docs/adr/0025-…:55-60`
+
+## (3) MCP — **자리가 없다. 지워졌다**
+
+"MCP 는 호스트 중립성을 사는 값이고, 호스트가 하나면 살 이유가 없다. `pal` 을 Bash 로 부르면 프로토콜 층 없이 같은 답이 온다." `pal-mcp` 크레이트 · `serve` 서브커맨드 · feature `mcp` · `rmcp` 의존이 전부 처분됐다(서브커맨드 18→17, 크레이트 8→7).
+근거: `docs/adr/0025-…:71` · `:101` · `docs/plan/00-stack.md:198` · `docs/gates/inventory-disposal.md:69,73`
+
+남는 것 둘:
+- **ADR-0024 의 규칙은 산다** — "표면을 더할 때 목록을 더하지 않는다"가 스킬·훅에 그대로 걸린다 (`docs/plan/00-stack.md:436`)
+- ⚠ **계측 하나를 잃었다** — 실 MCP 세션에서 응답 토큰을 재던 유일한 축(`response_size_is_measured_not_assumed`)이 사라졌고, 위험 R-11(응답이 에이전트 컨텍스트를 잡아먹는다·높음)은 살아 있다 (`docs/gates/inventory-disposal.md:133-138`)

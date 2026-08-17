@@ -157,8 +157,8 @@ DB를 직접 만들 때 가장 비싼 것은 스키마 마이그레이션과 백
 ([§3.4](#34-의존-정책): *"P0에서 외부 크레이트 신규 추가는 커밋 메시지에 근거를 남긴다"*).
 
 `schema/graph.toml` 이 노드·엣지의 **단일 진실**이고([옛 DESIGN §1.2](disposal-map.md) D25),
-[§3.4](disposal-map.md)는 `producer`↔`provenance` 정합이 *"로딩 시점에 거부된다"* 고,
-[§12.7](disposal-map.md)은 `doctor` 의 불변식 여덟이 *"`schema/graph.toml` 에서 파생되며 손으로
+[옛 DESIGN §3.4](disposal-map.md)는 `producer`↔`provenance` 정합이 *"로딩 시점에 거부된다"* 고,
+[옛 DESIGN §12.7](disposal-map.md)은 `doctor` 의 불변식 여덟이 *"`schema/graph.toml` 에서 파생되며 손으로
 세지 않는다"* 고 적었다. 즉 **이 파일은 실행 시점에 읽혀야 한다.**
 
 `xtask` 가 `vocab.toml` 을 파서 없이 읽은 것(*"이 한 줄을 읽자고 의존을 늘리지 않는다"*)과
@@ -180,7 +180,7 @@ DB를 직접 만들 때 가장 비싼 것은 스키마 마이그레이션과 백
 | | 착수 | 왜 |
 |---|---|---|
 | **Kotlin** | **S0** | 유일하게 **사전 등록된 대조값**이 있다 — [T7](../gates/preflight.md#t7--kotlin-파싱-사전-측정)의 선언 추출 94.30% |
-| Java · JavaScript · TypeScript | F02 | **대조값이 없다.** 아무도 재본 적 없으므로 지금 숫자를 적지 않는다([§7.5](README.md)) |
+| Java · JavaScript · TypeScript | F02 | **대조값이 없다.** 아무도 재본 적 없으므로 지금 숫자를 적지 않는다(옛 `README §7.5`) |
 
 **우선순위가 아니라 측정 가능성이 순서를 정했다.** 넷은 같은 층에 선다.
 
@@ -252,7 +252,7 @@ palimpsest/
 ├── surface/queries.toml            # 명명된 질의 카탈로그 — 단일 진실
 ├── packs/schema/                   # 선언 팩 스키마
 ├── corpus/                         # 평가 코퍼스·과제·성공 기준
-└── docs/                           # 백서·설계·근거·이 계획
+└── docs/                           # ADR·게이트·이 계획 (백서·설계는 2026-08-18 에 지웠다)
 ```
 
 **단일 진실 파일이 셋이 됐다** — `schema/graph.toml`(무엇이 존재하는가) · `surface/queries.toml`(무엇을 물을 수 있는가) · `schema/provider.toml`(프로젝트가 무엇을 줄 수 있는가). **셋 다 코드가 아니라 데이터이고, 코드는 거기서 파생되거나 거기에 대조된다.**
