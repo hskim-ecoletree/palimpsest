@@ -43,8 +43,7 @@ where
         .serve(TokioChildProcess::new(cmd).expect("자식 프로세스를 못 띄웠다"))
         .await
         .expect("MCP 세션이 안 섰다");
-    let out = f(client, repo).await;
-    out
+    f(client, repo).await
 }
 
 /// ① **왕복한다** — `initialize` 는 `serve` 가 이미 했고, 여기서 `tools/list` 와
@@ -184,7 +183,7 @@ async fn 응답_크기가_잰_것과_가정한_것으로_갈려_있다() {
             // **신고한 크기가 실제로 나간 바이트와 맞는가.** 봉투는 자기 자신을 뺀
             // 나머지를 재므로 실제 본문이 조금 더 크다 — 그러나 **작을 수는 없다.**
             assert!(
-                본문.len() >= 잰_것 as usize,
+                본문.len() as u64 >= 잰_것,
                 "{} 의 신고 크기({})가 실제로 나간 바이트({})보다 크다",
                 q.name(),
                 잰_것,
@@ -203,6 +202,65 @@ async fn 응답_크기가_잰_것과_가정한_것으로_갈려_있다() {
         client.cancel().await.expect("세션을 닫는다");
     })
     .await;
+}
+
+/// ★ **종료까지 완주한다** — `[f06b.pass]` ① 의 못 재던 절반.
+///
+/// # 왜 실 클라이언트로 이것을 못 재는가
+///
+/// 위 시험들은 답을 받은 뒤 `cancel()` 한다. 그 경로는 **정상 종료가 아니고**, 그래서
+/// 서버가 세션을 닫으며 무엇을 하는지 하나도 안 잰다. 실제 호스트는 파이프를 닫아
+/// **EOF** 로 끝내고, 그때 `rmcp` 는 *"Drain in-flight handler responses"* 를 지난다.
+///
+/// **그 자리가 실제로 깨져 있었다**(2026-08-17): 런타임에 타이머가 없어 드레인이
+/// 패닉했고, 패닉했으므로 **아직 못 내보낸 답이 통째로 사라졌다.** 시험 넷은 전부
+/// 초록이었다 — **서버의 rc 도 stderr 도 아무도 안 봤기 때문이다.**
+///
+/// 그래서 여기서는 손으로 만든 JSON-RPC 를 파이프에 붓는다. ⚠ **이것이 ① 을 갈음하지
+/// 않는다** — 프로토콜의 왕복은 위의 실 클라이언트가 재고, 여기서 재는 것은 **종료**다.
+#[test]
+fn 종료가_깨끗하다() {
+    use std::io::Write as _;
+    use std::process::{Command, Stdio};
+
+    let repo = 저장소("mcp-exit");
+    let 대장 = pal_core::QueryName::LedgerSnapshot.name();
+    let 요청들 = format!(
+        concat!(
+            r#"{{"jsonrpc":"2.0","id":1,"method":"initialize","params":{{"protocolVersion":"2025-06-18","capabilities":{{}},"clientInfo":{{"name":"probe","version":"0"}}}}}}"#,
+            "\n",
+            r#"{{"jsonrpc":"2.0","method":"notifications/initialized"}}"#,
+            "\n",
+            r#"{{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{{"name":"{}","arguments":{{}}}}}}"#,
+            "\n",
+        ),
+        대장
+    );
+
+    let mut child = Command::new(PAL)
+        .args(["serve", "--repo"])
+        .arg(&repo)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("pal serve 를 못 띄웠다");
+    child.stdin.take().expect("stdin").write_all(요청들.as_bytes()).expect("요청을 못 넣었다");
+    let out = child.wait_with_output().expect("자식을 못 기다렸다");
+
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+
+    // ① **답이 둘 다 나갔다.** 종료가 답을 삼키면 여기서 하나가 빈다.
+    let 줄 = stdout.lines().filter(|l| !l.trim().is_empty()).count();
+    assert_eq!(줄, 2, "응답이 {줄} 줄이다 — 종료가 답을 삼켰다\nstdout: {stdout}\nstderr: {stderr}");
+    assert!(stdout.contains(r#""id":2"#), "tools/call 의 답이 없다\nstdout: {stdout}");
+
+    // ② **깨끗하게 끝났다.** rc 와 stderr 를 **둘 다** 본다 — 하나만 보면 나머지가 샌다.
+    assert!(out.status.success(), "pal serve 가 rc={:?} 로 끝났다\nstderr: {stderr}", out.status.code());
+    assert!(!stderr.contains("panicked"), "서버가 패닉했다\nstderr: {stderr}");
+
+    let _ = std::fs::remove_dir_all(&repo);
 }
 
 /// 툴 호출 하나 — **`CallToolRequestParams` 가 `non_exhaustive` 라** 필드 대입으로 만든다.

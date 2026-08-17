@@ -44,6 +44,13 @@ impl pal_mcp::Answers for 조립기 {
         // **이름을 문자열로 되돌려 `NamedQuery` 를 만든다.** 어댑터가 준 것은
         // `QueryName`(인자 없는 이름)이고 실행이 요구하는 것은 `NamedQuery`(인자 붙은
         // 것)다. 그 변환은 `parse` 하나뿐이고 CLI 도 같은 것을 지난다.
+        //
+        // ⚠ **지금 있는 유일한 호출자로부터는 이 `else` 에 못 온다** — `pal_mcp` 의
+        // `call_tool` 이 인자 유무를 먼저 강제한다(독립 검증이 실측했다: 이 자리를
+        // `panic!` 으로 바꾸고 `cargo test -p pal-cli` **394 통과 · 패닉 0 회**).
+        // **그래도 지운다는 뜻은 아니다** — [`pal_mcp::Answers`] 는 공개 트레이트이고
+        // 이 구현은 그 계약을 지는 자리다. 계약의 방어를 「지금 호출자가 안 온다」로
+        // 지우면, 호출자가 하나 더 생기는 날 **여기가 조용히 틀린 답을 낸다.**
         let Some(query) = NamedQuery::parse(name.name(), arg) else {
             return Err(format!(
                 "질의 `{}` 에 인자가 맞지 않는다 — 필요한 것은 {:?}",

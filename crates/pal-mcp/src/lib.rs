@@ -168,14 +168,33 @@ impl<A: Answers> ServerHandler for Server<A> {
 
         // 인자는 **하나 이하**다(`arg_names` 의 길이). 그 사실은 `NamedQuery::parse` 의
         // 모양이 이미 지고 있고, `인자가_하나_이하다` 가 그것을 못 박는다.
-        let arg = query.arg_names().first().and_then(|name| {
-            request.arguments.as_ref()?.get(*name)?.as_str().map(str::to_owned)
-        });
-        if !query.arg_names().is_empty() && arg.is_none() {
-            return Err(McpError::invalid_params(
-                format!("질의 `{}` 에 인자 `{}` 가 필요하다", query.name(), query.arg_names()[0]),
-                None,
-            ));
+        //
+        // ★ **「안 왔다」와 「타입이 틀렸다」를 가른다.** 뭉치면 부르는 쪽이 무엇을
+        // 고칠지 모른다 — 인자를 숫자로 보낸 사람에게 *"인자가 필요하다"* 라고 답하는 것은
+        // 거짓이다. `pal query` 의 *"모르는 이름"* 과 *"인자가 없다"* 를 가르는 것과
+        // 같은 규율이고, 그 자리에 이미 그렇게 적혀 있다(`query.rs` 의 `run`).
+        let mut arg = None;
+        if let Some(name) = query.arg_names().first() {
+            let 값 = request.arguments.as_ref().and_then(|m| m.get(*name));
+            match 값 {
+                Some(serde_json::Value::String(s)) => arg = Some(s.clone()),
+                Some(other) => {
+                    return Err(McpError::invalid_params(
+                        format!(
+                            "질의 `{}` 의 인자 `{name}` 은 문자열이어야 한다 — 온 것은 {}",
+                            query.name(),
+                            타입_이름(other)
+                        ),
+                        None,
+                    ));
+                }
+                None => {
+                    return Err(McpError::invalid_params(
+                        format!("질의 `{}` 에 인자 `{name}` 가 필요하다", query.name()),
+                        None,
+                    ));
+                }
+            }
         }
 
         match self.answers.answer(query, arg.as_deref()) {
@@ -184,6 +203,18 @@ impl<A: Answers> ServerHandler for Server<A> {
             // 결과로 내면 *"관측이 0 건"* 과 구별되지 않는다.
             Err(why) => Err(McpError::internal_error(why, None)),
         }
+    }
+}
+
+/// JSON 값의 갈래 이름 — 오류 메시지가 *"온 것은 무엇인가"* 를 말하기 위해.
+fn 타입_이름(v: &serde_json::Value) -> &'static str {
+    match v {
+        serde_json::Value::Null => "null",
+        serde_json::Value::Bool(_) => "참거짓",
+        serde_json::Value::Number(_) => "수",
+        serde_json::Value::String(_) => "문자열",
+        serde_json::Value::Array(_) => "배열",
+        serde_json::Value::Object(_) => "객체",
     }
 }
 
@@ -201,7 +232,24 @@ pub fn serve_stdio<A: Answers>(answers: A, version: impl Into<String>) -> anyhow
     // 아니라 **블로킹 풀** 위에서 돈다. 부르면 feature 를 하나 더 켜야 하고, 그
     // feature 는 소켓을 여는 능력이다. **상주 서버가 아니라는 것이 P12 의 실질**이므로
     // 소켓을 열 수 있는 상태로 두지 않는다.
+    //
+    // ★ **그러나 `enable_time()` 은 부른다 — 안 부르면 답이 사라진다.**
+    //
+    // 위 문단은 *"필요한 것만 켠다"* 를 논증하는데, **그 논증이 「무엇이 필요한가」를
+    // 틀리게 셌다.** `rmcp` 는 세션을 닫기 전에 *"Drain in-flight handler responses
+    // before closing the transport"* 를 하고 그 자리가 `tokio::time::timeout` 을 탄다
+    // (`service.rs:1736`). 타이머 드라이버가 없으면 **거기서 패닉**하고, 드레인이
+    // 패닉하므로 **아직 못 내보낸 응답이 통째로 사라진다.**
+    //
+    // 실측(2026-08-17): `initialize` → `initialized` → `tools/call` 을 파이프로 넣으면
+    // **응답이 1 줄**(initialize 만)이고 `tools/call` 의 답은 안 나갔다. rc=**1**.
+    // 켠 뒤: **응답 2 줄** · rc=**0** · stderr **빈 출력**.
+    //
+    // ⚠ **이것이 시험 넷 전부에서 초록으로 읽혔다** — 클라이언트가 답을 받은 뒤
+    // `cancel()` 하므로 시험은 통과하고, **서버의 rc=1 과 패닉은 아무도 안 봤다.**
+    // `종료가_깨끗하다` 가 이제 그것을 본다.
     let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_time()
         .build()
         .map_err(|e| anyhow::anyhow!("런타임을 세우지 못했다: {e}"))?;
 
@@ -251,6 +299,24 @@ mod tests {
                 q.arg_names().len()
             );
         }
+    }
+
+    /// **「안 왔다」와 「타입이 틀렸다」가 다른 말을 한다.**
+    ///
+    /// 뭉치면 인자를 숫자로 보낸 사람이 *"인자가 필요하다"* 를 받고, 그것은 거짓이다.
+    #[test]
+    fn 타입_이름이_갈래마다_다르다() {
+        let 갈래 = [
+            serde_json::json!(null),
+            serde_json::json!(true),
+            serde_json::json!(1),
+            serde_json::json!("x"),
+            serde_json::json!([]),
+            serde_json::json!({}),
+        ];
+        let 이름들: Vec<&str> = 갈래.iter().map(타입_이름).collect();
+        let 중복 = 이름들.iter().collect::<std::collections::BTreeSet<_>>();
+        assert_eq!(중복.len(), 이름들.len(), "갈래 이름이 겹친다 — 뭉개진다: {이름들:?}");
     }
 
     /// 스키마가 인자를 **필수로** 싣는다 — 안 실으면 부르는 쪽이 안 보내고, 그러면
