@@ -132,28 +132,47 @@ fn 등록된_외침() -> Vec<(&'static str, &'static str)> {
     외침.iter().filter(|(p, ..)| *p == 여기).map(|(_, n, w)| (*n, *w)).collect()
 }
 
-fn test(root: &Path) -> Result<()> {
-    println!("■ 시험 — 그리고 남는 실패가 등록된 외침과 같은지 본다");
+/// 자식 `cargo` 하나가 낸 것 중 **판정에 필요한 전부**.
+struct 돌린_결과 {
+    /// 종료 상태가 성공인가. ★ `false` 가 곧 빨강은 아니다 — [`판정한다`] 를 보라.
+    섰나: bool,
+    /// stdout 전문. 실패 이름([`실패한_시험들`])과 시험 보고([`시험이_돌았나`])를 여기서 긁는다.
+    화면: String,
+}
+
+/// `cargo <args>` 를 `root` 에서 돌리고 **출력을 그대로 화면에 흘린다.**
+///
+/// ★ **흘리는 것을 없애지 마라.** 이 명령이 무엇을 감췄는지 사람이 볼 수 있어야 한다 —
+/// 판정만 내고 증거를 숨기면 그것이 곧 조용한 실패다.
+fn 돌린다(root: &Path, args: &[&str]) -> Result<돌린_결과> {
     let out = Command::new(env!("CARGO"))
-        .args(["test", "--workspace", "--all-targets", "--no-fail-fast"])
+        .args(args)
         .current_dir(root)
         .output()
         .context("cargo test 를 돌리지 못했다")?;
 
-    // **stdout 과 stderr 를 그대로 흘린다.** 이 명령이 무엇을 감췄는지 사람이 볼 수
-    // 있어야 한다 — 판정만 내고 증거를 숨기면 그것이 곧 조용한 실패다.
     print!("{}", String::from_utf8_lossy(&out.stdout));
     eprint!("{}", String::from_utf8_lossy(&out.stderr));
 
+    Ok(돌린_결과 {
+        섰나: out.status.success(),
+        화면: String::from_utf8_lossy(&out.stdout).into_owned(),
+    })
+}
+
+fn test(root: &Path) -> Result<()> {
+    println!("■ 시험 — 그리고 남는 실패가 등록된 외침과 같은지 본다");
+    let 돌린_결과 { 섰나, 화면 } =
+        돌린다(root, &["test", "--workspace", "--all-targets", "--no-fail-fast"])?;
+
     // **같은 이름이 여러 시험 바이너리에서 날 수 있다** — 집합으로 센다.
-    let 화면 = String::from_utf8_lossy(&out.stdout);
     let mut 실패: Vec<String> =
         실패한_시험들(&화면).into_iter().map(str::to_owned).collect();
     실패.sort();
     실패.dedup();
     let 등록 = 등록된_외침();
 
-    match 판정한다(out.status.success(), 시험이_돌았나(&화면), &실패, &등록) {
+    match 판정한다(섰나, 시험이_돌았나(&화면), &실패, &등록) {
         판정::시험을_못_돌렸다 => bail!(
             "**시험을 돌리지도 못했다** — 컴파일·링크가 서지 못했다.\n    \
              `cargo test` 가 rc≠0 을 냈는데 시험 바이너리의 보고(`test result:`)가 \
