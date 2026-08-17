@@ -551,6 +551,8 @@ fn check(root: &Path) -> Result<()> {
         ("인입이 자연어 유사도를 안 쓴다", check_no_similarity(root)),
         ("승격이 원본을 안 고친다", check_promotion_is_not_in_place(root)),
         ("설치 경로가 홈을 안 부른다", check_install_never_reaches_home(root)),
+        ("죽은 링크 부재", check_dead_links(root)),
+        ("sunset 선언", check_sunset(root)),
     ];
     let total = checks.len();
 
@@ -1262,6 +1264,13 @@ fn check_catalog(root: &Path) -> Result<String> {
 }
 
 /// 파생 — 질의 표. **손으로 쓰지 않는다.**
+/// ⚠ **여기서 나가는 문자열에 상대 링크를 쓰지 않는다.**
+///
+/// 이 함수는 `xtask/src/` 에 살면서 `docs/` 아래에 파일을 낸다. 상대 링크를 담으면
+/// **두 기준 중 하나에서 반드시 죽는다** — 죽은 링크 검사는 「발신 파일 기준」으로
+/// 해석하므로 `xtask/src/…` 에서 보고, 사람은 `docs/…` 에서 본다. 둘을 동시에
+/// 만족시킬 수 없다. 그래서 경로는 **코드 표기(`` ` ` ``)로 적고 링크로 안 만든다.**
+///
 fn render_catalog_doc(c: &pal_core::QueryCatalog) -> String {
     use std::fmt::Write as _;
     let mut o = String::new();
@@ -1271,7 +1280,7 @@ fn render_catalog_doc(c: &pal_core::QueryCatalog) -> String {
     let _ = writeln!(
         o,
         "**이 빌드가 답하는 질의 {}개.** 여기 없는 것은 이 빌드가 답하지 않는다 — \
-         [F06 §3](plan/features/F06-surface.md)의 표는 **로드맵이고 이 표의 상위집합이 \
+         옛 `F06 §3` 의 표는 **로드맵이고 이 표의 상위집합이 \
          아니다**.\n",
         c.queries.len()
     );
@@ -1416,7 +1425,7 @@ fn render_schema_doc(s: &pal_core::GraphSchema) -> String {
     let _ = writeln!(
         o,
         "노드 라벨 **{}개** · 엣지 타입 **{}개**. \
-         자라는 것 자체가 관측 대상이다([DESIGN §1.2](DESIGN.md)).\n",
+         자라는 것 자체가 관측 대상이다(옛 `DESIGN §1.2` · 처분은 `docs/plan/disposal-map.md`).\n",
         s.nodes.len(),
         s.edges.len()
     );
@@ -2282,4 +2291,280 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
             }
         }
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 죽은 링크 — **문서가 없는 문서를 가리키면 그것이 거짓 신호다**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// # 왜 이 검사가 생겼나 (2026-08-18 · 재고 처분)
+//
+// 이 저장소의 논지가 *"낡은 문서의 문제는 쓸모없어지는 것이 아니라 **거짓 신호**가
+// 되는 것"* 인데, **자기 저장소에 마크다운 링크 검사기가 없었다.** 그래서 문서 하나를
+// 지우면 그것을 가리키던 자리 백여 곳이 조용히 죽고 아무도 안 셌다. `rustdoc` 의
+// `broken_intra_doc_links` 는 **Rust 항목 링크만** 보고 파일 경로 링크는 안 본다.
+//
+// # ★ 모집단 규칙 — **측정 전에 등록한다**
+//
+// 규칙 없이 훑으면 시험 픽스처가 오탐으로 쏟아진다(실측: `.rs` 안의 경로형 문자열
+// `"docs/x.md"` 11 건 · `"docs/order/x.md"` 3 건 · `"docs/plan.md"` 3 건 — 전부 임시
+// 저장소에 만드는 가짜 경로다). 그래서 셋을 못 박는다:
+//
+//   1. **마크다운 링크 문법만** 본다 — `](경로)`. 산문 안의 경로 언급은 안 본다.
+//   2. **발신 파일 기준**으로 상대 해석한다.
+//   3. `http`·`mailto`·앵커 전용(`#…`)은 제외한다.
+//
+// # ★ 모집단 밖 — **왜 빠지는지가 각각 다르다**
+//
+// | 자리 | 왜 |
+// |---|---|
+// | `docs/gates/` 의 판정 문서 | **동결됐다.** 그때의 기록이고 사후에 안 고친다 |
+// | `docs/adr/` | **채택 시점의 결정 기록**이다. 근거 절을 사후에 고치면 그 ADR 이 무엇에 근거해 채택됐는지가 사라진다 |
+// | `docs/instructions/` | **소유자 지시 원문**이다. 낡을 수 없다 |
+// | `corpus/` | 게이트가 읽는 **측정 장치**이자 사전 등록 대장이다 |
+// | sunset 선언된 경로 | **지울 예정**이다. 지금 수리하면 두 장치가 서로를 당긴다 |
+// | `target/` · `.git/` | 산출·내부 |
+//
+// ⚠ **이 목록이 은신처가 되지 않게 하는 것**: 빠지는 자리마다 **왜**가 위 표에 있고,
+// 그 왜가 「고치기 귀찮다」인 항목은 하나도 없다. 새로 더할 때도 같은 자를 쓴다.
+//
+// ⚠ **모집단이 비면 실패다** — 0 건은 *"죽은 링크가 없다"* 가 아니라 *"안 봤다"* 이고,
+// 둘을 뭉개면 이 검사가 자기 대상이 사라진 것을 초록으로 낸다(`SURFACE_MIN` 과 같은 자리).
+
+/// 훑지 않는 자리. 저장소 루트 기준 접두사이고 구분자는 언제나 `/` 다.
+const 링크_모집단_밖: &[&str] = &[
+    "docs/adr/",
+    "docs/instructions/",
+    "corpus/",
+    "target/",
+    ".git/",
+];
+
+/// 게이트 디렉터리에서 **판정 문서만** 뺀다.
+///
+/// ★ `docs/gates/` 를 통째로 빼면 이 회차가 거기 새로 놓는 `README.md` 와
+/// `inventory-disposal.md` 가 **자기가 세우는 검사의 모집단 밖**에 선다.
+fn 동결된_판정_문서인가(상대: &str) -> bool {
+    let Some(이름) = 상대.strip_prefix("docs/gates/") else { return false };
+    if 이름.contains('/') {
+        return true;
+    }
+    let 첫 = 이름.as_bytes().first().copied().unwrap_or(b' ');
+    matches!(첫, b'F' | b'G' | b'S') || 이름.starts_with("preflight")
+}
+
+fn check_dead_links(root: &Path) -> Result<String> {
+    let sunset = sunset_선언(root)?;
+    let mut 파일들 = Vec::new();
+    모을_문서(root, root, &sunset, &mut 파일들)?;
+    파일들.sort();
+
+    // **모집단이 비면 실패다.**
+    if 파일들.len() < 30 {
+        bail!(
+            "훑을 문서가 {}개다 — 30개 미만이면 이 검사는 아무것도 안 세고 통과한다",
+            파일들.len()
+        );
+    }
+
+    let mut 죽음 = Vec::new();
+    let mut 링크수 = 0usize;
+    for file in &파일들 {
+        let body = std::fs::read_to_string(file)?;
+        let dir = file.parent().unwrap_or(root);
+        for 대상 in 마크다운_링크(&body) {
+            링크수 += 1;
+            if !dir.join(&대상).exists() {
+                죽음.push(format!("{}  →  {대상}", 상대_경로(root, file)));
+            }
+        }
+    }
+
+    if !죽음.is_empty() {
+        bail!("죽은 링크 {}건:\n    {}", 죽음.len(), 죽음.join("\n    "));
+    }
+    Ok(format!("문서 {}개 · 링크 {링크수}건 · 죽은 것 0건", 파일들.len()))
+}
+
+/// 모집단을 모은다 — `.md` 와 `.rs`.
+fn 모을_문서(root: &Path, dir: &Path, sunset: &[String], out: &mut Vec<PathBuf>) -> Result<()> {
+    for entry in std::fs::read_dir(dir).with_context(|| format!("읽지 못했다: {}", dir.display()))? {
+        let p = entry?.path();
+        let 상대 = 상대_경로(root, &p);
+        if 링크_모집단_밖.iter().any(|x| 상대.starts_with(x))
+            || sunset.iter().any(|x| 상대 == *x || 상대.starts_with(&format!("{x}/")))
+        {
+            continue;
+        }
+        if p.is_dir() {
+            모을_문서(root, &p, sunset, out)?;
+        } else if 동결된_판정_문서인가(&상대) {
+            continue;
+        } else {
+            let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("");
+            // ⚠ 시험은 가짜 경로를 만든다 — 모집단에서 뺀다.
+            let 시험인가 = 상대.contains("/tests/") || 상대.ends_with("/common.rs");
+            if ext == "md" || (ext == "rs" && !시험인가) {
+                out.push(p);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// `](…)` 에서 **파일 경로만** 뽑는다.
+///
+/// ★ **rustdoc 의 항목 링크를 걸러야 한다.** `.rs` 안에는 `[Envelope](Envelope)` ·
+/// `[좌표](crate::Coord)` · `[심볼](Self::symbols)` 같은 **Rust 항목 링크**가 많고,
+/// 그것들은 파일이 아니다. `rustdoc` 의 `broken_intra_doc_links` 가 이미 그 축을
+/// 재고 있으므로 여기서 또 재면 **같은 것을 두 곳에서 세는 것**이고, 게다가 틀리게 센다.
+///
+/// 가르는 자 둘:
+///   · `::` 가 있으면 Rust 경로다.
+///   · 파일 경로는 **`/` 를 갖거나 아는 확장자로 끝난다.**
+fn 마크다운_링크(body: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let b = body.as_bytes();
+    let mut i = 0;
+    while i + 1 < b.len() {
+        if b[i] == b']' && b[i + 1] == b'(' {
+            if let Some(close) = body[i + 2..].find(')') {
+                let 대상 = &body[i + 2..i + 2 + close];
+                i += 2 + close;
+                let 경로 = 대상.split('#').next().unwrap_or("");
+                let 경로 = 경로.trim();
+                if 파일_경로인가(경로) {
+                    out.push(경로.to_owned());
+                }
+                continue;
+            }
+        }
+        i += 1;
+    }
+    out
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// sunset — **「나중에 지운다」를 장치로 잠근다**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 선언은 `docs/sunset.toml` 에 있고 **그 파일이 왜 그렇게 생겼는지도 거기 있다.**
+// 여기서는 셋을 본다:
+//
+//   ① 트리거가 참인데 선언된 경로가 남아 있으면  → 실패 (지울 때가 됐다)
+//   ② 선언된 경로가 이미 없으면                  → 실패 (선언이 잔재다)
+//   ③ 선언이 하나도 없으면                       → 실패 (빈 껍데기다)
+//
+// ★ ②가 없으면 이 파일이 조용히 낡는다 — `SURFACE_MIN`·`외침` 레지스트리와 같은 자리다.
+//
+// `toml` 크레이트를 안 들인다. `xtask/Cargo.toml` 이 *"외부 의존을 늘리지 않는다"* 를
+// 적었고, 선례가 있다 — `vocab.toml`(한 줄짜리 허용 목록)을 손으로 읽는다. 이 파일도
+// **키가 셋뿐인 평평한 목록**이라 같은 자격이다.
+
+fn sunset_선언(root: &Path) -> Result<Vec<String>> {
+    let path = root.join("docs/sunset.toml");
+    let text = std::fs::read_to_string(&path)
+        .with_context(|| format!("sunset 선언을 읽지 못했다: {}", path.display()))?;
+    Ok(text
+        .lines()
+        .filter_map(|l| l.trim().strip_prefix("경로 = "))
+        .filter_map(|v| v.trim().strip_prefix('"')?.strip_suffix('"'))
+        .map(str::to_owned)
+        .collect())
+}
+
+fn sunset_트리거(root: &Path) -> Result<String> {
+    let text = std::fs::read_to_string(root.join("docs/sunset.toml"))?;
+    text.lines()
+        .find_map(|l| l.trim().strip_prefix("트리거 = "))
+        .and_then(|v| v.trim().strip_prefix('"')?.strip_suffix('"'))
+        .map(str::to_owned)
+        .context("`docs/sunset.toml` 에 `트리거 = ` 가 없다")
+}
+
+/// `.palimpsest/rounds/*/*.json` 형태의 글롭 하나만 푼다.
+fn 트리거가_참인가(root: &Path, glob: &str) -> Result<Vec<String>> {
+    let mut 조각 = glob.split('/');
+    let (Some(a), Some(b), Some(c), Some(d), None) =
+        (조각.next(), 조각.next(), 조각.next(), 조각.next(), 조각.next())
+    else {
+        bail!("트리거 글롭의 형태가 `a/b/*/*.ext` 가 아니다: {glob}");
+    };
+    let 확장 = c == "*" && d.starts_with("*.");
+    if !확장 {
+        bail!("트리거 글롭의 형태가 `a/b/*/*.ext` 가 아니다: {glob}");
+    }
+    let ext = &d[2..];
+    let base = root.join(a).join(b);
+    let mut 찾음 = Vec::new();
+    let Ok(읽기) = std::fs::read_dir(&base) else { return Ok(찾음) };
+    for entry in 읽기 {
+        let dir = entry?.path();
+        if !dir.is_dir() {
+            continue;
+        }
+        for e2 in std::fs::read_dir(&dir)? {
+            let f = e2?.path();
+            if f.extension().and_then(|e| e.to_str()) == Some(ext) {
+                찾음.push(상대_경로(root, &f));
+            }
+        }
+    }
+    찾음.sort();
+    Ok(찾음)
+}
+
+fn check_sunset(root: &Path) -> Result<String> {
+    let 선언 = sunset_선언(root)?;
+    // ③ 빈 껍데기
+    if 선언.is_empty() {
+        bail!("`docs/sunset.toml` 에 선언이 하나도 없다 — 이 검사가 아무것도 안 잰다");
+    }
+    let mut problems = Vec::new();
+
+    // ② 선언이 잔재인가
+    for 경로 in &선언 {
+        if !root.join(경로).exists() {
+            problems.push(format!(
+                "`{경로}` 가 이미 없는데 선언이 남아 있다 — 선언을 지워라"
+            ));
+        }
+    }
+
+    // ① 트리거가 참인가
+    let glob = sunset_트리거(root)?;
+    let 마커 = 트리거가_참인가(root, &glob)?;
+    if !마커.is_empty() {
+        for 경로 in &선언 {
+            if root.join(경로).exists() {
+                problems.push(format!(
+                    "`{경로}` 를 지울 때가 됐다 — 트리거가 참이다 ({})",
+                    마커.join(" · ")
+                ));
+            }
+        }
+    }
+
+    if !problems.is_empty() {
+        bail!("sunset:\n    {}", problems.join("\n    "));
+    }
+    Ok(format!(
+        "선언 {}건 · 트리거 `{glob}` 는 아직 0건 — 그날이 오면 여기가 빨개진다",
+        선언.len()
+    ))
+}
+
+/// 링크 대상이 **파일 경로**인가 — Rust 항목 링크·URL·산문을 여기서 가른다.
+fn 파일_경로인가(대상: &str) -> bool {
+    const 확장자: &[&str] =
+        &[".md", ".rs", ".toml", ".yml", ".yaml", ".json", ".py", ".sh", ".txt"];
+    if 대상.is_empty()
+        || 대상.starts_with("http")
+        || 대상.starts_with("mailto:")
+        || 대상.contains(' ')
+        || 대상.contains("::")
+    {
+        return false;
+    }
+    대상.contains('/') || 확장자.iter().any(|e| 대상.ends_with(e))
 }
