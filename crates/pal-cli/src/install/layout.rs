@@ -45,6 +45,15 @@ pub const PAYLOAD: &[Resource] = &[
         path: ".claude/commands/pal/doctor.md",
         body: include_str!("../../assets/commands/doctor.md"),
     },
+    // ★ **2026-08-18 에 `surface/claude-plugin/` 에서 승계했다.** 그 디렉터리는 코드가
+    // 한 번도 안 읽는 죽은 표면이었는데(설치는 여기 `assets/` 를 `include_str!` 한다),
+    // 그 안의 `ledger.md` 만 **여기 짝이 없었다.** 담고 있는 문장이 이 제품의 것이다 —
+    // *"`unsupported`·`unrecognized` 는 「그 파일에 아무 일도 없다」가 아니라
+    // **「우리가 안 봤다」**"*. 지우면 그 문장이 코드 어디에도 안 남는다(실측: 0 건).
+    Resource {
+        path: ".claude/commands/pal/ledger.md",
+        body: include_str!("../../assets/commands/ledger.md"),
+    },
 ];
 
 /// 매니페스트의 자리.
