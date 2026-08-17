@@ -61,3 +61,38 @@
 `/tmp/pal-inventory-20260818/` — `effect-before.txt` · `effect-before-2.txt` ·
 `help-before.txt` · `deadlinks.sh` · `deadlinks-baseline.txt` · `deadlinks-negctl.txt` ·
 `issues.json` · `issues.txt` · `wp-capabilities.md` · `wp-principles.md`
+
+## 착수 기준선 — 실행 (2026-08-18)
+
+| 잰 것 | 값 | 파일 |
+|---|---|---|
+| `cargo xtask check` | **16/16 통과 · rc=0** · 표면 2 곳 · 소스 35 | `xtask-check-before.txt` |
+| `cargo xtask test` | **774 통과 · rc=0** — 이 기계는 초록 | `xtask-test-before.txt` |
+| CI 회차 32049575037 @ `2989527` | **macos-latest failure** · 나머지 6 success | `ci-fail.txt` |
+| `pal --help` 서브커맨드 | **18** (`help` 제외) | `help-before.txt` |
+| 죽은 링크 | **2** (모집단 69 파일) | `deadlinks-baseline.txt` |
+| 삭제 대상으로 가는 참조 | **115** = 문서 58 + 소스 주석 57 | |
+
+**★ CI 실패는 내 것이 아니다.** `crates/pal-cli/tests/host_free.rs:302` —
+`drop(읽기_하나); drop(읽기_둘)` 직후 쓰기로 여는데
+`Database already open. Cannot acquire lock.` 이 난다. 이 기계에서 **3/3 통과**하고
+전체 시험도 774/774 통과하므로 **부하 의존**이다. 앞 커밋 `2f70104` 는 7/7 초록이었고
+`2989527` 은 문서만 바뀐 커밋이라 코드가 안 변했다.
+
+**★ `docs/gates/F06b.md:38` 이 MCP 없는 세계를 이미 예측해 뒀다** — `755 · 41줄`
+(`774 = 755 + 19` · `pal-mcp` 단위 5 + 세션 바이너리 14). 삭제 후 이 예측을 잰다.
+
+## scripts/ 41 판정 (조사 완료)
+
+| 처분 | 수 | 무엇 |
+|---|---|---|
+| **지운다** | 1 | `f06b-verify.py` — `:37` 이 `cargo test --test mcp_session` 을 첫 줄에서 돌리고 `:179-196` 이 `--help` 의 `serve` 유무를 잰다. 대상이 통째로 사라진다 |
+| **고친다** | 1 | `f12-verify.py:477` — **조건 없는 `skip("⑦ MCP 경로", "crates/pal-mcp 가 없다")`.** 메시지가 지금 이미 거짓인데 조건문이 없어 아무도 못 잡는다 |
+| **남긴다** | 39 | 접점 0. `f06-verify.py:246`(`if not exists(): 기권`)과 `f11-verify.py:472`(`else: skip`)는 **삭제가 스스로 고친다** — 확인한다 |
+
+★ **오탐을 하나 걸렀다.** `f12`·`f10`·`f02-1` 의 `.ditto` 는 **외부 코퍼스
+`~/dev/projects/ditto`** 이지 이 저장소의 `.ditto/` 가 아니다(`f10:51`
+`Path.home()/"dev/projects/ditto"`). **이 저장소 `.ditto/` 11 파일을 읽는 스크립트는 0 개**다.
+
+★ `scripts/` 중 **CI 가 실제로 부르는 것은 `interop-produce.sh`·`interop-receive.sh`
+둘뿐**이다(`ci.yml:206,260`). 나머지 39 는 사람이 손으로 돌리는 게이트 검증기다.
