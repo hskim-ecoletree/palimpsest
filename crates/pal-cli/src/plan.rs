@@ -14,7 +14,7 @@
 //! 서는 길을 이미 적었다 — *"계획 승인 시점의 Snapshot 을 계획에 기록"*.
 //! **그래서 기준선은 계획 문서의 프론트매터가 진다**([`PlanBaseline`]).
 //!
-//! [F23 §7]: ../../../docs/plan/features/F23-git-integration.md
+//! [F23 §7]: ../../../docs/plan/disposal-map.md
 
 use std::path::{Path, PathBuf};
 

@@ -1,6 +1,6 @@
 //! 좌표와 정체성 — **결박은 좌표 위에 서고, 좌표는 정체성 위에 선다.**
 //!
-//! # 값이 둘인 것이 이 모듈의 전부다 ([F03 §2](../../../docs/plan/disposal-map.md))
+//! # 값이 둘인 것이 이 모듈의 전부다 ([옛 F03 §2](../../../docs/plan/disposal-map.md))
 //!
 //! ```text
 //! symbol_id    "같은 심볼인가"   바뀌면 → 정체성이 끊긴다 (orphaned)
@@ -193,7 +193,7 @@ impl BodyDigest {
 /// });
 /// ```
 ///
-/// [F03 §3.3]: ../../../docs/plan/features/F03-identity.md
+/// [F03 §3.3]: ../../../docs/plan/disposal-map.md
 /// [`Unavailable`]: IdentityGrade::Unavailable
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "grade", content = "id")]

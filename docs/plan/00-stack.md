@@ -72,7 +72,7 @@ git (코드의 진실 원본)                    사람의 승인 (의도의 진
 - 2층은 의도 저장소의 **색인**만 갖는다(`BOUND_BY` · `WATCH` 등). 실체는 의도 저장소에 있고 2층은 그것을 가리킨다.
 - `pal cache prune` · `pal reindex`는 의도 저장소를 **건드리지 않는다.** 지우는 경로가 존재하지 않는 것이 대응이고, 그것을 CI가 검사한다.
 
-#### 정본은 텍스트다 — 2026-08-10 정정 ([F23](disposal-map.md) · [DESIGN §12.8](disposal-map.md))
+#### 정본은 텍스트다 — 2026-08-10 정정 ([옛 F23](disposal-map.md) · [옛 DESIGN §12.8](disposal-map.md))
 
 초안은 `intent.redb`를 원본으로 두고 JSONL을 **내보내기**로 두었다. 방향을 뒤집는다.
 
@@ -156,7 +156,7 @@ DB를 직접 만들 때 가장 비싼 것은 스키마 마이그레이션과 백
 이 절의 제목이 *"여기서 늘리지 않는다"* 이므로 늘어난 것은 근거와 함께 본문에 적는다
 ([§3.4](#34-의존-정책): *"P0에서 외부 크레이트 신규 추가는 커밋 메시지에 근거를 남긴다"*).
 
-`schema/graph.toml` 이 노드·엣지의 **단일 진실**이고([DESIGN §1.2](disposal-map.md) D25),
+`schema/graph.toml` 이 노드·엣지의 **단일 진실**이고([옛 DESIGN §1.2](disposal-map.md) D25),
 [§3.4](disposal-map.md)는 `producer`↔`provenance` 정합이 *"로딩 시점에 거부된다"* 고,
 [§12.7](disposal-map.md)은 `doctor` 의 불변식 여덟이 *"`schema/graph.toml` 에서 파생되며 손으로
 세지 않는다"* 고 적었다. 즉 **이 파일은 실행 시점에 읽혀야 한다.**
@@ -399,7 +399,7 @@ pub trait Projection {                         // 2층
 | 선택 필드 금지 | **도메인 타입**에 `Option<T>` 금지(범위는 아래) | CI |
 | **능력 부재를 값으로** | 미구축 산출의 자리는 `Capable<T>`. 빈 컬렉션으로 대신하지 않는다 | CI + 리뷰 |
 | 출처 불변 | setter 없음. 승격은 새 노드 반환 | 컴파일 |
-| **속성 출처 동질성** | 한 노드의 모든 속성이 같은 출처. 스키마의 `producer`가 노드 `provenance`와 정합([DESIGN §3.4](disposal-map.md)) | 스키마 로딩 + CI |
+| **속성 출처 동질성** | 한 노드의 모든 속성이 같은 출처. 스키마의 `producer`가 노드 `provenance`와 정합([옛 DESIGN §3.4](disposal-map.md)) | 스키마 로딩 + CI |
 | `clean` 없음 | `enum Judgment` 3변형 | 컴파일 |
 | 조용한 절단 금지 | `Envelope` 생성에 `Elision` 필수, 없으면 `Elision::none()`을 명시 | 컴파일 |
 

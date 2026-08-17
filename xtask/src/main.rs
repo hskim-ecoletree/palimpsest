@@ -2404,7 +2404,11 @@ fn 모을_문서(root: &Path, dir: &Path, sunset: &[String], out: &mut Vec<PathB
             let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("");
             // ⚠ 시험은 가짜 경로를 만든다 — 모집단에서 뺀다.
             let 시험인가 = 상대.contains("/tests/") || 상대.ends_with("/common.rs");
-            if ext == "md" || (ext == "rs" && !시험인가) {
+            // ★ **`.toml` 이 빠져 있었다** (독립 리뷰 2026-08-18). `surface/queries.toml`
+            //    은 **질의 카탈로그의 단일 진실**인데 확장자 때문에 안 훑렸고, 그 안에서
+            //    링크 하나가 죽어 있었다 — 계약 근거가 없는 문서를 가리켰다.
+            //    등록된 모집단에 `surface/` 가 있었으므로 **선언과 구현이 갈린 자리**다.
+            if ext == "md" || ext == "toml" || (ext == "rs" && !시험인가) {
                 out.push(p);
             }
         }
@@ -2412,7 +2416,19 @@ fn 모을_문서(root: &Path, dir: &Path, sunset: &[String], out: &mut Vec<PathB
     Ok(())
 }
 
-/// `](…)` 에서 **파일 경로만** 뽑는다.
+/// 마크다운 링크에서 **파일 경로만** 뽑는다 — **두 형태를 다 본다.**
+///
+/// ★ **인라인만 보면 절반을 놓친다** (독립 리뷰 2026-08-18 · 실측 8 건). 마크다운에는
+/// 형태가 둘이고 `rustdoc` 은 **똑같이 렌더링한다**:
+///
+/// ```text
+/// 인라인      [라벨](경로)
+/// 참조 정의   [라벨]: 경로        ← 줄 첫머리에 산다
+/// ```
+///
+/// 앞 판은 `']' + '('` 만 찾아서 정의형을 통째로 안 셌다. 그 결과 같은 파일 안에
+/// 인라인형은 고쳐지고 정의형은 안 고쳐진 자리가 나왔다(`crates/pal-core/src/budget.rs`
+/// 의 `:55` 와 `:141`). **수선이 검사와 같은 눈으로 돌지 않으면 그 차이가 그대로 남는다.**
 ///
 /// ★ **rustdoc 의 항목 링크를 걸러야 한다.** `.rs` 안에는 `[Envelope](Envelope)` ·
 /// `[좌표](crate::Coord)` · `[심볼](Self::symbols)` 같은 **Rust 항목 링크**가 많고,
@@ -2424,6 +2440,27 @@ fn 모을_문서(root: &Path, dir: &Path, sunset: &[String], out: &mut Vec<PathB
 ///   · 파일 경로는 **`/` 를 갖거나 아는 확장자로 끝난다.**
 fn 마크다운_링크(body: &str) -> Vec<String> {
     let mut out = Vec::new();
+
+    // ── 참조 정의형 — `[라벨]: 경로` ────────────────────────────────────────
+    // 줄 첫머리(주석 접두사 뒤)에 오는 것만 본다. 산문 중간의 `[x]: y` 는 링크가 아니다.
+    for line in body.lines() {
+        let t = line
+            .trim_start()
+            .trim_start_matches("///")
+            .trim_start_matches("//!")
+            .trim_start_matches("//")
+            .trim_start_matches('#')
+            .trim_start();
+        let Some(rest) = t.strip_prefix('[') else { continue };
+        let Some((_라벨, 뒤)) = rest.split_once("]: ") else { continue };
+        let 대상 = 뒤.split_whitespace().next().unwrap_or("");
+        let 경로 = 대상.split('#').next().unwrap_or("").trim();
+        if 파일_경로인가(경로) {
+            out.push(경로.to_owned());
+        }
+    }
+
+    // ── 인라인형 — `](경로)` ────────────────────────────────────────────────
     let b = body.as_bytes();
     let mut i = 0;
     while i + 1 < b.len() {

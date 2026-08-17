@@ -1,0 +1,26 @@
+Warning: no stdin data received in 3s, proceeding without it. If piping from a slow command, redirect stdin explicitly: < /dev/null to skip, or wait longer.
+저장소 문서만 읽고 답한다.
+
+## (1) 에이전트에 물리려면 — **표면 넷을 놓는 것이고, 설치 장면은 아직 안 써졌다**
+
+정해진 것: 표면은 **스킬 · 에이전트 정의 · 훅 · `pal` CLI** 넷이고 그 이상 없다 — `docs/adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md:62-69`. `pal` 은 상태 관리자이고 **대화하지 않는다**(같은 줄 69). 실제 진입점은 `/round` 를 여는 것 — `AGENTS.md:23`. 저장소에 선 실물은 `.claude/skills/round/SKILL.md` 하나와 `.claude/agents/*.md` 여섯이다.
+
+⚠ **답이 반쪽이다.** *"완성되면 실제로 어떻게 쓰이나"* 는 **비어 있다** — 옛 완성 장면(`how-it-works.md`)이 MCP 를 전제해 2026-08-18 에 지워졌고, 사용자 프로젝트에 어떻게 설치되어 도는지는 **다음 회차가 쓴다**: `AGENTS.md:33` · `docs/plan/README.md:9` · `NEXT-B-plan-for-harness.md:22-28`(*"하네스를 만드는 일이 하나도 없다"*).
+
+## (2) P7 = *"환경에 종속되지 않는다"* — **뒤집혔다**
+
+`docs/plan/00-goals.md:223` 이 P7 을 취소선으로 싣고 처분을 **「뒤집힘」**으로 적는다. 뒤집은 것은 `ADR-0025:56-60` — 호스트 중립을 초석에서 내리고 **Claude Code 전용**으로 갔다. 근거는 표현력(*"스킬은 절차를 줄 수 있고 MCP 는 도구만 줄 수 있다"*, `:60`).
+
+**단, 내려간 것은 하네스 층뿐이다.** 코어는 여전히 호스트 없이 서고(*"다른 호스트 사용자는 코어만 쓴다"* — `ADR-0025:100`), 그 계약을 재는 시험이 `crates/pal-cli/tests/host_free.rs` 다(`00-goals.md:223`). 되돌리는 조건도 등록돼 있다 — 호스트 중립이 다시 초석이 되면 전체가 뒤집힌다(`ADR-0025:112`).
+
+## (3) MCP — **자리가 없다. 값을 잃고 지워졌다**
+
+*"MCP 는 호스트 중립성을 사는 값이고, 호스트가 하나면 살 이유가 없다. `pal` 을 Bash 로 부르면 프로토콜 층 없이 같은 답이 온다"* — `ADR-0025:71`. 실제 처분: `crates/pal-mcp` · `serve` 서브커맨드 · feature `mcp` **711 줄 삭제**(`docs/plan/disposal-map.md:96`), 의존 `rmcp` 제거(`docs/plan/00-stack.md:198`), D30(*"MCP·플러그인은 어댑터"*)는 **뒤집힘**(`disposal-map.md:298`).
+
+두 가지는 남는다:
+- **ADR-0024 의 규칙은 산다** — 표면을 더할 때 목록을 더하지 않는다. 스킬·훅에도 그대로 걸린다(`ADR-0025:73` · `00-stack.md:436`).
+- ⚠ **계측 하나를 잃었다** — 실 MCP 세션에서 응답 토큰을 재던 유일한 축이 사라졌고, R-11(응답이 에이전트 컨텍스트를 잡아먹는다·높음)은 살아 있다: `docs/gates/inventory-disposal.md:92,95-97`.
+
+---
+
+**어긋남 하나 발견.** `docs/plan/00-goals.md:314` 「전달 형태」 행이 아직 *"MCP 서버와 Claude Code 플러그인은 **어댑터**"* 라고 적는다 — 같은 파일 `:223` 의 P7 처분·ADR-0025 §3 과 충돌하는 잔존 문장이다. 처분표가 D30 을 뒤집었는데 이 행은 따라오지 않았다.

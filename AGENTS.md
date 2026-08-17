@@ -33,7 +33,7 @@
 | 완성되면 실제로 어떻게 쓰이나 | ⏳ **비었다** — 옛 완성 장면은 MCP 를 전제해 [ADR-0025](docs/adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md) 와 충돌했고 2026-08-18 에 지웠다([처분표](docs/plan/disposal-map.md)). 하네스의 완성 장면은 **다음 회차가 쓴다** |
 | 무슨 언어·라이브러리·구조로 만드나 | [docs/plan/00-stack.md](docs/plan/00-stack.md) |
 | 무엇이 우리를 막을 것인가 | [docs/plan/00-risks.md](docs/plan/00-risks.md) |
-| 설계 결정과 그 근거 | [docs/adr/](docs/adr/) — **결정은 ADR 에만 산다**. 옛 `DESIGN.md` 의 결정 94 개가 어디로 갔는지는 [처분표](docs/plan/disposal-map.md) |
+| 설계 결정과 그 근거 | [docs/adr/](docs/adr/) — **결정은 ADR 에만 산다**. 옛 `DESIGN.md` 의 결정 99 개가 어디로 갔는지는 [처분표](docs/plan/disposal-map.md) |
 | 왜 만드나 · 능력 계약 `C1~C6` · 설계 원리 `P1~P14` | [docs/plan/00-goals.md](docs/plan/00-goals.md) — 백서에서 옮겨 왔다 |
 | 소유자가 실제로 무엇을 요구했나 | [docs/instructions/](docs/instructions/) — 원문이 산다 |
 

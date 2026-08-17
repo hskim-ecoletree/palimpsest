@@ -7,7 +7,7 @@
 //!
 //! 그래서 파일 상태가 3값(ok/skip/error)이 아니라 **일곱**이다. *"언어를 모른다"* 와
 //! *"언어는 아는데 추출기가 없다"* 를 사용자가 다르게 처리하기 때문이다 — 후자는
-//! 로드맵이고 전자는 설정이다. 뭉개면 대장이 거짓말을 한다([F01 §6](../../../docs/plan/disposal-map.md)).
+//! 로드맵이고 전자는 설정이다. 뭉개면 대장이 거짓말을 한다([옛 F01 §6](../../../docs/plan/disposal-map.md)).
 
 use std::collections::BTreeMap;
 use std::num::NonZeroUsize;

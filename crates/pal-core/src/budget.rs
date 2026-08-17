@@ -66,7 +66,7 @@ pub const PROVISIONAL_ERROR_RATIO_PERCENT: usize = 30;
 ///
 /// # 자리표시다 — **어느 측정도 이 값을 정하지 않았다**
 ///
-/// [DESIGN §12.4](../../../docs/plan/disposal-map.md) 의 예산 표에 **`미측정` 으로** 서 있다
+/// [옛 DESIGN §12.4](../../../docs/plan/disposal-map.md) 의 예산 표에 **`미측정` 으로** 서 있다
 /// (2026-08-13). 같은 표의 *브리핑 도달 깊이 3홉* 에서 자릿수만 빌렸고 근거는 그것뿐이다.
 /// §15-40 이 이미 *"낡음 전파의 비용이 미측정"* 을 열린 채로 적어 두었다 — 그 값을
 /// 정하는 것은 **F11 · F17** 의 실측이다.
@@ -74,7 +74,7 @@ pub const PROVISIONAL_ERROR_RATIO_PERCENT: usize = 30;
 /// **옛 자리**: `pal_core::cascade`.
 pub const PROVISIONAL_CASCADE_DEPTH: usize = 3;
 
-/// 후보 집합 상한 `K` — [DESIGN §12.4](../../../docs/plan/disposal-map.md) 의 예산 표. 초기값 32.
+/// 후보 집합 상한 `K` — [옛 DESIGN §12.4](../../../docs/plan/disposal-map.md) 의 예산 표. 초기값 32.
 ///
 /// # ⚠ 이것이 「흩어진 자리」 목록에 없었다
 ///
@@ -138,7 +138,7 @@ pub const PROVISIONAL_HISTORY_BUDGET: usize = 400;
 ///
 /// **옛 자리**: `pal_cli::cache` — **F04 가 더했다.** 옛 목록이 적힌 뒤에 늘어난 자리다.
 ///
-/// [DESIGN §5.5]: ../../../docs/DESIGN.md
+/// [DESIGN §5.5]: ../../../docs/plan/disposal-map.md
 pub const DEFAULT_CACHE_BUDGET_BYTES: u64 = 2 * 1024 * 1024 * 1024;
 
 /// 한 번에 손에 드는 파일 수 — **메모리가 파일 수에 비례하지 않게 하는 값이다.**
@@ -170,7 +170,7 @@ pub const CORRUPT_NOTES: usize = 5;
 // *"저장은 됐는데 어떤 질의로도 안 닿는"* 자리가 생긴다.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// 경로 곱 상한 `B` — [DESIGN §12.4](../../../docs/plan/disposal-map.md) 의 예산 표. 초기값 10⁴.
+/// 경로 곱 상한 `B` — [옛 DESIGN §12.4](../../../docs/plan/disposal-map.md) 의 예산 표. 초기값 10⁴.
 ///
 /// 후보 집합을 여럿 지나면 경로 수가 **곱으로** 자란다. 합으로 재면 폭발이 안 보인다.
 ///
@@ -285,7 +285,7 @@ impl Budget {
 /// > `closure(k)` 는 런타임에 조용히 느려지는 대신 **설정 시점에 실패한다.**
 ///
 /// 반경이 넓으면 `watch_snapshot` 의 부피가 반경에 비례해 늘고, 상태 계산이 매 질의마다
-/// 그 비용을 진다([F09 §4.2](../../../docs/plan/disposal-map.md)) —
+/// 그 비용을 진다([옛 F09 §4.2](../../../docs/plan/disposal-map.md)) —
 /// **투영 신선도 검사(상수 시간)와 혼동하지 않는다.**
 ///
 /// **자리표시다** — 어느 측정도 이 값을 정하지 않았다. `[f09.4]` 의 반경별 벤치가
@@ -311,7 +311,7 @@ pub const PROVISIONAL_WATCH_PRODUCT_MAX: usize = 1_000_000;
 /// [F11 §3.3] 이 *"기본 10"* 이라고 적은 값을 그대로 옮겼고, 그 문서도 근거를 안 적었다.
 /// 확정은 실 MCP 세션의 응답 토큰 분포(F06 · [R-11] 의 판정)가 한다.
 ///
-/// [F11 §3.3]: ../../../docs/plan/features/F11-touch.md
+/// [F11 §3.3]: ../../../docs/plan/disposal-map.md
 pub const PROVISIONAL_TOUCH_BINDING_MAX: usize = 10;
 
 /// 계획 항목의 **경로 패턴**이 맞출 수 있는 파일 수의 상한 — [F12 §4].

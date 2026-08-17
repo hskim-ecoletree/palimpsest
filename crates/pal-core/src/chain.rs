@@ -1,7 +1,7 @@
 //! 사슬의 마디 — `Change` · `Actor` · `Defect` · `Journey`.
 //!
 //! **넷 다 새 요구가 아니다.** 다른 절이 이미 *반환한다*고 적었거나 *검사한다*고
-//! 적었는데 타입이 없던 것이다([DESIGN §1.1](../../../docs/plan/disposal-map.md) D26).
+//! 적었는데 타입이 없던 것이다([옛 DESIGN §1.1](../../../docs/plan/disposal-map.md) D26).
 //!
 //! # 넷의 처지가 다르다 — 그리고 그 차이가 여기 타입으로 있다
 //!
@@ -55,7 +55,7 @@ impl ActorId {
 ///
 /// # `종류(human|agent|tool)` 가 여기 없다 — F22-3 이 내린 판단
 ///
-/// [DESIGN §1.1](../../../docs/plan/disposal-map.md)은 `Actor` 를 `{종류, 안정 식별자, 표시 이름}`
+/// [옛 DESIGN §1.1](../../../docs/plan/disposal-map.md)은 `Actor` 를 `{종류, 안정 식별자, 표시 이름}`
 /// 으로 적고 출처를 `asserted`(등록)라고 했다. **그 셋은 한 노드에 설 수 없다.**
 ///
 /// git 커밋의 저자 이름·이메일은 `(재현 입력, 추출기 버전)` 만으로 재현되므로 배정
@@ -125,13 +125,13 @@ impl ChangeId {
     }
 }
 
-/// 변경 하나 — **[DESIGN §12.6](../../../docs/plan/disposal-map.md)이 "변경의 1급화"를 수입한다고
+/// 변경 하나 — **[옛 DESIGN §12.6](../../../docs/plan/disposal-map.md)이 "변경의 1급화"를 수입한다고
 /// 적고 타입을 만들지 않았던 자리다.**
 ///
 /// **[graph-node] `Change`** — `schema/graph.toml`
 ///
-/// [F23](../../../docs/plan/disposal-map.md)의 git 결합과
-/// [F20](../../../docs/plan/disposal-map.md)의 델타가 전부 이
+/// [옛 F23](../../../docs/plan/disposal-map.md)의 git 결합과
+/// [옛 F20](../../../docs/plan/disposal-map.md)의 델타가 전부 이
 /// 마디 위에 선다. 없으면 델타에 기준선이 없다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Change {
@@ -246,7 +246,7 @@ pub enum NotFoundReason {
 ///
 /// # `원인 좌표[]` 가 여기 없다 — F22-3 이 내린 판단
 ///
-/// [DESIGN §1.1](../../../docs/plan/disposal-map.md)은 `{서술, 발현 좌표[], 원인 좌표[], 도입
+/// [옛 DESIGN §1.1](../../../docs/plan/disposal-map.md)은 `{서술, 발현 좌표[], 원인 좌표[], 도입
 /// Change, 해소 Change, 출처}` 를 적었다. **소급 결박에서 원인은 발현과 구별되지 않는다** —
 /// 우리가 아는 것은 *"이 심볼이 수정 커밋에서 변했다"* 와 *"그 전에 마지막으로 변한
 /// 커밋이 이것이다"* 뿐이고, 그 둘 다 같은 좌표를 가리킨다.
@@ -285,7 +285,7 @@ pub struct Defect {
 /// 있었고 `src/**` 변경이 0 줄이었다. `발현 좌표[]` 를 코드 심볼로만 좁히면 그 종류는
 /// **통째로 담기지 않는다.**
 ///
-/// [F22 §4](../../../docs/plan/disposal-map.md)는 그 자리를
+/// [옛 F22 §4](../../../docs/plan/disposal-map.md)는 그 자리를
 /// *"아직 정하지 않는다 — 잔여로 기록만 한다"* 로 두었다. 관측 1 건으로 스키마를 넓힐
 /// 근거가 얇기 때문이다. **그러면 남는 요구는 하나다: 세어서 표시한다.**
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

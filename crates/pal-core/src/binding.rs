@@ -140,7 +140,7 @@ pub struct Binding {
     /// # `TreeRef` 가 아니라 `Snapshot` 이다 (F22 의 정본화 · 2026-08-12)
     ///
     /// 이 자리는 `BOUND_TO` 엣지가 지는 **발생 `Snapshot`** 이고, 그것은 모든 엣지가
-    /// 공통으로 지는 넷 중 하나다([DESIGN §1.2](../../../docs/plan/disposal-map.md)).
+    /// 공통으로 지는 넷 중 하나다([옛 DESIGN §1.2](../../../docs/plan/disposal-map.md)).
     /// S3 는 여기에 `TreeRef` 를 넣었다 — 저장소가 하나뿐이라 트리 하나가 곧 "지금"
     /// 이었기 때문이다. **멀티레포에서는 그것이 성립하지 않는다**(§1.1).
     ///

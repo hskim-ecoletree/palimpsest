@@ -11,7 +11,7 @@
 //! 지지 않아서 정적 엔진의 판정과 에이전트의 판정이 **같은 노드로 붕괴**했다.
 //! 여기 있는 넷이 그 붕괴를 막는 성분이다.
 //!
-//! # 왜 값이 넷이고 다섯이 아닌가 ([DESIGN §3](../../../docs/plan/disposal-map.md))
+//! # 왜 값이 넷이고 다섯이 아닌가 ([옛 DESIGN §3](../../../docs/plan/disposal-map.md))
 //!
 //! 백서 P2 는 *사실과 추론* 2분할을 요구했고 그것은 가드 라벨을 담지 못한다(추출되지
 //! 않았으므로 사실이 아니고 사람이 확정했으므로 추론이 아니다). 4값으로 바꾸면 덮는다.
@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 
 /// 출처 — **인식론적 지위.** 이 값을 무엇으로 믿을 수 있는가.
 ///
-/// # 불변이다 ([DESIGN §3.1](../../../docs/plan/disposal-map.md))
+/// # 불변이다 ([옛 DESIGN §3.1](../../../docs/plan/disposal-map.md))
 ///
 /// 승격은 이 값을 고쳐 쓰는 것이 아니다. `inferred` 를 승인하면 그것을 가리키는 **새
 /// `asserted` 노드**가 생기고 원본은 남는다. 그래서 이 열거에 setter 가 없고,
@@ -75,7 +75,7 @@ impl Provenance {
 
 /// 생산자 — **생산 경로.** 무엇이 이 값을 계산했는가.
 ///
-/// # 출처의 중복이 아니다 ([DESIGN §3.4](../../../docs/plan/disposal-map.md))
+/// # 출처의 중복이 아니다 ([옛 DESIGN §3.4](../../../docs/plan/disposal-map.md))
 ///
 /// 출처는 *이 값을 무엇으로 믿을 수 있는가*이고 생산자는 *무엇이 이 값을 계산했는가*다.
 /// `asserted` 하나에 [`Self::Rule`] 과 [`Self::Human`] 이 함께 대응하는 것이 그 차이의
@@ -152,7 +152,7 @@ impl Producer {
     }
 }
 
-/// 엣지 해소 등급 — **엣지에 자격을 박는다** ([DESIGN §5.1](../../../docs/plan/disposal-map.md)).
+/// 엣지 해소 등급 — **엣지에 자격을 박는다** ([옛 DESIGN §5.1](../../../docs/plan/disposal-map.md)).
 ///
 /// P6 은 넓게 잡으라 하고 C2 는 거짓 엣지가 없는 엣지보다 나쁘다고 한다. 둘 다 옳고,
 /// 화해는 하나를 고르는 것이 아니라 **엣지가 자기 자격을 싣는 것**이다.
@@ -194,7 +194,7 @@ impl ResolutionGrade {
     ///
     /// # 이 함수가 §5.1 의 표보다 넓은 이유 — F22 가 내린 판단 (2026-08-12)
     ///
-    /// [DESIGN §5.1](../../../docs/plan/disposal-map.md) 의 등급표는 출처 열에 `exact`·`scoped`·
+    /// [옛 DESIGN §5.1](../../../docs/plan/disposal-map.md) 의 등급표는 출처 열에 `exact`·`scoped`·
     /// `candidate` → `extracted`, `contract` → `inferred` 만 적었다. 그런데 §1.2 는
     /// **"모든 엣지"** 가 해소 등급을 진다고 적었고, 그 둘을 그대로 합치면
     /// **`asserted` 엣지가 존재할 수 없다** — 결박(`BOUND_TO`)이 등록되지 못한다.

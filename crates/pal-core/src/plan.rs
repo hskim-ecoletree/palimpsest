@@ -48,9 +48,9 @@
 //! [ADR-0012]: ../../../docs/adr/0012-a-single-truth-file-declares-only-what-has-a-counterpart-in-code.md
 //! [ADR-0015]: ../../../docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
 //! [ADR-0019]: ../../../docs/adr/0019-the-site-of-the-repair-is-not-the-site-of-the-defect.md
-//! [F03 §3.3]: ../../../docs/plan/features/F03-normalize.md
-//! [F12 §3.1]: ../../../docs/plan/features/F12-plan-binding.md
-//! [F12 §4]: ../../../docs/plan/features/F12-plan-binding.md
+//! [F03 §3.3]: ../../../docs/plan/disposal-map.md
+//! [F12 §3.1]: ../../../docs/plan/disposal-map.md
+//! [F12 §4]: ../../../docs/plan/disposal-map.md
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;

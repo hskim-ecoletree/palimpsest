@@ -20,7 +20,7 @@
 //! [`pal_core::resolve_plan`] 가 묻고, 그것이 [ADR-0019] 의 자격 검사다.
 //! 조각화가 2 층을 안 타는 것과 같은 갈림이다.
 //!
-//! [F10]: ../../../docs/plan/features/F10-narrative.md
+//! [F10]: ../../../docs/plan/disposal-map.md
 //! [ADR-0015]: ../../../docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
 //! [ADR-0019]: ../../../docs/adr/0019-the-site-of-the-repair-is-not-the-site-of-the-defect.md
 

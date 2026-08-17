@@ -1,7 +1,8 @@
 # 달성 목표 — palimpsest로 무엇을 할 수 있게 되는가
 
 > 이 문서가 **모든 기능 문서의 채점 기준**이다. 기능은 스스로 정당화하지 않는다 — 아래 목표 중 하나에 기여하지 않으면 만들지 않는다.
-> 설계 근거는 [`DESIGN.md`](disposal-map.md), 논거는 [`WHITEPAPER.md`](00-goals.md)에 있다. 여기서는 **사용자가 무엇을 경험하는가**만 적는다.
+> 설계 결정은 [`docs/adr/`](../adr/) 에, 능력 계약과 설계 원리는 **이 문서 §2.5·§2.6** 에 있다.
+> 여기서는 **사용자가 무엇을 경험하는가**만 적는다. (옛 `DESIGN.md`·`WHITEPAPER.md` 의 행선지는 [처분표](disposal-map.md).)
 
 ---
 
@@ -11,7 +12,7 @@
 
 파는 것은 그래프가 아니다. 그래프는 이미 여럿 있다. 파는 것은 **"이 코드에 걸린 결정이 아직 유효한가"에 기계가 답한다**는 것이고, 그 답이 사람이나 에이전트가 코드를 만지려는 **바로 그 순간에** 온다는 것이다.
 
-### 0.1 무엇으로 채점되는가 — 산출이 아니라 결과 ([DESIGN §0.8](disposal-map.md))
+### 0.1 무엇으로 채점되는가 — 산출이 아니라 결과 ([옛 DESIGN §0.8](disposal-map.md))
 
 > **역사·결정을 알게 하는 것은 목적이 아니라 수단이다. 상위 가치는 그 결과로 더 나은 코드가 나오는 것이다.**
 
@@ -26,16 +27,16 @@
 
 | | 결과의 형태 | 어느 기능이 지는가 | P1에 있나 |
 |---|---|---|---|
-| **(a)** | 역사와 현재 방향성을 반영하는 코드 | [F09](disposal-map.md)·[F11](disposal-map.md) — 이미 중심 | **예** |
-| **(b)** | 단편적으로 안 보이는 결함·취약점·잘못된 추상화를 거시적으로 | [F16b](disposal-map.md) 조달 + F13·F15(자체 산출) — **전부 P2** | **아니오 — 2026-08-11 내려갔다** |
-| **(c)** | ~~여정·데이터 흐름의 사전 위험~~ → **진입점에서 시작하는 도달 하한** | [F19](disposal-map.md) 브리핑 + ~~`Journey` 노드~~ | 아니오 (P3) — **2026-08-11 축소됐다** |
-| **(d)** | 나비효과 방지 | [F07](disposal-map.md) 역방향 색인 + `Defect` 노드로 **재발을 센다** | **예** — [T8](../gates/preflight.md#t8--재발-사례-5건-확보)·[T10ⓐ](../gates/preflight.md#t10--여정결함의-올라탈-곳)가 받쳤다 |
+| **(a)** | 역사와 현재 방향성을 반영하는 코드 | [옛 F09](disposal-map.md)·[옛 F11](disposal-map.md) — 이미 중심 | **예** |
+| **(b)** | 단편적으로 안 보이는 결함·취약점·잘못된 추상화를 거시적으로 | [옛 F16b](disposal-map.md) 조달 + F13·F15(자체 산출) — **전부 P2** | **아니오 — 2026-08-11 내려갔다** |
+| **(c)** | ~~여정·데이터 흐름의 사전 위험~~ → **진입점에서 시작하는 도달 하한** | [옛 F19](disposal-map.md) 브리핑 + ~~`Journey` 노드~~ | 아니오 (P3) — **2026-08-11 축소됐다** |
+| **(d)** | 나비효과 방지 | [옛 F07](disposal-map.md) 역방향 색인 + `Defect` 노드로 **재발을 센다** | **예** — [T8](../gates/preflight.md#t8--재발-사례-5건-확보)·[T10ⓐ](../gates/preflight.md#t10--여정결함의-올라탈-곳)가 받쳤다 |
 
 > ### ⚠ P1의 약속은 **(a)(d)** 로 줄었다 — 2026-08-11
 >
 > **(b)를 P1에 세우는 유일한 경로가 조달이었다.** 직접 만들면 XL 둘(F13·F15)이고
 > [R-17](00-risks.md#r-17)이 막는다. SAST·린터·타입체커의 산물을 `observed`로 받으면 M 하나다 —
-> 그래서 2026-08-10에 F16이 P2에서 P1로 올라갔다([DESIGN §7.5](disposal-map.md)).
+> 그래서 2026-08-10에 F16이 P2에서 P1로 올라갔다([옛 DESIGN §7.5](disposal-map.md)).
 >
 > **[T9의 실측이 그 전제를 반증했다](../gates/preflight.md#t9--조달-가능성-실측)**([G8](#5-성공실패의-판정-형태) 발동 · [R-25](00-risks.md#r-25)).
 > 코퍼스 넷에서 **SAST 조달원은 0/4**, 좌표 있는 진단을 실제로 내는 곳은 1/4(ditto)이며
@@ -43,8 +44,8 @@
 > boxwood Kotlin 백엔드에는 분석 CI가 하나도 없다.**
 >
 > 그래서 처분을 적용했다: **[조달을 P2로 되돌리고, P1의 약속을 (a)(d)로 줄인다.**
-> **(b)는 P1의 약속이 아니다.]** 그 강등이 F16을 둘로 쪼갰다 — 수용 API([F16](disposal-map.md))는
-> P1로 남고 조달([F16b](disposal-map.md))이 P2로 내려간다.
+> **(b)는 P1의 약속이 아니다.]** 그 강등이 F16을 둘로 쪼갰다 — 수용 API([옛 F16](disposal-map.md))는
+> P1로 남고 조달([옛 F16b](disposal-map.md))이 P2로 내려간다.
 > 조달이 성립하는 프로젝트에서는 F16b가 여전히 값을 내지만,
 > 그것은 **"때때로 있는 능력"** 이므로 P1의 약속에 넣지 않는다.
 >
@@ -56,7 +57,7 @@
 > ### ⚠ (c)가 **"진입점에서 시작하는 도달 하한"** 으로 줄었다 — 2026-08-11
 >
 > (c)는 `Journey` 노드 위에 서 있었다. **여정은 코드에서 도출되지 않는다** — 진입점은
-> 추출되지만 *"이것들이 한 여정이다"* 는 사람의 선언이고([DESIGN §1.1](disposal-map.md)),
+> 추출되지만 *"이것들이 한 여정이다"* 는 사람의 선언이고([옛 DESIGN §1.1](disposal-map.md)),
 > 그래서 [R-27](00-risks.md#r-27)이 물은 것은 *"새 저작을 요구하지 않는 경로가 있는가"* 였다.
 >
 > **[T10ⓑ의 실측이 아니오라고 답했다](../gates/preflight.md#t10--여정결함의-올라탈-곳).**
@@ -130,24 +131,24 @@ $ pal touch order-svc:OrderService.cancel
 
 | 화면의 줄 | 세우는 기능 |
 |---|---|
-| `Snapshot` · `대장` · `언어` | [F01](disposal-map.md) · [F02](disposal-map.md) |
-| 좌표 `order-svc:OrderService.cancel` | [F03](disposal-map.md) |
-| 응답이 즉시 온다 | [F04](disposal-map.md) · [F05](disposal-map.md) |
-| `pal touch` 가 존재한다 | [F06](disposal-map.md) |
-| `호출자 7 (exact 5 · candidate 2)` | [F07](disposal-map.md) |
-| `내가 모르는 것` | [F08](disposal-map.md) |
-| `live / stale / pending` | [F09](disposal-map.md) |
-| `ADR-0042` 가 어떻게 들어왔나 | [F10](disposal-map.md) |
-| **이 화면 전체가 뜨는 것** | [F11](disposal-map.md) |
-| `PLAN §4-2` | [F12](disposal-map.md) |
-| `writes` | [F13](disposal-map.md) |
-| (진입점·경계) | [F14](disposal-map.md) |
-| `Finding` · `Residual` | [F15](disposal-map.md) |
-| `외부 엔진이 본 것` | [F16b](disposal-map.md) — **P2** (2026-08-11 강등: [T9](../gates/preflight.md#t9--조달-가능성-실측)). **P1에서는 이 줄이 뜨지 않는다** |
-| provider 산물이 `observed`로 들어오는 문 | [F16](disposal-map.md) — P1 |
-| `provider 경로 2/7` | [F21](disposal-map.md) |
-| **`여기서 났던 일`**(`Defect`) · `Change` · `Journey` · `Actor` | [F22](disposal-map.md) |
-| 결박이 팀에 공유되는 것 · `--base` 델타 | [F23](disposal-map.md) |
+| `Snapshot` · `대장` · `언어` | [옛 F01](disposal-map.md) · [옛 F02](disposal-map.md) |
+| 좌표 `order-svc:OrderService.cancel` | [옛 F03](disposal-map.md) |
+| 응답이 즉시 온다 | [옛 F04](disposal-map.md) · [옛 F05](disposal-map.md) |
+| `pal touch` 가 존재한다 | [옛 F06](disposal-map.md) |
+| `호출자 7 (exact 5 · candidate 2)` | [옛 F07](disposal-map.md) |
+| `내가 모르는 것` | [옛 F08](disposal-map.md) |
+| `live / stale / pending` | [옛 F09](disposal-map.md) |
+| `ADR-0042` 가 어떻게 들어왔나 | [옛 F10](disposal-map.md) |
+| **이 화면 전체가 뜨는 것** | [옛 F11](disposal-map.md) |
+| `PLAN §4-2` | [옛 F12](disposal-map.md) |
+| `writes` | [옛 F13](disposal-map.md) |
+| (진입점·경계) | [옛 F14](disposal-map.md) |
+| `Finding` · `Residual` | [옛 F15](disposal-map.md) |
+| `외부 엔진이 본 것` | [옛 F16b](disposal-map.md) — **P2** (2026-08-11 강등: [T9](../gates/preflight.md#t9--조달-가능성-실측)). **P1에서는 이 줄이 뜨지 않는다** |
+| provider 산물이 `observed`로 들어오는 문 | [옛 F16](disposal-map.md) — P1 |
+| `provider 경로 2/7` | [옛 F21](disposal-map.md) |
+| **`여기서 났던 일`**(`Defect`) · `Change` · `Journey` · `Actor` | [옛 F22](disposal-map.md) |
+| 결박이 팀에 공유되는 것 · `--base` 델타 | [옛 F23](disposal-map.md) |
 
 ---
 
@@ -170,7 +171,7 @@ $ pal touch order-svc:OrderService.cancel
 
 ## 2.5 능력 계약 `C1~C6` · 횡단요구 `U` — **채점의 단위**
 
-> ★ **2026-08-18 에 [`WHITEPAPER.md`](00-goals.md) 에서 옮겨 왔다.** 백서는 이
+> ★ **2026-08-18 에 옛 `WHITEPAPER.md` 에서 옮겨 왔다.** 백서는 이
 > 회차에 폐기됐고, 그 어휘는 이슈 제목·ADR·게이트 문서 스물 몇 곳이 지금도 쓴다.
 > 정의가 사는 자리를 **여기 하나**로 만든다. 폐기 판정은
 > [`disposal-map.md`](disposal-map.md) 에 있다.
@@ -274,15 +275,15 @@ $ pal touch order-svc:OrderService.cancel
 | **정밀한 정적 분석기를 <u>만드는</u> 것** | 컴파일러 수준 정밀도는 빌드를 요구한다. 균일성(임의 커밋·임의 언어)을 정밀도와 바꾸지 않는다. **그러나 그 산물을 받지 않는다는 뜻이 아니다** — 아래 |
 | **코드 검색 도구** | ripgrep이 이미 있다. 이 도구의 값은 검색이 아니라 결박이다 |
 | **CI 게이트 / 머지 차단기** — ★ **코어에 대한 진술이다** | 거버넌스는 이 층 **위에** 선다. **코어는 판정을 산출할 뿐 차단하지 않는다.** 하네스의 **훅**은 강제하고(표면 넷 중 하나) 그것이 훅이 있는 유일한 이유다 — 가르는 문장은 *"차단하는 것은 판정이 아니라 그 판정을 읽은 절차다"*. 전문 [ADR-0026](../adr/0026-the-core-produces-judgment-and-the-harness-enforces-it.md) |
-| ~~**작업을 모는 에이전트 하네스**~~ | ★ **2026-08-18 목표로 옮겼다 — [ADR-0025](../adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md).** 계획·실행·검증 루프를 돌리는 것이 이제 이 제품의 일이다. 하네스가 그래프를 조회하고(사서) 회차의 결정을 결박한다(사관). 절차는 [AGENTS.md](../../AGENTS.md) 가 진다. **"불러 쓰는 배치 도구"라는 뜻의 하네스도 여전히 1급 전달 형태다**([DESIGN §12.2](disposal-map.md)) |
+| ~~**작업을 모는 에이전트 하네스**~~ | ★ **2026-08-18 목표로 옮겼다 — [ADR-0025](../adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md).** 계획·실행·검증 루프를 돌리는 것이 이제 이 제품의 일이다. 하네스가 그래프를 조회하고(사서) 회차의 결정을 결박한다(사관). 절차는 [AGENTS.md](../../AGENTS.md) 가 진다. **"불러 쓰는 배치 도구"라는 뜻의 하네스도 여전히 1급 전달 형태다**([옛 DESIGN §12.2](disposal-map.md)) |
 | **자기 자신의 온톨로지를 만드는 도구** | 설치된 **그 프로젝트**의 온톨로지를 만든다. 자기 저장소는 첫 시험대일 뿐이다 |
 | **범용 지식 그래프** | 노드 타입은 코드 좌표에 결박 가능한 것과, 그것에 결박되는 것뿐이다 |
 
-**첫 행의 정정 (2026-08-10)**: 이 줄은 두 문장을 묶고 있었다 — ① *우리가 만들지 않는다*(참) ② *그 산물이 이 제품에 들어오지 않는다*(**거짓**). [`DESIGN §7.2`](disposal-map.md)의 O가 처음부터 반대로 적고 있었고 이 계획만 조달원 목록에서 SAST를 빠뜨린 채 F16을 P2로 미뤄 두었다.
+**첫 행의 정정 (2026-08-10)**: 이 줄은 두 문장을 묶고 있었다 — ① *우리가 만들지 않는다*(참) ② *그 산물이 이 제품에 들어오지 않는다*(**거짓**). [옛 `DESIGN §7.2`](disposal-map.md)의 O가 처음부터 반대로 적고 있었고 이 계획만 조달원 목록에서 SAST를 빠뜨린 채 F16을 P2로 미뤄 두었다.
 
 > **정적 분석은 필요하다. 다만 palimpsest가 만드는 것이 아니라 조달하고 결박하는 것이다.**
 
-조달만으로는 이 제품일 이유가 없으므로 이기는 자리를 다섯으로 못 박는다 — **결박 · 낡음 · 3분할 재분류 · 억제 이력 · 엔진 간 불일치**([DESIGN §7.5](disposal-map.md)). 다섯 중 어느 것도 성립하지 않으면 그냥 SAST를 돌리는 편이 낫고, 그것이 [F16b](disposal-map.md)의 반증 조건이다.
+조달만으로는 이 제품일 이유가 없으므로 이기는 자리를 다섯으로 못 박는다 — **결박 · 낡음 · 3분할 재분류 · 억제 이력 · 엔진 간 불일치**([옛 DESIGN §7.5](disposal-map.md)). 다섯 중 어느 것도 성립하지 않으면 그냥 SAST를 돌리는 편이 낫고, 그것이 [옛 F16b](disposal-map.md)의 반증 조건이다.
 
 ---
 
@@ -303,7 +304,7 @@ $ pal touch order-svc:OrderService.cancel
 
 G1·G2·G5·G6은 **코드로 검사한다**. G3·G4는 **코드 이전에 손으로 잰다**([`P0-preflight`](disposal-map.md)) — 다만 그 측정은 판단 성분만 재는 것이고 편향 방향을 함께 기록한다([R-23](00-risks.md#r-23)).
 
-**G7에는 아직 저울이 없다**([DESIGN §15-39](disposal-map.md)). 채점 기준을 올려 놓고 재는 수단이 코퍼스의 과거 결함 재현 검출 하나뿐이며 n이 작다. **그러므로 G7의 대조 장치를 P0-preflight의 산출에 넣는다** — 사후에 과제를 고르면 그것이 [R-18](00-risks.md#r-18)이 경고한 자기 판정의 오염이다.
+**G7에는 아직 저울이 없다**([옛 DESIGN §15-39](disposal-map.md)). 채점 기준을 올려 놓고 재는 수단이 코퍼스의 과거 결함 재현 검출 하나뿐이며 n이 작다. **그러므로 G7의 대조 장치를 P0-preflight의 산출에 넣는다** — 사후에 과제를 고르면 그것이 [R-18](00-risks.md#r-18)이 경고한 자기 판정의 오염이다.
 
 ---
 
