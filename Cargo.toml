@@ -7,7 +7,6 @@ members = [
     "crates/pal-intent",
     "crates/pal-store",
     "crates/pal-query",
-    "crates/pal-mcp",
     "crates/pal-cli",
     "xtask",
 ]
@@ -30,7 +29,6 @@ pal-git = { path = "crates/pal-git" }
 pal-store = { path = "crates/pal-store" }
 pal-intent = { path = "crates/pal-intent" }
 pal-query = { path = "crates/pal-query" }
-pal-mcp = { path = "crates/pal-mcp" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -84,18 +82,6 @@ proptest = "1"
 #     **반대 방향**(스레드 수를 바꿔도 산출이 같다)이 그것 없이는 재어지지 않는다
 #   · 라이선스 MIT/Apache-2.0 — `deny.toml` 의 예외를 **하나도 늘리지 않는다**
 rayon = "1"
-
-# F06b 가 들인 둘 — **어댑터 크레이트만 직접 의존한다.** 근거 전문은
-# `crates/pal-mcp/Cargo.toml` 에 있다(신규 크레이트는 근거를 남긴다 · stack §3.4).
-#   rmcp   — MCP 공식 Rust SDK. Apache-2.0 이라 `deny.toml` 의 허용 목록을 안 늘린다.
-#            `default-features = false` — 기본이 켜는 `base64`·`macros` 를 둘 다 안 쓴다
-#   tokio  — rmcp 의 트랜스포트가 async 다. **런타임은 `pal-mcp` 안에서 끝난다** —
-#            `pal-cli` 는 동기로 남는다(`serve_stdio` 가 동기 함수인 이유).
-#            ★ **`time` 이 필수다** — rmcp 의 **세션 종료 드레인**이 `tokio::time::timeout`
-#            을 탄다(`service.rs:1736`). 없으면 세션이 끝날 때마다 패닉하고 **아직 못
-#            내보낸 답이 통째로 사라진다**(실측: `tools/call` 답 유실 · rc=1)
-rmcp = { version = "3", default-features = false, features = ["server", "transport-io"] }
-tokio = { version = "1", default-features = false, features = ["rt", "io-std", "time"] }
 
 # F22 가 들인 하나. stack §3.4 는 "P0 에서 외부 크레이트 신규 추가는 근거를 남긴다" 고
 # 적었고 그 근거는 이렇다: `schema/graph.toml` 이 노드·엣지의 **단일 진실**이고

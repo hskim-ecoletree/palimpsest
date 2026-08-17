@@ -122,32 +122,6 @@ jobs:
       - name: cargo xtask test
         run: cargo xtask test
 
-      # ★ **어댑터를 빼고 돈다** — `[f06b.pass]` ⑥.
-      #
-      # F06 §4b 가 *"없어도 코어의 어떤 능력도 죽지 않는다"* 를 적었다. **그 문장은
-      # 꺼서 재는 문장이지 문서에 적어 두면 참이 되는 문장이 아니다.** 위의
-      # `xtask test` 는 기본 feature 로만 도므로 어댑터가 있는 세계만 잰다 — 여기가
-      # 없으면 어댑터가 언제 코어에 필수가 됐는지 아무도 모른다.
-      #
-      # ⚠ **`--help` 대조가 함께 있어야 한다**(아래 스텝). 빌드만 재면 이 검사는
-      # *"컴파일이 되는가"* 이지 *"뺐는가"* 가 아니다.
-      - name: 어댑터 없이 — 시험
-        run: cargo test -p pal-cli --no-default-features
-
-      - name: 어댑터 없이 — 표면이 실제로 갈린다
-        shell: bash
-        run: |
-          set -euo pipefail
-          # ⚠ **셸 변수명은 ASCII 다.** bash 의 식별자는 비ASCII 를 못 받고 `없는쪽=x` 는
-          # `command not found` 로 죽는다(실측 rc=127). 이 저장소는 이름을 한국어로
-          # 쓰지만 **셸 변수는 예외**이고, 그것은 job id·matrix 키와 같은 자리다.
-          cargo build -p pal-cli --bin pal --no-default-features
-          without=$(./target/debug/pal --help)
-          cargo build -p pal-cli --bin pal
-          with_=$(./target/debug/pal --help)
-          echo "$without" | grep -q "serve" && { echo "뺀 빌드에 serve 가 있다"; exit 1; }
-          echo "$with_" | grep -q "serve" || { echo "있는 빌드에 serve 가 없다"; exit 1; }
-          echo "표면이 갈린다 — 뺀 쪽에 serve 없음 · 있는 쪽에 있음"
 
   # ───────────────────────────────────────────────────────────────────────────
   # ★ **크로스 플랫폼 상호운용 — 한쪽이 놓고 커밋한 것을 다른 쪽이 받는다**
