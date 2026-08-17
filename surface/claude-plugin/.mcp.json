@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "palimpsest": {
+      "command": "pal",
+      "args": ["serve"]
+    }
+  }
+}
