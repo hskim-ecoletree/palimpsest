@@ -33,9 +33,11 @@ KG·투영 중심이라 **하네스를 안 담았다**
 ./scripts/frontier.sh
 ```
 
-⚠ **지금 프론티어에 「만들 것」이 없다.** 에픽 12 와 작업 항목 하나를 닫았고 새 지형이
-아직 안 섰으므로, 남은 착수 가능은 전부 **「고칠 것」**이다. 그 상태 자체가
-[재고 처분 게이트](../gates/inventory-disposal.md) 의 판정에 적혀 있다.
+⚠ **지금 프론티어의 「만들 것」이 둘뿐이다** — [#68](https://github.com/hskim-ecoletree/palimpsest/issues/68)(sunset)과
+[#69](https://github.com/hskim-ecoletree/palimpsest/issues/69)(문서 간 결박). 에픽 12 와 작업 항목 하나를 닫았고
+새 지형이 아직 안 섰으므로 나머지 아홉은 전부 **「고칠 것」**이다. 그 셈은
+[재고 처분 게이트](../gates/inventory-disposal.md) 의 판정에 있고, **지금 값은
+`./scripts/frontier.sh` 가 답한다.**
 
 ### 우선순위의 뜻 — ⏳ **함께 걷어냈다**
 
