@@ -45,7 +45,7 @@ pub struct Args<'a> {
 
 /// # Errors
 /// 저장소·캐시·2층 중 하나에 닿지 못하거나 질의 이름을 모르면.
-pub fn run(a: Args) -> Result<()> {
+pub fn run(a: &Args) -> Result<()> {
     if a.list {
         return list(a.json);
     }
@@ -60,7 +60,7 @@ pub fn run(a: Args) -> Result<()> {
         );
     };
 
-    let envelope = answer(&a, &query)?;
+    let envelope = answer(a, &query)?;
     if a.json {
         println!("{}", serde_json::to_string_pretty(&envelope)?);
     } else {

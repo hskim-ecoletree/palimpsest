@@ -532,7 +532,7 @@ fn main() -> Result<()> {
             node_max,
             read_only,
             json,
-        } => query::run(query::Args {
+        } => query::run(&query::Args {
             name: &name,
             arg: arg.as_deref(),
             list,
