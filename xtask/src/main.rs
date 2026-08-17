@@ -1078,6 +1078,12 @@ fn check_schema(root: &Path) -> Result<String> {
 /// **하한** — 이보다 적으면 네 방향이 공짜로 통과한다.
 const CATALOG_MIN_QUERIES: usize = 6;
 
+/// 방향 4 가 훑는 **표면 소스 전부.**
+///
+/// 질의 이름을 리터럴로 쓸 수 있는 자리는 여기뿐이고, **여기 없는 표면은 안 재어진다.**
+/// F06b 가 어댑터를 더하면서 `pal-cli` 하나이던 이 목록이 둘이 됐다.
+const SURFACE_SOURCES: &[&str] = &["crates/pal-cli/src", "crates/pal-mcp/src"];
+
 fn check_catalog(root: &Path) -> Result<String> {
     let path = root.join("surface/queries.toml");
     let text = std::fs::read_to_string(&path)
@@ -1158,22 +1164,37 @@ fn check_catalog(root: &Path) -> Result<String> {
 
     // ── 방향 4 — 표면이 자기 목록을 갖는가 ──────────────────────────────────
     //
-    // **CLI 소스에 질의 이름이 리터럴로 박히면 실패.** 박히는 순간 목록이 두 곳에서
+    // **표면 소스에 질의 이름이 리터럴로 박히면 실패.** 박히는 순간 목록이 두 곳에서
     // 자라고, 그러면 카탈로그가 단일 진실이 아니다.
-    let cli_src = root.join("crates/pal-cli/src");
+    //
+    // ★ **표면이 하나가 아니다** (F06b · `[f06b.pass]` ⑤). 여기가 `pal-cli` 만 훑던
+    // 동안 어댑터(`pal-mcp`)는 **방향 4 가 꺼진 채로** 자랄 수 있었다. 꺼진 대조는
+    // `–` 가 아니라 실패다. **표면을 더하면 이 목록에 더한다** — 안 더하면 새 표면이
+    // 자기 목록을 갖고, 그것을 아무도 안 센다.
     let mut 스캔 = 0usize;
-    for file in rust_sources(&cli_src)? {
-        let body = std::fs::read_to_string(&file)?;
-        스캔 += 1;
-        for name in catalog.queries.keys() {
-            // **따옴표 안일 때만 잡는다.** `report.ledger.snapshot` 같은 필드 접근은
-            // 이름이 아니라 경로다 — 그것까지 잡으면 이 검사가 무엇을 재는지 흐려진다.
-            if body.contains(&format!("\"{name}\"")) {
-                problems.push(format!(
-                    "{} 에 질의 이름 `{name}` 이 리터럴로 있다 — 표면은 \
-                     `QueryName::ALL` 에서 렌더링해야 하고, 리터럴은 두 번째 목록이다",
-                    상대_경로(root, &file)
-                ));
+    let mut 훑은_표면 = 0usize;
+    for 표면 in SURFACE_SOURCES {
+        let dir = root.join(표면);
+        // **없으면 실패다.** feature 로 꺼서 디렉터리가 사라지는 일은 없고, 조용히
+        // 건너뛰면 이 검사가 0 개를 훑고도 통과한다(대조가 꺼지는 형태 ①).
+        if !dir.is_dir() {
+            problems.push(format!("표면 소스 {표면} 가 없다 — 스캔이 조용히 꺼진다"));
+            continue;
+        }
+        훑은_표면 += 1;
+        for file in rust_sources(&dir)? {
+            let body = std::fs::read_to_string(&file)?;
+            스캔 += 1;
+            for name in catalog.queries.keys() {
+                // **따옴표 안일 때만 잡는다.** `report.ledger.snapshot` 같은 필드 접근은
+                // 이름이 아니라 경로다 — 그것까지 잡으면 이 검사가 무엇을 재는지 흐려진다.
+                if body.contains(&format!("\"{name}\"")) {
+                    problems.push(format!(
+                        "{} 에 질의 이름 `{name}` 이 리터럴로 있다 — 표면은 \
+                         `QueryName::ALL` 에서 렌더링해야 하고, 리터럴은 두 번째 목록이다",
+                        상대_경로(root, &file)
+                    ));
+                }
             }
         }
     }
@@ -1196,7 +1217,7 @@ fn check_catalog(root: &Path) -> Result<String> {
         bail!("카탈로그와 코드가 어긋난다:\n    {}", problems.join("\n    "));
     }
     Ok(format!(
-        "질의 {}개 · 양방향 0건 · CLI 소스 {스캔}개에 박힌 이름 0건",
+        "질의 {}개 · 양방향 0건 · 표면 {훑은_표면}곳의 소스 {스캔}개에 박힌 이름 0건",
         catalog.queries.len()
     ))
 }
