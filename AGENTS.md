@@ -1,6 +1,6 @@
 # palimpsest
 
-환경에 종속되지 않는 코드 이해의 큐레이터. **코드가 서 있다** — `pal` 바이너리(서브커맨드 **17** — `symbols`·`bind`·`narrative`·`defect`·`plan`·`deviation`·`touch`·`doctor`·`install`·`update`·`uninstall`·`hook`·`intent`·`cache`·`query`·`export`·`ledger`. `crates/pal-cli/src/main.rs` 의 `enum Command` 선언 순서다)와 크레이트 **일곱**(`crates/` 아래 디렉터리 수 — 워크스페이스 멤버는 `xtask` 를 더해 여덟이다). 무엇이 실제로 서 있고 무엇이 자리뿐인지는 **문서가 아니라 산출이 말한다**: `pal doctor` 는 검사하지 못한 것을 `Residual` 로, 담을 수 없는 것을 능력 부재로 낸다.
+환경에 종속되지 않는 코드 이해의 큐레이터. **코드가 서 있다** — `pal` 바이너리(서브커맨드 **18** — `symbols`·`bind`·`narrative`·`defect`·`plan`·`deviation`·`touch`·`doctor`·`install`·`update`·`uninstall`·`hook`·`intent`·`cache`·`query`·**`serve`**·`export`·`ledger`. `crates/pal-cli/src/main.rs` 의 `enum Command` 선언 순서다. ⚠ **`serve` 는 feature `mcp` 뒤에 있다** — 기본으로 켜지고, 끄면 **17** 이 된다. 그 갈림을 CI 가 잰다)와 크레이트 **여덟**(`crates/` 아래 디렉터리 수 — 워크스페이스 멤버는 `xtask` 를 더해 아홉이다). 무엇이 실제로 서 있고 무엇이 자리뿐인지는 **문서가 아니라 산출이 말한다**: `pal doctor` 는 검사하지 못한 것을 `Residual` 로, 담을 수 없는 것을 능력 부재로 낸다.
 
 ## 지금 어디에 서 있는가
 
@@ -95,4 +95,4 @@
 
 ### Domain docs
 
-단일 컨텍스트 — 루트의 `CONTEXT.md` + `docs/adr/`. **`CONTEXT.md` 는 아직 없고 없는 것이 정상 상태다.** ADR 은 **스물셋** 있다(F22·F01·F02·F03·F05·F06·F09·F10·F10-5·F10-6·F11·F12·**F24**·**F24-Windows** 종료 시 발행). `docs/agents/domain.md` 참조.
+단일 컨텍스트 — 루트의 `CONTEXT.md` + `docs/adr/`. **`CONTEXT.md` 는 아직 없고 없는 것이 정상 상태다.** ADR 은 **스물넷** 있다(F22·F01·F02·F03·F05·F06·F09·F10·F10-5·F10-6·F11·F12·**F24**·**F24-Windows**·**F06b** 종료 시 발행). `docs/agents/domain.md` 참조.

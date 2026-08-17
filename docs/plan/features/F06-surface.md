@@ -228,9 +228,16 @@ impl PalimpsestServer {
 - [x] 2층의 **읽기 전용 경로** — `--read-only`. ⚠ **얻은 것은 읽기 여럿의 공존이고
       쓰기와의 공존이 아니다**([게이트](../../gates/F06.md) §4)
 
-**P1 — 어댑터 (§4b)**
+**P1 — 어댑터 (§4b)** — **닫혔다** (2026-08-17 · [게이트](../../gates/F06b.md))
 
-- [ ] `pal serve` MCP 서버(rmcp) + 툴 등록
-- [ ] Claude Code 플러그인 껍데기
-- [ ] 실 MCP 세션 응답 크기 측정 기록
-- [ ] **어댑터 부재 통과 검사** — `pal-mcp`를 뺀 빌드에서 전건 통과
+- [x] `pal serve` MCP 서버(rmcp 3.1.2) + 툴 등록. ⚠ **툴은 `#[tool_router]` 로 안
+      세운다** — §4.2 의 스케치는 질의마다 함수 하나이고 그것이 곧 두 번째 목록이다.
+      `QueryName::ALL` 을 순회한다([ADR-0024](../../adr/0024-an-adapter-that-can-diverge-is-a-second-core.md))
+- [x] Claude Code 플러그인 껍데기 — **`surface/claude-plugin/`**. 저장소 루트가 아닌
+      이유는 그 디렉터리의 README 에
+- [x] 실 MCP 세션 응답 크기 측정 기록 — `ledger.snapshot` **1,199 B** ·
+      `binding.status` **1,272 B**(실제로 나간 바이트). 봉투의 신고는 각각 1,194·1,267 B
+      이고 **차이 5 B 는 봉투가 자기 자신을 안 세기 때문**이다 — `serialized_bytes` 는 하한
+- [x] **어댑터 부재 통과 검사** — `pal-mcp` 를 뺀 빌드에서 **381 통과**, 그 빌드의
+      `--help` 에 `serve` **없음**. CI 스텝 둘이 상시로 잰다.
+      ⚠ **워크스페이스 전체가 아니라 `-p pal-cli` 다**([게이트](../../gates/F06b.md) §판정-나-⑥)
