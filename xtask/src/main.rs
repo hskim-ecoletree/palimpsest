@@ -1084,6 +1084,16 @@ const CATALOG_MIN_QUERIES: usize = 6;
 /// F06b 가 어댑터를 더하면서 `pal-cli` 하나이던 이 목록이 둘이 됐다.
 const SURFACE_SOURCES: &[&str] = &["crates/pal-cli/src", "crates/pal-mcp/src"];
 
+/// **하한** — 이 수보다 적은 표면을 훑으면 방향 4 는 아무것도 안 세고 통과한다.
+///
+/// ⚠ **이것이 없으면 목록을 비우는 것만으로 검사가 초록이 된다**(실측 2026-08-17:
+/// `SURFACE_SOURCES` 를 `&[]` 로 두니 *"표면 0곳의 소스 0개에 박힌 이름 0건"* 으로
+/// **16/16 통과**). 「없는 디렉터리를 문제로 적는다」는 **목록에 적힌 것**만 막고
+/// **빈 목록**은 못 막는다 — `CATALOG_MIN_QUERIES` 와 같은 자리이고 같은 이유다.
+///
+/// 수는 **지금 서 있는 표면의 수**다. 표면이 늘면 이 수도 같이 올린다.
+const SURFACE_MIN: usize = 2;
+
 fn check_catalog(root: &Path) -> Result<String> {
     let path = root.join("surface/queries.toml");
     let text = std::fs::read_to_string(&path)
@@ -1173,6 +1183,17 @@ fn check_catalog(root: &Path) -> Result<String> {
     // 자기 목록을 갖고, 그것을 아무도 안 센다.
     let mut 스캔 = 0usize;
     let mut 훑은_표면 = 0usize;
+
+    // **하한을 먼저 본다.** 아래 루프는 목록이 비면 **한 바퀴도 안 돌고** 통과한다 —
+    // 0 건은 *"리터럴이 없다"* 가 아니라 *"안 봤다"* 이고, 둘을 뭉개면 이 검사가
+    // 자기 대상이 사라진 것을 초록으로 낸다.
+    if SURFACE_SOURCES.len() < SURFACE_MIN {
+        problems.push(format!(
+            "훑을 표면이 {}곳이다 — {SURFACE_MIN}곳 미만이면 방향 4 가 공짜로 통과한다",
+            SURFACE_SOURCES.len()
+        ));
+    }
+
     for 표면 in SURFACE_SOURCES {
         let dir = root.join(표면);
         // **없으면 실패다.** feature 로 꺼서 디렉터리가 사라지는 일은 없고, 조용히
@@ -1182,7 +1203,13 @@ fn check_catalog(root: &Path) -> Result<String> {
             continue;
         }
         훑은_표면 += 1;
-        for file in rust_sources(&dir)? {
+        // **파일이 0 개인 표면도 실패다.** 디렉터리는 있는데 `.rs` 가 없으면 그 표면에
+        // 대해 아래 루프가 한 번도 안 돈다 — 위와 같은 침묵이다.
+        let 파일들 = rust_sources(&dir)?;
+        if 파일들.is_empty() {
+            problems.push(format!("표면 소스 {표면} 에 Rust 파일이 없다 — 그 표면은 안 재어진다"));
+        }
+        for file in 파일들 {
             let body = std::fs::read_to_string(&file)?;
             스캔 += 1;
             for name in catalog.queries.keys() {
