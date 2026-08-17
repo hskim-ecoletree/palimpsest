@@ -1,4 +1,4 @@
-//! 낡음의 이어달리기 — **규칙이 없으면 전파가 멈춘다** ([DESIGN §6.4](../../../docs/DESIGN.md) · D29).
+//! 낡음의 이어달리기 — **규칙이 없으면 전파가 멈춘다** ([DESIGN §6.4](../../../docs/plan/disposal-map.md) · D29).
 //!
 //! > **모든 파생 노드는 자기 입력 좌표 집합에 결박된다. 입력 중 하나가 `stale` 이면
 //! > 파생물은 `stale-derived` 다.**
@@ -27,7 +27,7 @@
 //! 파생 사슬은 길어질 수 있으므로 이어달리기에도 예산이 붙는다. **걸리면 잔여다** —
 //! [`crate::ResidualReason::CascadeBudgetExceeded`]. 조용한 절단 금지가 여기에도 걸린다.
 //!
-//! **끄는 손잡이를 두지 않는다.** 예산은 값이고 손잡이는 [DESIGN §10](../../../docs/DESIGN.md)
+//! **끄는 손잡이를 두지 않는다.** 예산은 값이고 손잡이는 [DESIGN §10](../../../docs/plan/disposal-map.md)
 //! 이 세는 협상 대상이다. 끌 수 있으면 그것이 게이트 오염의 가장 값싼 경로가 된다.
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
@@ -47,7 +47,7 @@ use crate::view::{GraphView, NodeKey};
 ///
 /// [`crate::CodeFreshness`] 는 **결박 하나**가 자기 감시 집합을 현재 값에 댄 결과이고
 /// `Orphaned`(좌표가 사라짐)를 갖는다. 이것은 **그래프 노드**가 파생 사슬 위에서 지는
-/// 등급이다. [F09 §2](../../../docs/plan/features/F09-grounding.md) 는 둘을 한 열거로
+/// 등급이다. [F09 §2](../../../docs/plan/disposal-map.md) 는 둘을 한 열거로
 /// 합칠 것을 적었지만, **결박의 입력이 낡는 경로가 이 빌드에 없다** — 합치면
 /// `CodeFreshness` 에 아무도 만들지 못하는 변형이 하나 생기고 그것이 곧
 /// *"있는데 안 나오는"* 자리다. 둘이 만나는 것은 F09 다.

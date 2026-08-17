@@ -141,17 +141,37 @@ fn 파이프로(repo: &Path, args: &[&str]) -> (Option<i32>, String, String) {
 ///
 /// ★ **왜 필요한가** (실측 2026-08-18 · CI 회차 32049575037 · `macos-latest`):
 /// 읽기 전용 핸들을 `drop` 한 **직후** 같은 파일을 쓰기로 여는 자리에서
-/// `Database already open. Cannot acquire lock.` 이 났다. 이 기계에서는 3/3 통과하고
-/// 전체 시험도 774/774 통과하므로 **부하 의존**이다 — 파일 락이 핸들이 닫힌 직후에도
+/// `Database already open. Cannot acquire lock.` 이 났다. 이 기계에서는 몇 번을 돌려도
+/// 통과하고 전체 시험도 통과하므로 **부하 의존**이다 — 파일 락이 핸들이 닫힌 직후에도
 /// 아주 잠깐 남는다.
+///
+/// ⚠ **수를 안 적는다.** 「시험 N 개가 통과한다」는 다음 커밋에 낡는 캐시다
+/// (실제로 이 회차의 MCP 삭제가 774 를 755 로 만들었다). 재는 방법은 `cargo xtask test` 다.
+///
+/// ★ **같은 형태가 이 파일에 네 자리 있다** — 자식 프로세스가 배타 락을 놓은 직후,
+/// 임시 핸들이 문장 끝에서 drop 된 직후. 넷 다 이 헬퍼를 지난다. 하나만 고치면
+/// 깜빡임이 옆줄로 옮겨갈 뿐이다.
 ///
 /// ⚠ **재시도를 단정에 걸면 안 된다.** 이 파일이 세우는 단정은
 /// *"쓰기와 읽기는 공존하지 않는다"* 이고, 그 자리에 재시도를 걸면 단정이 재시도로
 /// 뭉개진다. 여기서 쓰기를 얻는 것은 그 단정을 **세우기 위한 준비**다.
 fn 쓰기로_붙는다(index: &Path) -> pal_store::Projection {
+    붙는다(index, "쓰기", pal_store::Projection::open)
+}
+
+/// 읽기 전용으로 붙는다 — 같은 이유의 유계 재시도. **준비 전용이다.**
+fn 읽기로_붙는다(index: &Path) -> pal_store::Projection {
+    붙는다(index, "읽기 전용", pal_store::Projection::open_read_only)
+}
+
+fn 붙는다(
+    index: &Path,
+    무엇: &str,
+    열기: fn(&Path) -> Result<pal_store::Projection, pal_store::ProjectionError>,
+) -> pal_store::Projection {
     let mut 마지막 = None;
     for _ in 0..50 {
-        match pal_store::Projection::open(index) {
+        match 열기(index) {
             Ok(p) => return p,
             Err(e) => {
                 마지막 = Some(e);
@@ -159,7 +179,7 @@ fn 쓰기로_붙는다(index: &Path) -> pal_store::Projection {
             }
         }
     }
-    panic!("쓰기로 붙지 못했다 (2초 재시도): {:?}", 마지막.expect("오류가 하나는 있다"));
+    panic!("{무엇}으로 붙지 못했다 (2초 재시도): {:?}", 마지막.expect("오류가 하나는 있다"));
 }
 
 #[test]
@@ -303,13 +323,13 @@ fn 읽기_전용_여럿이_동시에_붙고_쓰기는_배타다() {
     let (코드, _, 오류) = 파이프로(&repo, &["query", 대장_질의, "--json"]);
     assert_eq!(코드, Some(0), "2층을 세우지 못했다: {오류}");
     let 세운_뒤 =
-        pal_store::Projection::open(&index).expect("붙는다").count().expect("셈");
+        쓰기로_붙는다(&index).count().expect("셈");
     // **하한** — 2층이 비면 아래의 락 대조가 무엇에 대한 것인지 알 수 없다.
     assert!(세운_뒤 >= 1, "2층에 심볼이 {세운_뒤}개다");
 
     // ── ① 읽기 전용 **둘**이 동시에 붙는다 ───────────────────────────────────
-    let 읽기_하나 = pal_store::Projection::open_read_only(&index).expect("첫 읽기");
-    let 읽기_둘 = pal_store::Projection::open_read_only(&index).expect("둘째 읽기");
+    let 읽기_하나 = 읽기로_붙는다(&index);
+    let 읽기_둘 = 읽기로_붙는다(&index);
     assert!(읽기_하나.is_read_only() && 읽기_둘.is_read_only());
     // **둘 다 답한다** — 붙기만 하고 못 읽으면 아무 말도 안 한 것이다.
     assert_eq!(읽기_하나.count().expect("셈"), 세운_뒤);
@@ -378,7 +398,7 @@ fn 로그_줄이_실제로_늘고_읽기_전용에서는_안_는다() {
     let 열쇠 = 스냅샷_열쇠(&repo);
 
     let 세기 = |키: &str| -> usize {
-        let p = pal_store::Projection::open(&index).expect("붙는다");
+        let p = 쓰기로_붙는다(&index);
         p.query_log(키).expect("로그를 읽는다").len()
     };
 

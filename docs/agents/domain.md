@@ -20,11 +20,11 @@
 ├── CONTEXT.md        ← 용어집 (아직 없음)
 ├── docs/
 │   ├── adr/          ← 결정 기록 (기능 종료 시 발행. 지금 0001~0006)
-│   ├── DESIGN.md     ← 설계 결정과 그 근거
+│   ├── adr/          ← 설계 결정과 그 근거 — **여기가 정본이다**
 │   ├── evidence-map.md
 │   ├── plan/         ← 무엇을 어느 순서로 만드는가
 │   └── research/     ← 관측 기록 (R번호)
-└── WHITEPAPER.md
+└── plan/00-goals.md  ← 왜 만드나 · 능력 계약 `C1~C6` · 설계 원리 `P1~P14`
 ```
 
 ## 이 저장소의 문서 분업 — 같은 것을 두 곳에 적지 않는다
@@ -33,7 +33,7 @@
 
 | 무엇 | 어디 |
 |---|---|
-| 결정 | `docs/DESIGN.md` |
+| 결정 | `docs/adr/` |
 | 근거·관측 | `docs/evidence-map.md` · `docs/research/` |
 | 실행 순서와 상태 | GitHub Issues (`docs/plan/`은 각 기능을 *어떻게* 만드는가) |
 | 용어의 정의 | `CONTEXT.md` |

@@ -2,7 +2,7 @@
 //!
 //! # 왜 뷰가 필요한가 (F22-4 의 판단 · 2026-08-12)
 //!
-//! [DESIGN §12.7](../../../docs/DESIGN.md) 은 `doctor` 를 *"저장된 그래프가 자기 규칙을
+//! [DESIGN §12.7](../../../docs/plan/disposal-map.md) 은 `doctor` 를 *"저장된 그래프가 자기 규칙을
 //! 지키는가"* 로 정의했다. 그런데 이 빌드의 저장소에는 **엣지 자리가 없다** — 2층은
 //! `SYMBOL`·`BY_NAME` 둘뿐이고 의도 저장소가 결박과 그 역방향 색인을 갖는다. `Change`·
 //! `Defect` 의 엣지 여섯은 `pal defect` 가 **계산만 하고 저장하지 않는다**. 그래서
@@ -157,7 +157,7 @@ impl NodeInstance {
 
 /// 엣지가 무엇을 가리키는가.
 ///
-/// **`Candidate` 등급은 엣지 N 개가 아니라 후보 집합 하나다**([DESIGN §5.1](../../../docs/DESIGN.md)).
+/// **`Candidate` 등급은 엣지 N 개가 아니라 후보 집합 하나다**([DESIGN §5.1](../../../docs/plan/disposal-map.md)).
 /// 그래서 여기 변형이 둘이고, 둘째가 상한 `K` 와 강등 기록을 함께 진다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]

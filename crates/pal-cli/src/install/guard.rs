@@ -27,7 +27,7 @@
 //! 그 다음 판은 *"유닉스는 거부, Windows 는 끊기"* 였고 **그것도 반증됐다** — 같은
 //! 상황에 rc 가 갈리면 팀에게 런북이 둘이다. 지금은 [`제자리를_준비한다`] 가
 //! **양쪽 다 끊는다.** 결정의 전문은 그 함수의 문서와
-//! [docs/DESIGN.md](../../../../docs/DESIGN.md) §12.9 · [ADR-0023] 에 있다.
+//! [docs/DESIGN.md](../../../../docs/plan/disposal-map.md) §12.9 · [ADR-0023] 에 있다.
 //!
 //! [ADR-0023]: ../../../../docs/adr/0023-consistent-method-and-result-across-platforms.md
 

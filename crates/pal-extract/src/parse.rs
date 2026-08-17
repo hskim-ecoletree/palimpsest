@@ -112,7 +112,7 @@ pub fn parse_with(language: &tree_sitter::Language, source: &[u8]) -> Result<Tre
 
 /// 선언 하나의 **정규형** — 주석·공백·포매팅을 지운 바이트열.
 ///
-/// # 무엇을 지우고 무엇을 남기는가 ([F03 §3.1](../../../docs/plan/features/F03-identity.md))
+/// # 무엇을 지우고 무엇을 남기는가 ([F03 §3.1](../../../docs/plan/disposal-map.md))
 ///
 /// | 지운다 | 왜 |
 /// |---|---|

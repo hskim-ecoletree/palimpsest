@@ -76,9 +76,9 @@ GitHub 이슈를 만든다.
 
 | | 어디 |
 |---|---|
-| 각 기능을 **어떻게** 만드는가 — 구현 방식·라이브러리·이슈·대안 | `docs/plan/features/F<NN>-*.md` (저장소) |
+| 각 기능을 **어떻게** 만드는가 | ⏳ **비었다** — 옛 `docs/plan/features/` 는 2026-08-18 에 지웠다([처분표](../plan/disposal-map.md)). 새 지형은 다음 회차가 쓴다 |
 | **무엇을 어느 순서로**, 지금 **어디까지 왔는가** | GitHub 이슈 (상태의 단일 진실) |
-| 왜 그렇게 정했는가 | `docs/DESIGN.md` |
+| 왜 그렇게 정했는가 | `docs/adr/` — **결정은 ADR 에만 산다** |
 | 무엇을 보고 정했는가 | `docs/evidence-map.md` · `docs/research/` |
 | 수치 합격선 | `corpus/criteria.toml` |
 | 게이트 판정 기록 (통과·반증·대조 불가) | `docs/gates/<기능>.md` — **커밋으로 남긴다**([계획 §7.1](../plan/README.md)) |
@@ -90,4 +90,4 @@ GitHub 이슈를 만든다.
 ## 쓰지 않는 것
 
 - **`/wayfinder`** — 다중 세션 규모를 결정 티켓 지도로 그리는 스킬. 이 저장소는 그 지도를 이미 갖고 있다(`docs/plan/`). 실행하면 두 번째 지도가 생긴다.
-- **`/to-spec`** — `docs/plan/features/`가 이미 스펙이다. `to-tickets`는 기능 문서를 직접 읽는다.
+- **`/to-spec`** — 스펙을 따로 두지 않는다. 판정이 커밋된 것은 `docs/gates/` 가, 결정은 `docs/adr/` 가 진다.

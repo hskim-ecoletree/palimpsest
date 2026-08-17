@@ -1,4 +1,4 @@
-//! `doctor` — **저장된 그래프가 자기 규칙을 지키는가** ([DESIGN §12.7](../../../docs/DESIGN.md) · D29).
+//! `doctor` — **저장된 그래프가 자기 규칙을 지키는가** ([DESIGN §12.7](../../../docs/plan/disposal-map.md) · D29).
 //!
 //! # 재구축 등가성 검사가 말하지 않는 것
 //!
@@ -619,7 +619,7 @@ impl<'a> Context<'a> {
     /// 엣지 하나가 **공통 넷**을 제대로 지고 있는가.
     ///
     /// 엣지의 *"필수 속성"* 은 등급 · 출처 · 근거 · 발생 `Snapshot` 넷이다
-    /// ([DESIGN §1.2](../../../docs/DESIGN.md)). 도메인·레인지도 여기서 본다 —
+    /// ([DESIGN §1.2](../../../docs/plan/disposal-map.md)). 도메인·레인지도 여기서 본다 —
     /// 라벨이 등록됐다는 것은 **그 라벨 사이에** 설 수 있다는 뜻이기 때문이다.
     fn edge_shape(&self, e: &EdgeInstance) -> Vec<String> {
         let Some(decl) = self.schema.edges.get(&e.kind) else {

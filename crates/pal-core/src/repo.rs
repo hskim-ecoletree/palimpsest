@@ -222,7 +222,7 @@ fn from_hex<const N: usize>(hex: &str) -> Option<[u8; N]> {
 /// **전혀 모른 채** 그대로 돈다. 커밋 축이 필요한 곳은 좌표 표기와 결박뿐이다.
 ///
 /// **S1 은 `Committed` 만 돌린다.** `Worktree` 는 타입으로 서 있고 값은 F01 이 채운다 —
-/// 머클 계산과 git 인덱스 캐시가 거기 있다([F01 §3.2](../../../docs/plan/features/F01-repo-ledger.md)).
+/// 머클 계산과 git 인덱스 캐시가 거기 있다([F01 §3.2](../../../docs/plan/disposal-map.md)).
 /// 자리를 미리 비워두는 것과 없는 것은 다르다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -261,7 +261,7 @@ impl fmt::Display for TreeRef {
 ///
 /// # 집합이다 — 쌍이 아니다 (F22 의 정본화 · 2026-08-12)
 ///
-/// [DESIGN §1.1](../../../docs/DESIGN.md) 은 `Snapshot` 을 `{(repo_id, TreeRef)}` 로
+/// [DESIGN §1.1](../../../docs/plan/disposal-map.md) 은 `Snapshot` 을 `{(repo_id, TreeRef)}` 로
 /// 적었다: **"멀티레포의 '지금'은 하나가 아니라 집합"**. S1 은 그것을 `{repo, tree}`
 /// 쌍으로 만들었고 저장소가 하나뿐이라 그 차이가 드러나지 않았다.
 ///

@@ -1,7 +1,8 @@
 # 회차 B — 하네스의 계획을 세운다
 
 > **임시 파일이다.** 착수하면 이 파일을 지운다.
-> 짝: [`NEXT-A-inventory-disposal.md`](NEXT-A-inventory-disposal.md) — 다른 PC 에서 **병렬로** 돈다. §5 를 반드시 읽어라.
+> 짝: `NEXT-A-inventory-disposal.md` — 다른 PC 에서 **병렬로** 돈다. §5 를 반드시 읽어라.
+> ★ **A 는 2026-08-18 에 착수했고 그 파일을 지웠다**(커밋 `57db375`). 회차 기록은 `.palimpsest/rounds/2026-08-18-inventory-disposal/` 에, 처분 결과는 `docs/plan/disposal-map.md` 에 있다.
 > **다른 PC 에서 여는 회차다.** 저장소를 클론했으면 먼저 `git pull` 로 최신을 받아라.
 
 ---

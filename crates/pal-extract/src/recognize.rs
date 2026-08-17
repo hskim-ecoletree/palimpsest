@@ -12,7 +12,7 @@
 //!
 //! # 인식은 셋이고, F01 §3.3 의 넷과 순서가 다르다
 //!
-//! [F01 §3.3](../../../docs/plan/features/F01-repo-ledger.md) 이 정한 순서는
+//! [F01 §3.3](../../../docs/plan/disposal-map.md) 이 정한 순서는
 //! ① 확장자 ② 셔뱅 ③ `.gitattributes` 의 `linguist-language` ④ 내용 휴리스틱 이다.
 //! **F01 이 ②③ 을 세우면서 두 자리에서 그 순서를 정정했다.**
 //!

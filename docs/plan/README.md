@@ -6,65 +6,36 @@
 | 읽는 목적 | 문서 |
 |---|---|
 | **지금 어디까지 왔나 / 무엇이 착수 가능한가** | [GitHub 이슈](https://github.com/hskim-ecoletree/palimpsest/issues) — **상태의 단일 진실.** 이 폴더는 상태를 세지 않는다 |
-| **완성되면 실제로 어떻게 쓰이나** | [../how-it-works.md](../how-it-works.md) — 설치부터 반년 뒤까지, 장면으로 |
-| **왜 만드나 / 완성되면 무엇이 있나** | [00-goals.md](00-goals.md) — **모든 기능의 채점 기준** |
+| **완성되면 실제로 어떻게 쓰이나** | ⏳ **비었다** — 옛 완성 장면은 MCP 를 전제해 2026-08-18 에 지웠다([처분표](disposal-map.md)) |
+| **왜 만드나 · 능력 계약 `C1~C6` · 설계 원리 `P1~P14`** | [00-goals.md](00-goals.md) — **모든 기능의 채점 기준**. 백서에서 옮겨 왔다 |
 | **무슨 언어·라이브러리·구조로 만드나** | [00-stack.md](00-stack.md) |
 | **무엇이 우리를 막을 것인가** | [00-risks.md](00-risks.md) — R-01~R-20 |
-| **각 기능을 어떻게 만드나** | [features/](features/) — 아래 표 |
-| 설계 결정의 근거 | [../DESIGN.md](../DESIGN.md) · [../evidence-map.md](../evidence-map.md) |
-| 왜 이런 제품이어야 하나 | [../../WHITEPAPER.md](../../WHITEPAPER.md) |
+| **각 기능을 어떻게 만드나** | ⏳ **비었다** — 판정이 커밋된 것은 [`../gates/`](../gates/) 가, 안 만든 것의 능력은 [00-goals §2.5](00-goals.md) 가 진다([처분표](disposal-map.md)) |
+| 설계 결정과 그 근거 | [../adr/](../adr/) — **결정은 ADR 에만 산다.** 옛 `DESIGN.md` 의 결정 94 개는 [처분표](disposal-map.md) |
 
 ---
 
-## 1. 지형
+## 1. 지형 — ⏳ **비었다**
 
-**진행 상태는 이 표가 아니라 [GitHub 이슈](https://github.com/hskim-ecoletree/palimpsest/issues)가 센다.** 이 표는 무엇이 어디에 있고 무엇에 막혀 있는지를 보여주는 지형이고, 어디까지 왔는지는 이슈 하나에만 있다 — 같은 것을 두 곳에 적으면 그것이 곧 drift다([§7.4](#7-진행-규칙)).
+★ **2026-08-18 재고 처분이 옛 지형을 걷어냈다.** 여기 있던 표는 기능 문서
+`docs/plan/features/` 25 개(F01~F23 · P0 · F16b)를 가리키고 있었고, 그 문서들은
+KG·투영 중심이라 **하네스를 안 담았다**
+([ADR-0025](../adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md)).
 
-**지금 어디에 서 있는지는 한 명령으로 나온다:**
+**무엇이 어디로 갔는지는 [처분표](disposal-map.md) 가 진다** — 판정이 커밋된 13 은
+게이트가 정본이고, 안 만든 12 는 능력(`C1~C6`)만 [`00-goals §2.5`](00-goals.md) 로
+살아남았다.
+
+**새 지형은 다음 회차가 쓴다.** 그때까지 *"지금 어디에 서 있는가"* 에 답하는 것은
+이 문서가 아니라 이슈다:
 
 ```bash
-./scripts/frontier.sh          # 착수 가능한 것
-./scripts/frontier.sh --all    # 막힌 것까지, 무엇에 막혀 있는지와 함께
+./scripts/frontier.sh
 ```
 
-착수 가능한 것 = 열려 있고 · 열린 차단자가 없고 · 아무도 잡지 않은 이슈. blocking은 GitHub 네이티브 의존으로 걸려 있고, 스크립트는 **상태를 복제하지 않고 매번 계산한다** — 그래서 낡을 수 없다. 착수는 `gh issue edit <번호> --add-assignee @me`가 세션의 첫 쓰기다.
-
-| 기능 | 이슈 | 우선순위 | 의존 | 규모 | 완성 화면의 어느 줄이 켜지나 |
-|---|---|---|---|---|---|
-| [**P0-preflight** 코드 전 실측](features/P0-preflight.md) | [#1](https://github.com/hskim-ecoletree/palimpsest/issues/1) | **P0** | — | M | 없음 — 계획 절반의 생사 판정 |
-| [**F22 그래프 스키마·무결성**](features/F22-graph-schema.md) | [#3](https://github.com/hskim-ecoletree/palimpsest/issues/3) | **P0** | preflight | M | 모든 줄의 형태를 정한다 |
-| [F01 저장소 접근·관측 범위 대장](features/F01-repo-ledger.md) | [#4](https://github.com/hskim-ecoletree/palimpsest/issues/4) | **P0** | preflight · F22 | M | `Snapshot` · `대장` · `언어` |
-| [F02 파싱·심볼 추출 + 파일 내 스코프 (C1·L2a)](features/F02-parse-extract.md) | [#5](https://github.com/hskim-ecoletree/palimpsest/issues/5) | **P0** | F01 | L | 심볼이 존재한다 |
-| [F03 심볼 정체성·정규화](features/F03-identity.md) | [#6](https://github.com/hskim-ecoletree/palimpsest/issues/6) | **P0** | F02 | M | 좌표 `order-svc:OrderService.cancel` |
-| [F04 추출 캐시 (1층)](features/F04-extract-cache.md) | [#7](https://github.com/hskim-ecoletree/palimpsest/issues/7) | **P0** | F02 | M | 응답이 즉시 온다 · 과거 커밋이 열린다 |
-| [F05 질의 투영 (2층)·의도 저장소·실행기](features/F05-projection-query.md) | [#8](https://github.com/hskim-ecoletree/palimpsest/issues/8) | **P0** | F03·F04 | L | `Envelope` · 절단 기록 |
-| [F06 표면 — 카탈로그·**CLI**](features/F06-surface.md) | [#9](https://github.com/hskim-ecoletree/palimpsest/issues/9) | **P0** | F05 | M | `pal touch` 가 존재한다 |
-| [F06b 표면 어댑터 — MCP·플러그인](features/F06-surface.md#4b-p1--mcp-서버와-플러그인은-어댑터다) | [#10](https://github.com/hskim-ecoletree/palimpsest/issues/10) | **P1** | F06 | S | 질의 로그가 생긴다 |
-| [F07 **파일 간** 참조 해소·등급 엣지 (C2)](features/F07-reference-resolution.md) | [#11](https://github.com/hskim-ecoletree/palimpsest/issues/11) | **P1** | F05 | **XL** | `호출자 7 (exact 5 · candidate 2)` |
-| [F08 미해소 참조](features/F08-unresolved.md) | [#12](https://github.com/hskim-ecoletree/palimpsest/issues/12) | **P1** | F07 | M | `■ 내가 모르는 것` |
-| [F09 결박과 낡음 (C6)](features/F09-grounding.md) | [#13](https://github.com/hskim-ecoletree/palimpsest/issues/13) | **P1** | F03·F05 | L | `live / stale / pending` |
-| [F10 서술물 인입](features/F10-narrative-intake.md) | [#14](https://github.com/hskim-ecoletree/palimpsest/issues/14) | **P1** | F09 | L | `ADR-0042` 가 들어온다 |
-| [**F11 적시 제시 `touch`**](features/F11-touch.md) | [#15](https://github.com/hskim-ecoletree/palimpsest/issues/15) | **P1** | F09·F10 | M | **화면 전체 — 제품이 완성되는 지점** |
-| [F12 계획-구현 결박·이탈률](features/F12-plan-binding.md) | [#16](https://github.com/hskim-ecoletree/palimpsest/issues/16) | **P1** | F11 | M | `PLAN §4-2 … pending` |
-| [**F16 관측 수용 (O) — 수용 API**](features/F16-observation-intake.md) | [#17](https://github.com/hskim-ecoletree/palimpsest/issues/17) | **P1** | F22 | M | provider 산물이 `observed`로 들어온다 |
-| [**F21 `provider` 포트**](features/F21-provider-ports.md) | [#18](https://github.com/hskim-ecoletree/palimpsest/issues/18) | **P1** | F16 | M | `provider 경로 2/7` |
-| [**F23 git 결합**](features/F23-git-integration.md) | [#19](https://github.com/hskim-ecoletree/palimpsest/issues/19) | **P1** | F09·F22 | M | 결박이 팀에 공유된다 · `--base` 델타 |
-| [F13 효과 집합 (E)](features/F13-effects.md) | [#20](https://github.com/hskim-ecoletree/palimpsest/issues/20) | **P2** | F07·F12 | **XL** | `writes: order.status …` |
-| [F14 진입점·경계 (C3·C4)](features/F14-entrypoints-boundaries.md) | [#21](https://github.com/hskim-ecoletree/palimpsest/issues/21) | **P2** | F07·F16 | L | 여정의 시작점 |
-| [**F16b 외부 엔진 조달**](features/F16b-engine-procurement.md) | [#41](https://github.com/hskim-ecoletree/palimpsest/issues/41) | **P2 ← P1** (2026-08-11) | F16·F08 | M | `외부 엔진이 본 것` · `Finding` **without** F13·F15 |
-| [F15 지배관계·3분할 판정 (C5)](features/F15-judgment.md) | [#22](https://github.com/hskim-ecoletree/palimpsest/issues/22) | **P2** ⚠ | F13·F14 | **XL** | `Finding 0 / Residual 2`(자체 산출) |
-| [F17 합성물·커버리지](features/F17-synthesis-coverage.md) | [#23](https://github.com/hskim-ecoletree/palimpsest/issues/23) | **P3** | F11·F15 | L | 근거 없는 요약이 저장되지 않는다 |
-| [F18 선언 팩·개념 층](features/F18-packs-concepts.md) | [#24](https://github.com/hskim-ecoletree/palimpsest/issues/24) | **P3** | F07·F11·F15 | L | 프로젝트 어휘·온톨로지 |
-| [F19 사전 브리핑·뷰 모델](features/F19-briefing-view.md) | [#25](https://github.com/hskim-ecoletree/palimpsest/issues/25) | **P3** | F12·F15 | L | 변경 전 산출·시각화 |
-| [F20 구조 평가 델타·거버넌스 경계](features/F20-conformance-governance.md) | [#26](https://github.com/hskim-ecoletree/palimpsest/issues/26) | **P3** ⚠ | F15·F18 | M | 변경 후 평가 |
-
-**⚠ F15·F20의 존속은 `미판정`이다 (2026-08-12).** 둘은 *"라벨 판정이 감당 불가하면 내린다"*는 처분에서
-[T2의 22.9초](../gates/preflight.md#t2--라벨-판정-30건) 덕에 살아남았는데, **그 수는 한 줄 분류의 단가지
-*"이 흐름에 구멍이 있나"*(F15)·*"구조가 적절한가"*(F20)의 단가가 아니다.** 내리지도 존속시키지도 않는다 —
-판정은 **F15 착수 시점**으로 미뤘고 그때 **과제를 리뷰로 다시 정의하지 않으면 재측정하지 않는다**
-([정정](../gates/preflight.md#t2의-값은-무엇의-단가인가--2026-08-12-정정)). 둘 다 XL·M이고 [R-17](00-risks.md#r-17)이
-*"게이트는 속도를 검사하지 않는다"*고 적어 둔 자리이므로, **XL 셋(F07·F13·F15) 중 무엇을 실제로 만들지는
-S3 이후에 정한다.**
+⚠ **지금 프론티어에 「만들 것」이 없다.** 에픽 12 와 작업 항목 하나를 닫았고 새 지형이
+아직 안 섰으므로, 남은 착수 가능은 전부 **「고칠 것」**이다. 그 상태 자체가
+[재고 처분 게이트](../gates/inventory-disposal.md) 의 판정에 적혀 있다.
 
 ### 우선순위의 뜻
 
@@ -83,15 +54,15 @@ S3 이후에 정한다.**
 [goals §0.1](00-goals.md#01-무엇으로-채점되는가--산출이-아니라-결과-design-08)에 줄었다는 사실이 적혀 있다.
 **이것은 계획이 작동한 것이지 실패가 아니다** — 코드 한 줄 쓰기 전에 L 하나가 빈 능력이 될 뻔한 것을 막았다.
 
-**그 강등이 F16을 둘로 쪼갰다.** [F21](features/F21-provider-ports.md)(P1)이 필요로 한 것은
+**그 강등이 F16을 둘로 쪼갰다.** [F21](disposal-map.md)(P1)이 필요로 한 것은
 조달이 아니라 **수용 API**였다 — F21 §3.1 규칙 1이 *"코어는 F16의 수용 API로 받는다"*라고
 적고 있었고, 포트 일곱 중 조달자는 하나뿐이다. 한 문서에 P1 절과 P2 절이 섞여 있던 것이
 강등과 함께 드러난 셈이다.
 
 | | 무엇 | 우선순위 |
 |---|---|---|
-| [**F16**](features/F16-observation-intake.md) | 수용 계약 · 출처 배정 · `observed` 무효화 · 좌표 결박 | **P1** |
-| [**F16b**](features/F16b-engine-procurement.md) | 외부 엔진 조달 — SAST·린터·SCIP + palimpsest의 다섯 몫 | **P2** |
+| [**F16**](disposal-map.md) | 수용 계약 · 출처 배정 · `observed` 무효화 · 좌표 결박 | **P1** |
+| [**F16b**](disposal-map.md) | 외부 엔진 조달 — SAST·린터·SCIP + palimpsest의 다섯 몫 | **P2** |
 
 경계는 *무엇을 받느냐*가 아니라 **받는 장치냐 받을 것을 고르는 일이냐**다.
 
@@ -126,7 +97,7 @@ S3 이후에 정한다.**
 **진짜 실험은 이미 등록돼 있고 실행된 적이 없다.** [`corpus/arms.toml`](../../corpus/arms.toml)에 대조군 다섯
 (**C1 문서 한 장** · C2 기성 코드그래프 · C3 정적 분석 · A0 도구 없음 · **A1 palimpsest 있음**)이 박혀 있고,
 지표는 [`criteria.toml`](../../corpus/criteria.toml), 사례는 [`recurrence.toml`](../../corpus/tasks/recurrence.toml) 7건이
-결과를 보기 전에 고정돼 있다. [DESIGN §15-17](../DESIGN.md)이 *"R8 대조 실험은 설계만 있고 실행된 적 없다"*고
+결과를 보기 전에 고정돼 있다. [DESIGN §15-17](disposal-map.md)이 *"R8 대조 실험은 설계만 있고 실행된 적 없다"*고
 적어 둔 그것이며 — **없는 것은 A1 팔 하나뿐이다.**
 
 | 이슈 | 무엇 | 무엇을 판정하나 |
@@ -134,7 +105,7 @@ S3 이후에 정한다.**
 | [**#37 S0**](https://github.com/hskim-ecoletree/palimpsest/issues/37) | `pal symbols <파일>` | **[R-01](00-risks.md#r-01)·치명.** 대조값이 이미 있다 — T7의 선언 추출 **94.30%**(CLI)가 **라이브러리** 경로에서 재현되는가. **허용 편차와 기한은 착수 직전에 등록한다** |
 | [#38 S1](https://github.com/hskim-ecoletree/palimpsest/issues/38) | `pal ledger` | git 접근·분류·캐시가 붙는가 |
 | [#39 S2](https://github.com/hskim-ecoletree/palimpsest/issues/39) | `pal touch <coord>` | **빈 답이 정직한가** — 관측 0건에서 모든 질의가 공백을 포함해 답하는가 |
-| [**#40 S3**](https://github.com/hskim-ecoletree/palimpsest/issues/40) | 의도 한 건 결박 | **제품의 핵심 명제가 처음으로 반증 가능해진다.** `recurrence.toml` 7건의 좌표를 `touch` 해 **C1(문서 한 장)과 대조**한다. **지표는 시간이 아니라 적중과 다음 행동의 변화다.** 못 이기면 [DESIGN §15-29](../DESIGN.md)대로 P1의 핵심이 반증된다 |
+| [**#40 S3**](https://github.com/hskim-ecoletree/palimpsest/issues/40) | 의도 한 건 결박 | **제품의 핵심 명제가 처음으로 반증 가능해진다.** `recurrence.toml` 7건의 좌표를 `touch` 해 **C1(문서 한 장)과 대조**한다. **지표는 시간이 아니라 적중과 다음 행동의 변화다.** 못 이기면 [DESIGN §15-29](disposal-map.md)대로 P1의 핵심이 반증된다 |
 
 **되돌릴 수 없는 것 둘은 첫 커밋부터 집행한다** — 실험이 아니라 불변식이고, 처분은 게이트가 아니라 빌드 실패다:
 **의도 저장소를 파생층에서 분리**([R-21](00-risks.md#r-21)·치명)와 **`Capable<T>`**. 검사는 [§4 단계 1](#4-상시-검사--단계적으로-켠다)에 이미 등록돼 있다.
@@ -179,8 +150,8 @@ F01~F06을 하나씩 완결시키면 **여섯 개가 다 끝나야 처음 뭔가
 
 | 검사 | 켜는 곳 |
 |---|---|
-| **스키마 정합** — 코드의 노드·엣지가 `schema/graph.toml`에 있고 속성 `producer`가 노드 `provenance`와 정합([DESIGN §3.4](../DESIGN.md)) | **F22** [#3](https://github.com/hskim-ecoletree/palimpsest/issues/3) |
-| **그래프 불변식 여덟**(`pal doctor` — [DESIGN §12.7](../DESIGN.md)) | **F22**(골격) [#3](https://github.com/hskim-ecoletree/palimpsest/issues/3) · 각 기능이 자기 불변식을 등록 |
+| **스키마 정합** — 코드의 노드·엣지가 `schema/graph.toml`에 있고 속성 `producer`가 노드 `provenance`와 정합([DESIGN §3.4](disposal-map.md)) | **F22** [#3](https://github.com/hskim-ecoletree/palimpsest/issues/3) |
+| **그래프 불변식 여덟**(`pal doctor` — [DESIGN §12.7](disposal-map.md)) | **F22**(골격) [#3](https://github.com/hskim-ecoletree/palimpsest/issues/3) · 각 기능이 자기 불변식을 등록 |
 | **선택 필드 금지** — 도메인 타입의 `Option<T>`(범위 정의는 [stack §5.4](00-stack.md#54-타입으로-강제하는-여섯)) | F03 [#6](https://github.com/hskim-ecoletree/palimpsest/issues/6) |
 | **재구축 등가성** — 2층 삭제 후 **1층 + 의도 저장소**로 재구축 → `extracted`·`asserted`·`observed` 전부 복원 + **의도 파일 불변** | F05 [#8](https://github.com/hskim-ecoletree/palimpsest/issues/8) |
 | **캐시 폐기 격리** — `pal cache prune` 후 결박·승인 건수 불변 | F05 [#8](https://github.com/hskim-ecoletree/palimpsest/issues/8) |
@@ -227,7 +198,7 @@ F01~F06을 하나씩 완결시키면 **여섯 개가 다 끝나야 처음 뭔가
 2. **일정을 두지 않는다.** 순서는 게이트가 정하고 작업에는 상대 규모(S/M/L/XL)만 붙는다. 절대 시간을 적으면 그것이 게이트를 우회할 압력이 된다.
 3. **반증은 실패가 아니다.** 기능이 취소되면 이 계획이 작동한 것이다.
 4. **결정은 설계 문서에, 근거는 근거 대장에, 각 기능을 *어떻게* 만드는가는 이 폴더에, *어디까지 왔는가*는 이슈에.** 같은 것을 두 곳에 적으면 그것이 곧 drift다. **수치 합격선의 단일 진실은 `corpus/criteria.toml`이고**, 기능 문서는 *무엇을 재는가*를 적는다. 이슈 본문은 기능 문서를 복제하지 않고 가리킨다([`docs/agents/issue-tracker.md`](../agents/issue-tracker.md)).
-5. **합격선은 결과보다 먼저 등록한다.** "코드보다 먼저"가 아니라 **"결과보다 먼저"** — 그 기능의 첫 코드 커밋 이전이면 된다([preflight §5.1](features/P0-preflight.md)). 아무도 재본 적 없는 값에 지금 선을 그으면 그것은 근거가 아니라 소원이다.
+5. **합격선은 결과보다 먼저 등록한다.** "코드보다 먼저"가 아니라 **"결과보다 먼저"** — 그 기능의 첫 코드 커밋 이전이면 된다([preflight §5.1](disposal-map.md)). 아무도 재본 적 없는 값에 지금 선을 그으면 그것은 근거가 아니라 소원이다.
 6. **ADR은 기능 착수가 아니라 종료 시점에 발행한다.** 착수 시점의 ADR은 결정이 아니라 계획의 복사본이다.
 
 ---
@@ -236,22 +207,22 @@ F01~F06을 하나씩 완결시키면 **여섯 개가 다 끝나야 처음 뭔가
 
 **이 계획은 설계를 고치지 않는다.** 아래는 계획을 세우며 관측된 갱신 대상이었고, **열 항목 전부가 `DESIGN.md`에 반영됐다.** 표를 지우지 않고 남기는 이유는 *무엇을 계획이 먼저 관측했는가*가 이 저장소의 기록이기 때문이다 — 계획이 설계보다 앞서 본 것이 열 건 있었다는 사실 자체가 관측 대상이다.
 
-> **2026-08-10 지시로 설계가 먼저 갱신된 항목은 여기 없다.** D23~D33([DESIGN §1](../DESIGN.md))이 그것이며, 이 표는 **계획이 설계보다 앞서 관측한 것**만 담는다.
+> **2026-08-10 지시로 설계가 먼저 갱신된 항목은 여기 없다.** D23~D33([DESIGN §1](disposal-map.md))이 그것이며, 이 표는 **계획이 설계보다 앞서 관측한 것**만 담는다.
 
 **새 항목이 생기면 여기 ☐로 추가한다.** 지금은 없다.
 
 | | 대상 | 무엇이 바뀌었나 | 근거 |
 |---|---|---|---|
-| ☑ | **§2.1 좌표** | `commit_sha` → **`TreeRef`(커밋 \| 워킹트리)**. 반영 완료 — [DESIGN §2.1-1](../DESIGN.md) | [R-06](00-risks.md#r-06) |
-| ☑ | **§2 좌표** | **`EntityId` 규정 신설.** `EntityKind`는 등록형 — [DESIGN §2.1-3](../DESIGN.md) | [F09 §4.3](features/F09-grounding.md) |
-| ☑ | **§2 좌표 (버전 축)** | **축 셋으로 분리** — 추출기 / 투영 / 팩 지문. 팩 지문은 좌표에 들어가지 않는다 — [DESIGN §2.1-2](../DESIGN.md) | [stack §5.1](00-stack.md#51-버전-축-셋--하나로-합치면-캐시가-상시-전량-무효화된다) |
+| ☑ | **§2.1 좌표** | `commit_sha` → **`TreeRef`(커밋 \| 워킹트리)**. 반영 완료 — [DESIGN §2.1-1](disposal-map.md) | [R-06](00-risks.md#r-06) |
+| ☑ | **§2 좌표** | **`EntityId` 규정 신설.** `EntityKind`는 등록형 — [DESIGN §2.1-3](disposal-map.md) | [F09 §4.3](disposal-map.md) |
+| ☑ | **§2 좌표 (버전 축)** | **축 셋으로 분리** — 추출기 / 투영 / 팩 지문. 팩 지문은 좌표에 들어가지 않는다 — [DESIGN §2.1-2](disposal-map.md) | [stack §5.1](00-stack.md#51-버전-축-셋--하나로-합치면-캐시가-상시-전량-무효화된다) |
 | ☑ | **§12.1 저장소 행** | **"파생 2층 + 재생 불가 의도(정본은 텍스트·git)"**로 교체. 그래프 DB는 내보내기 대상 | [stack §2](00-stack.md#2-저장--파생-2층--원본-1층-재생-가능한-것과-아닌-것을-물리적으로-가른다) · [R-21](00-risks.md#r-21) |
 | ☑ | **§12.1 실행 형태 행** | 언어 Rust 확정 + **그 근거를 강제 규칙 다섯의 컴파일 이전으로** 적었다 | [stack §1](00-stack.md#1-언어--rust-edition-2024) |
 | ☑ | **불변식 목록** | **§1.1에 강제 규칙 일곱 신설** — 일곱째가 능력 부재를 값으로(`Capable<T>`) | [stack §5.3](00-stack.md#53-capablet--점진-구축이-정직함을-깨지-않게) |
 | ☑ | **§13 로드맵** | **로드맵을 계획에 넘기고 §13을 "결정은 무엇으로 반증되는가"로 재편.** 문서 전체의 슬라이스 기호(S-1~S12)를 기능 번호로 치환 — 같은 것을 두 곳에 두는 것이 곧 drift다 | 이 폴더 |
 | ☑ | **§15.2 잔여 대장** | 설계 성격 잔여 넷 추가 — **45**(자기 판정·구조적 영구) · **46**(의도 유실의 잔여) · **47**(정규화 등급 승급) · **48**(워킹트리 좌표 비용) | [00-risks](00-risks.md) |
-| ☑ | **온톨로지 어휘 부재** | ~~개념 노드의 자리가 §1.1에 없다~~ → **D25(그래프 스키마 파일)가 흡수**. 실질은 어휘가 아니라 **스키마가 없다**는 것이었다 | [F22](features/F22-graph-schema.md) |
-| ☑ | **[how-it-works.md](../how-it-works.md) 개정** | 2026-08-10 지시와 연구 G를 반영 완료(2026-08-11) — 결과 채점 · 조달 · 결함 계보와 두 축 · PR 델타 · 텍스트 정본 · 앵커와 판정 불가 · provider | 이 폴더 |
+| ☑ | **온톨로지 어휘 부재** | ~~개념 노드의 자리가 §1.1에 없다~~ → **D25(그래프 스키마 파일)가 흡수**. 실질은 어휘가 아니라 **스키마가 없다**는 것이었다 | [F22](disposal-map.md) |
+| ☑ | **[how-it-works.md](disposal-map.md) 개정** | 2026-08-10 지시와 연구 G를 반영 완료(2026-08-11) — 결과 채점 · 조달 · 결함 계보와 두 축 · PR 델타 · 텍스트 정본 · 앵커와 판정 불가 · provider | 이 폴더 |
 
 ---
 
@@ -259,5 +230,5 @@ F01~F06을 하나씩 완결시키면 **여섯 개가 다 끝나야 처음 뭔가
 
 1. **일정과 날짜.** 순서를 정하는 것은 게이트이고 게이트는 시간이 아니라 판정으로 열린다.
 2. **팩의 내용.** 어떤 규칙·개념이 들어가는지는 프로젝트가 정한다. 이 계획은 스키마의 자리만 정한다.
-3. **설계 결정의 재서술.** 왜 그렇게 정했는지는 [DESIGN.md](../DESIGN.md), 무엇을 보고 정했는지는 [evidence-map.md](../evidence-map.md).
+3. **설계 결정의 재서술.** 왜 그렇게 정했는지는 [DESIGN.md](disposal-map.md), 무엇을 보고 정했는지는 [evidence-map.md](../evidence-map.md).
 4. **거버넌스 층의 구현.** 그것은 이 층 **위에** 서고 이 층이 아니다. F20에서 경계와 소비 계약까지만 만든다.

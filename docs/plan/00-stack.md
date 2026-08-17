@@ -72,7 +72,7 @@ git (코드의 진실 원본)                    사람의 승인 (의도의 진
 - 2층은 의도 저장소의 **색인**만 갖는다(`BOUND_BY` · `WATCH` 등). 실체는 의도 저장소에 있고 2층은 그것을 가리킨다.
 - `pal cache prune` · `pal reindex`는 의도 저장소를 **건드리지 않는다.** 지우는 경로가 존재하지 않는 것이 대응이고, 그것을 CI가 검사한다.
 
-#### 정본은 텍스트다 — 2026-08-10 정정 ([F23](features/F23-git-integration.md) · [DESIGN §12.8](../DESIGN.md))
+#### 정본은 텍스트다 — 2026-08-10 정정 ([F23](disposal-map.md) · [DESIGN §12.8](disposal-map.md))
 
 초안은 `intent.redb`를 원본으로 두고 JSONL을 **내보내기**로 두었다. 방향을 뒤집는다.
 
@@ -144,7 +144,7 @@ DB를 직접 만들 때 가장 비싼 것은 스키마 마이그레이션과 백
 | 캐시 직렬화 | **`postcard`** + `serde` | 1층 캐시 값. 컴팩트한 바이너리, no_std 호환, 스키마 버전을 키에 이미 넣으므로 호환성 부담 없음. ⚠️ `rkyv`(zero-copy)는 더 빠르지만 타입 제약이 크고 초심자에게 함정이 많다 — P1 이후 성능 실측 후 재론 |
 | 캐시 압축 | **`zstd`** | 파일 부분 그래프는 반복이 많아 압축률이 높다. 레벨 3 고정 |
 | 2층 저장 | **`redb`** | §2.3 |
-| 표면 직렬화 | **`serde_json`** | CLI/MCP 출력 |
+| 표면 직렬화 | **`serde_json`** | CLI 출력 |
 | 병렬 | **`rayon`** | 파일 단위 추출은 완전 병렬. `par_iter`로 충분하고 async가 필요 없다 |
 | CLI | **`clap`** (derive) | 표준 |
 | 에러 | **`thiserror`** | 라이브러리 경계. 바이너리 최상단에서만 `anyhow` |
@@ -156,9 +156,9 @@ DB를 직접 만들 때 가장 비싼 것은 스키마 마이그레이션과 백
 이 절의 제목이 *"여기서 늘리지 않는다"* 이므로 늘어난 것은 근거와 함께 본문에 적는다
 ([§3.4](#34-의존-정책): *"P0에서 외부 크레이트 신규 추가는 커밋 메시지에 근거를 남긴다"*).
 
-`schema/graph.toml` 이 노드·엣지의 **단일 진실**이고([DESIGN §1.2](../DESIGN.md) D25),
-[§3.4](../DESIGN.md)는 `producer`↔`provenance` 정합이 *"로딩 시점에 거부된다"* 고,
-[§12.7](../DESIGN.md)은 `doctor` 의 불변식 여덟이 *"`schema/graph.toml` 에서 파생되며 손으로
+`schema/graph.toml` 이 노드·엣지의 **단일 진실**이고([DESIGN §1.2](disposal-map.md) D25),
+[§3.4](disposal-map.md)는 `producer`↔`provenance` 정합이 *"로딩 시점에 거부된다"* 고,
+[§12.7](disposal-map.md)은 `doctor` 의 불변식 여덟이 *"`schema/graph.toml` 에서 파생되며 손으로
 세지 않는다"* 고 적었다. 즉 **이 파일은 실행 시점에 읽혀야 한다.**
 
 `xtask` 가 `vocab.toml` 을 파서 없이 읽은 것(*"이 한 줄을 읽자고 의존을 늘리지 않는다"*)과
@@ -195,7 +195,7 @@ DB를 직접 만들 때 가장 비싼 것은 스키마 마이그레이션과 백
 
 | 시점 | 크레이트 | 용도 |
 |---|---|---|
-| P1 | `rmcp` | 공식 MCP Rust SDK. stdio 트랜스포트. 4.7M+ 다운로드, 현행 스펙 추종 |
+| ~~P1~~ | ~~`rmcp`~~ | ★ **2026-08-18 에 뺐다** — [ADR-0025](../adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md) 가 호스트 중립을 초석에서 내렸고, *"MCP 는 호스트 중립성을 사는 값이고 호스트가 하나면 살 이유가 없다"* |
 | P1 | `pulldown-cmark` | 마크다운 인입(서술물 → 좌표) |
 | P2 | `serde_yaml` / `toml` | 팩 스키마·OpenAPI 로딩 |
 | P2 | `scip` 또는 protobuf 직접 파싱 | 표준 코드 인덱스 수용 |
@@ -245,7 +245,6 @@ palimpsest/
 │   │                               #   의존: pal-core, pal-store
 │   ├── pal-intake/                 # 관측 수용 API. 의존: pal-core, pal-store
 │   ├── pal-cli/                    # JSON in/out. 의존: 위 전부. **1급 표면**
-│   └── pal-mcp/                    # MCP 서버. 의존: 위 전부. **어댑터(P1)**
 ├── xtask/                          # CI 검사 구현
 ├── schema/
 │   ├── graph.toml                  # 노드·엣지·속성·producer — 단일 진실 (F22)
@@ -263,7 +262,7 @@ palimpsest/
 | 규칙 | 무엇을 막는가 |
 |---|---|
 | `pal-core`는 워크스페이스 내 **어떤** 크레이트에도 의존하지 않는다 | 도메인이 저장·전송·호스트 개념을 내부화하는 것 |
-| 어떤 크레이트도 `pal-cli`·`pal-mcp`에 의존하지 않는다 | 소비자 어휘의 역류 |
+| 어떤 크레이트도 `pal-cli`에 의존하지 않는다 | 소비자 어휘의 역류 |
 | `pal-core`는 `tree-sitter`·`redb`·`gix`에 의존하지 않는다 | 파서·저장 기술이 좌표계에 새는 것 |
 | `pal-intake`는 `pal-extract`에 의존하지 않는다 | `observed`가 `extracted` 경로를 재사용해 출처 배정이 흐려지는 것 |
 | **`pal-store`는 `pal-intent`에 쓰기 의존하지 않는다** (읽기만) | 캐시 폐기 경로가 의도 저장소에 닿는 것 — [R-21](00-risks.md#r-21) |
@@ -400,7 +399,7 @@ pub trait Projection {                         // 2층
 | 선택 필드 금지 | **도메인 타입**에 `Option<T>` 금지(범위는 아래) | CI |
 | **능력 부재를 값으로** | 미구축 산출의 자리는 `Capable<T>`. 빈 컬렉션으로 대신하지 않는다 | CI + 리뷰 |
 | 출처 불변 | setter 없음. 승격은 새 노드 반환 | 컴파일 |
-| **속성 출처 동질성** | 한 노드의 모든 속성이 같은 출처. 스키마의 `producer`가 노드 `provenance`와 정합([DESIGN §3.4](../DESIGN.md)) | 스키마 로딩 + CI |
+| **속성 출처 동질성** | 한 노드의 모든 속성이 같은 출처. 스키마의 `producer`가 노드 `provenance`와 정합([DESIGN §3.4](disposal-map.md)) | 스키마 로딩 + CI |
 | `clean` 없음 | `enum Judgment` 3변형 | 컴파일 |
 | 조용한 절단 금지 | `Envelope` 생성에 `Elision` 필수, 없으면 `Elision::none()`을 명시 | 컴파일 |
 
@@ -430,9 +429,11 @@ pub trait Projection {                         // 2층
 
 ---
 
-## 6. 표면 — CLI와 MCP는 같은 카탈로그에서 파생된다
+## 6. 표면 — 목록은 언제나 카탈로그에서 파생된다
 
-`surface/queries.toml` 하나가 단일 진실이고, 여기서 ① Rust 질의 enum ② JSON 스키마 ③ CLI 서브커맨드 ④ MCP 툴 정의 ⑤ 문서 표가 전부 생성된다. **코드에만 있고 카탈로그에 없는 질의는 CI 실패.**
+`surface/queries.toml` 하나가 단일 진실이고, 여기서 ① Rust 질의 enum ② JSON 스키마 ③ CLI 서브커맨드 ④ 문서 표가 전부 생성된다. **코드에만 있고 카탈로그에 없는 질의는 CI 실패.**
+
+★ 옛 판은 여기에 **MCP 툴 정의**가 있었다. 어댑터는 2026-08-18 에 지워졌지만 **규칙은 남는다** — *"표면을 더할 때 목록을 더하지 않는다"* ([ADR-0024](../adr/0024-an-adapter-that-can-diverge-is-a-second-core.md)). 스킬·에이전트 정의·훅에도 그대로 걸린다.
 
 ```toml
 [query.touch]
@@ -451,7 +452,7 @@ direction = "consume"          # observation.intake 만 "provide"
 |---|---|
 | MSRV | 최신 stable − 2 (edition 2024 요구) |
 | 타깃 | 개발 `aarch64-apple-darwin` · **배포는 넷** — `x86_64-pc-windows-msvc` · `x86_64-unknown-linux-gnu` · `aarch64-apple-darwin` · `x86_64-apple-darwin`(`.github/workflows/release.yml:57-72` 의 matrix 이고 릴리스 자산이 그 넷이다). ⚠ **`x86_64-unknown-linux-musl` 은 배포 타깃이 아니다** — 이 표가 그렇게 적고 있었고, 실제 산출과 어긋났다. **`x86_64-pc-windows-msvc`(지원 대상 · 아직 미검증 — 아래를 볼 것)** |
-| 바이너리 | `pal`(CLI, 1급) · `pal serve`(MCP 어댑터, P1). 실제로는 하나의 바이너리 + 서브커맨드 |
+| 바이너리 | `pal` 하나. 서브커맨드 **17** (2026-08-18 에 `serve` 를 빼면서 18 → 17) |
 | 설치 데이터 위치 | 대상 저장소의 `.palimpsest/` — `cache/`·`index.redb`·**`intent.redb`는 gitignore**(전부 파생), **`intent/*.jsonl`은 커밋**(정본, §2.2) |
 | 릴리스 | **P2까지 릴리스 아티팩트를 만들지 않는다.** 자기 저장소와 코퍼스에서만 돈다 |
 
