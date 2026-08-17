@@ -2328,6 +2328,22 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
 // ⚠ **이 목록이 은신처가 되지 않게 하는 것**: 빠지는 자리마다 **왜**가 위 표에 있고,
 // 그 왜가 「고치기 귀찮다」인 항목은 하나도 없다. 새로 더할 때도 같은 자를 쓴다.
 //
+// # ★ 이 검사가 **못 보는 것** — 알고 두는 것과 모르고 두는 것은 다르다
+//
+// 2026-08-18 재고 처분이 문서 넷을 지우면서 링크 **161 건**이 죽었고, 수선 뒤에도
+// 이 검사가 **구조적으로 못 보는** 부류가 남는다. 적어 둔다 — 안 적으면 다음 사람이
+// 「0 건」을 「없다」로 읽는다.
+//
+// | 못 보는 것 | 왜 | 이 회차의 실물 |
+// |---|---|---|
+// | **텍스트가 부르는 절이 대상에 없다** | 대상 파일이 있으면 통과한다 | `[옛 DESIGN §12.4]` 이 `disposal-map.md` 를 가리키는데 거기 §12.4 절은 없다. **109 건**에 「옛」을 달아 *"그 문서는 사라졌다"* 를 텍스트가 말하게 했다 |
+// | **정의가 없는 참조형** | `[라벨]: 경로` 줄이 아예 없으면 셀 것이 없다 | `crates/pal-extract/src/plan.rs` 의 `[F12 §3.4]` — 정의 0 건이라 `rustdoc` 이 대괄호를 그대로 렌더한다. 「옛」 표기로 바꿔 링크가 아니게 했다 |
+// | **산문 안의 경로 언급** | 마크다운 링크 문법만 본다 | `crates/pal-cli/src/ledger.rs` 의 *"how-it-works §2.2 의 화면"* |
+//
+// ★ **규약**: 삭제된 문서를 계속 인용해야 하면 **링크가 아니라 코드 표기로 적고 앞에
+// 「옛」을 단다.** 그러면 이 검사가 안 봐도 **읽는 사람이 안다** — 그것이 이 저장소가
+// 말하는 *"낡은 문서의 문제는 거짓 신호가 되는 것"* 의 반대편이다.
+//
 // ⚠ **모집단이 비면 실패다** — 0 건은 *"죽은 링크가 없다"* 가 아니라 *"안 봤다"* 이고,
 // 둘을 뭉개면 이 검사가 자기 대상이 사라진 것을 초록으로 낸다(`SURFACE_MIN` 과 같은 자리).
 
@@ -2374,8 +2390,22 @@ fn check_dead_links(root: &Path) -> Result<String> {
         let dir = file.parent().unwrap_or(root);
         for 대상 in 마크다운_링크(&body) {
             링크수 += 1;
-            if !dir.join(&대상).exists() {
+            let (경로, 앵커) = 대상.split_once('#').map_or((대상.as_str(), ""), |(a, b)| (a, b));
+            let 붙인 = dir.join(경로);
+            if !붙인.exists() {
                 죽음.push(format!("{}  →  {대상}", 상대_경로(root, file)));
+                continue;
+            }
+            // ★ **자리까지 본다.** 파일이 있어도 그 안에 그 조각이 없으면 죽은 링크다.
+            //   `.md` 만 본다 — 다른 형식의 조각 규칙은 우리가 모른다.
+            if !앵커.is_empty() && 경로.ends_with(".md") {
+                let Ok(대상_본문) = std::fs::read_to_string(&붙인) else { continue };
+                if !조각들(&대상_본문).contains(앵커) {
+                    죽음.push(format!(
+                        "{}  →  {대상}  (파일은 있는데 **그 조각이 없다**)",
+                        상대_경로(root, file)
+                    ));
+                }
             }
         }
     }
@@ -2454,9 +2484,8 @@ fn 마크다운_링크(body: &str) -> Vec<String> {
         let Some(rest) = t.strip_prefix('[') else { continue };
         let Some((_라벨, 뒤)) = rest.split_once("]: ") else { continue };
         let 대상 = 뒤.split_whitespace().next().unwrap_or("");
-        let 경로 = 대상.split('#').next().unwrap_or("").trim();
-        if 파일_경로인가(경로) {
-            out.push(경로.to_owned());
+        if let Some(링크) = 링크로(대상) {
+            out.push(링크);
         }
     }
 
@@ -2468,10 +2497,8 @@ fn 마크다운_링크(body: &str) -> Vec<String> {
             if let Some(close) = body[i + 2..].find(')') {
                 let 대상 = &body[i + 2..i + 2 + close];
                 i += 2 + close;
-                let 경로 = 대상.split('#').next().unwrap_or("");
-                let 경로 = 경로.trim();
-                if 파일_경로인가(경로) {
-                    out.push(경로.to_owned());
+                if let Some(링크) = 링크로(대상) {
+                    out.push(링크);
                 }
                 continue;
             }
@@ -2589,6 +2616,80 @@ fn check_sunset(root: &Path) -> Result<String> {
         "선언 {}건 · 트리거 `{glob}` 는 아직 0건 — 그날이 오면 여기가 빨개진다",
         선언.len()
     ))
+}
+
+/// 링크 대상을 **`경로#앵커`** 로 정규화한다. 파일 경로가 아니면 `None`.
+///
+/// ★ **앵커를 버리면 안 된다** (독립 리뷰 2026-08-18 · 실측 3 건). 앞 판은
+/// `대상.split('#').next()` 로 조각을 통째로 버렸고, 그래서 **이 회차가 제목 하나를
+/// 고치면서 살아 있던 앵커 셋을 깼는데도 초록**이었다. 파일이 있으면 통과시키는 검사는
+/// *"가리키는 것이 있는가"* 를 답하지 *"가리키는 자리가 있는가"* 를 답하지 않는다.
+fn 링크로(대상: &str) -> Option<String> {
+    let 대상 = 대상.trim();
+    let (경로, 앵커) = 대상.split_once('#').map_or((대상, ""), |(a, b)| (a, b));
+    let 경로 = 경로.trim();
+    if !파일_경로인가(경로) {
+        return None;
+    }
+    Some(if 앵커.is_empty() { 경로.to_owned() } else { format!("{경로}#{앵커}") })
+}
+
+/// 마크다운 제목에서 GitHub 이 만드는 조각 이름을 낸다.
+///
+/// 규칙(실측으로 맞춘 것): 링크는 **텍스트만** 남기고 · 강조와 코드 표기를 벗기고 ·
+/// 소문자로 · 글자·숫자·공백·`-`·`_` 아닌 것을 버리고 · 공백을 `-` 로.
+fn 조각_이름(제목: &str) -> String {
+    // `[텍스트](대상)` → `텍스트`
+    let mut t = String::new();
+    let b: Vec<char> = 제목.chars().collect();
+    let mut i = 0;
+    while i < b.len() {
+        if b[i] == '[' {
+            if let Some(close) = b[i + 1..].iter().position(|c| *c == ']') {
+                let 텍스트: String = b[i + 1..i + 1 + close].iter().collect();
+                t.push_str(&텍스트);
+                let mut j = i + 1 + close + 1;
+                if j < b.len() && b[j] == '(' {
+                    while j < b.len() && b[j] != ')' {
+                        j += 1;
+                    }
+                    j += 1;
+                }
+                i = j;
+                continue;
+            }
+        }
+        t.push(b[i]);
+        i += 1;
+    }
+    t.to_lowercase()
+        .chars()
+        .filter(|c| c.is_alphanumeric() || *c == ' ' || *c == '-' || *c == '_')
+        .map(|c| if c == ' ' { '-' } else { c })
+        .collect()
+}
+
+/// 그 문서가 가진 조각 이름 전부.
+fn 조각들(body: &str) -> std::collections::HashSet<String> {
+    let mut out = std::collections::HashSet::new();
+    for line in body.lines() {
+        let t = line.trim_start();
+        if !t.starts_with('#') {
+            continue;
+        }
+        let 제목 = t.trim_start_matches('#').trim();
+        if 제목.is_empty() {
+            continue;
+        }
+        out.insert(조각_이름(제목));
+        // 손으로 단 `{#이름}` 도 받는다.
+        if let Some(a) = 제목.rfind("{#") {
+            if let Some(b) = 제목[a..].find('}') {
+                out.insert(제목[a + 2..a + b].to_owned());
+            }
+        }
+    }
+    out
 }
 
 /// 링크 대상이 **파일 경로**인가 — Rust 항목 링크·URL·산문을 여기서 가른다.

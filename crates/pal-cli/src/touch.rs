@@ -234,7 +234,7 @@ fn 수(v: &Capable<Vec<BoundItem>>) -> String {
     }
 }
 
-/// how-it-works §2.3 의 화면.
+/// 옛 `how-it-works §2.3` 의 화면 (그 문서는 2026-08-18 에 지웠다 — `docs/plan/disposal-map.md`).
 fn print_screen(envelope: &Envelope<TouchAnswer>) {
     println!();
     match &envelope.answer {
