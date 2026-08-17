@@ -162,17 +162,41 @@ fn 돌린다(root: &Path, args: &[&str]) -> Result<돌린_결과> {
 
 fn test(root: &Path) -> Result<()> {
     println!("■ 시험 — 그리고 남는 실패가 등록된 외침과 같은지 본다");
-    let 돌린_결과 { 섰나, 화면 } =
-        돌린다(root, &["test", "--workspace", "--all-targets", "--no-fail-fast"])?;
+
+    // ★ **축이 둘이고, 둘을 한 번에 못 부른다.**
+    //
+    //     $ cargo test --workspace --all-targets --doc --no-fail-fast
+    //     error: can't mix --doc with other target selecting options   (rc=101, 실측)
+    //
+    // ⚠ **`--all-targets` 를 빼서 한 줄로 줄이지 마라.** 그러면 명시적 타깃 계약을
+    // 암묵 기본값에 넘기는 것이고, `benches/` 가 생기는 날 **조용히 커버리지가 준다.**
+    // 두 번 부르는 쪽이 계약을 지킨다.
+    let 축 = [
+        ["test", "--workspace", "--all-targets", "--no-fail-fast"],
+        ["test", "--workspace", "--doc", "--no-fail-fast"],
+    ];
+    let 결과: Vec<돌린_결과> =
+        축.iter().map(|args| 돌린다(root, args)).collect::<Result<_>>()?;
+
+    // ★ **하나라도 안 서면 안 선 것이다.**
+    let 모두_섰나 = 결과.iter().all(|r| r.섰나);
+    // ★ **보고 유무는 「실패한 호출마다」 따로 본다.** 합친 화면으로 보면 한 축이 통과해
+    // 보고를 낸 것이 다른 축의 컴파일 실패를 덮어 준다 — 그것이 이 회차가 막은 구멍의
+    // 바로 그 모양이다.
+    let 보고가_다_있나 = 결과.iter().all(|r| r.섰나 || 시험이_돌았나(&r.화면));
 
     // **같은 이름이 여러 시험 바이너리에서 날 수 있다** — 집합으로 센다.
-    let mut 실패: Vec<String> =
-        실패한_시험들(&화면).into_iter().map(str::to_owned).collect();
+    // doctest 도 `test <이름> ... FAILED` 한 줄 형태를 따르므로 파서는 그대로 쓴다.
+    let mut 실패: Vec<String> = 결과
+        .iter()
+        .flat_map(|r| 실패한_시험들(&r.화면))
+        .map(str::to_owned)
+        .collect();
     실패.sort();
     실패.dedup();
     let 등록 = 등록된_외침();
 
-    match 판정한다(섰나, 시험이_돌았나(&화면), &실패, &등록) {
+    match 판정한다(모두_섰나, 보고가_다_있나, &실패, &등록) {
         판정::시험을_못_돌렸다 => bail!(
             "**시험을 돌리지도 못했다** — 컴파일·링크가 서지 못했다.\n    \
              `cargo test` 가 rc≠0 을 냈는데 시험 바이너리의 보고(`test result:`)가 \
@@ -1786,6 +1810,7 @@ test 통과하는것 ... ok
 test 파이프_방어가_이_플랫폼에서는_안_재진다 ... FAILED
 test common::eol::tests::맞추면_왕복한다 ... ok
 test 또_깨진것 ... FAILED
+test crates/pal-core/src/coord.rs - coord::SymbolIdentity (line 177) - compile fail ... FAILED
 
 failures:
 
@@ -1794,7 +1819,15 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
 ";
         assert_eq!(
             실패한_시험들(out),
-            vec!["파이프_방어가_이_플랫폼에서는_안_재진다", "또_깨진것"]
+            vec![
+                "파이프_방어가_이_플랫폼에서는_안_재진다",
+                "또_깨진것",
+                // ★ **doctest 도 같은 한 줄 형태다** — 파서를 안 고쳐도 걸린다.
+                // ⚠ 그리고 이름에 **줄번호가 박힌다**(`(line 177)`). 그 위에 주석 한 줄만
+                // 넣어도 이름이 바뀌므로, 이 이름을 `외침` 에 등록하면 **양방향 판정이
+                // 동시에 운다** — 등록되지 않은 실패 + 등록됐는데 안 남.
+                "crates/pal-core/src/coord.rs - coord::SymbolIdentity (line 177) - compile fail",
+            ]
         );
     }
 
