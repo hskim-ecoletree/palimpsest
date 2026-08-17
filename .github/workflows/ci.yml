@@ -18,6 +18,13 @@
 # 배운다.** `cargo xtask test` 가 그 대신 **등록된 외침 집합과 실제 실패 집합이 같은지**
 # 를 판정한다. 새 실패도, 승격 뒤 남은 등록도 둘 다 걸린다.
 #
+# ⚠ **그 집합 판정만으로는 부족했다** (2026-08-17). 앞 판은 자식의 종료 상태를 어디서도
+# 안 봤고, 그래서 stdout 에 `test … ... FAILED` 가 **한 줄도 안 나는 실패** — 컴파일이
+# 서지 못한 경우가 대표다 — 가 「실패 0건 = 등록 0건」이 되어 **초록으로 통과했다.**
+# 이 워크플로는 세 OS 를 그 명령 하나로 판정하므로 **셋이 함께 속았다.** 지금은
+# `xtask` 의 `판정한다` 가 종료 상태와 집합을 **함께** 보고, 「시험이 실패했다」와
+# 「시험을 돌리지도 못했다」를 **다른 문구로** 낸다.
+#
 # ## ⚠ `core.autocrlf` 를 실사용자 환경과 같게 맞춘다
 #
 # Git for Windows 의 기본은 `true` 이고 실측 기계도 `true` 였다. runner 가 다른 값이면
@@ -104,7 +111,14 @@ jobs:
       - name: cargo xtask check
         run: cargo xtask check
 
-      # 시험 전수 + **외침 대조**. 이 명령의 판정 규칙은 `xtask/src/main.rs` 에 있다.
+      # 시험 + **외침 대조**. 이 명령의 판정 규칙은 `xtask/src/main.rs` 에 있다.
+      #
+      # ★ **「전수」라고 쓰지 않는다.** 이 명령은 `cargo test` 를 **두 번** 부른다 —
+      # `--all-targets` 축과 `--doc` 축(둘은 같이 못 쓴다: `error: can't mix --doc with
+      # other target selecting options`). 그래서 lib·bin·시험·doctest 를 다 돈다.
+      # ⚠ **그래도 전수가 아니다**: `--doc` 은 **lib 타깃만** 보므로 `pal-cli` 와
+      # `xtask` 의 doctest 는 **영원히 0** 이다(둘 다 lib 이 없다). 사용자가 만나는
+      # 표면이 바로 `pal-cli` 라, 거기 `///` 예제를 적어도 아무도 컴파일하지 않는다.
       - name: cargo xtask test
         run: cargo xtask test
 
