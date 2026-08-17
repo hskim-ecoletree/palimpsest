@@ -60,11 +60,38 @@ pub fn run(a: Args) -> Result<()> {
         );
     };
 
+    let envelope = answer(&a, &query)?;
+    if a.json {
+        println!("{}", serde_json::to_string_pretty(&envelope)?);
+    } else {
+        print_screen(&query, &envelope);
+    }
+    Ok(())
+}
+
+/// **조립해서 답 하나를 낸다** — 출력하지 않는다.
+///
+/// # 왜 `run` 에서 이것을 뽑았는가
+///
+/// `run` 은 *"조립 → 실행 → 출력"* 셋을 한 몸으로 했다. 그런데 **이 조립을 CLI 가
+/// 아닌 소비자도 지나야 한다** — 어댑터(F06b §4b)가 같은 질의를 같은 예산으로 돌리려면
+/// 여기 있는 것 전부(대장 · 2층 붙기 · 의도 저장소 · 예산 · 낡음 · 대장에서 뜬 부분
+/// 파싱 목록)가 필요하다. 출력과 붙어 있으면 그 소비자는 **자기 조립을 새로 쓰게 되고,
+/// 그 순간 둘이 갈린다** — 예산 하나가 달라도 같은 질의가 다른 답을 낸다.
+///
+/// **어댑터가 이 함수를 직접 부르지는 않는다**(`pal-mcp` 는 `pal-cli` 에 의존할 수
+/// 없다 — `cargo xtask check` 의 의존 방향 규칙 3). 부르는 것은 `crate::serve` 이고,
+/// 그것이 어댑터가 정의한 트레이트의 구현이다. **조립이 한 곳에 남는 것이 요점이다.**
+///
+/// # Errors
+/// 저장소·캐시·2층·의도 저장소 중 하나에 닿지 못하면.
+pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
     // **캐시 위치를 미리 뜬다** — `plan.deviation` 은 대장을 **두 번 더** 만든다
     // (기준선과 머리). 같은 캐시를 지나야 두 번째가 적중한다.
     let cache_dir = a.cache_dir.clone();
-    let report = ledger::compute(a.repo, a.rev, a.cache_dir)?;
-    let index = a.index.unwrap_or_else(|| a.repo.join(".palimpsest/index.redb"));
+    let report = ledger::compute(a.repo, a.rev, a.cache_dir.clone())?;
+    let index =
+        a.index.clone().unwrap_or_else(|| a.repo.join(".palimpsest/index.redb"));
 
     // **붙는 방법이 둘이고 그 갈림이 답에 실린다**(`[f06.3.pass]` ③).
     //
@@ -80,7 +107,7 @@ pub fn run(a: Args) -> Result<()> {
 
     // **의도 저장소는 읽기로만 연다** — 이 명령은 결박을 안 만든다.
     // 파일이 없으면 결박이 0 건이고 **그것이 정확한 값**이다(아직 아무도 안 걸었다).
-    let intent = IntentStore::open_read_only(&touch::intent_file(a.repo, a.intent))
+    let intent = IntentStore::open_read_only(&touch::intent_file(a.repo, a.intent.clone()))
         .context("의도 저장소를 열지 못했다")?;
     // ⚠ **`binding.status` 만 전수가 필요하다** — 그 질의의 답이 결박 전부다.
     // 다른 질의에서 전수를 들면 좌표 하나에 답하는 데 O(전체 결박)을 낸다(F11 §3.1).
@@ -127,7 +154,7 @@ pub fn run(a: Args) -> Result<()> {
         bindings,
         // ★ **계산은 표면의 일이다** — 이탈은 **두 스냅샷**을 요구하는데 `QueryCtx` 는
         // 투영 하나만 든다. `narrative` 와 같은 자리이고 이유가 하나 더 있다.
-        deviation: 이탈(&query, a.repo, a.rev, cache_dir)?,
+        deviation: 이탈(query, a.repo, a.rev, cache_dir)?,
         bound: &bound,
         binding_max: pal_core::PROVISIONAL_TOUCH_BINDING_MAX,
         extractor: pal_extract::version(),
@@ -151,13 +178,7 @@ pub fn run(a: Args) -> Result<()> {
             .collect(),
     };
 
-    let envelope = pal_query::execute(&query, &ctx).context("질의가 실패했다")?;
-    if a.json {
-        println!("{}", serde_json::to_string_pretty(&envelope)?);
-    } else {
-        print_screen(&query, &envelope);
-    }
-    Ok(())
+    pal_query::execute(query, &ctx).context("질의가 실패했다")
 }
 
 /// `plan.deviation` 일 때만 이탈을 계산한다.
