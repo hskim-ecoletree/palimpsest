@@ -46,8 +46,19 @@ def P2(rng, touched):
                 if len(t) > 12 and t in added and added[t] != cur:
                     removed[t] = cur
         if removed:
-            hits.append((p, n, len(removed), list(removed)[:1]))
+            hits.append((p, n, len(removed), [안전하게(x) for x in list(removed)[:1]]))
     return hits
+
+
+def 안전하게(t):
+    """인용한 줄이 **다른 검사를 깨뜨리지 않게** 링크 문법을 무력화한다.
+
+    이 파일의 출력은 `.txt` 이고 `.txt` 는 죽은 링크 검사의 모집단 안이다
+    (`md·toml·txt·rs`). 인용한 줄에 든 마크다운 링크가 이 파일의 자리에서
+    풀리지 않아 **측정 산출이 검사를 빨갛게 만들었다**(실측 2026-08-19 · 죽은 링크 10 건).
+    도구가 그런 출력을 내면 안 된다.
+    """
+    return t.replace('](', ']\u200b(').replace('[', '\u200b[')
 
 def P3(rng, start, end, tokens):
     hits = []
