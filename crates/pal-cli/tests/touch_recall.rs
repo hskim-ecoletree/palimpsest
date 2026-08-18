@@ -14,7 +14,7 @@ mod common;
 use common::{git, pal};
 use std::path::{Path, PathBuf};
 
-/// `[f11.pass].top_n_default` — `F11 §3.3` 이 적은 값이고 이 시험이 정하지 않았다.
+/// `[f11.pass].top_n_default` — `옛 F11 §3.3` 이 적은 값이고 이 시험이 정하지 않았다.
 const 상한: usize = 10;
 
 /// 저장소 하나 — **한 파일에 심볼 셋.** 반경 `files:` 가 셋을 다 지켜본다.
@@ -93,7 +93,7 @@ fn 다른_좌표에_걸린_규칙이_이_좌표에서_뜬다() {
     let root = 저장소("watch");
     let 방 = 방(&root, "watch");
 
-    // `deriveVerdicts` 에 걸고 **파일 전체**를 지켜본다 — 반경은 선언이다(F09 §3).
+    // `deriveVerdicts` 에 걸고 **파일 전체**를 지켜본다 — 반경은 선언이다(옛 F09 §3).
     bind(&root, &방, "deriveVerdicts", "완료 경로는 같은 함수를 부른다", "files:core.ts");
 
     // ★ **결박은 다른 좌표에 걸렸는데 여기서 떠야 한다.**
@@ -225,7 +225,7 @@ fn 못_찾으면_가까운_이름을_내고_하나를_고르지_않는다() {
     assert_eq!(near[0]["name"], "deriveVerdicts");
     assert_eq!(near[0]["kind"], "spelling");
 
-    // 부분 매칭 — `F11 §4` 가 *"`pal touch cancel` 이 후보를 보여 준다"* 로 적은 형태.
+    // 부분 매칭 — `옛 F11 §4` 가 *"`pal touch cancel` 이 후보를 보여 준다"* 로 적은 형태.
     let v = touch(&root, &방, "Verdicts", &[]);
     let near = v["answer"]["near"].as_array().expect("near");
     let 이름들: Vec<&str> = near.iter().map(|n| n["name"].as_str().expect("name")).collect();

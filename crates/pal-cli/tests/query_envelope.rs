@@ -14,7 +14,7 @@ mod common;
 use common::{git, pal};
 use std::path::PathBuf;
 
-/// F05 §5.1 이 적은 봉투의 성분. **하나라도 빠지면 실패다.**
+/// 옛 F05 §5.1 이 적은 봉투의 성분. **하나라도 빠지면 실패다.**
 const 봉투의_여섯: [&str; 6] =
     ["snapshot", "projection", "coverage", "capabilities", "ledger", "elision"];
 
@@ -45,7 +45,7 @@ const 질의들: [(&str, Option<&str>); 10] = [
     ("narrative.unbound", None),
     // F11 — 좌표 하나. **`pal touch` 와 같은 실행기를 지난다.**
     ("binding.touch", Some("도움")),
-    // ★ F12 — **좌표가 아니라 계획 문서다.** 기준선이 그 문서 안에 있다(F12 §4).
+    // ★ F12 — **좌표가 아니라 계획 문서다.** 기준선이 그 문서 안에 있다(옛 F12 §4).
     ("plan.deviation", Some(계획_자리)),
 ];
 
@@ -141,7 +141,7 @@ fn 질의_로그가_쌓이고_재구축이_지우지_않는다() {
     }
 
     // ⚠ **2층을 연 채로 `pal` 을 부르면 안 된다** — `redb` 가 배타 락을 잡는다.
-    // 그 사실 자체가 이 세션의 발견이고 게이트에 적혀 있다(F05 §6 은 *"읽기는 동시
+    // 그 사실 자체가 이 세션의 발견이고 게이트에 적혀 있다(옛 F05 §6 은 *"읽기는 동시
     // 가능"* 이라 적었다).
     let 읽기 = |index: &std::path::Path| {
         let p = pal_store::Projection::open(index).expect("2층");

@@ -606,7 +606,7 @@ def f09_재측정(tmp: Path, tag: str, src: Path, pin: str, ext: str) -> None:
     for row in 표본:
         print("      " + " | ".join(str(x) for x in row))
 
-    # ★ **판정 재료를 파일로 남긴다** — F09 §4-가 가 *"결박마다 한 줄"* 로 적은 그것이고,
+    # ★ **판정 재료를 파일로 남긴다** — 옛 F09 §4-가 가 *"결박마다 한 줄"* 로 적은 그것이고,
     #   메모 전체가 없으면 *"이 커밋이 이 메모를 무효로 만드는가"* 를 판정할 수 없다.
     out = ROOT / f"corpus/tasks/f10-f09-remeasure-{tag}.tsv"
     with out.open("w", encoding="utf-8") as fh:

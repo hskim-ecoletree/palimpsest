@@ -13,7 +13,7 @@ blake3.workspace = true
 # `schema/graph.toml` · `surface/queries.toml` 을 읽는다 — 읽는 경로가 하나여야
 # 로딩 시점 거부가 성립한다.
 toml.workspace = true
-# **`Envelope` 가 자기 크기를 잰다**(F06 §4.3 · `[f06.2.pass]` ③). 부르는 쪽이 인자로
+# **`Envelope` 가 자기 크기를 잰다**(옛 F06 §4.3 · `[f06.2.pass]` ③). 부르는 쪽이 인자로
 # 넘기면 그 값은 관측이 아니라 주장이 되고, 잊는 경로가 생긴다. 소비자가 읽는 형식이
 # 이미 JSON 이라고 `Envelope` 의 머리 주석이 적었으므로 재는 단위도 그것이다.
 serde_json.workspace = true

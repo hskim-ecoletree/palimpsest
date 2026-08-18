@@ -2813,6 +2813,14 @@ fn check_stale_citation(root: &Path) -> Result<String> {
                 if 면제_범위.is_some_and(|(a, b)| n >= a && n <= b) {
                     continue;
                 }
+                // 옛 계획 문서를 **절 번호로** 부르는 자리 — 문자열 토큰으로는 못 잡는다.
+                for at in 계획문서_인용(line) {
+                    센_자리 += 1;
+                    let 왼쪽: String = line[..at].chars().rev().take(20).collect();
+                    if !왼쪽.contains('옛') {
+                        문제.push(format!("{상대}:{}  {}", n + 1, line.trim()));
+                    }
+                }
                 for tok in 사라진_문서 {
                     let mut from = 0;
                     while let Some(rel) = line[from..].find(tok) {
@@ -2940,6 +2948,46 @@ fn 실행시점_docs(root: &Path) -> Result<Vec<String>> {
     }
     out.sort();
     Ok(out)
+}
+
+/// 옛 계획 문서를 절 단위로 부르는 자리 — `F〇〇 §N` 형태의 시작 오프셋들.
+///
+/// 이 저장소의 계획 문서 25 개는 전부 같은 서식이었다(§1 왜 · §2 데이터 · §3 구현 ·
+/// §4 이슈 · §5 대안 · §6 검증 · §7 완료 체크리스트). 코드는 **그 절 번호**를 근거로
+/// 적었고, 2026-08-18 재고 처분이 그 문서 전부를 지웠다.
+///
+/// ⚠ **문자열 토큰으로는 못 잡는다** — 번호가 변수라서다. 그래서 이 회차는 303 곳에
+/// 「옛」을 **손으로** 달았고 **59 곳을 흘렸다**(독립 리뷰 15 라운드가 실측).
+/// **손으로 단 규약은 장치가 재기 전까지 샌 줄도 모른다.**
+///
+/// ★ **게이트 문서의 절이 아니다.** 살아 있는 `docs/gates/F〇〇.md` 도 번호 절을 쓰지만,
+/// 이 표기는 계획 문서를 가리킨다 — `docs/gates/F03.md:62` 가 자기 §2 의 제목에
+/// *"완료 체크리스트 (옛 F03 §7)"* 이라 적어 그것을 스스로 증언한다. §7 은 계획 문서
+/// 서식의 마지막 절이고 게이트에는 그런 절이 없다.
+fn 계획문서_인용(line: &str) -> Vec<usize> {
+    let b = line.as_bytes();
+    let mut out = Vec::new();
+    for (i, _) in line.match_indices('F') {
+        let mut j = i + 1;
+        let mut 숫자 = 0;
+        while j < b.len() && b[j].is_ascii_digit() {
+            j += 1;
+            숫자 += 1;
+        }
+        if 숫자 != 2 {
+            continue;
+        }
+        if j < b.len() && b[j].is_ascii_lowercase() {
+            j += 1;
+        }
+        if j + 1 < b.len() && b[j] == b'-' && b[j + 1].is_ascii_digit() {
+            j += 2;
+        }
+        if line[j..].starts_with(" §") {
+            out.push(i);
+        }
+    }
+    out
 }
 
 /// 토큰 목록 선언 블록의 줄 범위(0-기준, 양끝 포함) — **면제는 여기서만 선다.**

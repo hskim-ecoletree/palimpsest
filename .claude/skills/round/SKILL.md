@@ -228,12 +228,24 @@ wc -l docs/gates/<기능>.md
 
 **가르는 자는 경로가 아니라 「그 커밋이 검사의 입력을 건드렸는가」다.**
 
+★★ **그런데 그 물음에 경로 목록으로 답하지 않는다.** (정정 2026-08-18 · 독립 리뷰 15 라운드)
+
+앞 판은 확장자·접두사 `grep` 으로 검사의 모집단을 **손으로 베껴 놓았다.** 그 거울은 놓은 날부터 갈렸다 — 실측으로 넷이 **"안 기다린다"** 를 받으면서 `cargo xtask check` 를 **빨갛게** 만든다: `scripts/*.py`·`.gitignore`·`CLAUDE.md`·`crates/pal-cli/assets/**/*.md`(설치 자산). 반대로 `^docs/` 는 **동결된 판정 문서·ADR·원문**까지 "기다린다"로 끌어온다. **그 줄을 쓴 커밋이 바로 죽은 링크·sunset 검사를 놓은 커밋이다** — 입력을 넓힌 손이 같은 자리에서 좁은 필터를 썼다.
+
+**검사의 모집단은 검사가 안다. 베끼지 말고 돌려라.**
+
 ```bash
-git diff --name-only <착수>..HEAD | grep -qE '\.(rs|toml|lock|ya?ml)$|^docs/|^AGENTS\.md$|^\.claude/|^\.palimpsest/' \
-  && echo "기다린다" || echo "안 기다린다"
+# ① 문서·설정이 검사를 깨뜨리나 — 로컬에서 답이 그대로 난다.
+#    검사 19 개는 파일을 읽어 판정할 뿐이라 세 OS 에서 같은 답을 낸다.
+cargo xtask check
+
+# ② 플랫폼마다 갈릴 수 있나 — 여기만 CI 가 새로 답한다.
+git diff --name-only <착수>..HEAD \
+  | grep -qE '^(crates|xtask)/|^Cargo\.(toml|lock)$|^\.github/' \
+  && echo "기다린다" || echo "안 기다린다 — ① 이 초록이면 CI 가 더 답할 것이 없다"
 ```
 
-**여전히 안 기다려도 되는 것**은 검사가 안 보는 자리다 — 동결된 `docs/gates/` 판정 문서 · `docs/instructions/` 원문 · `docs/adr/` 본문 · `corpus/`. 확실하지 않으면 **기다린다.**
+②의 목록은 **모집단이 아니라 빌드 입력**이라 손으로 적어도 안 갈린다. ① 이 빨가면 **push 하기 전에 고친다.** 확실하지 않으면 **기다린다.**
 
 ⚠ **그리고 `cancel-in-progress: true` 다.** 커밋을 여럿 내되 **push 는 한 번** 한다. 나눠 push 하면 앞의 런이 취소되고, 종료 판정은 「초록을 봤다」가 아니라 **「회차의 마지막 커밋 SHA 에 `conclusion=success` 런이 붙어 있다」**로 잰다.
 

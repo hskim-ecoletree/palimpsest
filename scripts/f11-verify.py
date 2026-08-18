@@ -52,12 +52,12 @@ RECURRENCE_FIRED_MIN = 5      # ★ **부분 통과선을 안 만든다** — �
 CROSS_COORD_POPULATION_MIN = 1
 NEAR_POPULATION_MIN = 1
 NEAR_MIN = 1
-TOP_N = 10                    # [F11 §3.3] 의 「상위 N(기본 10)」
+TOP_N = 10                    # [옛 F11 §3.3] 의 「상위 N(기본 10)」
 UNRELATED_FIRED_MAX = 0
 UNRELATED_POPULATION_MIN = 1
 ELISION_POPULATION_MIN = 1
 WATCH_BOUND_POPULATION_MIN = 1
-P95_QUERY_MS_MAX = 500        # [F11 §6] 의 값
+P95_QUERY_MS_MAX = 500        # [옛 F11 §6] 의 값
 LATENCY_SAMPLE = 50           # `[f10.pass].false_binding_sample_size` 에서 옮긴 값
 SELF_REPO_BOUND_MIN = 1
 
@@ -421,7 +421,7 @@ def 반대_방향(repo: Path, box: Path, 판정: list[dict]) -> None:
         잘린 = sum(t["count"] for t in a["elision"]["truncated"]
                    if t["reason"] == "binding_max_exceeded")
         # ★ **낡은 것은 상한을 안 탄다.** 상한을 1 로 낮춰도 낡은 것이 전부 실리는 것이
-        # [F11 §3.3] 이 요구한 그것이고, 그때 「잘린 것 0」은 고장이 아니라 규율이다.
+        # [옛 F11 §3.3] 이 요구한 그것이고, 그때 「잘린 것 0」은 고장이 아니라 규율이다.
         skip("④ 상한과 절단",
              f"한 좌표에 걸린 것이 최대 {가장_많은}건이라 상한 {TOP_N} 에 안 닿는다 — "
              f"**실 코퍼스에서는 모집단 0 이라 대조 불가.** 손잡이를 1 로 낮추면 "

@@ -123,7 +123,7 @@ pub fn run(a: Args) -> Result<()> {
 
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
     // **1패스 스티칭.** 무대에 배치로 쓰고 한 트랜잭션에서 교체한다 — 읽는 쪽은
-    // 옛 세대 전체 아니면 새 세대 전체만 본다(F05 §4 · `[f05.2.pass]` ③).
+    // 옛 세대 전체 아니면 새 세대 전체만 본다(옛 F05 §4 · `[f05.2.pass]` ③).
     let attached = attach::attach(&index, &report, attach::How::Stitching)?;
     let built_for_this = attached.built_for_this_snapshot();
     let attach::Attached { projection, indexed, .. } = attached;

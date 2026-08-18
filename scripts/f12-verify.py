@@ -190,7 +190,7 @@ def 소급(tmp: Path, limit: int | None) -> dict | None:
     # ⑨ 기획 → 결정. **분모는 record.json 전부다** — `Plan` 이 선 것만 세면 1.0 이 된다.
     ac_있음 = sum(1 for r in recs.values() if r.get("acceptance_criteria"))
     ok("⑨ 기획→결정 해소율", f"**{ac_있음} / {len(recs)}** — AC 가 1 건 이상인 work item / "
-                              f"추적되는 record.json 전부. **하한 없음**(F12 §6 이 이 값의 "
+                              f"추적되는 record.json 전부. **하한 없음**(옛 F12 §6 이 이 값의 "
                               f"소비자를 F18 의 판단으로 적었다)")
 
     # ⑩ 선행성 — ①③의 자격이다.
@@ -499,7 +499,7 @@ def 상한과_카탈로그(tmp: Path) -> None:
         fail("⑬ 경계", "`pal deviation` 에 `--base` 가 있다 — **F23 을 당겨왔다**")
     else:
         ok("⑬ 경계", f"손잡이 {sorted(이름들)} — `--base` 가 **없다.** 기준선은 계획 "
-                      f"문서가 진다(F12 §4)")
+                      f"문서가 진다(옛 F12 §4)")
 
     # ④의 구조 — **이 기능은 결박을 하나도 안 만든다**
     소스 = "\n".join(
