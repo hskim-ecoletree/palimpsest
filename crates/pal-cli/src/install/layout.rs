@@ -117,12 +117,32 @@ pub const IGNORE_FILE: &str = ".gitignore";
 pub const OWNED_DIRS: &[&str] = &[".claude/pal", ".claude/commands/pal"];
 
 /// **파일 하나짜리 뿌리** — 그 디렉터리에는 남의 것이 함께 산다.
-pub const OWNED_FILES: &[&str] = &[".claude/agents/pal-orchestrator.md"];
+///
+/// ★ **이 목록이 곧 「되돌릴 수 있는 것」의 상한이다**([`super::manifest::우리_자리인가`]).
+/// `PAYLOAD` 에 더하면서 여기 안 더하면 **놓기는 하는데 `update`·`uninstall` 이 거부한다** —
+/// 실측 2026-08-19: 회차 규약 넷을 `PAYLOAD` 에만 더했더니 설치 뒤 **되돌릴 수 없는
+/// 상태**가 됐다. 두 목록은 함께 움직인다.
+pub const OWNED_FILES: &[&str] = &[
+    ".claude/agents/pal-orchestrator.md",
+    // 회차 규약 — `PAYLOAD` 의 짝이다.
+    ".claude/agents/pal-premortem-sweeper.md",
+    ".claude/agents/pal-independent-reviewer.md",
+    ".claude/skills/pal-round/SKILL.md",
+];
 
 /// 우리가 만들 수 있는 디렉터리 — **만든 것만 매니페스트에 적히고, 제거는 그것만
 /// 되돌린다.**
-pub const DIRS: &[&str] =
-    &[".claude", ".claude/pal", ".claude/agents", ".claude/commands", ".claude/commands/pal"];
+pub const DIRS: &[&str] = &[
+    ".claude",
+    ".claude/pal",
+    ".claude/agents",
+    ".claude/commands",
+    ".claude/commands/pal",
+    // 회차 규약이 사는 자리. `.claude/skills` 에는 남의 스킬이 함께 살고,
+    // `pal-round` 는 우리 것이라 이름을 갈랐다.
+    ".claude/skills",
+    ".claude/skills/pal-round",
+];
 
 /// **매니페스트가 사는 집** — 나머지보다 먼저 세운다.
 ///
@@ -229,3 +249,69 @@ pub fn 절대_안_건드리나(rel: &str) -> bool {
 /// 「등록만 남고 판정이 사라진 훅」이 조용히 돌고, 실측상 그 헛돎은 **어디에도 안
 /// 보인다** — 훅 실행은 트랜스크립트에도 화면에도 흔적을 안 남긴다.
 pub const HOOK_EVENTS: &[&str] = crate::hook::EVENTS;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// **놓는 목록과 되돌리는 목록은 함께 움직인다.**
+    ///
+    /// 실측 2026-08-19: 회차 규약 넷을 [`PAYLOAD`] 에만 더했더니 `install` 은 놓는데
+    /// `update`·`uninstall` 이 *"우리가 놓을 수 있는 자리가 아니다"* 로 **거부**했다 —
+    /// 설치 뒤 **되돌릴 수 없는 상태**가 됐다. 이 시험이 그 자리를 지킨다.
+    #[test]
+    fn 놓는_것은_전부_되돌릴_수_있다() {
+        for r in PAYLOAD {
+            assert!(
+                놓을_수_있는_파일인가(r.path),
+                "`{}` 을 PAYLOAD 가 놓는데 `놓을_수_있는_파일인가` 가 거부한다 — \
+                 `OWNED_FILES` 나 `OWNED_DIRS` 에 짝이 없다. \
+                 그러면 설치는 되고 제거는 안 된다",
+                r.path
+            );
+        }
+    }
+
+    /// **놓는 파일의 부모 디렉터리는 전부 우리가 만들 수 있어야 한다.**
+    ///
+    /// 못 만들면 설치가 그 자리에서 멈추거나, 만들고도 매니페스트에 못 적어
+    /// **제거가 빈 디렉터리를 남긴다.**
+    #[test]
+    fn 놓는_것의_부모를_전부_만들_수_있다() {
+        for r in PAYLOAD {
+            let mut 조각: Vec<&str> = r.path.split('/').collect();
+            조각.pop();
+            let mut 쌓임 = String::new();
+            for c in 조각 {
+                if !쌓임.is_empty() {
+                    쌓임.push('/');
+                }
+                쌓임.push_str(c);
+                assert!(
+                    만들_수_있는_디렉터리인가(&쌓임),
+                    "`{}` 을 놓으려면 `{}` 를 만들어야 하는데 `DIRS` 에 없다",
+                    r.path,
+                    쌓임
+                );
+            }
+        }
+    }
+
+    /// **크레이트 경계를 넘는 `include_str!` 는 `publish = false` 를 전제한다.**
+    ///
+    /// 회차 규약 셋(`pal-round/SKILL.md`·에이전트 둘)은 사본을 안 만들려고
+    /// `../../../../.claude/…` 를 싣는다. 그것은 **빌드는 되지만 `cargo package` 를
+    /// 깨뜨린다**(실측 2026-08-19, 격리 사본에서 확인).
+    ///
+    /// 그 전제가 깨지면 **여기가 먼저 무너지므로** 워크스페이스 선언을 직접 읽어 지킨다.
+    #[test]
+    fn 발행하지_않는다는_전제() {
+        let ws = include_str!("../../../../Cargo.toml");
+        assert!(
+            ws.contains("publish = false"),
+            "워크스페이스가 `publish = false` 가 아니다 — 그런데 `layout.rs` 가 \
+             크레이트 밖 파일을 `include_str!` 한다. `cargo package` 가 깨진다. \
+             사본을 만들 것인가 발행을 안 할 것인가를 사람이 정해야 한다"
+        );
+    }
+}

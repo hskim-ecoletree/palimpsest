@@ -1,0 +1,65 @@
+# 설치 왕복 실측 — install → update → uninstall (C16-b·c·d)
+# 대상: 남의 파일 둘이 미리 있는 프로젝트
+#   .claude/agents/independent-reviewer.md   ← 일반명. 이름을 안 갈랐으면 입양됐을 것
+#   .claude/skills/round/SKILL.md            ← 같음
+
+===== install =====
+
+■ 설치 — /private/tmp/install-probe-20260819/victim
+  놓았다                   .claude/pal/INSTRUCTIONS.md
+  놓았다                   .claude/agents/pal-orchestrator.md
+  놓았다                   .claude/commands/pal/touch.md
+  놓았다                   .claude/commands/pal/plan.md
+  놓았다                   .claude/commands/pal/doctor.md
+  놓았다                   .claude/commands/pal/ledger.md
+  놓았다                   .claude/skills/pal-round/SKILL.md
+  놓았다                   .claude/agents/pal-premortem-sweeper.md
+  놓았다                   .claude/agents/pal-independent-reviewer.md
+  놓았다                   .claude/pal/policy.toml
+  훅 등록                  SubagentStop  ·  pal hook SubagentStop
+  ⚠ 훅이 아직 안 뜬다          `PATH` 어디에도 `pal` 이 없다 — 등록은 그 이름을 가리키므로 지금은 훅이 안 뜬다(그리고 그 실패는 침묵한다). `/Users/incognito/dev/projects/palimpsest/target/debug/pal` 을 `PATH` 에 넣으십시오
+  병합                    .claude/settings.json  (더한 키: agent)
+  블록                    CLAUDE.md
+  블록                    .gitignore
+  매니페스트                 .claude/pal/manifest.json  ·  pal 0.0.0+8f3f28fd32bd
+
+
+===== 사용자가 정책을 고친다 (정상 사용) =====
+  → .claude/pal/policy.toml 에 한 줄 더함
+
+===== update — 사람이 고친 것을 밟나 =====
+
+■ 갱신 — /private/tmp/install-probe-20260819/victim
+  이미 최신입니다  ·  pal 0.0.0+8f3f28fd32bd
+
+
+===== uninstall =====
+
+■ 제거 — /private/tmp/install-probe-20260819/victim
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  사용자 수정 — 지웠다          .claude/pal/policy.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/commands/
+
+
+===== 음성 대조: 남의 파일이 살아남았나 =====
+.claude/agents/independent-reviewer.md
+.claude/skills/round/SKILL.md
+--- 내용 ---
+남의 것이다 — 지우면 안 된다
+남의 스킬이다
