@@ -140,8 +140,13 @@
 
 | 무엇 | 실측 | 조건 | 이슈 |
 |---|---|---|---|
-| **호출자 조회** | 사전부검·리뷰가 「부르는 자리」를 전부 `grep` 으로 셌다 | Rust 추출기 | [#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) |
+| **결박 자체** | `pal ledger` — **`Markdown L0 결박 불가 197 파일` · `Rust L0 결박 불가 116 파일`**. **이 회차의 산출물이 전부 미결박이다**(`effect/binding-attempt.txt`) | Rust·Markdown 추출기 | [#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) |
+| **호출자 조회** | 사전부검·리뷰가 「부르는 자리」를 전부 `grep` 으로 셌다. `pal query symbol.callers` → *"2층 심볼 7 색인됨 · 범위 밖 397 파일"* | 위와 같다 | [#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) |
 | **문서 간 결박** | 회고의 근거가 커밋 본문 산문이고, 축이 기계로 안 섰다(C1-b 반증) | 문서 노드·엣지 | [#69](https://github.com/hskim-ecoletree/palimpsest/issues/69) |
+
+★ **§11 조건 4(결박·그래프 갱신)를 시도했고 능력 부재가 산출로 나왔다** — 앞 회차와
+같은 자리다. `pal narrative` 는 *"아무것도 승인하지 않았습니다"* 를 냈고 `pal ledger` 는
+**결박 불가 언어 7 개 · 386 파일**을 냈다. **문서가 아니라 산출이 그렇게 말한다.**
 
 ★ **`grep` 은 문자열을 맞히고 그래프는 관계를 안다.** 이 회차도 그 자리에 `grep` 을
 세웠고, **그 사실 자체가 다음에 만들 것을 정한다.**
