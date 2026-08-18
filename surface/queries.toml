@@ -196,3 +196,5 @@ summary    = "계획과 실제의 갈림 — 넷이고 ★ **못 잰 것이 분�
 args       = [{ name = "plan", type = "RepoPath", required = true }]
 returns    = "Deviation"
 introduced = "F12"
+
+# DESIGN.md 가 이렇게 정했다
