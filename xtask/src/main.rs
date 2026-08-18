@@ -2819,7 +2819,13 @@ fn check_stale_citation(root: &Path) -> Result<String> {
 /// `docs/`·`.palimpsest/` 는 뺀다: 거기엔 **처분 자체를 서술하는 정당한 자리**가 있다.
 fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
     const 밖: &[&str] = &["docs/", ".palimpsest/", "target/", ".git/", "corpus/"];
-    const 확장자: &[&str] = &["rs", "toml", "py", "sh", "yml", "yaml", "json"];
+    // ★ **`.md` 도 본다** (독립 리뷰 8 라운드). 앞 판은 `.md` 를 빼서
+    //   **설치 자산**(`crates/pal-cli/assets/**/*.md` — `include_str!` 로 사용자
+    //   프로젝트에 실려 나간다)과 **하네스 표면 둘**(`.claude/agents/`·`.claude/skills/`)이
+    //   통째로 사각이었다. 심어서 확인한 **꺼진 대조**다 — 거기 「옛」 없는 인용을 넣어도
+    //   19/19 초록이었다. `docs/`·`.palimpsest/` 만 빼는 것이 이 검사의 선언이었으므로
+    //   **선언과 구현이 갈린 자리**이기도 하다.
+    const 확장자: &[&str] = &["rs", "toml", "py", "sh", "yml", "yaml", "json", "md"];
     let mut out = Vec::new();
     let mut stack = vec![root.to_path_buf()];
     while let Some(d) = stack.pop() {
