@@ -2797,6 +2797,11 @@ fn check_stale_citation(root: &Path) -> Result<String> {
             파일수 += 1;
             // 이 검사 자신이 사는 파일인가 — 면제는 여기서만 선다.
             let 이_파일 = 상대 == "xtask/src/main.rs";
+            // ★ **면제가 설 줄 범위** — 토큰 목록 선언 블록과 그 doc 주석뿐.
+            //   ⚠ 앞 판은 주석에 *"블록 안에서만"* 이라 적고 **파일 전체**로 구현했다
+            //   (독립 리뷰 12 라운드가 심어서 확인 — 블록 밖 52 줄이 면제됐다).
+            //   **선언과 구현이 갈리면 그것이 곧 꺼진 대조다.**
+            let 면제_범위 = 이_파일.then(|| 토큰_블록(&body)).flatten();
             for (n, line) in body.lines().enumerate() {
                 // ★ **이 검사 자신의 토큰 목록은 인용이 아니다.** 검사가 자기 정의를
                 //   위반으로 읽으면 그것은 대조가 아니라 자가당착이다.
@@ -2805,7 +2810,7 @@ fn check_stale_citation(root: &Path) -> Result<String> {
                 //   `"…",` 로 생긴 줄이 통째로 면제됐다 — 심어서 확인한 **꺼진 대조**다.
                 //   이 저장소는 규약을 말할 때 「**「옛」 표기**」라는 낱말을 쓰므로,
                 //   그 면제는 **가장 잘 걸릴 문장 형태를 정확히 비켜 가고 있었다.**
-                if 이_파일 && (line.contains("사라진_문서") || 토큰_정의인가(line)) {
+                if 면제_범위.is_some_and(|(a, b)| n >= a && n <= b) {
                     continue;
                 }
                 for tok in 사라진_문서 {
@@ -2885,13 +2890,19 @@ fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
     Ok(out)
 }
 
-/// 토큰 목록 자신의 줄인가 — **검사가 자기 정의를 위반으로 읽으면 자가당착이다.**
-fn 토큰_정의인가(line: &str) -> bool {
-    let t = line.trim_start();
-    // 목록의 원소 줄 · 목록 시작 · **그 목록을 설명하는 doc 줄**.
-    // 마지막 것이 없으면 검사가 자기 설명문을 위반으로 읽는다(실측).
-    (t.starts_with('"') && t.ends_with("\","))
-        || t.starts_with("&[")
-        || (t.starts_with("///") && (t.contains("표기") || t.contains("사각")))
-        || (t.starts_with("//") && t.contains("표기"))
+/// 토큰 목록 선언 블록의 줄 범위(0-기준, 양끝 포함) — **면제는 여기서만 선다.**
+///
+/// 앞의 doc 주석부터 `];` 까지. 그 밖은 아무리 그럴듯해 보여도 면제 안 한다 —
+/// 이 저장소는 규약을 말할 때 「「옛」 표기」라는 낱말을 쓰므로, 「표기」가 든 줄을
+/// 전역으로 면제하면 **가장 잘 걸릴 문장 형태를 정확히 비켜 간다.**
+fn 토큰_블록(body: &str) -> Option<(usize, usize)> {
+    let lines: Vec<&str> = body.lines().collect();
+    let 시작 = lines.iter().position(|l| l.starts_with("const 사라진_문서"))?;
+    // doc 주석을 위로 올라가며 포함한다.
+    let mut a = 시작;
+    while a > 0 && lines[a - 1].trim_start().starts_with("///") {
+        a -= 1;
+    }
+    let b = lines[시작..].iter().position(|l| l.trim() == "];")? + 시작;
+    Some((a, b))
 }
