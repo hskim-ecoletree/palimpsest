@@ -1,0 +1,114 @@
+===== 홀드아웃 · 앞 회차 (먼저 돌렸다) · a0fbf72..2989527 =====
+만진 경로 13 · 2회 이상 4 (31%)
+
+[P1 순변경 공집합] 0  (상한 0 = 5%)
+
+[P2 되돌린 줄] 1  (상한 1 = 10%)
+    4회 · 왕복줄 7  .claude/skills/round/SKILL.md
+           예: palimpsest 는 **데이터 흐름 · 함수와 인터페이스 호출 · 이벤트 전파 · 라이브러리 사용**을 미리 계산해 둔다.
+
+[P3 토큰 왕복] 후보 6 중 0 걸림
+
+[합집합] 1 / 13  (상한 2 = 20%)  → 통과
+
+
+===== 처치군 · 재고 처분 · 2989527..7b683d0 =====
+만진 경로 167 · 2회 이상 58 (35%)
+
+[P1 순변경 공집합] 1  (상한 8 = 5%)
+    2회  scripts/f10-5-verify.py
+
+[P2 되돌린 줄] 41  (상한 16 = 10%)
+    2회 · 왕복줄 3  .claude/skills/round/SKILL.md
+           예: git diff --name-only <착수>..HEAD | grep -qE '\.(rs|toml|lock|ya?ml)$|^d
+    6회 · 왕복줄 44  .palimpsest/rounds/2026-08-18-inventory-disposal/intent.md
+           예: 판정하는 자 셋 ([NEXT-A §3](../../../NEXT-A-inventory-disposal.md), 착수 시 삭제됨
+    5회 · 왕복줄 16  .palimpsest/rounds/2026-08-18-inventory-disposal/report.md
+           예: **착수 때 정했다. 회차 중에 새로 안 생겼다.**
+    32회 · 왕복줄 154  .palimpsest/rounds/2026-08-18-inventory-disposal/state.md
+           예: | 열린 이슈 | **22** = 에픽 13 + 결함 9 | |
+    4회 · 왕복줄 1  AGENTS.md
+           예: | 설계 결정과 그 근거 | [docs/adr/](docs/adr/) — **결정은 ADR 에만 산다**. 옛 `DESIGN.
+    2회 · 왕복줄 1  crates/pal-cli/src/install/guard.rs
+           예: //! [docs/DESIGN.md](../../../../docs/plan/disposal-map.md) §12.9 · [A
+    3회 · 왕복줄 1  crates/pal-cli/src/plan.rs
+           예: //! [F23 §7]: ../../../docs/plan/disposal-map.md
+    4회 · 왕복줄 1  crates/pal-cli/src/query.rs
+           예: // 다른 모양으로 나가고, 그것이 곧 두 곳에 적힌 같은 것이다(옛 계획 §7 의 넷째).
+    5회 · 왕복줄 1  crates/pal-cli/src/touch.rs
+           예: /// 그것이 곧 두 곳에 적힌 같은 것이다(옛 계획 §7 의 넷째).
+    4회 · 왕복줄 6  crates/pal-cli/tests/host_free.rs
+           예: /// `Database already open. Cannot acquire lock.` 이 났다. 이 기계에서는 3/3 통과
+    2회 · 왕복줄 2  crates/pal-cli/tests/touch_recall.rs
+           예: /// `[f11.pass].top_n_default` — `F11 §3.3` 이 적은 값이고 이 시험이 정하지 않았다.
+    3회 · 왕복줄 1  crates/pal-core/src/binding.rs
+           예: /// 공통으로 지는 넷 중 하나다([DESIGN §1.2](../../../docs/plan/disposal-map.md))
+    5회 · 왕복줄 6  crates/pal-core/src/budget.rs
+           예: /// [DESIGN §12.4](../../../docs/plan/disposal-map.md) 의 예산 표에 **`미측정`
+    5회 · 왕복줄 2  crates/pal-core/src/chain.rs
+           예: /// 둘을 한 노드에 넣으면 [§3.4](../../../docs/plan/disposal-map.md)의 속성 출처 동질성
+    3회 · 왕복줄 1  crates/pal-core/src/coord.rs
+           예: /// [F03 §3.3]: ../../../docs/plan/disposal-map.md
+    4회 · 왕복줄 5  crates/pal-core/src/graph.rs
+           예: //! # 왜 값이 넷이고 다섯이 아닌가 ([DESIGN §3](../../../docs/plan/disposal-map.md
+    4회 · 왕복줄 1  crates/pal-core/src/ledger.rs
+           예: //! 로드맵이고 전자는 설정이다. 뭉개면 대장이 거짓말을 한다([F01 §6](../../../docs/plan/dispos
+    3회 · 왕복줄 3  crates/pal-core/src/plan.rs
+           예: //! [F03 §3.3]: ../../../docs/plan/disposal-map.md
+    3회 · 왕복줄 2  crates/pal-core/src/repo.rs
+           예: /// 머클 계산과 git 인덱스 캐시가 거기 있다([F01 §3.2](../../../docs/plan/disposal-ma
+    3회 · 왕복줄 1  crates/pal-extract/src/narrative.rs
+           예: /// 서로 다른 경로를 본다 — 옛 계획 §7 의 넷째가 금한 형태다.
+    4회 · 왕복줄 1  crates/pal-extract/src/parse.rs
+           예: /// # 무엇을 지우고 무엇을 남기는가 ([F03 §3.1](../../../docs/plan/disposal-map.md)
+    4회 · 왕복줄 1  crates/pal-extract/src/plan.rs
+           예: //! [F10]: ../../../docs/plan/disposal-map.md
+    3회 · 왕복줄 1  crates/pal-extract/src/recognize.rs
+           예: //! [F01 §3.3](../../../docs/plan/disposal-map.md) 이 정한 순서는
+    3회 · 왕복줄 1  crates/pal-git/src/lib.rs
+           예: //! [F01 §3.1](../../../docs/plan/disposal-map.md) 이 다섯을 적었고 그것은
+    3회 · 왕복줄 6  docs/adr/0026-the-core-produces-judgment-and-the-harness-enforces-it.md
+           예: *"물음에 답했는가"* 만 가른다(`crates/pal-cli/tests/host_free.rs` 의 `[f06.3.pass]
+    2회 · 왕복줄 1  docs/adr/README.md
+           예: 역방향도 사실이다 — **여기 있는 26 개 중 13 개는 `DESIGN.md` 의 후보 목록에 없었다.**
+    4회 · 왕복줄 2  docs/agents/domain.md
+           예: │   ├── adr/          ← 설계 결정과 그 근거 — **여기가 정본이다**
+    19회 · 왕복줄 77  docs/gates/inventory-disposal.md
+           예: ★ **「공백을 정직하게 표시한다」(`P4`)가 자기 자신에 대해 작동했다.** 하네스가 자기
+    9회 · 왕복줄 46  docs/plan/00-goals.md
+           예: | 전달 형태 | **단일 정적 바이너리 CLI가 1급**(JSON in/out — 스크립트·CI·git 훅). MCP 서버와
+    5회 · 왕복줄 16  docs/plan/00-risks.md
+           예: **대응이 실패하면** — 해소율이 낮으면 [F12(계획-구현 결박)](disposal-map.md)의 비중을 올린다. 계획 
+    4회 · 왕복줄 5  docs/plan/00-stack.md
+           예: #### 정본은 텍스트다 — 2026-08-10 정정 ([F23](disposal-map.md) · [DESIGN §12.8]
+    8회 · 왕복줄 21  docs/plan/README.md
+           예: | 설계 결정과 그 근거 | [../adr/](../adr/) — **결정은 ADR 에만 산다.** 옛 `DESIGN.md` 
+    5회 · 왕복줄 10  docs/plan/disposal-map.md
+           예: ### 1.2 아직 안 만들었다 — **B 가 새 지형에서 다시 정한다** (12)
+    3회 · 왕복줄 5  docs/sunset.toml
+           예: 백서의 **증거**다(`research/README` 가 *"이 연구는 WHITEPAPER.md 의 증거이지
+    4회 · 왕복줄 1  schema/graph.toml
+           예: # 다시 계산되므로, 큐를 적으면 그것이 **세 곳에 적힌 같은 것**이다(옛 계획 §7 의 넷째).
+    2회 · 왕복줄 1  scripts/f02-1-verify.py
+           예: 이유가 그것이다(옛 DESIGN §2.2 · F03 §2).
+    2회 · 왕복줄 1  scripts/f10-5-verify.py
+           예: 곧 두 곳에 적힌 같은 규칙이다(옛 계획 §7 의 넷째).
+    4회 · 왕복줄 1  scripts/f11-verify.py
+           예: RECURRENCE_FIRED_MIN = 5      # ★ **부분 통과선을 안 만든다** — 옛 계획 §6 이 관용을 안 
+    5회 · 왕복줄 7  scripts/f12-verify.py
+           예: "계획 문서 `docs/plan/features/F12-plan-binding.md` 가 **폐기됐다** "
+    6회 · 왕복줄 1  surface/queries.toml
+           예: # DESIGN.md 가 이렇게 정했다
+    16회 · 왕복줄 48  xtask/src/main.rs
+           예: if ext == "md" || (ext == "rs" && !시험인가) {
+
+[P3 토큰 왕복] 후보 6 중 6 걸림
+    '계획 §'  6커밋  파일수 29→30  최종동일=False
+    '옛'  24커밋  파일수 95→157  최종동일=False
+    'DESIGN §'  9커밋  파일수 74→67  최종동일=False
+    'WHITEPAPER'  7커밋  파일수 14→18  최종동일=False
+    'how-it-works'  9커밋  파일수 8→15  최종동일=False
+    'docs/adr/README.md'  5커밋  파일수 0→2  최종동일=False
+
+[합집합] 41 / 167  (상한 33 = 20%)  → ★ 상한 초과
+
