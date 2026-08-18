@@ -35,7 +35,7 @@
 
 ## 범위 밖
 
-**착수 때 정했다. 회차 중에 새로 안 생겼다.**
+**착수 때 정한 것이 대부분이다.** ⚠ **하나는 회차 중에 생겼다** — 아래 `cargo doc`.
 
 - **새 지형을 세우는 것** — 무엇을 어느 순서로 만드나. 병렬 회차 B 가 쓴다.
 - **DESIGN 의 미발행 결정 36 개를 ADR 로 내는 것** — 규약이 *"ADR 은 기능 종료
@@ -63,7 +63,7 @@
 
 | 무엇 | 실측 | 조건 | 이슈 |
 |---|---|---|---|
-| **결박 갱신** | `pal narrative` → 결박 **0** · 미결박 1684. 이 회차 산출물 다섯에서 조각 80 개가 났고 전부 미결박 | **Rust 추출기** — `pal ledger` 가 `Rust L0 결박 불가` 를 낸다 | [#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) |
+| **결박 갱신** | `pal narrative` → **결박 0**. 이 회차 산출물이 전부 미결박이다 | **Rust 추출기** — `pal ledger` 가 `Rust L0 결박 불가` 를 낸다 | [#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) |
 | **영향 범위 조회** | 사전부검 **세 라운드가 전부 `grep`** 으로 돌았다 | 위와 같다 | [#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) |
 | **문서 간 결박** | 죽은 링크 161 건을 **`xtask` 의 `grep` 검사**로 셌다 | 문서 노드·엣지 | [#69](https://github.com/hskim-ecoletree/palimpsest/issues/69) |
 

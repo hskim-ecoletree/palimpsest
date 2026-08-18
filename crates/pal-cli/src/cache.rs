@@ -70,7 +70,7 @@ pub fn stats(repo: &Path, cache_dir: Option<PathBuf>, json: bool) -> Result<()> 
     println!("캐시      {}", root.display());
     println!("엔트리    {} · {}", usage.entries, 사람이_읽는(usage.bytes));
     if usage.entries > 0 {
-        // **파일당 평균이 합격선이다** — F04 §3.2 의 「2KB 이하」.
+        // **파일당 평균이 합격선이다** — 옛 F04 §3.2 의 「2KB 이하」.
         println!(
             "파일당    평균 {}",
             사람이_읽는(usage.bytes / usage.entries as u64)

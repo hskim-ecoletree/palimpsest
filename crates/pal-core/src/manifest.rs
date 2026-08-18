@@ -1,4 +1,4 @@
-//! 프로젝트 매니페스트 — **범위는 선언에서 온다** (F01 §3.5 · DESIGN §4.3).
+//! 프로젝트 매니페스트 — **범위는 선언에서 온다** (옛 F01 §3.5 · 옛 DESIGN §4.3).
 //!
 //! > *"어떤 저장소들이 한 프로젝트인가"는 코드에 없다.* 그러므로 매니페스트는
 //! > `asserted` 이고, **대장은 항상 "선언된 저장소 N개"를 머리에 적는다.**
@@ -43,7 +43,7 @@ impl std::fmt::Display for ManifestError {
 ///
 /// 제외 규칙을 넓히면 판정 대상이 줄고 *"잔여가 줄었다"* 로 보인다. 규칙 ID 가 있어야
 /// **"범위가 줄어서 사라진 것"** 과 **"판정되어 사라진 것"** 을 나중에 구별할 수 있고,
-/// 그때 이 ID 가 `ScopeReduction` 이 된다(F01 §3.3).
+/// 그때 이 ID 가 `ScopeReduction` 이 된다(옛 F01 §3.3).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ExclusionRule {
     pub id: ExclusionRuleId,
@@ -118,7 +118,7 @@ impl Manifest {
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ScopeSource {
-    /// `.palimpsest/manifest.toml` 이 선언했다 — 출처는 `asserted`(DESIGN §4.3).
+    /// `.palimpsest/manifest.toml` 이 선언했다 — 출처는 `asserted`(옛 DESIGN §4.3).
     Declared {
         /// 선언된 저장소 수.
         repos: usize,

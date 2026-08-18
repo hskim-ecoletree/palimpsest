@@ -36,7 +36,7 @@ use crate::ledger::LedgerReport;
 /// 이 표면이 2층에 **어떻게** 붙는가.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum How {
-    /// **스티칭한다** — 파일 노드 · 엣지 · `EXPORTS` 전부(F05 §4).
+    /// **스티칭한다** — 파일 노드 · 엣지 · `EXPORTS` 전부(옛 F05 §4).
     Stitching,
     /// ⚠ **심볼만 다시 만든다 — 엣지를 지운다.**
     ///

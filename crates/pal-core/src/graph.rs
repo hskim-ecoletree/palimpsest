@@ -66,7 +66,7 @@ impl Provenance {
     /// 이 출처가 `Finding`(존재 주장)을 세울 수 있는가.
     ///
     /// **`observed` 가 여기 포함되는 유일한 비-`extracted` 출처다** — 트레이스가 A→B 를
-    /// 실제로 봤다면 그것은 추측이 아니다(DESIGN §3).
+    /// 실제로 봤다면 그것은 추측이 아니다(옛 DESIGN §3).
     #[must_use]
     pub const fn can_assert_existence(self) -> bool {
         matches!(self, Self::Extracted | Self::Observed)
@@ -135,7 +135,7 @@ impl Producer {
         }
     }
 
-    /// 이 생산자가 그 출처의 노드에 설 수 있는가 — **DESIGN §3.4 의 대응표.**
+    /// 이 생산자가 그 출처의 노드에 설 수 있는가 — **옛 DESIGN §3.4 의 대응표.**
     ///
     /// `machine-record` 만 **해당 노드를 따른다**. 나머지 다섯은 출처 하나에 묶인다.
     /// 어긋나면 스키마 로딩이 거부되고, 그 거부가 [`crate::schema`] 의 몫이다.
@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn 생산자와_출처의_대응은_하나씩이다() {
-        // DESIGN §3.4 의 표 그대로. 어긋나면 파티션이 거짓이 된다.
+        // 옛 DESIGN §3.4 의 표 그대로. 어긋나면 파티션이 거짓이 된다.
         assert!(Producer::Extractor.fits(Provenance::Extracted));
         assert!(!Producer::Extractor.fits(Provenance::Inferred));
         assert!(Producer::Agent.fits(Provenance::Inferred));

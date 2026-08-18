@@ -154,7 +154,7 @@ pub fn run(args: Args) -> Result<()> {
             matches_worktree: Capable::Present(
                 report.worktree.matches(&report.ledger.snapshot_tree()),
             ),
-            // 재구축 중인지 이 빌드는 모른다 — 관측 경로가 F05 다. DESIGN §12.7 격리 3번.
+            // 재구축 중인지 이 빌드는 모른다 — 관측 경로가 F05 다. 옛 DESIGN §12.7 격리 3번.
             rebuild: Capable::not_built(CapabilityId::new("F05", "rebuild-progress")),
             built_for_this_snapshot: true,
             symbols_indexed: indexed,
@@ -171,7 +171,7 @@ pub fn run(args: Args) -> Result<()> {
         LedgerRef::of(&report.ledger),
         // 검사가 절단하는 것은 없다 — 표본은 **잔여**로 나가고 그것이 절단과 다른 것이다.
         Elision::none(),
-        // **대장이 접혀 있다** — 절단이 아니라 부피를 옮긴 것이다(F06 §4.3).
+        // **대장이 접혀 있다** — 절단이 아니라 부피를 옮긴 것이다(옛 F06 §4.3).
         접힌_대장(&report),
         // ⚠ **이 표면은 질의 로그를 안 쓴다.** `pal touch` 와 같은 자리다.
         LogStatus::NotRecorded { why: NotRecorded::SurfaceDoesNotLog },

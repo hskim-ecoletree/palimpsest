@@ -99,7 +99,7 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
     // **붙는 방법이 둘이고 그 갈림이 답에 실린다**(`[f06.3.pass]` ③).
     //
     // 기본은 **쓰기**다. 읽기가 기본이면 질의 로그가 조용히 안 쌓이고, F17 은
-    // 데이터가 없어 착수할 수 없다(F05 §5.3). `--read-only` 는 명시해야 켜진다.
+    // 데이터가 없어 착수할 수 없다(옛 F05 §5.3). `--read-only` 는 명시해야 켜진다.
     let attached = attach::attach(
         &index,
         &report,
@@ -113,7 +113,7 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
     let intent = IntentStore::open_read_only(&touch::intent_file(a.repo, a.intent.clone()))
         .context("의도 저장소를 열지 못했다")?;
     // ⚠ **`binding.status` 만 전수가 필요하다** — 그 질의의 답이 결박 전부다.
-    // 다른 질의에서 전수를 들면 좌표 하나에 답하는 데 O(전체 결박)을 낸다(F11 §3.1).
+    // 다른 질의에서 전수를 들면 좌표 하나에 답하는 데 O(전체 결박)을 낸다(옛 F11 §3.1).
     let bindings = if matches!(query, NamedQuery::BindingStatus) {
         intent.all().context("결박을 읽지 못했다")?
     } else {
@@ -337,7 +337,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
 
 /// 결박마다 한 줄 — **상태 · 반경 · 무엇이 켰는가를 함께 낸다.**
 ///
-/// F09 §5 의 마지막 행이 요구한 것이다: *"`stale` 출력에 **`triggered_by` 와 반경을
+/// 옛 F09 §5 의 마지막 행이 요구한 것이다: *"`stale` 출력에 **`triggered_by` 와 반경을
 /// 항상 붙여** 행동 가능하게 만든다."* 상태만 적으면 사람이 어디를 볼지 모르고,
 /// 그러면 표시를 무시하기 시작한다 — 그것이 [목표 G1] 의 반증 조건이다.
 ///
@@ -371,7 +371,7 @@ fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::Det
         };
         println!("  [{}] {mark}{계보}", b.binding.as_str());
         // **반경이 상태와 같은 줄에 있다** — *"이 결정은 `symbol` 반경에서 live"* 는
-        // *"이 결정은 유효하다"* 와 다른 문장이다(F09 §3).
+        // *"이 결정은 유효하다"* 와 다른 문장이다(옛 F09 §3).
         let 등급 = b
             .watch_grades
             .iter()
@@ -388,7 +388,7 @@ fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::Det
     println!("  **반경 밖의 변경은 여기 안 뜹니다** — 거짓 음성은 원리적으로 안 닫힙니다.");
     println!("  선언된 반경이 위에 적혀 있고, 그것이 이 도구가 할 수 있는 전부입니다.");
     println!();
-    // **낡음을 재는 자의 낡음**(F09 §5). 안 적으면 낡은 감지기가 낸 `live` 가
+    // **낡음을 재는 자의 낡음**(옛 F09 §5). 안 적으면 낡은 감지기가 낸 `live` 가
     // 지금의 `live` 로 읽힌다.
     println!("  감지기  문법 {} · 추출기 {}", detector.grammar, detector.extractor);
     if !detector.matches_head {
@@ -432,7 +432,7 @@ fn print_symbols(symbols: &[pal_core::SymbolNode]) {
     }
 }
 
-/// 미결박 목록 — **이것이 사람의 작업 목록이다** (F10 §2).
+/// 미결박 목록 — **이것이 사람의 작업 목록이다** (옛 F10 §2).
 ///
 /// # 세 갈래를 함께 낸다
 ///

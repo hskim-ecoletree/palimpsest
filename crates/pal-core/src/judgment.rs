@@ -50,7 +50,7 @@ use crate::repo::Snapshot;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ResidualReason {
-    // ── DESIGN §8 의 아홉 ────────────────────────────────────────────────────
+    // ── 옛 DESIGN §8 의 아홉 ────────────────────────────────────────────────────
     /// 미해소 참조 경유.
     ViaUnresolvedRef,
     /// 라벨 없음.
@@ -77,7 +77,7 @@ pub enum ResidualReason {
 }
 
 impl ResidualReason {
-    /// 사람이 읽는 이름. **DESIGN §8 의 낱말을 그대로 쓴다.**
+    /// 사람이 읽는 이름. **옛 DESIGN §8 의 낱말을 그대로 쓴다.**
     #[must_use]
     pub const fn label(self) -> &'static str {
         match self {

@@ -7,10 +7,10 @@
 //! `(symbol_id, body_digest)` 와 파일 목록뿐이고, 그것을 위해 2 층을 두 번 스티칭하면
 //! **같은 색인 파일을 두 스냅샷이 번갈아 덮어쓴다** — 그러면 뒤엣것이 앞엣것을 지운다.
 //!
-//! # `--base <ref>` 가 없다 — **[F23] 의 것이다**
+//! # `--base <ref>` 가 없다 — **`F23` 의 것이다**
 //!
 //! [옛 F23 §7] 의 완료 체크리스트가 `--base <ref>` 를 `briefing · conformance ·
-//! **deviation**` 셋에 대해 한 줄로 적었고 소유자가 거기다. [F12 §4] 는 그것 없이
+//! **deviation**` 셋에 대해 한 줄로 적었고 소유자가 거기다. [옛 F12 §4] 는 그것 없이
 //! 서는 길을 이미 적었다 — *"계획 승인 시점의 Snapshot 을 계획에 기록"*.
 //! **그래서 기준선은 계획 문서의 프론트매터가 진다**([`PlanBaseline`]).
 //!
@@ -189,7 +189,7 @@ pub fn compute(a: &Args) -> Result<Computed> {
         // 되고, 그 0 이 *"계획대로 했다"* 로 읽힌다.
         bail!(
             "`{}` 에 기준선이 없습니다 — 프론트매터에 `baseline: <rev>` 를 적으십시오. \
-             **어디부터가 이 계획의 변경인가**를 계획이 정해야 하고(F12 §4), \
+             **어디부터가 이 계획의 변경인가**를 계획이 정해야 하고(옛 F12 §4), \
              `--base` 는 이 명령의 손잡이가 아닙니다(F23)",
             plan.source
         );
@@ -229,7 +229,7 @@ pub fn deviation(a: &Args) -> Result<()> {
 
 /// 화면 — **넷이 각각 줄을 갖는다.**
 ///
-/// `unmeasurable` 을 다른 셋과 합쳐 적으면 [F12 §2] 가 *"이탈률이 거짓말이 된다"* 고
+/// `unmeasurable` 을 다른 셋과 합쳐 적으면 [옛 F12 §2] 가 *"이탈률이 거짓말이 된다"* 고
 /// 적은 상태 그 자체다. 산출에서 갈라 놓고 화면에서 뭉치면 **사람이 그 구별을 못 본다.**
 pub fn print_screen(c: &Computed) {
     let d = &c.deviation;
@@ -255,7 +255,7 @@ pub fn print_screen(c: &Computed) {
     }
     println!();
 
-    // ⚠ **나쁜 것이 아니다**([F12 §4]) — 판정이 아니라 관측이다.
+    // ⚠ **나쁜 것이 아니다**([옛 F12 §4]) — 판정이 아니라 관측이다.
     println!("■ 계획에 없던 변경 ({})", d.unplanned.len());
     for s in &d.unplanned {
         println!("  {}", s.short());
@@ -263,7 +263,7 @@ pub fn print_screen(c: &Computed) {
     if d.unplanned.is_empty() {
         println!("  없습니다.");
     }
-    println!("  ⚠ **나쁜 것이 아닙니다** — 분류만 하고 평가하지 않습니다(F12 §4).");
+    println!("  ⚠ **나쁜 것이 아닙니다** — 분류만 하고 평가하지 않습니다(옛 F12 §4).");
     println!();
 
     println!("■ 계획했으나 없는 변경 ({})", d.unimplemented.len());
@@ -285,7 +285,7 @@ pub fn print_screen(c: &Computed) {
             .collect::<Vec<_>>()
             .join(" · ")
     );
-    println!("  ★ **위 셋에 합산하지 않습니다** — 섞으면 이탈률이 거짓말이 됩니다(F12 §2·§5).");
+    println!("  ★ **위 셋에 합산하지 않습니다** — 섞으면 이탈률이 거짓말이 됩니다(옛 F12 §2·§5).");
     println!();
 
     println!("■ 값");

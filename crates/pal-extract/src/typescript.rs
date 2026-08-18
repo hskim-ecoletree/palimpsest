@@ -1,10 +1,10 @@
-//! TypeScript 선언 추출 — **쿼리가 아니라 직접 순회**(F02 §3.2).
+//! TypeScript 선언 추출 — **쿼리가 아니라 직접 순회**(옛 F02 §3.2).
 //!
 //! # 왜 순회인가
 //!
 //! Kotlin 은 쿼리다. 그것으로 되는 이유는 S0 이 **최상위만** 세기 때문이고, 그래서
 //! 컨테이너 체인이 필요 없었다. TypeScript 는 다르다 — 클래스 안의 메서드가 심볼이고,
-//! 그 포함 관계가 `symbol_id` 의 성분이다(F03). F02 §3.2 의 표가 그 판단이다:
+//! 그 포함 관계가 `symbol_id` 의 성분이다(F03). 옛 F02 §3.2 의 표가 그 판단이다:
 //! 컨테이너 체인 추적과 오류 회복 제어는 쿼리로 어렵고 순회로 자연스럽다.
 //!
 //! # 세는 단위 — **손 목록이 이것보다 먼저 커밋됐다**
@@ -83,7 +83,7 @@ impl LanguageExtractor for TypeScriptExtractor {
 /// 아니다** — 부분 결과와 회복 지점 수가 함께 나온다.
 pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
     let language = tree_sitter::Language::new(tree_sitter_typescript::LANGUAGE_TYPESCRIPT);
-    // **스레드당 파서를 재사용한다**(#49 · F02 §3.1). `Parser::new()` 는 싸지 않다.
+    // **스레드당 파서를 재사용한다**(#49 · 옛 F02 §3.1). `Parser::new()` 는 싸지 않다.
     let tree = parse_with(&language, source)?;
 
     let mut walk = Walk::new(source);
@@ -237,7 +237,7 @@ impl<'a, 't> Walk<'a, 't> {
             "method_definition" => self.declare(node, SymbolKind::Method, container, true),
 
             // **본문으로 내려가지 않는다** — 인터페이스의 속성·메서드 시그니처와 enum
-            // 멤버는 F02 §3.3 의 표에 없다. 내려가면 손 목록에 없는 것이 나온다.
+            // 멤버는 옛 F02 §3.3 의 표에 없다. 내려가면 손 목록에 없는 것이 나온다.
             "interface_declaration" => self.declare(node, SymbolKind::Interface, container, false),
             "type_alias_declaration" => self.declare(node, SymbolKind::TypeAlias, container, false),
             "enum_declaration" => self.declare(node, SymbolKind::Enum, container, false),
@@ -486,7 +486,7 @@ fn digest_of(scoped: &Scoped, node: Node<'_>, source: &[u8], identity: IdentityG
 /// 그 심볼의 **정규형 바이트열.** [`digest_of`] 가 이것을 해싱한다.
 ///
 /// **갈라 둔 이유는 시험이다** — 요약만 내면 *"두 소스가 같은 값을 갖는가"* 밖에 못
-/// 묻고, F03 §3.1 이 적어 둔 **정규형 자체**(`function add(#0: number, …)`)가
+/// 묻고, 옛 F03 §3.1 이 적어 둔 **정규형 자체**(`function add(#0: number, …)`)가
 /// 실물과 같은지는 물을 수 없다. 그것이 [`f03.2.pass`] ③ 의 판정 대상이다.
 fn normalized_of(
     scoped: &Scoped,
@@ -540,7 +540,7 @@ fn normalized_of(
         //
         // **①(합성 포매팅)은 이것을 못 잡았다** — 리네임 변형이 `exact` 심볼 **안**의
         // 바인딩만 건드리므로 import 를 건드릴 일이 없었다. 잡은 것은 ②(실 이력)의
-        // 손 검토다. 두 측정을 가른 F03 §6.2 의 판단이 여기서 값을 냈다.
+        // 손 검토다. 두 측정을 가른 옛 F03 §6.2 의 판단이 여기서 값을 냈다.
         if scope == ScopeIx(0) {
             continue;
         }
@@ -553,7 +553,7 @@ fn normalized_of(
         order.iter().enumerate().map(|(n, (s, b, _))| ((*s, *b), n)).collect();
 
     let erase = |at: usize| -> Option<usize> {
-        // **객체 리터럴의 키는 계약이다** (F03 §4.2). 해소는 그대로 두고 여기서만 막는다.
+        // **객체 리터럴의 키는 계약이다** (옛 F03 §4.2). 해소는 그대로 두고 여기서만 막는다.
         if scoped.protected.contains(&at) {
             return None;
         }
@@ -649,7 +649,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
     #[test]
     fn 익명은_가장_가까운_조상의_요약에_포함된다() {
-        // **정체성 규칙 ②의 뒤쪽 절반이다** (F03 §3.4). 익명이 독립 심볼이 아니라는
+        // **정체성 규칙 ②의 뒤쪽 절반이다** (옛 F03 §3.4). 익명이 독립 심볼이 아니라는
         // 것만으로는 부족하다 — 그 본문의 변경이 **어딘가에는** 실려야 하고, 안 실리면
         // 익명 안의 코드가 통째로 감시 밖으로 사라진다(F02 가 넘긴 「입자 부재」).
         let 요약 = |s: &str| 그래프(s).symbols[0].body;
@@ -661,7 +661,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
     #[test]
     fn 제네릭은_선언_하나가_심볼_하나고_인스턴스화는_심볼이_아니다() {
-        // **정체성 규칙 ③** (F03 §3.4).
+        // **정체성 규칙 ③** (옛 F03 §3.4).
         let g = 그래프("export function pick<T>(x: T): T { return x; }\nconst a = pick<number>(1);\nconst b = pick<string>('s');\n");
         let names: Vec<&str> = g.symbols.iter().map(|s| s.name.as_str()).collect();
         assert_eq!(names, vec!["pick", "a", "b"], "인스턴스화가 심볼로 샜다");
@@ -818,7 +818,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
     #[test]
     fn 정규형이_문서에_적힌_그대로다() {
-        // **F03 §3.1 이 예시를 적어 두었다** — 그 문장이 이 시험의 오라클이다:
+        // **옛 F03 §3.1 이 예시를 적어 두었다** — 그 문장이 이 시험의 오라클이다:
         //
         // ```
         // 원본:   function add(a: number, b: number) { const s = a + b; return s }
@@ -926,7 +926,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
     #[test]
     fn 객체_리터럴의_키는_지우지_않는다() {
-        // **★ 반대 방향.** F03 §4.2 — *"객체 리터럴 키·구조분해 이름은 지우지 않는다
+        // **★ 반대 방향.** 옛 F03 §4.2 — *"객체 리터럴 키·구조분해 이름은 지우지 않는다
         // (외부에서 보이는 형태)"*. 축약 속성의 이름은 **동시에 지역 참조이고 키**다.
         let 요약 = |s: &str| 그래프(s).symbols[0].body;
         let a = "function f() { const alpha = 1; return { alpha }; }";
@@ -948,7 +948,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
     #[test]
     fn 후행_쉼표는_요약을_바꾸지_않는다() {
-        // F03 §3.1 — 스타일이다. `prettier` 가 매일 붙였다 뗀다.
+        // 옛 F03 §3.1 — 스타일이다. `prettier` 가 매일 붙였다 뗀다.
         let 요약 = |s: &str| 그래프(s).symbols[0].body;
         assert_eq!(요약("function f(a: N, b: N) {}"), 요약("function f(a: N, b: N,) {}"));
         assert_eq!(요약("const x = [1, 2];"), 요약("const x = [1, 2,];"));
@@ -964,7 +964,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
     #[test]
     fn 따옴표_종류는_요약을_바꾸지_않는다() {
-        // F03 §3.1 — 스타일이다. **`prettier` 가 가장 자주 바꾸는 것이고**,
+        // 옛 F03 §3.1 — 스타일이다. **`prettier` 가 가장 자주 바꾸는 것이고**,
         // 이스케이프까지 풀지 않으면 따옴표를 뒤집는 변형에서 요약이 움직인다.
         let 요약 = |s: &str| 그래프(s).symbols[0].body;
         assert_eq!(요약("const x = 'hi';"), 요약("const x = \"hi\";"));

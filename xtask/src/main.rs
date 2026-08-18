@@ -553,6 +553,7 @@ fn check(root: &Path) -> Result<()> {
         ("설치 경로가 홈을 안 부른다", check_install_never_reaches_home(root)),
         ("죽은 링크 부재", check_dead_links(root)),
         ("sunset 선언", check_sunset(root)),
+        ("사라진 문서를 현재형으로 안 부른다", check_stale_citation(root)),
     ];
     let total = checks.len();
 
@@ -934,13 +935,13 @@ fn 줄바꿈_같은가(have: &str, want: &str) -> bool {
     have.replace("\r\n", "\n") == want.replace("\r\n", "\n")
 }
 
-// ── 검사 7 — 스키마 정합 (stack §4.3 단계 2 · DESIGN §1.2) ────────────────────
+// ── 검사 7 — 스키마 정합 (stack §4.3 단계 2 · 옛 DESIGN §1.2) ────────────────────
 
 /// `schema/graph.toml` ↔ 코드. **양방향이다.**
 ///
 /// | 방향 | 무엇을 막나 |
 /// |---|---|
-/// | 코드 → 스키마 | 급할 때 코드에만 노드를 만드는 것(F22 §4) |
+/// | 코드 → 스키마 | 급할 때 코드에만 노드를 만드는 것(옛 F22 §4) |
 /// | 스키마 → 코드 | **스키마가 만들 수 없는 것을 선언한 채 자라는 것** — 온톨로지의 팽창 |
 ///
 /// 그리고 셋째 다리가 있다: 스키마가 적은 속성 이름과 **Rust 타입의 `pub` 필드**를
@@ -953,7 +954,7 @@ fn check_schema(root: &Path) -> Result<String> {
     let text = std::fs::read_to_string(&path)
         .with_context(|| format!("스키마를 읽지 못했다: {}", path.display()))?;
 
-    // **로딩 시점 거부가 여기서 CI 실패가 된다** (DESIGN §3.4).
+    // **로딩 시점 거부가 여기서 CI 실패가 된다** (옛 DESIGN §3.4).
     let schema = pal_core::GraphSchema::parse(&text).map_err(|e| anyhow::anyhow!("{e}"))?;
 
     let src = root.join("crates/pal-core/src");
@@ -1057,7 +1058,7 @@ fn check_schema(root: &Path) -> Result<String> {
     ))
 }
 
-// ── 검사 11 — 카탈로그 정합 (F06 §2 · `[f06.1.pass]` ①) ─────────────────────
+// ── 검사 11 — 카탈로그 정합 (옛 F06 §2 · `[f06.1.pass]` ①) ─────────────────────
 //
 // `surface/queries.toml` ↔ `pal_core::QueryName` 의 **양방향** 대조.
 // 「스키마 정합」과 같은 형태이고 같은 자격이다 — F22-1 이 음성 대조 9/9 로 각 방향을
@@ -1145,7 +1146,7 @@ fn check_catalog(root: &Path) -> Result<String> {
         if !catalog.queries.contains_key(*name) {
             problems.push(format!(
                 "코드가 `{name}` 에 답하는데 카탈로그에 없다 — \
-                 질의 추가는 `surface/queries.toml` 변경으로만 일어난다(F06 §2 규칙 1)"
+                 질의 추가는 `surface/queries.toml` 변경으로만 일어난다(옛 F06 §2 규칙 1)"
             ));
         }
     }
@@ -1640,10 +1641,10 @@ fn check_budget_constants(root: &Path) -> Result<String> {
     Ok(format!("예산 상수 {}개 · 다른 파일 {scanned}개에 0건", declared.len()))
 }
 
-// ── 검사 10 — 벗어나는 경로 부재 (F05 §5.1·§5.2) ─────────────────────────────
+// ── 검사 10 — 벗어나는 경로 부재 (옛 F05 §5.1·§5.2) ─────────────────────────────
 //
 // 둘을 한 검사로 센다. **같은 형태이기 때문이다** — 둘 다 *"이 값을 안 지고 나갈 수
-// 있는 문"* 이고, 둘 다 **타입으로 100% 막히지 않는다.** F05 §5.1 이 그것을 인정했다:
+// 있는 문"* 이고, 둘 다 **타입으로 100% 막히지 않는다.** 옛 F05 §5.1 이 그것을 인정했다:
 // *"타입으로 100% 막히지 않는다는 것을 인정하고, 대신 **빠지면 골든이 깨지는** 자리에
 // 검사를 둔다."* 여기가 그 검사의 정적인 절반이다.
 //
@@ -1711,7 +1712,7 @@ fn check_no_escape_hatch(root: &Path) -> Result<String> {
 
     if !problems.is_empty() {
         bail!(
-            "값을 안 지고 나가는 문이 생겼다 (F05 §5.1·§5.2):\n    {}",
+            "값을 안 지고 나가는 문이 생겼다 (옛 F05 §5.1·§5.2):\n    {}",
             problems.join("\n    ")
         );
     }
@@ -1759,7 +1760,7 @@ mod budget_tests {
     }
 }
 
-// ── 검사 12 — 앵커는 신고받지 않는다 (F09 §4.1 · DESIGN §6.5 D32) ────────────
+// ── 검사 12 — 앵커는 신고받지 않는다 (옛 F09 §4.1 · 옛 DESIGN §6.5 D32) ────────────
 //
 // > 결박을 만드는 주체가 *"이건 커밋 X 기준이야"* 라고 말해도 그 값이 앵커가 되지
 // > 않는다 — **앵커는 결박 시점에 기계가 대상 좌표에서 읽은 digest 다.**
@@ -1780,7 +1781,7 @@ const WATCH_ENTRY_SITES: &[(&str, &str)] = &[
     // ★ **F10 이 더한 자리이고, 이 검사가 그것을 잡아서 여기 적힌다.**
     // `pal narrative approve` 도 `pal bind` 와 **같은 자리에서 같은 값을 읽는다** —
     // 투영의 `symbol.body` 다. 제안이 지고 온 값을 앵커로 쓰는 경로가 **없다**:
-    // 제안은 좌표까지만 낸다(`Classification`). 그것이 F09 §4.1(D32)이 요구한
+    // 제안은 좌표까지만 낸다(`Classification`). 그것이 옛 F09 §4.1(D32)이 요구한
     // *"`watch_snapshot` 은 신고받지 않는다"* 를 인입 경로에서도 지키는 형태다.
     ("crates/pal-cli/src/narrative.rs", "승인이 투영에서 읽어 만든다 — 제안이 지고 오지 않는다"),
 ];
@@ -1812,7 +1813,7 @@ fn check_anchor_is_measured(root: &Path) -> Result<String> {
     if !새것.is_empty() {
         bail!(
             "`WatchEntry` 를 만드는 자리가 늘었다 — **앵커가 어디서 오는지 사람이 봐야 한다**\n    \
-             (F09 §4.1: 앵커는 결박 시점에 **기계가 대상 좌표에서 읽은** digest 다.\n    \
+             (옛 F09 §4.1: 앵커는 결박 시점에 **기계가 대상 좌표에서 읽은** digest 다.\n    \
              생산자의 신고를 여기 넣으면 그 신고가 앵커가 된다):\n    {}",
             새것.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n    ")
         );
@@ -1820,7 +1821,7 @@ fn check_anchor_is_measured(root: &Path) -> Result<String> {
     Ok(format!("`WatchEntry` 생성 자리 {}개 · 등록된 자리 {}개", sites.len(), WATCH_ENTRY_SITES.len()))
 }
 
-// ── 검사 13 — 낡음이 생성기를 안 부른다 (F09 §4.1) ──────────────────────────
+// ── 검사 13 — 낡음이 생성기를 안 부른다 (옛 F09 §4.1) ──────────────────────────
 //
 // > **낡음은 탐지만 한다.** `Stale` 이 재생성을 트리거하지 않는다 — 하면
 // > ① 생산자 분리(F17)가 깨지고 ② 기록하되 통치하지 않는다는 경계가 무너지고
@@ -1861,7 +1862,7 @@ fn check_no_regeneration(root: &Path) -> Result<String> {
     }
     if !hits.is_empty() {
         bail!(
-            "낡음이 생성기를 부르는 경로가 생겼다 (F09 §4.1):\n    \
+            "낡음이 생성기를 부르는 경로가 생겼다 (옛 F09 §4.1):\n    \
              ① 생산자 분리(F17)가 깨지고 ② 기록하되 통치하지 않는다는 경계가 무너지고\n    \
              ③ **사람이 승인한 것이 승인 없이 교체된다**:\n    {}",
             hits.join("\n    ")
@@ -1870,7 +1871,7 @@ fn check_no_regeneration(root: &Path) -> Result<String> {
     Ok(format!("낡음을 다루는 파일 {}개 · 생성 낱말 {}개에 0건", files.len(), REGENERATION_MARKERS.len()))
 }
 
-// ── 검사 14 — 인입이 자연어 유사도를 안 쓴다 (F10 §3.2 · §5) ────────────────
+// ── 검사 14 — 인입이 자연어 유사도를 안 쓴다 (옛 F10 §3.2 · §5) ────────────────
 //
 // 문서 §3.2 의 표가 여섯째 줄에 못 박았다:
 //
@@ -1928,7 +1929,7 @@ fn check_no_similarity(root: &Path) -> Result<String> {
     }
     if !hits.is_empty() {
         bail!(
-            "좌표 해소가 자연어 유사도를 쓴다 (F10 §3.2 · §5):\n    \
+            "좌표 해소가 자연어 유사도를 쓴다 (옛 F10 §3.2 · §5):\n    \
              **거짓 결박을 대량 생산한다. 그리고 틀린 결박은 없는 결박보다 나쁘다.**\n    \
              동점은 좁히는 것이 아니라 **후보로 내고 승인을 요구한다**:\n    {}",
             hits.join("\n    ")
@@ -1937,7 +1938,7 @@ fn check_no_similarity(root: &Path) -> Result<String> {
     Ok(format!("인입 파일 {센_파일}개 · 유사도 낱말 {}개에 0건", SIMILARITY_MARKERS.len()))
 }
 
-// ── 검사 15 — 승격이 원본을 안 고친다 (F10 §1 · §3.3) ──────────────────────
+// ── 검사 15 — 승격이 원본을 안 고친다 (옛 F10 §1 · §3.3) ──────────────────────
 //
 // > **승격은 필드를 고쳐 쓰는 것이 아니다.** `inferred` 노드를 승인하면 그것을 가리키는
 // > **새 `asserted` 노드**가 생기고 원본은 `promoted_by` 와 함께 남는다.
@@ -1981,7 +1982,7 @@ fn check_promotion_is_not_in_place(root: &Path) -> Result<String> {
     }
     if !hits.is_empty() {
         bail!(
-            "승격이 원본을 제자리에서 고친다 (F10 §3.3):\n    \
+            "승격이 원본을 제자리에서 고친다 (옛 F10 §3.3):\n    \
              ① 되돌릴 수 없고 ② **원래 누구의 추론이었는가**가 계보에서 사라지고\n    \
              ③ *\"어디까지가 기록이고 어디부터가 재구성인지\"* 를 아무도 모르게 된다:\n    {}",
             hits.join("\n    ")
@@ -1990,7 +1991,7 @@ fn check_promotion_is_not_in_place(root: &Path) -> Result<String> {
     Ok(format!("승격을 다루는 파일 {}개 · 제자리 수정 {}개 형태에 0건", files.len(), IN_PLACE_PROMOTION.len()))
 }
 
-// ── 검사 16 — 설치 경로가 홈을 안 부른다 (F24 §2 ⑦) ─────────────────────────
+// ── 검사 16 — 설치 경로가 홈을 안 부른다 (옛 F24 §2 ⑦) ─────────────────────────
 //
 // 소유자의 문장이 이 검사를 낳았다:
 //
@@ -2337,8 +2338,8 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
 // | 못 보는 것 | 왜 | 이 회차의 실물 |
 // |---|---|---|
 // | **텍스트가 부르는 절이 대상에 없다** | 대상 파일이 있으면 통과한다 | `[옛 DESIGN §12.4]` 이 `disposal-map.md` 를 가리키는데 거기 §12.4 절은 없다. **109 건**에 「옛」을 달아 *"그 문서는 사라졌다"* 를 텍스트가 말하게 했다 |
-// | **정의가 없는 참조형** | `[라벨]: 경로` 줄이 아예 없으면 셀 것이 없다 | `crates/pal-extract/src/plan.rs` 의 `[F12 §3.4]` — 정의 0 건이라 `rustdoc` 이 대괄호를 그대로 렌더한다. 「옛」 표기로 바꿔 링크가 아니게 했다 |
-// | **산문 안의 경로 언급** | 마크다운 링크 문법만 본다 | `crates/pal-cli/src/ledger.rs` 의 *"how-it-works §2.2 의 화면"* |
+// | **정의가 없는 참조형** | `[라벨]: 경로` 줄이 아예 없으면 셀 것이 없다 | `crates/pal-extract/src/plan.rs` 의 `[옛 F12 §3.4]` — 정의 0 건이라 `rustdoc` 이 대괄호를 그대로 렌더한다. 「옛」 표기로 바꿔 링크가 아니게 했다 |
+// | **산문 안의 경로 언급** | 마크다운 링크 문법만 본다 | `crates/pal-cli/src/ledger.rs` 의 *"옛 how-it-works §2.2 의 화면"* |
 //
 // ★ **규약**: 삭제된 문서를 계속 인용해야 하면 **링크가 아니라 코드 표기로 적고 앞에
 // 「옛」을 단다.** 그러면 이 검사가 안 봐도 **읽는 사람이 안다** — 그것이 이 저장소가
@@ -2720,4 +2721,86 @@ fn 아래_전부(dir: &Path, ext: &str, root: &Path, out: &mut Vec<String>) -> R
         }
     }
     Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 사라진 문서를 현재형으로 안 부른다 — **「옛」 규약을 장치로**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// # 왜 이 검사가 생겼나 (2026-08-18 · 재고 처분 · 독립 리뷰 6 라운드)
+//
+// 회차가 문서 넷을 지우면서 **규약**을 하나 세웠다:
+//
+// > 삭제된 문서를 계속 인용해야 하면 **링크가 아니라 코드 표기로 적고 앞에 「옛」을
+// > 단다.** 죽은 링크 검사가 안 봐도 **읽는 사람이 안다.**
+//
+// 그런데 그 규약을 **게이트 산문에만 적고 장치로 안 만들었더니 316 자리가 안 지켰다**
+// (실측). 「옛」이 없으면 소스 주석이 *"`DESIGN §4` 가 이렇게 정했다"* 를 **현재형**으로
+// 말하고, 그것이 이 저장소가 없애려는 거짓 신호다 — **없는 문서가 근거로 서 있다.**
+//
+// ★ **표시 대신 장치를 남긴다**(AGENTS.md). 규약을 산문에 적으면 다음 사람이 안 읽고,
+// 검사에 넣으면 못 지나간다.
+//
+// # 왜 `.rs` 만 보나
+//
+// 문서 쪽에서는 **처분 자체를 서술하는 자리**가 정당하게 그 이름을 부른다 —
+// `disposal-map.md` 가 *"옛 `docs/plan/features/` 25 파일"* 을 적는 것은 낡음이 아니라
+// **기록**이다. 소스 주석에는 그런 자리가 없다: 코드가 사라진 문서를 부르면 그것은
+// 언제나 **낡은 근거**다.
+
+/// 사라진 문서를 부르는 토큰. 이 회차가 지운 것들이다.
+const 사라진_문서: &[&str] =
+    &["DESIGN §", "DESIGN.md", "WHITEPAPER", "how-it-works", "docs/plan/features/"];
+
+fn check_stale_citation(root: &Path) -> Result<String> {
+    let mut 문제 = Vec::new();
+    let mut 센_자리 = 0usize;
+    for dir in ["crates", "xtask"] {
+        let d = root.join(dir);
+        if !d.is_dir() {
+            continue;
+        }
+        for file in rust_sources(&d)? {
+            let 상대 = 상대_경로(root, &file);
+            // 시험은 가짜 경로를 만든다 — 죽은 링크 검사와 같은 모집단 규칙이다.
+            if 상대.contains("/tests/") || 상대.ends_with("/common.rs") {
+                continue;
+            }
+            let body = std::fs::read_to_string(&file)?;
+            for (n, line) in body.lines().enumerate() {
+                // ★ **이 검사 자신의 토큰 목록은 인용이 아니다.** 검사가 자기 정의를
+                //   위반으로 읽으면 그것은 대조가 아니라 자가당착이다.
+                if line.contains("사라진_문서") || line.trim_start().starts_with("&[\"DESIGN") {
+                    continue;
+                }
+                for tok in 사라진_문서 {
+                    let mut from = 0;
+                    while let Some(rel) = line[from..].find(tok) {
+                        let at = from + rel;
+                        센_자리 += 1;
+                        // ⚠ **문자로 자른다.** 이 저장소는 주석을 한국어로 쓰므로
+                        //    `&line[at-30..at]` 은 **글자 가운데를 잘라 패닉한다**
+                        //    (실측: `is not a char boundary … inside '니'`).
+                        let 왼쪽: String = line[..at].chars().rev().take(20).collect();
+                        if !왼쪽.contains('옛') {
+                            문제.push(format!("{상대}:{}  {}", n + 1, line.trim()));
+                        }
+                        from = at + tok.len();
+                    }
+                }
+            }
+        }
+    }
+    // **모집단이 비면 실패다** — 0 건은 *"안 부른다"* 가 아니라 *"안 봤다"* 일 수 있다.
+    if 센_자리 == 0 {
+        bail!("사라진 문서를 부르는 자리가 0 곳이다 — 토큰 목록이나 모집단이 비었다");
+    }
+    if !문제.is_empty() {
+        bail!(
+            "사라진 문서를 **현재형**으로 부르는 자리 {}곳 — 앞에 「옛」을 달아라:\n    {}",
+            문제.len(),
+            문제.join("\n    ")
+        );
+    }
+    Ok(format!("사라진 문서 인용 {센_자리}곳 · 전부 「옛」 표기"))
 }

@@ -1,6 +1,6 @@
 //! 파일 하나에서 나온 전부.
 //!
-//! **핵심 성질은 파일 하나에만 의존한다는 것이다**(F02 §2). 다른 파일을 보지 않으므로
+//! **핵심 성질은 파일 하나에만 의존한다는 것이다**(옛 F02 §2). 다른 파일을 보지 않으므로
 //! 완전 병렬이고(#49), 1층 콘텐츠 주소 캐시(F04)의 값이 될 수 있다(stack §5.2의
 //! `ExtractCache` 포트). 그 성질이 깨지면 **둘 다 무너진다.**
 //!
@@ -13,7 +13,7 @@
 //!
 //! # 지금 없는 자리 — **비어 있는 것이 아니라 아직 필드가 아니다**
 //!
-//! F02 §2 의 `FileGraph` 는 여기에 더해 `scopes`·`local_refs`·`raw_refs`·`export_digest`
+//! 옛 F02 §2 의 `FileGraph` 는 여기에 더해 `scopes`·`local_refs`·`raw_refs`·`export_digest`
 //! 를 갖는다. **그것들을 빈 값으로 미리 세우지 않는다** — 빈 스코프 목록은 *"스코프가
 //! 없는 파일"* 과 *"이 빌드가 스코프를 안 만든다"* 를 같은 출력으로 만들고, 그것이
 //! [`crate::Capable`] 이 존재하는 이유의 정면 위반이다.
@@ -55,7 +55,7 @@ pub struct LocalIx(pub u32);
 ///
 /// # 왜 `(LocalIx, LocalIx)` 가 아닌가
 ///
-/// F02 §2 는 `contains: Vec<(LocalIx, LocalIx)>` 로 적었다. **이름을 붙여 갈랐다** —
+/// 옛 F02 §2 는 `contains: Vec<(LocalIx, LocalIx)>` 로 적었다. **이름을 붙여 갈랐다** —
 /// 벌거벗은 쌍은 인자가 뒤바뀌어도 타입이 잡지 못하고, 뒤바뀌면 *"메서드가 클래스를
 /// 담는다"* 가 조용히 참이 된다. 이 저장소가 막으려는 것이 정확히 그 형태다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -138,7 +138,7 @@ pub enum RecoveryKind {
 /// 여기서 필요한 것은 `span` 이지 `Coord` 가 아니다.
 ///
 /// **개수만으로는 사용자가 어디를 못 읽었는지 모른다.** 그것이 *"공백이 순위를 갖는다"*
-/// (DESIGN §5.3)가 성립하는 조건이다.
+/// (옛 DESIGN §5.3)가 성립하는 조건이다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RecoverySite {
     pub kind: RecoveryKind,

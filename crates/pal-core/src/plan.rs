@@ -24,7 +24,7 @@
 //!
 //! **관측은 [`PlanBinding`] 이 지고, 확정은 여전히 `pal bind` 하나뿐이다.**
 //! 그래서 [`crate::PromotedBy`] 가 **둘 그대로**이고 이 모듈이 그것을 안 늘린다 —
-//! 늘리면 세탁 금지가 타입에서 문장으로 내려앉는다(F10 §3.3).
+//! 늘리면 세탁 금지가 타입에서 문장으로 내려앉는다(옛 F10 §3.3).
 //!
 //! # `pending` 이 [`crate::Binding`] 이 아닌 이유
 //!
@@ -155,7 +155,7 @@ pub enum PatternSource {
     Span,
     /// 본문의 camelCase·PascalCase 토큰.
     ///
-    /// ⚠ **이것이 가장 약하다.** [F10] 은 이 형태를 아예 안 봤다(스팬 안만 봤다).
+    /// ⚠ **이것이 가장 약하다.** `F10` 은 이 형태를 아예 안 봤다(스팬 안만 봤다).
     /// F12 가 범위를 넓힌 근거는 실측이다 — ditto 의 계획 항목 575 중 백틱을 쓴 것이
     /// **5** 건이라, F10 의 규칙을 그대로 대면 후보가 코퍼스의 성질이 아니라
     /// **우리가 고른 규칙의 성질**로 0 이 된다.
@@ -216,7 +216,7 @@ impl CoordPattern {
     }
 }
 
-/// **무엇으로 됐다고 판정할 것인가**([F12 §2]).
+/// **무엇으로 됐다고 판정할 것인가**([옛 F12 §2]).
 ///
 /// # `Option<String>` 이 아닌 이유
 ///
@@ -259,7 +259,7 @@ pub struct PlanItem {
 /// > **base 커밋 선택** — 어디부터가 이 계획의 변경인가 …
 /// > **계획 승인 시점의 Snapshot 을 계획에 기록**
 ///
-/// ⚠ **`--base <ref>` 를 안 만든다.** 그 손잡이의 소유자는 [F23 §7] 이고, 거기 완료
+/// ⚠ **`--base <ref>` 를 안 만든다.** 그 손잡이의 소유자는 [옛 F23 §7] 이고, 거기 완료
 /// 체크리스트가 `briefing · conformance · **deviation**` 셋을 한 줄로 묶어 적었다.
 /// 여기서 만들면 F23 을 당겨오는 것이다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -273,7 +273,7 @@ pub enum PlanBaseline {
 
 /// 계획 하나 — **기획 하나와 결정 여럿**(§3.3).
 ///
-/// # `items` 가 비공개인 것이 [F12 §2] 의 `NonEmpty` 다
+/// # `items` 가 비공개인 것이 [옛 F12 §2] 의 `NonEmpty` 다
 ///
 /// 문서가 `Plan { items: NonEmpty<PlanItem> }` 이라고 적었다. 이 저장소에 `NonEmpty`
 /// 타입이 없으므로 **생성자가 그 불변식을 진다** — 항목 0 인 계획은
@@ -304,7 +304,7 @@ impl fmt::Display for PlanRefusal {
             Self::NoItems { source } => write!(
                 f,
                 "`{source}` 에 계획 항목이 없습니다 — 헤딩 조각도 체크박스 줄도 \
-                 없습니다. **기획은 있는데 결정이 없는 것**이고, 그 자체가 F12 §3.3 이 \
+                 없습니다. **기획은 있는데 결정이 없는 것**이고, 그 자체가 옛 F12 §3.3 이 \
                  재는 값입니다"
             ),
         }
@@ -439,7 +439,7 @@ pub struct PlanBinding {
 ///
 /// # 왜 둘인가 — `pending → live` 전이가 여기서만 보인다
 ///
-/// 기준선에서 `Pending` 이던 것이 머리에서 `Bound` 가 되는 것이 [F12 §7] 의
+/// 기준선에서 `Pending` 이던 것이 머리에서 `Bound` 가 되는 것이 [옛 F12 §7] 의
 /// *"`pending` 결박 → 좌표 생성 시 자동 `live` 전이"* 다. 한쪽만 계산하면 그 전이가
 /// 산출에서 사라진다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -697,7 +697,7 @@ pub fn resolve(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 심볼 단위 diff — **파일 단위로 하면 포매팅에 반응한다**([F12 §3.2] · §5)
+// 심볼 단위 diff — **파일 단위로 하면 포매팅에 반응한다**([옛 F12 §3.2] · §5)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// 두 스냅샷 사이에서 **의미가 변한 좌표들.**
@@ -765,7 +765,7 @@ pub fn symbol_delta(base: &[SymbolNode], head: &[SymbolNode]) -> SymbolDelta {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 이탈 — **넷이고, `unmeasurable` 이 분리돼 있다**([F12 §2] · §5)
+// 이탈 — **넷이고, `unmeasurable` 이 분리돼 있다**([옛 F12 §2] · §5)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// 계획대로 간 짝 하나 — **무엇이 그 좌표를 냈는지를 함께 싣는다.**
@@ -786,12 +786,12 @@ pub struct Unmeasured {
 
 /// 계획과 실제의 갈림 — **넷이다.**
 ///
-/// # `unmeasurable` 을 분리하는 것이 이 타입의 요점이다 ([F12 §2])
+/// # `unmeasurable` 을 분리하는 것이 이 타입의 요점이다 ([옛 F12 §2])
 ///
 /// > 좌표로 해소되지 않은 계획 항목을 「계획대로」나 「미구현」에 섞으면 **이탈률이
 /// > 거짓말이 된다.** 못 잰 것은 못 쟀다고 적는다.
 ///
-/// 그리고 [F12 §5] 가 *"`unmeasurable` 을 미구현에 합산"* 을 **기각한 대안**으로 적었다.
+/// 그리고 [옛 F12 §5] 가 *"`unmeasurable` 을 미구현에 합산"* 을 **기각한 대안**으로 적었다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Deviation {
     pub plan: PlanId,
@@ -805,7 +805,7 @@ pub struct Deviation {
     pub unmeasurable: Vec<Unmeasured>,
     /// 실제 변경의 규모 — 이탈률의 분모가 어디서 왔는지.
     pub delta: SymbolDelta,
-    /// `pending` 이던 것이 `live` 로 간 수 — [F12 §7] 의 전이.
+    /// `pending` 이던 것이 `live` 로 간 수 — [옛 F12 §7] 의 전이.
     pub promoted_from_pending: usize,
 }
 
@@ -827,7 +827,7 @@ impl Deviation {
         DeviationRate::Rate { value: self.unplanned.len() as f64 / a as f64, changed: a }
     }
 
-    /// **판정할 수 있었던 항목의 비율** — [F12 §6] 의 좌표 해소율.
+    /// **판정할 수 있었던 항목의 비율** — [옛 F12 §6] 의 좌표 해소율.
     ///
     /// 분자는 `as_planned ∪ unimplemented` 의 항목 수, 즉 **`unmeasurable` 이 아닌 것**이다.
     /// ⚠ **「좌표가 걸렸다」와 같지 않다** — 계획이 자리를 적었는데 그 자리가 아직 없는
@@ -918,7 +918,7 @@ pub fn deviate(plan: &Plan, resolutions: &[ItemResolution], delta: &SymbolDelta)
                 // **사건이 다르다.**
                 unimplemented.push(r.item.clone());
             } else {
-                // ★ **여기가 [F12 §2] 가 분리를 요구한 자리다.**
+                // ★ **여기가 [옛 F12 §2] 가 분리를 요구한 자리다.**
                 unmeasurable.push(Unmeasured { item: r.item.clone(), why: r.unmeasurable_why() });
             }
             continue;
@@ -1023,7 +1023,7 @@ mod tests {
 
     #[test]
     fn 포매팅만_바뀌면_변경_심볼이_0_이고_본문이_바뀌면_1_이다() {
-        // ★ [F12 §5] 가 파일 단위 diff 를 기각한 이유가 이것이다 — **양쪽을 함께 센다.**
+        // ★ [옛 F12 §5] 가 파일 단위 diff 를 기각한 이유가 이것이다 — **양쪽을 함께 센다.**
         let base = vec![심볼("a", "src/a.ts", 1), 심볼("b", "src/a.ts", 2)];
         let 같음 = vec![심볼("a", "src/a.ts", 1), 심볼("b", "src/a.ts", 2)];
         assert!(symbol_delta(&base, &같음).is_empty(), "포매팅에 반응했다");
@@ -1065,7 +1065,7 @@ mod tests {
         let d = deviate(&plan, &res, &symbol_delta(&base, &head));
         assert_eq!(d.unmeasurable.len(), 1);
         assert_eq!(d.unmeasurable[0].why, UnresolvedWhy::NotAtBaseline);
-        // ★ **미구현에 합산되지 않는다** — [F12 §5] 가 기각한 형태다.
+        // ★ **미구현에 합산되지 않는다** — [옛 F12 §5] 가 기각한 형태다.
         assert!(d.unimplemented.is_empty());
         assert!(d.as_planned.is_empty());
     }

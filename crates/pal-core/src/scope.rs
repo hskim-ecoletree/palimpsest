@@ -5,7 +5,7 @@
 //! F03 의 `body_digest` 정규화가 이것 없이는 성립하지 않는다. 지역 변수·파라미터명을
 //! 지우려면 **어느 이름이 어느 선언을 가리키는지** 알아야 하고, 그것을 P1 까지 미루면
 //! P0 에서 만든 좌표와 digest 가 F07 완료일에 **전부 이동한다.** 그 사이에 쌓인 결박은
-//! 전부 `orphaned` 가 된다(F02 §3.5).
+//! 전부 `orphaned` 가 된다(옛 F02 §3.5).
 //!
 //! 그리고 이 연산은 **파일 하나만 본다.** 1층의 성질을 깨지 않는다 — 완전 병렬이고
 //! 콘텐츠 주소 캐시의 값이 될 수 있다. F07 에 남는 것은 파일 **간** 연산(L2b 모듈 해소 ·
@@ -13,7 +13,7 @@
 //!
 //! # 이름이 `ScopeTable` 이 아닌 이유
 //!
-//! F02 §2·§3.5 는 `ScopeTable` 로 적었다. **`table` 이 `pal-core` 의 금지어 16 개에
+//! 옛 F02 §2·§3.5 는 `ScopeTable` 로 적었다. **`table` 이 `pal-core` 의 금지어 16 개에
 //! 있고**(stack §4.2 · `mutable`·`immutable`·`portable` 을 부분 문자열로 잡기 위한
 //! 것이다) `cargo xtask check` 가 코드 어휘를 부분 문자열로 검사한다. `Ledger` 가
 //! `languages` 로 피한 것과 같은 자리이고, 여기서는 [`ScopeChain`] 으로 간다.
@@ -52,7 +52,7 @@ pub enum ScopeKind {
 
 /// TypeScript 의 두 이름 공간 — **뭉개면 해소가 조용히 틀린다.**
 ///
-/// `interface Foo` 와 `const Foo` 는 공존한다(F02 §3.5). 한 공간으로 뭉개면 둘 중 하나가
+/// `interface Foo` 와 `const Foo` 는 공존한다(옛 F02 §3.5). 한 공간으로 뭉개면 둘 중 하나가
 /// 다른 하나를 가리고, 그러면 `Foo` 를 타입 자리에서 쓴 참조가 **값 선언으로 해소된다.**
 /// 틀린 해소는 틀린 정규화이고 틀린 정규화는 **서로 다른 코드가 같은 digest** 다(R-22).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -78,7 +78,7 @@ pub struct ScopeBinding {
     /// 쓰이는 자리보다 **뒤에 있어도 해소되는가**. 함수 선언과 `var` 가 참이다.
     ///
     /// 거짓인 이름을 선언 전에 참조하면 그것은 TDZ 이고 [`RefResolution::BeforeDeclaration`]
-    /// 이다. **그것을 해소해 버리면 이것은 스코프 체인이 아니라 이름 표다**(DESIGN §5.1).
+    /// 이다. **그것을 해소해 버리면 이것은 스코프 체인이 아니라 이름 표다**(옛 DESIGN §5.1).
     pub hoisted: bool,
     /// 이 이름이 심볼이기도 한가 — 최상위 선언은 그렇고 지역 변수·파라미터는 아니다.
     pub symbol: BoundSymbol,
@@ -93,7 +93,7 @@ pub struct ScopeBinding {
 pub enum BoundSymbol {
     /// 이 이름은 심볼이다 — [`crate::FileGraph::symbols`] 의 자리.
     Symbol(LocalIx),
-    /// 심볼이 아니다 — 지역 변수 · 파라미터 · 타입 파라미터. **세면 폭발한다**(F02 §3.3).
+    /// 심볼이 아니다 — 지역 변수 · 파라미터 · 타입 파라미터. **세면 폭발한다**(옛 F02 §3.3).
     NotASymbol,
 }
 
@@ -325,7 +325,7 @@ mod tests {
 
     #[test]
     fn tdz_는_해소되지_않고_바깥으로_나가지도_않는다() {
-        // **이 시험이 「스코프 체인」과 「이름 표」를 가른다**(DESIGN §5.1).
+        // **이 시험이 「스코프 체인」과 「이름 표」를 가른다**(옛 DESIGN §5.1).
         //
         // 바깥에 같은 이름이 있는데도 안쪽의 선언 전 참조가 바깥으로 새면, 그 답은
         // *"조용히 다른 선언을 가리키는"* 답이다. JavaScript 에서 그 참조는 오류다.

@@ -54,7 +54,7 @@ pub struct CachedGraph {
     pub contains: Vec<Containment>,
     /// **F02-2 가 F04 로 넘긴 자리다** — 전에는 개수만 실렸다.
     pub recovery_sites: Vec<RecoverySite>,
-    /// 이 파일이 이름으로 내보내는 것. **2층의 `EXPORTS` 가 이것을 읽는다**(F05 §4).
+    /// 이 파일이 이름으로 내보내는 것. **2층의 `EXPORTS` 가 이것을 읽는다**(옛 F05 §4).
     pub exports: Slot<ExportSet>,
     pub imports: Slot<ImportSet>,
     /// R-05 무효화 전파의 입력. **2층의 파일 노드가 이것을 싣는다**(F05).

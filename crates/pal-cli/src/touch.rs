@@ -355,7 +355,7 @@ fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elisio
                 format!("판정 불가 ← {} ({} 개 좌표)", reason.name(), at.len()),
         };
         // **반경을 함께 낸다** — *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은
-        // 유효하다"* 와 다른 문장이다(F09 §3).
+        // 유효하다"* 와 다른 문장이다(옛 F09 §3).
         println!("  [{}] {mark}  ·  {radius} 반경 · 감시 {watch}", binding.as_str());
         // ★ **어디에 걸렸는지가 다음 행동을 정한다.**
         if let BoundTarget::Elsewhere { symbol, place } = at {

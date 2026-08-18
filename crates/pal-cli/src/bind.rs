@@ -46,7 +46,7 @@ pub fn run(a: Args) -> Result<()> {
     let Args { repo: repo_path, rev, cache_dir, index: index_path, intent: intent_path, name, note, radius } = a;
     // **모르는 반경은 여기서 멈춘다.** 조용히 `symbol` 로 되돌아가면 사용자가 **더
     // 넓다고 믿는 반경**에서 좁은 감시를 받는다 — 거짓 음성을 선언으로 다룬다는
-    // 이 설계의 정면 위반이다(F09 §3).
+    // 이 설계의 정면 위반이다(옛 F09 §3).
     let Some(radius) = Radius::parse(radius) else {
         bail!("반경 `{radius}` 를 모른다 — 아는 것은 {} 다", Radius::NAMES.join(" · "));
     };
@@ -84,7 +84,7 @@ pub fn run(a: Args) -> Result<()> {
         }
     };
 
-    // **좌표를 꺼내는 길이 둘뿐이다** (F03 §3.3). `Unavailable` 에는 실린 좌표가
+    // **좌표를 꺼내는 길이 둘뿐이다** (옛 F03 §3.3). `Unavailable` 에는 실린 좌표가
     // 없으므로 여기서 결박이 끝난다 — 그 판정이 `if` 가 아니라 **타입**이다.
     let target = match SymbolIdentity::new(symbol.identity, symbol.id) {
         SymbolIdentity::Exact(id) | SymbolIdentity::Ordinal(id) => id,
@@ -97,7 +97,7 @@ pub fn run(a: Args) -> Result<()> {
     // 돈다 — 투영이 그 트레잇의 실물 구현이다.
     let 감시 = expand(target, &radius, projection);
     // 요약을 **투영에서 읽는다.** 생산자의 신고를 여기 넣는 경로가 없고, 그것이
-    // F09 §4.1(D32)이 요구한 *"`watch_snapshot` 은 신고받지 않는다"* 다.
+    // 옛 F09 §4.1(D32)이 요구한 *"`watch_snapshot` 은 신고받지 않는다"* 다.
     let mut watch = Vec::with_capacity(감시.len());
     for s in 감시 {
         let Some(실물) = projection.symbol(s).context("2층을 읽지 못했다")? else {
@@ -111,7 +111,7 @@ pub fn run(a: Args) -> Result<()> {
     let intent = IntentStore::open(&touch::intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;
 
-    // ── 저장 시점의 예산 (F09 §3) ──────────────────────────────────────────
+    // ── 저장 시점의 예산 (옛 F09 §3) ──────────────────────────────────────────
     //
     // **런타임에 조용히 느려지는 대신 여기서 실패한다.** 이미 있는 결박이면 건수가
     // 안 늘므로 지금 수를, 새 결박이면 +1 을 쓴다.
@@ -120,7 +120,7 @@ pub fn run(a: Args) -> Result<()> {
     let 건수 = intent.count().unwrap_or(0) + usize::from(이미.is_none());
     check_budget(건수, watch.len()).map_err(|e| anyhow::anyhow!("{e}"))?;
 
-    // ── 개체 (F09 §4.3) ────────────────────────────────────────────────────
+    // ── 개체 (옛 F09 §4.3) ────────────────────────────────────────────────────
     //
     // **같은 조각을 같은 좌표에 두 번 걸면 하나다.** 이미 있으면 그 개체를 물려받는다 —
     // 새로 뽑으면 같은 것이 둘이 된다.
@@ -147,7 +147,7 @@ pub fn run(a: Args) -> Result<()> {
     println!("  본문    {}  ← 이 값이 바뀌면 낡음이 표시됩니다", symbol.body.short());
     println!("  개체    {}", binding.subject.to_display());
     // **반경과 감시 집합 크기를 함께 낸다.** *"이 결정은 `symbol` 반경에서 live"* 는
-    // *"이 결정은 유효하다"* 와 다른 문장이고, 그 차이가 산출에 남아야 한다(F09 §3).
+    // *"이 결정은 유효하다"* 와 다른 문장이고, 그 차이가 산출에 남아야 한다(옛 F09 §3).
     println!("  반경    {} · 감시 {} 개", binding.radius.name(), binding.watch.len());
     println!("  결박    [{}]", binding.id.as_str());
     println!();

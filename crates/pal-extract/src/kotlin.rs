@@ -84,7 +84,7 @@ const KIND_BY_PATTERN: [SymbolKind; 5] = [
 /// (`LanguageExtractor::extract`), **부르는 경로만 바뀌었지 세는 방식은 같다** —
 /// `pal_extract::extract` 가 레지스트리를 거쳐 이 함수에 그대로 닿는다.
 ///
-/// 대장은 `parsed` 와 `partial` 을 갈라야 하고(DESIGN §4.1) 그러려면 오류 회복이
+/// 대장은 `parsed` 와 `partial` 을 갈라야 하고(옛 DESIGN §4.1) 그러려면 오류 회복이
 /// 일어났는지를 알아야 한다. S0 은 그것을 묻지 않았으므로 버렸던 값이다.
 ///
 /// # 산출 타입이 `FileGraph` 로 바뀌었다 — **값은 그대로다**
@@ -98,7 +98,7 @@ const KIND_BY_PATTERN: [SymbolKind; 5] = [
 /// 문법·쿼리·파싱 중 하나가 실패하면 [`ExtractError`].
 pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
     let language = tree_sitter::Language::new(brokk_tree_sitter_kotlin::LANGUAGE);
-    // **스레드당 파서를 재사용한다**(#49 · F02 §3.1). `Parser::new()` 는 싸지 않다.
+    // **스레드당 파서를 재사용한다**(#49 · 옛 F02 §3.1). `Parser::new()` 는 싸지 않다.
     let tree = parse_with(&language, source)?;
 
     let query = Query::new(&language, TOP_LEVEL_QUERY)?;

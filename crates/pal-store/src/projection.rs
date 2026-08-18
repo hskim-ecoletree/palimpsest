@@ -1,6 +1,6 @@
 //! 2층 — 질의 투영.
 //!
-//! # 왜 자체 인덱스인가 (stack §2.3 · F05 §2)
+//! # 왜 자체 인덱스인가 (stack §2.3 · 옛 F05 §2)
 //!
 //! 필요한 연산은 넷뿐이다 — 키 조회 / 인접 순회 / 역방향 색인 / **예산 절단이 있는**
 //! 제한 깊이 탐색. 결정적인 이유는 넷째다: 질의 도중 잘라내고 **얼마나 무슨 이유로
@@ -14,7 +14,7 @@
 //! 다르면 2층은 캐시가 아니라 원본이고, 그 순간 *"자체 구현의 최대 비용이 0"* 이라는
 //! 주장이 무너진다.
 //!
-//! **그래서 결박 색인(`BOUND_BY`·`WATCH`)이 여기 없다.** F05 §3 은 그 둘을 2층 테이블로
+//! **그래서 결박 색인(`BOUND_BY`·`WATCH`)이 여기 없다.** 옛 F05 §3 은 그 둘을 2층 테이블로
 //! 적었지만 §3.1 이 근거로 든 *"지워도 다시 만들 수 있다"* 의 **재생 경로가 없다.**
 //! 세우면 재구축이 그것을 지우고 `touch` 가 조용히 빈 결박을 낸다 —
 //! **R-21 이 「지우는 명령」이 아니라 「다시 안 만드는 재구축」으로 돌아오는 형태다.**
@@ -22,7 +22,7 @@
 //!
 //! # 배치 커밋이 격리를 깨지 않는 형태 (`[f05.2.pass]` ③)
 //!
-//! F05 §4 는 *"파일 1,000 개 단위로 묶어 커밋"* 을 요구한다. 그런데 `[f22.4]` 가 등록한
+//! 옛 F05 §4 는 *"파일 1,000 개 단위로 묶어 커밋"* 을 요구한다. 그런데 `[f22.4]` 가 등록한
 //! 합격선은 **재구축 중 부분 갱신 관측 0/100** 이고, 한 재구축을 여러 트랜잭션으로
 //! 쪼개면 읽는 쪽이 반쯤 채워진 2층을 본다. **등록된 합격선을 사후에 고치지 않는다.**
 //!
@@ -34,7 +34,7 @@
 //!
 //! 그리고 이 형태가 공짜로 하나를 준다 — **무대가 있으면 재구축 중이다.**
 //! 봉투의 `projection.rebuild` 가 `NotBuilt{F05}` 였던 자리가 값이 된다
-//! (DESIGN §12.7 격리 3번).
+//! (옛 DESIGN §12.7 격리 3번).
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -56,7 +56,7 @@ const BY_NAME: MultimapTableDefinition<&str, &[u8]> = MultimapTableDefinition::n
 const FILE: TableDefinition<&str, Vec<u8>> = TableDefinition::new("file");
 /// `from` → `to` 들. 정방향 인접.
 const EDGE_OUT: MultimapTableDefinition<&[u8], &[u8]> = MultimapTableDefinition::new("edge_out");
-/// `to` → `from` 들. **역방향이 이 제품의 1순위 질의다**(F05 §3).
+/// `to` → `from` 들. **역방향이 이 제품의 1순위 질의다**(옛 F05 §3).
 ///
 /// 저장 2배를 지불하고 *"누가 이걸 부르나"* 를 O(차수)로 만든다. 정방향만 두고 스캔하면
 /// O(전체)다.
@@ -68,7 +68,7 @@ const EDGE_IN: MultimapTableDefinition<&[u8], &[u8]> = MultimapTableDefinition::
 const BY_FILE: MultimapTableDefinition<&str, &[u8]> = MultimapTableDefinition::new("by_file");
 /// `(파일, 이름)` → `symbol_id`. F07 의 해소가 읽을 자리.
 const EXPORTS: TableDefinition<(&str, &str), &[u8]> = TableDefinition::new("exports");
-/// `(스냅샷, 순번)` → 질의 한 줄. **append-only** (F05 §5.3).
+/// `(스냅샷, 순번)` → 질의 한 줄. **append-only** (옛 F05 §5.3).
 ///
 /// # 스티칭이 이 자리를 안 건드린다
 ///
@@ -123,7 +123,7 @@ fn tx(e: impl std::fmt::Display) -> ProjectionError {
     ProjectionError::Transaction(e.to_string())
 }
 
-/// 파일 하나치의 스티칭 입력 — **1패스가 파일마다 만드는 것**(F05 §4).
+/// 파일 하나치의 스티칭 입력 — **1패스가 파일마다 만드는 것**(옛 F05 §4).
 ///
 /// **파일 하나만 보고 만들어진다.** 그것이 1패스가 병렬 가능하고 배치로 끊을 수 있는
 /// 이유이고, 파일 간 해소(F07)가 여기 없는 이유다.
@@ -155,7 +155,7 @@ pub struct StitchReport {
 /// 2층에 어떻게 붙었는가 — **락이 다르다.**
 ///
 /// `redb` 4.1 의 실물: [`Database::create`]·[`Database::open`] 은 **배타** 락이고
-/// [`ReadOnlyDatabase::open`] 만 **공유** 락이다. F05 §6 의 표가
+/// [`ReadOnlyDatabase::open`] 만 **공유** 락이다. 옛 F05 §6 의 표가
 /// *"읽기는 동시 가능, 쓰기는 하나. **CLI 는 읽기 전용으로 붙는다**"* 라고 적었는데
 /// **여는 방법이 하나뿐이라 그 문장이 성립하지 않았다** — 두 프로세스가 동시에
 /// `pal query` 를 돌리면 `Database already open. Cannot acquire lock.` 이 났다.
@@ -433,7 +433,7 @@ impl Projection {
         self.len_of(SYMBOL)
     }
 
-    /// 2층에 있는 **서로 다른 이름 전부** — 근접 후보가 이것을 훑는다 (F11 §4).
+    /// 2층에 있는 **서로 다른 이름 전부** — 근접 후보가 이것을 훑는다 (옛 F11 §4).
     ///
     /// # 왜 이름만 내는가
     ///
@@ -686,7 +686,7 @@ impl Projection {
 
     /// **지금 재구축 중인가** — 무대가 서 있으면 그렇다.
     ///
-    /// DESIGN §12.7 격리 3번이 요구한 값이고, 봉투의 `projection.rebuild` 가 지금까지
+    /// 옛 DESIGN §12.7 격리 3번이 요구한 값이고, 봉투의 `projection.rebuild` 가 지금까지
     /// `NotBuilt{F05}` 였던 자리다. **관측 경로가 생겼으므로 이제 값이다.**
     ///
     /// # Errors
@@ -837,7 +837,7 @@ impl pal_core::Neighborhood for Projection {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 좌표 해소가 요구하는 조회 (F10 §3.2)
+// 좌표 해소가 요구하는 조회 (옛 F10 §3.2)
 //
 // [`pal_core::Neighborhood`] 와 **같은 규율이다** — 트레잇이 `Result` 를 안 지고,
 // 읽기가 실패하면 후보가 **빈다.** 즉 *"덜 건다"* 이지 *"틀린 것을 건다"* 가 아니고,

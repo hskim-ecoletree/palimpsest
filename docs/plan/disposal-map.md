@@ -95,7 +95,7 @@
 | `docs/how-it-works.md` | 973 줄 | **지움** | 완성 장면이 **MCP 를 전제**하고(`:67` *"`pal serve` 로 MCP 서버를 띄우거나"*) `P7`(호스트 중립)을 유효한 것으로 서술해 **ADR-0025 와 정면 충돌**한다. 하네스의 완성 장면은 B 가 새로 쓴다 |
 | `docs/evidence-map.md` | 95 줄 | **sunset** | `DESIGN.md` 의 **역방향 인덱스**라 주인을 잃었다. [`docs/sunset.toml`](../sunset.toml) 이 진다 |
 | `docs/research/` | 3,015 줄 | **sunset** | 백서의 **증거**다. ditto 하네스 실패 관찰·pre-compute 선례는 하네스 방향의 1 차 사료라 새 지형이 자리를 정한 뒤에 간다 |
-| `surface/claude-plugin/` | 6 파일 | **지움** | 코드가 한 번도 안 읽는다(`pal install` 은 `crates/pal-cli/assets/` 를 `include_str!`). `commands/ledger.md` 만 설치 자산에 짝이 없어 **승계했다** |
+| `surface/claude-plugin/` | 5 파일 | **지움** | 코드가 한 번도 안 읽는다(`pal install` 은 `crates/pal-cli/assets/` 를 `include_str!`). `commands/ledger.md` 만 설치 자산에 짝이 없어 **승계했다** |
 | `crates/pal-mcp` · `serve` · `mcp` feature | 711 줄 | **지움** | ADR-0025 — *"MCP 는 호스트 중립성을 사는 값이고, 호스트가 하나면 살 이유가 없다"* |
 | `.ditto/` | 11 파일 | **지움** | 선행 하네스가 이 저장소를 몰던 흔적. palimpsest 가 이제 자기 하네스다 |
 | `scripts/f06b-verify.py` | 233 줄 | **지움** | 첫 줄이 `cargo test --test mcp_session` 을 돌린다. 대상이 통째로 사라졌다 |

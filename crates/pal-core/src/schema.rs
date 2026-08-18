@@ -220,7 +220,7 @@ impl fmt::Display for SchemaError {
             Self::ProducerMismatch { at, attr, producer, provenance } => write!(
                 f,
                 "{at}.{attr} 의 생산자 `{producer}` 가 노드 출처 `{}` 와 어긋난다 — \
-                 한 노드의 모든 속성은 같은 출처를 갖는다(DESIGN §3.4). \
+                 한 노드의 모든 속성은 같은 출처를 갖는다(옛 DESIGN §3.4). \
                  섞으려면 노드를 쪼개고 엣지로 이어라",
                 provenance.name()
             ),
@@ -228,7 +228,7 @@ impl fmt::Display for SchemaError {
                 f,
                 "엣지 `{edge}` 에 `{field}` 가 없다 — 모든 엣지는 공통 넷\
                  (grade · provenance · evidence · snapshot)을 진다. \
-                 넷이 없는 엣지 타입은 등록되지 않는다(DESIGN §1.2)"
+                 넷이 없는 엣지 타입은 등록되지 않는다(옛 DESIGN §1.2)"
             ),
             Self::UnknownValue { at, field, value } => {
                 write!(f, "{at} 의 `{field}` 값을 모른다: `{value}`")
@@ -439,7 +439,7 @@ impl GraphSchema {
             (Some(false), _) => {
                 return Err(SchemaError::Rule(format!(
                     "{at}.{} 이 `required = false` 다 — 필수이거나 없거나 둘 중 하나다\
-                     (DESIGN §3.1). 그만큼 중요하지 않으면 스키마에서 빼라",
+                     (옛 DESIGN §3.1). 그만큼 중요하지 않으면 스키마에서 빼라",
                     a.name
                 )));
             }
@@ -515,7 +515,7 @@ impl GraphSchema {
         {
             return Err(SchemaError::Rule(format!(
                 "{at} 는 `inferred` 로 설 수 있는데 근거를 요구하지 않는다 — \
-                 근거 없는 추론 엣지는 저장될 수 없다(DESIGN §5.2 · §9.1)"
+                 근거 없는 추론 엣지는 저장될 수 없다(옛 DESIGN §5.2 · §9.1)"
             )));
         }
 
@@ -523,7 +523,7 @@ impl GraphSchema {
         if let GradeRule::Fixed(g) = grade {
             if let Some(bad) = provenance.iter().find(|p| !g.allows(**p)) {
                 return Err(SchemaError::Rule(format!(
-                    "{at} 의 등급 `{}` 는 출처 `{}` 에 설 수 없다(DESIGN §5.1·§5.2)",
+                    "{at} 의 등급 `{}` 는 출처 `{}` 에 설 수 없다(옛 DESIGN §5.1·§5.2)",
                     g.name(),
                     bad.name()
                 )));
@@ -637,7 +637,7 @@ carried_by  = { rust_type = "Binding", field = "target" }
 
     #[test]
     fn 출처가_섞인_노드는_로딩에서_거부된다() {
-        // **DESIGN §3.4 의 실물.** `Symbol{name, summary}` 를 만들 수 없다는 것이
+        // **옛 DESIGN §3.4 의 실물.** `Symbol{name, summary}` 를 만들 수 없다는 것이
         // 규율이 아니라 파일 하나의 검사가 되는 자리다.
         let 섞인 = 성한.replace(
             r#"{ name = "name", type = "string", producer = "extractor", required = true },"#,

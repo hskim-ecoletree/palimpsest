@@ -1,6 +1,6 @@
 //! 관측 범위 대장 — D4. **모든 응답이 이것을 동반한다.**
 //!
-//! 완전성을 반증 가능한 형태로 재정의한 것이 대장이다(DESIGN §4):
+//! 완전성을 반증 가능한 형태로 재정의한 것이 대장이다(옛 DESIGN §4):
 //!
 //! > 기계는 **선언된 관측 범위 안에서** 전수임을 보증한다.
 //! > 범위 밖은 "없음"이 아니라 **"보지 않음"** 으로 산출된다.
@@ -69,7 +69,7 @@ impl ExtractGrade {
         }
     }
 
-    /// 추출 등급이 **심볼 정체성의 계산 가능성을 정한다**(DESIGN §2.2).
+    /// 추출 등급이 **심볼 정체성의 계산 가능성을 정한다**(옛 DESIGN §2.2).
     ///
     /// 둘을 따로 적는 이유가 이것이다 — L0 은 정체성이 없어 결박 자체가 성립하지 않는다.
     #[must_use]
@@ -109,7 +109,7 @@ impl IdentityGrade {
 ///
 /// 제외 규칙을 넓히면 판정 대상이 줄고 *"잔여가 줄었다"* 로 보인다. 그것이 게이트
 /// 오염의 형태다. 규칙 ID 가 있어야 나중에 **"범위가 줄어서 사라진 것"** 을
-/// **"판정되어 사라진 것"** 과 구별할 수 있다([F01 §3.3]).
+/// **"판정되어 사라진 것"** 과 구별할 수 있다([옛 F01 §3.3]).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct ExclusionRuleId(String);
 
@@ -297,13 +297,13 @@ pub struct LanguageCapability {
     pub files: usize,
 }
 
-/// 낡음을 재는 자의 낡음 — **감지기 자신이 낡을 수 있다** (DESIGN §6.3 · F01 §4).
+/// 낡음을 재는 자의 낡음 — **감지기 자신이 낡을 수 있다** (옛 DESIGN §6.3 · 옛 F01 §4).
 ///
 /// 감지기가 3주 낡았으면 낡음 표시들도 3주 낡았다는 사실이 응답에 붙어야 한다.
 ///
 /// # "이후 커밋 수" 를 싣지 않는다 — 그 자리에서 문서가 어긋나 있었다
 ///
-/// F01 §4 는 *"마지막 재추출 `Snapshot` · 추출기 버전 · **이후 커밋 수**"* 를 적으면서
+/// 옛 F01 §4 는 *"마지막 재추출 `Snapshot` · 추출기 버전 · **이후 커밋 수**"* 를 적으면서
 /// 같은 문단에서 *"이 검사는 **상수 시간**(HEAD 비교)이므로 무한 후퇴하지 않는다"* 고
 /// 못 박았다. **커밋 수를 세는 것은 상수 시간이 아니다** — 이력 깊이에 비례하고, 그러면
 /// 예산이 필요하고, 예산은 §12.4 의 표에 값이 있어야 켜진다(D16).
@@ -329,14 +329,14 @@ pub struct DetectorFreshness {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Ledger {
     pub snapshot: Snapshot,
-    /// **선언된** 저장소 수. 대장이 항상 머리에 적는다(DESIGN §4.3).
+    /// **선언된** 저장소 수. 대장이 항상 머리에 적는다(옛 DESIGN §4.3).
     ///
     /// 저장소 하나가 빠지면 그것을 지나는 경로가 조용히 사라지는 대신 대장이 계속 말한다.
     pub repos_declared: NonZeroUsize,
     pub entries: Vec<LedgerEntry>,
     /// **`table` 이 아니라 `languages` 다** — 어휘 금지(stack §4.2)에 걸린다.
     pub languages: Vec<LanguageCapability>,
-    /// 이 범위가 **선언**에서 왔는가 추정에서 왔는가 (DESIGN §4.3).
+    /// 이 범위가 **선언**에서 왔는가 추정에서 왔는가 (옛 DESIGN §4.3).
     pub scope: ScopeSource,
     /// 낡음을 재는 자의 낡음.
     pub detector: DetectorFreshness,
@@ -358,7 +358,7 @@ impl Ledger {
 
     /// 이 대장이 선 트리.
     ///
-    /// **저장소가 하나일 때만 뜻이 있다.** 스냅샷은 집합이고(DESIGN §1.1) 멀티레포에서는
+    /// **저장소가 하나일 때만 뜻이 있다.** 스냅샷은 집합이고(옛 DESIGN §1.1) 멀티레포에서는
     /// 저장소마다 트리가 다르다 — 그때 첫 것을 고르면 나머지가 조용히 감춰진다.
     /// 이 빌드는 `repos_declared` 가 언제나 1 이고(멀티레포는 F14) 그 사실을 여기 적는다.
     ///
@@ -387,7 +387,7 @@ impl Ledger {
         self.entries.len()
     }
 
-    /// 결박이 성립하지 않는 언어들 — 대장 **머리**에 적힌다(DESIGN §4.1).
+    /// 결박이 성립하지 않는 언어들 — 대장 **머리**에 적힌다(옛 DESIGN §4.1).
     #[must_use]
     pub fn unbindable_languages(&self) -> Vec<&LanguageCapability> {
         self.languages

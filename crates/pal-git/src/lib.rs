@@ -9,12 +9,12 @@
 //!
 //! 최악의 경우 `git` CLI 호출 구현으로 대체할 수 있다. 트레잇이 그 자리를 미리 비워둔다.
 //!
-//! # 접촉면은 여섯이고, F01 §3.1 의 다섯과 같지 않다
+//! # 접촉면은 여섯이고, 옛 F01 §3.1 의 다섯과 같지 않다
 //!
 //! [옛 F01 §3.1](../../../docs/plan/disposal-map.md) 이 다섯을 적었고 그것은
 //! **상한이지 하한이 아니다.** 실제로 선 것은 여섯이고 목록이 다르다:
 //!
-//! | F01 §3.1 | 여기 | |
+//! | 옛 F01 §3.1 | 여기 | |
 //! |---|---|---|
 //! | `head` · `list_tree` · `read_blob` | 있다 | S1 |
 //! | `worktree_state` | **있다** | F01 — `TreeRef::Worktree` 를 만드는 자리 |
@@ -77,7 +77,7 @@ pub trait GitAccess {
     /// 그 이름의 객체가 없거나 blob 이 아니면.
     fn read_blob(&self, name: ObjectName) -> Result<Vec<u8>, GitError>;
 
-    /// **커밋되지 않은 지금** — [`TreeRef::Worktree`] 가 여기서 나온다 (F01 §3.2).
+    /// **커밋되지 않은 지금** — [`TreeRef::Worktree`] 가 여기서 나온다 (옛 F01 §3.2).
     ///
     /// # 이것이 F01 이 내리는 가장 중요한 결정의 실행부다 ([R-06])
     ///
@@ -127,7 +127,7 @@ pub trait GitAccess {
         limit: usize,
     ) -> Result<Vec<ObjectName>, GitError>;
 
-    /// 이 커밋이 **first parent 와 견주어** 바꾼 경로들 — F10 §3.2 의 넷째 신호.
+    /// 이 커밋이 **first parent 와 견주어** 바꾼 경로들 — 옛 F10 §3.2 의 넷째 신호.
     ///
     /// # 왜 `first parent` 하나와만 대는가
     ///
@@ -146,7 +146,7 @@ pub trait GitAccess {
 /// 워킹트리 훑기의 결과 — 목록과 회계 둘.
 type WorktreeScan = (Vec<(RepoPath, ObjectName)>, usize, usize);
 
-/// 워킹트리의 지금 — **커밋되지 않은 것도 좌표를 갖는다** (F01 §3.2).
+/// 워킹트리의 지금 — **커밋되지 않은 것도 좌표를 갖는다** (옛 F01 §3.2).
 ///
 /// # 왜 이것이 공짜로 성립하는가
 ///
@@ -166,7 +166,7 @@ pub struct WorktreeState {
     pub dirty_paths: Vec<RepoPath>,
     /// 인덱스의 `(mtime, size)` 를 믿고 넘어간 파일 수.
     ///
-    /// **git 자신이 쓰는 방법이다**(F01 §3.2). 회계를 싣는 이유는 [`CacheStats`] 와
+    /// **git 자신이 쓰는 방법이다**(옛 F01 §3.2). 회계를 싣는 이유는 [`CacheStats`] 와
     /// 같다 — 믿은 것과 다시 잰 것이 구별되지 않으면 *"캐시가 항상 적중"* 이라고
     /// 거짓 보고하는 코드와 진짜가 같아 보인다.
     ///
@@ -211,7 +211,7 @@ impl WorktreeState {
 /// 그러면 이름 변경이 요약에 안 잡히고, 그것이 criteria `[f01.pass]` ③ 의 넷째 변이가
 /// 세는 고장이다. `pal-core::derived` 의 `field()` 가 같은 이유로 같은 일을 한다.
 ///
-/// **머클 트리가 아니다.** F01 §3.2 는 *"머클 루트"* 라고 적었지만 부분 재계산을 쓰는
+/// **머클 트리가 아니다.** 옛 F01 §3.2 는 *"머클 루트"* 라고 적었지만 부분 재계산을 쓰는
 /// 소비자가 없다 — 증분은 F05 의 것이다. 지금 필요한 것은 *"같은 목록 → 같은 요약,
 /// 다른 목록 → 다른 요약"* 하나이고 순차 요약이 그것을 준다.
 #[must_use]
@@ -239,7 +239,7 @@ pub struct CommitMeta {
     pub author_display: String,
     /// 저자 시각(에포크 초) — **표시용이다.**
     ///
-    /// # 이 값은 앵커가 아니다 (F09 §6)
+    /// # 이 값은 앵커가 아니다 (옛 F09 §6)
     ///
     /// 선행 구현은 커밋 시각을 낡음의 앵커로 썼고, 그러면 **포매팅 커밋에도 `stale` 이
     /// 켜진다** — [R-07] 이 치명이라 부른 실패다. `body_digest` 가 더 강하다.
@@ -363,7 +363,7 @@ impl GitAccess for GixRepo {
         let (list, trusted, rehashed) = self.scan_worktree()?;
         let tree_digest = digest_of(&list);
 
-        // **`base` 의 트리와 대는 것이 `dirty` 의 정의다**(F01 §3.2).
+        // **`base` 의 트리와 대는 것이 `dirty` 의 정의다**(옛 F01 §3.2).
         let mut committed = self.list_tree(&TreeRef::Committed(base))?;
         committed.sort();
         Ok(WorktreeState {
@@ -485,7 +485,7 @@ fn 경로집합(
 /// 대신 criteria `[f01.pass]` ③ 의 첫째 변이가 *"내용 1바이트를 바꾸면 요약이 바뀌는가"*
 /// 를 실제로 센다.
 ///
-/// **`.palimpsest/worktree.state` 캐시는 만들지 않는다.** F01 §3.2 는 *"인덱스 mtime 으로
+/// **`.palimpsest/worktree.state` 캐시는 만들지 않는다.** 옛 F01 §3.2 는 *"인덱스 mtime 으로
 /// 무효화"* 를 적었는데 **그것이 틀렸다** — 파일을 고치고 `git add` 하지 않으면 인덱스
 /// mtime 은 그대로이고 워킹트리만 변한다. 그 캐시는 낡은 요약을 돌려주고, 같은 ③ 첫째
 /// 변이가 그것을 반증한다.

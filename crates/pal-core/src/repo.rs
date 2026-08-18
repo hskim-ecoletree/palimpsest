@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 /// 저장소의 안정 식별자. **경로도 원격 URL 도 아니다** — 둘 다 움직인다([R-08]).
 ///
 /// 매니페스트가 선언하며 출처는 `asserted` 다. "어떤 저장소들이 한 프로젝트인가"는
-/// 코드에 없기 때문이다(DESIGN §4.3).
+/// 코드에 없기 때문이다(옛 DESIGN §4.3).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct RepoId(String);
 
@@ -414,7 +414,7 @@ mod tests {
 
     #[test]
     fn 스냅샷은_집합이고_비어_있을_수_없다() {
-        // DESIGN §1.1 — 멀티레포의 "지금"은 하나가 아니라 집합이다.
+        // 옛 DESIGN §1.1 — 멀티레포의 "지금"은 하나가 아니라 집합이다.
         let c = ObjectName::from_bytes([0xab; 20]);
         let s = Snapshot::single(RepoId::new("a"), TreeRef::Committed(c));
         assert_eq!(s.len(), 1);
@@ -459,7 +459,7 @@ mod tests {
 
 /// 저장소 하나가 **다른 이름으로도 불린 적이 있다**는 선언.
 ///
-/// # 왜 필요한가 ([R-08](../../../docs/plan/00-risks.md#r-08) · F03 §4.2)
+/// # 왜 필요한가 ([R-08](../../../docs/plan/00-risks.md#r-08) · 옛 F03 §4.2)
 ///
 /// `repo_id` 가 `symbol_id` 의 해시 성분이라, 저장소를 나누거나 합치면 **전 심볼의
 /// 정체성이 한 번에 끊긴다.** 별칭이 그 재배치를 흡수한다.
@@ -472,7 +472,7 @@ mod tests {
 ///
 /// # 흡수되지 않은 재배치는 **관측 가능한 사건**이다
 ///
-/// 별칭이 없으면 전 심볼이 `orphaned` 가 된다. F03 §4.2 가 그것을 *"조용한 정체성
+/// 별칭이 없으면 전 심볼이 `orphaned` 가 된다. 옛 F03 §4.2 가 그것을 *"조용한 정체성
 /// 유실보다 낫다"* 로 판단했고, 이 타입은 그 판단을 뒤집지 않는다 — **자동으로
 /// 흡수하지 않고 선언된 것만 흡수한다.**
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

@@ -1,4 +1,4 @@
-//! 질의 카탈로그 — **`surface/queries.toml` 하나가 목록의 단일 진실이다** (F06 §2).
+//! 질의 카탈로그 — **`surface/queries.toml` 하나가 목록의 단일 진실이다** (옛 F06 §2).
 //!
 //! [`crate::schema`] 가 노드·엣지에 대해 하는 일을 **질의**에 대해 한다.
 //!
@@ -200,7 +200,7 @@ impl QueryName {
             | Self::NarrativeUnbound => &[],
             Self::SymbolResolve | Self::SymbolContains | Self::SymbolCallers
             | Self::SymbolReaches | Self::BindingTouch => &["name"],
-            // **좌표가 아니라 계획 문서다** — 기준선이 그 문서 안에 있다(F12 §4).
+            // **좌표가 아니라 계획 문서다** — 기준선이 그 문서 안에 있다(옛 F12 §4).
             Self::PlanDeviation => &["plan"],
         }
     }
