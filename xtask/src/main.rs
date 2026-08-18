@@ -2791,9 +2791,8 @@ fn check_stale_citation(root: &Path) -> Result<String> {
     for file in 인용_모집단(root)? {
             let 상대 = 상대_경로(root, &file);
             // 시험은 가짜 경로를 만든다 — 죽은 링크 검사와 같은 모집단 규칙이다.
-            if 상대.contains("/tests/") || 상대.ends_with("/common.rs") {
-                continue;
-            }
+            // ★ **시험도 훑는다** — 사유는 아래 `인용_모집단` 의 주석에 있다.
+            let _ = &상대;
             let Ok(body) = std::fs::read_to_string(&file) else { continue };
             파일수 += 1;
             // 이 검사 자신이 사는 파일인가 — 면제는 여기서만 선다.
@@ -2870,10 +2869,12 @@ fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
             } else {
                 let 이름 = p.file_name().and_then(|x| x.to_str()).unwrap_or("");
                 let ext = p.extension().and_then(|x| x.to_str()).unwrap_or("");
-                // 시험은 가짜 경로를 만든다 — 죽은 링크 검사와 같은 모집단 규칙이다.
-                if 상대.contains("/tests/") || 이름 == "common.rs" {
-                    continue;
-                }
+                // ★ **시험도 훑는다** (독립 리뷰 11 라운드). 앞 판은 죽은 링크 검사에서
+                //   *"시험은 가짜 경로를 만든다"* 를 사유째 복사해 `tests/` 를 뺐는데,
+                //   **그 사유는 경로를 파일시스템에 대 보는 검사의 것**이지 산문 토큰을
+                //   세는 이 검사와 무관하다. 사각이 하나 생겼고 거기 실물이 있었다
+                //   (`crates/pal-store/tests/isolation.rs:1` 이 사라진 문서를 현재형으로).
+                let _ = 이름;
                 if 확장자.contains(&ext) || 이름 == ".gitignore" {
                     out.push(p);
                 }

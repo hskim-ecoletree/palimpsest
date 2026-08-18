@@ -293,10 +293,16 @@ proptest! {
     // **반증 씨앗을 파일로 남긴다.** 통합 시험이라 proptest 가 기본 자리를 못 찾고,
     // 안 남기면 한 번 잡힌 반례가 다음 회차에 다시 안 돈다 — 그러면 이 검사는
     // 회차마다 다른 것을 재게 된다.
+    //
+    // ⚠ **경로는 크레이트 루트 기준이다** (실측 2026-08-18 · 독립 리뷰 11 라운드).
+    //    앞 판은 `"crates/pal-extract/tests/…"` 로 **저장소 루트 기준** 경로를 줬는데
+    //    `Direct` 는 그것을 **실행 CWD(= 크레이트 루트)** 기준으로 푼다. 그래서
+    //    `crates/pal-extract/crates/pal-extract/tests/` 라는 **유령 트리**가 생겨
+    //    추적까지 됐고, 한 시험에 씨앗 파일이 **둘**이 됐다.
     #![proptest_config(ProptestConfig {
         failure_persistence: Some(Box::new(
             proptest::test_runner::FileFailurePersistence::Direct(
-                "crates/pal-extract/tests/normalize-props.regressions"
+                "tests/normalize_props.proptest-regressions"
             )
         )),
         ..ProptestConfig::default()

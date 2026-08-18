@@ -4,8 +4,8 @@
 //!
 //! [ADR-0025](../../../docs/adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md)
 //! 가 **호스트 중립을 초석에서 내렸다**(Claude Code 전용). 그래서 이 시험의 옛 근거
-//! 문서 셋(`WHITEPAPER.md` 의 P7 · `docs/DESIGN.md` 의 P7 반증 조건 ·
-//! `docs/how-it-works.md`)이 2026-08-18 재고 처분으로 사라진다.
+//! 문서 셋(옛 `WHITEPAPER.md` 의 P7 · 옛 `docs/DESIGN.md` 의 P7 반증 조건 ·
+//! 옛 `docs/how-it-works.md`)이 2026-08-18 재고 처분으로 사라졌다.
 //!
 //! **그렇다고 이 시험이 고아가 되지는 않는다.** ADR-0025 가 내린 것은 **하네스 층**의
 //! 호스트 중립이고, 같은 문서가 *"다른 호스트 사용자는 코어(`pal` CLI)만 쓴다"* 를
