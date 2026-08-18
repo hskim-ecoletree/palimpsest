@@ -227,13 +227,11 @@ palimpsest/
 │   ├── pal-core/                   # 도메인 타입·불변식·판정
 │   │   │                           #   의존: std + serde + blake3 뿐. 그 외 워크스페이스 크레이트 0
 │   │   ├── coord.rs                #   Coord · Site · Snapshot · SymbolId · BodyDigest
-│   │   ├── provenance.rs           #   출처 4값 · 배정 규칙 · 승격
 │   │   ├── ledger.rs               #   대장 · 파일 상태 7값 · 언어 등급
 │   │   ├── graph.rs                #   노드 · 엣지 · 해소 등급 · UnresolvedRef
 │   │   ├── binding.rs              #   결박 5상태 · 반경 · 감시 집합
 │   │   ├── judgment.rs             #   Finding · Residual · OutOfScope · ScopeReduction
 │   │   ├── narrative.rs            #   Synthesis · Narration · ViewModel · Elision
-│   │   ├── intent.rs               #   Plan · Deviation · Briefing
 │   │   └── envelope.rs             #   Envelope<T> · Coverage · ProjectionFreshness
 │   ├── pal-git/                    # gix 격리. 접촉면 최소. 의존: pal-core
 │   ├── pal-extract/                # tree-sitter 추출기 · 언어 등급 · 정규화. 의존: pal-core
@@ -243,19 +241,18 @@ palimpsest/
 │   │                               #   의존: pal-core. **지우는 API가 없다**(§2.2)
 │   ├── pal-query/                  # 명명된 질의 · 실행기 · 예산 절단 · 질의 로그
 │   │                               #   의존: pal-core, pal-store
-│   ├── pal-intake/                 # 관측 수용 API. 의존: pal-core, pal-store
 │   ├── pal-cli/                    # JSON in/out. 의존: 위 전부. **1급 표면**
 ├── xtask/                          # CI 검사 구현
 ├── schema/
 │   ├── graph.toml                  # 노드·엣지·속성·producer — 단일 진실 (F22)
-│   └── provider.toml               # provider 요청·응답 스키마 (F21)
 ├── surface/queries.toml            # 명명된 질의 카탈로그 — 단일 진실
-├── packs/schema/                   # 선언 팩 스키마
 ├── corpus/                         # 평가 코퍼스·과제·성공 기준
 └── docs/                           # ADR·게이트·이 계획 (백서·설계는 2026-08-18 에 지웠다)
 ```
 
-**단일 진실 파일이 셋이 됐다** — `schema/graph.toml`(무엇이 존재하는가) · `surface/queries.toml`(무엇을 물을 수 있는가) · `schema/provider.toml`(프로젝트가 무엇을 줄 수 있는가). **셋 다 코드가 아니라 데이터이고, 코드는 거기서 파생되거나 거기에 대조된다.**
+**단일 진실 파일은 둘이다** — `schema/graph.toml`(무엇이 존재하는가) · `surface/queries.toml`(무엇을 물을 수 있는가). **둘 다 코드가 아니라 데이터이고, 코드는 거기서 파생되거나 거기에 대조된다.**
+
+⚠ **셋째(`schema/provider.toml`)는 안 만들었다.** 옛 `F21 provider` 포트의 것이고 그 기능은 2026-08-18 에 처분됐다([처분표](disposal-map.md)).
 
 ### 4.1 의존 방향 규칙 — CI가 기계로 검사한다
 
@@ -264,7 +261,6 @@ palimpsest/
 | `pal-core`는 워크스페이스 내 **어떤** 크레이트에도 의존하지 않는다 | 도메인이 저장·전송·호스트 개념을 내부화하는 것 |
 | 어떤 크레이트도 `pal-cli`에 의존하지 않는다 | 소비자 어휘의 역류 |
 | `pal-core`는 `tree-sitter`·`redb`·`gix`에 의존하지 않는다 | 파서·저장 기술이 좌표계에 새는 것 |
-| `pal-intake`는 `pal-extract`에 의존하지 않는다 | `observed`가 `extracted` 경로를 재사용해 출처 배정이 흐려지는 것 |
 | **`pal-store`는 `pal-intent`에 쓰기 의존하지 않는다** (읽기만) | 캐시 폐기 경로가 의도 저장소에 닿는 것 — [R-21](00-risks.md#r-21) |
 
 ### 4.2 어휘 금지 목록 — `pal-core` 소스에 나타나면 CI 실패

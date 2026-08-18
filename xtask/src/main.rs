@@ -2741,12 +2741,17 @@ fn 아래_전부(dir: &Path, ext: &str, root: &Path, out: &mut Vec<String>) -> R
 // ★ **표시 대신 장치를 남긴다**(AGENTS.md). 규약을 산문에 적으면 다음 사람이 안 읽고,
 // 검사에 넣으면 못 지나간다.
 //
-// # 왜 `.rs` 만 보나
+// # 무엇을 보나 — **문서가 아닌 것 전부**
 //
-// 문서 쪽에서는 **처분 자체를 서술하는 자리**가 정당하게 그 이름을 부른다 —
-// `disposal-map.md` 가 *"옛 `docs/plan/features/` 25 파일"* 을 적는 것은 낡음이 아니라
-// **기록**이다. 소스 주석에는 그런 자리가 없다: 코드가 사라진 문서를 부르면 그것은
-// 언제나 **낡은 근거**다.
+// 문서 쪽(`docs/`·`.palimpsest/`)에서는 **처분 자체를 서술하는 자리**가 정당하게 그
+// 이름을 부른다 — `disposal-map.md` 가 *"옛 `docs/plan/features/` 25 파일"* 을 적는 것은
+// 낡음이 아니라 **기록**이다. 그 밖에는 그런 자리가 없다: **코드·스키마·설정·스크립트가
+// 사라진 문서를 부르면 그것은 언제나 낡은 근거**다.
+//
+// ⚠ **처음엔 `.rs` 만 봤고 15 자리가 샜다**(독립 리뷰 7 라운드 · 실측):
+// `schema/graph.toml` 10 · `Cargo.toml` 1 · `.gitignore` 1 · `scripts/` 3.
+// 특히 `schema/graph.toml` 은 `pal-core::schema` 가 **실행 시점에 읽는** 단일 진실
+// 파일이고, 그 머리가 사라진 문서를 근거로 세우고 있었다.
 
 /// 사라진 문서를 부르는 토큰. 이 회차가 지운 것들이다.
 const 사라진_문서: &[&str] =
@@ -2755,18 +2760,15 @@ const 사라진_문서: &[&str] =
 fn check_stale_citation(root: &Path) -> Result<String> {
     let mut 문제 = Vec::new();
     let mut 센_자리 = 0usize;
-    for dir in ["crates", "xtask"] {
-        let d = root.join(dir);
-        if !d.is_dir() {
-            continue;
-        }
-        for file in rust_sources(&d)? {
+    let mut 파일수 = 0usize;
+    for file in 인용_모집단(root)? {
             let 상대 = 상대_경로(root, &file);
             // 시험은 가짜 경로를 만든다 — 죽은 링크 검사와 같은 모집단 규칙이다.
             if 상대.contains("/tests/") || 상대.ends_with("/common.rs") {
                 continue;
             }
-            let body = std::fs::read_to_string(&file)?;
+            let Ok(body) = std::fs::read_to_string(&file) else { continue };
+            파일수 += 1;
             for (n, line) in body.lines().enumerate() {
                 // ★ **이 검사 자신의 토큰 목록은 인용이 아니다.** 검사가 자기 정의를
                 //   위반으로 읽으면 그것은 대조가 아니라 자가당착이다.
@@ -2789,11 +2791,13 @@ fn check_stale_citation(root: &Path) -> Result<String> {
                     }
                 }
             }
-        }
     }
     // **모집단이 비면 실패다** — 0 건은 *"안 부른다"* 가 아니라 *"안 봤다"* 일 수 있다.
-    if 센_자리 == 0 {
-        bail!("사라진 문서를 부르는 자리가 0 곳이다 — 토큰 목록이나 모집단이 비었다");
+    if 센_자리 == 0 || 파일수 < 100 {
+        bail!(
+            "사라진 문서를 부르는 자리가 {센_자리} 곳이고 훑은 파일이 {파일수} 개다 — \
+             토큰 목록이나 모집단이 비었다"
+        );
     }
     if !문제.is_empty() {
         bail!(
@@ -2802,5 +2806,40 @@ fn check_stale_citation(root: &Path) -> Result<String> {
             문제.join("\n    ")
         );
     }
-    Ok(format!("사라진 문서 인용 {센_자리}곳 · 전부 「옛」 표기"))
+    Ok(format!("파일 {파일수}개 · 사라진 문서 인용 {센_자리}곳 · 전부 「옛」 표기"))
+}
+
+/// 검사 19 가 훑는 자리 — **문서가 아닌 것 전부.**
+///
+/// `docs/`·`.palimpsest/` 는 뺀다: 거기엔 **처분 자체를 서술하는 정당한 자리**가 있다.
+fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
+    const 밖: &[&str] = &["docs/", ".palimpsest/", "target/", ".git/", "corpus/"];
+    const 확장자: &[&str] = &["rs", "toml", "py", "sh", "yml", "yaml", "json"];
+    let mut out = Vec::new();
+    let mut stack = vec![root.to_path_buf()];
+    while let Some(d) = stack.pop() {
+        let Ok(읽기) = std::fs::read_dir(&d) else { continue };
+        for e in 읽기 {
+            let p = e?.path();
+            let 상대 = 상대_경로(root, &p);
+            if 밖.iter().any(|x| 상대.starts_with(x)) {
+                continue;
+            }
+            if p.is_dir() {
+                stack.push(p);
+            } else {
+                let 이름 = p.file_name().and_then(|x| x.to_str()).unwrap_or("");
+                let ext = p.extension().and_then(|x| x.to_str()).unwrap_or("");
+                // 시험은 가짜 경로를 만든다 — 죽은 링크 검사와 같은 모집단 규칙이다.
+                if 상대.contains("/tests/") || 이름 == "common.rs" {
+                    continue;
+                }
+                if 확장자.contains(&ext) || 이름 == ".gitignore" {
+                    out.push(p);
+                }
+            }
+        }
+    }
+    out.sort();
+    Ok(out)
 }

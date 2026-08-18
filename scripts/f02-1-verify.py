@@ -23,7 +23,7 @@
 
 그래서 비교 대상은 **낡음을 판정하는 축**이다: 이름·종류·`body_digest`·포함 관계·
 export·import. 좌표가 움직이는 것은 정상이고, `body_digest` 를 span 과 다른 축에 둔
-이유가 그것이다(DESIGN §2.2 · F03 §2).
+이유가 그것이다(옛 DESIGN §2.2 · F03 §2).
 
 사용:
     ./scripts/f02-1-verify.py --ditto ~/dev/projects/ditto --s0-corpus /tmp/s0-corpus

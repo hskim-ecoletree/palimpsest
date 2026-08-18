@@ -19,12 +19,12 @@
 /
 ├── CONTEXT.md        ← 용어집 (아직 없음)
 ├── docs/
-│   ├── adr/          ← 결정 기록 (기능 종료 시 발행. 지금 0001~0006)
-│   ├── adr/          ← 설계 결정과 그 근거 — **여기가 정본이다**
-│   ├── evidence-map.md
-│   ├── plan/         ← 무엇을 어느 순서로 만드는가
-│   └── research/     ← 관측 기록 (R번호)
-└── plan/00-goals.md  ← 왜 만드나 · 능력 계약 `C1~C6` · 설계 원리 `P1~P14`
+│   ├── adr/          ← **설계 결정과 그 근거. 여기가 정본이다** (기능 종료 시 발행)
+│   ├── gates/        ← 판정 기록 (동결 — 그때의 기록이다)
+│   ├── plan/         ← 00-goals(왜 · `C1~C6` · `P1~P14`) · 00-stack · 00-risks · disposal-map
+│   ├── evidence-map.md   ← sunset 선언됨 (docs/sunset.toml)
+│   └── research/     ← 관측 기록 (R번호) · sunset 선언됨
+└── AGENTS.md         ← 어디서부터 읽는가
 ```
 
 ## 이 저장소의 문서 분업 — 같은 것을 두 곳에 적지 않는다

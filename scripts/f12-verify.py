@@ -522,7 +522,7 @@ def 상한과_카탈로그(tmp: Path) -> None:
 def 자기_적용(tmp: Path) -> None:
     box = tmp / "self"
     box.mkdir()
-    doc = ROOT / "docs/plan/features/F12-plan-binding.md"
+    doc = ROOT / "옛 docs/plan/features/F12-plan-binding.md"
     # ★ **2026-08-18 재고 처분이 이 문서를 지웠다.**
     #    앞 판은 파일이 없으면 아래 `returncode != 0` 을 타고
     #    *"자기 계획 문서를 못 읽었다 — 대조 불가"* 로 **조용히** 떨어졌다.
@@ -530,7 +530,7 @@ def 자기_적용(tmp: Path) -> None:
     #    이 회차가 없애려던 바로 그 형태다. 사유를 가른다.
     if not doc.exists():
         skip("⑪ 자기 적용",
-             "계획 문서 `docs/plan/features/F12-plan-binding.md` 가 **폐기됐다** "
+             "계획 문서 `옛 docs/plan/features/F12-plan-binding.md` 가 **폐기됐다** "
              "(2026-08-18 재고 처분 · ADR-0025 로 지형이 바뀌었다). "
              "「아직 못 쟀다」가 아니라 **「잴 대상이 없어졌다」**다. "
              "새 지형이 계획 문서를 다시 세우면 그때 이 자리를 다시 겨눈다 — "
