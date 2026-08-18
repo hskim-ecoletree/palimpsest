@@ -244,6 +244,10 @@ impl Report {
     fn say(&mut self, tag: &str, what: &str) {
         self.lines.push(format!("  {tag:<22}{what}"));
     }
+    /// 적힌 줄들 — 제거가 「잃은 것」을 다시 세는 데 쓴다.
+    fn lines(&self) -> impl Iterator<Item = &str> {
+        self.lines.iter().map(String::as_str)
+    }
     fn print(&self, head: &str) {
         println!();
         println!("■ {head}");
@@ -1100,6 +1104,34 @@ pub fn uninstall(target: &Path) -> Result<()> {
     drop(lock);
     디렉터리_걷기(&m, &자리, &mut report)?;
     report.print(&format!("제거 — {root}"));
+
+    // ★ **잃은 것을 한 줄이 아니라 블록으로 말한다.** (2026-08-19 · 독립 리뷰 3 라운드)
+    //
+    // 앞 판은 항목마다 `사용자 수정 — 지웠다` 를 붙였고 그것이 열 몇 줄 사이에 섞여
+    // **되돌릴 수 없다는 사실이 안 보였다.** 실측: 사용자가 에이전트 정의에 세 줄을
+    // 더한 뒤 제거하면 그 세 줄이 백업 없이 사라지고 디렉터리까지 없어진다.
+    //
+    // ⚠ **지우는 것 자체는 그대로다** — 게이트 ⑥ 이 `S2 == S0` 을 요구한다.
+    // 여기서 더하는 것은 **말**이고, 그 말이 보이게 만드는 것이 이 블록이다.
+    let 잃은것: Vec<&str> = report
+        .lines()
+        .filter(|l| l.contains(지운_사용자_수정))
+        .filter_map(|l| l.split_whitespace().last())
+        .collect();
+    if !잃은것.is_empty() {
+        println!("⚠ 사람이 고친 파일 {}개를 지웠다 — 그 내용은 되돌릴 수 없다.", 잃은것.len());
+        for p in &잃은것 {
+            println!("    {p}");
+        }
+        println!(
+            "  제거는 **설치 전 상태로 되돌리는 것**이라 우리가 놓은 파일은 남기지 않는다."
+        );
+        println!(
+            "  프로젝트 고유의 규율은 우리가 안 놓고 안 지우는 자리에 적어라 — \
+             `.claude/pal/policy.toml`."
+        );
+        println!();
+    }
     Ok(())
 }
 

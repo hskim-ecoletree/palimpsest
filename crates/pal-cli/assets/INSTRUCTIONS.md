@@ -4,7 +4,15 @@
 `CLAUDE.md` 가 `@.claude/pal/INSTRUCTIONS.md` 한 줄로 이것을 끌어온다.
 
 ⚠ 손으로 고치지 마라. `pal update` 가 **고친 파일을 밟지 않고 보고만 한다** —
-그래서 고치면 갱신이 여기서 멈춘다. 고칠 것이 있으면 이 파일 밖에 적어라.
+그래서 고치면 갱신이 여기서 멈춘다.
+
+★ **프로젝트 고유의 것은 어디에 적나 — `.claude/pal/policy.toml` 이다.**
+그 파일은 **우리가 안 놓고 안 지운다.** 없으면 만들어라.
+
+`pal install` 이 놓은 나머지(`.claude/pal/` · `.claude/commands/pal/` ·
+`.claude/agents/pal-*` · `.claude/skills/pal-round/`)는 **우리 것**이다 —
+`update` 가 갈아 끼우고 `uninstall` 이 걷어낸다. 거기 적은 것은 **제거할 때 사라진다.**
+회차의 금지역 · 프로젝트 규율 · 판정 기준은 전부 `policy.toml` 로 간다.
 
 ## 무엇을 먼저 묻는가
 
