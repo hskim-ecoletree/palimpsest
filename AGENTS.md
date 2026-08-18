@@ -29,7 +29,7 @@
 | 알고 싶은 것 | 문서 |
 |---|---|
 | 회차를 어떻게 도나 | **`/round`** — 절차의 정본 |
-| 무엇을 어느 순서로 만드나 (지형) | [docs/plan/README.md](docs/plan/README.md) — **전체를 관장한다** |
+| 무엇을 어느 순서로 만드나 (지형) | ⏳ **비었다** — 옛 지형은 2026-08-18 에 걷어냈다([처분표](docs/plan/disposal-map.md)). **지금 어디에 서 있는지는 `./scripts/frontier.sh` 가 답한다.** [docs/plan/README.md](docs/plan/README.md) 에는 **어느 회차에서든 걸리는 것**(상시 검사·판정 오라클·게이트 소유자·진행 규칙)만 남았다 |
 | 완성되면 실제로 어떻게 쓰이나 | ⏳ **비었다** — 옛 완성 장면은 MCP 를 전제해 [ADR-0025](docs/adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md) 와 충돌했고 2026-08-18 에 지웠다([처분표](docs/plan/disposal-map.md)). 하네스의 완성 장면은 **다음 회차가 쓴다** |
 | 무슨 언어·라이브러리·구조로 만드나 | [docs/plan/00-stack.md](docs/plan/00-stack.md) |
 | 무엇이 우리를 막을 것인가 | [docs/plan/00-risks.md](docs/plan/00-risks.md) |

@@ -215,7 +215,7 @@ pub fn intent_file(repo_path: &Path, given: Option<PathBuf>) -> PathBuf {
 /// 답의 모양 한 줄 — `pal query binding.touch` 가 이것만 낸다.
 ///
 /// **전문을 두 표면이 각자 그리지 않는다.** 같은 답이 표면마다 다른 모양으로 나가면
-/// 그것이 곧 두 곳에 적힌 같은 것이다(옛 계획 §7 의 넷째).
+/// 그것이 곧 두 곳에 적힌 같은 것이다(계획 §7 의 넷째).
 #[must_use]
 pub fn 한_줄_found(r: &pal_core::TouchResult) -> String {
     format!(

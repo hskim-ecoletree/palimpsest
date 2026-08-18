@@ -38,7 +38,7 @@
 |---|---|
 | 결정 | `docs/adr/` |
 | 근거·관측 | `docs/evidence-map.md` · `docs/research/` |
-| 실행 순서와 상태 | GitHub Issues (`docs/plan/`은 각 기능을 *어떻게* 만드는가) |
+| 실행 순서와 상태 | GitHub Issues — **상태의 단일 진실**. `./scripts/frontier.sh` 가 지금 값을 낸다 |
 | 용어의 정의 | `CONTEXT.md` |
 | 수치 합격선 | `corpus/criteria.toml` (단일 진실) |
 

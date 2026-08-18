@@ -329,11 +329,29 @@ mod tests {
         assert_eq!(Ulid::parse(&"0".repeat(27)), None);
     }
 
+    /// ★ **벽시계가 뒤로 가면 준비가 무너진다** (실측 2026-08-18 · 전체 부하에서
+    /// 4 회 중 1 회 `1787015951724 !> 1787015951726`). `Ulid::now()` 가
+    /// `SystemTime::now()` 를 쓰므로 **NTP 보정에 노출된다** — 2 ms 를 잤는데 값이
+    /// 2 ms 뒤로 갔다.
+    ///
+    /// ⚠ **단정은 안 바꾼다.** 이 시험이 세우는 것은 *"뒤에 만든 것이 시간순으로
+    /// 뒤에 온다"* 이고, 그 앞에서 **두 값을 얻는 것은 준비**다. 준비에만 유계
+    /// 재시도를 건다 — `host_free.rs` 의 락 획득과 같은 자리, 같은 처분이다.
     #[test]
     fn 시각이_실리고_시간순으로_정렬된다() {
-        let a = Ulid::now();
-        std::thread::sleep(std::time::Duration::from_millis(2));
-        let b = Ulid::now();
+        let (a, b) = {
+            let mut 얻은 = None;
+            for _ in 0..50 {
+                let a = Ulid::now();
+                std::thread::sleep(std::time::Duration::from_millis(2));
+                let b = Ulid::now();
+                if b.millis() > a.millis() {
+                    얻은 = Some((a, b));
+                    break;
+                }
+            }
+            얻은.expect("벽시계가 50 회 연속 뒤로 갔다 — 시계가 고장이다")
+        };
         assert!(b.millis() > a.millis(), "{} !> {}", b.millis(), a.millis());
         assert!(b > a, "시간순으로 정렬되지 않는다");
         assert!(b.to_string() > a.to_string(), "문자열도 시간순이어야 한다");
