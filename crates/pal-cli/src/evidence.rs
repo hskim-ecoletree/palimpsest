@@ -47,7 +47,7 @@ pub fn lines<T>(e: &Envelope<T>) -> Vec<String> {
     }
 
     // **하한이라고 적는다.** 재는 것은 빈틈 없는 JSON 이고, 이 화면처럼 들여쓴
-    // 산출은 그보다 크다. 하한임을 안 적으면 소비자가 상한으로 읽는다(백서 §6.3).
+    // 산출은 그보다 크다. 하한임을 안 적으면 소비자가 상한으로 읽는다(옛 백서 §6.3).
     o.push(format!(
         "  크기      약 {} 토큰 **이상** (잰 것: {} 바이트 · 가정: {} 바이트/토큰)",
         e.tokens.approx_tokens, e.tokens.serialized_bytes, e.tokens.bytes_per_token

@@ -48,7 +48,7 @@ DITTO, DITTO_PIN = F10.DITTO, F10.DITTO_PIN
 
 # ── `[f11.pass]` 가 등록한 값들. **여기서 정하지 않는다 — 옮겨 적을 뿐이다** ────────
 RECURRENCE_TOTAL = 5          # `recurrence.toml` 이 2026-08-11 에 고정한 모집단
-RECURRENCE_FIRED_MIN = 5      # ★ **부분 통과선을 안 만든다** — 계획 §6 이 관용을 안 적었다
+RECURRENCE_FIRED_MIN = 5      # ★ **부분 통과선을 안 만든다** — 옛 계획 §6 이 관용을 안 적었다
 CROSS_COORD_POPULATION_MIN = 1
 NEAR_POPULATION_MIN = 1
 NEAR_MIN = 1

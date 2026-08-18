@@ -300,7 +300,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
             touch::print_near(near, &e.elision);
         }
         // **전문의 화면은 `pal touch` 가 진다.** 여기서 다시 그리면 같은 답이 표면마다
-        // 다른 모양으로 나가고, 그것이 곧 두 곳에 적힌 같은 것이다(계획 §7 의 넷째).
+        // 다른 모양으로 나가고, 그것이 곧 두 곳에 적힌 같은 것이다(옛 계획 §7 의 넷째).
         QueryResult::Touch { result } => {
             println!("  {}", touch::한_줄_found(result));
             println!();

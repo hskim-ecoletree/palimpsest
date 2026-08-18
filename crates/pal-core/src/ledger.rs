@@ -41,7 +41,7 @@ impl LanguageId {
     }
 }
 
-/// 언어 능력 등급 — 백서 §2.2-2 *"하한은 전역이 아니라 언어별"*.
+/// 언어 능력 등급 — 옛 백서 §2.2-2 *"하한은 전역이 아니라 언어별"*.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ExtractGrade {

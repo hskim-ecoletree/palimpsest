@@ -1,6 +1,6 @@
 //! CI 검사 — **단계 1**(stack §4.3). 전부 S 규모이고 외부 의존을 늘리지 않는다.
 //!
-//! 여기 있는 일곱 중 둘은 계획 §2 가 *"되돌릴 수 없는 것"* 으로 분류한 것이다.
+//! 여기 있는 일곱 중 둘은 옛 계획 §2 가 *"되돌릴 수 없는 것"* 으로 분류한 것이다.
 //! **그 둘의 처분은 게이트가 아니라 빌드 실패다.**
 //!
 //! 앞의 다섯이 stack §4.3 **단계 1** 의 전부다 — F01 완료 체크리스트가 *"CI 1단계 켜기"* 로
@@ -2759,8 +2759,26 @@ fn 아래_전부(dir: &Path, ext: &str, root: &Path, out: &mut Vec<String>) -> R
 // 파일이고, 그 머리가 사라진 문서를 근거로 세우고 있었다.
 
 /// 사라진 문서를 부르는 토큰. 이 회차가 지운 것들이다.
-const 사라진_문서: &[&str] =
-    &["DESIGN §", "DESIGN.md", "WHITEPAPER", "how-it-works", "docs/plan/features/"];
+///
+/// ★ **한국어 표기도 담는다** (독립 리뷰 9 라운드). 앞 판은 라틴 표기만 담아서
+/// **이 저장소가 실제로 쓰는 말**이 통째로 사각이었다 — 라틴 109 곳은 전부 「옛」이
+/// 붙어 규약이 지켜진 것이 확인되는데 한국어 16 곳은 안 붙어 있었고 검사는 초록이었다.
+/// **장치가 자기 저장소의 말을 모르면 그것은 대조가 아니다.**
+///
+/// ⚠ 아래 목록이 곧 그 말이다 — 여기 다시 안 적는다(적으면 검사가 자기 설명을
+/// 위반으로 읽는다. 실측으로 한 번 걸렸다).
+const 사라진_문서: &[&str] = &[
+    // 라틴 표기
+    "DESIGN §",
+    "DESIGN.md",
+    "WHITEPAPER",
+    "how-it-works",
+    "docs/plan/features/",
+    // 한국어 표기 — 이 저장소가 실제로 쓰는 말
+    "백서 §",
+    "설계 문서",
+    "계획 §",
+];
 
 fn check_stale_citation(root: &Path) -> Result<String> {
     let mut 문제 = Vec::new();
@@ -2777,7 +2795,7 @@ fn check_stale_citation(root: &Path) -> Result<String> {
             for (n, line) in body.lines().enumerate() {
                 // ★ **이 검사 자신의 토큰 목록은 인용이 아니다.** 검사가 자기 정의를
                 //   위반으로 읽으면 그것은 대조가 아니라 자가당착이다.
-                if line.contains("사라진_문서") || line.trim_start().starts_with("&[\"DESIGN") {
+                if line.contains("사라진_문서") || 토큰_정의인가(line) {
                     continue;
                 }
                 for tok in 사라진_문서 {
@@ -2853,4 +2871,15 @@ fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
     }
     out.sort();
     Ok(out)
+}
+
+/// 토큰 목록 자신의 줄인가 — **검사가 자기 정의를 위반으로 읽으면 자가당착이다.**
+fn 토큰_정의인가(line: &str) -> bool {
+    let t = line.trim_start();
+    // 목록의 원소 줄 · 목록 시작 · **그 목록을 설명하는 doc 줄**.
+    // 마지막 것이 없으면 검사가 자기 설명문을 위반으로 읽는다(실측).
+    (t.starts_with('"') && t.ends_with("\","))
+        || t.starts_with("&[")
+        || (t.starts_with("///") && (t.contains("표기") || t.contains("사각")))
+        || (t.starts_with("//") && t.contains("표기"))
 }
