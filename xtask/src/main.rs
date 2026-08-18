@@ -2849,9 +2849,20 @@ fn check_stale_citation(root: &Path) -> Result<String> {
 
 /// 검사 19 가 훑는 자리 — **문서가 아닌 것 전부.**
 ///
-/// `docs/`·`.palimpsest/` 는 뺀다: 거기엔 **처분 자체를 서술하는 정당한 자리**가 있다.
+/// 빼는 것은 **다섯**이다: `docs/`·`.palimpsest/` 에는 **처분 자체를 서술하는 정당한
+/// 자리**가 있고, `corpus/` 는 **사전 등록된 측정 대장**이라 회차가 안 만진다
+/// (소유자: *"범위 밖 — 측정 장치다"*), `target/`·`.git/` 는 산출물이다.
+///
+/// ⚠ 앞 판은 doc 과 게이트 합격선 ③b 가 둘 다 *"`docs/`·`.palimpsest/` **만** 뺀다"*
+///   라고 적었는데 구현은 다섯이었다 — **선언과 구현이 갈린 자리**이고, 독립 리뷰 13
+///   라운드가 `corpus/criteria.toml` 에 심어 확인했다(19/19 초록). 세는 문장이 자기
+///   사각을 안 적으면 그 문장이 곧 꺼진 대조다.
+///
+/// ★ **`docs/` 아래여도 코드가 실행 시점에 여는 파일은 들어온다** — 그것은 문서가
+///   아니라 **설정**이다. 손으로 적지 않고 [`실행시점_docs`] 가 소스에서 뽑는다.
 fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
     const 밖: &[&str] = &["docs/", ".palimpsest/", "target/", ".git/", "corpus/"];
+    let 예외 = 실행시점_docs(root)?;
     // ★ **`.md` 도 본다** (독립 리뷰 8 라운드). 앞 판은 `.md` 를 빼서
     //   **설치 자산**(`crates/pal-cli/assets/**/*.md` — `include_str!` 로 사용자
     //   프로젝트에 실려 나간다)과 **하네스 표면 둘**(`.claude/agents/`·`.claude/skills/`)이
@@ -2866,7 +2877,7 @@ fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
         for e in 읽기 {
             let p = e?.path();
             let 상대 = 상대_경로(root, &p);
-            if 밖.iter().any(|x| 상대.starts_with(x)) {
+            if 밖.iter().any(|x| 상대.starts_with(x)) && !예외.iter().any(|x| 상대.starts_with(x)) {
                 continue;
             }
             if p.is_dir() {
@@ -2885,6 +2896,47 @@ fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
                 }
             }
         }
+    }
+    out.sort();
+    Ok(out)
+}
+
+/// `docs/` 아래인데 **코드가 실행 시점에 여는** 파일 — 문서가 아니라 설정이다.
+///
+/// ★ **손으로 안 적는다.** `xtask` 소스의 `join("docs/…")` 리터럴에서 뽑으므로,
+///   다음에 같은 종이 하나 더 생겨도 **자동으로 모집단에 든다.** 손으로 적은
+///   예외 목록은 그때 조용히 샌다 — 이 회차가 만든 `docs/sunset.toml` 이 정확히
+///   그렇게 샜다(독립 리뷰 13 라운드가 심어서 확인: 19/19 초록).
+///
+/// 사유는 `schema/graph.toml` 을 넣을 때와 **같은 것**이다 — 실행 시점에 읽히는
+/// 단일 진실 파일의 머리가 사라진 문서를 근거로 세우면, 그것은 낡은 산문이 아니라
+/// **낡은 설정**이다.
+///
+/// 비면 실패다 — 뽑기가 고장 나면 `docs/` 전체가 도로 사각이 된다.
+fn 실행시점_docs(root: &Path) -> Result<Vec<String>> {
+    let mut out = Vec::new();
+    for f in rust_sources(&root.join("xtask"))? {
+        let Ok(body) = std::fs::read_to_string(&f) else { continue };
+        for line in body.lines() {
+            // ⚠ **주석은 코드가 아니다.** 첫 판은 줄을 안 갈라서, 이 함수의 doc 주석에
+            //    적힌 `join("docs/…")` 자신이 목록을 채웠다 — **하한이 죽어 있었다**
+            //    (음성 대조를 돌렸더니 뽑기를 고장 내도 초록이었다). 자기 설명이
+            //    자기 대조를 끄는 형태다.
+            let 코드 = line.split("//").next().unwrap_or("");
+            let mut from = 0;
+            while let Some(rel) = 코드[from..].find("join(\"docs/") {
+                let at = from + rel + "join(\"".len();
+                let Some(end) = 코드[at..].find('"') else { break };
+                let 경로 = 코드[at..at + end].to_string();
+                if !out.contains(&경로) {
+                    out.push(경로);
+                }
+                from = at + end;
+            }
+        }
+    }
+    if out.is_empty() {
+        bail!("`docs/` 아래에서 실행 시점에 열리는 파일을 하나도 못 뽑았다 — 뽑기가 고장 났다");
     }
     out.sort();
     Ok(out)
