@@ -54,6 +54,34 @@ pub const PAYLOAD: &[Resource] = &[
         path: ".claude/commands/pal/ledger.md",
         body: include_str!("../../assets/commands/ledger.md"),
     },
+    // ── 회차 규약 ── (2026-08-19 · [#70](https://github.com/hskim-ecoletree/palimpsest/issues/70))
+    //
+    // ★ **사본을 만들지 않는다.** 아래 셋은 `assets/` 가 아니라 **이 저장소가 실제로 도는
+    // 파일**을 그대로 싣는다. 사본을 두면 갈리고, 두 벌을 대는 검사가 없다 — 그것이 직전
+    // 회차가 15 라운드에서 잡은 *"검사의 모집단을 손으로 베낀 거울이 갈렸다"* 와 같은 종이다.
+    //
+    // ⚠ **전제: 워크스페이스가 `publish = false` 다.** 크레이트 경계를 넘는
+    // `include_str!` 는 **빌드는 되지만 `cargo package` 를 깨뜨린다**(실측 2026-08-19).
+    // 그 전제가 깨지면 여기가 먼저 무너지므로 시험이 그것을 지킨다
+    // ([`crate::install::layout::tests::발행하지_않는다는_전제`]).
+    Resource {
+        path: ".claude/skills/pal-round/SKILL.md",
+        body: include_str!("../../../../.claude/skills/round/SKILL.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-premortem-sweeper.md",
+        body: include_str!("../../../../.claude/agents/pal-premortem-sweeper.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-independent-reviewer.md",
+        body: include_str!("../../../../.claude/agents/pal-independent-reviewer.md"),
+    },
+    // 정책 금지역 — **프로젝트가 소유한다.** 회차의 해악 게이트가 이것을 읽는다.
+    // 자산으로 두는 것은 **씨앗**이기 때문이다 — 사람이 고치는 것이 정상 사용이다.
+    Resource {
+        path: ".claude/pal/policy.toml",
+        body: include_str!("../../assets/policy.toml"),
+    },
 ];
 
 /// 매니페스트의 자리.

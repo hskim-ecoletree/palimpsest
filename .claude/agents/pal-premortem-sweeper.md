@@ -1,5 +1,5 @@
 ---
-name: premortem-sweeper
+name: pal-premortem-sweeper
 description: 착수 전 사전부검을 한 라운드 돈다. 이 계획대로 갔을 때 무엇이 실패하는지 거꾸로 찾아 시나리오를 낸다. 원 의도와 계획만 받고 대화 기록·앞 라운드 결과는 받지 않는다 — 독립성이 이 자리의 값이다. 처분은 메인이 한다.
 tools: Bash, Read, Glob, Grep
 ---

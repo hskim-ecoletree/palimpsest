@@ -1,5 +1,5 @@
 ---
-name: independent-reviewer
+name: pal-independent-reviewer
 description: 회차 종료 전 독립 리뷰를 한 라운드 돈다. 잠긴 의도를 전부 다뤘는지, 끝내도 되는지를 판정한다. 잠긴 의도와 산출물만 받고 대화 기록·앞 라운드 결과는 받지 않는다 — 독립성이 이 자리의 값이다. 발견마다 모집단·유효성·해악도를 붙여서 낸다. 끝은 메인이 정한다.
 tools: Bash, Read, Glob, Grep
 ---

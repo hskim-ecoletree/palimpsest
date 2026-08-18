@@ -83,7 +83,30 @@ n    objs     admissible 비율
        정반합이 그대로는 미달한다. 40% 를 걸러내고도 **회차 수준의 판정은
        늘 revise** 였다.
 
-  ★ ③ `category` 가 38 종, `disposition` 이 24 종으로 **발산**했다.
+  ★ ③ `category` 가 38 종, `disposition` 이 22 종으로 **발산**했다.
        계기판 카테고리는 **enum 이어야 한다** — 자유서술이 섞이면 세지지 않는다.
        선행 하네스의 실물이 이 교훈을 이미 갖고 있다.
 
+
+## 7. 지문 — 이 수가 어느 상태에서 나왔나 (C4-b)
+
+증거원이 **저장소 밖의 움직이는 워킹트리**다. 파일은 안 들여오고 지문만 남긴다.
+
+```
+ditto HEAD: aded7ce7f88feb3c03238c5f9760f3a2ade4a6c1 2026-07-24
+미커밋 변경: 278 건
+잰 시각: 2026-08-19
+
+312dee979f67a129  dialectic-1.json
+79cb3085a9da9519  dialectic-2.json
+27c9e83048461a14  dialectic-3.json
+7995c59b34a8d0da  dialectic-4.json
+de2c97041969841d  dialectic-5.json
+e86c54e0653c55ac  dialectic-6.json
+02e167ac247bc755  dialectic-7.json
+9aae526f18f1cce6  dialectic-8.json
+466fbdd77abe145e  dialectic-9.json
+```
+
+⚠ **이 수는 이 저장소의 어느 검사로도 재현·검증되지 않는다.** ditto 는 결합 금지
+대상이라 파일을 들여올 수 없다. 지문이 어긋나면 수가 달라졌다는 뜻이다.
