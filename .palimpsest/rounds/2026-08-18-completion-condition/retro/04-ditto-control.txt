@@ -1,0 +1,89 @@
+# ditto dialectic — 대조군 (C3-b(2) · C4)
+# 기록 9 · 경로 /Users/incognito/dev/projects/ditto/reports/design/agentic-governance/reviews
+
+## 0. 필드 존재 표 (C4 가 요구한 것) — 9 행 × 물음 3
+
+n    스키마       라운드수         자원           합의시점      
+1    ditto.dia 없음           없음           있음        
+2    ditto.dia 없음           없음           있음        
+3    ditto.dia 없음           없음           있음        
+4    ditto.dia 없음           cost         있음        
+5    ditto.dia 없음           없음           있음        
+6    v2:0.1.0  없음           token        없음        
+7    v2:0.1.0  없음           없음           없음        
+8    ditto.dia 1/1          없음           있음        
+9    ditto.dia 1/1          없음           있음        
+
+## 1. 세 물음의 판정 — 「n < 전체면 답 없음」
+  라운드 수 : 2/9  → **답 없음** (있는 둘도 값이 1/1 — 반복이 일어난 적 없다)
+  자원      : 0/9 에 가깝다  → **답 없음**
+  합의 시점 : 7/9  → 값은 있으나 **전부 revise** — 음성이 난 적 없다
+
+## 2. 답이 있는 축 — objections 의 유효성 (축 1 의 대조군)
+n    objs     admissible 비율
+1    14       10/14      71%
+2    10       6/10       60%
+3    6        2/6        33%
+4    20       15/20      75%
+5    9        7/9        78%
+8    13       5/13       38%
+9    11       5/11       45%
+
+  총계 83 · admissible 참 50 / 거짓 33 → **60% / 40%**
+
+## 3. severity
+  high       42
+  medium     25
+  critical   8
+  low        8
+
+## 4. category — 상위 축만 (서브카테고리는 '.' 앞으로 합침)
+  internal_consistency           16
+  engineering_soundness          16
+  gap                            8
+  implementation_readiness       8
+  journey_sufficiency            6
+  open_question                  6
+  scope_creep                    4
+  consistency_propagation        3
+  over_engineering               2
+  stack_agnostic                 2
+  reuse_claim                    2
+  schema_gap                     2
+  dependency_direction           1
+  evidence_overreach             1
+  correctness                    1
+  balance                        1
+  binding_fiction                1
+  binding_decision               1
+  over_claim                     1
+  scope_authority                1
+  → 상위 축 20 종. 원래 표기는 38 종으로 발산했다 (서브카테고리가 '.' 로 섞임)
+
+## 5. disposition — 발산의 실물
+  22 종. 자유서술이 섞였다:
+    fixed                    28
+    open_question            11
+    fix-needed               10
+    deferred                 9
+    rejected                 6
+    defer-if-schema-only     2
+    rejected-surfaced        2
+    partial                  1
+
+## 6. 이 대조군이 말하는 것
+
+  ★ ① 에이전트에게 '이슈 찾아봐' 라고 하면 **40% 가 유효하지 않았다.**
+       소유자의 진술 ③(자기확신에 빠져 초기 발견에 매몰)이 수로 확인된다.
+       그리고 **정반합이 그것을 걸러냈다** — `admissible` 은 ditto 가 이미
+       필드로 갖고 있던 것이다. 「발견 = 참」을 전제하지 않았다.
+
+  ★ ② 그러나 `outcome` 이 **전부 revise** 다. 한 번도 「그대로 통과」가 없었다.
+       **정반합도 음성을 못 냈다.** 소유자가 고른 가늠자 「음성이 가능해야 한다」에
+       정반합이 그대로는 미달한다. 40% 를 걸러내고도 **회차 수준의 판정은
+       늘 revise** 였다.
+
+  ★ ③ `category` 가 38 종, `disposition` 이 24 종으로 **발산**했다.
+       계기판 카테고리는 **enum 이어야 한다** — 자유서술이 섞이면 세지지 않는다.
+       선행 하네스의 실물이 이 교훈을 이미 갖고 있다.
+
