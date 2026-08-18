@@ -76,13 +76,28 @@ pub const PAYLOAD: &[Resource] = &[
         path: ".claude/agents/pal-independent-reviewer.md",
         body: include_str!("../../../../.claude/agents/pal-independent-reviewer.md"),
     },
-    // 정책 금지역 — **프로젝트가 소유한다.** 회차의 해악 게이트가 이것을 읽는다.
-    // 자산으로 두는 것은 **씨앗**이기 때문이다 — 사람이 고치는 것이 정상 사용이다.
+    // 계기판 — 규약 §5 「검증 → 수정 착수」 자리가 이것을 부른다.
+    // ★ **스킬과 함께 놓아야 한다.** 규약만 놓고 이것을 안 놓으면 설치본의 그 자리가
+    // **태어나면서 죽은 가지**가 된다(실측 2026-08-19 · 독립 리뷰 2 라운드가 잡았다).
     Resource {
-        path: ".claude/pal/policy.toml",
-        body: include_str!("../../assets/policy.toml"),
+        path: ".claude/skills/pal-round/bin/dashboard.py",
+        body: include_str!("../../../../.claude/skills/round/bin/dashboard.py"),
     },
 ];
+
+// ★ **정책 금지역 파일은 놓지 않는다.** (2026-08-19 · 독립 리뷰 2 라운드)
+//
+// 한 번 `assets/policy.toml` 을 씨앗으로 놓았다가 걷었다. 까닭이 둘이다 —
+//
+// ① **아무도 안 읽었다.** 놓기만 하고 규약이 그것을 가리키지 않아, 사용자가 고쳐도
+//    아무 판정도 안 바뀌었다. 소유자가 든 금지역 「측정이 죽은 가지가 됨」이다.
+// ② **읽게 만들면 `uninstall` 이 사용자의 편집을 지운다.** `파일_하나_걷기` 는
+//    `Origin` 을 안 보고 지우고, 그것이 옳다 — 게이트 ⑥ 이 `S2 == S0` 을 요구하고
+//    설치 전에 그 파일은 **없었다.** 우리가 소유한 자리에 **사람이 고치는 것이 정상인
+//    내용**을 두는 것 자체가 모순이다.
+//
+// **그래서 규약이 「있으면 읽는다」로 적는다.** 파일은 사용자가 만들고 우리는 안 만든다.
+// 없으면 규약의 기본 목록을 쓴다. 그러면 지울 것이 없고 죽은 가지도 안 생긴다.
 
 /// 매니페스트의 자리.
 pub const MANIFEST: &str = ".claude/pal/manifest.json";
@@ -128,6 +143,7 @@ pub const OWNED_FILES: &[&str] = &[
     ".claude/agents/pal-premortem-sweeper.md",
     ".claude/agents/pal-independent-reviewer.md",
     ".claude/skills/pal-round/SKILL.md",
+    ".claude/skills/pal-round/bin/dashboard.py",
 ];
 
 /// 우리가 만들 수 있는 디렉터리 — **만든 것만 매니페스트에 적히고, 제거는 그것만
@@ -142,6 +158,7 @@ pub const DIRS: &[&str] = &[
     // `pal-round` 는 우리 것이라 이름을 갈랐다.
     ".claude/skills",
     ".claude/skills/pal-round",
+    ".claude/skills/pal-round/bin",
 ];
 
 /// **매니페스트가 사는 집** — 나머지보다 먼저 세운다.
