@@ -57,6 +57,11 @@ const BY_EXTENSION: &[(&str, &str)] = &[
     // ⚠ `("rs", "Rust")` 가 여기 있었다. `Language::from_extension("rs")` 가
     // `Some(Rust)` 를 내면서 **도달 불가**가 됐다 — 위 주석이 *"이름을 여기 한 번 더
     // 적는 대신"* 이라 못 박은 그 규율에 스스로 걸린 것이다(#66 사전부검).
+    //
+    // ★ **지우면서 대문자 경로가 함께 떨어질 뻔했다**(독립 리뷰 R1). `BY_EXTENSION`
+    // 은 소문자화한 뒤 보는데 `Language::from_extension` 은 대소문자를 가린다 —
+    // 그래서 `.RS` 가 착수 전에는 `Known("Rust")` 였다가 미인식이 됐다.
+    // 아래 `recognize` 가 **소문자화한 확장자로** 언어를 물어 그 회귀를 없앤다.
     ("rb", "Ruby"),
     ("svelte", "Svelte"),
     ("vue", "Vue"),
@@ -128,10 +133,15 @@ pub fn recognize(
         };
     }
     // ① 확장자와 이름.
-    if let Some(l) = Language::from_extension(extension) {
+    //
+    // ★ **소문자화한 뒤 묻는다.** `BY_EXTENSION` 은 원래 소문자화해 봤는데
+    // `Language::from_extension` 은 대소문자를 가린다 — 그래서 `.RS`·`.KT` 같은
+    // 대문자 확장자가 **1급 목록에서만 떨어졌다**(독립 리뷰 R1 이 `.RS` 로 잡았다).
+    // 두 경로가 같은 자를 쓰지 않으면 그 갈림이 조용한 미인식이 된다.
+    let lower = extension.to_ascii_lowercase();
+    if let Some(l) = Language::from_extension(&lower) {
         return Recognition::FirstClass(l);
     }
-    let lower = extension.to_ascii_lowercase();
     if let Some((_, name)) = BY_EXTENSION.iter().find(|(e, _)| *e == lower) {
         return Recognition::Known(LanguageId::new(*name));
     }

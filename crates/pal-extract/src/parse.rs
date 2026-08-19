@@ -634,10 +634,20 @@ fn doc_주석인가(node: Node<'_>) -> bool {
 /// ⚠ **`doc_comment` 자식이 있는 것끼리만 접는다.** 공용 수집기에 무조건 접기를
 /// 넣으면 TypeScript 의 `//` 연속이 함께 접혀 **단위시험이 빨개지고 ditto 표식이
 /// 330 → 327 로 준다**(사전부검 R2 실측) — 등록된 금지역 「두 언어 회귀」다.
-fn 이어지는_doc<'t>(first: Node<'t>, source: &[u8]) -> Node<'t> {
+///
+/// ⚠ **빈 줄 판정에 [`사이에_빈_줄`] 을 쓰면 안 된다.** tree-sitter 의
+/// `line_comment` 는 **끝의 줄바꿈을 마디 안에 담는다** — 그러면 `end_byte` 와
+/// 다음 마디의 `start_byte` 사이에 `\n` 이 **하나만** 남아 빈 줄이 안 잡힌다.
+/// (실측: `/// A` · 빈 줄 · `/// B` 가 한 조각으로 접혔다.)
+/// **줄 번호로 본다** — `line_comment` 는 한 줄짜리라 시작 행이 정확한 자다.
+fn 이어지는_doc<'t>(first: Node<'t>, _source: &[u8]) -> Node<'t> {
     let mut last = first;
     while let Some(next) = last.next_named_sibling() {
-        if !doc_주석인가(next) || 사이에_빈_줄(source, last.end_byte(), next.start_byte()) {
+        if !doc_주석인가(next) {
+            break;
+        }
+        // **바로 다음 줄이어야 한다.** 한 줄이라도 건너뛰면 다른 블록이다.
+        if next.start_position().row != last.start_position().row + 1 {
             break;
         }
         last = next;
@@ -825,6 +835,50 @@ mod marked_comment_tests {
         // **처분 (나)는 언어 공통이다** — `다음_선언` 하나가 두 언어를 다 지난다.
         let src = "// ADR-0007 파일 머리 주석\n\nclass C(val a: Int)\n";
         assert_eq!(kt(src)[0].attaches_to_byte, None, "코틀린 파일 머리 주석이 붙었다");
+    }
+
+    /// Rust 판 — `ts`·`kt` 와 같은 자리다. **레지스트리를 그대로 탄다.**
+    fn rs(src: &str) -> Vec<MarkedComment> {
+        crate::RustExtractor.marked_comments(src.as_bytes(), &표식).expect("파싱")
+    }
+
+    #[test]
+    fn 속성을_건너뛰고_선언에_붙는다() {
+        // ★ **이 회차의 음성 대조 ②가 걸린 자리다.** 안 건너뛰면 주석이
+        // `attribute_item` 에 붙어 좌표를 못 얻는다 — 자기 저장소에서 49 건이
+        // 그 형태였다(#66).
+        let src = "// @decision: 하나\n#[must_use]\n#[inline]\nfn f() {}";
+        let c = rs(src);
+        assert_eq!(c.len(), 1);
+        let at = c[0].attaches_to_byte.expect("좌표를 못 얻었다");
+        assert_eq!(&src[at..][..2], "fn", "속성에 붙었다");
+    }
+
+    #[test]
+    fn doc_주석_연속은_한_조각이다() {
+        // ★ **음성 대조 ③이 걸린 자리다.** tree-sitter-rust 는 `///` 를 줄마다
+        // 별개 `line_comment` 로 낸다 — 안 접으면 ADR 하나가 조각 셋이 되고
+        // 같은 뜻의 결박이 세 번 선다.
+        let c = rs("/// @decision: 첫 줄\n/// 이어지는 줄\n/// 셋째 줄\nfn f() {}");
+        assert_eq!(c.len(), 1, "접히지 않았다");
+        assert!(c[0].text.contains("셋째 줄"), "마지막 줄이 조각에 안 들어왔다");
+        assert!(c[0].attaches_to_byte.is_some(), "접은 뒤 좌표를 잃었다");
+    }
+
+    #[test]
+    fn 빈_줄이_doc_접기를_끊는다() {
+        // 접기가 빈 줄을 넘으면 서로 다른 선언의 주석이 한 조각이 된다.
+        let c = rs("/// @decision: 앞\n\n/// @decision: 뒤\nfn f() {}");
+        assert_eq!(c.len(), 2, "빈 줄을 넘어 접혔다");
+    }
+
+    #[test]
+    fn 접기가_다른_두_언어에_안_닿는다() {
+        // ★ **등록된 금지역 「기존 두 언어 회귀」의 단위 시험이다.**
+        // `doc_comment` 자식은 tree-sitter-rust 고유 마디라 TS·Kotlin 의 연속
+        // 주석은 접히면 안 된다 — 접히면 ditto 표식이 330 에서 준다.
+        let c = ts("// @decision: 첫 줄\n// @decision: 둘째 줄\nexport class C {}");
+        assert_eq!(c.len(), 2, "TypeScript 주석이 접혔다");
     }
 
     #[test]

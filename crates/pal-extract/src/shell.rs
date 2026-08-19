@@ -216,7 +216,7 @@ mod tests {
     }
 
     #[test]
-    fn 능력_축은_결정적이고_네_언어를_전부_적는다() {
+    fn 능력_축은_결정적이고_모든_1급_언어를_적는다() {
         assert_eq!(capability_axis(), capability_axis());
         for language in FIRST_CLASS {
             assert!(capability_axis().contains(language.name()), "{} 이 축에 없다", language.name());

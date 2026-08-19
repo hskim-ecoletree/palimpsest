@@ -5,22 +5,24 @@
 
 ## 지금 어느 단계인가
 
-**§2 사전부검** — 라운드 3/3 진행 중 (상한).
+**§7 독립 리뷰** — 라운드 1/5 처분 완료, 라운드 2 대기.
 
-- ✔ §1 인터뷰 — **4 라운드 상한 소진.** 범주 다섯이 전부 열렸다
-- ⏳ §2 사전부검 — 상한 3 · 라운드 1(20+9) · 라운드 2(16+9) 처분 완료
-- ☐ §3 완수 조건 잠금
-- ☐ §4 승인
-- ☐ §5 루프
+- ✔ §1 인터뷰 — **4 라운드 상한 소진**
+- ✔ §2 사전부검 — **3 라운드 상한 소진** (20+9 · 16+9 · 12+10 = 76 건)
+- ✔ §3 완수 조건 44 잠금
+- ✔ §4 승인
+- ⏳ §5 루프 — 추출기·오라클·게이트·ADR·이슈 다섯이 섰다
+- ☐ §8 효과 — 넷 붙였다(ledger 전후 · narrative · 질의 둘 · ADR 결박)
+- ☐ §10 종료 보고
+- ☐ §11-6 push · CI
 
 ## 착수 좌표
 
 | | |
 |---|---|
 | 착수 커밋 | `56926aa` |
-| 이슈 | [#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) |
-| 회차 슬러그 | `2026-08-20-rust-extractor` |
-| §11③ 선택 | **(나)** — 장치를 만들고 그에 대한 발견은 분할 |
+| 이슈 | [#66] · 분할 [#77]~[#81] |
+| §11③ 선택 | **(나)** |
 
 ## 상한
 
@@ -28,47 +30,49 @@
 |---|--:|--:|
 | 인터뷰 | 4 | **4 소진** |
 | 사전부검 | 3 | **3 소진** |
-| 독립 리뷰 | 5 | — |
+| 독립 리뷰 | 5 | **1** |
 
-## 인터뷰가 정한 것 열하나
+## 이 회차가 세운 것
 
-1. Rust 는 **다섯째 1급 언어** (소유자 지시 2026-08-12 §1 「넷이 전부」를 정정)
-2. 추출 깊이 **TypeScript 급** — 순회·컨테이너 체인·스코프
-3. `#[cfg(test)]` 를 **안 거른다** — 추출기는 `cfg` 를 해석하지 않는다 (라운드 4 번복)
-4. 외부 코퍼스 **`rust-lang/cargo`** @ 고정 SHA
-5. 오라클 — **손 표본이 정본**(코드보다 먼저 커밋) · **기계 대조군이 음성 대조**
-6. 판정 모집단 **셋** — 자기 저장소(결박) · cargo(정확도) · 기존 세 언어(회귀)
-7. 종료 — `ledger` 가 Rust L1+ · 결박이 섬 · **자기 저장소가 피드백을 냄**
-8. 금지역 — 기본 다섯 + 「기존 세 언어 회귀」 + 「손 표본을 추출 결과에 맞춰 고침」
-9. 효과 — `ledger` 전후 · `narrative` 결박 목록 · 실제 질의 · **이 회차의 ADR 결박**
-10. 상한 — 위 표
-11. 병렬 세션 **없다** — 이 세션이 유일하다
+- `crates/pal-extract/src/rust.rs` — 중첩 순회 · L1 · 시험 11
+- `parse.rs` — `attribute_item` 건너뛰기 · `doc_comment` 접기 · 시험 5
+- `Language::Rust` · `SymbolKind` 일곱 · `FIRST_CLASS` 다섯
+- `corpus/tasks/rust-recall-sample.tsv` — 손 표본 13 파일 · 268 선언
+- `corpus/criteria.toml` `[rust]` · `docs/gates/rust-extractor.md`
+- `docs/adr/0027-…` · `docs/instructions/2026-08-20-owner-direction.md`
+- `scripts/rust-recall-verify.py` · `scripts/syn-oracle/`(음성 대조군)
+- `crates/pal-extract/examples/count_marked.rs`
 
-## 착수 시점 RED (관측됨)
+## 지금까지의 수
 
-```
-파일 458 · parsed 1 · unsupported 413
-Rust        L0 결박 불가  117 파일   ← 표적
-TypeScript  L2 identity: exact  1 파일   ← 지금 서 있는 전부
-```
+| | |
+|---|--:|
+| `pal ledger` `parsed` | 1 → **120** |
+| Rust | `L0` → **`L1` · 119 파일** |
+| `pal narrative` 결박됨 | 0 → **46** |
+| 손 표본 재현율 / 정밀도 | **94.40% / 94.40%** |
+| 발견 레코드 | **113 행** |
 
-`.rs` 의 ADR 표식 doc 주석 99건 — 최상위 74 · `impl`/`mod` 안 **25**.
-`macro_rules!` 1 · `#[cfg(` 115 · `#[cfg(test)] mod tests` 110.
+## 실패한 접근 — 다음 컨텍스트가 같은 벽에 안 부딪히도록
 
-## 실패한 접근
-
-- **「합계를 읽으며 센다」 — 두 번 다 틀렸다.** 라운드 1 을 19 로, 라운드 2 를 17 로
-  세었고 파일은 20 · 16 이었다. **세는 자리는 `grep -c "^### "` 이다.**
-- **라운드 1 의 처방 셋이 라운드 2 에서 더 작은 것으로 바뀌었다** —
-  ① 「`is_leading_separator` 에 조건을 단다」 → **삭제**(ditto 496 파일에서 참 0 건)
-  ② 「`;` 에 언어 축」 → **`token_repetition_pattern` 노드 하나**(실물 충돌 0~1 건)
-  ③ 「인접 `line_comment` 접기」 → **`doc_comment` 자식이 있는 것만**(공용 접기는
-  TS 단위시험을 깨고 ditto 표식을 330→327 로 줄인다)
-- **라운드 1 이 「L1 이 `&self` 위험을 회피한다」고 했으나 거짓이다** — `normalize` 와
-  `normalize_erasing` 이 둘 다 `normalize_into` 를 타므로 등급과 무관하다.
-- **계획 2 판이 문법 핀 SHA 를 틀리게 적었다** — `4f31efe` 는 v0.5.2 의 태그 객체.
-  v0.24.2 는 `77a3747`. 사전 등록 문서에 들어갈 뻔했다.
+- **「합계를 읽으며 센다」 — 세 번 다 틀렸다.** 라운드 1 을 19(→20), 라운드 2 를
+  17(→16) 로 세었다. **세는 자리는 `grep -c "^### "` 이다.**
+- **`rc` 를 판정으로 읽으면 안 된다.** `cargo xtask check` 가 죽은 링크로 실패했는데
+  exit code 는 0 이었다. 독립 리뷰어도 같은 자리에서 물렸다(`timeout` 미설치).
+- **`f10-6-verify.py` 를 돌리면 손 표본의 `판정`·`근거` 열이 지워진다.** `--bless`
+  조차 필요 없다. 되돌렸고 [#81] 로 분할했다.
+- **`f01-verify.py --repo` 에 `~/dev/projects/boxwood` 를 주면 SHA 를 못 찾는다.**
+  `boxwood/portal-backend` 를 줘야 한다(8 저장소 워크스페이스다).
+- **`사이에_빈_줄` 로 doc 접기의 경계를 판정하면 틀린다.** `line_comment` 가 끝의
+  줄바꿈을 마디에 담아 `\n` 이 하나만 남는다 — **줄 번호로 봐야 한다.**
+- **순회 중에 `impl` 대상을 찾으면 선언 순서에 매인다.** 파일 전체를 본 뒤
+  해소해야 한다(독립 리뷰 R1 이 격리 파일로 잡았다).
 
 ## 능력 부재 — 이 회차가 겪은 것
 
-- **표식 위치를 `grep` 으로 셌다.** 그래프가 Rust 를 못 읽어서다 — 그것이 이 회차의 이유다
+- **표식 위치를 `grep` 으로 셌다**(착수 시점). 그래프가 Rust 를 못 읽어서였고,
+  **이 회차가 그것을 고쳤다** — 지금은 `pal query symbol.contains` 가 답한다.
+
+[#66]: https://github.com/hskim-ecoletree/palimpsest/issues/66
+[#77]: https://github.com/hskim-ecoletree/palimpsest/issues/77
+[#81]: https://github.com/hskim-ecoletree/palimpsest/issues/81

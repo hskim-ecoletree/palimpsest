@@ -111,11 +111,54 @@ struct 후보<'t> {
 struct 순회<'t> {
     symbols: Vec<후보<'t>>,
     contains: Vec<Containment>,
+    /// `impl` 안의 심볼들 — **순회가 끝난 뒤에** 대상 타입에 붙인다.
+    ///
+    /// ⚠ **앞 판은 순회 중에 붙였고, 그래서 선언 순서에 의존했다.**
+    /// `self.symbols.iter().position(…)` 은 **이미 순회한 것만** 보므로
+    /// `impl Foo { … }` 가 `struct Foo;` 보다 **위에 있으면** 같은 파일에 있어도
+    /// 컨테이너가 안 붙었다 — 구조체를 impl 위로 옮기기만 해도 그래프가 조용히
+    /// 바뀌는 형태다(독립 리뷰 R1 이 격리 파일로 잡았다).
+    ///
+    /// 열: (대상 타입 이름, `impl` 을 감싼 부모, 그 안에서 나온 심볼들)
+    미해소_impl: Vec<(String, Option<LocalIx>, Vec<LocalIx>)>,
 }
 
 impl<'t> 순회<'t> {
     fn new() -> Self {
-        Self { symbols: Vec::new(), contains: Vec::new() }
+        Self { symbols: Vec::new(), contains: Vec::new(), 미해소_impl: Vec::new() }
+    }
+
+    /// 순회가 끝난 뒤 `impl` 을 대상 타입에 붙인다 — **파일 전체를 본 뒤**라 순서에
+    /// 안 매인다.
+    ///
+    /// 대상 타입이 **이 파일에 없으면**(외부 타입 `impl` — Rust 의 관용) 아무것도
+    /// 안 붙인다. `Containment` 는 `LocalIx` 쌍이라 심볼이 있어야 걸 수 있고,
+    /// 없는 것을 심볼로 만들면 손 표본 규칙 ①을 뒤집는 일이다. **그 잔여는 #78 이 진다.**
+    fn impl_을_해소한다(&mut self) {
+        for (대상, 감싼_부모, 자식들) in std::mem::take(&mut self.미해소_impl) {
+            // **컨테이너 후보는 「담을 수 있는 종류」만이다.** 같은 이름의 함수가
+            // 있어도 그것은 `impl` 의 대상이 아니다.
+            let 부모 = self.symbols.iter().position(|s| {
+                s.name == 대상
+                    && matches!(
+                        s.kind,
+                        SymbolKind::Struct
+                            | SymbolKind::Enum
+                            | SymbolKind::Trait
+                            | SymbolKind::Union
+                            | SymbolKind::TypeAlias
+                    )
+            });
+            let Some(ix) = 부모.map(|i| LocalIx(u32::try_from(i).unwrap_or(u32::MAX))) else {
+                // 못 찾았다 — 외부 타입이다. `impl` 을 감싼 부모가 있으면 그것에 붙인다
+                // (`mod m { impl 외부타입 { fn f } }` 의 `f` 는 적어도 `m` 안이다).
+                if let Some(p) = 감싼_부모 {
+                    self.contains.extend(자식들.into_iter().map(|c| Containment { parent: p, child: c }));
+                }
+                continue;
+            };
+            self.contains.extend(자식들.into_iter().map(|c| Containment { parent: ix, child: c }));
+        }
     }
 
     /// 마디 하나와 그 자식들.
@@ -148,16 +191,24 @@ impl<'t> 순회<'t> {
 
             // ── 심볼은 아니지만 안에 선언이 있을 수 있다 ──────────────
             if 내려간다.contains(&kind) {
-                // `impl_item` 은 **부모를 갈아 끼운다** — 대상 타입이 컨테이너다.
-                let 다음_부모 = if kind == "impl_item" {
-                    impl_대상(child, source)
-                        .and_then(|t| self.symbols.iter().position(|s| s.name == t))
+                if kind == "impl_item" {
+                    // ★ **여기서 해소하지 않는다.** 대상 타입이 파일 뒤쪽에 있을 수
+                    // 있고, 순회 중에 찾으면 **선언 순서에 매인다.**
+                    let 앞 = self.symbols.len();
+                    self.walk(child, source, None);
+                    let 자식들: Vec<LocalIx> = (앞..self.symbols.len())
                         .map(|i| LocalIx(u32::try_from(i).unwrap_or(u32::MAX)))
-                        .or(parent)
-                } else {
-                    parent
-                };
-                self.walk(child, source, 다음_부모);
+                        .collect();
+                    if let Some(대상) = impl_대상(child, source) {
+                        self.미해소_impl.push((대상, parent, 자식들));
+                    } else if let Some(p) = parent {
+                        // 대상 타입이 이름을 안 갖는다(튜플·배열·함수 포인터).
+                        self.contains
+                            .extend(자식들.into_iter().map(|c| Containment { parent: p, child: c }));
+                    }
+                    continue;
+                }
+                self.walk(child, source, parent);
             }
         }
     }
@@ -215,6 +266,7 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
 
     let mut walk = 순회::new();
     walk.walk(tree.root_node(), source, None);
+    walk.impl_을_해소한다();
 
     let symbols: Vec<Symbol> = walk
         .symbols
@@ -339,6 +391,34 @@ mod tests {
         let names: Vec<String> = s.into_iter().map(|(n, _)| n).collect();
         assert!(names.contains(&"기본".to_owned()), "기본 구현이 빠졌다");
         assert!(!names.contains(&"시그니처".to_owned()), "본문 없는 시그니처를 셌다");
+    }
+
+    #[test]
+    fn impl_이_타입보다_앞에_있어도_붙는다() {
+        // ★ **독립 리뷰 R1 이 격리 파일로 잡은 자리다.** 앞 판은 순회 중에 대상을
+        // 찾아서 `impl Foo` 가 `struct Foo` 보다 위에 있으면 컨테이너가 안 붙었다 —
+        // **구조체를 impl 위로 옮기기만 해도 그래프가 조용히 바뀌었다.**
+        let 앞 = extract_detailed(b"impl Foo { fn early() {} }\nstruct Foo;").unwrap();
+        let 뒤 = extract_detailed(b"struct Foo;\nimpl Foo { fn late() {} }").unwrap();
+        assert_eq!(앞.contains.len(), 1, "impl 이 앞에 있을 때 안 붙었다");
+        assert_eq!(뒤.contains.len(), 1, "impl 이 뒤에 있을 때 안 붙었다");
+    }
+
+    #[test]
+    fn 외부_타입_impl_은_안_붙는다() {
+        // 대상이 이 파일에 없으면 `Containment` 를 만들 수 없다 — 심볼이 있어야
+        // 걸 수 있고, 없는 것을 심볼로 만들면 손 표본 규칙 ①을 뒤집는다. 잔여는 #78.
+        let g = extract_detailed(b"impl std::fmt::Display for u8 { fn fmt() {} }").unwrap();
+        assert_eq!(g.symbols.len(), 1);
+        assert_eq!(g.contains.len(), 0, "외부 타입에 억지로 붙였다");
+    }
+
+    #[test]
+    fn 같은_이름의_함수는_impl_대상이_아니다() {
+        // 컨테이너 후보는 「담을 수 있는 종류」만이다.
+        let g = extract_detailed(b"fn Foo() {}\nstruct Foo;\nimpl Foo { fn m() {} }").unwrap();
+        let 부모 = g.contains.first().map(|c| g.symbols[c.parent.0 as usize].kind);
+        assert_eq!(부모, Some(SymbolKind::Struct), "함수에 붙었다");
     }
 
     #[test]

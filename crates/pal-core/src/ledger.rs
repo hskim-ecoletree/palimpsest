@@ -17,9 +17,9 @@ use serde::{Deserialize, Serialize};
 use crate::manifest::ScopeSource;
 use crate::repo::{ObjectName, RepoPath, Snapshot, TreeRef};
 
-/// 언어의 이름. **추출 대상 넷보다 넓다.**
+/// 언어의 이름. **추출 대상 다섯보다 넓다.**
 ///
-/// [`crate::Language`] 는 *"이 빌드가 추출할 수 있는가"* 를 묻는 닫힌 넷이고, 이것은
+/// [`crate::Language`] 는 *"이 빌드가 추출할 수 있는가"* 를 묻는 닫힌 다섯이고, 이것은
 /// *"이 파일이 무슨 언어인가"* 를 묻는 열린 이름이다. 대장은 후자가 필요하다 —
 /// 추출기가 없는 언어도 **인식됐다는 사실**이 산출되어야 하기 때문이다.
 ///

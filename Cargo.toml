@@ -1,5 +1,8 @@
 [workspace]
 resolver = "3"
+# **판정 도구는 멤버가 아니다.** `scripts/syn-oracle` 은 손 표본의 음성 대조군이고
+# `syn` 에 의존한다 — 제품의 의존이 아니므로 `deny.toml` 의 모집단에 안 들어간다.
+exclude = ["scripts/syn-oracle"]
 members = [
     "crates/pal-core",
     "crates/pal-extract",

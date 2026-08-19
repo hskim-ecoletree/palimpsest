@@ -25,6 +25,11 @@
 # 코퍼스  rust-lang/cargo @ 514c56dd7321eecbfdcf9b6479519cf4edfab906
 #         **팁을 쓰면 안 된다** — 코퍼스는 팁이 아니라 이 SHA 다.
 #
+# ★ **자기 저장소 기준 SHA 는 `56926aa` 다**(회차 E 착수 커밋). 이 표본은 cargo 만
+#   담지만, 같은 회차의 결박 측정이 **자기 저장소**에서 나오고 그쪽 파일들은
+#   회차가 직접 고친다. 두 수가 판정 표에 나란히 놓이면 **다른 트리**에서 잰
+#   것이므로 그 사실을 여기에도 적는다(앞 판은 `criteria.toml` 에만 있었다).
+#
 # 모집단  `git ls-tree -r --name-only <sha> | grep '\.rs$' | grep -v '^tests/testsuite/'`
 #         → **380**
 #         · 전체 `.rs` 는 1,372 이고 그중 **992 가 `tests/testsuite/`** 다.

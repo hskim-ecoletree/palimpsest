@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""손 표본과 추출기 산출을 **집합으로** 댄다 — `[rust.pass]` ①②.
+"""손 표본과 추출기 산출을 **다중집합으로** 댄다 — `[rust.pass]` ①②.
+
+⚠ **집합이 아니라 다중집합이다.** 앞 판은 `set` 을 써서 열쇠가 겹치는 행을 삼켰다 —
+산출 268 행을 266 으로 보고했고, 삼켜진 둘이 하필 **R-16(좌표 충돌)이 사는 축**이라
+오라클이 자기가 재야 할 축에 눈이 멀어 있었다(독립 리뷰 R1).
 
     python3 scripts/rust-recall-verify.py --repo ~/dev/projects/cargo [--bin target/release/pal]
 
@@ -11,7 +15,7 @@
 그것이 이 회차가 등록한 금지역이다(`intent.md` §금지역).
 """
 
-import argparse, json, subprocess, sys
+import argparse, collections, json, subprocess, sys
 from pathlib import Path
 
 for _s in (sys.stdin, sys.stdout, sys.stderr):
@@ -31,8 +35,8 @@ def 핀_읽기() -> str:
 
 
 def 손표본():
-    """(path, container, name, kind) 집합 + 파일 목록."""
-    keys, files = set(), []
+    """(path, container, name, kind) **다중집합** + 파일 목록."""
+    keys, files = collections.Counter(), []
     for line in 표본.read_text(encoding="utf-8").splitlines():
         if line.startswith("#") or line.startswith("path\t") or not line.strip():
             continue
@@ -41,7 +45,7 @@ def 손표본():
             files.append(p)
         if kind == "none":
             continue
-        keys.add((p, container, name, kind))
+        keys[(p, container, name, kind)] += 1
     return keys, files
 
 
@@ -68,7 +72,7 @@ KIND = {
 
 
 def 산출(binary: Path, repo: Path, files, at: str):
-    keys = set()
+    keys = collections.Counter()
     for rel in files:
         blob = subprocess.run(
             ["git", "-C", str(repo), "show", f"{at}:{rel}"],
@@ -86,7 +90,38 @@ def 산출(binary: Path, repo: Path, files, at: str):
         g = json.loads(out)
         memo = {}
         for i, s in enumerate(g["symbols"]):
-            keys.add((rel, 체인(g, i, memo), s["name"], KIND.get(s["kind"], s["kind"])))
+            keys[(rel, 체인(g, i, memo), s["name"], KIND.get(s["kind"], s["kind"]))] += 1
+    return keys
+
+
+def syn_대조(repo: Path, files, at: str):
+    """**음성 대조군** — 다른 파서로 같은 규칙을 적용한다.
+
+    손 표본이 고장이면 여기서 드러난다. 둘이 갈리면 **표본을 고치는 것이 아니라
+    갈렸다는 사실을 게이트에 적는다.**
+    """
+    import tempfile
+    oracle = ROOT / "scripts/syn-oracle"
+    tmp = Path(tempfile.mkdtemp(prefix="_syn_"))
+    mapping = {}
+    for i, rel in enumerate(files):
+        blob = subprocess.run(["git", "-C", str(repo), "show", f"{at}:{rel}"],
+                              capture_output=True, check=True).stdout
+        f = tmp / f"{i:02d}.rs"; f.write_bytes(blob); mapping[str(f)] = rel
+    out = subprocess.run(
+        ["cargo", "run", "-q", "--release", "--manifest-path", str(oracle / "Cargo.toml"),
+         "--", *mapping],
+        capture_output=True, text=True, encoding="utf-8",
+    )
+    keys = collections.Counter()
+    for line in out.stdout.splitlines():
+        if not line.strip():
+            continue
+        f, c, n, k = line.split("\t")
+        keys[(mapping[f], c, n, k)] += 1
+    for f in mapping:
+        Path(f).unlink(missing_ok=True)
+    tmp.rmdir()
     return keys
 
 
@@ -94,24 +129,39 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", type=Path, required=True, help="cargo 코퍼스 (읽기만 한다)")
     ap.add_argument("--bin", type=Path, default=ROOT / "target/release/pal")
+    ap.add_argument("--syn", action="store_true",
+                    help="음성 대조군도 돌린다 — 손 표본이 고장이면 여기서 드러난다")
     a = ap.parse_args()
 
     at = 핀_읽기()
     손, files = 손표본()
     기계 = 산출(a.bin, a.repo, files, at)
 
-    빠뜨림 = sorted(손 - 기계)
-    과잉 = sorted(기계 - 손)
+    if a.syn:
+        syn = syn_대조(a.repo, files, at)
+        손_only = sorted((손 - syn).elements()); syn_only = sorted((syn - 손).elements())
+        print("── 음성 대조 (syn) ──")
+        print(f"  손 표본 {sum(손.values())} · syn {sum(syn.values())}")
+        print(f"  손에만 {len(손_only)} · syn 에만 {len(syn_only)}")
+        for t, xs in (("손에만", 손_only), ("syn 에만", syn_only)):
+            for k in xs[:10]:
+                print(f"    {t}\t" + "\t".join(k))
+        print()
+
+    # **다중집합 뺄셈** — 겹치는 열쇠가 상쇄돼 사라지지 않는다.
+    빠뜨림 = sorted((손 - 기계).elements())
+    과잉 = sorted((기계 - 손).elements())
 
     print(f"코퍼스   cargo @ {at}")
-    print(f"표본     파일 {len(files)} · 손 표본 선언 {len(손)}")
-    print(f"산출     선언 {len(기계)}")
+    print(f"표본     파일 {len(files)} · 손 표본 선언 {sum(손.values())} (열쇠 {len(손)})")
+    print(f"산출     선언 {sum(기계.values())} (열쇠 {len(기계)})")
     print(f"① 빠뜨린 것  {len(빠뜨림)}")
     print(f"② 잘못 잡은 것 {len(과잉)}")
-    if 손:
-        print(f"재현율   {(len(손) - len(빠뜨림)) / len(손) * 100:.2f}%")
-    if 기계:
-        print(f"정밀도   {(len(기계) - len(과잉)) / len(기계) * 100:.2f}%")
+    n손, n기계 = sum(손.values()), sum(기계.values())
+    if n손:
+        print(f"재현율   {(n손 - len(빠뜨림)) / n손 * 100:.2f}%")
+    if n기계:
+        print(f"정밀도   {(n기계 - len(과잉)) / n기계 * 100:.2f}%")
 
     for 이름, 목록 in (("빠뜨린 것", 빠뜨림), ("잘못 잡은 것", 과잉)):
         if not 목록:
