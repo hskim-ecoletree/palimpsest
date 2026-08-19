@@ -88,7 +88,8 @@ def 첫경로(s):
         return "(경로 없음)", None
     for m in re.finditer(r"`?([^\s`,·{}]+\.(?:jsonl|json|rs|py|md|toml|tsv|txt|yml|ts))(?::(\d+))?", s):
         경로 = m.group(1)
-        if "*" in 경로 or "<" in 경로 or "{" in 경로 or "}" in 경로:
+        #  같은 **축약 표기**도 경로가 아니다 (실측: 새 검사가 잡았다)
+        if any(x in 경로 for x in ("*", "<", "{", "}", "...")):
             continue
         # 절대 경로는 기계 고유라 상대로 깎는다 — 다른 기계에서 안 맞는다.
         경로 = re.sub(r"^.*/palimpsest/", "", 경로)

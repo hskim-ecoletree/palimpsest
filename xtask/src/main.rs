@@ -3105,7 +3105,7 @@ fn 아래_전부_확장자들(dir: &Path, exts: &[&str], out: &mut Vec<PathBuf>)
 ///
 /// | 출처 | 규칙 |
 /// |---|---|
-/// | 사전부검 | `^### ` 항 + `## 내가 기각한 것` 아래 최상위 불릿 |
+/// | 사전부검 | `^### ` 항 + `## 내가 기각한 것` 아래 최상위 항 (**불릿이든 표든**) |
 /// | 독립리뷰 | **`| # |` 헤더를 가진 표**의 데이터 행 |
 ///
 /// ⚠ 리뷰어의 `## 합격선 축` 표는 `| 조건 |` 로 시작하므로 **안 걸린다** — 그것은
@@ -3192,6 +3192,32 @@ fn check_round_records(root: &Path) -> Result<String> {
 
     let mut problems = Vec::new();
 
+    // 스키마 원천에 먼저 물어본다 — `종류` 목록도 거기 산다.
+    let 파이썬 = 파이썬_실행자()?;
+    let 원천 = root.join(스키마_원천);
+    if !원천.exists() {
+        bail!("스키마 원천이 없다: {스키마_원천}");
+    }
+    let 스키마_출력 = std::process::Command::new(파이썬)
+        .arg(&원천)
+        .arg("--schema")
+        .output()
+        .with_context(|| format!("`{파이썬} {스키마_원천} --schema` 를 못 돌렸다"))?;
+    if !스키마_출력.status.success() {
+        bail!(
+            "`{스키마_원천} --schema` 가 실패했다:\n{}",
+            String::from_utf8_lossy(&스키마_출력.stderr)
+        );
+    }
+    let 스키마: serde_json::Value =
+        serde_json::from_slice(&스키마_출력.stdout).context("`--schema` 출력이 JSON 이 아니다")?;
+    let 종류_목록: Vec<String> = 스키마["종류"]
+        .as_array()
+        .context("`--schema` 에 `종류` 가 없다 — 가르는 축은 스스로 선언돼야 한다")?
+        .iter()
+        .filter_map(|v| v.as_str().map(str::to_owned))
+        .collect();
+
     // ① 각 파일이 **자기 스키마를 선언**하는가.
     for p in &산출 {
         let 상대 = 상대_경로(root, p);
@@ -3207,13 +3233,13 @@ fn check_round_records(root: &Path) -> Result<String> {
                 //   앞 판은 `findings.jsonl` 이라는 **이름**만 행 검증을 받았고, 다른
                 //   `.jsonl` 은 머리 줄만 보고 통과하면서 `산출 N개` 에는 세어져
                 //   **「쟀다」로 보였다.** 이름이 아니라 선언이 갈라야 한다.
-                let 종류_ok = ["\"종류\": \"레코드\"", "\"종류\": \"예외표\""]
-                    .iter()
-                    .any(|k| 첫줄.contains(k));
+                // ★ **`종류` 목록도 원천에 물어본다.** (정정 2026-08-19 · 독립 리뷰 5 라운드)
+                //   앞 판은 여기에 `레코드`·`예외표` 를 **다시 적었고**, 그것이
+                //   *"스키마의 유일한 자리"* 라는 C2-b 의 문장을 깨뜨렸다.
+                let 종류_ok = 종류_목록.iter().any(|k| 첫줄.contains(&format!("\"종류\": \"{k}\"")));
                 if 첫줄.contains("\"종류\"") && !종류_ok {
                     problems.push(format!(
-                        "{상대}: 머리 줄의 `종류` 가 `레코드`·`예외표` 밖이다 — \
-                         가르는 축은 스스로 선언돼야 한다"
+                        "{상대}: 머리 줄의 `종류` 가 원천이 선언한 {종류_목록:?} 밖이다"
                     ));
                 }
                 if !첫줄.contains("\"종류\"") {
@@ -3258,11 +3284,6 @@ fn check_round_records(root: &Path) -> Result<String> {
     //
     // ★ **역할을 가른다** — 한 줄 안의 정합은 `record.py check` 가, **파일 사이**의 정합
     // (모집단 · 좌표 해소 · 합계 검산 · tsv 열)은 여기가 잰다. 두 벌이 아니라 위임이다.
-    let 파이썬 = 파이썬_실행자()?;
-    let 원천 = root.join(스키마_원천);
-    if !원천.exists() {
-        bail!("스키마 원천이 없다: {스키마_원천}");
-    }
     // 이름이 아니라 **머리 줄의 선언**으로 고른다.
     let mut 레코드들: Vec<&PathBuf> = Vec::new();
     for p in &산출 {
