@@ -22,6 +22,18 @@
 """
 import subprocess, sys, re, collections, os
 
+# ★ **출력 인코딩을 못 박는다.** 이 스크립트의 출력은 전부 한국어이고, Windows 의
+# 파이썬은 **비-tty stdout 에 로케일 인코딩(보통 cp1252)** 을 쓴다. 그러면 파이프로
+# 받는 순간 `UnicodeEncodeError` 로 죽는다 — `xtask` 의 회차 레코드 검사와 설치본
+# 시험이 정확히 그렇게 부른다(독립 리뷰 2026-08-19 · `PYTHONIOENCODING=cp1252` 로 재현).
+# 옛 ADR-0023: 고를 축은 「볼 수 있는 쪽」이 아니라 **양쪽이 할 수 있는 것**이다.
+for _스트림 in (sys.stdout, sys.stderr):
+    try:
+        _스트림.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
+
 자기_접두 = ('.palimpsest/', 'docs/gates/', '.claude/', 'xtask/', 'scripts/')
 
 def sh(c):
@@ -202,11 +214,21 @@ def 발견칸(의도파일, 라운드셋):
     if 유효.get('추정'):
         print(f"                  추정 {유효['추정']} 은 분모에서 뺐다 — 아직 안 갈렸다")
 
-    # **라운드를 커밋 태그와 댄다** — 원천이 둘이라 대는 장치가 필요하다.
-    레코드라운드 = {o.get('라운드') for o in 행 if o.get('라운드') is not None}
-    if 라운드셋 and 레코드라운드 and 레코드라운드 != 라운드셋:
-        print(f"                  ⚠ 라운드가 어긋난다 — 커밋 태그 {sorted(라운드셋)} ↔ "
-              f"레코드 {sorted(레코드라운드)}")
+    # ★ **라운드는 출처 안에서의 셈이다.** (정정 2026-08-19 · 독립 리뷰가 잡았다)
+    #   앞 판은 레코드의 `라운드` 를 커밋 태그 `[R<n>]` 과 **댔는데 전제가 틀렸다** —
+    #   사전부검 R1~R3 · 독립 리뷰 R1~R5 · 커밋 R1~R7 은 **서로 다른 셈**이다.
+    #   사전부검 R1 이 커밋 R1 과 우연히 겹쳐서 그 틀림이 안 보였다.
+    #   그러니 대지 않고 **출처별로 그대로 보인다** — 대조가 아니라 분포다.
+    출처별 = collections.defaultdict(set)
+    for o in 행:
+        if o.get('라운드') is not None:
+            출처별[o.get('출처')].add(o['라운드'])
+    if 출처별:
+        print("                  라운드 " + " · ".join(
+            f"{k} R{min(v)}~R{max(v)}" if len(v) > 1 else f"{k} R{min(v)}"
+            for k, v in sorted(출처별.items())))
+        print(f"                  (커밋 태그는 {sorted(라운드셋) if 라운드셋 else '—'} — "
+              "**다른 셈이다. 대지 않는다**)")
 
     print("                  ★ ⑦⑧ 의 원천은 **기록된 판정**이지 git 이 아니다.")
 

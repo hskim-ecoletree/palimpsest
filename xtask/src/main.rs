@@ -3097,10 +3097,40 @@ fn 아래_전부_확장자들(dir: &Path, exts: &[&str], out: &mut Vec<PathBuf>)
 
 /// 보존된 원 반환문에서 **항 수**를 센다 — 합계 검산의 둘째 원천.
 ///
-/// 규칙은 계획이 못박은 것과 같다: **`^### ` 항 + `## 내가 기각한 것` 아래 최상위 불릿.**
+/// ★ **출처마다 규칙이 다르다.** 사전부검자는 `### 항`으로 내고 리뷰어는 **표**로 낸다.
 /// 규칙을 여기 적는 까닭은, 파일마다 절 구성이 달라서(실측: `##` 절이 1 개인 반환문과
 /// 2 개인 반환문이 있다) **「전부 세기」가 원리상 안 되기 때문**이다.
-fn 반환문_항_수(text: &str) -> usize {
+///
+/// | 출처 | 규칙 |
+/// |---|---|
+/// | 사전부검 | `^### ` 항 + `## 내가 기각한 것` 아래 최상위 불릿 |
+/// | 독립리뷰 | **`| # |` 헤더를 가진 표**의 데이터 행 |
+///
+/// ⚠ 리뷰어의 `## 합격선 축` 표는 `| 조건 |` 로 시작하므로 **안 걸린다** — 그것은
+/// 발견이 아니라 등록된 조건에 대한 판정이고 게이트가 진다.
+fn 반환문_항_수(출처: &str, text: &str) -> usize {
+    if 출처 == "독립리뷰" {
+        let mut n = 0usize;
+        let mut 표안 = false;
+        for line in text.lines() {
+            if line.starts_with("| # |") {
+                표안 = true;
+                continue;
+            }
+            if 표안 {
+                let t = line.trim_start();
+                if t.starts_with("|-") || t.starts_with("| -") || t.starts_with("|:") {
+                    continue;
+                }
+                if t.starts_with('|') {
+                    n += 1;
+                    continue;
+                }
+                표안 = false;
+            }
+        }
+        return n;
+    }
     let mut 시나리오 = 0usize;
     let mut 기각 = 0usize;
     let mut 기각_절 = false;
@@ -3118,6 +3148,13 @@ fn 반환문_항_수(text: &str) -> usize {
     }
     시나리오 + 기각
 }
+
+/// 원 반환문이 사는 디렉터리 ↔ 그것을 낸 **출처**.
+///
+/// ★ **인터뷰와 실측은 여기 없다.** 인터뷰는 소유자와의 대화이고 실측은 메인의 관측이라
+/// **에이전트 반환문이 원리상 없다.** 그래서 검산에서 면제하되 — 면제라는 사실을 판정에
+/// 실어 낸다. 「안 잰 것」과 「잴 수 없는 것」을 같은 침묵으로 두지 않는다.
+const 반환문_자리: &[(&str, &str)] = &[("premortem", "사전부검"), ("review", "독립리뷰")];
 
 fn check_round_records(root: &Path) -> Result<String> {
     let 산출 = 회차_산출(root)?;
@@ -3197,7 +3234,7 @@ fn check_round_records(root: &Path) -> Result<String> {
         .collect();
 
     // ③ 레코드의 각 행이 스키마를 지키는가 + `경로` 가 실재하는가.
-    let mut 행_수: std::collections::BTreeMap<i64, usize> = Default::default();
+    let mut 쌍_수: std::collections::BTreeMap<(String, i64), usize> = Default::default();
     let mut 좌표_해소_실패 = Vec::new();
     let mut 총_행 = 0usize;
     for p in 산출.iter().filter(|p| p.ends_with(레코드_이름)) {
@@ -3235,8 +3272,11 @@ fn check_round_records(root: &Path) -> Result<String> {
                     }
                 }
             }
-            if let Some(r) = v.get("라운드").and_then(|x| x.as_i64()) {
-                *행_수.entry(r).or_default() += 1;
+            if let (Some(r), Some(s)) = (
+                v.get("라운드").and_then(|x| x.as_i64()),
+                v.get("출처").and_then(|x| x.as_str()),
+            ) {
+                *쌍_수.entry((s.to_string(), r)).or_default() += 1;
             }
             // ★ `경로` 만 해소한다. `줄` 은 안 잰다 — 회차가 자기 좌표를 밀어내기 때문이다
             //   (실측 2026-08-19: 에이전트 정의를 고치니 인용한 줄이 93 → 95 로 밀렸다).
@@ -3251,33 +3291,62 @@ fn check_round_records(root: &Path) -> Result<String> {
     problems.extend(좌표_해소_실패);
 
     // ④ **합계 검산 — 독립된 둘째 원천을 댄다.**
+    //
+    // ★ **(출처, 라운드) 쌍으로 센다.** 라운드 번호만으로 세면 ① 같은 라운드에 두 출처가
+    //   섞였을 때 **멀쩡한 레코드가 거짓 실패**를 내고, ② 반환문 파일이 없는 출처는
+    //   **아무 검산도 안 받는다** — 그것이 「측정이 죽은 가지」다(독립 리뷰 2026-08-19).
     let mut 검산 = Vec::new();
+    let mut 면제 = std::collections::BTreeSet::new();
     let 회차들 = std::fs::read_dir(root.join(회차_뿌리))?;
     for e in 회차들 {
         let dir = e?.path();
-        let pm = dir.join("premortem");
-        if !pm.is_dir() {
+        if !dir.is_dir() {
             continue;
         }
-        for e2 in std::fs::read_dir(&pm)? {
-            let f = e2?.path();
-            let name = f.file_name().and_then(|x| x.to_str()).unwrap_or("").to_string();
-            let Some(n) = name
-                .strip_prefix('r')
-                .and_then(|s| s.strip_suffix("-raw.md"))
-                .and_then(|s| s.parse::<i64>().ok())
-            else {
+        for (자리, 출처) in 반환문_자리 {
+            let d = dir.join(자리);
+            if !d.is_dir() {
                 continue;
-            };
-            let 항 = 반환문_항_수(&std::fs::read_to_string(&f)?);
-            let 적힌 = 행_수.get(&n).copied().unwrap_or(0);
-            검산.push(format!("R{n} 원문 {항} ↔ 레코드 {적힌}"));
-            if 항 != 적힌 {
-                problems.push(format!(
-                    "합계 검산 어긋남 — {}: 원 반환문의 항이 {항} 인데 레코드는 {적힌} 행이다",
-                    상대_경로(root, &f)
-                ));
             }
+            for e2 in std::fs::read_dir(&d)? {
+                let f = e2?.path();
+                let name = f.file_name().and_then(|x| x.to_str()).unwrap_or("").to_string();
+                let Some(n) = name
+                    .strip_prefix('r')
+                    .and_then(|s| s.strip_suffix("-raw.md"))
+                    .and_then(|s| s.parse::<i64>().ok())
+                else {
+                    continue;
+                };
+                let 항 = 반환문_항_수(출처, &std::fs::read_to_string(&f)?);
+                let 적힌 = 쌍_수.get(&(출처.to_string(), n)).copied().unwrap_or(0);
+                검산.push(format!("{출처}R{n} {항}↔{적힌}"));
+                if 항 != 적힌 {
+                    problems.push(format!(
+                        "합계 검산 어긋남 — {}: 원 반환문의 항이 {항} 인데 `출처={출처}`\
+                         이고 `라운드={n}` 인 레코드는 {적힌} 행이다",
+                        상대_경로(root, &f)
+                    ));
+                }
+            }
+        }
+    }
+    // ⑤ **에이전트 출처인데 반환문이 없으면 실패다.** 보존을 빠뜨리면 검산이 조용히 사라진다.
+    for ((출처, n), 행) in &쌍_수 {
+        let 에이전트 = 반환문_자리.iter().any(|(_, s)| s == 출처);
+        if !에이전트 {
+            면제.insert(출처.clone());
+            continue;
+        }
+        let 자리 = 반환문_자리.iter().find(|(_, s)| s == 출처).map(|(d, _)| *d).unwrap();
+        let 있나 = std::fs::read_dir(root.join(회차_뿌리))?.flatten().any(|e| {
+            e.path().join(자리).join(format!("r{n}-raw.md")).exists()
+        });
+        if !있나 {
+            problems.push(format!(
+                "`출처={출처}` · `라운드={n}` 인 레코드가 {행} 행인데 원 반환문이 없다 — \
+                 `<회차>/{자리}/r{n}-raw.md` 를 보존해야 합계 검산이 선다"
+            ));
         }
     }
 
@@ -3285,9 +3354,14 @@ fn check_round_records(root: &Path) -> Result<String> {
         bail!("회차 레코드:\n    {}", problems.join("\n    "));
     }
     Ok(format!(
-        "산출 {}개 · 레코드 {총_행}행 · 검산 {} · 파이썬 `{파이썬}`",
+        "산출 {}개 · 레코드 {총_행}행 · 검산 {} · 검산 면제 {} · 파이썬 `{파이썬}`",
         산출.len(),
-        if 검산.is_empty() { "없음".to_string() } else { 검산.join(" · ") }
+        if 검산.is_empty() { "없음".to_string() } else { 검산.join(" · ") },
+        if 면제.is_empty() {
+            "없음".to_string()
+        } else {
+            format!("{} (반환문이 원리상 없다)", 면제.into_iter().collect::<Vec<_>>().join("·"))
+        }
     ))
 }
 
@@ -3322,8 +3396,14 @@ fn 좌표가_실재하는가(root: &Path, 경로: &str) -> bool {
                 if 찾는다(&p, 끝, 깊이 - 1) {
                     return true;
                 }
-            } else if p.to_string_lossy().replace('\\', "/").ends_with(끝) {
-                return true;
+            } else {
+                // ⚠ **경계를 맞춰야 한다.** 앞 판은 맨 접미 비교라 `.md`·`s.rs` 같은
+                //   조각이 전부 「실재」로 판정됐다(독립 리뷰 2026-08-19 실측).
+                //   경로 구분자나 문자열 처음에서 시작해야 진짜 접미다.
+                let 전체 = p.to_string_lossy().replace('\\', "/");
+                if 전체 == 끝 || 전체.ends_with(&format!("/{끝}")) {
+                    return true;
+                }
             }
         }
         false

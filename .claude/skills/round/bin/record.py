@@ -9,8 +9,10 @@
 
 ★ **호출은 `python3 <경로>` 다.** 설치본은 파일 모드를 0644 로 놓아 직접 실행이 안 된다
 (`crates/pal-cli/src/install.rs` 의 `guard::쓴다` 는 바이트만 쓴다). 그리고 Windows 에서는
-모드로도 안 풀린다(옛 ADR-0023). **그래서 다섯 자리가 전부 이 형태로 적힌다** —
-`SKILL.md` 두 줄 · 이 파일의 위 두 줄 · `NEXT-D-handoff.md`.
+모드로도 안 풀린다(옛 ADR-0023). **그래서 이 형태를 적는 자리가 전부 같아야 한다** —
+세는 자리는 `grep -rn dashboard.py` 와 `grep -rn record.py` 이지 이 주석이 아니다.
+⚠ 앞 판은 여기에 **자리 다섯을 손으로 세어 놓았고**, 그중 하나(`NEXT-D-handoff.md`)를
+같은 회차가 지우면서 **놓은 날 갈렸다**(독립 리뷰 2026-08-19). 베끼지 말고 돌려라.
 
 ★ **enum 은 여기 한 자리에만 산다.** `xtask` 의 검사는 `--schema` 를 **불러서** 읽고
 파이썬 소스를 정규식으로 안 긁는다. 두 곳에 적으면 갈리고, 갈린 것을 대는 장치가 없다
@@ -21,6 +23,18 @@
 """
 
 import sys, json, os, subprocess
+
+# ★ **출력 인코딩을 못 박는다.** 이 스크립트의 출력은 전부 한국어이고, Windows 의
+# 파이썬은 **비-tty stdout 에 로케일 인코딩(보통 cp1252)** 을 쓴다. 그러면 파이프로
+# 받는 순간 `UnicodeEncodeError` 로 죽는다 — `xtask` 의 회차 레코드 검사와 설치본
+# 시험이 정확히 그렇게 부른다(독립 리뷰 2026-08-19 · `PYTHONIOENCODING=cp1252` 로 재현).
+# 옛 ADR-0023: 고를 축은 「볼 수 있는 쪽」이 아니라 **양쪽이 할 수 있는 것**이다.
+for _스트림 in (sys.stdout, sys.stderr):
+    try:
+        _스트림.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 
 SCHEMA_VERSION = 1
 
