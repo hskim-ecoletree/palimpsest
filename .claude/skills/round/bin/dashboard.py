@@ -8,10 +8,17 @@
 **이 물건이 하는 일은 하나다: 당긴다.** 판정하지 않고, 읽기를 강요하지 않는다.
 수가 이상하면 사람이 들여다보거나 설명을 요구한다 — 그 요구가 이 장치의 산출이다.
 
-카테고리 여섯은 **enum** 이고 회고에서 도출됐다:
+카테고리는 **enum** 이고 회고에서 도출됐다:
 `.palimpsest/rounds/2026-08-18-completion-condition/retro/09-categories.md`
 
-    사용: dashboard.py <착수커밋> [의도파일] [종료커밋=HEAD]
+★ **⑦⑧ 은 원천이 다르다.** ①~⑥ 은 git 이 답하고 ⑦⑧ 은 **기록된 판정**이 답한다
+(`findings.jsonl`). 그래서 규약 §5 의 「원천이 산문이면 못 더한다」를 **충족했다고
+주장하지 않는다** — 형식이 기계 판독이 된 것이지 원천이 기계가 된 것이 아니다.
+
+⚠ **호출은 `python3 <경로>` 다.** 설치본은 파일 모드를 0644 로 놓아 직접 실행이
+안 되고, Windows 에서는 모드로도 안 풀린다(옛 ADR-0023).
+
+    사용: python3 dashboard.py <착수커밋> [의도파일] [종료커밋=HEAD]
 """
 import subprocess, sys, re, collections, os
 
@@ -81,7 +88,7 @@ def main(착수, 의도파일=None, 종료="HEAD"):
     if 전체 is None:
         print(f"① 자기 비율      — (범위 `{rng}` 에 만진 경로가 없다)")
         print()
-        print("⚠ 범위가 비었다 — 인자를 확인하라: dashboard.py <착수커밋> [의도파일] [종료커밋]")
+        print("⚠ 범위가 비었다 — 인자를 확인하라: python3 dashboard.py <착수커밋> [의도파일] [종료커밋]")
         return
     print(f"① 자기 비율      회차 전체 {전체:>3.0f}%  ({s_a}/{n_a} 경로)")
     if 이번 is not None and 이번라운드경로:
@@ -134,9 +141,74 @@ def main(착수, 의도파일=None, 종료="HEAD"):
     print(f"⑥ 승격 횟수      {승격}"
           + ("" if 표기있음 else "   ⚠ 표기가 없는 회차 — 0 은 「없었다」가 아니라 「못 셌다」다"))
 
+    # ⑦⑧ — **원천이 git 이 아니다.**
+    발견칸(의도파일, 라운드셋)
+
     print()
     print("⚠ 이 계기판은 **지난 라운드들의 잔액**을 낸다.")
     print("  지금 착수할 수정이 진자를 만드는지는 원리상 못 말한다.")
+    print("⚠ ①~⑥ 은 `<착수>..<종료>` **커밋 범위**를 재고, ⑦⑧ 은 **레코드 파일 전체**를 잰다.")
+    print("  같은 회차의 두 수지만 **같은 범위가 아니다**.")
+
+
+def 발견칸(의도파일, 라운드셋):
+    """⑦ 원 의도 비율 · ⑧ 발견 유효성 — `findings.jsonl` 이 원천이다.
+
+    ★ **레코드가 없으면 「못 셌다」다. 0 이라고 말하지 않는다** — ⑥ 이 표기 없는 회차에
+    대해 그렇게 하는 것과 같은 자다.
+    """
+    import json
+    if not 의도파일:
+        print("⑦ 원 의도 비율    — (의도 파일 없음 → 레코드 자리를 못 찾는다)")
+        print("⑧ 발견 유효성    — (같음)")
+        return
+    path = os.path.join(os.path.dirname(os.path.abspath(의도파일)), 'findings.jsonl')
+    if not os.path.exists(path):
+        print("⑦ 원 의도 비율    — **못 셌다** (레코드가 없다. 0 이 아니다)")
+        print("⑧ 발견 유효성    — **못 셌다**")
+        return
+    행 = []
+    for i, line in enumerate(io_open(path)):
+        line = line.strip()
+        if not line:
+            continue
+        o = json.loads(line)
+        if i == 0 and 'schema_version' in o:
+            continue
+        행.append(o)
+    if not 행:
+        print("⑦ 원 의도 비율    — **못 셌다** (레코드가 비었다)")
+        print("⑧ 발견 유효성    — **못 셌다**")
+        return
+
+    n = len(행)
+    원의도 = sum(1 for o in 행 if o.get('모집단') == '원의도')
+    print(f"⑦ 원 의도 비율   {원의도 * 100 // n:>3}%  ({원의도}/{n} 발견)")
+    분포 = collections.Counter(o.get('모집단') for o in 행)
+    print("                  " + " · ".join(f"{k} {v}" for k, v in 분포.most_common()))
+
+    유효 = collections.Counter(o.get('유효성') for o in 행)
+    참, 거짓 = 유효.get('참', 0), 유효.get('거짓', 0)
+    잰것 = 참 + 거짓
+    if 잰것:
+        print(f"⑧ 발견 유효성    참 {참} · 거짓 {거짓}  →  {거짓 * 100 // 잰것}% 가 헛것")
+    else:
+        print("⑧ 발견 유효성    — **못 셌다** (참·거짓이 하나도 없다)")
+    if 유효.get('추정'):
+        print(f"                  추정 {유효['추정']} 은 분모에서 뺐다 — 아직 안 갈렸다")
+
+    # **라운드를 커밋 태그와 댄다** — 원천이 둘이라 대는 장치가 필요하다.
+    레코드라운드 = {o.get('라운드') for o in 행 if o.get('라운드') is not None}
+    if 라운드셋 and 레코드라운드 and 레코드라운드 != 라운드셋:
+        print(f"                  ⚠ 라운드가 어긋난다 — 커밋 태그 {sorted(라운드셋)} ↔ "
+              f"레코드 {sorted(레코드라운드)}")
+
+    print("                  ★ ⑦⑧ 의 원천은 **기록된 판정**이지 git 이 아니다.")
+
+
+def io_open(p):
+    import io
+    return io.open(p, encoding='utf-8')
 
 if __name__ == '__main__':
     main(sys.argv[1],
