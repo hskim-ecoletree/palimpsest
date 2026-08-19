@@ -47,9 +47,19 @@ def 항들(text):
 
 
 def 첫경로(본문):
-    m = re.search(r"`([^`\s]+\.(?:rs|py|md|toml|json|jsonl|tsv|txt|yml|ts))(?::(\d+))?", 본문)
-    if m:
-        return m.group(1), (int(m.group(2)) if m.group(2) else None)
+    """첫 좌표를 뽑는다.
+
+    ⚠ **확장자 후보는 긴 것이 앞이다** — `json` 을 `jsonl` 보다 앞에 두었더니
+    `findings.jsonl` 이 `findings.json` 으로 잘렸고, 좌표 해소가 17 건 실패했다
+    (실측 2026-08-19 · 새 검사가 잡았다).
+    ⚠ **글롭과 플레이스홀더는 좌표가 아니다** — `*`·`<slug>` 가 들어간 것은 자리를
+    가리키는 말이지 파일이 아니다.
+    """
+    for m in re.finditer(r"`([^`\s]+\.(?:jsonl|json|rs|py|md|toml|tsv|txt|yml|ts))(?::(\d+))?", 본문):
+        경로 = m.group(1)
+        if "*" in 경로 or "<" in 경로:
+            continue
+        return 경로, (int(m.group(2)) if m.group(2) else None)
     return "(경로 없음)", None
 
 

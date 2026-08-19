@@ -554,6 +554,7 @@ fn check(root: &Path) -> Result<()> {
         ("죽은 링크 부재", check_dead_links(root)),
         ("sunset 선언", check_sunset(root)),
         ("사라진 문서를 현재형으로 안 부른다", check_stale_citation(root)),
+        ("회차 레코드", check_round_records(root)),
     ];
     let total = checks.len();
 
@@ -3005,4 +3006,327 @@ fn 토큰_블록(body: &str) -> Option<(usize, usize)> {
     }
     let b = lines[시작..].iter().position(|l| l.trim() == "];")? + 시작;
     Some((a, b))
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// 회차 레코드 — **발견이 사라지지 않는 자리**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// # 왜 이 검사가 생겼나 (2026-08-19 · [#71] · [#72])
+//
+// 앞 회차가 발견 108 건을 분류해 `retro/02-classification.tsv` 에 담았는데 **그 파일이
+// 어느 검사의 모집단에도 없었다.** 분류가 틀려도 기계가 아무 말을 안 했고, 합계 검산은
+// **사람이 돌렸다.** 그리고 축 1(발견이 유효했나)이 **참 109 · 거짓 0** 으로 반증됐다 —
+// 축이 고장난 것이 아니라 **모집단이 고장났다.** 커밋에 남는 것은 채택된 발견뿐이다.
+//
+// ★ **이 검사가 재는 회차에서 계수 시도 셋 중 둘이 어긋났다** — 메인이 17 이라 말한 것이
+// 18 이었고, 사전부검이 11 이라 적은 것이 12 였다. **사람도 에이전트도 자기 산출을 잘못
+// 센다.** 그래서 합계 검산이 **독립된 둘째 원천**(보존된 원 반환문)을 댄다. 자기가 쓴 것을
+// 자기가 세면 그것은 검산이 아니라 항등식이다.
+//
+// ⚠ **모집단이 비면 실패다.** 0 건은 「안 부른다」가 아니라 「안 봤다」일 수 있다.
+//
+// [#71]: https://github.com/hskim-ecoletree/palimpsest/issues/71
+// [#72]: https://github.com/hskim-ecoletree/palimpsest/issues/72
+
+/// 회차 산출이 사는 자리.
+const 회차_뿌리: &str = ".palimpsest/rounds";
+
+/// 발견 레코드의 이름.
+const 레코드_이름: &str = "findings.jsonl";
+
+/// enum 이 사는 **유일한 자리**. 이 검사는 여기에 물어보고, 파이썬 소스를 정규식으로
+/// 안 긁는다. 두 곳에 적으면 갈리고 갈린 것을 대는 장치가 없다.
+const 스키마_원천: &str = ".claude/skills/round/bin/record.py";
+
+/// **파이썬 실행자를 찾는 한 자리.**
+///
+/// ★ 이름은 플랫폼이 정한다 — `python3` 가 서는 곳도 있고 `python` 뿐인 곳도 있다.
+/// 옛 ADR-0023 이 가른 대로 고를 축은 「볼 수 있는 쪽」이 아니라 **양쪽이 할 수 있는
+/// 것**이고, 그 분기는 **여기 한 번**이어야 한다. 두 곳에서 각자 답하면 한쪽이 조용히
+/// 낡는다(설치 쪽의 [`실행자 이름`] 이 같은 사유로 한 자리다).
+///
+/// **찾은 이름을 판정에 실어 낸다** — 세 OS 의 답이 CI 로그에 남는 것이 이 저장소가
+/// 「쟀다」고 말할 수 있는 유일한 근거다.
+///
+/// [`실행자 이름`]: https://github.com/hskim-ecoletree/palimpsest/blob/main/crates/pal-cli/src/install/exe.rs
+fn 파이썬_실행자() -> Result<&'static str> {
+    for 이름 in ["python3", "python"] {
+        let ok = std::process::Command::new(이름)
+            .arg("--version")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false);
+        if ok {
+            return Ok(이름);
+        }
+    }
+    bail!(
+        "파이썬 실행자를 못 찾았다 — `python3` 도 `python` 도 안 선다. \
+         회차 레코드 검사는 스키마를 `{스키마_원천} --schema` 에 물어본다"
+    )
+}
+
+/// `.palimpsest/rounds/**` 아래의 **기계 판독 산출** 전부.
+///
+/// ⚠ `*.md` 는 안 든다 — 사람이 쓰는 것이다. 갈래는 확장자가 정한다.
+fn 회차_산출(root: &Path) -> Result<Vec<PathBuf>> {
+    let mut out = Vec::new();
+    let base = root.join(회차_뿌리);
+    if base.is_dir() {
+        아래_전부_확장자들(&base, &["jsonl", "tsv"], &mut out)?;
+    }
+    out.sort();
+    Ok(out)
+}
+
+fn 아래_전부_확장자들(dir: &Path, exts: &[&str], out: &mut Vec<PathBuf>) -> Result<()> {
+    for e in std::fs::read_dir(dir).with_context(|| format!("읽지 못했다: {}", dir.display()))? {
+        let p = e?.path();
+        if p.is_dir() {
+            아래_전부_확장자들(&p, exts, out)?;
+        } else if p
+            .extension()
+            .and_then(|x| x.to_str())
+            .is_some_and(|x| exts.contains(&x))
+        {
+            out.push(p);
+        }
+    }
+    Ok(())
+}
+
+/// 보존된 원 반환문에서 **항 수**를 센다 — 합계 검산의 둘째 원천.
+///
+/// 규칙은 계획이 못박은 것과 같다: **`^### ` 항 + `## 내가 기각한 것` 아래 최상위 불릿.**
+/// 규칙을 여기 적는 까닭은, 파일마다 절 구성이 달라서(실측: `##` 절이 1 개인 반환문과
+/// 2 개인 반환문이 있다) **「전부 세기」가 원리상 안 되기 때문**이다.
+fn 반환문_항_수(text: &str) -> usize {
+    let mut 시나리오 = 0usize;
+    let mut 기각 = 0usize;
+    let mut 기각_절 = false;
+    for line in text.lines() {
+        if let Some(제목) = line.strip_prefix("## ") {
+            기각_절 = 제목.contains("내가 기각한 것");
+            continue;
+        }
+        if line.starts_with("### ") {
+            시나리오 += 1;
+            기각_절 = false;
+        } else if 기각_절 && line.starts_with("- ") {
+            기각 += 1;
+        }
+    }
+    시나리오 + 기각
+}
+
+fn check_round_records(root: &Path) -> Result<String> {
+    let 산출 = 회차_산출(root)?;
+
+    // ⚠ 모집단이 비면 실패다.
+    if 산출.is_empty() {
+        bail!(
+            "`{회차_뿌리}/**` 에 기계 판독 산출(`*.jsonl`·`*.tsv`)이 하나도 없다 — \
+             이 검사가 아무것도 안 잰다. 0 건은 「안 부른다」가 아니라 「안 봤다」다"
+        );
+    }
+
+    let mut problems = Vec::new();
+
+    // ① 각 파일이 **자기 스키마를 선언**하는가.
+    for p in &산출 {
+        let 상대 = 상대_경로(root, p);
+        let text = std::fs::read_to_string(p).with_context(|| format!("읽지 못했다: {상대}"))?;
+        let 첫줄 = text.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+        let ext = p.extension().and_then(|x| x.to_str()).unwrap_or("");
+        match ext {
+            "jsonl" => {
+                if !첫줄.contains("\"schema_version\"") {
+                    problems.push(format!("{상대}: 머리 줄에 `schema_version` 이 없다"));
+                }
+            }
+            "tsv" => {
+                if 첫줄.starts_with('#') || !첫줄.contains('\t') {
+                    problems.push(format!(
+                        "{상대}: 헤더 행이 없다 — 열 이름을 탭으로 가른 첫 줄이 스키마 선언이다"
+                    ));
+                }
+                // 열 수가 갈리면 세는 자가 틀린다.
+                let 열 = 첫줄.split('\t').count();
+                for (i, line) in text.lines().enumerate().skip(1) {
+                    if line.trim().is_empty() {
+                        continue;
+                    }
+                    let n = line.split('\t').count();
+                    if n != 열 {
+                        problems.push(format!(
+                            "{상대}:{}: 열이 {n} 인데 헤더는 {열} 이다",
+                            i + 1
+                        ));
+                        break;
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // ② 스키마는 **원천에 물어본다.** 파이썬 소스를 정규식으로 안 긁는다.
+    let 파이썬 = 파이썬_실행자()?;
+    let 원천 = root.join(스키마_원천);
+    if !원천.exists() {
+        bail!("스키마 원천이 없다: {스키마_원천}");
+    }
+    let out = std::process::Command::new(파이썬)
+        .arg(&원천)
+        .arg("--schema")
+        .output()
+        .with_context(|| format!("`{파이썬} {스키마_원천} --schema` 를 못 돌렸다"))?;
+    if !out.status.success() {
+        bail!(
+            "`{스키마_원천} --schema` 가 실패했다:\n{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+    let 스키마: serde_json::Value = serde_json::from_slice(&out.stdout)
+        .context("`--schema` 의 출력이 JSON 이 아니다")?;
+    let 필수: Vec<&str> = 스키마["필수"]
+        .as_array()
+        .context("`필수` 가 배열이 아니다")?
+        .iter()
+        .filter_map(|v| v.as_str())
+        .collect();
+
+    // ③ 레코드의 각 행이 스키마를 지키는가 + `경로` 가 실재하는가.
+    let mut 행_수: std::collections::BTreeMap<i64, usize> = Default::default();
+    let mut 좌표_해소_실패 = Vec::new();
+    let mut 총_행 = 0usize;
+    for p in 산출.iter().filter(|p| p.ends_with(레코드_이름)) {
+        let 상대 = 상대_경로(root, p);
+        let text = std::fs::read_to_string(p)?;
+        for (i, line) in text.lines().enumerate() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            let v: serde_json::Value = match serde_json::from_str(line) {
+                Ok(v) => v,
+                Err(e) => {
+                    problems.push(format!("{상대}:{}: JSON 이 아니다 — {e}", i + 1));
+                    continue;
+                }
+            };
+            if i == 0 && v.get("schema_version").is_some() {
+                continue;
+            }
+            총_행 += 1;
+            for k in &필수 {
+                if v.get(*k).is_none() || v[*k].is_null() {
+                    problems.push(format!("{상대}:{}: 필수 필드 `{k}` 가 없다", i + 1));
+                }
+            }
+            for (축, 값들) in 스키마["enum"].as_object().into_iter().flatten() {
+                if let Some(있는) = v.get(축).and_then(|x| x.as_str()) {
+                    let 목록: Vec<&str> = 값들.as_array().into_iter().flatten()
+                        .filter_map(|x| x.as_str()).collect();
+                    if !목록.contains(&있는) {
+                        problems.push(format!(
+                            "{상대}:{}: `{축}` 값 `{있는}` 는 enum 밖이다",
+                            i + 1
+                        ));
+                    }
+                }
+            }
+            if let Some(r) = v.get("라운드").and_then(|x| x.as_i64()) {
+                *행_수.entry(r).or_default() += 1;
+            }
+            // ★ `경로` 만 해소한다. `줄` 은 안 잰다 — 회차가 자기 좌표를 밀어내기 때문이다
+            //   (실측 2026-08-19: 에이전트 정의를 고치니 인용한 줄이 93 → 95 로 밀렸다).
+            //   드리프트는 `기준커밋` 이 설명한다.
+            if let Some(경로) = v.get("경로").and_then(|x| x.as_str()) {
+                if 경로 != "(경로 없음)" && !좌표가_실재하는가(root, 경로) {
+                    좌표_해소_실패.push(format!("{상대}:{}: `{경로}` 가 없다", i + 1));
+                }
+            }
+        }
+    }
+    problems.extend(좌표_해소_실패);
+
+    // ④ **합계 검산 — 독립된 둘째 원천을 댄다.**
+    let mut 검산 = Vec::new();
+    let 회차들 = std::fs::read_dir(root.join(회차_뿌리))?;
+    for e in 회차들 {
+        let dir = e?.path();
+        let pm = dir.join("premortem");
+        if !pm.is_dir() {
+            continue;
+        }
+        for e2 in std::fs::read_dir(&pm)? {
+            let f = e2?.path();
+            let name = f.file_name().and_then(|x| x.to_str()).unwrap_or("").to_string();
+            let Some(n) = name
+                .strip_prefix('r')
+                .and_then(|s| s.strip_suffix("-raw.md"))
+                .and_then(|s| s.parse::<i64>().ok())
+            else {
+                continue;
+            };
+            let 항 = 반환문_항_수(&std::fs::read_to_string(&f)?);
+            let 적힌 = 행_수.get(&n).copied().unwrap_or(0);
+            검산.push(format!("R{n} 원문 {항} ↔ 레코드 {적힌}"));
+            if 항 != 적힌 {
+                problems.push(format!(
+                    "합계 검산 어긋남 — {}: 원 반환문의 항이 {항} 인데 레코드는 {적힌} 행이다",
+                    상대_경로(root, &f)
+                ));
+            }
+        }
+    }
+
+    if !problems.is_empty() {
+        bail!("회차 레코드:\n    {}", problems.join("\n    "));
+    }
+    Ok(format!(
+        "산출 {}개 · 레코드 {총_행}행 · 검산 {} · 파이썬 `{파이썬}`",
+        산출.len(),
+        if 검산.is_empty() { "없음".to_string() } else { 검산.join(" · ") }
+    ))
+}
+
+/// 좌표가 실재하는가 — 경로째로 있거나, **끝이 맞는 파일이 저장소에 있거나.**
+///
+/// ⚠ **접미 매칭을 여는 까닭**: 발견을 내는 자(에이전트)가 `layout.rs:161` 처럼 **파일
+/// 이름만** 적거나 `retro/09-categories.md` 처럼 **회차 안에서의 상대 경로**로 적는 일이
+/// 흔하다(실측: 좌표 59 개 중 그런 것이 17). 그것을 실패로 치면 검사가 실질을 안 재고
+/// **형식만** 재게 된다.
+///
+/// ★ 이 검사가 재는 것은 **「그 파일이 이 저장소에 있는가」**이지 「인용이 정확한가」가
+/// 아니다. 줄 번호는 **안 잰다** — 회차가 자기 좌표를 밀어내기 때문이다.
+fn 좌표가_실재하는가(root: &Path, 경로: &str) -> bool {
+    if root.join(경로).exists() {
+        return true;
+    }
+    fn 찾는다(dir: &Path, 끝: &str, 깊이: usize) -> bool {
+        if 깊이 == 0 {
+            return false;
+        }
+        let Ok(읽기) = std::fs::read_dir(dir) else {
+            return false;
+        };
+        for e in 읽기.flatten() {
+            let p = e.path();
+            let n = p.file_name().and_then(|x| x.to_str()).unwrap_or("");
+            // `.github` 도 본다 — CI 정의가 거기 살고 발견이 그것을 가리킨다.
+            if n == "target" || n == "node_modules" || n == ".git" {
+                continue;
+            }
+            if p.is_dir() {
+                if 찾는다(&p, 끝, 깊이 - 1) {
+                    return true;
+                }
+            } else if p.to_string_lossy().replace('\\', "/").ends_with(끝) {
+                return true;
+            }
+        }
+        false
+    }
+    찾는다(root, 경로, 10)
 }
