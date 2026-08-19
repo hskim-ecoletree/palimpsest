@@ -31,7 +31,13 @@ import sys, json, os, subprocess
 # 받는 순간 `UnicodeEncodeError` 로 죽는다 — `xtask` 의 회차 레코드 검사와 설치본
 # 시험이 정확히 그렇게 부른다(독립 리뷰 2026-08-19 · `PYTHONIOENCODING=cp1252` 로 재현).
 # 옛 ADR-0023: 고를 축은 「볼 수 있는 쪽」이 아니라 **양쪽이 할 수 있는 것**이다.
-for _스트림 in (sys.stdout, sys.stderr):
+# ★ **stdin 도 박는다.** (2026-08-19 · **CI 의 windows-latest 가 잡았다**)
+# 출력만 박았더니 `add` 가 Windows 에서 죽었다 —
+#   `UnicodeEncodeError: 'utf-8' codec can't encode character '\udc9d': surrogates not allowed`
+# 파이프로 들어온 UTF-8 바이트를 로케일(cp1252 등)로 디코드하면 **surrogate escape** 가
+# 생기고, 그것을 다시 UTF-8 로 쓸 때 터진다. 죽는 자리가 **출력 → subprocess 입력 →
+# stdin** 으로 세 번 옮겨 다녔다. **셋 다 박아야 한다.**
+for _스트림 in (sys.stdin, sys.stdout, sys.stderr):
     try:
         _스트림.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):

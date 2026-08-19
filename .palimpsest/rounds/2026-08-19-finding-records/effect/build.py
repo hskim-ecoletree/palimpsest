@@ -14,7 +14,7 @@ import sys, os, json, glob, subprocess
 # ★ **출력 인코딩을 못 박는다.** `record.py`·`dashboard.py` 는 박는데 여기만 안 박아
 # Windows 파이프에서 죽었다(독립 리뷰 5 라운드 S4). 게이트가 「세는 자리」로 가리키는
 # 스크립트가 그 자리에서 죽으면 효과가 통째로 없어진다.
-for _스트림 in (sys.stdout, sys.stderr):
+for _스트림 in (sys.stdin, sys.stdout, sys.stderr):
     try:
         _스트림.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):

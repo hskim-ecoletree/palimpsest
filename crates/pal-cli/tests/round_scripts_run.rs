@@ -115,6 +115,12 @@ fn 계기판이_레코드가_없으면_못_셌다고_말한다() {
     let 한줄 = r#"{"id":"T-1","라운드":1,"출처":"실측","모집단":"원의도","유효성":"참","해악도":"미관","처분":"정정","경로":"CLAUDE.md","요약":"시험용 한 줄"}"#;
     let mut 자식 = Command::new(파이썬())
         .args([레코드, "add", ".palimpsest/rounds/시험회차"])
+        // ★ **파이썬의 I/O 인코딩을 못 박는다.** Windows 러너에서 이 시험이 실제로
+        //   죽었다 — 파이프로 들어온 UTF-8 을 로케일로 디코드해 surrogate 가 생겼고
+        //   그것을 다시 UTF-8 로 쓸 때 터졌다(실측 2026-08-19 · CI 가 잡았다).
+        //   스크립트 자신도 `sys.stdin.reconfigure` 로 박지만, **호출하는 쪽도 말해야**
+        //   「양쪽이 할 수 있는 것」이 된다(옛 ADR-0023).
+        .env("PYTHONIOENCODING", "utf-8")
         .current_dir(&repo)
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())

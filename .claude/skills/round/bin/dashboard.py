@@ -27,7 +27,7 @@ import subprocess, sys, re, collections, os
 # 받는 순간 `UnicodeEncodeError` 로 죽는다 — `xtask` 의 회차 레코드 검사와 설치본
 # 시험이 정확히 그렇게 부른다(독립 리뷰 2026-08-19 · `PYTHONIOENCODING=cp1252` 로 재현).
 # 옛 ADR-0023: 고를 축은 「볼 수 있는 쪽」이 아니라 **양쪽이 할 수 있는 것**이다.
-for _스트림 in (sys.stdout, sys.stderr):
+for _스트림 in (sys.stdin, sys.stdout, sys.stderr):
     try:
         _스트림.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):
