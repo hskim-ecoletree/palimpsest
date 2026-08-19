@@ -14,8 +14,10 @@
 ⚠ 앞 판은 여기에 **자리 다섯을 손으로 세어 놓았고**, 그중 하나(`NEXT-D-handoff.md`)를
 같은 회차가 지우면서 **놓은 날 갈렸다**(독립 리뷰 2026-08-19). 베끼지 말고 돌려라.
 
-★ **enum 은 여기 한 자리에만 산다.** `xtask` 의 검사는 `--schema` 를 **불러서** 읽고
-파이썬 소스를 정규식으로 안 긁는다. 두 곳에 적으면 갈리고, 갈린 것을 대는 장치가 없다
+★ **스키마와 한 줄의 정합 규칙이 여기 한 자리에만 산다.** `xtask` 의 검사는
+`check` 를 **불러서** 위임하고 파이썬 소스를 정규식으로 안 긁는다.
+⚠ 앞 판은 여기에 *"`--schema` 를 불러서 읽는다"* 라 적었는데 위임 뒤로는 안 부른다 —
+주석이 구현과 갈렸고 독립 리뷰가 그것을 「사실이 아닌 것을 사실로」로 판정했다. 두 곳에 적으면 갈리고, 갈린 것을 대는 장치가 없다
 (옛 `layout.rs` 의 *"사본을 두면 갈리고 두 벌을 대는 검사가 없다"* 와 같은 자).
 
 ⚠ **`획득` 필드는 없다.** 에이전트가 내는 `획득`(조회/추정)과 `유효성`(참/추정/거짓)은
@@ -36,7 +38,10 @@ for _스트림 in (sys.stdout, sys.stderr):
         pass
 
 
-SCHEMA_VERSION = 1
+# ★ **깨지는 변경마다 올린다.** 2 로 올린 까닭: `합격선판정` 필드를 없앴다(정본은
+# 게이트의 `## 판정` 이다). 버전을 안 올렸더니 **버전 1 로 정당하게 쓰인 레코드가
+# 스키마 1 에서 전부 실패**했다 — 독립 리뷰 3 라운드가 `git show` 로 그것을 실측했다.
+SCHEMA_VERSION = 2
 
 # ── enum — 한 자리 ───────────────────────────────────────────────────────────
 ENUM = {
@@ -101,24 +106,30 @@ def 스키마():
     }
 
 
-def 검증(줄번호, obj, out):
-    """한 줄을 잰다. 문제를 `out` 에 담는다."""
+def 검증(줄번호, obj, out, 파일=None):
+    """한 줄을 잰다. 문제를 `out` 에 담는다.
+
+    ★ **파일 이름을 함께 낸다.** `xtask` 가 이 함수의 출력을 그대로 실어 나르는데,
+    앞 판은 `4행: …` 만 내서 **회차가 둘 이상이면 어느 파일의 4 행인지 알 수 없었다**
+    (독립 리뷰 3 라운드). 위임하면서 잃은 좌표를 되찾는다.
+    """
+    앞 = f"{파일}:" if 파일 else ""
     for k in REQUIRED:
         if k not in obj or obj[k] in (None, ""):
-            out.append(f"{줄번호}행: 필수 필드 `{k}` 가 없다")
+            out.append(f"{앞}{줄번호}행: 필수 필드 `{k}` 가 없다")
     for k, vals in ENUM.items():
         if k in obj and obj[k] is not None and obj[k] not in vals:
-            out.append(f"{줄번호}행: `{k}` 값 `{obj[k]}` 는 enum 밖이다 ({' · '.join(vals)})")
+            out.append(f"{앞}{줄번호}행: `{k}` 값 `{obj[k]}` 는 enum 밖이다 ({' · '.join(vals)})")
     for k in obj:
         if k not in FIELDS:
-            out.append(f"{줄번호}행: 모르는 필드 `{k}`")
+            out.append(f"{앞}{줄번호}행: 모르는 필드 `{k}`")
     if obj.get("라운드") is not None and not isinstance(obj["라운드"], int):
-        out.append(f"{줄번호}행: `라운드` 는 정수여야 한다")
+        out.append(f"{앞}{줄번호}행: `라운드` 는 정수여야 한다")
     # 대응표가 금지하는 조합
     if obj.get("처분") == "전환" and obj.get("승격됨") == "아니오":
-        out.append(f"{줄번호}행: `전환` 은 항상 승격이다 (대응표)")
+        out.append(f"{앞}{줄번호}행: `전환` 은 항상 승격이다 (대응표)")
     if obj.get("조건변경") == "완화" and obj.get("처분") != "축소":
-        out.append(f"{줄번호}행: `완화` 는 `축소` 로 적는다 (대응표) — 위장한 정정을 가린다")
+        out.append(f"{앞}{줄번호}행: `완화` 는 `축소` 로 적는다 (대응표) — 위장한 정정을 가린다")
 
 
 def 읽기(path):
@@ -141,6 +152,7 @@ def cmd_check(paths):
     문제 = []
     총 = 0
     for p in paths:
+        상대 = os.path.relpath(p)
         if not os.path.exists(p):
             문제.append(f"{p}: 없다")
             continue
@@ -154,7 +166,7 @@ def cmd_check(paths):
         elif 머리.get("schema_version") != SCHEMA_VERSION:
             문제.append(f"{p}: schema_version {머리.get('schema_version')} ≠ {SCHEMA_VERSION}")
         for 번호, obj in 행:
-            검증(번호, obj, 문제)
+            검증(번호, obj, 문제, 상대)
         총 += len(행)
         print(f"{p}: {len(행)}행")
     if 문제:
@@ -187,6 +199,7 @@ def cmd_add(회차, 기준커밋):
     with open(path, "a", encoding="utf-8") as f:
         if 새로:
             f.write(json.dumps({"schema_version": SCHEMA_VERSION,
+                                "종류": "레코드",
                                 "회차": os.path.basename(os.path.normpath(회차))},
                                ensure_ascii=False) + "\n")
         for obj in 파싱:

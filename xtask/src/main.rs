@@ -3034,8 +3034,13 @@ const 회차_뿌리: &str = ".palimpsest/rounds";
 /// 발견 레코드의 이름.
 const 레코드_이름: &str = "findings.jsonl";
 
-/// enum 이 사는 **유일한 자리**. 이 검사는 여기에 물어보고, 파이썬 소스를 정규식으로
-/// 안 긁는다. 두 곳에 적으면 갈리고 갈린 것을 대는 장치가 없다.
+/// 스키마와 **한 줄의 정합 규칙**이 사는 유일한 자리. 이 검사는 `check` 를 **불러서**
+/// 위임하고 파이썬 소스를 정규식으로 안 긁는다. 두 곳에 적으면 갈리고 갈린 것을 대는
+/// 장치가 없다.
+///
+/// ⚠ 앞 판은 여기에 *"`--schema` 를 불러서 읽는다"* 라 적었는데 **R9 의 위임 뒤로는
+/// `check` 만 부른다.** 주석이 구현과 갈렸고 독립 리뷰가 그것을 「사실이 아닌 것을
+/// 사실로」로 판정했다.
 const 스키마_원천: &str = ".claude/skills/round/bin/record.py";
 
 /// **파이썬 실행자를 찾는 한 자리.**
@@ -3142,8 +3147,20 @@ fn 반환문_항_수(출처: &str, text: &str) -> usize {
         if line.starts_with("### ") {
             시나리오 += 1;
             기각_절 = false;
-        } else if 기각_절 && line.starts_with("- ") {
-            기각 += 1;
+        } else if 기각_절 {
+            // ★ **불릿이든 표든 센다.** (정정 2026-08-19 · 독립 리뷰 3 라운드)
+            //   같은 회차가 사전부검자 정의를 고쳐 *"기각한 것도 같은 표로 내라"* 고
+            //   시켜 놓고 검산은 **불릿만** 셌다. 다음 사전부검이 규약대로 표를 내면
+            //   기각 행이 전부 0 으로 세어져 **거짓 실패**하고, 초록으로 만드는 유일한
+            //   길이 「레코드에서 기각 행을 지우는 것」이 된다 — 그것이 #72 가 고치려던 병이다.
+            let s = line.trim_start();
+            if s.starts_with("- ") {
+                기각 += 1;
+            } else if s.starts_with('|') && !s.starts_with("| #") && !s.starts_with("|-")
+                && !s.starts_with("| -") && !s.starts_with("|:")
+            {
+                기각 += 1;
+            }
         }
     }
     시나리오 + 기각
@@ -3189,6 +3206,16 @@ fn check_round_records(root: &Path) -> Result<String> {
                 if !첫줄.contains("\"schema_version\"") {
                     problems.push(format!("{상대}: 머리 줄에 `schema_version` 이 없다"));
                 }
+                // ★ **자기 「종류」를 선언해야 한다.** (2026-08-19 · 독립 리뷰 3 라운드)
+                //   앞 판은 `findings.jsonl` 이라는 **이름**만 행 검증을 받았고, 다른
+                //   `.jsonl` 은 머리 줄만 보고 통과하면서 `산출 N개` 에는 세어져
+                //   **「쟀다」로 보였다.** 이름이 아니라 선언이 갈라야 한다.
+                if !첫줄.contains("\"종류\"") {
+                    problems.push(format!(
+                        "{상대}: 머리 줄에 `종류` 가 없다 — `레코드` 인지 `예외표` 인지 \
+                         선언해야 행 검증을 어느 자로 잴지 정해진다"
+                    ));
+                }
             }
             "tsv" => {
                 if 첫줄.starts_with('#') || !첫줄.contains('\t') {
@@ -3230,7 +3257,18 @@ fn check_round_records(root: &Path) -> Result<String> {
     if !원천.exists() {
         bail!("스키마 원천이 없다: {스키마_원천}");
     }
-    let 레코드들: Vec<&PathBuf> = 산출.iter().filter(|p| p.ends_with(레코드_이름)).collect();
+    // 이름이 아니라 **머리 줄의 선언**으로 고른다.
+    let mut 레코드들: Vec<&PathBuf> = Vec::new();
+    for p in &산출 {
+        if p.extension().and_then(|x| x.to_str()) != Some("jsonl") {
+            continue;
+        }
+        let text = std::fs::read_to_string(p)?;
+        let 첫줄 = text.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+        if 첫줄.contains("\"종류\": \"레코드\"") {
+            레코드들.push(p);
+        }
+    }
     if !레코드들.is_empty() {
         let out = std::process::Command::new(파이썬)
             .arg(&원천)
@@ -3239,11 +3277,24 @@ fn check_round_records(root: &Path) -> Result<String> {
             .output()
             .with_context(|| format!("`{파이썬} {스키마_원천} check` 를 못 돌렸다"))?;
         if !out.status.success() {
+            let mut 실었나 = false;
             for line in String::from_utf8_lossy(&out.stderr).lines() {
                 let l = line.trim();
                 if !l.is_empty() {
                     problems.push(l.trim_start_matches("✗ ").to_string());
+                    실었나 = true;
                 }
+            }
+            // ★ **rc 를 버리지 않는다.** (정정 2026-08-19 · 독립 리뷰 3 라운드)
+            //   앞 판은 실패 신호를 stderr 텍스트에서만 읽어서, **rc≠0 인데 stderr 가
+            //   비면 검사가 초록**이었다. 규약이 *"`rc` 는 판정이 아니다"* 라고 적은 것은
+            //   **rc 만으로 판정하지 말라**는 뜻이지 **rc 를 무시하라**는 뜻이 아니다.
+            if !실었나 {
+                problems.push(format!(
+                    "`{스키마_원천} check` 가 rc={} 로 실패했는데 아무 말도 안 했다 — \
+                     원천이 고장났다",
+                    out.status.code().unwrap_or(-1)
+                ));
             }
         }
     }
@@ -3256,7 +3307,7 @@ fn check_round_records(root: &Path) -> Result<String> {
     let mut 쌍_수: std::collections::BTreeMap<(String, String, i64), usize> = Default::default();
     let mut 좌표_해소_실패 = Vec::new();
     let mut 총_행 = 0usize;
-    for p in 산출.iter().filter(|p| p.ends_with(레코드_이름)) {
+    for p in 레코드들.iter().copied() {
         let 상대 = 상대_경로(root, p);
         let text = std::fs::read_to_string(p)?;
         for (i, line) in text.lines().enumerate() {
