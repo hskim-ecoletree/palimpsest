@@ -1,0 +1,401 @@
+# Rust 심볼 리콜 표본 — **손으로 센 선언 목록**
+#
+# 합격선 정본: corpus/criteria.toml [rust.oracle] · 판정: docs/gates/rust-extractor.md
+# 회차: .palimpsest/rounds/2026-08-20-rust-extractor/
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 이 파일이 무엇인가 — **개수가 아니라 목록이다**
+# ─────────────────────────────────────────────────────────────────────────────
+# 개수만 맞추면 하나를 빠뜨리고 하나를 잘못 잡은 파일이 통과한다. 대조는 **집합
+# 비교**이고 빠뜨린 것 0 · 잘못 잡은 것 0 이 둘 다 합격선이다.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 순서 — **이 파일이 추출기 코드보다 먼저 커밋된다**
+# ─────────────────────────────────────────────────────────────────────────────
+# 이 파일이 커밋되는 시점에 `crates/pal-extract/src/rust.rs` 는 **한 줄도 없다.**
+# 아래 목록은 전부 소스를 읽어 센 것이고 **어떤 도구의 산출도 참조하지 않았다** —
+# tree-sitter 도, rust-analyzer 도, `syn` 도.
+#
+# 나중에 어긋난 것이 나오면 **어긋난 것을 게이트에 적는다.** 이 파일을 고쳐 맞추지
+# 않는다 — 그것이 이 회차가 등록한 금지역이다(`intent.md` §금지역).
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 코퍼스와 표본 선정 — **규칙이 고른다**
+# ─────────────────────────────────────────────────────────────────────────────
+# 코퍼스  rust-lang/cargo @ 514c56dd7321eecbfdcf9b6479519cf4edfab906
+#         **팁을 쓰면 안 된다** — 코퍼스는 팁이 아니라 이 SHA 다.
+#
+# 모집단  `git ls-tree -r --name-only <sha> | grep '\.rs$' | grep -v '^tests/testsuite/'`
+#         → **380**
+#         · 전체 `.rs` 는 1,372 이고 그중 **992 가 `tests/testsuite/`** 다.
+#           그것을 빼는 까닭: 통합시험은 `snapbox` 의 `str![[r#"…"#]]` 구문을 써서
+#           **992 중 512 가 파싱 오류**를 낸다. 「추출이 정확한가」가 아니라
+#           「그 구문을 읽는가」를 재게 된다
+#         · ⚠ 남은 380 안에도 **시험/벤치 지원 코드 24 파일**이 있다
+#           (`cargo-test-support` 11 · `resolver-tests` 7 · `benchsuite` 5 · `tests/` 1).
+#           **빼지 않는다** — 규칙이 고른 것을 사후에 빼면 그것이 사후 조정이다.
+#           그 사실을 여기 적어 판정이 읽게 한다
+#         · ⚠ 380 중 **6 파일에 파싱 오류**가 있다(ERROR 마디 43).
+#           `classify` 가 그것을 `partial` 로 보내므로 **정확도의 분모가 380 이 아니다**
+#
+# 선정    경로 **LC_ALL=C 정렬** 후 등간격. F02-1 과 같은 규칙이다:
+#           g = floor(380 / 12) = 31 → 0-기반 인덱스 0·31·62·… → **13 파일**
+#         재현:
+#           git -C <cargo> ls-tree -r --name-only 514c56dd \
+#             | grep '\.rs$' | grep -v '^tests/testsuite/' \
+#             | LC_ALL=C sort | awk 'NR%31==1'
+#
+#         **왜 12 인가**: F02-1 은 496 파일에서 20 개를 뽑아 172 선언을 얻었다
+#         (파일당 8.6). cargo 는 380 파일에 7,620 선언(파일당 20)이라 12 로도
+#         같은 급이 나온다. **수를 보고 정한 것이 아니라 밀도를 보고 정했다.**
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 세는 단위 — **여기서 정하고 코드가 따른다**
+# ─────────────────────────────────────────────────────────────────────────────
+# 세는 것 (kind 값)
+#   function     `fn` — 최상위 · `impl` 안 · `mod` 안 · trait 의 **기본 구현**(본문 있음)
+#                `async`·`unsafe`·`const`·`extern` 수식 무관. `pub` 여부 무관
+#   struct       `struct` — 튜플 구조체·유닛 구조체 포함
+#   enum         `enum`
+#   trait        `trait`
+#   type_alias   `type` — 최상위와 `impl`/`trait` 안의 연관 타입 **둘 다**
+#   const        `const` — 연관 상수 포함
+#   static       `static`
+#   module       `mod` — 인라인(`mod m { … }`)과 파일 참조(`mod m;`) **둘 다**
+#   macro        `macro_rules!`
+#   union        `union`
+#
+# 세지 않는 것 — **이 여덟이 이 표본에서 하중을 진다**
+#   ① **`impl` 블록은 심볼이 아니다.** 이름이 없다. **컨테이너로만** 쓴다.
+#      ⚠ 이 회차는 컨테이너 이름을 **대상 타입 이름 하나**로 적는다
+#      (`impl From<A> for Error` → `Error`). 그래서 `impl Error` 와
+#      `impl From<A> for Error` 안의 동명 함수가 **같은 체인**을 갖는다.
+#      그것이 R-16 이 적은 충돌이고 **이 회차의 범위 밖**이다(분할 I2)
+#      ★ **그 이름에서 벗기는 것 셋** (표본 작성이 판단으로 메운 자리를 규칙으로 올린다):
+#        · **타입 인자와 수명** — `impl BuildContext<'_, '_>` → `BuildContext`
+#        · **경로 자격** — `impl fmt::Display for X` → `X`
+#        · **참조·포인터** — `impl Trait for &T` → `T`
+#      대상 타입이 이름을 안 갖는 형태(`impl Trait for (A, B)` 같은 튜플·배열·
+#      함수 포인터)는 **이 표본 13 파일에 하나도 없다** — 없다는 사실을 적어 둔다
+#   ② **함수 내부의 어떤 선언도 세지 않는다.** `fn` 안의 `let`·`fn`·`struct`·`const`
+#      전부. 폭발을 막는 규칙이고 F02-1 의 ②와 같은 자다
+#      ★ **클로저는 어디에 있든 심볼이 아니다** — `let size_opt = |x| …` 처럼
+#      이름에 묶여도 그렇다. `fn` 이 아니기 때문이고, F02-1 의 ①(익명 함수는
+#      독립 심볼이 아니다)과 같은 자다
+#      ★ **`return` 뒤에 오는 진짜 아이템 선언도 안 센다.** Rust 는 함수 본문 어디에나
+#      `fn`·`struct`·`const` 를 놓을 수 있고 그것은 클로저가 아니라 아이템이다.
+#      그래도 **함수 안이면 안 센다** — 가르는 것은 「아이템인가」가 아니라
+#      **「함수 안인가」**다. (표본 작성이 *"이 파일에서 가장 큰 단일 판단"* 이라
+#      지목했다: 넣었으면 69 가 아니라 73 이었다)
+#   ③ **`use` 는 이 파일의 선언이 아니다** — `ImportSet` 의 몫이다.
+#      `pub use` 재수출도 마찬가지다
+#   ④ **구조체 필드·enum 배리언트는 심볼이 아니다.** F02-1 이 인터페이스 속성을
+#      안 센 것과 같은 자리다
+#   ⑤ **trait 의 메서드 시그니처(본문 없음)는 심볼이 아니다.** 기본 구현은 센다 —
+#      가르는 것은 **본문의 유무**다
+#   ⑥ **`extern` 블록 안의 항목**은 세지 않는다
+#   ⑦ **매크로 호출이 만드는 것은 세지 않는다.** 추출기가 매크로를 확장하지 않는다.
+#      ★ **이름이 소스에 문자로 보여도 안 센다** — `criterion_group!(benches, …)` 의
+#      `benches` 가 그 형태다. 가르는 것은 **`macro_rules!` 정의냐 호출이냐**이지
+#      이름이 보이느냐가 아니다. (표본 작성이 *"가장 헷갈리는 자리"* 로 지목했다)
+#      ★ **`macro_rules!` 의 본문 안에 있는 `fn` 도 안 센다** — `fn $field(…)` 는
+#      선언이 아니라 **틀**이다. 정의 자체만 `macro` 한 줄로 센다.
+#      (`package_field_getter!` 가 그 형태이고 호출이 게터 14 개를 만든다)
+#   ⑧ **`#[cfg(...)]` 로 꺼진 코드도 센다.** 추출기는 `cfg` 를 해석하지 않는다 —
+#      소유자 지시(2026-08-20 · *"번복할게 #[cfg(test)] 도 진행해"*).
+#      `#[cfg(test)] mod tests` 와 그 안의 `fn` 이 전부 들어온다
+#      ⚠ **이 규칙은 이 표본에서 하중을 거의 안 진다** — 13 파일 중 `cfg(test)` 를
+#      가진 것이 매우 적다(표본 작성 실측: 큰 파일 넷에는 **0 건**).
+#      **자기 저장소에서는 다르다** — 선언 2,778 중 **629(22%)** 가 그 안이다.
+#      그러므로 이 규칙의 음성 대조는 **cargo 표본이 아니라 자기 저장소**가 진다
+#
+# 속성(`#[...]`)은 선언의 일부가 아니다 — 별개 마디이고 **이름을 안 바꾼다.**
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 열
+# ─────────────────────────────────────────────────────────────────────────────
+#   path       cargo 저장소 루트 기준 경로
+#   ordinal    **소스 순서**, 파일마다 1 부터. 선언 시작 위치 오름차순.
+#              ★ **속성은 시작 위치에 안 든다** — `#[instrument] fn f` 의 위치는
+#              `fn` 의 시작 바이트다. 속성까지 넣으면 앞 선언과 겹치는 파일에서
+#              순서가 갈린다
+#   container  포함 관계. 최상위면 `-`, 아니면 조상 이름을 `.` 로 이은 것
+#              (예: `mod parser { impl Foo { fn bar } }` → `parser.Foo`)
+#   name       선언된 이름
+#   kind       위 열 중 하나
+#
+# 선언 0 인 파일은 **`ordinal` 이 0 인 한 줄**(`kind=none`)로 적는다.
+# 빠뜨린 것과 구별되어야 한다.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# 합계 — 13 파일 · 선언 (아래 데이터 행이 정본이고 여기 수를 안 적는다)
+# ─────────────────────────────────────────────────────────────────────────────
+path	ordinal	container	name	kind
+benches/benchsuite/benches/global_cache_tracker.rs	1	-	GLOBAL_CACHE_SAMPLE	const
+benches/benchsuite/benches/global_cache_tracker.rs	2	-	GLOBAL_CACHE_RANDOM	const
+benches/benchsuite/benches/global_cache_tracker.rs	3	-	root	function
+benches/benchsuite/benches/global_cache_tracker.rs	4	-	cargo_home	function
+benches/benchsuite/benches/global_cache_tracker.rs	5	-	initialize_context	function
+benches/benchsuite/benches/global_cache_tracker.rs	6	-	global_tracker_init	function
+benches/benchsuite/benches/global_cache_tracker.rs	7	-	global_tracker_empty_save	function
+benches/benchsuite/benches/global_cache_tracker.rs	8	-	load_random_sample	function
+benches/benchsuite/benches/global_cache_tracker.rs	9	-	global_tracker_update	function
+crates/cargo-util-schemas/src/core/mod.rs	1	-	package_id_spec	module
+crates/cargo-util-schemas/src/core/mod.rs	2	-	partial_version	module
+crates/cargo-util-schemas/src/core/mod.rs	3	-	source_kind	module
+crates/mdman/src/lib.rs	1	-	format	module
+crates/mdman/src/lib.rs	2	-	hbs	module
+crates/mdman/src/lib.rs	3	-	util	module
+crates/mdman/src/lib.rs	4	-	ManMap	type_alias
+crates/mdman/src/lib.rs	5	-	Section	type_alias
+crates/mdman/src/lib.rs	6	-	Format	enum
+crates/mdman/src/lib.rs	7	Format	extension	function
+crates/mdman/src/lib.rs	8	-	convert	function
+crates/mdman/src/lib.rs	9	-	EventIter	type_alias
+crates/mdman/src/lib.rs	10	-	md_parser	function
+crates/mdman/src/lib.rs	11	-	join_url	function
+crates/mdman/src/lib.rs	12	-	extract_section	function
+crates/rustfix/tests/everything/multiple-solutions.rs	1	-	main	function
+src/bin/cargo/commands/clean.rs	1	-	cli	function
+src/bin/cargo/commands/clean.rs	2	-	exec	function
+src/bin/cargo/commands/clean.rs	3	-	gc	function
+src/bin/cargo/commands/update.rs	1	-	cli	function
+src/bin/cargo/commands/update.rs	2	-	exec	function
+src/compiler/rustdoc.rs	1	-	DOCS_RS_URL	const
+src/compiler/rustdoc.rs	2	-	RustdocExternMode	enum
+src/compiler/rustdoc.rs	3	RustdocExternMode	from	function
+src/compiler/rustdoc.rs	4	RustdocExternMode	fmt	function
+src/compiler/rustdoc.rs	5	RustdocExternMode	deserialize	function
+src/compiler/rustdoc.rs	6	-	RustdocExternMap	struct
+src/compiler/rustdoc.rs	7	RustdocExternMap	default	function
+src/compiler/rustdoc.rs	8	-	default_crates_io_to_docs_rs	function
+src/compiler/rustdoc.rs	9	RustdocExternMap	hash	function
+src/compiler/rustdoc.rs	10	-	build_all_urls	function
+src/compiler/rustdoc.rs	11	-	add_root_urls	function
+src/compiler/rustdoc.rs	12	-	add_output_format	function
+src/compiler/rustdoc.rs	13	-	RustdocScrapeExamples	enum
+src/compiler/rustdoc.rs	14	RustdocScrapeExamples	is_enabled	function
+src/compiler/rustdoc.rs	15	RustdocScrapeExamples	is_unset	function
+src/compiler/rustdoc.rs	16	BuildContext	scrape_units_have_dep_on	function
+src/compiler/rustdoc.rs	17	BuildContext	unit_can_fail_for_docscraping	function
+src/diagnostics/rules/non_kebab_case_features.rs	1	-	LINT	static
+src/diagnostics/rules/non_kebab_case_features.rs	2	-	lint_package	function
+src/diagnostics/rules/non_kebab_case_features.rs	3	-	lint_package_inner	function
+src/ops/cargo_pkgid.rs	1	-	pkgid	function
+src/resolver/context.rs	1	-	ResolverContext	struct
+src/resolver/context.rs	2	-	ContextAge	type_alias
+src/resolver/context.rs	3	-	Activations	type_alias
+src/resolver/context.rs	4	ResolverContext	new	function
+src/resolver/context.rs	5	ResolverContext	flag_activated	function
+src/resolver/context.rs	6	ResolverContext	is_active	function
+src/resolver/context.rs	7	ResolverContext	is_conflicting	function
+src/resolver/context.rs	8	ResolverContext	resolve_replacements	function
+src/resolver/context.rs	9	ResolverContext	graph	function
+src/util/command_prelude.rs	1	-	heading	module
+src/util/command_prelude.rs	2	heading	PACKAGE_SELECTION	const
+src/util/command_prelude.rs	3	heading	TARGET_SELECTION	const
+src/util/command_prelude.rs	4	heading	FEATURE_SELECTION	const
+src/util/command_prelude.rs	5	heading	COMPILATION_OPTIONS	const
+src/util/command_prelude.rs	6	heading	MANIFEST_OPTIONS	const
+src/util/command_prelude.rs	7	-	CommandExt	trait
+src/util/command_prelude.rs	8	CommandExt	arg_package_spec	function
+src/util/command_prelude.rs	9	CommandExt	arg_package_spec_no_all	function
+src/util/command_prelude.rs	10	CommandExt	arg_package_spec_simple	function
+src/util/command_prelude.rs	11	CommandExt	arg_package	function
+src/util/command_prelude.rs	12	CommandExt	arg_parallel	function
+src/util/command_prelude.rs	13	CommandExt	arg_jobs	function
+src/util/command_prelude.rs	14	CommandExt	arg_unsupported_keep_going	function
+src/util/command_prelude.rs	15	CommandExt	arg_redundant_default_mode	function
+src/util/command_prelude.rs	16	CommandExt	arg_targets_all	function
+src/util/command_prelude.rs	17	CommandExt	arg_targets_lib_bin_example	function
+src/util/command_prelude.rs	18	CommandExt	arg_targets_bins_examples	function
+src/util/command_prelude.rs	19	CommandExt	arg_targets_bin_example	function
+src/util/command_prelude.rs	20	CommandExt	arg_features	function
+src/util/command_prelude.rs	21	CommandExt	arg_release	function
+src/util/command_prelude.rs	22	CommandExt	arg_profile	function
+src/util/command_prelude.rs	23	CommandExt	arg_doc	function
+src/util/command_prelude.rs	24	CommandExt	arg_target_triple	function
+src/util/command_prelude.rs	25	CommandExt	arg_target_triple_with_candidates	function
+src/util/command_prelude.rs	26	CommandExt	arg_target_dir	function
+src/util/command_prelude.rs	27	CommandExt	arg_manifest_path	function
+src/util/command_prelude.rs	28	CommandExt	arg_manifest_path_without_unsupported_path_tip	function
+src/util/command_prelude.rs	29	CommandExt	arg_message_format	function
+src/util/command_prelude.rs	30	CommandExt	arg_unit_graph	function
+src/util/command_prelude.rs	31	CommandExt	arg_new_opts	function
+src/util/command_prelude.rs	32	CommandExt	arg_registry	function
+src/util/command_prelude.rs	33	CommandExt	arg_index	function
+src/util/command_prelude.rs	34	CommandExt	arg_dry_run	function
+src/util/command_prelude.rs	35	CommandExt	arg_ignore_rust_version	function
+src/util/command_prelude.rs	36	CommandExt	arg_ignore_rust_version_with_help	function
+src/util/command_prelude.rs	37	CommandExt	arg_future_incompat_report	function
+src/util/command_prelude.rs	38	CommandExt	arg_silent_suggestion	function
+src/util/command_prelude.rs	39	CommandExt	arg_timings	function
+src/util/command_prelude.rs	40	CommandExt	arg_artifact_dir	function
+src/util/command_prelude.rs	41	CommandExt	arg_compile_time_deps	function
+src/util/command_prelude.rs	42	Command	_arg	function
+src/util/command_prelude.rs	43	-	flag	function
+src/util/command_prelude.rs	44	-	opt	function
+src/util/command_prelude.rs	45	-	optional_opt	function
+src/util/command_prelude.rs	46	-	optional_multi_opt	function
+src/util/command_prelude.rs	47	-	multi_opt	function
+src/util/command_prelude.rs	48	-	subcommand	function
+src/util/command_prelude.rs	49	-	ProfileChecking	enum
+src/util/command_prelude.rs	50	-	ArgMatchesExt	trait
+src/util/command_prelude.rs	51	ArgMatchesExt	value_of_u32	function
+src/util/command_prelude.rs	52	ArgMatchesExt	value_of_i32	function
+src/util/command_prelude.rs	53	ArgMatchesExt	value_of_path	function
+src/util/command_prelude.rs	54	ArgMatchesExt	root_manifest	function
+src/util/command_prelude.rs	55	ArgMatchesExt	workspace	function
+src/util/command_prelude.rs	56	ArgMatchesExt	jobs	function
+src/util/command_prelude.rs	57	ArgMatchesExt	verbose	function
+src/util/command_prelude.rs	58	ArgMatchesExt	dry_run	function
+src/util/command_prelude.rs	59	ArgMatchesExt	keep_going	function
+src/util/command_prelude.rs	60	ArgMatchesExt	honor_rust_version	function
+src/util/command_prelude.rs	61	ArgMatchesExt	targets	function
+src/util/command_prelude.rs	62	ArgMatchesExt	get_profile_name	function
+src/util/command_prelude.rs	63	ArgMatchesExt	packages_from_flags	function
+src/util/command_prelude.rs	64	ArgMatchesExt	compile_options	function
+src/util/command_prelude.rs	65	ArgMatchesExt	cli_features	function
+src/util/command_prelude.rs	66	ArgMatchesExt	compile_options_for_single_package	function
+src/util/command_prelude.rs	67	ArgMatchesExt	new_options	function
+src/util/command_prelude.rs	68	ArgMatchesExt	registry_or_index	function
+src/util/command_prelude.rs	69	ArgMatchesExt	registry	function
+src/util/command_prelude.rs	70	ArgMatchesExt	check_optional_opts	function
+src/util/command_prelude.rs	71	ArgMatchesExt	is_present_with_zero_values	function
+src/util/command_prelude.rs	72	ArgMatches	flag	function
+src/util/command_prelude.rs	73	ArgMatches	maybe_flag	function
+src/util/command_prelude.rs	74	ArgMatches	_value_of	function
+src/util/command_prelude.rs	75	ArgMatches	_value_of_os	function
+src/util/command_prelude.rs	76	ArgMatches	_values_of	function
+src/util/command_prelude.rs	77	ArgMatches	_values_of_os	function
+src/util/command_prelude.rs	78	ArgMatches	_count	function
+src/util/command_prelude.rs	79	ArgMatches	_contains	function
+src/util/command_prelude.rs	80	-	values	function
+src/util/command_prelude.rs	81	-	values_os	function
+src/util/command_prelude.rs	82	-	root_manifest	function
+src/util/command_prelude.rs	83	-	get_registry_candidates	function
+src/util/command_prelude.rs	84	-	get_profile_candidates	function
+src/util/command_prelude.rs	85	-	get_workspace_profile_candidates	function
+src/util/command_prelude.rs	86	-	default_profile_candidates	function
+src/util/command_prelude.rs	87	-	get_feature_candidates	function
+src/util/command_prelude.rs	88	-	get_crate_candidates	function
+src/util/command_prelude.rs	89	-	get_target_triples	function
+src/util/command_prelude.rs	90	-	get_target_triples_with_all	function
+src/util/command_prelude.rs	91	-	get_target_triples_from_rustup	function
+src/util/command_prelude.rs	92	-	get_target_triples_from_rustc	function
+src/util/command_prelude.rs	93	-	get_ws_member_candidates	function
+src/util/command_prelude.rs	94	-	get_ws_member_packages	function
+src/util/command_prelude.rs	95	-	get_pkg_id_spec_candidates	function
+src/util/command_prelude.rs	96	-	get_pkg_name_candidates	function
+src/util/command_prelude.rs	97	-	get_packages	function
+src/util/command_prelude.rs	98	-	get_direct_dependencies_pkg_name_candidates	function
+src/util/command_prelude.rs	99	-	get_dependencies_from_metadata	function
+src/util/command_prelude.rs	100	-	new_gctx_for_completions	function
+src/util/command_prelude.rs	101	-	ignore_unknown	function
+src/util/command_prelude.rs	102	-	CommandInfo	enum
+src/util/network/http_async.rs	1	-	Response	type_alias
+src/util/network/http_async.rs	2	-	Request	type_alias
+src/util/network/http_async.rs	3	-	HttpResult	type_alias
+src/util/network/http_async.rs	4	-	Error	enum
+src/util/network/http_async.rs	5	-	Message	struct
+src/util/network/http_async.rs	6	-	Stats	struct
+src/util/network/http_async.rs	7	-	Client	struct
+src/util/network/http_async.rs	8	Client	new	function
+src/util/network/http_async.rs	9	Client	request_blocking	function
+src/util/network/http_async.rs	10	Client	request	function
+src/util/network/http_async.rs	11	Client	request_helper	function
+src/util/network/http_async.rs	12	Client	bytes_pending	function
+src/util/network/http_async.rs	13	Client	drop	function
+src/util/network/http_async.rs	14	Client	fmt	function
+src/util/network/http_async.rs	15	-	WorkerServer	struct
+src/util/network/http_async.rs	16	WorkerServer	run	function
+src/util/network/http_async.rs	17	WorkerServer	fail_and_drain	function
+src/util/network/http_async.rs	18	WorkerServer	process_response	function
+src/util/network/http_async.rs	19	WorkerServer	reset_low_speed_timeout	function
+src/util/network/http_async.rs	20	WorkerServer	check_low_speed_timeout	function
+src/util/network/http_async.rs	21	WorkerServer	worker_loop	function
+src/util/network/http_async.rs	22	WorkerServer	enqueue_request	function
+src/util/network/http_async.rs	23	-	Collector	struct
+src/util/network/http_async.rs	24	Collector	new	function
+src/util/network/http_async.rs	25	Collector	write	function
+src/util/network/http_async.rs	26	Collector	header	function
+src/util/network/http_async.rs	27	Collector	read	function
+src/util/network/http_async.rs	28	Collector	debug	function
+src/util/network/http_async.rs	29	Collector	progress	function
+src/util/network/http_async.rs	30	Collector	drop	function
+src/util/network/http_async.rs	31	-	Extensions	struct
+src/util/network/http_async.rs	32	-	ResponsePartsExtensions	trait
+src/util/network/http_async.rs	33	Parts	client_ip	function
+src/util/network/http_async.rs	34	Parts	effective_url	function
+src/util/network/http_async.rs	35	Response	client_ip	function
+src/util/network/http_async.rs	36	Response	effective_url	function
+src/util/network/http_async.rs	37	-	handle_http_header	function
+src/workspace/parser/mod.rs	1	-	embedded	module
+src/workspace/parser/mod.rs	2	-	targets	module
+src/workspace/parser/mod.rs	3	-	is_embedded	function
+src/workspace/parser/mod.rs	4	-	read_manifest	function
+src/workspace/parser/mod.rs	5	-	make_document_owned	function
+src/workspace/parser/mod.rs	6	-	read_toml_string	function
+src/workspace/parser/mod.rs	7	-	parse_document	function
+src/workspace/parser/mod.rs	8	-	deserialize_toml	function
+src/workspace/parser/mod.rs	9	-	stringify	function
+src/workspace/parser/mod.rs	10	-	to_workspace_config	function
+src/workspace/parser/mod.rs	11	-	to_workspace_root_config	function
+src/workspace/parser/mod.rs	12	-	normalize_toml	function
+src/workspace/parser/mod.rs	13	-	normalize_patch	function
+src/workspace/parser/mod.rs	14	-	normalize_package_toml	function
+src/workspace/parser/mod.rs	15	-	normalize_package_readme	function
+src/workspace/parser/mod.rs	16	-	DEFAULT_README_FILES	const
+src/workspace/parser/mod.rs	17	-	default_readme_from_package_root	function
+src/workspace/parser/mod.rs	18	-	normalize_features	function
+src/workspace/parser/mod.rs	19	-	normalize_dependencies	function
+src/workspace/parser/mod.rs	20	-	normalize_path_dependency	function
+src/workspace/parser/mod.rs	21	-	load_inheritable_fields	function
+src/workspace/parser/mod.rs	22	-	inheritable_from_path	function
+src/workspace/parser/mod.rs	23	-	package_field_getter	macro
+src/workspace/parser/mod.rs	24	-	InheritableFields	struct
+src/workspace/parser/mod.rs	25	InheritableFields	get_dependency	function
+src/workspace/parser/mod.rs	26	InheritableFields	lints	function
+src/workspace/parser/mod.rs	27	InheritableFields	license_file	function
+src/workspace/parser/mod.rs	28	InheritableFields	readme	function
+src/workspace/parser/mod.rs	29	InheritableFields	ws_root	function
+src/workspace/parser/mod.rs	30	-	field_inherit_with	function
+src/workspace/parser/mod.rs	31	-	lints_inherit_with	function
+src/workspace/parser/mod.rs	32	-	dependency_inherit_with	function
+src/workspace/parser/mod.rs	33	-	inner_dependency_inherit_with	function
+src/workspace/parser/mod.rs	34	-	deprecated_ws_default_features	function
+src/workspace/parser/mod.rs	35	-	to_real_manifest	function
+src/workspace/parser/mod.rs	36	-	missing_dep_diagnostic	function
+src/workspace/parser/mod.rs	37	-	to_virtual_manifest	function
+src/workspace/parser/mod.rs	38	-	validate_dependencies	function
+src/workspace/parser/mod.rs	39	-	ManifestContext	struct
+src/workspace/parser/mod.rs	40	-	gather_dependencies	function
+src/workspace/parser/mod.rs	41	-	replace	function
+src/workspace/parser/mod.rs	42	-	patch	function
+src/workspace/parser/mod.rs	43	-	config_patch_to_dependency	function
+src/workspace/parser/mod.rs	44	-	dep_to_dependency	function
+src/workspace/parser/mod.rs	45	-	to_dependency_source_id	function
+src/workspace/parser/mod.rs	46	-	lookup_path_base	function
+src/workspace/parser/mod.rs	47	-	ResolveToPath	trait
+src/workspace/parser/mod.rs	48	String	resolve	function
+src/workspace/parser/mod.rs	49	ConfigRelativePath	resolve	function
+src/workspace/parser/mod.rs	50	-	unique_build_targets	function
+src/workspace/parser/mod.rs	51	-	validate_profiles	function
+src/workspace/parser/mod.rs	52	-	validate_profile	function
+src/workspace/parser/mod.rs	53	-	validate_profile_layer	function
+src/workspace/parser/mod.rs	54	-	validate_profile_override	function
+src/workspace/parser/mod.rs	55	-	verify_lints	function
+src/workspace/parser/mod.rs	56	-	EXPECTED_LINT_CONFIG	static
+src/workspace/parser/mod.rs	57	-	warn_for_cargo_lint_feature	function
+src/workspace/parser/mod.rs	58	-	lints_to_rustflags	function
+src/workspace/parser/mod.rs	59	-	emit_frontmatter_diagnostic	function
+src/workspace/parser/mod.rs	60	-	emit_toml_diagnostic	function
+src/workspace/parser/mod.rs	61	-	deprecated_underscore	function
+src/workspace/parser/mod.rs	62	-	warn_on_unused	function
+src/workspace/parser/mod.rs	63	-	unused_dep_keys	function
+src/workspace/parser/mod.rs	64	-	prepare_for_publish	function
+src/workspace/parser/mod.rs	65	-	prepare_toml_for_publish	function
+src/workspace/parser/mod.rs	66	-	prepare_targets_for_publish	function
+src/workspace/parser/mod.rs	67	-	prepare_target_for_publish	function
+src/workspace/parser/mod.rs	68	-	normalize_path_sep	function
+src/workspace/parser/mod.rs	69	-	normalize_path_string_sep	function
