@@ -14,6 +14,7 @@ mod narrative;
 mod parse;
 mod plan;
 mod recognize;
+mod rust;
 mod scopes;
 mod shell;
 mod typescript;
@@ -29,6 +30,7 @@ pub use parse::{ExtractError, MarkedComment, marked_comments};
 // **계획 문서 인입** — 조각화는 [`fragment`] 를 그대로 쓰고 좌표 추출만 F12 가 세운다.
 pub use plan::ingest_plan;
 pub use recognize::{Recognition, recognize};
+pub use rust::RustExtractor;
 pub use shell::{FIRST_CLASS, GraphShell, capability_axis, shell_of};
 pub use typescript::TypeScriptExtractor;
 

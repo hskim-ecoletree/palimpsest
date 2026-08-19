@@ -531,22 +531,33 @@ fn 모은다(
     out: &mut Vec<MarkedComment>,
 ) {
     let mut cursor = node.walk();
+    // **앞 그룹에 삼켜진 주석은 다시 안 본다.** 접기가 없던 판은 자식마다 독립이었다.
+    let mut 소비된_끝 = 0usize;
     for child in node.named_children(&mut cursor) {
         if child.kind().contains("comment") {
-            let Ok(text) = std::str::from_utf8(&source[child.byte_range()]) else { continue };
+            if child.start_byte() < 소비된_끝 {
+                continue;
+            }
+            // ★ **doc 주석만 접는다** — 그 밖은 앞 판 그대로 한 마디가 한 조각이다.
+            let 끝 = if doc_주석인가(child) { 이어지는_doc(child, source) } else { child };
+            소비된_끝 = 끝.end_byte();
+            let Ok(text) = std::str::from_utf8(&source[child.start_byte()..끝.end_byte()]) else {
+                continue;
+            };
             if markers.iter().any(|m| text.contains(m)) {
                 out.push(MarkedComment {
                     span: Span {
                         byte_start: child.start_byte(),
-                        byte_end: child.end_byte(),
+                        byte_end: 끝.end_byte(),
                         // **자르지 않고 포화시킨다** — 줄 번호는 표시용이고,
                         // `as` 로 자르면 큰 파일에서 조용히 0 이 된다.
                         line_start: u32::try_from(child.start_position().row + 1)
                             .unwrap_or(u32::MAX),
-                        line_end: u32::try_from(child.end_position().row + 1).unwrap_or(u32::MAX),
+                        line_end: u32::try_from(끝.end_position().row + 1).unwrap_or(u32::MAX),
                     },
                     text: text.to_owned(),
-                    attaches_to_byte: 다음_선언(child, source, wrappers),
+                    // **붙는 자리는 그룹의 마지막 주석이 정한다** — 첫 줄이 아니다.
+                    attaches_to_byte: 다음_선언(끝, source, wrappers),
                 });
             }
             continue;
@@ -555,11 +566,33 @@ fn 모은다(
     }
 }
 
+/// 주석과 선언 **사이에 끼어도 경계가 아닌** 마디들.
+///
+/// # 왜 「벗기기」가 아니라 「건너뛰기」인가
+///
+/// [`벗긴다`] 는 **포함 관계**를 벗기는 함수다 — `export_statement` 안에 선언이
+/// 들어 있으니 안으로 내려가면 된다. 그런데 Rust 의 속성은 **형제**다:
+///
+/// ```text
+/// line_comment[0..33]  ·  attribute_item[33..44]  ·  function_item[45..58]
+/// ```
+///
+/// `attribute_item` 을 래퍼 목록에 넣으면 그 **첫 이름 있는 자식**(`attribute`,
+/// 바이트 35)으로 내려가고 심볼이 서는 자리(45)와 여전히 다르다. **구조가 다르므로
+/// 처방도 달라야 한다** — 형제는 건너뛰는 것이지 벗기는 것이 아니다(#66 사전부검).
+///
+/// ⚠ **언어 축이 아니라 노드 이름이다.** `attribute_item` 은 tree-sitter-rust 의
+/// 고유 이름이고 Kotlin 은 `annotation`, TypeScript 는 `decorator` 다. 그래서 이
+/// 목록이 두 언어의 산출을 **구조적으로** 안 움직인다 — `parse.rs` 의
+/// *"언어마다 따로 쓰지 않는다"* 가 그대로 산다.
+const 건너뛴다: [&str; 1] = ["attribute_item"];
+
 /// 이 주석에 **인접한** 다음 선언의 시작 바이트 — **래퍼를 벗긴 자리**.
 ///
-/// 셋이 전부다: 주석을 건너뛰고, **빈 줄에서 멈추고**, **래퍼를 벗긴다.**
-/// 주석 블록이 여러 줄이면 그 전부가 같은 선언에 붙는다. 다음이 없거나 **빈 줄로
-/// 갈리면** [`None`] 이고, 그것이 *"이 주석에는 좌표가 없다"* 다.
+/// 넷이 전부다: 주석을 건너뛰고, **속성을 건너뛰고**, **빈 줄에서 멈추고**,
+/// **래퍼를 벗긴다.** 주석 블록이 여러 줄이면 그 전부가 같은 선언에 붙는다.
+/// 다음이 없거나 **빈 줄로 갈리면** [`None`] 이고, 그것이 *"이 주석에는 좌표가
+/// 없다"* 다.
 fn 다음_선언(comment: Node<'_>, source: &[u8], wrappers: &[&str]) -> Option<usize> {
     let mut 앞 = comment;
     let mut n = comment.next_named_sibling();
@@ -569,13 +602,45 @@ fn 다음_선언(comment: Node<'_>, source: &[u8], wrappers: &[&str]) -> Option<
         if 사이에_빈_줄(source, 앞.end_byte(), x.start_byte()) {
             return None;
         }
-        if !x.kind().contains("comment") {
+        if !x.kind().contains("comment") && !건너뛴다.contains(&x.kind()) {
             return Some(벗긴다(x, wrappers).start_byte());
         }
         앞 = x;
         n = x.next_named_sibling();
     }
     None
+}
+
+/// 이 주석이 **doc 주석**인가 — 문법이 직접 가른 것.
+///
+/// tree-sitter-rust 는 `///` 를 `(line_comment (outer_doc_comment_marker) (doc_comment))`
+/// 로 낸다. Kotlin·TypeScript 의 주석은 평평한 `comment` 라 이 자식이 없다 —
+/// 그래서 **아래 접기가 두 언어에 구조적으로 안 닿는다.**
+fn doc_주석인가(node: Node<'_>) -> bool {
+    node.child_by_field_name("doc").is_some()
+}
+
+/// 이 주석에 이어 붙는 doc 주석들의 **마지막 마디**.
+///
+/// # 왜 접는가
+///
+/// tree-sitter-rust 는 연속한 `///` 세 줄을 `line_comment` **세 개**로 낸다.
+/// TypeScript 의 `/** … */` 는 하나다. 안 접으면 ADR 하나를 세 줄에 걸쳐 인용한
+/// 주석이 **조각 3 개**가 되고, 같은 심볼에 같은 뜻의 결박이 3 건 생긴다 —
+/// 수가 부풀고 그 수가 종료 조건의 근거가 된다(#66 사전부검 R1).
+///
+/// ⚠ **`doc_comment` 자식이 있는 것끼리만 접는다.** 공용 수집기에 무조건 접기를
+/// 넣으면 TypeScript 의 `//` 연속이 함께 접혀 **단위시험이 빨개지고 ditto 표식이
+/// 330 → 327 로 준다**(사전부검 R2 실측) — 등록된 금지역 「두 언어 회귀」다.
+fn 이어지는_doc<'t>(first: Node<'t>, source: &[u8]) -> Node<'t> {
+    let mut last = first;
+    while let Some(next) = last.next_named_sibling() {
+        if !doc_주석인가(next) || 사이에_빈_줄(source, last.end_byte(), next.start_byte()) {
+            break;
+        }
+        last = next;
+    }
+    last
 }
 
 /// 두 자리 사이에 **공백만 있는 줄**이 하나라도 있는가.

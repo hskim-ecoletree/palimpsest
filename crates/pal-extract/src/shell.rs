@@ -30,12 +30,17 @@ use pal_core::{Capable, CapabilityId, FileGraph, Language};
 
 use crate::extractor::extractor_for;
 
-/// 1급 언어 넷 — 소유자 지시 2026-08-12 §1.
+/// 1급 언어 다섯 — 소유자 지시 2026-08-12 §1 · 2026-08-20 §1.
 ///
 /// **표가 늘면 여기가 함께 늘어야 능력 축이 전수가 된다.** 안 늘면 새 언어의 능력이
 /// 키에 안 실리고, 그 언어의 추출기를 세우는 커밋이 캐시를 무효화하지 못한다.
-pub const FIRST_CLASS: [Language; 4] =
-    [Language::Kotlin, Language::Java, Language::JavaScript, Language::TypeScript];
+///
+/// ⚠ **타입이 이 배열을 강제하지만 「올바른 편집」을 강제하지는 않는다.**
+/// `index_of` 의 전수 `match` 는 컴파일 오류를 내지만, 새 팔에 다음 번호만 주고
+/// 이 배열과 [`Shells`] 의 길이를 그대로 두면 **컴파일이 통과하고 `shell_of` 가
+/// 인덱스 범위 초과로 패닉한다.** 셋이 함께 움직여야 한다(#66 사전부검).
+pub const FIRST_CLASS: [Language; 5] =
+    [Language::Kotlin, Language::Java, Language::JavaScript, Language::TypeScript, Language::Rust];
 
 /// 빈 소스조차 못 읽는 빌드의 자리. **없을 자리이고, 없다고 가정하지 않는다.**
 ///
@@ -83,7 +88,7 @@ impl GraphShell {
     }
 }
 
-type Shells = [Capable<GraphShell>; 4];
+type Shells = [Capable<GraphShell>; 5];
 
 static SHELLS: OnceLock<Shells> = OnceLock::new();
 static AXIS: OnceLock<String> = OnceLock::new();
@@ -94,6 +99,7 @@ const fn index_of(language: Language) -> usize {
         Language::Java => 1,
         Language::JavaScript => 2,
         Language::TypeScript => 3,
+        Language::Rust => 4,
     }
 }
 

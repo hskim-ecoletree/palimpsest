@@ -32,7 +32,7 @@ use pal_core::{Language, LanguageId, SHEBANG_SCAN_BYTES};
 /// 여기 없는 확장자는 `Unrecognized` 다. 목록을 넓히는 것이 대장을 더 정직하게 만들지는
 /// 않는다 — 틀리게 인식하는 것보다 모른다고 적는 것이 낫다.
 const BY_EXTENSION: &[(&str, &str)] = &[
-    // 1급 넷 — `Language` 로도 잡힌다. 이름을 여기 한 번 더 적는 대신 아래에서 변환한다.
+    // 1급 다섯 — `Language` 로도 잡힌다. 이름을 여기 한 번 더 적는 대신 아래에서 변환한다.
     // 그 밖의 언어들:
     ("sql", "SQL"),
     ("md", "Markdown"),
@@ -54,7 +54,9 @@ const BY_EXTENSION: &[(&str, &str)] = &[
     ("scss", "SCSS"),
     ("py", "Python"),
     ("go", "Go"),
-    ("rs", "Rust"),
+    // ⚠ `("rs", "Rust")` 가 여기 있었다. `Language::from_extension("rs")` 가
+    // `Some(Rust)` 를 내면서 **도달 불가**가 됐다 — 위 주석이 *"이름을 여기 한 번 더
+    // 적는 대신"* 이라 못 박은 그 규율에 스스로 걸린 것이다(#66 사전부검).
     ("rb", "Ruby"),
     ("svelte", "Svelte"),
     ("vue", "Vue"),

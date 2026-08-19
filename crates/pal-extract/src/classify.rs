@@ -220,6 +220,18 @@ pub const fn grade_of(language: pal_core::Language) -> ExtractGrade {
         // 합쳤으면 여기서 Kotlin 이 딸려 올라가 `f01-verify` 의 등급 음성 대조가
         // 무의미해졌을 것이다.
         pal_core::Language::TypeScript => ExtractGrade::L2,
+        // F-rust 의 추출기 — **중첩 순회 + L1**(#66 · 소유자 지시 2026-08-20 §2).
+        //
+        // 순회는 `impl`·`mod` 안까지 들어가지만 **스코프 해소는 하지 않는다.**
+        // 둘은 다른 결정이고 처음에 하나로 접혀 있었다 — 표식이 `impl` 안에 있는 것을
+        // 잡는 데 필요한 것은 순회이지 스코프 체인이 아니다.
+        //
+        // **L1 을 고른 대가**: Rust 의 shadowing(`let x = 1; let x = f(x);` 가
+        // 관용이다)이 `ScopeChain::resolve` 의 「가장 앞선 것」 팔을 상시 경로로
+        // 만드는 문제가 구조적으로 사라진다. 대신 Rust 심볼의 `identity` 가 전부
+        // `Ordinal` 이 되어, **선언 순서에 취약한 것과 그냥 L1 인 것이 대장에서
+        // 같은 글자**가 된다(cargo 실측 6.1%). 그 갈림은 #66 의 분할이 진다.
+        pal_core::Language::Rust => ExtractGrade::L1,
         // 남은 둘(Java · JavaScript)은 추출기가 없으므로 이 함수에 도달하지 않는다.
         pal_core::Language::Java | pal_core::Language::JavaScript => ExtractGrade::L0,
     }

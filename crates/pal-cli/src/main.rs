@@ -546,8 +546,20 @@ fn symbols(path: &Path, json: bool, graph: bool) -> Result<()> {
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
     let Some(language) = Language::from_extension(ext) else {
         // **"언어를 모른다"와 "추출기가 없다"는 다르다.** 여기는 전자다.
+        // **목록을 손으로 적지 않는다**(ADR-0024). 코드가 이미 아는 것에서 렌더링한다 —
+        // 앞 판은 네 이름이 문자열에 박혀 있었고 어떤 시험도 그것을 안 봤다(#66 사전부검).
+        let 아는것: Vec<&str> = pal_extract::FIRST_CLASS.iter().map(|l| l.name()).collect();
         anyhow::bail!(
-            "확장자 `.{ext}` 를 언어로 알지 못한다 — 아는 것은 Kotlin · Java · JavaScript · TypeScript 넷이다"
+            "확장자 `.{ext}` 를 언어로 알지 못한다 — 아는 것은 {} {} 이다",
+            아는것.join(" · "),
+            match 아는것.len() {
+                1 => "하나",
+                2 => "둘",
+                3 => "셋",
+                4 => "넷",
+                5 => "다섯",
+                _ => "전부",
+            }
         );
     };
 

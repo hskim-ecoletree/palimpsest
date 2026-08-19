@@ -117,3 +117,18 @@ brokk-tree-sitter-kotlin = { git = "https://github.com/BrokkAi/tree-sitter-kotli
 # 없다**(LICENSE 추가·FUNDING·docs·CI). 그리고 75b3874 가 더한 것이 `LICENSE` 파일이다.
 # 라이선스는 MIT 이고 `cargo deny` 의 licenses 를 그대로 통과한다 — **예외를 늘리지 않았다**.
 tree-sitter-typescript = { git = "https://github.com/tree-sitter/tree-sitter-typescript", rev = "75b3874edb2dc714fb1fd77a32013d0f8699989f" }
+# **핀을 재보고 골랐다** — `corpus/criteria.toml` `[rust].grammar_axes` 가 축 셋을
+# **측정 전에** 등록했고, 후보 넷을 cargo @ 514c56dd 의 380 파일 전수로 쟀다.
+#
+#   후보      A·0.26 호환   B·오류 파일   C·상류 뒤짐
+#   v0.23.3      ✔          7 (마디 47)      16
+#   v0.24.0      ✔          7 (마디 47)      14
+#   v0.24.1      ✔          6 (마디 43)       3
+#   v0.24.2      ✔          6 (마디 43)       0   ← 고른 것
+#
+# **B 가 둘을 동률로 남기고 C 가 갈랐다** — G50 이 Kotlin 포크에서 겪은 것과 같은
+# 형태다. 판정 전문: docs/gates/rust-extractor.md
+#
+# ⚠ **태그가 아니라 커밋인 이유**: 태그는 옮길 수 있다. 그리고 계획 2 판이 실제로
+# `4f31efe` 를 적었다가 사전부검이 잡았다 — 그것은 **v0.5.2 의 태그 객체**(2019년)였다.
+tree-sitter-rust = { git = "https://github.com/tree-sitter/tree-sitter-rust", rev = "77a3747266f4d621d0757825e6b11edcbf991ca5" }

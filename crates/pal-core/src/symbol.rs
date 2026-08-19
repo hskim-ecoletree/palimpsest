@@ -7,6 +7,12 @@ use serde::{Deserialize, Serialize};
 /// 앞의 다섯이 Kotlin 최상위 선언 10종(class/interface/object/enum/data/annotation/
 /// typealias/fun/val/var)을 전부 덮는다 — T7 이 먼저 확인했고 S0 의 쿼리가 그것을 따른다.
 ///
+/// # 일곱이 더 늘었다 — Rust (#66 · 2026-08-20)
+///
+/// **앞의 아홉은 이름도 값도 안 건드렸다.** `SymbolId::compute` 는
+/// `discriminator.kind.name()` **문자열**을 쓰므로 뒤에 더한 변형이 기존 이름을
+/// 안 움직인다 — Kotlin·TypeScript 의 좌표가 그대로다.
+///
 /// # 넷이 늘었다 — TypeScript (F02-1 · #46)
 ///
 /// **기존 다섯의 이름도 값도 건드리지 않았다.** 변형을 더하는 것은 Kotlin 산출을
@@ -31,6 +37,23 @@ pub enum SymbolKind {
     Variable,
     /// 클래스 본문의 `method_definition`. 포함 관계(C1)로 클래스에 매인다.
     Method,
+    /// Rust `struct_item`. **`Class` 로 접지 않는다** — 접으면 `struct Error` 와
+    /// 그 `impl Error` 안의 심볼이 같은 열쇠가 되어 cargo 코퍼스에서 충돌이
+    /// 6.1% → 11.2% 로 는다(#66 실측).
+    Struct,
+    /// Rust `trait_item`.
+    Trait,
+    /// Rust `mod_item` — 인라인(`mod m { … }`)과 파일 참조(`mod m;`) 둘 다.
+    Module,
+    /// Rust `const_item` — 연관 상수 포함.
+    Const,
+    /// Rust `static_item`.
+    Static,
+    /// Rust `macro_definition`(`macro_rules!`). **호출이 만드는 것은 심볼이 아니다** —
+    /// 추출기가 매크로를 확장하지 않는다.
+    Macro,
+    /// Rust `union_item`.
+    Union,
 }
 
 impl SymbolKind {
@@ -49,6 +72,13 @@ impl SymbolKind {
             Self::Enum => "enum",
             Self::Variable => "variable",
             Self::Method => "method",
+            Self::Struct => "struct",
+            Self::Trait => "trait",
+            Self::Module => "mod",
+            Self::Const => "const",
+            Self::Static => "static",
+            Self::Macro => "macro",
+            Self::Union => "union",
         }
     }
 }

@@ -77,6 +77,7 @@ pub fn extractor_for(language: Language) -> Capable<&'static dyn LanguageExtract
             Capable::not_built(CapabilityId::new("F02", "javascript-extraction"))
         }
         Language::TypeScript => Capable::Present(&crate::typescript::TYPESCRIPT),
+        Language::Rust => Capable::Present(&crate::rust::RUST),
     }
 }
 
@@ -85,9 +86,15 @@ mod tests {
     use super::*;
     use crate::grade_of;
 
-    /// 1급 언어 넷 — 표가 늘 때 이 배열이 함께 늘어야 아래 시험들이 전수가 된다.
-    const 일급: [Language; 4] =
-        [Language::Kotlin, Language::Java, Language::JavaScript, Language::TypeScript];
+    /// 1급 언어 전부 — **`FIRST_CLASS` 를 그대로 탄다.**
+    ///
+    /// ⚠ 앞 판은 여기에 배열을 **손으로 한 벌 더** 적어 두고 주석에
+    /// *"표가 늘 때 이 배열이 함께 늘어야 한다"* 라고만 적었다. 강제 장치가 없어서
+    /// **안 늘리면 아래 시험들이 새 언어를 건너뛰고 초록이 된다** — 「검사가 초록인
+    /// 채로 안 재는」 형태이고 사후에 발견되지 않는다(#66 사전부검).
+    ///
+    /// **세는 자리는 하나다. 베끼지 말고 돌려라.**
+    use crate::shell::FIRST_CLASS as 일급;
 
     #[test]
     fn 능력과_등급이_같은_표를_본다() {
