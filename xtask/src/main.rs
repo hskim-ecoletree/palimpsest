@@ -3156,6 +3156,15 @@ fn 반환문_항_수(출처: &str, text: &str) -> usize {
 /// 실어 낸다. 「안 잰 것」과 「잴 수 없는 것」을 같은 침묵으로 두지 않는다.
 const 반환문_자리: &[(&str, &str)] = &[("premortem", "사전부검"), ("review", "독립리뷰")];
 
+/// 산출 파일이 어느 회차의 것인가 — `.palimpsest/rounds/<회차>/…` 의 `<회차>`.
+fn 회차_이름(root: &Path, p: &Path) -> String {
+    상대_경로(root, p)
+        .strip_prefix(&format!("{회차_뿌리}/"))
+        .and_then(|s| s.split('/').next())
+        .unwrap_or("")
+        .to_string()
+}
+
 fn check_round_records(root: &Path) -> Result<String> {
     let 산출 = 회차_산출(root)?;
 
@@ -3207,34 +3216,44 @@ fn check_round_records(root: &Path) -> Result<String> {
         }
     }
 
-    // ② 스키마는 **원천에 물어본다.** 파이썬 소스를 정규식으로 안 긁는다.
+    // ② **한 줄의 내부 정합은 원천에 위임한다.** (정정 2026-08-19 · 독립 리뷰 2 라운드)
+    //
+    // 앞 판은 `--schema` 로 enum 만 받아 **Rust 로 다시 검증**했다. 그래서 `record.py` 가
+    // 아는 규칙 셋 — **대응표**(`전환`↛`승격됨=아니오` · `완화`↛`축소`)와 **모르는 필드** —
+    // 이 CI 에 안 들어왔고, 그 규칙을 부르는 자가 **0** 이었다. C1-d 가 세운 「위장한 정정을
+    // 가리는 축」이 **태어나면서 죽은 가지**였다(격리 사본에서 재현: `xtask` ok / `check` rc=1).
+    //
+    // ★ **역할을 가른다** — 한 줄 안의 정합은 `record.py check` 가, **파일 사이**의 정합
+    // (모집단 · 좌표 해소 · 합계 검산 · tsv 열)은 여기가 잰다. 두 벌이 아니라 위임이다.
     let 파이썬 = 파이썬_실행자()?;
     let 원천 = root.join(스키마_원천);
     if !원천.exists() {
         bail!("스키마 원천이 없다: {스키마_원천}");
     }
-    let out = std::process::Command::new(파이썬)
-        .arg(&원천)
-        .arg("--schema")
-        .output()
-        .with_context(|| format!("`{파이썬} {스키마_원천} --schema` 를 못 돌렸다"))?;
-    if !out.status.success() {
-        bail!(
-            "`{스키마_원천} --schema` 가 실패했다:\n{}",
-            String::from_utf8_lossy(&out.stderr)
-        );
+    let 레코드들: Vec<&PathBuf> = 산출.iter().filter(|p| p.ends_with(레코드_이름)).collect();
+    if !레코드들.is_empty() {
+        let out = std::process::Command::new(파이썬)
+            .arg(&원천)
+            .arg("check")
+            .args(레코드들.iter().map(|p| p.as_os_str()))
+            .output()
+            .with_context(|| format!("`{파이썬} {스키마_원천} check` 를 못 돌렸다"))?;
+        if !out.status.success() {
+            for line in String::from_utf8_lossy(&out.stderr).lines() {
+                let l = line.trim();
+                if !l.is_empty() {
+                    problems.push(l.trim_start_matches("✗ ").to_string());
+                }
+            }
+        }
     }
-    let 스키마: serde_json::Value = serde_json::from_slice(&out.stdout)
-        .context("`--schema` 의 출력이 JSON 이 아니다")?;
-    let 필수: Vec<&str> = 스키마["필수"]
-        .as_array()
-        .context("`필수` 가 배열이 아니다")?
-        .iter()
-        .filter_map(|v| v.as_str())
-        .collect();
 
     // ③ 레코드의 각 행이 스키마를 지키는가 + `경로` 가 실재하는가.
-    let mut 쌍_수: std::collections::BTreeMap<(String, i64), usize> = Default::default();
+    // ★ **회차로 먼저 가른다.** (정정 2026-08-19 · 독립 리뷰 2 라운드)
+    //   앞 판은 저장소 전역 `(출처, 라운드)` 맵이라 **다음 회차가 자기 레코드를 놓는
+    //   순간 두 회차가 서로를 거짓 실패시켰다** — 그리고 오류 문장이 그 회차에 없는
+    //   수를 「레코드는 N 행이다」로 적었다. 사실이 아닌 것을 사실로 적는 자리다.
+    let mut 쌍_수: std::collections::BTreeMap<(String, String, i64), usize> = Default::default();
     let mut 좌표_해소_실패 = Vec::new();
     let mut 총_행 = 0usize;
     for p in 산출.iter().filter(|p| p.ends_with(레코드_이름)) {
@@ -3255,28 +3274,11 @@ fn check_round_records(root: &Path) -> Result<String> {
                 continue;
             }
             총_행 += 1;
-            for k in &필수 {
-                if v.get(*k).is_none() || v[*k].is_null() {
-                    problems.push(format!("{상대}:{}: 필수 필드 `{k}` 가 없다", i + 1));
-                }
-            }
-            for (축, 값들) in 스키마["enum"].as_object().into_iter().flatten() {
-                if let Some(있는) = v.get(축).and_then(|x| x.as_str()) {
-                    let 목록: Vec<&str> = 값들.as_array().into_iter().flatten()
-                        .filter_map(|x| x.as_str()).collect();
-                    if !목록.contains(&있는) {
-                        problems.push(format!(
-                            "{상대}:{}: `{축}` 값 `{있는}` 는 enum 밖이다",
-                            i + 1
-                        ));
-                    }
-                }
-            }
             if let (Some(r), Some(s)) = (
                 v.get("라운드").and_then(|x| x.as_i64()),
                 v.get("출처").and_then(|x| x.as_str()),
             ) {
-                *쌍_수.entry((s.to_string(), r)).or_default() += 1;
+                *쌍_수.entry((회차_이름(root, p), s.to_string(), r)).or_default() += 1;
             }
             // ★ `경로` 만 해소한다. `줄` 은 안 잰다 — 회차가 자기 좌표를 밀어내기 때문이다
             //   (실측 2026-08-19: 에이전트 정의를 고치니 인용한 줄이 93 → 95 로 밀렸다).
@@ -3296,7 +3298,7 @@ fn check_round_records(root: &Path) -> Result<String> {
     //   섞였을 때 **멀쩡한 레코드가 거짓 실패**를 내고, ② 반환문 파일이 없는 출처는
     //   **아무 검산도 안 받는다** — 그것이 「측정이 죽은 가지」다(독립 리뷰 2026-08-19).
     let mut 검산 = Vec::new();
-    let mut 면제 = std::collections::BTreeSet::new();
+    let mut 면제: std::collections::BTreeMap<String, usize> = Default::default();
     let 회차들 = std::fs::read_dir(root.join(회차_뿌리))?;
     for e in 회차들 {
         let dir = e?.path();
@@ -3319,12 +3321,20 @@ fn check_round_records(root: &Path) -> Result<String> {
                     continue;
                 };
                 let 항 = 반환문_항_수(출처, &std::fs::read_to_string(&f)?);
-                let 적힌 = 쌍_수.get(&(출처.to_string(), n)).copied().unwrap_or(0);
+                let 회차 = dir
+                    .file_name()
+                    .and_then(|x| x.to_str())
+                    .unwrap_or("")
+                    .to_string();
+                let 적힌 = 쌍_수
+                    .get(&(회차.clone(), 출처.to_string(), n))
+                    .copied()
+                    .unwrap_or(0);
                 검산.push(format!("{출처}R{n} {항}↔{적힌}"));
                 if 항 != 적힌 {
                     problems.push(format!(
-                        "합계 검산 어긋남 — {}: 원 반환문의 항이 {항} 인데 `출처={출처}`\
-                         이고 `라운드={n}` 인 레코드는 {적힌} 행이다",
+                        "합계 검산 어긋남 — {}: 원 반환문의 항이 {항} 인데 회차 `{회차}` 의 \
+                         `출처={출처}` · `라운드={n}` 레코드는 {적힌} 행이다",
                         상대_경로(root, &f)
                     ));
                 }
@@ -3332,20 +3342,24 @@ fn check_round_records(root: &Path) -> Result<String> {
         }
     }
     // ⑤ **에이전트 출처인데 반환문이 없으면 실패다.** 보존을 빠뜨리면 검산이 조용히 사라진다.
-    for ((출처, n), 행) in &쌍_수 {
+    for ((회차, 출처, n), 행) in &쌍_수 {
         let 에이전트 = 반환문_자리.iter().any(|(_, s)| s == 출처);
         if !에이전트 {
-            면제.insert(출처.clone());
+            *면제.entry(출처.clone()).or_insert(0usize) += 행;
             continue;
         }
         let 자리 = 반환문_자리.iter().find(|(_, s)| s == 출처).map(|(d, _)| *d).unwrap();
-        let 있나 = std::fs::read_dir(root.join(회차_뿌리))?.flatten().any(|e| {
-            e.path().join(자리).join(format!("r{n}-raw.md")).exists()
-        });
+        // ★ **그 회차 안에서만** 찾는다. 남의 회차 반환문이 내 레코드를 덮으면 안 된다.
+        let 있나 = root
+            .join(회차_뿌리)
+            .join(회차)
+            .join(자리)
+            .join(format!("r{n}-raw.md"))
+            .exists();
         if !있나 {
             problems.push(format!(
-                "`출처={출처}` · `라운드={n}` 인 레코드가 {행} 행인데 원 반환문이 없다 — \
-                 `<회차>/{자리}/r{n}-raw.md` 를 보존해야 합계 검산이 선다"
+                "회차 `{회차}` 의 `출처={출처}` · `라운드={n}` 레코드가 {행} 행인데 원 반환문이 \
+                 없다 — `{회차}/{자리}/r{n}-raw.md` 를 보존해야 합계 검산이 선다"
             ));
         }
     }
@@ -3360,7 +3374,12 @@ fn check_round_records(root: &Path) -> Result<String> {
         if 면제.is_empty() {
             "없음".to_string()
         } else {
-            format!("{} (반환문이 원리상 없다)", 면제.into_iter().collect::<Vec<_>>().join("·"))
+            // ★ **몇 행이 면제됐는지 낸다.** 라벨만 내면 「11% 가 아무 대조도 안 받았다」는
+            //   사실이 화면에 안 뜬다(독립 리뷰 2 라운드).
+            format!(
+                "{} (반환문이 원리상 없다)",
+                면제.iter().map(|(k, v)| format!("{k} {v}행")).collect::<Vec<_>>().join("·")
+            )
         }
     ))
 }

@@ -37,7 +37,14 @@ for _스트림 in (sys.stdout, sys.stderr):
 자기_접두 = ('.palimpsest/', 'docs/gates/', '.claude/', 'xtask/', 'scripts/')
 
 def sh(c):
-    return subprocess.run(c, shell=True, capture_output=True, text=True).stdout
+    # ★ **입력 디코드도 못 박는다.** (2026-08-19 · 독립 리뷰 2 라운드)
+    #   앞 판은 `sys.stdout.reconfigure` 로 **출력**만 막았는데, 죽는 자리는 여기였다 —
+    #   `text=True` 는 로케일 인코딩으로 git 출력을 읽고, 이 저장소의 커밋 제목은
+    #   한국어라 cp1252·cp949 에서 **디코드 불가**다. 그러면 Windows 에서 ⑦⑧ 이 영영
+    #   안 뜬다. `errors="replace"` 를 함께 두는 까닭: 계기판이 죽으면 그 자리에서
+    #   회차가 멈추므로, **못 읽은 글자 하나 때문에 수 전체를 잃지 않는다.**
+    return subprocess.run(c, shell=True, capture_output=True, text=True,
+                          encoding="utf-8", errors="replace").stdout
 
 def 자기인가(p):
     return p.startswith(자기_접두)
