@@ -83,6 +83,15 @@ pub const PAYLOAD: &[Resource] = &[
         path: ".claude/skills/pal-round/bin/dashboard.py",
         body: include_str!("../../../../.claude/skills/round/bin/dashboard.py"),
     },
+    // 발견 레코드를 쓰는 자 — 규약 §7 「발견을 레코드에 적는다」가 이것을 부른다.
+    // ★ **계기판과 같은 사유로 함께 놓는다.** 규약이 부르는데 물건이 없으면 그 자리가
+    // 태어나면서 죽은 가지다. 그리고 이것은 **읽는 자가 아니라 쓰는 자**라 없으면
+    // 레코드가 아예 안 쌓인다 — 설치본에는 `xtask` 가 없어 비었다는 것을 말해 줄
+    // 하한도 없다.
+    Resource {
+        path: ".claude/skills/pal-round/bin/record.py",
+        body: include_str!("../../../../.claude/skills/round/bin/record.py"),
+    },
 ];
 
 // ★ **정책 금지역 파일은 놓지 않는다.** (2026-08-19 · 독립 리뷰 2 라운드)
@@ -144,6 +153,7 @@ pub const OWNED_FILES: &[&str] = &[
     ".claude/agents/pal-independent-reviewer.md",
     ".claude/skills/pal-round/SKILL.md",
     ".claude/skills/pal-round/bin/dashboard.py",
+    ".claude/skills/pal-round/bin/record.py",
 ];
 
 /// 우리가 만들 수 있는 디렉터리 — **만든 것만 매니페스트에 적히고, 제거는 그것만
