@@ -1,30 +1,31 @@
 # 음성 대조 — 「이 검사가 고장이면 이렇게 드러난다」 (C3-f)
 
-격리 사본 `/tmp/pal-neg-1787124415/repo` · **그 사본에서 xtask 를 빌드해서** 돌렸다.
+격리 사본에서 **그 사본의 `xtask` 를 빌드해서** 돌렸다. 이 파일은 **HEAD 판 검사**로
+다시 잰 것이다 — 앞 판은 R6 판 검사의 출력을 싣고 있었고 독립 리뷰가 잡았다.
 
 ⚠ **두 번 실패한 뒤에 섰다. 그 실패가 이 회차의 발견이다:**
   ① `git clone --depth 1` 이 커밋된 것만 가져와 사본이 제 상태가 아니었다
-  ② 원 저장소의 `xtask` 바이너리는 `repo_root()` 가 `env!("CARGO_MANIFEST_DIR")` 로
+  ② 원 저장소의 `xtask` 는 `repo_root()` 가 `env!("CARGO_MANIFEST_DIR")` 로
      **컴파일 시점 경로를 박아** cwd 와 무관하게 자기가 빌드된 저장소를 잰다
-  두 번 다 일곱 대조가 **전부 「20/20 통과」**로 보였다 — 검사가 옳아서가 아니라
+  두 번 다 대조가 **전부 「20/20 통과」**로 보였다 — 검사가 옳아서가 아니라
   **대조가 안 선 것**이고, 그것을 통과로 읽으면 규약이 경고한 그 오독이다.
 
-## 기준선
-  ok 회차 레코드 — 산출 3개 · 레코드 59행 · 검산 R1 23↔23 · R2 17↔17 · R3 19↔19 · 파이썬 `python3`
-  검사 20/20 통과
+## 여덟 대조 — 전부 발화했다
 
-## 일곱 대조 — 전부 발화했다
+    기준선: 회차 레코드  — 산출 4개 · 레코드 162행 · 검산 사전부검R1 23↔23 · 사전부검R3 19↔19 · 사전부검R2 17↔17 · 독립리뷰R1 25↔25 · 독립리뷰R3 30↔30 · 독립리뷰R2 31↔31 · 검산 면제 실측 11행·인터뷰 6행 (반환문이 원리상 없다) · 파이썬 `python3`
+    ① enum 밖 값  →  회차 레코드: ../../../../tmp/pal-neg2-1787131031/repo/.palimpsest/rounds/2026-08-19-finding-records/findings.jsonl:2행: `해악도` 값 `아주나쁨` 는 enum 밖이다 (금지역 · 실패 · 거짓신호 · 미관)
+    ② 필수 필드 누락  →  회차 레코드: ../../../../tmp/pal-neg2-1787131031/repo/.palimpsest/rounds/2026-08-19-finding-records/findings.jsonl:2행: 필수 필드 `해악도` 가 없다
+    ③ 빈 모집단  →  회차 레코드: `.palimpsest/rounds/**` 에 기계 판독 산출(`*.jsonl`·`*.tsv`)이 하나도 없다 — 이 검사가 아무것도 안 잰다. 0 건은 「안 부른다」가 아니라 「안 봤다」다
+    ④ 없는 경로  →  회차 레코드: .palimpsest/rounds/2026-08-19-finding-records/findings.jsonl:2: `crates/없는파일.rs` 가 없다
+    ⑤ 합계 검산 어긋남  →  회차 레코드: 합계 검산 어긋남 — .palimpsest/rounds/2026-08-19-finding-records/premortem/r1-raw.md: 원 반환문의 항이 24 인데 회차 `2026-08-19-finding-records` 의 `출처=사전부검` · `라운드=1` 레코드는 23 행이다
+    ⑥ tsv 열 수  →  회차 레코드: .palimpsest/rounds/2026-08-18-completion-condition/retro/02-classification.tsv:6: 열이 12 인데 헤더는 11 이다
+    ⑦ 머리 줄 없음  →  회차 레코드: .palimpsest/rounds/2026-08-19-finding-records/findings.jsonl: 머리 줄에 `schema_version` 이 없다
+    ⑧ 종류가 enum 밖  →  회차 레코드: .palimpsest/rounds/2026-08-19-finding-records/findings.jsonl: 머리 줄의 `종류` 가 `레코드`·`예외표` 밖이다 — 가르는 축은 스스로 선언돼야 한다
+    복원: 1 (1 이면 복원됨)
 
-① enum 밖 값        findings.jsonl:2: `해악도` 값 `아주나쁨` 는 enum 밖이다
-② 필수 필드 누락     findings.jsonl:2: 필수 필드 `해악도` 가 없다
-③ 빈 모집단          `.palimpsest/rounds/**` 에 기계 판독 산출이 하나도 없다 —
-                     이 검사가 아무것도 안 잰다. 0 건은 「안 부른다」가 아니라 「안 봤다」다
-④ 없는 경로          findings.jsonl:2: `crates/pal-core/src/절대없는파일.rs` 가 없다
-⑤ 합계 검산 어긋남   r1-raw.md: 원 반환문의 항이 24 인데 레코드는 23 행이다
-⑥ tsv 열 수 어긋남   02-classification.tsv:6: 열이 12 인데 헤더는 11 이다
-⑦ 머리 줄 없음       findings.jsonl: 머리 줄에 `schema_version` 이 없다
-
-전부 `Error: 1개 검사가 실패했다` 로 끝났고, 복원하면 20/20 으로 돌아왔다.
+전부 `Error: 1개 검사가 실패했다` 로 끝났고 복원하면 20/20 으로 돌아왔다.
 
 ★ **⑥ 이 #71 의 실증이다** — 그 이슈가 지목한 `retro/02-classification.tsv` 가
 실제로 재어진다. 앞 회차에서는 그 파일이 어느 검사의 모집단에도 없었다.
+★ **⑧ 은 이 회차가 R10 에 만든 축**(머리 줄의 `종류`)을 재는 것이고, 독립 리뷰
+4 라운드가 *"가르는 축이 선언되지 않았다"* 고 잡은 뒤에 붙었다.

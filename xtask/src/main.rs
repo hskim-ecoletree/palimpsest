@@ -3031,9 +3031,6 @@ fn 토큰_블록(body: &str) -> Option<(usize, usize)> {
 /// 회차 산출이 사는 자리.
 const 회차_뿌리: &str = ".palimpsest/rounds";
 
-/// 발견 레코드의 이름.
-const 레코드_이름: &str = "findings.jsonl";
-
 /// 스키마와 **한 줄의 정합 규칙**이 사는 유일한 자리. 이 검사는 `check` 를 **불러서**
 /// 위임하고 파이썬 소스를 정규식으로 안 긁는다. 두 곳에 적으면 갈리고 갈린 것을 대는
 /// 장치가 없다.
@@ -3210,6 +3207,15 @@ fn check_round_records(root: &Path) -> Result<String> {
                 //   앞 판은 `findings.jsonl` 이라는 **이름**만 행 검증을 받았고, 다른
                 //   `.jsonl` 은 머리 줄만 보고 통과하면서 `산출 N개` 에는 세어져
                 //   **「쟀다」로 보였다.** 이름이 아니라 선언이 갈라야 한다.
+                let 종류_ok = ["\"종류\": \"레코드\"", "\"종류\": \"예외표\""]
+                    .iter()
+                    .any(|k| 첫줄.contains(k));
+                if 첫줄.contains("\"종류\"") && !종류_ok {
+                    problems.push(format!(
+                        "{상대}: 머리 줄의 `종류` 가 `레코드`·`예외표` 밖이다 — \
+                         가르는 축은 스스로 선언돼야 한다"
+                    ));
+                }
                 if !첫줄.contains("\"종류\"") {
                     problems.push(format!(
                         "{상대}: 머리 줄에 `종류` 가 없다 — `레코드` 인지 `예외표` 인지 \
@@ -3416,7 +3422,7 @@ fn check_round_records(root: &Path) -> Result<String> {
     }
 
     if !problems.is_empty() {
-        bail!("회차 레코드:\n    {}", problems.join("\n    "));
+        bail!("{}", problems.join("\n    "));
     }
     Ok(format!(
         "산출 {}개 · 레코드 {총_행}행 · 검산 {} · 검산 면제 {} · 파이썬 `{파이썬}`",

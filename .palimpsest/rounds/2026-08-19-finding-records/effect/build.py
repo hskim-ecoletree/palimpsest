@@ -61,8 +61,23 @@ def 우리_계수(회차):
 
 
 def sh(*args):
-    return subprocess.run(args, capture_output=True, text=True,
-                          encoding="utf-8", errors="replace").stdout.rstrip()
+    """돌리고 **rc 와 stderr 를 버리지 않는다.**
+
+    ★ 이 회차가 `xtask` 에 대해 막 고친 결함(rc≠0 인데 아무 말 없으면 초록)이 **효과를
+    만드는 자리에 그대로 있었다**(독립 리뷰 4 라운드 F1). 도구가 없거나 죽으면 빈
+    코드블록을 내고 rc=0 으로 끝나는데, 게이트가 *"세는 자리는 하나다 — 돌려라"* 며
+    가리키는 것이 이 스크립트다. **못 돌린 것을 조용히 빈칸으로 두면 그것이 거짓이다.**
+    """
+    r = subprocess.run(args, capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    out = (r.stdout or "").rstrip()
+    if r.returncode != 0 or not out:
+        err = (r.stderr or "").strip() or "(아무 말도 안 했다)"
+        raise SystemExit(
+            f"✗ 못 돌렸다 — rc={r.returncode}\n  명령: {' '.join(args)}\n  stderr: {err}\n"
+            f"  ⚠ 효과를 빈칸으로 내지 않는다. 고치고 다시 돌려라."
+        )
+    return out
 
 
 def main(회차):
