@@ -7,7 +7,11 @@ use serde::{Deserialize, Serialize};
 /// 앞의 다섯이 Kotlin 최상위 선언 10종(class/interface/object/enum/data/annotation/
 /// typealias/fun/val/var)을 전부 덮는다 — T7 이 먼저 확인했고 S0 의 쿼리가 그것을 따른다.
 ///
-/// # 일곱이 더 늘었다 — Rust (#66 · 2026-08-20)
+/// # 일곱이 더 늘었다 — Rust (ADR-0027 · #66 · 2026-08-20)
+///
+/// **접지 않고 늘린 것이 결정이다** — ADR-0027 §③. 접으면 cargo 코퍼스에서 좌표
+/// 충돌이 6.1% → 11.2% 로 늘고, 종류는 `SymbolId::compute` 의 성분이라 그 접힘이
+/// 정체성에 직접 실린다.
 ///
 /// **앞의 아홉은 이름도 값도 안 건드렸다.** `SymbolId::compute` 는
 /// `discriminator.kind.name()` **문자열**을 쓰므로 뒤에 더한 변형이 기존 이름을

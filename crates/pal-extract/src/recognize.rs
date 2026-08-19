@@ -72,7 +72,7 @@ const BY_FILE_NAME: &[(&str, &str)] = &[
 /// 이 파일이 무슨 언어인가.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Recognition {
-    /// 1급 넷 중 하나다. **추출기가 있는지는 별도 질문이다**(`pal_extract::extract`).
+    /// 1급 다섯 중 하나다. **추출기가 있는지는 별도 질문이다**(`pal_extract::extract`).
     FirstClass(Language),
     /// 언어는 알지만 우리 추출 대상이 아니다.
     Known(LanguageId),
