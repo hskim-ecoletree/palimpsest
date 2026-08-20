@@ -206,7 +206,7 @@ mod tests {
     }
 
     #[test]
-    fn 일급_넷은_따로_잡힌다() {
+    fn 일급_언어는_따로_잡힌다() {
         assert_eq!(인식("kt", "A.kt"), Recognition::FirstClass(Language::Kotlin));
         assert_eq!(인식("ts", "a.ts"), Recognition::FirstClass(Language::TypeScript));
     }

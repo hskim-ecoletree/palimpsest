@@ -20,6 +20,10 @@ fn main() {
     let mut a = std::env::args().skip(1);
     let root = a.next().expect("루트");
     let exts: Vec<String> = a.collect();
+    // ★ **빈 모집단은 0 이 아니라 「안 봤다」다.** 확장자를 잊으면 앞 판은
+    // `파일 0 · 표식 0` 을 내고 rc=0 이었다 — F3(금지역 「두 언어 회귀」)의 유일한
+    // 관측 장치가 조용히 초록을 내는 형태다(독립 리뷰 R3).
+    assert!(!exts.is_empty(), "확장자를 하나 이상 줘라 — 빈 모집단은 0 이 아니라 「안 봤다」다");
     let mut files = Vec::new();
     walk(Path::new(&root), &exts, &mut files);
     files.sort();

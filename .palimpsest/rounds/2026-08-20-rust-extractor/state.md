@@ -5,7 +5,7 @@
 
 ## 지금 어느 단계인가
 
-**§7 독립 리뷰** — 라운드 2/5 처분 완료, 라운드 3 대기.
+**§7 독립 리뷰** — 라운드 3/5 처분 완료, 라운드 4 대기.
 
 ★ **CI 는 이미 초록이다**(`966850b`). 이후 커밋이 나오면 **그 SHA 에 대해 다시 재야** 한다 — §11-6 은 「회차의 **마지막** 커밋」을 요구한다.
 
@@ -32,12 +32,12 @@
 |---|--:|--:|
 | 인터뷰 | 4 | **4 소진** |
 | 사전부검 | 3 | **3 소진** |
-| 독립 리뷰 | 5 | **2** |
+| 독립 리뷰 | 5 | **3** |
 
 ## 이 회차가 세운 것
 
-- `crates/pal-extract/src/rust.rs` — 중첩 순회 · L1 · 시험 11
-- `parse.rs` — `attribute_item` 건너뛰기 · `doc_comment` 접기 · 시험 4
+- `crates/pal-extract/src/rust.rs` — 중첩 순회 · L1
+- `parse.rs` — `attribute_item` 건너뛰기 · `doc_comment` 접기 · 시험 넷
 - `Language::Rust` · `SymbolKind` 일곱 · `FIRST_CLASS` 다섯
 - `corpus/tasks/rust-recall-sample.tsv` — 손 표본 13 파일 · 268 선언
 - `corpus/criteria.toml` `[rust]` · `docs/gates/rust-extractor.md`
@@ -48,12 +48,14 @@
 ## 지금까지의 수
 
 | | |
-|---|--:|
-| `pal ledger` `parsed` | 1 → **120** |
-| Rust | `L0` → **`L1` · 119 파일** |
-| `pal narrative` 결박됨 | 0 → **46** |
-| 손 표본 재현율 / 정밀도 | **94.40% / 94.40%** |
-| 발견 레코드 | **130 행** |
+|---|---|
+| `pal ledger` 의 Rust | `L0` → **`L1`** (착수 117 파일이 전부 빠졌다) |
+| `pal narrative` 결박됨 | 0 → **46** (접기 끄면 73) |
+| 손 표본 재현율 / 정밀도 | **94.40% / 94.40%** (cargo 핀 고정이라 안 변한다) |
+| 발견 레코드 | `python3 .claude/skills/round/bin/record.py count <회차>` |
+
+⚠ **변하는 수는 여기 안 적는다.** 파일 수·심볼 수·레코드 행 수는 커밋마다 변하고,
+이 회차에서 **세 번 갈렸다.** 세는 명령만 적는다.
 
 ## 실패한 접근 — 다음 컨텍스트가 같은 벽에 안 부딪히도록
 
