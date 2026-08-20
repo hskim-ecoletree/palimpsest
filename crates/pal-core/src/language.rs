@@ -68,3 +68,51 @@ impl Language {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// 1급 언어 전수 — **네 번째 손 배열을 여기서 막는다.**
+    ///
+    /// ★ `Language` enum · `from_extension` 의 `match` · `FIRST_CLASS` · **`from_name`
+    /// 의 배열** 넷이 함께 움직여야 하는데, 앞의 셋은 컴파일러나 타입이 잡고
+    /// **`from_name` 만 안 잡혔다**(독립 리뷰 R5). 그 배열에서 언어가 빠져도
+    /// 컴파일이 통과하고 `.gitattributes` 의 `linguist-language` 만 조용히 죽는다.
+    const 전부: [Language; 5] = [
+        Language::Kotlin,
+        Language::Java,
+        Language::JavaScript,
+        Language::TypeScript,
+        Language::Rust,
+    ];
+
+    #[test]
+    fn 이름으로도_전부_찾힌다() {
+        for l in 전부 {
+            assert_eq!(from_name_or_panic(l.name()), l, "{} 가 from_name 배열에서 빠졌다", l.name());
+        }
+    }
+
+    #[test]
+    fn 이름은_대소문자를_안_가린다() {
+        assert_eq!(Language::from_name("rust"), Some(Language::Rust));
+        assert_eq!(Language::from_name("RUST"), Some(Language::Rust));
+    }
+
+    #[test]
+    fn 확장자와_이름이_같은_집합을_본다() {
+        // 확장자로 잡히는데 이름으로 안 잡히면 **같은 파일이 선언 유무에 따라
+        // 다른 등급을 받는다** — 사전부검이 잡은 형태다.
+        for (ext, l) in [("kt", Language::Kotlin), ("java", Language::Java),
+                         ("js", Language::JavaScript), ("ts", Language::TypeScript),
+                         ("rs", Language::Rust)] {
+            assert_eq!(Language::from_extension(ext), Some(l));
+            assert_eq!(Language::from_name(l.name()), Some(l));
+        }
+    }
+
+    fn from_name_or_panic(n: &str) -> Language {
+        Language::from_name(n).unwrap_or_else(|| panic!("from_name 이 {n} 를 모른다"))
+    }
+}

@@ -103,10 +103,15 @@ Rust 만 다르게 하려면 **문법이 이미 가른 것**을 쓰면 된다:
 
 **얻는 것**
 
-- `pal ledger` 의 `parsed` 가 **1 → 118**. Rust 117 파일이 `unsupported` 에서 빠졌다
-- `pal narrative` 의 결박이 **0 → 43**
-- 자기 저장소가 **2,609 심볼**로 색인된다. `symbol.resolve`·`symbol.contains` 가
+- `pal ledger` 의 Rust 가 `L0` → **`L1`**. 착수 시점 `.rs` **117 파일**이
+  `unsupported` 에서 전부 빠졌다
+- `pal narrative` 의 결박이 **0** 에서 양수가 됐다
+- 자기 저장소가 심볼로 색인된다. `symbol.resolve`·`symbol.contains` 가
   이 저장소 자신의 코드에 답한다
+
+⚠ **파일 수·`parsed`·심볼 수·결박 수는 여기 안 적는다.** 커밋마다 변하고, 이 회차에서
+**다섯 번 갈렸다**(독립 리뷰 R1~R5). **세는 자리는
+[판정 문서](../gates/rust-extractor.md)의 「이 판정의 수를 다시 재는 법」 표다.**
 - **`[f11.pass]` ⑧ 이 픽스처 한 파일에서 내려온다**
 
 **잃는 것 · 남는 것**

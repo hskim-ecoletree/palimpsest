@@ -139,7 +139,10 @@ DB를 직접 만들 때 가장 비싼 것은 스키마 마이그레이션과 백
 | 용도 | 크레이트 | 왜 이것인가 / 주의 |
 |---|---|---|
 | git 접근 | **`gix`** | 순수 Rust. blob·트리·커밋 읽기와 HEAD 비교만 쓴다. ⚠️ API가 아직 진화 중이므로 **`pal-git` 모듈로 감싸 접촉면을 20줄 이내로 유지**한다. 깨지면 그 모듈만 고친다. 대안 `git2`(libgit2)는 C 의존이라 정적 링크 비용이 오른다 |
-| 파싱 | **`tree-sitter`** + 문법 넷 — `kotlin` · `java` · `javascript` · `typescript` | 빌드·툴체인 없이 blob 하나로 파싱된다. 오류 회복이 있어 `partial` 상태를 표현할 수 있다. **넷이 전부 1급이다 (↳ **2026-08-20 이 Rust 를 더해 다섯이 됐다** — [ADR-0027](../adr/0027-the-instrument-must-reach-its-own-floor.md))**([지시 2026-08-12 §1](../instructions/2026-08-12-owner-direction.md)) |
+| 파싱 | **`tree-sitter`** + 문법 넷 — `kotlin` · `java` · `javascript` · `typescript` | 빌드·툴체인 없이 blob 하나로 파싱된다. 오류 회복이 있어 `partial` 상태를 표현할 수 있다. **넷이 전부 1급이다
+> ↳ **2026-08-20 이 Rust 를 더해 다섯이 됐다**([ADR-0027](../adr/0027-the-instrument-must-reach-its-own-floor.md)).
+> ⚠ **1급 언어와 붙인 문법은 다른 수다** — 1급은 다섯, `Cargo.toml` 의 문법 의존은
+> **셋**(kotlin·typescript·rust)이다. Java·JavaScript 는 선언만 있고 `NotBuilt` 다.**([지시 2026-08-12 §1](../instructions/2026-08-12-owner-direction.md)) |
 | 해시 | **`blake3`** | `symbol_id`·`body_digest`·캐시 키. SHA-256보다 빠르고 병렬 친화적. 트리 해시라 큰 입력에 유리 |
 | 캐시 직렬화 | **`postcard`** + `serde` | 1층 캐시 값. 컴팩트한 바이너리, no_std 호환, 스키마 버전을 키에 이미 넣으므로 호환성 부담 없음. ⚠️ `rkyv`(zero-copy)는 더 빠르지만 타입 제약이 크고 초심자에게 함정이 많다 — P1 이후 성능 실측 후 재론 |
 | 캐시 압축 | **`zstd`** | 파일 부분 그래프는 반복이 많아 압축률이 높다. 레벨 3 고정 |

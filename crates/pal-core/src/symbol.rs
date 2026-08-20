@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 ///
 /// # 일곱이 더 늘었다 — Rust (ADR-0027 · #66 · 2026-08-20)
 ///
-/// **접지 않고 늘린 것이 결정이다** — ADR-0027 §③. 접으면 cargo 코퍼스에서 좌표
+/// **접지 않고 늘린 것이 결정이다** — ADR-0027 §③.
+///
 /// **종류는 `SymbolId::compute` 의 성분이라 정직한 이름이 곧 정직한 좌표다** —
 /// `pal symbols` 가 `struct` 를 `class` 라 부르면 그 거짓이 좌표에 실린다.
 ///
@@ -45,10 +46,9 @@ pub enum SymbolKind {
     Variable,
     /// 클래스 본문의 `method_definition`. 포함 관계(C1)로 클래스에 매인다.
     Method,
-    /// Rust `struct_item`. **`Class` 로 접지 않는다** — 접으면 `struct Error` 와
-    /// 그 `impl Error` 안의 심볼이 같은 열쇠가 되어 cargo 코퍼스에서 충돌이
-    /// **`Class` 로 접지 않는 것이 결정이다**(ADR-0027 §③) — 근거는 충돌 감소가
-    /// 아니라 **이름의 정직성**이다. 세는 자리는 `--example coord_collisions`.
+    /// Rust `struct_item`. **`Class` 로 접지 않는다**(ADR-0027 §③) —
+    /// 근거는 충돌 감소가 아니라 **이름의 정직성**이다.
+    /// 세는 자리는 `--example coord_collisions`.
     Struct,
     /// Rust `trait_item`.
     Trait,
