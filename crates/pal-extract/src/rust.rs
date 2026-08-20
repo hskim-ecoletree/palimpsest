@@ -241,8 +241,13 @@ fn 이름(node: Node<'_>, source: &[u8]) -> Option<String> {
 /// (`http::response::Parts` → `Parts`) · 참조(`&T` → `T`).
 ///
 /// ⚠ **트레잇 이름은 안 싣는다.** `impl From<A> for Error` 와 `impl Error` 가 같은
-/// 컨테이너 이름을 갖고, cargo 코퍼스에서 464 건(6.1%)이 그 형태로 충돌한다
-/// (R-16). **이 회차의 범위 밖**이고 판정에 수로 적는다.
+/// 컨테이너 이름을 갖고 그 안의 동명 함수가 좌표를 다툰다(R-16).
+/// **이 회차의 범위 밖**이고 [#78] 이 진다.
+///
+/// **세는 자리는 `--example coord_collisions` 다** — 수를 여기 안 적는다.
+/// 앞 판이 적은 464(6.1%)는 격리 스파이크의 값이었고 재현되지 않았다(독립 리뷰 R3).
+///
+/// [#78]: https://github.com/hskim-ecoletree/palimpsest/issues/78
 fn impl_대상(node: Node<'_>, source: &[u8]) -> Option<String> {
     let t = node.child_by_field_name("type")?;
     Some(마지막_이름(t, source))

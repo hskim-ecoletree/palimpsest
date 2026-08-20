@@ -1,5 +1,10 @@
 //! ditto·boxwood 표식 주석을 센다 — **회귀 관측용, 아무것도 안 쓴다.**
 //! 사용: cargo run -q -p pal-extract --example count_marked -- <루트> <확장자…>
+//!
+//! ⚠ **접기를 끈 수는 이 도구로 못 잰다** — `이어지는_doc` 에 스위치가 없어 소스를
+//! 고쳐야 한다(독립 리뷰 R4). 판정에 실린 「안 접음 73·137」은 그렇게 잰 값이고,
+//! **재현 절차는 `docs/gates/rust-extractor.md` §판정 에 적혀 있다.**
+//! 스위치를 다는 것은 `parse.rs` 의 공개면을 늘리는 일이라 [#77] 이 진다.
 use std::path::Path;
 const MARKERS: [&str; 2] = ["@decision:", "ADR-"];
 

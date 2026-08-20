@@ -10,8 +10,12 @@ use serde::{Deserialize, Serialize};
 /// # 일곱이 더 늘었다 — Rust (ADR-0027 · #66 · 2026-08-20)
 ///
 /// **접지 않고 늘린 것이 결정이다** — ADR-0027 §③. 접으면 cargo 코퍼스에서 좌표
-/// 충돌이 6.1% → 11.2% 로 늘고, 종류는 `SymbolId::compute` 의 성분이라 그 접힘이
-/// 정체성에 직접 실린다.
+/// **종류는 `SymbolId::compute` 의 성분이라 정직한 이름이 곧 정직한 좌표다** —
+/// `pal symbols` 가 `struct` 를 `class` 라 부르면 그 거짓이 좌표에 실린다.
+///
+/// ⚠ **처음에 적은 근거(「접으면 충돌이 두 배로 는다」)는 반증됐다.** 그 수는
+/// 추출기가 서기 전에 격리 스파이크로 잰 것이고 재현되지 않았다 — 접어도 안 늘었다.
+/// **세는 자리는 `--example coord_collisions` 다**(독립 리뷰 R3·R4).
 ///
 /// **앞의 아홉은 이름도 값도 안 건드렸다.** `SymbolId::compute` 는
 /// `discriminator.kind.name()` **문자열**을 쓰므로 뒤에 더한 변형이 기존 이름을
@@ -43,7 +47,8 @@ pub enum SymbolKind {
     Method,
     /// Rust `struct_item`. **`Class` 로 접지 않는다** — 접으면 `struct Error` 와
     /// 그 `impl Error` 안의 심볼이 같은 열쇠가 되어 cargo 코퍼스에서 충돌이
-    /// 6.1% → 11.2% 로 는다(#66 실측).
+    /// **`Class` 로 접지 않는 것이 결정이다**(ADR-0027 §③) — 근거는 충돌 감소가
+    /// 아니라 **이름의 정직성**이다. 세는 자리는 `--example coord_collisions`.
     Struct,
     /// Rust `trait_item`.
     Trait,

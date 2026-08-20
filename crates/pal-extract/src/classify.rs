@@ -231,7 +231,9 @@ pub const fn grade_of(language: pal_core::Language) -> ExtractGrade {
         // 관용이다)이 `ScopeChain::resolve` 의 「가장 앞선 것」 팔을 상시 경로로
         // 만드는 문제가 구조적으로 사라진다. 대신 Rust 심볼의 `identity` 가 전부
         // `Ordinal` 이 되어, **선언 순서에 취약한 것과 그냥 L1 인 것이 대장에서
-        // 같은 글자**가 된다(cargo 실측 6.1%). 그 갈림은 #66 의 분할이 진다.
+        // 같은 글자**가 된다. 그 갈림은 #66 의 분할이 지고,
+        // **세는 자리는 `--example coord_collisions` 다**(수를 여기 안 적는다 —
+        // 앞 판이 적은 6.1% 는 재현되지 않았다 · 독립 리뷰 R3).
         pal_core::Language::Rust => ExtractGrade::L1,
         // 남은 둘(Java · JavaScript)은 추출기가 없으므로 이 함수에 도달하지 않는다.
         pal_core::Language::Java | pal_core::Language::JavaScript => ExtractGrade::L0,

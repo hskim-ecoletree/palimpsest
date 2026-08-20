@@ -10,6 +10,11 @@
 //!
 //! 사용: cargo run -q -p pal-extract --example coord_collisions -- <루트> <확장자…> [--제외 <조각>]
 //!
+//! ⚠ **이 도구에는 단위시험이 없다.** `cargo xtask test` 는 `--all-targets` 라 예제를
+//! **빌드만** 하고 안 돌린다 — `#[cfg(test)]` 를 달아도 죽은 가지다(독립 리뷰 R4).
+//! 그래서 이 파일의 로직은 **부르는 쪽이 눈으로 대야** 한다. 그 자리를 CI 로 옮기는
+//! 것은 [#81] 이 진다.
+//!
 //! `--제외` 는 경로에 그 조각이 들어가면 뺀다 — cargo 코퍼스의 `tests/testsuite/`
 //! 992 파일이 그 자리다(손 표본 모집단이 그것을 뺀 380 이다).
 use std::collections::HashMap;
@@ -124,3 +129,4 @@ fn main() {
         비율(접음_충돌)
     );
 }
+

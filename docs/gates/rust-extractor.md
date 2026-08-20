@@ -59,6 +59,9 @@ pal narrative: 결박됨 0
 | **통과** | **43** | |
 | **반증** | **0** | |
 | **대조 불가** | **1** | **B3**(문법 핀 선정 축) |
+
+★ **이 표가 유일한 계수 자리다.** 절 제목·절별 표기·종료 보고에 수를 한 벌 더 적었더니
+**네 번 갈렸다**(독립 리뷰 R1~R4). `report.md` 는 이제 이 표를 **가리키기만 한다.**
 | **미측정** | **0** | — |
 
 ★ **H6 이 섰다.** `966850b7ec6be8a1ffc25cf66becf70b52b78bc0` 에
@@ -78,7 +81,7 @@ pal narrative: 결박됨 0
 | | 판정 | 원문 |
 |---|---|---|
 | ① recall (빠뜨린 것 0) | **대조 불가** | 15 — 아래 |
-| ② precision (잘못 잡은 것 0) | **대조 불가** | 13 — 아래 |
+| ② precision (잘못 잡은 것 0) | **대조 불가** | 15 — 아래 |
 | ③ binding | **통과** | Rust 가 `unsupported` 에서 **전부** 빠졌다 · 결박 **46** |
 | ④ no_regression | **통과** | 골든 셋 불변 · 표식 330 |
 | ⑤ grammar_pin | **통과** | 축 셋으로 갈랐다 |
@@ -144,9 +147,17 @@ cargo 표본에 `struct Foo` 와 `enum Foo` 가 같은 컨테이너에 있는 �
 `pal symbols` 가 `struct` 를 `class` 라 부르면 **그것이 거짓이다.** 종류는
 `SymbolId::compute` 의 성분이므로 **정직한 이름이 곧 정직한 좌표**다. 충돌 감소는
 **부수 효과였고 이 코퍼스에서는 0 이었다.**
+
+⚠ **그 근거가 자기 산출에 완전히 적용되지는 않는다.** Rust 의 `fn` 을 `pal` 은
+**`fun`** 으로 낸다 — `SymbolKind::name()` 이 **Kotlin 표기**이기 때문이다
+(`symbol.rs`, S0 부터). 같은 논리대로면 그것도 거짓이다.
+
+**고치지 않는다.** 그 문자열은 골든의 `kind` 열에 실려 있어 바꾸면 **Kotlin·TypeScript
+골든이 전부 움직이고**, 그것이 이 회차가 등록한 금지역 「기존 두 언어 회귀」다.
+**비대칭이 남고, 남는다는 사실을 적는 것이 여기서 지는 몫이다**(독립 리뷰 R4).
 **앞의 아홉은 이름도 값도 안 건드렸고** 골든의 `kind` 열이 안 움직였다.
 
-**D. 오라클** — ⚠ **D4 는 아래 「대조 불가」다**
+**D. 오라클**
 
 손 표본이 **추출기 코드보다 먼저** 커밋됐다(`c6e5155` → `bdd3934`).
 기준 SHA 명시: 자기 저장소 `56926aa` · cargo `514c56dd`.
@@ -206,7 +217,9 @@ tree-sitter-rust 고유 마디이고 Kotlin 은 `annotation`, TS 는 `decorator`
 **G. 효과** — [`effect/effect.md`](../../.palimpsest/rounds/2026-08-20-rust-extractor/effect/effect.md)
 
 **H. 규약** — 새 지시 문서 + 옛 문서 갱신 줄(원문은 안 지웠다) ·
-「1급은 넷」을 말하던 코드 doc **아홉 자리** 정정 · 이 문서 이름이 `F`·`G`·`S` 로 시작하지
+「1급은 넷」을 말하던 코드 doc 정정 (⚠ **수는 안 적는다** — 앞 판이 「아홉」이라
+적었는데 실제 제거 줄은 **12** 였다. 세는 자리는
+`git diff 56926aa..HEAD -- crates/ xtask/ | grep -cE "^-.*넷"` 이다) · 이 문서 이름이 `F`·`G`·`S` 로 시작하지
 않음 · `record.py check` 통과 · 종료 보고.
 **H6 — CI 가 `966850b` 에 `conclusion=success` 를 붙였다.** 일곱 잡 전부 통과.
 
@@ -216,7 +229,9 @@ tree-sitter-rust 고유 마디이고 Kotlin 은 `annotation`, TS 는 `decorator`
 [#80](https://github.com/hskim-ecoletree/palimpsest/issues/80) ·
 [#81](https://github.com/hskim-ecoletree/palimpsest/issues/81)
 
-### ⓐ 대조 불가 둘 — B3 · D4
+### ⓐ 대조 불가 하나 — B3
+
+(D4 는 아래 「통과로 올린 것」을 보라.)
 
 **B3 — 문법 핀 선정 축이 「측정 전」인가.** 축은 `c6e5155`(07:30)에 등록됐는데,
 **승자 `77a3747` 은 `a2ed4dd`(07:21) 잠긴 의도 B1 에 이미 박혀 있었다.** 사전부검 R2 가
@@ -227,7 +242,9 @@ tree-sitter-rust 고유 마디이고 Kotlin 은 `annotation`, TS 는 `decorator`
 **축이 없었어도 같은 값이 나왔을지는 산출로 대조할 수 없다.**
 `what_was_already_known` ⑦ 에 그 사실을 적었다.
 
-**D4 — 기계 대조군은 「통과」로 올렸다.** 처음에 `syn` 스파이크를 격리 사본에서만
+### 통과로 올린 것 — D4
+
+**D4 — 기계 대조군은 「통과」다.** 처음에 `syn` 스파이크를 격리 사본에서만
 돌리고 저장소에 안 남겨 R1 이 *"재현할 수 없다"* 고 판정했다. `scripts/syn-oracle/` 로
 넣었고, **R3 이 그것을 직접 돌려 재현했다.**
 
@@ -308,6 +325,41 @@ trait 만 · 함수 안은 안 셈)은 같은 회차가 두 번째로 옮겨 쓴
 268/268 이 말하는 것은 **「전사가 정확하다」이지 「규칙이 옳다」가 아니다**
 (독립 리뷰 R3). 규칙 자체를 반증하려면 **규칙을 안 본 제3자**가 세야 한다.
 
+## 이 판정의 수를 다시 재는 법
+
+★ **「실측」이라 적고 재는 자리가 없으면 그것이 병이다.** 이 회차가 그 병으로 **네 번**
+물렸다(독립 리뷰 R1~R4). 아래가 각 수의 세는 자리다.
+
+| 수 | 명령 |
+|---|---|
+| Rust 등급 · 결박 불가 언어 | `cargo run -q -p pal-cli -- ledger` |
+| 결박 **46** | `cargo run -q -p pal-cli -- narrative` |
+| 재현율 · 정밀도 · 어긋남 **30** | `python3 scripts/rust-recall-verify.py --repo <cargo> --syn` |
+| ditto 표식 **330** (금지역) | `cargo run -q -p pal-extract --example count_marked -- <ditto> ts tsx` |
+| R-16 좌표 충돌 | `cargo run -q -p pal-extract --example coord_collisions -- <cargo> rs --제외 /tests/testsuite/` |
+| Kotlin 골든 (금지역) | `python3 scripts/f01-verify.py --repo <boxwood>/portal-backend` |
+| TypeScript 골든 (금지역) | `python3 scripts/f03-3-verify.py` |
+
+### ⚠ 재는 자리가 **없는** 둘 — 절차만 적는다
+
+**① 접기 미적용 수(73 · 137).** `이어지는_doc` 에 스위치가 없어 소스를 고쳐야 한다:
+
+```
+# crates/pal-extract/src/parse.rs 의 모은다() 에서
+-  let 끝 = if doc_주석인가(child) { 이어지는_doc(child, source) } else { child };
++  let 끝 = child;
+```
+
+고친 뒤 `pal narrative` 가 **73**, `--example count_marked -- . rs` 가 **137** 을 낸다.
+**되돌리는 것을 잊지 마라.** 스위치를 다는 것은 `parse.rs` 의 공개면을 늘리는 일이라
+[#77] 이 진다.
+
+**② 문법 축 표의 지는 후보 세 행.** 후보마다 `tree-sitter-rust` 를 그 태그로 핀한
+별도 크레이트를 세우고 cargo 380 을 전수 파싱해야 한다. **승자 행만 저장소 도구로
+재현된다**(오류 6 · ERROR 43 · upstream behind 0). 나머지 셋은 **이 판정 시점의
+측정이고 재현 절차가 저장소에 없다** — 그 사실이 B3 를 「대조 불가」로 남기는 이유를
+하나 더 보탠다(독립 리뷰 R4).
+
 ## 효과
 
 전문: [`effect/effect.md`](../../.palimpsest/rounds/2026-08-20-rust-extractor/effect/effect.md)
@@ -354,7 +406,7 @@ trait 만 · 함수 안은 안 셈)은 같은 회차가 두 번째로 옮겨 쓴
   실질이다. 의도가 *"「안 넣는다」를 판정으로 적는다"* 로 등록했고 여기 적는다
   (앞 판은 이 항목을 빠뜨렸다 — 독립 리뷰가 두 목록을 대조해 잡았다)
 
-## 이 회차가 저장소에 영구히 남긴 도구 둘
+## 이 회차가 저장소에 영구히 남긴 도구 셋
 
 의도가 명시적으로 요구하지 않았으나 측정에 필요해서 만들었고, **남는다는 사실을
 여기 적는다**(독립 리뷰 R1 이 *"어디에도 안 적혔다"* 고 지적했다).
@@ -364,6 +416,13 @@ trait 만 · 함수 안은 안 셈)은 같은 회차가 두 번째로 옮겨 쓴
   ⚠ `cargo xtask test` 가 매번 빌드한다
 - **`scripts/syn-oracle/`** — 손 표본의 **음성 대조군**. 워크스페이스 멤버가 아니라
   `deny.toml` 의 의존 모집단에 안 들어간다
+- **`crates/pal-extract/examples/coord_collisions.rs`** — R-16 좌표 충돌을 센다.
+  ★ **이 도구가 없어서 「실측」이라 적힌 수가 재현되지 않았다** — 그 병을 닫으려고
+  만들었다(독립 리뷰 R3)
+
+⚠ **셋 다 단위시험이 없다.** `cargo xtask test` 는 `--all-targets` 라 예제를 **빌드만**
+하고, `syn-oracle` 은 워크스페이스 밖이다. **부르는 자리도 `xtask`·CI 에 없다** —
+넷 다 손으로 돌려야 하고 안 돌리면 아무 일도 안 일어난다. [#81] 이 그 자리를 진다.
 
 ## ⚠ 회차 중에 관측한 것 둘 — 판정에 싣는다
 
