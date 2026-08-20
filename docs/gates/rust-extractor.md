@@ -56,10 +56,14 @@ pal narrative: 결박됨 0
 
 | | 수 | 무엇 |
 |---|--:|---|
-| **통과** | **41** | |
+| **통과** | **42** | |
 | **반증** | **0** | |
 | **대조 불가** | **2** | **B3**(문법 핀 선정 축) · **D4**(기계 대조군) |
-| **미측정** | **1** | **H6**(CI) — push 전에는 원리상 못 잰다 |
+| **미측정** | **0** | — |
+
+★ **H6 이 섰다.** `966850b7ec6be8a1ffc25cf66becf70b52b78bc0` 에
+`conclusion=success` — **일곱 잡 전부**(ubuntu · macos · windows · 놓는다 ×2 ·
+받는다 ×2). 이 기계에 Windows 가 없으므로 **원리상 못 보던 축**이 여기서 섰다.
 
 **합 = 44** ✔
 
@@ -185,10 +189,10 @@ tree-sitter-rust 고유 마디이고 Kotlin 은 `annotation`, TS 는 `decorator`
 
 **G. 효과** — [`effect/effect.md`](../../.palimpsest/rounds/2026-08-20-rust-extractor/effect/effect.md)
 
-**H. 규약** — ⚠ **H6 은 「미측정」이다** — 새 지시 문서 + 옛 문서 갱신 줄(원문은 안 지웠다) ·
+**H. 규약** — 새 지시 문서 + 옛 문서 갱신 줄(원문은 안 지웠다) ·
 「1급은 넷」을 말하던 코드 doc **아홉 자리** 정정 · 이 문서 이름이 `F`·`G`·`S` 로 시작하지
 않음 · `record.py check` 통과 · 종료 보고.
-**H6(CI)는 push 전에 원리상 못 잰다** — 종료 보고가 그 결과를 싣는다.
+**H6 — CI 가 `966850b` 에 `conclusion=success` 를 붙였다.** 일곱 잡 전부 통과.
 
 **I. 분할** — [#77](https://github.com/hskim-ecoletree/palimpsest/issues/77) ·
 [#78](https://github.com/hskim-ecoletree/palimpsest/issues/78) ·
