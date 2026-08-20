@@ -313,9 +313,11 @@ R-11을 정면으로 위반한다."*
 `isAtOrAboveHome`에 결박 1(하한 1). **그런데 이 저장소에서 결박 가능한 좌표가
 7개뿐이고 파일이 1개다** — `corpus/tasks/f03-normalize-seeds.ts` 하나.
 
-★ **코어가 Rust이고 추출기가 Kotlin·Java·JavaScript·TypeScript 넷뿐이다
+★ **코어가 Rust이고 추출기가 Kotlin·Java·JavaScript·TypeScript 넷뿐이다.
+>
 > ↳ **2026-08-20 이 갱신했다 — Rust 가 다섯째 1급이 됐고 추출기는 셋이다**
-> ([ADR-0027](../adr/0027-the-instrument-must-reach-its-own-floor.md)). **이 문서의 판정은 안 바꾼다** — 그때의 측정이다.**
+> ([ADR-0027](../adr/0027-the-instrument-must-reach-its-own-floor.md)).
+> **이 문서의 판정은 안 바꾼다** — 그때의 측정이다..**
 그러므로 *"자기 저장소에서 실사용"* 은 이 빌드에서 **코퍼스 픽스처 한 파일 위에서만**
 선다. [R-19]가 *"자기 저장소 자기적용은 편향된 표본"* 이라고 이미 적었는데,
 **여기서는 편향 이전에 능력 부재다.** 하한 1은 넘지만 그 1이 무엇 위에 섰는지를 적는다.

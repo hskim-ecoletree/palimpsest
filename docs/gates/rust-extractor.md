@@ -33,7 +33,7 @@ pal narrative: 결박됨 0
 
 | 무엇이 고장 | 드러나는 조건 | 실제 |
 |---|---|---|
-| 추출기가 죽은 가지 | `parsed` 가 1 에서 안 오른다 | **118** ✔ |
+| 추출기가 죽은 가지 | `parsed` 가 1 에서 안 오른다 | **121** ✔ |
 | `attribute_item` 건너뛰기가 죽은 가지 | 도달 수가 24 에서 안 오른다 | **69** ✔ |
 | `///` 접기가 죽은 가지 | 조각이 130 에서 안 준다 | **85** ✔ |
 | **손 표본이 고장** | **기계 대조군과의 차이가 「전부」가 된다** | **차이 0** ✔ |
@@ -75,15 +75,19 @@ pal narrative: 결박됨 0
 |---|---|---|
 | ① recall (빠뜨린 것 0) | **대조 불가** | 15 — 아래 |
 | ② precision (잘못 잡은 것 0) | **대조 불가** | 13 — 아래 |
-| ③ binding | **통과** | `parsed` 118 · 결박 46 |
+| ③ binding | **통과** | `parsed` 121 · 결박 46 |
 | ④ no_regression | **통과** | 골든 셋 불변 · 표식 330 |
 | ⑤ grammar_pin | **통과** | 축 셋으로 갈랐다 |
 
 **합 = 5** ✔
 
-### 통과 43 — 원문 수치와 함께
+### 통과한 것 — 원문 수치와 함께
 
-**A. 추출기가 선다 (9/9)**
+★ **수는 위 표에만 있다.** 앞 판은 절 제목과 절별 `(n/n)` 표기에 수를 한 벌 더
+적었고 **세 자리가 41·43·42 로 갈렸다**(독립 리뷰 R2 가 금지역으로 판정했다).
+**세는 자리는 하나다.**
+
+**A. 추출기가 선다**
 
 `Language::Rust` 가 서고 `from_extension("rs")`·`from_name("Rust")` 가 둘 다 답한다.
 `extractor_for` 가 `Capable::Present`, `grade_of` 가 **L1**.
@@ -94,7 +98,7 @@ pal narrative: 결박됨 0
 `recognize.rs` 의 `("rs","Rust")` → 도달 불가라 삭제.
 중첩 순회는 `symbol.contains RustExtractor` 가 `impl` 안 메서드 넷을 내는 것으로 선다.
 
-**B. 문법 핀 (4/4)**
+**B. 문법 핀** — ⚠ **B3 은 아래 「대조 불가」다**
 
 축 셋을 **재기 전에 등록**하고 후보 넷을 전수로 쟀다:
 
@@ -110,13 +114,13 @@ pal narrative: 결박됨 0
 (CI 의 `produce` 가 `--locked`).
 `cargo deny` 통과 · **`allow-git` 이 2 → 3** 으로 늘었다(라이선스 예외는 안 늘었다: MIT).
 
-**C. 심볼 종류 (2/2)**
+**C. 심볼 종류**
 
 `SymbolKind` 에 일곱(`Struct`·`Trait`·`Module`·`Const`·`Static`·`Macro`·`Union`).
 접었으면 cargo 좌표 충돌이 **6.1% → 11.2%** 였다.
 **앞의 아홉은 이름도 값도 안 건드렸고** 골든의 `kind` 열이 안 움직였다.
 
-**D. 오라클 (4/5 — D4 는 아래)**
+**D. 오라클** — ⚠ **D4 는 아래 「대조 불가」다**
 
 손 표본이 **추출기 코드보다 먼저** 커밋됐다(`c6e5155` → `bdd3934`).
 기준 SHA 명시: 자기 저장소 `56926aa` · cargo `514c56dd`.
@@ -124,25 +128,38 @@ pal narrative: 결박됨 0
 **파싱 오류 6 파일(ERROR 43)** 을 여기 싣는다.
 재현율·정밀도를 **집합 비교**로 냈다(아래 「대조 불가」 참조).
 
-**E. 결박이 선다 (5/5)**
+**E. 결박이 선다**
 
 ```
-파일      472
-  parsed             120
+파일      477
+  parsed             121
   partial              0
-  unsupported        306  추출기 없음(로드맵)
-  unrecognized        45  언어 미인식
-언어      Rust              L1  identity: ordinal   119 파일
-          TypeScript        L2  identity: exact       1 파일
-          Markdown          L0  결박 불가            228 파일
-          ← 결박 불가 언어 6개 · 306 파일
+  unsupported        309  추출기 없음(로드맵)
+  unrecognized        46  언어 미인식
+  excluded             0
+  binary               1
+  generated            0
 
-pal narrative: 결박됨 46
+언어      Markdown          L0  결박 불가            230 파일
+          Rust              L1  identity: ordinal   120 파일
+          Python            L0  결박 불가             41 파일
+          TOML              L0  결박 불가             29 파일
+          Shell             L0  결박 불가              6 파일
+          YAML              L0  결박 불가              2 파일
+          JSON              L0  결박 불가              1 파일
+          TypeScript        L2  identity: exact     1 파일
+
+          ← 결박 불가 언어 6개 · 309 파일. 이 파일들에는 좌표가 없습니다
 ```
 
-⚠ **앞 판의 이 블록은 실행 출력이 아니었다** — `466 · 118 · 303` 이라 적었는데
-TypeScript 1 도 `parsed` 이므로 Rust 119 면 `parsed` 는 120 이상이어야 한다.
-독립 리뷰가 산술로 잡았다. **위는 실행 출력을 그대로 붙인 것이다.**
+⚠ **이 수는 워킹트리 상태에 따라 움직인다.** 앞 판은 두 번 갈렸다 —
+① `466 · 118 · 303` 은 **실행 출력이 아니었다**(TS 1 도 `parsed` 이므로 산술상 불가) ·
+② 고쳐 붙인 `472 · 120` 도 **재현되지 않았다** — 그 사이에 내가 커밋한
+`scripts/syn-oracle/target/` **65 파일(17.5 MB)** 이 대장을 오염시켰기 때문이다
+(`unrecognized 45→80` · `binary 1→20` · `excluded 0→2`). 독립 리뷰 R2 가 잡았다.
+
+**빌드 산출을 걷어내고 `.gitignore` 에 `**/target/` 을 넣은 뒤의 출력이 위 블록이다.**
+★ **자기 저장소를 재는 도구는 자기 쓰레기에 걸린다** — 그 사실 자체가 이 회차의 산출이다.
 
 ★ **사전 등록한 수 셋이 전부 맞았다** — 처방 전 **24** · 접기 끔 **69** · 접기 켬 **43**.
 (ADR-0027 인용을 코드에 단 뒤 46.)
@@ -152,7 +169,7 @@ TypeScript 1 도 `parsed` 이므로 Rust 119 면 `parsed` 는 120 이상이어�
 `let_declaration` 10 · `enum_variant` 8 · `expression_statement` 7 ·
 `field_declaration` 5 · `field_identifier` 3 · 기타 4 · 좌표없음 3.
 
-**F. 회귀가 없다 (5/5) — 등록된 금지역**
+**F. 회귀가 없다 — 등록된 금지역**
 
 | 축 | 원문 |
 |---|---|
@@ -166,14 +183,14 @@ TypeScript 1 도 `parsed` 이므로 Rust 119 면 `parsed` 는 120 이상이어�
 tree-sitter-rust 고유 마디이고 Kotlin 은 `annotation`, TS 는 `decorator` 다.
 **언어 축을 안 만들었으므로** `parse.rs` 의 *"언어마다 따로 쓰지 않는다"* 가 그대로 산다.
 
-**G. 효과 (3/3)** — [`effect/effect.md`](../../.palimpsest/rounds/2026-08-20-rust-extractor/effect/effect.md)
+**G. 효과** — [`effect/effect.md`](../../.palimpsest/rounds/2026-08-20-rust-extractor/effect/effect.md)
 
-**H. 규약 (5/6 — H6 은 미측정)** — 새 지시 문서 + 옛 문서 갱신 줄(원문은 안 지웠다) ·
+**H. 규약** — ⚠ **H6 은 「미측정」이다** — 새 지시 문서 + 옛 문서 갱신 줄(원문은 안 지웠다) ·
 「1급은 넷」을 말하던 코드 doc **아홉 자리** 정정 · 이 문서 이름이 `F`·`G`·`S` 로 시작하지
 않음 · `record.py check` 통과 · 종료 보고.
 **H6(CI)는 push 전에 원리상 못 잰다** — 종료 보고가 그 결과를 싣는다.
 
-**I. 분할 (5/5)** — [#77](https://github.com/hskim-ecoletree/palimpsest/issues/77) ·
+**I. 분할** — [#77](https://github.com/hskim-ecoletree/palimpsest/issues/77) ·
 [#78](https://github.com/hskim-ecoletree/palimpsest/issues/78) ·
 [#79](https://github.com/hskim-ecoletree/palimpsest/issues/79) ·
 [#80](https://github.com/hskim-ecoletree/palimpsest/issues/80) ·
@@ -210,13 +227,17 @@ tree-sitter-rust 고유 마디이고 Kotlin 은 `annotation`, TS 는 `decorator`
 **「빠뜨린 것 0 · 잘못 잡은 것 0」은 안 섰다:**
 
 ```
-표본     파일 13 · 손 표본 선언 268
-산출     선언 266
+표본     파일 13 · 손 표본 선언 268 (열쇠 268)
+산출     선언 268 (열쇠 266)
 ① 빠뜨린 것  15
-② 잘못 잡은 것 13
+② 잘못 잡은 것 15
 재현율   94.40%
-정밀도   95.11%
+정밀도   94.40%
 ```
+
+⚠ **앞 판은 `②13 · 95.11%` 를 실었다.** 그때 검증 스크립트가 **열쇠 집합으로**
+비교해 중복을 삼켰고(산출 268 을 266 으로 보고), 삼켜진 둘이 하필 **R-16 이 사는
+축**이었다. 다중집합으로 고치니 **더 정직한 수**가 나왔다.
 
 ★★ **어긋남의 원인이 하나가 아니라 둘이었다.** 앞 판은 하나로 적었고 독립 리뷰 R1 이
 둘째를 격리 파일로 잡았다.
@@ -290,9 +311,14 @@ tree-sitter-rust 고유 마디이고 Kotlin 은 `annotation`, TS 는 `decorator`
   하나에서만 재현된다** → [#81]
 - **`cfg` 해석** — 추출기는 `cfg` 를 안 읽는다. `#[cfg]` 로 갈린 동명 선언이
   `Ordinal` 로 강등되는 것은 **설계대로**다(실측 2 건)
-- **동결된 판정 문서와 `corpus/criteria.toml` 이 「추출기는 넷뿐」을 현재형으로 말하는 것** —
-  `F11-touch.md:316`·`F12.md:303`·`criteria.toml:10516`. 죽은 링크 검사도 인용 검사도
-  그 모집단을 뺀다. **고칠 수 없으므로 적는다**
+- **`corpus/criteria.toml:10516` 이 「추출기는 넷뿐」을 현재형으로 말한다** —
+  그 파일은 소유자 판정으로 회차가 안 만지는 자리다. 죽은 링크 검사도 인용 검사도
+  그 모집단을 뺀다
+  ★ **`F11-touch.md`·`F12.md` 는 「원리상 못 고친다」가 아니라 잔여였다.**
+  같은 회차가 지시 문서에 갱신 줄을 다는 선례를 만들었고, 독립 리뷰 R1 이 그것을
+  지적해 **두 문서에 같은 줄을 달았다.** 판정 본문은 안 바꿨다 — 그때의 측정이다.
+  ⚠ 잠긴 의도 §범위 밖은 여전히 *"고칠 수 없으므로 적는다"* 라 적혀 있다.
+  **그 문장이 틀렸고 이 게이트가 정정한다**(독립 리뷰 R2)
 - **Java·JavaScript 추출기** — 선언된 1급인데 `NotBuilt` 인 채로 남는다
 - **Markdown 228 파일의 결박** — #69 가 진다
 - **CI 에 코퍼스 잡을 넣는 것** — cargo 3,071 파일을 세 OS × 매 커밋 클론하는 비용이

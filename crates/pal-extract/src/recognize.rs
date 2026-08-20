@@ -191,6 +191,21 @@ mod tests {
     }
 
     #[test]
+    fn 대문자_확장자도_1급으로_인식한다() {
+        // ★ **독립 리뷰 R1 이 잡고 R2 가 「방어 장치가 없다」고 지적한 자리다.**
+        // 도달 불가 항목 `("rs","Rust")` 를 지우면서 대문자 경로가 함께 떨어졌었다 —
+        // `BY_EXTENSION` 은 소문자화해 보는데 `Language::from_extension` 은 안 그랬다.
+        // 되돌리면 이 시험이 빨개진다.
+        for ext in ["RS", "KT", "TS", "Rs"] {
+            let r = 인식(ext, &format!("a.{ext}"));
+            assert!(
+                matches!(r, Recognition::FirstClass(_)),
+                "{ext} 가 1급으로 안 잡혔다 — {r:?}"
+            );
+        }
+    }
+
+    #[test]
     fn 일급_넷은_따로_잡힌다() {
         assert_eq!(인식("kt", "A.kt"), Recognition::FirstClass(Language::Kotlin));
         assert_eq!(인식("ts", "a.ts"), Recognition::FirstClass(Language::TypeScript));

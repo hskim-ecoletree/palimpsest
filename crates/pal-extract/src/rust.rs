@@ -135,10 +135,23 @@ impl<'t> 순회<'t> {
     /// 안 붙인다. `Containment` 는 `LocalIx` 쌍이라 심볼이 있어야 걸 수 있고,
     /// 없는 것을 심볼로 만들면 손 표본 규칙 ①을 뒤집는 일이다. **그 잔여는 #78 이 진다.**
     fn impl_을_해소한다(&mut self) {
+        // **부모 사슬** — 심볼 i 를 담는 심볼. `contains` 를 뒤집어 만든다.
+        let mut 담는이: Vec<Option<LocalIx>> = vec![None; self.symbols.len()];
+        for c in &self.contains {
+            if let Some(slot) = 담는이.get_mut(c.child.0 as usize) {
+                *slot = Some(c.parent);
+            }
+        }
         for (대상, 감싼_부모, 자식들) in std::mem::take(&mut self.미해소_impl) {
             // **컨테이너 후보는 「담을 수 있는 종류」만이다.** 같은 이름의 함수가
             // 있어도 그것은 `impl` 의 대상이 아니다.
-            let 부모 = self.symbols.iter().position(|s| {
+            //
+            // ★ **그리고 같은 모듈 안이어야 한다.** 앞 판은 파일 전체의 첫 일치를
+            // 잡아 **모듈 경계를 넘었다** — `mod a { struct S; } mod b { impl S { fn f } }`
+            // 에서 `f` 가 `a::S` 에 붙었고, 최상위 `S` 와 `mod m { struct S; }` 가
+            // 함께 있으면 `m::S` 의 메서드까지 최상위 `S` 로 갔다.
+            // cargo 380 파일 중 **11(2.9%)** 이 그 형태다(독립 리뷰 R2).
+            let 부모 = self.symbols.iter().enumerate().position(|(i, s)| {
                 s.name == 대상
                     && matches!(
                         s.kind,
@@ -148,6 +161,8 @@ impl<'t> 순회<'t> {
                             | SymbolKind::Union
                             | SymbolKind::TypeAlias
                     )
+                    // `impl` 을 감싼 것과 대상을 담는 것이 **같아야** 한다.
+                    && 담는이.get(i).copied().flatten().map(|p| p.0) == 감싼_부모.map(|p| p.0)
             });
             let Some(ix) = 부모.map(|i| LocalIx(u32::try_from(i).unwrap_or(u32::MAX))) else {
                 // 못 찾았다 — 외부 타입이다. `impl` 을 감싼 부모가 있으면 그것에 붙인다
@@ -402,6 +417,41 @@ mod tests {
         let 뒤 = extract_detailed(b"struct Foo;\nimpl Foo { fn late() {} }").unwrap();
         assert_eq!(앞.contains.len(), 1, "impl 이 앞에 있을 때 안 붙었다");
         assert_eq!(뒤.contains.len(), 1, "impl 이 뒤에 있을 때 안 붙었다");
+    }
+
+    #[test]
+    fn 동명_타입이_모듈마다_있어도_제_것에_붙는다() {
+        // ★ **독립 리뷰 R2 가 격리 빌드로 잡은 자리다.** 앞 판은 파일 전체의 첫
+        // 일치를 잡아 모듈 경계를 넘었다 — cargo 380 중 11(2.9%)이 그 형태다.
+        let g = extract_detailed(
+            b"struct S; impl S { fn top() {} }\nmod m { struct S; impl S { fn nested() {} } }",
+        )
+        .unwrap();
+        let 이름 = |ix: LocalIx| g.symbols[ix.0 as usize].name.clone();
+        // `top` 은 최상위 `S`(ix 0)에, `nested` 는 `m` 안의 `S` 에 붙어야 한다.
+        let top_부모 = g
+            .contains
+            .iter()
+            .find(|c| 이름(c.child) == "top")
+            .map(|c| c.parent.0)
+            .expect("top 이 안 붙었다");
+        let nested_부모 = g
+            .contains
+            .iter()
+            .find(|c| 이름(c.child) == "nested")
+            .map(|c| c.parent.0)
+            .expect("nested 가 안 붙었다");
+        assert_ne!(top_부모, nested_부모, "동명 타입 둘이 한 컨테이너로 접혔다");
+    }
+
+    #[test]
+    fn 모듈_밖의_동명_타입에_안_붙는다() {
+        // `mod a { struct S; }` 와 `mod b { impl S { … } }` 는 **다른 타입**이다.
+        let g = extract_detailed(b"mod a { struct S; }\nmod b { impl S { fn f() {} } }").unwrap();
+        let f = g.symbols.iter().position(|s| s.name == "f").expect("f 가 없다");
+        let 부모 = g.contains.iter().find(|c| c.child.0 as usize == f).map(|c| c.parent);
+        // `b` 안에 `S` 가 없으므로 `impl` 을 감싼 `b` 에 붙는다 — `a::S` 가 아니다.
+        assert_eq!(부모.map(|p| g.symbols[p.0 as usize].name.clone()), Some("b".to_owned()));
     }
 
     #[test]
