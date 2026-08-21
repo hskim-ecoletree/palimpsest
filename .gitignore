@@ -32,3 +32,12 @@ __pycache__/
 # `pal doctor` 가 `index.redb` 를, `pal narrative` 가 `intent.redb` 를 만든다
 /.palimpsest/index.redb
 /.palimpsest/intent.redb
+
+# Claude Code 플러그인 활성화 선언. `enabledPlugins` 는 `cut-bs@cut-the-bullshit`
+# 처럼 마켓플레이스 **이름**을 가리키는데, 그 이름은 이 저장소가 아니라 사용자 레벨
+# `~/.claude/settings.json` 에서 절대 경로(`/Users/…/cut-the-bullshit`)로 풀린다.
+# 커밋하면 남의 기계에서는 정의가 없는 이름을 가리키는 선언만 남는다.
+# 루트 고정이 아니라 `**` 인 것은, 프로젝트 루트가 아닌 곳에서 설치를 돌리면
+# `.claude/agents/.claude/settings.json` 같은 중첩 설정이 실제로 생기기 때문이다.
+# `settings.local.json` 은 전역 gitignore 가 이미 잡는다.
+**/.claude/settings.json
