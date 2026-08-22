@@ -3237,13 +3237,19 @@ fn check_round_records(root: &Path) -> Result<String> {
                 // ★ **`종류` 목록도 원천에 물어본다.** (정정 2026-08-19 · 독립 리뷰 5 라운드)
                 //   앞 판은 여기에 `레코드`·`예외표` 를 **다시 적었고**, 그것이
                 //   *"스키마의 유일한 자리"* 라는 C2-b 의 문장을 깨뜨렸다.
-                let 종류_ok = 종류_목록.iter().any(|k| 첫줄.contains(&format!("\"종류\": \"{k}\"")));
-                if 첫줄.contains("\"종류\"") && !종류_ok {
+                // ⚠ **여기도 JSON 으로 읽는다.** (독립 리뷰 R5) 앞 판은 공백까지 박힌
+                //    정확 문자열이라 `{"종류":"예외표"}` 처럼 공백만 빠져도
+                //    *"원천이 선언한 목록 밖이다"* 라고 **거짓을 말했다** — 값은 목록 안인데.
+                let 선언된_종류 = serde_json::from_str::<serde_json::Value>(첫줄)
+                    .ok()
+                    .and_then(|v| v.get("종류").and_then(|x| x.as_str()).map(str::to_owned));
+                let 종류_ok = 선언된_종류.as_deref().is_some_and(|k| 종류_목록.iter().any(|x| x == k));
+                if 선언된_종류.is_some() && !종류_ok {
                     problems.push(format!(
                         "{상대}: 머리 줄의 `종류` 가 원천이 선언한 {종류_목록:?} 밖이다"
                     ));
                 }
-                if !첫줄.contains("\"종류\"") {
+                if 선언된_종류.is_none() {
                     problems.push(format!(
                         "{상대}: 머리 줄에 `종류` 가 없다 — `레코드` 인지 `예외표` 인지 \
                          선언해야 행 검증을 어느 자로 잴지 정해진다"

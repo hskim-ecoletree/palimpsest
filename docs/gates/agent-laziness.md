@@ -89,7 +89,7 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 | **B** 조건·태그 파서 | `python3 .claude/skills/round/bin/record.py conditions <intent.md>` · **`git diff --diff-filter=A --name-only e45e822..HEAD -- .claude/`** (새 파일 0 — ⚠ `git ls-files` 는 스냅숏이라 「새 파일 0」을 **원리상 못 말한다**. 독립 리뷰 R1 이 잡았다) · `xtask` 는 `파서에_묻는다` 로 위임한다 |
 | **C** 게이트 표준 표 | `git diff e45e822..HEAD -- docs/gates/README.md .claude/skills/round/SKILL.md docs/gates/rust-extractor.md **docs/gates/round-finding-records.md**` (C2 는 게이트 **둘 다** 대야 한다 — 앞 판이 하나를 빠뜨렸다) · `python3 … record.py --schema` 의 `게이트파서` |
 | **D** 근거 칸 | 이 절 자체 |
-| **E** 21 번째 검사 | `cargo xtask check` · RED 는 [`red/e8-red-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e8-red-observed.txt) · 음성 대조 다섯은 [`red/e9-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls.txt) |
+| **E** 21 번째 검사 | `cargo xtask check` · RED 는 [`red/e8-red-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e8-red-observed.txt) · 음성 대조는 [`red/e9-negative-controls-rerun.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls-rerun.txt) — **지금 장치에 다시 태운 것**이다. 첫 판([`red/e9-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls.txt))은 장치가 두 번 바뀌기 전 출력이라 **판정의 근거로 쓰지 않는다** |
 | **F** Stop 관측 | [`effect/stop-hook-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/effect/stop-hook-observed.txt) — 격리 디렉터리에서 `claude -p` 두 번. `git status .claude/` · `git diff crates/pal-cli/src/hook/policy.rs` · `find .palimpsest/rounds -name '*.json'` |
 | **G** 스키마 3 열림 축 | `python3 … record.py check .palimpsest/rounds/*/findings.jsonl .palimpsest/rounds/*/*/disposal-overrides.jsonl` — 뒤 glob 이 있어야 G6(예외표는 2 로 남는다)을 댄다. ⚠ **코드 스팬 안에 `**` 를 두면 그 명령이 그대로는 안 돈다** — R1 의 고침이 그 병을 형태만 바꿔 남겼고 R2 가 잡았다 · 계기판 ⑨ · 음성 대조는 [`red/g-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/g-negative-controls.txt) |
 | **H** 전사 | `python3 … record.py conditions` 를 두 회차에 · `python3 … record.py gate docs/gates/{round-finding-records,rust-extractor}.md` · 계기판 ② 를 두 회차에 |
@@ -120,6 +120,32 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 「다음 미판정 조건을 집는다」 · 한 줄 수정 면제.
 
 ★ **기입은 이 회차가 안 한다** — 승격 5(*"고르는 것까지 · 기입은 다음"*). [#88] 이 진다.
+
+### ⚠ 이 회차가 자기 레코드에서 **원 반환문을 조용히 뒤집었다** (독립 리뷰 R5)
+
+리뷰 R2 의 발견을 레코드로 옮기면서 **열 행에서 열한 칸이 원문과 갈렸다.**
+합계 검산은 **행 수만** 세므로 초록이었고, 리뷰어가 1:1 로 대 보고서야 드러났다.
+
+★ **그중 둘은 리뷰어가 문장으로 거부한 것을 뒤집었다** — 원 반환문이
+*"…그래서 금지역으로 안 올린다"* 라고 적은 항 둘을 레코드가 **금지역**으로 적었다.
+그러면 그 회차의 커밋 메시지가 *"본 목록에 금지역 하나"* 라 말하는데 레코드는 넷이 된다.
+
+**전부 원문의 분류로 되돌렸다.** 재분류는 메인의 권한이지만 **밝히고 해야 한다** —
+같은 회차가 앞서 한 재분류 하나는 커밋 제목이 밝혔고 리뷰어가 그것을 확인했다.
+
+⚠ **레코드의 `조건` 칸은 값 하나뿐이라, 원문이 `E5 · E6` 처럼 둘을 적으면 잘린다**
+— 이 회차에서 열둘이 그랬다. **첫 값을 적는다**는 규칙조차 어디에도 없다.
+[#92] 가 그 자리를 진다.
+
+### ⚠ 계기판 ⑦⑧ 이 **자리 채우기 행**에 오염돼 있다 ([#93])
+
+리뷰어 반환 형식이 *"빠진 것 — 없음"* 같은 빈 표에도 `| # |` 행을 요구하고,
+합계 검산이 그 행을 세므로 **그것도 레코드가 되어야 한다.** 스키마에 「발견 아님」
+칸이 없어 `모집단=원의도` 가 붙고, ⑦ 이 그것을 **원 의도 발견으로 센다.**
+
+**그래서 이 회차의 ⑦ 은 실제보다 크다.** 형식을 요구한 까닭이 *"⑦⑧ 이 조용히
+**작아진다**"* 였는데 **지금은 조용히 커진다** — 고침이 부호만 뒤집었다.
+회차 안에서 안 고친다: `| — |` 행을 빼면 **옛 회차의 검산이 소급으로 어긋난다.**
 
 ### ⚠ 이 게이트가 **주장하지 않는 것** (D2 · D3)
 
@@ -176,6 +202,8 @@ $ python3 .claude/skills/round/bin/dashboard.py e45e822 \
 그것이 없으면 「Stop 이 안 받는다」와 「내 설정이 틀렸다」가 구별 불가다.
 
 [#88]: https://github.com/hskim-ecoletree/palimpsest/issues/88
+[#92]: https://github.com/hskim-ecoletree/palimpsest/issues/92
+[#93]: https://github.com/hskim-ecoletree/palimpsest/issues/93
 
 ## 범위 밖
 

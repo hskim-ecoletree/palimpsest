@@ -73,6 +73,8 @@
 | [#89] | 계기판 ③ 진자가 커밋 이력의 빌드 산출물에 지배된다 |
 | [#90] | 표 헤더 한 글자로 회차를 조용히 「원장 둘 대조」 밖으로 뺄 수 있다 |
 | [#92] | 회차 레코드의 합계 검산이 **행 수만** 센다 — 수만 맞고 내용이 어긋난 것을 못 잡는다 |
+| [#93] | 리뷰어 반환 형식의 「없음」 자리 행이 레코드가 되어 계기판 ⑦⑧ 을 오염시킨다 |
+| [#94] | `--schema` 의 `게이트파서` 선언이 코드 갈래를 못 따라간다 — **세 라운드 연속** 같은 자리 |
 
 ## 범위 밖 — 착수 때 정했다
 
@@ -169,3 +171,5 @@ Depth Tree · tree N · 「개선 없는 패스 = 완료」.
 [#89]: https://github.com/hskim-ecoletree/palimpsest/issues/89
 [#90]: https://github.com/hskim-ecoletree/palimpsest/issues/90
 [#92]: https://github.com/hskim-ecoletree/palimpsest/issues/92
+[#93]: https://github.com/hskim-ecoletree/palimpsest/issues/93
+[#94]: https://github.com/hskim-ecoletree/palimpsest/issues/94
