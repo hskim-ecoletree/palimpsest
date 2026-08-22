@@ -40,12 +40,12 @@
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A2 A3 A4 A5 A6 A7 B1 B2 B3 B4 B5 C1 C2 C3 C4 C5 D1 D2 D3 E1 E2 E3 E4 E5 E6 E7 E8 E9 E10 F1 F2 F3 F4 F5 F6 G1 G2 G3 G4 G5 G6 G7 H1 H2 H3 H4 H5 H6 H7 I1 I2 I3 I4 I5 J1 J2 J3 J4 K1 K3 K4 K5 K6 K7 K8 |
-| 반증 | J5 |
+| 통과 | A1 A2 A3 A4 A5 A6 A7 B1 B2 B3 B4 B5 C1 C2 C3 C4 C5 D2 D3 E1 E2 E3 E4 E5 E6 E7 E8 E9 E10 F1 F2 F3 F4 F5 F6 G1 G2 G3 G4 G5 G6 G7 H1 H2 H3 H4 H5 H6 H7 I1 I2 I3 I4 I5 J1 J2 J3 J4 K1 K3 K4 K5 K6 K7 K8 |
+| 반증 | D1 J5 |
 | 대조불가 | — |
 | 미측정 | K2 K9 |
 
-**검산** — 통과 66 · 반증 1 · 대조불가 0 · 미측정 2 = 69
+**검산** — 통과 65 · 반증 2 · 대조불가 0 · 미측정 2 = 69
 
 ★ **`J5` 는 반증이다.** 조건은 *"이 계획 문서가 손으로 벤 수를 **안 남긴다**"* 였는데
 `plan.md` 는 아직 남기고, 이제 **그 문서 자신이 그렇게 적는다.** 한 라운드가 이 자리를
@@ -86,11 +86,20 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 
 수는 여기 안 적는다. **돌리는 명령**을 적는다.
 
-⚠ **묶음 단위다 — 조건 예순아홉마다 따로 적지 않았다.** D1 의 문면은 *"판정마다"* 이고
-이 표는 *"묶음마다"* 다. **A~K 열한 묶음이 조건을 남김없이 덮으므로 어느 판정에 대해서든
-「무엇을 돌렸나」가 나오지만**, 한 묶음 안에서 조건별로 명령이 갈리는 경우는 이 표가
-안 가른다. 독립 리뷰 **R1·R2 가 둘 다** 이 차이를 지적했고, 그럼에도 D1 을 통과로 낸
-것은 리뷰어의 판정이다 — 이 문단은 그 차이를 **숨기지 않기 위해** 있다.
+⚠⚠ **`D1` 은 반증이다 — 이 표는 「판정마다」가 아니라 「묶음마다」다.**
+
+앞 판은 *"A~K 열한 묶음이 조건을 남김없이 덮으므로 **어느 판정에 대해서든 「무엇을
+돌렸나」가 나온다**"* 라고 적었다. **그 문장이 거짓이다** — 예컨대 `E10`(*"`intent.md`
+어느 것도 새 frontmatter 를 안 받았다"*)을 내는 명령은 이 표 어디에도 없고,
+E 행이 대는 셋 중 **frontmatter 를 재는 것이 하나도 없다.** 독립 리뷰 R7 이 잡았다.
+
+★ **묶음이 조건을 「덮는다」는 것과 「그 판정을 낸다」는 것은 다른 자다.**
+D1 이 등록한 것은 뒤의 것이고, 이 회차가 만든 것은 앞의 것이다.
+**§5: 「반증은 실패가 아니다.」** 근거 칸은 서 있고 쓸모도 있다 — 다만 **등록된
+알갱이보다 굵다.** 그 사실을 적는 것이 이 판정이다.
+
+⚠ 독립 리뷰 **R1·R2 는 같은 차이를 보고도 통과로 냈고 R7 이 반증으로 냈다.**
+셋 다 리뷰어의 판정이고, 가른 것은 **「거짓인 문장이 게이트에 있는가」**다.
 
 | 묶음 | 무엇을 돌렸나 |
 |---|---|
@@ -98,7 +107,7 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 | **B** 조건·태그 파서 | `python3 .claude/skills/round/bin/record.py conditions <intent.md>` · **`git diff --diff-filter=A --name-only e45e822..HEAD -- .claude/`** (새 파일 0 — ⚠ `git ls-files` 는 스냅숏이라 「새 파일 0」을 **원리상 못 말한다**. 독립 리뷰 R1 이 잡았다) · `xtask` 는 `파서에_묻는다` 로 위임한다 |
 | **C** 게이트 표준 표 | `git diff e45e822..HEAD -- docs/gates/README.md .claude/skills/round/SKILL.md docs/gates/rust-extractor.md **docs/gates/round-finding-records.md**` (C2 는 게이트 **둘 다** 대야 한다 — 앞 판이 하나를 빠뜨렸다) · `python3 … record.py --schema` 의 `게이트파서` |
 | **D** 근거 칸 | 이 절 자체 |
-| **E** 21 번째 검사 | `cargo xtask check` · RED 는 [`red/e8-red-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e8-red-observed.txt) · 음성 대조는 [`red/e9-negative-controls-rerun.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls-rerun.txt) — **지금 장치에 다시 태운 것**이다. 첫 판([`red/e9-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls.txt))은 장치가 두 번 바뀌기 전 출력이라 **판정의 근거로 쓰지 않는다** |
+| **E** 21 번째 검사 ([#76] 흡수) | `cargo xtask check` · RED 는 [`red/e8-red-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e8-red-observed.txt) · 음성 대조는 [`red/e9-negative-controls-rerun.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls-rerun.txt) — **지금 장치에 다시 태운 것**이다. 첫 판([`red/e9-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls.txt))은 장치가 두 번 바뀌기 전 출력이라 **판정의 근거로 쓰지 않는다** |
 | **F** Stop 관측 | [`effect/stop-hook-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/effect/stop-hook-observed.txt) — 격리 디렉터리에서 `claude -p` 두 번. `git status .claude/` · `git diff crates/pal-cli/src/hook/policy.rs` · `find .palimpsest/rounds -name '*.json'` |
 | **G** 스키마 3 열림 축 | `python3 … record.py check .palimpsest/rounds/*/findings.jsonl .palimpsest/rounds/*/*/disposal-overrides.jsonl` — 뒤 glob 이 있어야 G6(예외표는 2 로 남는다)을 댄다. ⚠ **코드 스팬 안에 `**` 를 두면 그 명령이 그대로는 안 돈다** — R1 의 고침이 그 병을 형태만 바꿔 남겼고 R2 가 잡았다 · 계기판 ⑨ · 음성 대조는 [`red/g-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/g-negative-controls.txt) |
 | **H** 전사 | `python3 … record.py conditions` 를 두 회차에 · `python3 … record.py gate docs/gates/{round-finding-records,rust-extractor}.md` · 계기판 ② 를 두 회차에 |
@@ -222,6 +231,7 @@ $ python3 .claude/skills/round/bin/dashboard.py e45e822 \
 **먹는다.** 그리고 **같은 `settings.json` 으로 `SubagentStop` 도 막혔다**(양성 대조) —
 그것이 없으면 「Stop 이 안 받는다」와 「내 설정이 틀렸다」가 구별 불가다.
 
+[#76]: https://github.com/hskim-ecoletree/palimpsest/issues/76
 [#88]: https://github.com/hskim-ecoletree/palimpsest/issues/88
 [#92]: https://github.com/hskim-ecoletree/palimpsest/issues/92
 [#93]: https://github.com/hskim-ecoletree/palimpsest/issues/93

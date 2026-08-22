@@ -94,10 +94,16 @@ pal narrative: 결박됨 0
 
 ```bash
 git rev-parse HEAD                                   # 회차의 마지막 커밋
-gh run list --limit 1 --json headSha,conclusion      # 그 SHA 에 붙은 런
+gh run list --branch <이 회차의 브랜치> --limit 5 \
+  --json headSha,conclusion,event                     # 그 SHA 에 붙은 런
 ```
 
 **「그 SHA 에 `conclusion=success` 가 붙어 있다」가 통과다.**
+
+⚠ **`--branch` 를 뺀 판이 여기 있었다** (정정 2026-08-23 · 회차 `agent-laziness` 의
+독립 리뷰 R7). 필터가 없으면 그 명령은 **「가장 최근 런」**을 내고, 그것은 대개
+`main` 의 런이라 **이 회차와 아무 상관 없는 초록을 증거로 읽게 된다.**
+판정은 안 고친다 — **재는 법만 고친다.**
 ⚠ CI 는 `cancel-in-progress: true` 라 **push 는 한 번**이고, 커밋을 더 내면
 **그 SHA 에 대해 다시 재야 한다.** SHA 를 문서에 박으면 그 순간부터 갈린다 —
 이 회차가 그 병으로 **다섯 번** 물렸다.
