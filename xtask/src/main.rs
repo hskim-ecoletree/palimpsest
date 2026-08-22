@@ -555,6 +555,7 @@ fn check(root: &Path) -> Result<()> {
         ("sunset 선언", check_sunset(root)),
         ("사라진 문서를 현재형으로 안 부른다", check_stale_citation(root)),
         ("회차 레코드", check_round_records(root)),
+        ("원장 둘 대조", check_ledger_pair(root)),
     ];
     let total = checks.len();
 
@@ -3506,4 +3507,260 @@ fn 좌표가_실재하는가(root: &Path, 경로: &str) -> bool {
         false
     }
     찾는다(root, 경로, 10)
+}
+
+// ── 검사 21 — 원장 둘을 댄다 (회차 `2026-08-22-agent-laziness` · E) ──────────
+//
+// # 무엇이 죽은 가지였나
+//
+// 판정 원장이 **두 자리**에 있었다. `intent.md` 의 완수 조건 상자와 게이트의 `## 판정`.
+// 최근 두 회차가 조건 90 개를 **열린 채로** 끝냈고 계기판 ② 는 그것을 읽어
+// 「미판정 44/44」라는 **거짓 신호**를 냈다 — 같은 회차의 게이트는 「통과 43」이라 적었다.
+// **둘이 갈리는 것을 아무도 안 댔다.** 그것이 이 검사가 닫는 금지역이다.
+//
+// # 왜 수가 아니라 ID 인가
+//
+// 소유자가 잠근 문장: *"수를 안 적고 조건 ID를 적는다. ID를 적으면 수는 세면 나온다.
+// 캐시가 아니다. 그리고 대조가 **집합 같음**이 되어 훨씬 강하다 — 수만 맞고 내용이
+// 다른 경우를 잡는다."*
+//
+// # 모집단과 짝짓기
+//
+// **회차 디렉터리 전부**에서 출발하고, 게이트에서 **역인덱스**로 짝을 찾는다.
+// 열쇠는 게이트 본문에 적힌 `.palimpsest/rounds/<회차>/intent.md` 다 —
+// **디렉터리만 가리키는 것은 짝이 아니다.** 이 검사가 여는 것은 그 파일이고,
+// 어느 원장의 짝인지를 선언하는 것이 게이트의 몫이기 때문이다.
+//
+// ⚠ **`intent.md` 에 새 frontmatter 를 안 만든다.** 반대 방향(의도 → 게이트)으로
+// 걸면 회차가 도는 내내 죽은 링크 검사가 빨개진다(격리 사본에서 재현). 게이트는
+// 회차 끝에 쓰이므로 **이 방향은 원리상 죽은 링크가 안 생긴다.**
+//
+// # 하한이 「가장 최근 회차」인 까닭
+//
+// 전역 개수 하한(*"표준 표가 N 개 이상"*)은 **과거 둘로 영구 충족되어 다시 발화하지
+// 않는다.** 그러면 이 검사가 새 회차에 대해 아무것도 요구하지 않는다 — 장치가 놓인
+// 날부터 죽은 가지다. 그래서 하한은 **「끝난 회차 중 가장 최근 것이 검사에 들었는가」**다.
+//
+// # 형식 이전은 오류가 아니다
+//
+// `docs/gates/README.md:46` 의 선례 — *"옛 게이트를 그 형식으로 옮기지 않는다. 지난
+// 판정은 그때의 기록이라 형식을 바꿔도 새로 재는 것이 없다."* 표준 표가 없는 게이트는
+// **검사 밖**이고, 그 사실을 판정문에 실어 낸다. 「안 잰 것」을 침묵으로 두지 않는다.
+
+const 게이트_뿌리: &str = "docs/gates";
+
+/// 파이썬 파서를 부르고 JSON 을 받는다.
+///
+/// ★ **rc 로 판정하지 않는다.** `record.py` 의 `conditions`·`gate` 는 **형식 오류가
+/// 있으면 rc=1 을 내면서도 표준출력에 온전한 JSON 을 낸다** — 그것이 이 검사가 읽어야
+/// 하는 내용이다. rc 는 「말할 것이 있다」는 신호이지 「출력이 없다」가 아니다.
+fn 파서에_묻는다(파이썬: &str, 원천: &Path, 명령: &str, 대상: &Path) -> Result<serde_json::Value> {
+    let out = std::process::Command::new(파이썬)
+        .arg(원천)
+        .arg(명령)
+        .arg(대상)
+        .output()
+        .with_context(|| format!("`{파이썬} {스키마_원천} {명령} {}` 를 못 돌렸다", 대상.display()))?;
+    if out.stdout.is_empty() {
+        bail!(
+            "`{스키마_원천} {명령} {}` 가 아무것도 안 냈다 (rc={}):\n{}",
+            대상.display(),
+            out.status.code().unwrap_or(-1),
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+    serde_json::from_slice(&out.stdout)
+        .with_context(|| format!("`{스키마_원천} {명령}` 출력이 JSON 이 아니다"))
+}
+
+fn 문자열들(v: &serde_json::Value) -> Vec<String> {
+    v.as_array()
+        .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_owned)).collect())
+        .unwrap_or_default()
+}
+
+fn check_ledger_pair(root: &Path) -> Result<String> {
+    let 뿌리 = root.join(회차_뿌리);
+    if !뿌리.is_dir() {
+        bail!("`{회차_뿌리}` 가 없다 — 이 검사의 모집단이 원리상 안 선다");
+    }
+
+    // ① 모집단 — 회차 디렉터리 **전부**. `intent.md` 가 있는 것이 회차다.
+    let mut 회차들: Vec<String> = Vec::new();
+    for e in std::fs::read_dir(&뿌리)? {
+        let p = e?.path();
+        if p.is_dir() && p.join("intent.md").is_file() {
+            회차들.push(p.file_name().and_then(|x| x.to_str()).unwrap_or("").to_string());
+        }
+    }
+    회차들.sort();
+    if 회차들.is_empty() {
+        bail!(
+            "`{회차_뿌리}/*/intent.md` 가 하나도 없다 — 이 검사가 아무것도 안 잰다. \
+             0 건은 「안 부른다」가 아니라 「안 봤다」다"
+        );
+    }
+
+    // ② 역인덱스 — 게이트가 어느 회차의 `intent.md` 를 가리키나.
+    let mut 게이트들: Vec<(String, String)> = Vec::new(); // (상대경로, 본문)
+    for e in std::fs::read_dir(root.join(게이트_뿌리))? {
+        let p = e?.path();
+        if p.extension().and_then(|x| x.to_str()) == Some("md") {
+            게이트들.push((상대_경로(root, &p), std::fs::read_to_string(&p)?));
+        }
+    }
+    게이트들.sort();
+
+    let 파이썬 = 파이썬_실행자()?;
+    let 원천 = root.join(스키마_원천);
+    if !원천.exists() {
+        bail!("파서 원천이 없다: {스키마_원천}");
+    }
+
+    let mut problems = Vec::new();
+    let mut 검사안: Vec<String> = Vec::new();
+    let mut 형식이전: Vec<String> = Vec::new();
+    let mut 게이트없음: Vec<String> = Vec::new();
+    let mut 댄_조건 = 0usize;
+
+    for 회차 in &회차들 {
+        let 열쇠 = format!("{회차_뿌리}/{회차}/intent.md");
+        let 짝: Vec<&(String, String)> =
+            게이트들.iter().filter(|(_, 본문)| 본문.contains(&열쇠)).collect();
+        let 끝났나 = 뿌리.join(회차).join("report.md").is_file();
+
+        if 짝.len() > 1 {
+            problems.push(format!(
+                "형식 오류 · {회차}: 게이트 {} 개가 같은 회차를 가리킨다 ({}) — \
+                 원장의 짝은 하나여야 한다",
+                짝.len(),
+                짝.iter().map(|(p, _)| p.as_str()).collect::<Vec<_>>().join(" · ")
+            ));
+            continue;
+        }
+        let Some((게이트, _)) = 짝.first().copied() else {
+            // ③ 짝이 없다 — 「게이트 없음」.
+            게이트없음.push(회차.clone());
+            if 끝났나 {
+                problems.push(format!(
+                    "{회차}: 게이트 없음 — `report.md` 가 있는데 `{열쇠}` 를 가리키는 \
+                     게이트가 `{게이트_뿌리}/` 에 없다. 끝난 회차의 판정 원장이 한 자리뿐이다"
+                ));
+            }
+            continue;
+        };
+
+        let g = 파서에_묻는다(파이썬, &원천, "gate", &root.join(게이트))?;
+        if !g["표준표"].as_bool().unwrap_or(false) {
+            // ④ 표준 표가 없다 — **형식 이전**. 검사 밖이고 오류가 아니다.
+            형식이전.push(format!("{회차} ({게이트})"));
+            continue;
+        }
+        let 게이트오류 = 문자열들(&g["형식오류"]);
+        if !게이트오류.is_empty() {
+            for m in 게이트오류 {
+                problems.push(format!("형식 오류 · {게이트}: {m}"));
+            }
+            continue;
+        }
+
+        let c = 파서에_묻는다(파이썬, &원천, "conditions", &뿌리.join(회차).join("intent.md"))?;
+        let 조건들 = c["조건"].as_array().cloned().unwrap_or_default();
+        let mut 의도오류 = false;
+        for 조건 in &조건들 {
+            for m in 문자열들(&조건["형식오류"]) {
+                problems.push(format!(
+                    "형식 오류 · {회차_뿌리}/{회차}/intent.md:{}: {m}",
+                    조건["줄"].as_i64().unwrap_or(0)
+                ));
+                의도오류 = true;
+            }
+        }
+        if 의도오류 {
+            continue;
+        }
+
+        // ⑤ **양방향 집합 같음** + 조건마다 상자·태그.
+        let 게이트판정 = g["판정"].as_object().cloned().unwrap_or_default();
+        let mut 의도판정: std::collections::BTreeMap<String, (bool, String)> = Default::default();
+        for 조건 in &조건들 {
+            let Some(id) = 조건["id"].as_str() else { continue };
+            의도판정.insert(
+                id.to_string(),
+                (
+                    조건["상자"].as_bool().unwrap_or(false),
+                    조건["판정"].as_str().unwrap_or("미측정").to_string(),
+                ),
+            );
+        }
+        for (id, 판정) in &게이트판정 {
+            let 게 = 판정.as_str().unwrap_or("");
+            match 의도판정.get(id) {
+                None => problems.push(format!(
+                    "{회차}: 게이트가 `{id}` 를 「{게}」로 적었는데 `intent.md` 에 그 조건이 없다"
+                )),
+                Some((상자, 의)) => {
+                    if 의 != 게 {
+                        problems.push(format!(
+                            "{회차}: `{id}` — 게이트는 「{게}」, `intent.md` 는 「{의}」다. \
+                             원장 둘이 갈렸다"
+                        ));
+                    }
+                    // 규약 §3: **상자 켜짐 = 판정이 났다.** 안 켜짐 = 미측정.
+                    let 켜져야 = 게 != "미측정";
+                    if *상자 != 켜져야 {
+                        problems.push(format!(
+                            "{회차}: `{id}` — 게이트는 「{게}」인데 상자가 {}. \
+                             상자 켜짐 = 판정이 났다는 뜻이다",
+                            if *상자 { "켜져 있다" } else { "안 켜져 있다" }
+                        ));
+                    }
+                }
+            }
+        }
+        for id in 의도판정.keys() {
+            if !게이트판정.contains_key(id) {
+                problems.push(format!(
+                    "{회차}: `intent.md` 의 `{id}` 가 게이트 표준 표에 없다 — \
+                     넷 중 어디에도 안 적히면 그 조건은 조용히 안 세어진다"
+                ));
+            }
+        }
+        댄_조건 += 의도판정.len();
+        검사안.push(format!("{회차} ({}개)", 의도판정.len()));
+    }
+
+    // ⑥ **하한 — 끝난 회차 중 가장 최근 것이 검사에 들었는가.**
+    //    전역 개수 하한은 과거 둘로 영구 충족되어 다시 발화하지 않는다.
+    let 최근_끝난 = 회차들
+        .iter()
+        .rev()
+        .find(|회차| 뿌리.join(회차).join("report.md").is_file())
+        .cloned();
+    let 하한 = match &최근_끝난 {
+        None => "끝난 회차가 아직 없다".to_string(),
+        Some(회차) => {
+            if 검사안.iter().any(|s| s.starts_with(회차.as_str())) {
+                format!("최근 끝난 회차 `{회차}` 가 검사에 들었다")
+            } else {
+                problems.push(format!(
+                    "하한 미충족: 끝난 회차 중 가장 최근인 `{회차}` 가 이 검사 밖이다 — \
+                     표준 표를 세우거나 게이트를 짝지어야 한다. \
+                     전역 개수 하한은 과거로 영구 충족되므로 하한을 여기 건다"
+                ));
+                format!("최근 끝난 회차 `{회차}` 가 검사 밖이다")
+            }
+        }
+    };
+
+    if !problems.is_empty() {
+        bail!("{}", problems.join("\n    "));
+    }
+    Ok(format!(
+        "회차 {} · 검사 안 {} (조건 {댄_조건}) · 형식 이전 {} · 게이트 없음 {} · {하한}",
+        회차들.len(),
+        if 검사안.is_empty() { "없음".to_string() } else { 검사안.join(" · ") },
+        if 형식이전.is_empty() { "0".to_string() } else { 형식이전.join(" · ") },
+        if 게이트없음.is_empty() { "0".to_string() } else { 게이트없음.join(" · ") },
+    ))
 }
