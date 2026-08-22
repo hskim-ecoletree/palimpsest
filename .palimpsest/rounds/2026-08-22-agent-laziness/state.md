@@ -100,15 +100,18 @@ cargo xtask check
 
 ## 남은 것
 
-**K2 독립 리뷰 · K9 CI.** K9 는 CI 가 초록이 될 때까지 레코드에서 **`열림`** 이고,
-그래서 계기판 ⑨ 가 **막힘**을 낸다. 그것이 옳다. **수는 여기 안 적는다** —
-`dashboard.py` 를 돌려서 봐라.
+**없다 — 판정이 다 났다.** 통과 · **반증 둘**(`J5`·`D1`) · **대조 불가 하나**(`K9`).
+
+★ **`K9` 가 대조 불가인 까닭** — 조건은 *"CI 가 **회차의 마지막 커밋 SHA** 에
+`conclusion=success` 를 붙였다"* 인데 **그 상자를 켜는 행위가 새 마지막 커밋을 만든다.**
+그 SHA 의 런은 쓰는 시점에 없고, `cancel-in-progress: true` 라 나눠 push 도 못 한다.
+**이 회차가 정확히 그 모양을 금지역으로 한 번 잡았으므로 켜지 않는다.**
+구조를 고치는 것은 [#95] 가 진다.
 
 ⚠⚠ **`round/*` 브랜치는 `push` 로는 CI 가 안 돈다.** `ci.yml` 트리거는
-`push: branches: [main]` 과 `pull_request` 뿐이다. **K9 의 닫는 길은 PR** 이고
-소유자가 그것을 골랐다 — [#91](https://github.com/hskim-ecoletree/palimpsest/pull/91) 이 섰다.
-**런 상태는 여기 안 적는다** — `gh run list --branch round/agent-laziness` 로 봐라. 그리고 **push 를 한 번**만 한다
-(`cancel-in-progress: true` — 나눠 push 하면 앞 런이 취소된다).
+`push: branches: [main]` 과 `pull_request` 뿐이다. **닫는 길은 PR** 이고 소유자가
+그것을 골랐다 — [#91](https://github.com/hskim-ecoletree/palimpsest/pull/91) 이 섰다.
+**런 상태는 여기 안 적는다** — `gh run list --branch round/agent-laziness` 로 봐라.
 
 [#83]: https://github.com/hskim-ecoletree/palimpsest/issues/83
 [#84]: https://github.com/hskim-ecoletree/palimpsest/issues/84

@@ -3694,8 +3694,24 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         //   *"치환이 `## 효과` 절 전체를 삼켰다"* 인데, 그 상태가 여기서 초록이었다.
         //   ⚠ **표준 표를 가진 게이트만 잰다** — 옛 게이트는 형식 이전이라 검사 밖이다.
         let 게이트본문 = std::fs::read_to_string(root.join(게이트))?;
+        // ⚠ **펜스를 본다.** (독립 리뷰 R8) 앞 판은 `lines().any(starts_with)` 라
+        //    **코드펜스 안의 `## 효과` 한 줄로 속일 수 있었다** — 절을 통째로 지우고
+        //    예시 블록에 그 글자만 남기면 21/21 초록이었다. `record.py` 의 두 파서는
+        //    처음부터 펜스를 본다. **같은 규율을 여기에도 세운다.**
+        let mut 펜스 = false;
+        let 절머리: Vec<&str> = 게이트본문
+            .lines()
+            .filter(|l| {
+                if l.trim_start().starts_with("```") {
+                    펜스 = !펜스;
+                    return false;
+                }
+                !펜스
+            })
+            .map(str::trim_start)
+            .collect();
         for 절 in ["## 합격선", "## 판정", "## 효과", "## 범위 밖"] {
-            if !게이트본문.lines().any(|l| l.trim_start().starts_with(절)) {
+            if !절머리.iter().any(|l| l.starts_with(절)) {
                 problems.push(format!(
                     "형식 오류 · {게이트}: 절 `{절}` 이 없다 — 규약 §9 가 절 이름 **넷**을 \
                      고정한다. 한 번은 문자열 치환이 `## 효과` 절 전체를 삼켰고 \
