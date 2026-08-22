@@ -92,7 +92,9 @@ description: palimpsest 의 회차를 연다. 의도를 잠그고, 끝날 때까
 
 **세는 자리는 하나다** — `python3 .claude/skills/round/bin/record.py conditions <intent.md>`
 (설치본은 `pal-round/`). `^- \[` 로 세면 코드펜스 안의 형식 예시와 `## 범위 밖` 의
-불릿까지 세어 **`3/4`** 가 나온다. 실측이다.
+불릿까지 세어 **분자와 분모가 둘 다 틀린다.** 함정 파일로 재현했고 — **수는 여기 안
+적는다**(사전부검 원 반환문이 진다). ⚠ 앞 판이 이 자리에 적은 비율은 저장소에 보존된
+재현물의 값과 **달랐다**(독립 리뷰 R2).
 
 ## 4. 승인 — 여기서 루프에 들어간다
 
@@ -265,6 +267,9 @@ palimpsest 는 **데이터 흐름 · 함수와 인터페이스 호출 · 이벤�
 python3 .claude/skills/round/bin/record.py add .palimpsest/rounds/<slug> < 한줄JSON들
 # 설치된 프로젝트에서
 python3 .claude/skills/pal-round/bin/record.py add .palimpsest/rounds/<slug> < 한줄JSON들
+
+# 무엇이 쌓였는지 본다 — **수를 문서에 안 적기 위해 이것을 부른다.**
+python3 .claude/skills/round/bin/record.py count .palimpsest/rounds/<slug>
 ```
 
 #### 열림 축 — **닫는 자와 시점** (레코드 스키마 3 · 2026-08-23)
@@ -328,9 +333,11 @@ python3 .claude/skills/pal-round/bin/record.py add .palimpsest/rounds/<slug> < �
 # ⚠ **모집단이 `crates/` 뿐이면 이 자가 재는 것이 실물보다 작다.** 회차가 실제로
 #    건드리는 코드는 `xtask/` 의 검사와 `.claude/**/bin/` 의 스크립트에도 산다 —
 #    「에이전트 게으름」 회차는 **코드 산출의 대부분이 그 둘에 있었고**, 옛 명령은
-#    그 회차의 코드 변경을 **한 자릿수 분의 일**로 냈다. 수는 여기 안 적는다 —
-#    **두 명령을 다 돌려서 대 봐라.** (앞 판이 이 자리에 「0 줄」이라 적었는데
-#    **잰 적 없는 수였고 거짓이었다** — 독립 리뷰 R1 이 잡았다.)
+#    그 회차의 코드 변경을 **한 자릿수로** 냈다. 비율을 여기 안 적는다 —
+#    **두 명령을 다 돌려서 대 봐라.**
+#    ⚠ 이 자리가 **두 번 거짓이었다**: 앞 판은 「0 줄」이라 적었고(독립 리뷰 R1),
+#    고친 판은 「한 자릿수 분의 일」이라 적었는데 **실측은 1/11.5** 였다(R2).
+#    **잰 적 없는 것을 잰 것처럼 적는 손이 같은 문장에서 두 번 움직였다.**
 git diff --stat <착수>..HEAD -- 'crates/**/*.rs' 'xtask/**/*.rs' '.claude/**/bin/*' | tail -1
 wc -l docs/gates/<기능>.md
 ```
