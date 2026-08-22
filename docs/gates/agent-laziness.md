@@ -47,12 +47,12 @@
 | 묶음 | 무엇을 돌렸나 |
 |---|---|
 | **A** 계기판 파서 | `python3 .claude/skills/round/bin/dashboard.py e45e822 <intent.md> HEAD` — 빈 범위와 안 빈 범위 **양방향**. 시험은 `cargo test -p pal-cli --test round_scripts_run` 의 `계기판이_빈_범위에서_칸을_안_삼킨다` |
-| **B** 조건·태그 파서 | `python3 .claude/skills/round/bin/record.py conditions <intent.md>` · `git ls-files .claude/skills/round/bin` (새 파일 0) · `xtask` 는 `파서에_묻는다` 로 위임한다 |
-| **C** 게이트 표준 표 | `git diff e45e822..HEAD -- docs/gates/README.md .claude/skills/round/SKILL.md docs/gates/rust-extractor.md` · `python3 … record.py --schema` 의 `게이트파서` |
+| **B** 조건·태그 파서 | `python3 .claude/skills/round/bin/record.py conditions <intent.md>` · **`git diff --diff-filter=A --name-only e45e822..HEAD -- .claude/`** (새 파일 0 — ⚠ `git ls-files` 는 스냅숏이라 「새 파일 0」을 **원리상 못 말한다**. 독립 리뷰 R1 이 잡았다) · `xtask` 는 `파서에_묻는다` 로 위임한다 |
+| **C** 게이트 표준 표 | `git diff e45e822..HEAD -- docs/gates/README.md .claude/skills/round/SKILL.md docs/gates/rust-extractor.md **docs/gates/round-finding-records.md**` (C2 는 게이트 **둘 다** 대야 한다 — 앞 판이 하나를 빠뜨렸다) · `python3 … record.py --schema` 의 `게이트파서` |
 | **D** 근거 칸 | 이 절 자체 |
 | **E** 21 번째 검사 | `cargo xtask check` · RED 는 [`red/e8-red-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e8-red-observed.txt) · 음성 대조 다섯은 [`red/e9-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls.txt) |
 | **F** Stop 관측 | [`effect/stop-hook-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/effect/stop-hook-observed.txt) — 격리 디렉터리에서 `claude -p` 두 번. `git status .claude/` · `git diff crates/pal-cli/src/hook/policy.rs` · `find .palimpsest/rounds -name '*.json'` |
-| **G** 스키마 3 열림 축 | `python3 … record.py check .palimpsest/rounds/*/findings.jsonl` (옛 둘이 「형식 이전」) · 계기판 ⑨ · 음성 대조는 [`red/g-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/g-negative-controls.txt) |
+| **G** 스키마 3 열림 축 | `python3 … record.py check .palimpsest/rounds/*/findings.jsonl **.palimpsest/rounds/*/*/disposal-overrides.jsonl**` — 앞 glob 은 예외표를 안 집어 **G6 에 대해 아무것도 안 냈다**(독립 리뷰 R1) · 계기판 ⑨ · 음성 대조는 [`red/g-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/g-negative-controls.txt) |
 | **H** 전사 | `python3 … record.py conditions` 를 두 회차에 · `python3 … record.py gate docs/gates/{round-finding-records,rust-extractor}.md` · 계기판 ② 를 두 회차에 |
 | **I** R1 문면 전수 | [`review/r1-unlazy-line-by-line.md`](../../.palimpsest/rounds/2026-08-22-agent-laziness/review/r1-unlazy-line-by-line.md) — 규범 문장 **69** 전수. 고른 다섯과 기각 근거는 아래 |
 | **J** 손으로 벤 수 | `grep -rn '검사 20\|지금 20' .github .claude docs` (0 건) · `git diff` 로 §9 명령 범위 |
@@ -109,7 +109,7 @@
 통과→반증 · 상자 끄기 · 최근 회차를 형식 이전으로 · 검산 수 불일치. G 쪽에서 셋 더:
 `add` 가 옛 스키마 파일을 거부 · 시점 없는 닫힘이 형식 오류 · **계기판 ⑨ 가 「막힘」을 낸다.**
 
-### ② 계기판을 이 회차의 `intent.md` 에 직접 댔다 — CI 는 `dashboard.py` 를 안 부른다
+### ② 계기판을 이 회차의 `intent.md` 에 직접 댔다 — CI 는 **이 파일들에** 안 댄다
 
 ```
 $ python3 .claude/skills/round/bin/dashboard.py e45e822 \
@@ -117,6 +117,11 @@ $ python3 .claude/skills/round/bin/dashboard.py e45e822 \
 ```
 
 전문은 [`effect/dashboard-on-this-round.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/effect/dashboard-on-this-round.txt).
+
+⚠ **사유를 정정한다** (독립 리뷰 R1 · N2). 앞 판은 *"CI 는 `dashboard.py` 를 안 부른다"*
+라고 적었고 **그것은 거짓이다** — `ci.yml` 의 `cargo xtask test` 가 `round_scripts_run.rs`
+를 통해 부른다 (세는 자리: `grep -c dashboard.py crates/pal-cli/tests/round_scripts_run.rs`). 무너진 것은 사유 문장이고 **효과 자체는 선다**: CI 가 부르는
+것은 **합성한 함정 파일**이지 이 회차의 실제 `intent.md`·`findings.jsonl` 이 아니다.
 
 ### ③ `Stop` 훅이 실제로 막는지 태웠다 — CI 는 `claude -p` 를 안 돌린다
 

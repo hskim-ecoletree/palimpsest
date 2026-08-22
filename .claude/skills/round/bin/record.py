@@ -440,6 +440,7 @@ def 스키마():
             "표": "| 판정 | 조건 |  두 열 · **수 칸 없음** · 넷을 각각 한 행씩",
             "검산": "**검산** — 통과 N · 반증 N · 대조불가 N · 미측정 N = N",
             "형식이전": "표준 표가 없으면 「형식 이전」이고 검사 밖이다 — 오류가 아니다",
+            "빈모집단": "짝지어진 회차의 `## 완수 조건` 에 상자가 0 이면 **실패**다 — 공집합끼리 맞아 초록이 되는 구멍을 막는다",
             "대조밖": "헤더가 `| 판정 | 조건 |` 가 아닌 표는 안 읽는다 — `rust-extractor.md` ⓑ 의 `[rust.pass]` ①~⑤ 는 `intent.md` 에 없는 토큰이라 원장 대조의 모집단이 아니다",
         },
         "합계검산": {
@@ -451,7 +452,7 @@ def 스키마():
     }
 
 
-def 검증(줄번호, obj, out, 파일=None, 버전=SCHEMA_VERSION):
+def 검증(줄번호, obj, out, 파일=None, 버전=SCHEMA_VERSION, 종류_="레코드"):
     """한 줄을 잰다. 문제를 `out` 에 담는다.
 
     ★ **파일 이름을 함께 낸다.** `xtask` 가 이 함수의 출력을 그대로 실어 나르는데,
@@ -460,9 +461,20 @@ def 검증(줄번호, obj, out, 파일=None, 버전=SCHEMA_VERSION):
     """
     앞 = f"{파일}:" if 파일 else ""
     아는_필드 = 필드들(버전)
-    for k in REQUIRED:
-        if k not in obj or obj[k] in (None, ""):
-            out.append(f"{앞}{줄번호}행: 필수 필드 `{k}` 가 없다")
+    # ★ **예외표는 레코드가 아니다.** (정정 2026-08-23 · 독립 리뷰 R1)
+    #   `disposal-overrides.jsonl` 은 **덮어쓸 칸만** 적는 자리라 `REQUIRED` 를
+    #   원리상 못 채운다. 앞 판은 `종류` 를 **버전 해석에만** 쓰고 행 검증은 언제나
+    #   레코드 자로 재서, 예외표를 `check` 에 넘기면 필수 필드 없음이 쏟아졌다.
+    #   `xtask` 는 `종류=레코드` 만 넘기므로 **CI 는 초록이었고 아무도 안 봤다.**
+    if 종류_ == "예외표":
+        if not obj.get("id"):
+            out.append(f"{앞}{줄번호}행: 예외표 행에 `id` 가 없다 — 무엇을 덮어쓰는지가 없다")
+        if len(obj) < 2:
+            out.append(f"{앞}{줄번호}행: 예외표 행에 덮어쓸 칸이 없다 — `id` 뿐이다")
+    else:
+        for k in REQUIRED:
+            if k not in obj or obj[k] in (None, ""):
+                out.append(f"{앞}{줄번호}행: 필수 필드 `{k}` 가 없다")
     for k, vals in ENUM.items():
         if k in obj and obj[k] is not None and obj[k] not in vals:
             out.append(f"{앞}{줄번호}행: `{k}` 값 `{obj[k]}` 는 enum 밖이다 ({' · '.join(vals)})")
@@ -473,7 +485,7 @@ def 검증(줄번호, obj, out, 파일=None, 버전=SCHEMA_VERSION):
                 + (f" — 이 파일은 스키마 {버전} 이고 `{k}` 는 그 뒤에 생겼다" if k in FIELDS else "")
             )
     # ★ **열림 축은 버전 3 부터다.** 옛 파일에는 원리상 없다.
-    if 버전 >= 3:
+    if 종류_ == "레코드" and 버전 >= 3:
         if obj.get("상태") is None:
             out.append(f"{앞}{줄번호}행: 필수 필드 `상태` 가 없다 (열림 · 닫힘)")
         elif obj["상태"] == "닫힘" and not obj.get("닫은커밋"):
@@ -545,7 +557,7 @@ def cmd_check(paths):
             #   ⚠ **다만 침묵하지 않는다** — 「안 잰 축이 있다」를 판정에 실어 낸다.
             꼬리 = f"  ← **형식 이전** (스키마 {버전} · 최신 {최신} · 열림 축을 안 잰다)"
         for 번호, obj in 행:
-            검증(번호, obj, 문제, 상대, 버전)
+            검증(번호, obj, 문제, 상대, 버전, 종류_)
         총 += len(행)
         print(f"{p}: {len(행)}행{꼬리}")
     if 문제:
