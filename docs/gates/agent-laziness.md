@@ -40,12 +40,21 @@
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A2 A3 A4 A5 A6 A7 B1 B2 B3 B4 B5 C1 C2 C3 C4 C5 D1 D2 D3 E1 E2 E3 E4 E5 E6 E7 E8 E9 E10 F1 F2 F3 F4 F5 F6 G1 G2 G3 G4 G5 G6 G7 H1 H2 H3 H4 H5 H6 H7 I1 I2 I3 I4 I5 J1 J2 J3 J4 J5 K1 K3 K4 K5 K6 K7 K8 |
-| 반증 | — |
+| 통과 | A1 A2 A3 A4 A5 A6 A7 B1 B2 B3 B4 B5 C1 C2 C3 C4 C5 D1 D2 D3 E1 E2 E3 E4 E5 E6 E7 E8 E9 E10 F1 F2 F3 F4 F5 F6 G1 G2 G3 G4 G5 G6 G7 H1 H2 H3 H4 H5 H6 H7 I1 I2 I3 I4 I5 J1 J2 J3 J4 K1 K3 K4 K5 K6 K7 K8 |
+| 반증 | J5 |
 | 대조불가 | — |
 | 미측정 | K2 K9 |
 
-**검산** — 통과 67 · 반증 0 · 대조불가 0 · 미측정 2 = 69
+**검산** — 통과 66 · 반증 1 · 대조불가 0 · 미측정 2 = 69
+
+★ **`J5` 는 반증이다.** 조건은 *"이 계획 문서가 손으로 벤 수를 **안 남긴다**"* 였는데
+`plan.md` 는 아직 남기고, 이제 **그 문서 자신이 그렇게 적는다.** 한 라운드가 이 자리를
+「선언 문장을 고치는 것」으로 처분했는데 **그것은 조건이 재는 것을 안 바꿨다** —
+독립 리뷰 R6 이 잡았다.
+
+**§5: 「반증은 실패가 아니다.」** 그 수들은 착수 시점 계획의 기록이고, 지우면 계획이
+무엇을 근거로 골랐는지가 사라진다 — 게이트를 동결하는 것과 같은 사유다.
+**조건이 재는 것을 못 채웠다는 사실을 적는 것**이 이 판정이다.
 
 ★ **수는 여기서 세면 나온다.** 원장은 둘이고([`intent.md`](../../.palimpsest/rounds/2026-08-22-agent-laziness/intent.md)
 의 상자와 이 표), 둘이 갈리는 것을 `cargo xtask check` 의 「원장 둘 대조」가 **양방향**으로 댄다.
@@ -123,7 +132,7 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 
 ### ⚠ 이 회차가 자기 레코드에서 **원 반환문을 조용히 뒤집었다** (독립 리뷰 R5)
 
-리뷰 R2 의 발견을 레코드로 옮기면서 **열 행에서 열한 칸이 원문과 갈렸다.**
+리뷰 R2 의 발견을 레코드로 옮기면서 **열 행 남짓에서 여러 칸이 원문과 갈렸다**(수는 `git show 3453b9f` 가 낸다).
 합계 검산은 **행 수만** 세므로 초록이었고, 리뷰어가 1:1 로 대 보고서야 드러났다.
 
 ★ **그중 둘은 리뷰어가 문장으로 거부한 것을 뒤집었다** — 원 반환문이
@@ -194,10 +203,17 @@ $ python3 .claude/skills/round/bin/dashboard.py e45e822 \
 
 전문은 [`effect/dashboard-on-this-round.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/effect/dashboard-on-this-round.txt).
 
-⚠ **사유를 정정한다** (독립 리뷰 R1 · N2). 앞 판은 *"CI 는 `dashboard.py` 를 안 부른다"*
-라고 적었고 **그것은 거짓이다** — `ci.yml` 의 `cargo xtask test` 가 `round_scripts_run.rs`
-를 통해 부른다 (세는 자리: `grep -c dashboard.py crates/pal-cli/tests/round_scripts_run.rs`). 무너진 것은 사유 문장이고 **효과 자체는 선다**: CI 가 부르는
-것은 **합성한 함정 파일**이지 이 회차의 실제 `intent.md`·`findings.jsonl` 이 아니다.
+⚠⚠ **이 사유가 두 번 거짓이었다.** 첫 판은 *"CI 는 `dashboard.py` 를 안 부른다"* 였고
+(독립 리뷰 R1), 고친 판은 *"CI 가 부르는 것은 합성한 함정 파일이지 이 회차의 실제
+`intent.md`·`findings.jsonl` 이 아니다"* 였다 — **그것도 거짓이다**(R6).
+`cargo xtask check` 의 「원장 둘 대조」가 `record.py conditions` 를 **실제 `intent.md`**
+에, 「회차 레코드」가 `record.py check` 를 **실제 `findings.jsonl`** 에 건다.
+**고침이 거짓을 옮겨 놓았을 뿐이다.**
+
+★ **참인 문장은 이것 하나다** — CI 는 **`dashboard.py` 를 이 회차의 실제 `intent.md`
+에 대지 않는다.** 시험이 부르는 `dashboard.py` 는 **합성한 함정 파일**을 받고,
+`xtask` 가 실제 파일에 대는 것은 `record.py` 다. **⑦⑧⑨ 를 이 회차의 레코드에 댄
+출력은 여기 말고 어디에서도 안 난다.**
 
 ### ③ `Stop` 훅이 실제로 막는지 태웠다 — CI 는 `claude -p` 를 안 돌린다
 
