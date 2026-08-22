@@ -22,7 +22,7 @@ python3 .claude/skills/round/bin/dashboard.py 56926aa \
   .palimpsest/rounds/2026-08-20-rust-extractor/intent.md HEAD   # ② 44/44 (게이트는 「통과 43」)
 grep -n 'EVENTS' crates/pal-cli/src/hook/policy.rs               # ["SubagentStop"] 하나
 grep -c 'CHECK:' .palimpsest/rounds/*/intent.md                  # 전부 0
-grep -rn '](\.\./\.\./\.palimpsest/rounds/[^)]*intent\.md' docs/gates/*.md  # 히트 2 — 셋째가 없다
+grep -rn 'palimpsest/rounds/.*intent[.]md' docs/gates/*.md   # 마크다운 링크만  # 히트 2 — 셋째가 없다
 ```
 
 ⚠ **RED 를 이 회차 자신의 `intent.md` 에서 재려면 파서가 먼저 서야 한다** — 계기판
