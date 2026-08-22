@@ -49,7 +49,20 @@ for _스트림 in (sys.stdin, sys.stdout, sys.stderr):
 # ★ **깨지는 변경마다 올린다.** 2 로 올린 까닭: `합격선판정` 필드를 없앴다(정본은
 # 게이트의 `## 판정` 이다). 버전을 안 올렸더니 **버전 1 로 정당하게 쓰인 레코드가
 # 스키마 1 에서 전부 실패**했다 — 독립 리뷰 3 라운드가 `git show` 로 그것을 실측했다.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
+
+# ★ **버전은 종류마다 산다.** (2026-08-23 · 승격 2 = 열림 축)
+#   `레코드` 만 3 으로 올린다 — 예외표(`disposal-overrides.jsonl`) 는 **행 형식이 안
+#   바뀌었다.** 한 벌로 두면 안 바뀐 파일이 「스키마가 틀렸다」로 빨개지고, 그것을
+#   초록으로 만드는 유일한 길이 **아무것도 안 바뀐 파일을 손대는 것**이 된다.
+SCHEMA_VERSIONS = {"레코드": 3, "예외표": 2}
+
+# ★ **버전 3 에서 더한 것 — 「열림 축」.** (승격 2)
+#   ⚠ 없으면 §11 ② 해악 게이트가 **언제나 막힘**이다. 게이트는 *"남은 것이 무엇을
+#   깨뜨리나"* 로 판정하는데, 「남은」을 재는 축이 없으면 **처분된 발견까지 남은 것으로
+#   세어진다** — 이 회차의 레코드는 금지역 26 을 담고 있고 전부 이미 닫힌 것이다.
+#   그러면 어느 회차도 원리상 못 닫는다.
+V3_필드 = {"상태": "열림", "닫은커밋": None}
 
 # ── enum — 한 자리 ───────────────────────────────────────────────────────────
 ENUM = {
@@ -71,6 +84,9 @@ ENUM = {
     #   레코드는 **발견**을 담지 조건 판정을 담지 않는다.
     # 규약 §2 사전부검의 넷. **§5 와 다른 축**이다.
     "사전처분":   ["계획수정", "탐지수단", "완수조건전환", "수용사유", "해당없음"],
+    # ★ **열림 축** (버전 3). `처분` 과 다른 자다 — 처분은 **무엇을 하기로 했나**이고
+    #   이것은 **그것이 끝났나**다. 「정정하기로 했다」와 「정정했다」 사이에 회차가 산다.
+    "상태":       ["열림", "닫힘"],
 }
 
 # 머리 줄의 `종류` — **검사가 이것으로 행 검증 여부를 가른다.**
@@ -84,8 +100,21 @@ OPTIONAL_DEFAULT = {
     "승격됨": "아니오", "조건변경": "없음",
     "사전처분": "해당없음",
     "조건": "없음", "줄": None, "기준커밋": None,
+    **V3_필드,
 }
 FIELDS = REQUIRED + list(OPTIONAL_DEFAULT)
+
+
+def 필드들(버전):
+    """그 버전이 아는 필드. **옛 버전 파일을 새 필드로 재지 않는다.**
+
+    ⚠ 소급 이주를 안 하기로 했으므로(승격 2 · 사전부검 R3 #11) 버전 2 파일에는
+      `상태` 가 원리상 없다. 그것을 「모르는 필드」나 「필수 필드 없음」으로 내면
+      **검사가 이주를 강요**한다 — 안 하기로 한 것을 검사가 요구하는 자리다.
+    """
+    if 버전 >= 3:
+        return FIELDS
+    return [k for k in FIELDS if k not in V3_필드]
 
 # ── 규약 §5 ↔ `처분` 대응표 — 문서가 아니라 여기서 산다 ──────────────────────
 대응표 = {
@@ -383,6 +412,15 @@ def cmd_gate(path):
 def 스키마():
     return {
         "schema_version": SCHEMA_VERSION,
+        "버전들": SCHEMA_VERSIONS,
+        "열림축": {
+            "필드": list(V3_필드),
+            "부터": 3,
+            "왜": "§11 ② 해악 게이트가 「**남은** 것이 무엇을 깨뜨리나」로 판정한다. "
+                  "「남은」을 재는 축이 없으면 처분된 발견까지 남은 것으로 세어져 언제나 막힘이다",
+            "닫는자": "메인이 §5 처분으로 닫는다. 시점은 **그 발견을 처분한 커밋**이고 "
+                      "`닫은커밋` 에 적힌다 — 시점 없는 닫힘은 주장이지 기록이 아니다",
+        },
         "필드": FIELDS,
         "필수": REQUIRED,
         "기본값": OPTIONAL_DEFAULT,
@@ -413,7 +451,7 @@ def 스키마():
     }
 
 
-def 검증(줄번호, obj, out, 파일=None):
+def 검증(줄번호, obj, out, 파일=None, 버전=SCHEMA_VERSION):
     """한 줄을 잰다. 문제를 `out` 에 담는다.
 
     ★ **파일 이름을 함께 낸다.** `xtask` 가 이 함수의 출력을 그대로 실어 나르는데,
@@ -421,6 +459,7 @@ def 검증(줄번호, obj, out, 파일=None):
     (독립 리뷰 3 라운드). 위임하면서 잃은 좌표를 되찾는다.
     """
     앞 = f"{파일}:" if 파일 else ""
+    아는_필드 = 필드들(버전)
     for k in REQUIRED:
         if k not in obj or obj[k] in (None, ""):
             out.append(f"{앞}{줄번호}행: 필수 필드 `{k}` 가 없다")
@@ -428,8 +467,22 @@ def 검증(줄번호, obj, out, 파일=None):
         if k in obj and obj[k] is not None and obj[k] not in vals:
             out.append(f"{앞}{줄번호}행: `{k}` 값 `{obj[k]}` 는 enum 밖이다 ({' · '.join(vals)})")
     for k in obj:
-        if k not in FIELDS:
-            out.append(f"{앞}{줄번호}행: 모르는 필드 `{k}`")
+        if k not in 아는_필드:
+            out.append(
+                f"{앞}{줄번호}행: 모르는 필드 `{k}`"
+                + (f" — 이 파일은 스키마 {버전} 이고 `{k}` 는 그 뒤에 생겼다" if k in FIELDS else "")
+            )
+    # ★ **열림 축은 버전 3 부터다.** 옛 파일에는 원리상 없다.
+    if 버전 >= 3:
+        if obj.get("상태") is None:
+            out.append(f"{앞}{줄번호}행: 필수 필드 `상태` 가 없다 (열림 · 닫힘)")
+        elif obj["상태"] == "닫힘" and not obj.get("닫은커밋"):
+            out.append(
+                f"{앞}{줄번호}행: `닫힘` 인데 `닫은커밋` 이 없다 — "
+                "**시점 없는 닫힘은 주장이지 기록이 아니다**"
+            )
+        elif obj["상태"] == "열림" and obj.get("닫은커밋"):
+            out.append(f"{앞}{줄번호}행: `열림` 인데 `닫은커밋` 이 있다 — 둘 중 하나가 거짓이다")
     if obj.get("라운드") is not None and not isinstance(obj["라운드"], int):
         out.append(f"{앞}{줄번호}행: `라운드` 는 정수여야 한다")
     # 대응표가 금지하는 조합
@@ -470,14 +523,31 @@ def cmd_check(paths):
         except json.JSONDecodeError as e:
             문제.append(f"{p}: JSON 이 아니다 — {e}")
             continue
+        종류_ = (머리 or {}).get("종류", "레코드")
+        최신 = SCHEMA_VERSIONS.get(종류_, SCHEMA_VERSION)
+        버전 = (머리 or {}).get("schema_version")
+        꼬리 = ""
         if 머리 is None:
             문제.append(f"{p}: 머리 줄에 `schema_version` 이 없다")
-        elif 머리.get("schema_version") != SCHEMA_VERSION:
-            문제.append(f"{p}: schema_version {머리.get('schema_version')} ≠ {SCHEMA_VERSION}")
+            버전 = 최신
+        elif not isinstance(버전, int):
+            문제.append(f"{p}: schema_version 이 정수가 아니다 ({버전!r})")
+            버전 = 최신
+        elif 버전 > 최신:
+            # 앞선 버전은 **모르는 것**이다 — 재는 자가 그 형식을 모른다.
+            문제.append(
+                f"{p}: schema_version {버전} 는 이 파서가 아는 것({최신})보다 앞선다 — "
+                "재는 자가 그 형식을 모른다"
+            )
+        elif 버전 < 최신:
+            # ★ **옛 버전은 「형식 이전」이고 실패가 아니다.** 소급 이주를 안 하기로
+            #   했으므로(승격 2), 여기서 실패로 내면 검사가 이주를 강요한다.
+            #   ⚠ **다만 침묵하지 않는다** — 「안 잰 축이 있다」를 판정에 실어 낸다.
+            꼬리 = f"  ← **형식 이전** (스키마 {버전} · 최신 {최신} · 열림 축을 안 잰다)"
         for 번호, obj in 행:
-            검증(번호, obj, 문제, 상대)
+            검증(번호, obj, 문제, 상대, 버전)
         총 += len(행)
-        print(f"{p}: {len(행)}행")
+        print(f"{p}: {len(행)}행{꼬리}")
     if 문제:
         print("\n".join("  ✗ " + m for m in 문제), file=sys.stderr)
         return 1
@@ -488,6 +558,25 @@ def cmd_check(paths):
 def cmd_add(회차, 기준커밋):
     path = os.path.join(회차, "findings.jsonl")
     새로 = not os.path.exists(path)
+    # ★ **머리 줄 버전을 먼저 본다.** (G7 · 격리 사본에서 재현)
+    #   앞 판은 버전이 달라도 rc=0 으로 덧붙였다 — 그러면 한 파일 안에 **형식이 둘인
+    #   행**이 섞이고, 그것을 가르는 축이 파일 어디에도 없다.
+    if not 새로:
+        try:
+            머리, _ = 읽기(path)
+        except json.JSONDecodeError as e:
+            print(f"  ✗ {path}: JSON 이 아니다 — {e}", file=sys.stderr)
+            return 1
+        종류_ = (머리 or {}).get("종류", "레코드")
+        최신 = SCHEMA_VERSIONS.get(종류_, SCHEMA_VERSION)
+        if (머리 or {}).get("schema_version") != 최신:
+            print(
+                f"  ✗ {path}: 머리 줄이 스키마 {(머리 or {}).get('schema_version')} 인데 "
+                f"지금 쓰는 것은 {최신} 이다 — 한 파일에 형식 둘을 섞지 않는다. "
+                "이주하거나 새 파일을 열어라",
+                file=sys.stderr,
+            )
+            return 1
     if 기준커밋 is None:
         기준커밋 = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
                                   capture_output=True, text=True).stdout.strip() or None
