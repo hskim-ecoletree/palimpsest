@@ -3298,7 +3298,11 @@ fn check_round_records(root: &Path) -> Result<String> {
         //   **그 갈래의 호출자가 0** 이었다 — 태어나면서 죽은 가지다. 갈래를 만든
         //   손이 같은 자리에서 그것을 안 부르는 것이 이 저장소가 반복해 온 병이다.
         //   행 검증의 자는 `record.py` 가 머리 줄의 `종류` 로 고른다.
-        if 첫줄.contains("\"종류\":") {
+        // 같은 규율 — 선언이 **있으면** 넘긴다. 값은 `record.py` 가 읽는다.
+        let 선언 = serde_json::from_str::<serde_json::Value>(첫줄)
+            .ok()
+            .and_then(|v| v.get("종류").and_then(|x| x.as_str()).map(str::to_owned));
+        if 선언.is_some() {
             레코드들.push(p);
         }
     }
@@ -3345,11 +3349,14 @@ fn check_round_records(root: &Path) -> Result<String> {
         let 상대 = 상대_경로(root, p);
         let text = std::fs::read_to_string(p)?;
         // 머리 줄의 선언으로 종류를 고른다 — 이름이 아니라 선언이 가른다.
-        let 종류_ = if text.lines().next().unwrap_or("").contains("\"종류\": \"예외표\"") {
-            "예외표"
-        } else {
-            "레코드"
-        };
+        // ⚠ **공백에 기대지 않는다.** (독립 리뷰 R4) 앞 판은 `"종류": "예외표"` 라는
+        //    **정확 문자열**을 찾아서, 공백 하나만 달라도 예외표가 레코드로 세어지고
+        //    판정문의 두 수가 **조용히 갈렸다.** JSON 은 JSON 으로 읽는다.
+        let 종류_ = serde_json::from_str::<serde_json::Value>(text.lines().next().unwrap_or(""))
+            .ok()
+            .and_then(|v| v.get("종류").and_then(|x| x.as_str()).map(str::to_owned))
+            .unwrap_or_else(|| "레코드".to_string());
+        let 종류_ = 종류_.as_str();
         for (i, line) in text.lines().enumerate() {
             if line.trim().is_empty() {
                 continue;

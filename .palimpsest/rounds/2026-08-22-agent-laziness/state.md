@@ -93,9 +93,10 @@ cargo xtask check
 그래서 계기판 ⑨ 가 **막힘**을 낸다. 그것이 옳다. **수는 여기 안 적는다** —
 `dashboard.py` 를 돌려서 봐라.
 
-⚠⚠ **`round/*` 브랜치는 CI 트리거 밖이다.** `ci.yml` 은 `push: branches: [main]` 과
-`pull_request` 뿐이고 이 브랜치는 **이미 원격에 있는데 런이 0** 이다.
-**K9 의 닫는 길은 PR 이고, 그것은 소유자의 판단이다.** 그리고 **push 를 한 번**만 한다
+⚠⚠ **`round/*` 브랜치는 `push` 로는 CI 가 안 돈다.** `ci.yml` 트리거는
+`push: branches: [main]` 과 `pull_request` 뿐이다. **K9 의 닫는 길은 PR** 이고
+소유자가 그것을 골랐다 — [#91](https://github.com/hskim-ecoletree/palimpsest/pull/91) 이 섰다.
+**런 상태는 여기 안 적는다** — `gh run list --branch round/agent-laziness` 로 봐라. 그리고 **push 를 한 번**만 한다
 (`cancel-in-progress: true` — 나눠 push 하면 앞 런이 취소된다).
 
 [#83]: https://github.com/hskim-ecoletree/palimpsest/issues/83
@@ -104,3 +105,5 @@ cargo xtask check
 [#86]: https://github.com/hskim-ecoletree/palimpsest/issues/86
 [#87]: https://github.com/hskim-ecoletree/palimpsest/issues/87
 [#88]: https://github.com/hskim-ecoletree/palimpsest/issues/88
+[#89]: https://github.com/hskim-ecoletree/palimpsest/issues/89
+[#90]: https://github.com/hskim-ecoletree/palimpsest/issues/90

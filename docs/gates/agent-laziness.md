@@ -63,9 +63,15 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 아무 상관 없는 초록을 K9 의 증거로 읽게 된다(독립 리뷰 R3).
 
 ★ **그리고 이 브랜치를 push 해도 런이 안 생긴다.** `ci.yml` 의 트리거는
-`push: branches: [main]` 과 `pull_request` 둘뿐이고, `round/agent-laziness` 는
-**이미 원격에 있는데 런이 0** 이다. **K9 의 닫는 길은 PR 이고, PR 은 바깥으로 나가는
-행위라 소유자의 판단이 필요하다.**
+`push: branches: [main]` 과 `pull_request` 둘뿐이다 — **`push` 는 이 브랜치에 런을
+안 만든다.** ⚠ *"런이 0 이다"* 라고 쓰지 마라: PR 이 서는 순간 거짓이 된다.
+**세는 자리는** `gh run list --branch round/agent-laziness` 다. **K9 의 닫는 길은 PR 이고, PR 은 바깥으로 나가는
+행위라 소유자의 판단이다** — 소유자가 2026-08-23 에 *"PR 을 연다"* 를 골랐다.
+
+**PR [#91](https://github.com/hskim-ecoletree/palimpsest/pull/91) 이 섰고 도중 관측이
+초록이다** — 세 OS 전부. 전문은
+[`effect/ci-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/effect/ci-observed.txt).
+⚠ **그것이 K9 은 아니다.** K9 은 **회차의 마지막 커밋**을 재고, 회차는 아직 커밋을 더 낸다.
 
 ### 근거 — **무엇을 돌려 그 판정이 났나**
 
@@ -89,7 +95,7 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 | **H** 전사 | `python3 … record.py conditions` 를 두 회차에 · `python3 … record.py gate docs/gates/{round-finding-records,rust-extractor}.md` · 계기판 ② 를 두 회차에 |
 | **I** R1 문면 전수 | [`review/r1-unlazy-line-by-line.md`](../../.palimpsest/rounds/2026-08-22-agent-laziness/review/r1-unlazy-line-by-line.md) — 규범 문장 **69** 전수. 고른 다섯과 기각 근거는 아래 |
 | **J** 손으로 벤 수 | `grep -rn '검사 20' .github/workflows .claude/skills` · `grep -rn '지금 20' .github/workflows` — **모집단을 그 두 자리로 좁힌다.** ⚠ 앞 판은 `docs` 까지 훑고 「0 건」이라 적었는데 **이 게이트가 그 문자열을 인용하면서 스스로 1 건이 됐다**(독립 리뷰 R2) · `git diff` 로 §9 명령 범위 |
-| **K** 종료 | 이 문서 · `report.md` · `gh issue list` · `gh run list` |
+| **K** 종료 | 이 문서 · `report.md` · `gh issue list` · `gh run list --branch round/agent-laziness` (도중 관측은 [`effect/ci-observed.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/effect/ci-observed.txt)) |
 
 ### I3 — unlazy 에서 **가져오기로 고른 다섯** · 기각한 열하나
 
@@ -100,7 +106,7 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 
 | | 가져오는 것 | 어디 | 왜 |
 |---|---|---|---|
-| ① | **공격선 전환의 문턱** — 접근을 바꾸기 전에 «지금 것이 아직 낼 것» + «바꾸는 편이 나은 까닭»을 말한다 | §5 막힘 앞 | 이 회차의 「실패한 접근 여덟」 중 **넷을 실제로 밟았다**. §5 막힘은 *그만둘 상한*, 이것은 *그만두기 위한 조건* |
+| ① | **공격선 전환의 문턱** — 접근을 바꾸기 전에 «지금 것이 아직 낼 것» + «바꾸는 편이 나은 까닭»을 말한다 | §5 막힘 앞 | 이 회차의 「실패한 접근」 목록 중 **여럿을 실제로 밟았다**(그 목록은 회차가 도는 내내 늘었다 — 세는 자리는 `state.md`). §5 막힘은 *그만둘 상한*, 이것은 *그만두기 위한 조건* |
 | ② | **통과한 판정 하나를 적대적으로 재검** | §7 | `rust-extractor.md` 가 스스로 적었다 — *"그 수정을 다시 잰 리뷰는 없다"* |
 | ③ | **전수 훑기 + 훑은 수 검산 + 표본 선언** | §7 · §9 | 이 회차의 R1 이 정확히 그것을 필요로 했다. §7 의 *"모집단이 비면 실패"* 가 절반을 지고 **나머지 절반이 검산**이다 |
 | ④ | **「끝난 느낌」을 방아쇠로 — 결론 대신 검사** | §11 | 가장 싸다. §11 이 **바깥에서** 끝을 정하고 이것은 **안에서** 결론을 미룬다 |
@@ -138,9 +144,15 @@ gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,ev
 [`red/e9-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls.txt)
 · [`red/g-negative-controls.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/g-negative-controls.txt)
 
-기준선 **21/21 초록** 위에 하나씩 흠집을 냈고 다섯이 각각 발화했다 — ID 삭제 ·
-통과→반증 · 상자 끄기 · 최근 회차를 형식 이전으로 · 검산 수 불일치. G 쪽에서 셋 더:
+기준선 **21/21 초록** 위에 하나씩 흠집을 냈고 각각 발화했다 — ID 삭제 · 통과→반증 ·
+상자 끄기 · 최근 회차를 형식 이전으로 · 검산 수 불일치 · **빈 모집단**. G 쪽에서 셋 더:
 `add` 가 옛 스키마 파일을 거부 · 시점 없는 닫힘이 형식 오류 · **계기판 ⑨ 가 「막힘」을 낸다.**
+
+★ **그리고 다시 태웠다** —
+[`red/e9-negative-controls-rerun.txt`](../../.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls-rerun.txt).
+첫 판의 증거는 **장치가 두 번 바뀌기 전**의 출력이었고 독립 리뷰 R4 가 그것을 잡았다 —
+*"저장소 증거만으로는 「지금도 발화하는가」를 못 말한다."* 재실행은 **이 회차 자신의
+게이트**에 흠집을 낸다.
 
 ### ② 계기판을 이 회차의 `intent.md` 에 직접 댔다 — CI 는 **이 파일들에** 안 댄다
 

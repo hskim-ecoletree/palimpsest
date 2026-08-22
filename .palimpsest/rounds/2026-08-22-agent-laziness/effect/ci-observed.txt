@@ -1,0 +1,38 @@
+# K9 — CI 관측 · 2026-08-23
+
+⚠ **K9 는 「회차의 **마지막** 커밋 SHA」를 잰다.** 이 파일은 그 도중의 관측이고,
+회차가 커밋을 더 내면 **그 SHA 에 대해 다시 재야 한다.** SHA 를 게이트에 박지 않는 까닭이다.
+
+## `round/*` 는 push 로는 안 돈다
+
+```
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+```
+
+트리거가 `push: branches: [main]` 과 `pull_request` 둘뿐이라 이 브랜치는
+**push 해도 런이 안 생긴다** — 실측: 원격에 `0ae2402` 가 있는데 런 0 이었다.
+**PR 이 유일한 길이고, 소유자가 그것을 골랐다**(2026-08-23).
+
+## PR #91 의 런
+
+```
+672f76a  pull_request  completed  success
+
+$ gh run view <id> --json jobs
+  놓는다 · ubuntu-latest  success
+  windows-latest  success
+  ubuntu-latest  success
+  macos-latest  success
+  놓는다 · windows-latest  success
+  받는다 · ubuntu-latest → windows-latest  success
+  받는다 · windows-latest → ubuntu-latest  success
+```
+
+★ **세 OS 가 전부 초록이다.** 이 회차는 `record.py` 를 크게 고쳤고,
+앞 회차에서 그 파일의 인코딩 결함을 **잡은 것은 `windows-latest` 하나뿐**이었다
+— 이 기계에 Windows 가 없으므로 **CI 가 유일한 관측자**인 축이다.
+`받는다 · ubuntu → windows` 와 그 역방향의 설치 왕복도 함께 섰다.
