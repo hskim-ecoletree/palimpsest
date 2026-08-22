@@ -56,8 +56,16 @@
 
 ```bash
 git rev-parse HEAD
-gh run list --limit 1 --json headSha,conclusion
+gh run list --branch round/agent-laziness --limit 5 --json headSha,conclusion,event
 ```
+
+⚠⚠ **`--branch` 를 빼면 이 명령이 언제나 `main` 의 런을 집는다** — 그러면 이 회차와
+아무 상관 없는 초록을 K9 의 증거로 읽게 된다(독립 리뷰 R3).
+
+★ **그리고 이 브랜치를 push 해도 런이 안 생긴다.** `ci.yml` 의 트리거는
+`push: branches: [main]` 과 `pull_request` 둘뿐이고, `round/agent-laziness` 는
+**이미 원격에 있는데 런이 0** 이다. **K9 의 닫는 길은 PR 이고, PR 은 바깥으로 나가는
+행위라 소유자의 판단이 필요하다.**
 
 ### 근거 — **무엇을 돌려 그 판정이 났나**
 

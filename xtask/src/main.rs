@@ -3340,9 +3340,16 @@ fn check_round_records(root: &Path) -> Result<String> {
     let mut 쌍_수: std::collections::BTreeMap<(String, String, i64), usize> = Default::default();
     let mut 좌표_해소_실패 = Vec::new();
     let mut 총_행 = 0usize;
+    let mut 예외_행 = 0usize;
     for p in 레코드들.iter().copied() {
         let 상대 = 상대_경로(root, p);
         let text = std::fs::read_to_string(p)?;
+        // 머리 줄의 선언으로 종류를 고른다 — 이름이 아니라 선언이 가른다.
+        let 종류_ = if text.lines().next().unwrap_or("").contains("\"종류\": \"예외표\"") {
+            "예외표"
+        } else {
+            "레코드"
+        };
         for (i, line) in text.lines().enumerate() {
             if line.trim().is_empty() {
                 continue;
@@ -3357,7 +3364,13 @@ fn check_round_records(root: &Path) -> Result<String> {
             if i == 0 && v.get("schema_version").is_some() {
                 continue;
             }
+            // ★ **종류마다 따로 센다.** (독립 리뷰 R3) 예외표를 함께 넘기게 고친 뒤
+            //   판정문이 예외표 행까지 「레코드 N행」이라 불렀다 — `--schema` 가 `종류` 를
+            //   둘로 선언하는데 판정문은 하나로 뭉갰다.
             총_행 += 1;
+            if 종류_ == "예외표" {
+                예외_행 += 1;
+            }
             if let (Some(r), Some(s)) = (
                 v.get("라운드").and_then(|x| x.as_i64()),
                 v.get("출처").and_then(|x| x.as_str()),
@@ -3452,8 +3465,9 @@ fn check_round_records(root: &Path) -> Result<String> {
         bail!("{}", problems.join("\n    "));
     }
     Ok(format!(
-        "산출 {}개 · 레코드 {총_행}행 · 검산 {} · 검산 면제 {} · 파이썬 `{파이썬}`",
+        "산출 {}개 · 레코드 {}행 · 예외표 {예외_행}행 · 검산 {} · 검산 면제 {} · 파이썬 `{파이썬}`",
         산출.len(),
+        총_행 - 예외_행,
         if 검산.is_empty() { "없음".to_string() } else { 검산.join(" · ") },
         if 면제.is_empty() {
             "없음".to_string()
@@ -3627,6 +3641,7 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     let mut 형식이전: Vec<String> = Vec::new();
     let mut 게이트없음: Vec<String> = Vec::new();
     let mut 댄_조건 = 0usize;
+    let mut 댄_미측정 = 0usize;
 
     for 회차 in &회차들 {
         let 열쇠 = format!("{회차_뿌리}/{회차}/intent.md");
@@ -3752,6 +3767,10 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
             }
         }
         댄_조건 += 의도판정.len();
+        // ★ **「조건 N」은 판정한 수가 아니라 ID 집합 크기다.** (독립 리뷰 R3)
+        //   양쪽이 전부 `미측정` 이어도 집합은 맞으므로 초록이고, 그때 `조건 N` 만
+        //   보면 N 개를 **쟀다**고 읽힌다. 미측정 수를 함께 낸다 — 판정하지는 않는다.
+        댄_미측정 += 의도판정.values().filter(|(_, v)| v == "미측정").count();
         검사안.push(format!("{회차} ({}개)", 의도판정.len()));
     }
 
@@ -3785,19 +3804,24 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     // `검사 안 없음 (조건 0)` 으로 **초록**이 됐다. 판정문이 「조건 0」을 말하므로
     // 거짓은 아니지만, **아무것도 안 재는 검사가 통과하는 것**이 이 회차가 닫으러 온
     // 금지역이다. 회차 레코드 검사가 쓰는 규율과 같은 자로 막는다.
-    if 댄_조건 == 0 {
-        problems.push(
-            "이 검사가 조건을 **하나도 안 쟀다** — 짝지어진 게이트 중 표준 표를 가진 것이 \
-             없다. 0 건은 「안 부른다」가 아니라 「안 봤다」다"
-                .to_string(),
-        );
+    // ⚠ **끝난 회차가 하나도 없으면 이 가드를 안 건다.** (독립 리뷰 R3)
+    //   앞 판은 무조건 걸어서 「진행 중인 회차 하나뿐인 새 프로젝트」를 **거짓 실패**
+    //   시켰다 — E3 가 *"회차 진행 중이면 보고"* 라고 등록한 자리와 정면으로 어긋난다.
+    //   **잴 것이 있어야 할 때만** 「안 쟀다」를 실패로 낸다.
+    if 댄_조건 == 0 && 최근_끝난.is_some() {
+        problems.push(format!(
+            "이 검사가 조건을 **하나도 안 쟀다** — 끝난 회차 `{}` 가 있는데 표준 표를 \
+             가진 짝이 하나도 없다. 0 건은 「안 부른다」가 아니라 「안 봤다」다",
+            최근_끝난.as_deref().unwrap_or("")
+        ));
     }
 
     if !problems.is_empty() {
         bail!("{}", problems.join("\n    "));
     }
     Ok(format!(
-        "회차 {} · 검사 안 {} (조건 {댄_조건}) · 형식 이전 {} · 게이트 없음 {} · {하한}",
+        "회차 {} · 검사 안 {} (조건 {댄_조건} · 그중 미측정 {댄_미측정}) · \
+         형식 이전 {} · 게이트 없음 {} · {하한}",
         회차들.len(),
         if 검사안.is_empty() { "없음".to_string() } else { 검사안.join(" · ") },
         if 형식이전.is_empty() { "0".to_string() } else { 형식이전.join(" · ") },
