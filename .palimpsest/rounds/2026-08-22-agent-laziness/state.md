@@ -85,7 +85,8 @@ cargo xtask check
 [#83] 게이트 절 이름 「남기는 빚」 · [#84] `completion-condition` 표준 표 승격 ·
 [#85] Stop 정책과 자기 상한 · [#86] `HOOK_EVENTS` 반복 시험 ·
 [#87] 죽은 링크 검사의 코드 스팬 오인 · [#88] 고른 다섯의 규약 기입 ·
-[#89] 계기판 ③ 진자가 빌드 산출물에 지배됨 · [#90] 표 헤더 한 글자로 회차를 검사 밖에 뺄 수 있다.
+[#89] 계기판 ③ 진자가 빌드 산출물에 지배됨 · [#90] 표 헤더 한 글자로 회차를 검사 밖에 뺄 수 있다 ·
+[#92] 합계 검산이 행 수만 센다.
 
 ## 남은 것
 
@@ -107,3 +108,4 @@ cargo xtask check
 [#88]: https://github.com/hskim-ecoletree/palimpsest/issues/88
 [#89]: https://github.com/hskim-ecoletree/palimpsest/issues/89
 [#90]: https://github.com/hskim-ecoletree/palimpsest/issues/90
+[#92]: https://github.com/hskim-ecoletree/palimpsest/issues/92
