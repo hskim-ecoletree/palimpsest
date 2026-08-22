@@ -108,7 +108,8 @@ jobs:
         run: command -v cargo-deny >/dev/null || cargo install --locked cargo-deny
 
       # 게이트 — 검사 수는 여기 안 적는다. ⚠ 앞 판은 「열여섯」이라 벤 거울을 두었고
-      # 착수 전부터 낡아 있었다(지금 20). **세는 자리는 `xtask` 의 `checks.len()` 이다.**
+      # 착수 전부터 낡아 있었다. **한 번 고쳤더니 그 자리가 다시 낡았다** — 고친 수마저
+      # 손으로 벤 거울이었기 때문이다. **세는 자리는 `xtask` 의 `checks.len()` 이다.**
       # 여기에 `cargo-deny` 도 든다.
       - name: cargo xtask check
         run: cargo xtask check

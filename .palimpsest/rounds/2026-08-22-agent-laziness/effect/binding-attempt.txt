@@ -1,0 +1,170 @@
+# 결박 시도 — §11 조건 4 (K8) · 2026-08-23
+
+이 회차의 **결정과 의도**를 코드 좌표에 결박하고 그래프를 갱신하려 했다.
+**문서가 아니라 산출이 무엇이 서는지 말한다.**
+
+## `pal ledger` — 무엇을 결박할 수 있나
+```
+
+Snapshot  palimpsest-agent-laziness@2d7cb4b+worktree  (워킹트리)
+저장소    선언 1 · 본 것 1
+범위      매니페스트 없음 — 경로에서 유도했습니다 (선언이 아니라 추정)
+
+워킹트리  2d7cb4b 와 같음  ·  인덱스 신뢰 499 · 다시 잼 0
+
+파일      499
+  parsed             122
+  partial              0
+  unsupported        324  추출기 없음(로드맵)
+  unrecognized        52  언어 미인식
+  excluded             0
+  binary               1
+  generated            0
+
+언어      Markdown          L0  결박 불가            245 파일
+          Rust              L1  identity: ordinal   121 파일
+          Python            L0  결박 불가             41 파일
+          TOML              L0  결박 불가             29 파일
+          Shell             L0  결박 불가              6 파일
+          YAML              L0  결박 불가              2 파일
+          JSON              L0  결박 불가              1 파일
+          TypeScript        L2  identity: exact     1 파일
+
+          ← 결박 불가 언어 6개 · 324 파일. 이 파일들에는 좌표가 없습니다
+
+캐시      적중 471 · 빗나감 28
+
+provider  (이 빌드에 provider 포트가 없습니다 — F21 미구축)
+조달      (이 빌드에 관측 수용이 없습니다 — F16 미구축)
+감지기    추출기 f03-2 · 문법 acb9630 · HEAD 그대로
+
+```
+
+## 무엇이 바뀌었나 — **Rust 가 L1 이다**
+
+앞 회차(`2026-08-20-rust-extractor`)가 Rust 추출기를 세웠다. 그래서 이 회차의
+코드 산출 중 **`xtask/src/main.rs` 는 좌표가 있다**:
+
+```
+$ pal symbols xtask/src/main.rs   (이 회차가 더한 것만)
+   3557  fun         파서에_묻는다
+   3576  fun         문자열들
+   3582  fun         check_ledger_pair
+```
+
+⚠ **파이썬은 L0 다.** `record.py` 와 `dashboard.py` 는 이 회차 코드 산출의 절반이고
+**좌표가 없다** — 결박 불가 언어 여섯 · 324 파일에 든다.
+
+## `pal narrative` — 이 회차의 문서를 코드에 걸 수 있나
+
+```
+
+■ 서술물 인입
+  문서 246 · 조각 2598 · 새 개체 2598
+  결박됨 46 · 후보 있음 690 · 미결박 1862
+
+■ 무엇이 걸었나
+  attached               46
+  fenced-path            8
+  span                   682
+
+■ 이 인입이 못 본 것
+  이력 창 400 커밋 · 창 밖에서 마지막으로 바뀐 문서 13
+  **그 문서들에는 「같은 커밋」 신호가 없습니다** — 없는 것이지 0 이 아닙니다.
+
+  **아무것도 승인하지 않았습니다.** `inferred` 는 사람의 승인으로만
+  `asserted` 가 됩니다 — `pal narrative approve <개체>`.
+
+```
+
+## 그래프에 실제로 물었다
+
+```
+$ pal query symbol.callers check_ledger_pair
+
+■ symbol.callers  check_ledger_pair
+
+  (없음)
+
+■ 이 답의 근거
+  Snapshot  palimpsest-agent-laziness@2d7cb4b+worktree
+  2층       심볼 2638 색인됨
+  범위      미해소 0 · 범위 밖 377 파일 · 최저 등급 L1 · identity ordinal
+  절단      없음 (명시)
+  접힘      499건이 다른 질의로 옮겨졌습니다 — **잘린 것이 아닙니다**
+            ledger 499건 → `ledger.snapshot` 가 폅니다
+  질의 로그  남았습니다
+  크기      약 294 토큰 **이상** (잰 것: 1177 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 미구축 F07 · F08 · F13 · F15
+
+
+$ pal query binding.status   (머리만) — ⚠ **이 시점에는 아직 0 건이다. 아래에서 둘을 걸었다**
+
+■ binding.status  
+
+  결박이 아직 없습니다.
+
+■ 이 답의 근거
+  Snapshot  palimpsest-agent-laziness@2d7cb4b+worktree
+  2층       심볼 2638 색인됨
+  범위      미해소 0 · 범위 밖 377 파일 · 최저 등급 L0 · identity ordinal
+  절단      없음 (명시)
+  접힘      499건이 다른 질의로 옮겨졌습니다 — **잘린 것이 아닙니다**
+            ledger 499건 → `ledger.snapshot` 가 폅니다
+  질의 로그  남았습니다
+  크기      약 321 토큰 **이상** (잰 것: 1285 바이트 · 가정: 4 바이트/토큰)
+```
+
+## 판정 — **부분 결박이고, 못 한 자리를 적는다**
+
+| | |
+|---|---|
+| **결박됐다** | `xtask/src/main.rs` 의 새 심볼 셋 — Rust 가 **L1**(ordinal) 이라 좌표가 선다. 앞 회차가 만든 것이 이 회차에서 실제로 쓰였다 |
+| **서술물 인입** | 문서 246 · 조각 2598 · **결박 46 · 후보 690 · 미결박 1862**. `pal narrative` 는 **아무것도 승인하지 않는다** — `inferred` → `asserted` 는 사람의 승인이다 |
+| **못 했다** | **파이썬에 좌표가 없다.** `record.py`·`dashboard.py` 는 이 회차 코드 산출의 절반인데 L0 라 결박 불가 언어 여섯·324 파일에 든다 |
+
+### 능력 부재 — 그래프가 답했어야 하는데 못 답한 것
+
+1. **Python 추출기가 없다.** 이 회차가 만든 파서(`record.py` 의 `조건들()`·`게이트판정()`)와
+   계기판 칸(`해악칸()`)은 **좌표가 원리상 없다.** 「어디서 부르나」를 그래프에 못 묻고
+   `grep` 이 그 자리를 메웠다. → **만들 것.**
+2. **`pal narrative` 가 「이 회차의 문서가 걸렸나」에 답을 못 한다.** 수(46/690/1862)만 내고
+   **어느 문서의 어느 조각인지**를 이 자리에서 못 보인다. `narrative.unbound` 는 미결박만 낸다.
+   → **만들 것** (질의 하나: 「이 커밋 범위의 문서 조각이 무엇에 걸렸나」).
+3. **`plan.deviation` 을 못 썼다.** 이 회차의 계획 문서(`plan.md`)는 마크다운이고
+   `pal plan` 이 읽는 형식이 아니다 — **계획과 실제의 갈림을 기계가 못 냈다.**
+
+## 결박했다 — `pal bind` 로 둘
+
+```
+$ pal bind check_ledger_pair --radius callers --note "이 회차의 결정: …"
+$ pal bind 파서에_묻는다      --radius symbol  --note "이 회차의 의도: …"
+$ pal query binding.status
+
+■ binding.status  
+
+  결박 2건
+
+  [38c7c60300e1e8f1] live
+      반경 callers · 감시 1 개 · 등급 {ordinal 1}
+      decision/01M0N316AEX0FM7TDD6HE6WFHT  ·  워킹트리 (커밋 없음)
+      이 회차의 결정: 판정 원장은 둘이고(intent.md 의 상자 · 게이트의 표준 표) 둘이 갈리는 것을 이 검사가 양방향 집합 같음으로 댄다. 수를 안 적고 조건 ID 를 적는다 — 소유자가 2026-08-22 에 잠근 문장. 하한은 「끝난 회차 중 가장 최근 것이 검사에 들었는가」다: 전역 개수 하한은 과거로 영구 충족되어 다시 발화하지 않는다.
+
+  [3c55425d549c333d] live
+      반경 symbol · 감시 1 개 · 등급 {ordinal 1}
+      decision/01M0N31JMRAE42SFR2Q488MF06  ·  워킹트리 (커밋 없음)
+      이 회차의 의도: 형식을 아는 자리는 하나여야 한다. xtask 는 원장의 형식을 모르고 record.py 에 위임한다 — 두 벌로 두면 갈리고, 갈린 것을 대는 장치가 없다(회차 finding-records 의 C2-b 반증이 같은 자다). 그래서 rc 로 판정하지 않는다: conditions·gate 는 형식 오류가 있으면 rc=1 을 내면서도 온전한 JSON 을 낸다.
+
+  **반경 밖의 변경은 여기 안 뜹니다** — 거짓 음성은 원리적으로 안 닫힙니다.
+  선언된 반경이 위에 적혀 있고, 그것이 이 도구가 할 수 있는 전부입니다.
+
+  감지기  문법 acb96307d816618bd60e1e4d2fa3eaa793e97a2e · 추출기 f03-2
+
+■ 이 답의 근거
+  Snapshot  palimpsest-agent-laziness@2d7cb4b+worktree
+```
+
+★ **정본은 `.palimpsest/intent/bindings.jsonl` 이다.** `intent.redb` 는 파생이라
+`.gitignore` 가 뺀다 — `pal intent export` 로 내고 **커밋한다.**
+`--radius` 가 판정에 함께 나오는 것이 중요하다: *"이 결정은 `callers` 반경에서 live"*
+는 *"이 결정은 유효하다"* 와 **다른 문장**이다.
