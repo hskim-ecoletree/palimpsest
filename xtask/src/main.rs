@@ -3401,9 +3401,6 @@ mod 절이_섰나_시험 {
     }
 }
 
-/// 추출기가 뽑는 **기계 칸** — 사람이 판단하는 칸은 여기 없다.
-const 기계_칸: &[&str] = &["요약", "경로", "모집단", "유효성", "해악도"];
-
 /// 원 반환문에서 레코드를 **기계로** 뽑는 스크립트.
 const 추출기: &str = ".claude/skills/round/bin/extract.py";
 
@@ -3473,10 +3470,9 @@ fn check_round_records(root: &Path) -> Result<String> {
     // ★ **행과 칸은 다른 것이다.** `B4` 는 「라운드 수가 아니라 칸 수」를 요구했는데
     //   앞 판은 둘을 한 수로 합쳤다 — 2313 중 596 이 행이었다(독립 리뷰 R1 · 발견 8).
     let (mut 갈린_칸, mut 빠진_행) = (0usize, 0usize);
-    // ★ **반환문이 원리상 없는 출처**는 이 대조를 아예 안 받는다. 그 사실이
-    //   「진행 중 0」에 흡수되면 안 된다(발견 7).
+    // ★★ **면제 출처는 선언이 정한다.** 이 목록이 검산 면제의 **갈래**를 결정한다 —
+    //   비면 그 출처가 「선언 어디에도 없다」로 빨개진다. 표시 전용이 아니다.
     let 면제_출처: Vec<String> = 문자열들(&스키마["합계검산"]["면제출처"]);
-    let mut 대조_안_받은_행 = 0usize;
 
     let 종류_목록: Vec<String> = 스키마["종류"]
         .as_array()
@@ -3654,11 +3650,6 @@ fn check_round_records(root: &Path) -> Result<String> {
             if 종류_ == "예외표" {
                 예외_행 += 1;
             }
-            if let Some(s) = v.get("출처").and_then(|x| x.as_str()) {
-                if 종류_ == "레코드" && 면제_출처.iter().any(|x| x == s) {
-                    대조_안_받은_행 += 1;
-                }
-            }
             if let (Some(r), Some(s)) = (
                 v.get("라운드").and_then(|x| x.as_i64()),
                 v.get("출처").and_then(|x| x.as_str()),
@@ -3702,9 +3693,8 @@ fn check_round_records(root: &Path) -> Result<String> {
     let mut 손_전사 = 0usize;
     // ★ 절 목록은 `--schema` 가 진다 — 검사 쪽에 손으로 안 벤다(#94 와 같은 병).
     let 반환형식 = &스키마["반환형식"];
-    let 반드시_절: Vec<String> = 문자열들(&반환형식["반드시있어야하는절"]);
     let 없음표시 = 반환형식["없음표시"].as_str().unwrap_or("없음");
-    if 반드시_절.is_empty() {
+    if 반환형식["반드시있어야하는절"].as_object().map_or(true, |m| m.is_empty()) {
         bail!("`--schema` 의 `반환형식.반드시있어야하는절` 이 비었다 — 이 검사가 아무것도 안 잰다");
     }
     let mut 진행중_손_전사 = 0usize;
@@ -3730,6 +3720,11 @@ fn check_round_records(root: &Path) -> Result<String> {
                 else {
                     continue;
                 };
+                // ★ **기계 칸은 출처마다 다르다** — 선언이 정한다(독립 리뷰 R2).
+                let 기계_칸: Vec<String> = 문자열들(&반환형식["기계칸"][출처]);
+                if 기계_칸.is_empty() {
+                    bail!("`--schema` 의 `반환형식.기계칸.{출처}` 가 비었다 — 이 대조가 아무것도 안 잰다");
+                }
                 let raw본문 = std::fs::read_to_string(&f)?;
                 let 항 = 반환문_항_수(&스키마["합계검산"], 출처, &raw본문);
 
@@ -3751,6 +3746,12 @@ fn check_round_records(root: &Path) -> Result<String> {
                 //   추가한다(`## 어떻게 조사했나` 8/8). 닫힌 집합으로 검사하면
                 //   그것이 전부 형식 오류가 되고, 그러면 **축을 무르게 하려는
                 //   압력**이 회차 안에서 생긴다. **「반드시」만 본다.**
+                // ★ **출처마다 다르다** — 없는 절을 요구하면 그 반환문이 전량
+                //   형식 오류가 된다(실측).
+                let 반드시_절: Vec<String> = 문자열들(&반환형식["반드시있어야하는절"][출처]);
+                if 반드시_절.is_empty() {
+                    bail!("`--schema` 의 `반환형식.반드시있어야하는절.{출처}` 가 비었다");
+                }
                 if !dir.join("report.md").is_file() {
                     for 절 in 반드시_절.iter() {
                         if let Err(e) = 절이_섰나(&raw본문, 절, 없음표시) {
@@ -3796,7 +3797,7 @@ fn check_round_records(root: &Path) -> Result<String> {
                                     갈림.push(format!("{id}: 레코드에 없다"));
                                     continue;
                                 };
-                                for 칸 in 기계_칸 {
+                                for 칸 in &기계_칸 {
                                     let (a, b) = (e[칸].as_str().unwrap_or(""), r[칸].as_str().unwrap_or(""));
                                     if a != b {
                                         갈린_칸 += 1;
@@ -3841,9 +3842,21 @@ fn check_round_records(root: &Path) -> Result<String> {
     }
     // ⑤ **에이전트 출처인데 반환문이 없으면 실패다.** 보존을 빠뜨리면 검산이 조용히 사라진다.
     for ((회차, 출처, n), 행) in &쌍_수 {
+        // ★★ **면제는 선언이 정한다** — 여기가 아니다(독립 리뷰 R2 · 발견 5).
+        //   앞 판은 `면제출처` 를 **세기만** 했고 갈래는 하드코딩된 자리 표가 정했다.
+        //   그래서 그 키를 비워도 검사가 초록이었다 — **소비자가 표시 전용이면
+        //   그것은 소비자가 아니다.**
+        if 면제_출처.iter().any(|s| s == 출처) {
+            *면제.entry(출처.clone()).or_insert(0usize) += 행;
+            continue;
+        }
         let 에이전트 = 반환문_자리.iter().any(|(_, s)| s == 출처);
         if !에이전트 {
-            *면제.entry(출처.clone()).or_insert(0usize) += 행;
+            problems.push(format!(
+                "회차 `{회차}` 의 `출처={출처}` 가 **선언 어디에도 없다** — \
+                 `합계검산.면제출처` 에도 없고 반환문 자리에도 없다. \
+                 **조용히 면제되지 않는다**"
+            ));
             continue;
         }
         let 자리 = 반환문_자리.iter().find(|(_, s)| s == 출처).map(|(d, _)| *d).unwrap();
@@ -3868,12 +3881,11 @@ fn check_round_records(root: &Path) -> Result<String> {
     Ok(format!(
         "산출 {}개 · 레코드 {}행 · 예외표 {예외_행}행 · 좌표 면제 {좌표_면제}행 \
          (저장소 밖 절대경로) · **손으로 채운 칸 — 진행 중 {진행중_손_전사} · 끝난 회차 {손_전사}(보고만) \
-         [갈린 칸 {갈린_칸} · 빠진 행 {빠진_행}] · 대조 안 받은 행 {대조_안_받은_행}({})** · \
+         [갈린 칸 {갈린_칸} · 빠진 행 {빠진_행}]** · \
          검산 {} · 검산 면제 {} · \
          파이썬 `{파이썬}`",
         산출.len(),
         총_행 - 예외_행,
-        면제_출처.join("·"),
         if 검산.is_empty() { "없음".to_string() } else { 검산.join(" · ") },
         if 면제.is_empty() {
             "없음".to_string()
@@ -4053,45 +4065,62 @@ fn check_declared_lists(root: &Path) -> Result<String> {
     Ok(셈.join(" · "))
 }
 
+/// **이 저장소의 git 호출은 여기 하나로 모인다.**
+///
+/// ★ ADR-0023 — *"플랫폼 분기는 한 자리에 산다."* `gix 격리` 검사가 `xtask` 의 `gix`
+/// 사용을 막으므로 CLI 셸아웃뿐이고, 그러면 **자리를 하나로 모으는 것**이 그 규율을
+/// 지키는 유일한 길이다.
+///
+/// ⚠ 앞 판은 축을 하나 더하면서 **둘째 git 함수를 만들었다** — 그 자리는 캐시도 안
+/// 쓰고 실패도 안 알렸다(독립 리뷰 R2 · 발견 6). **더할 때마다 여기로 모은다.**
+fn 깃(root: &Path, args: &[&str]) -> Option<String> {
+    let out = Command::new("git").current_dir(root).args(args).output().ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    Some(String::from_utf8_lossy(&out.stdout).to_string())
+}
+
 /// `닫은커밋` 이 만진 파일 집합. `None` 이면 **이 이력에서 안 보인다**(없는 커밋이 아니다).
 ///
 /// ⚠ **「없는 커밋」과 「이력 밖 커밋」을 기계가 못 가른다.** 얕은 클론이나 squash 병합
 /// 뒤에는 실재하는 커밋도 안 읽힌다. 그래서 판정문이 **「이 이력에서 안 보인다」**로
 /// 적는다 — 「그런 커밋이 없다」로 적으면 사실이 아닌 것을 사실로 적는 것이다.
-fn 커밋이_만진_것(root: &Path, sha: &str, 캐시: &mut BTreeMap<String, Option<Vec<String>>>) -> Option<Vec<String>> {
+fn 커밋이_만진_것(
+    root: &Path,
+    sha: &str,
+    캐시: &mut BTreeMap<String, Option<Vec<String>>>,
+) -> Option<Vec<String>> {
     if let Some(v) = 캐시.get(sha) {
         return v.clone();
     }
-    let out = Command::new("git")
-        .current_dir(root)
-        .args(["show", "--name-only", "--format=", "--no-renames", sha])
-        .output()
-        .ok();
-    let v = match out {
-        Some(o) if o.status.success() => Some(
-            String::from_utf8_lossy(&o.stdout)
-                .lines()
-                .map(|l| l.trim().replace('\\', "/"))
-                .filter(|l| !l.is_empty())
-                .collect::<Vec<_>>(),
-        ),
-        _ => None,
-    };
+    let v = 깃(root, &["show", "--name-only", "--format=", "--no-renames", sha]).map(|s| {
+        s.lines()
+            .map(|l| l.trim().replace('\\', "/"))
+            .filter(|l| !l.is_empty())
+            .collect::<Vec<_>>()
+    });
     캐시.insert(sha.to_string(), v.clone());
     v
 }
 
-/// 이 브랜치가 열린 뒤 **닫힘에서 열림으로 되돌아간 행 수.**
+/// 지금 **열림**인 행 중, **이력의 어느 시점에 닫힘이었던** 행의 수.
 ///
-/// ★★ 「다시 연다」가 도피로가 되는 것을 막는 **둘째 자**다(독립 리뷰 R1 · 발견 1).
-/// 끝난 회차는 「열림이면 실패」가 막지만, **진행 중인 회차에서 닫힘을 열림으로
-/// 되돌리는 것**은 그 자가 못 본다 — 그러면 그 행이 모집단에서 빠져 즉시 초록이다.
+/// ★★ 「다시 연다」가 도피로가 되는 것을 막는 **둘째 자**다. 끝난 회차는
+/// 「열림이면 실패」가 막지만, **진행 중인 회차에서 닫힘을 열림으로 되돌리는 것**은
+/// 그 자가 못 본다 — 그러면 그 행이 모집단에서 빠져 즉시 초록이다.
 ///
-/// ⚠ **이것은 방어가 아니라 계기다.** 되돌리는 것이 정당할 때도 있다 — 숨지 않게만 한다.
+/// ⚠⚠ **기준을 한 커밋으로 잡으면 새는 길이 남는다.** (독립 리뷰 R2 · 발견 2·3)
+/// ⓐ `main` 갈림점은 신선한 clone·CI 에 지역 ref 가 **없어** 조용히 0 을 내고,
+///    **진행 중인 회차의 파일은 갈림점에 아예 없어** 건너뛴다.
+/// ⓑ 「파일이 처음 들어온 커밋」은 그 뒤에 **닫힘으로 들어온 행**이 뒤집히는 것을
+///    못 본다 — 실측으로 확인했다(셋을 뒤집었는데 둘만 잡혔다).
 ///
-/// 기준은 `main` 과의 갈림점이다. 못 찾으면 `0` 을 내고 **그 사실을 판정문이 안 숨긴다**
-/// (수가 0 이면 「전환이 없었다」가 아니라 「못 쟀다」일 수 있다 — 그래서 이 함수는
-/// 실패를 삼키지 않고 `Ok(0)` 만 낸다).
+/// **그래서 그 파일의 이력 전부를 본다.** 한 번이라도 닫힘이었으면 잡는다.
+///
+/// ⚠ **못 재면 실패다.** 0 과 「못 쟀다」를 같은 글자로 내지 않는다.
+///
+/// ★ 열림 행이 **하나도 없는 파일은 이력을 안 훑는다** — 잴 것이 없다.
 fn 닫힘에서_열림으로(
     root: &Path,
     산출: &[PathBuf],
@@ -4099,48 +4128,39 @@ fn 닫힘에서_열림으로(
     닫힘값: &str,
     열림값: &str,
 ) -> Result<usize> {
-    let 기준 = Command::new("git")
-        .current_dir(root)
-        .args(["merge-base", "HEAD", "main"])
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string());
-    let Some(기준) = 기준.filter(|s| !s.is_empty()) else {
-        return Ok(0);
-    };
     let mut n = 0usize;
     for p in 산출 {
         if p.extension().and_then(|x| x.to_str()) != Some("jsonl") {
             continue;
         }
+        let 본문 = std::fs::read_to_string(p)?;
+        let 지금_열림: Vec<String> = 본문
+            .lines()
+            .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
+            .filter(|v| v[상태칸].as_str() == Some(열림값))
+            .filter_map(|v| v["id"].as_str().map(str::to_string))
+            .collect();
+        if 지금_열림.is_empty() {
+            continue;
+        }
         let 상대 = 상대_경로(root, p);
-        let out = Command::new("git")
-            .current_dir(root)
-            .arg("show")
-            .arg(format!("{기준}:{상대}"))
-            .output();
-        let Some(out) = out.ok().filter(|o| o.status.success()) else {
-            continue; // 그때 없던 파일 — 전환일 수 없다
+        let Some(이력) = 깃(root, &["log", "--format=%H", "--", &상대]) else {
+            bail!("{상대}: 이력을 못 읽는다 — **0 과 「못 쟀다」를 같은 글자로 안 낸다**");
         };
-        let 옛: std::collections::BTreeMap<String, String> =
-            String::from_utf8_lossy(&out.stdout)
-                .lines()
-                .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
-                .filter_map(|v| {
-                    Some((
-                        v["id"].as_str()?.to_string(),
-                        v[상태칸].as_str().unwrap_or("").to_string(),
-                    ))
-                })
-                .collect();
-        for line in std::fs::read_to_string(p)?.lines() {
-            let Ok(v) = serde_json::from_str::<serde_json::Value>(line) else { continue };
-            let (Some(id), Some(상태)) = (v["id"].as_str(), v[상태칸].as_str()) else { continue };
-            if 상태 == 열림값 && 옛.get(id).map(|s| s == 닫힘값).unwrap_or(false) {
-                n += 1;
+        let mut 닫힌_적_있다: std::collections::BTreeSet<String> = Default::default();
+        for sha in 이력.lines().filter(|s| !s.trim().is_empty()) {
+            let Some(옛) = 깃(root, &["show", &format!("{sha}:{상대}")]) else {
+                continue;
+            };
+            for v in 옛.lines().filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok()) {
+                if v[상태칸].as_str() == Some(닫힘값) {
+                    if let Some(id) = v["id"].as_str() {
+                        닫힌_적_있다.insert(id.to_string());
+                    }
+                }
             }
         }
+        n += 지금_열림.iter().filter(|id| 닫힌_적_있다.contains(*id)).count();
     }
     Ok(n)
 }
@@ -4300,6 +4320,9 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     let mut problems = Vec::new();
     let mut 캐시: BTreeMap<String, Option<Vec<String>>> = Default::default();
     let (mut 잰_것, mut 안_보임, mut 열림) = (0usize, 0usize, 0usize);
+    // ★ 끝난 회차의 열림은 **즉시 실패**라 구조상 0 이다 — 그 0 이 화면에 떠야
+    //   「그 자가 실제로 돌았다」를 사람이 안다(독립 리뷰 R2 · 발견 1).
+    let mut 끝난_회차_열림 = 0usize;
     let mut 못_잼: BTreeMap<&'static str, usize> = Default::default();
     let mut 발화 = Vec::new();
 
@@ -4357,6 +4380,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
             if 상태 == 열림값 {
                 열림 += 1;
                 if 끝났나 {
+                    끝난_회차_열림 += 1;
                     problems.push(format!(
                         "{상대}:{}: `{id}` 가 **열림**인데 그 회차는 끝났다(`report.md` 가 있다) — \
                          끝난 회차에 열린 발견이 있으면 **그 회차가 안 끝난 것**이다. \
@@ -4434,6 +4458,23 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     //   숨지 않게만 한다.
     let 전환 = 닫힘에서_열림으로(root, &산출, &상태칸, 닫힘값, 열림값)?;
 
+    // ★★★ **모집단이 비면 실패다.** (독립 리뷰 R2 · 발견 7 · 금지역)
+    //
+    //   앞 판은 이 가드가 **없었다.** 그래서 선언 한 자리를 고쳐 모집단을 0 으로
+    //   비워도 **23/23 초록**이었다 — `열림축.부터` 를 4 로 올리거나
+    //   `요구하는자리` 를 전부 `null` 로 두면 「잰 것 0행」인데 통과였다.
+    //
+    //   **회차 레코드 검사와 원장 둘 대조에는 그 가드가 있는데 이 축만 없었다.**
+    //   0 건은 「안 부른다」가 아니라 **「안 봤다」**다 — 이 회차가 닫으러 온
+    //   금지역 「측정이 죽은 가지」 그 자체다.
+    if 잰_것 == 0 {
+        bail!(
+            "**잰 것이 0 행이다** — 이 축이 아무것도 안 잰다. 0 건은 「안 부른다」가 \
+             아니라 「안 봤다」다. (원리상 못 잼 {못_잼_합0} · 열림 {열림})",
+            못_잼_합0 = 못_잼.values().sum::<usize>()
+        );
+    }
+
     let 못_잼_합: usize = 못_잼.values().sum();
     let 못_잼_글 = if 못_잼.is_empty() {
         "0".to_string()
@@ -4455,7 +4496,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     Ok(format!(
         "잰 것 {잰_것}행 · 발화 {발화_수} · **감사 대기 발화 {대기_발화}** · \
          원리상 못 잼 {못_잼_글} · 이 이력에서 안 보임 {안_보임}행 · \
-         열림 {열림}행 (**닫힘→열림 전환 {전환}**) · SHA {}개",
+         열림 {열림}행 (끝난 회차 {끝난_회차_열림} · **닫힘→열림 전환 {전환}**) · SHA {}개",
         캐시.len()
     ))
 }
@@ -4730,28 +4771,38 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     //   없었다.** 그래서 **파일 하나를 안 쓰는 것**으로 `C1`·`G1`·`G2` 셋을 동시에
     //   무력화할 수 있었다.
     //
-    // ★★ **산문을 안 읽는다.** 첫 판은 `state.md` 의 「단계」 줄에서 「종료」를 찾았는데,
-    //   그 표기가 회차마다 갈린다 — `**단계**: 종료` · `**단계**: **닫혔다**` ·
-    //   `## 현재 단계` · 표 한 칸. **엄격한 파서와 안 적힌 문법이 같이 가면 안 된다**
-    //   (#90 의 실측). 그래서 **파일 배치만** 본다:
+    // ★★ **산문도 사전순도 안 쓴다.** 첫 판은 `state.md` 의 「단계」 줄을 읽었는데
+    //   그 표기가 회차마다 갈렸다. 둘째 판은 「가장 최근 회차」를 **디렉터리 이름의
+    //   사전순**으로 잡았는데, 같은 날짜에 여는 다음 회차의 슬러그가 앞서면
+    //   **새 회차가 거짓 실패하고 진짜 진행 중 회차가 대신 면제된다**
+    //   (독립 리뷰 R2 · 발견 9 — 이번엔 우연히 안 걸렸다).
     //
-    //   > **진행 중인 회차는 하나다.** 가장 최근 회차가 아닌데 `report.md` 가 없으면
-    //   > 그 회차는 **끝났는데 종료 보고를 안 썼거나 버려진 것**이다.
+    //   **그래서 순서를 안 쓴다. 세기만 한다:**
+    //
+    //   > **진행 중인 회차는 하나다.** 종료 보고가 없는 회차가 둘 이상이면,
+    //   > 그중 적어도 하나는 **끝났는데 안 썼거나 버려진 것**이다.
     //
     //   ⚠ 그 회차의 종료 보고를 **지금 지어내지 않는다** — 그때 쓴 사람만 쓸 수 있다.
     //   그래서 선언 목록으로 **빚**을 세우고 판정문이 매 실행 수를 낸다.
-    for 회차 in 회차들.iter().rev().skip(1) {
-        if 뿌리.join(회차).join("report.md").is_file() {
-            continue;
-        }
-        if 보고없음_유예.iter().any(|x| x == 회차) {
-            보고없음_유예_발화 += 1;
-            continue;
-        }
+    let 진행중: Vec<&String> = 회차들
+        .iter()
+        .filter(|r| !뿌리.join(r).join("report.md").is_file())
+        .filter(|r| {
+            if 보고없음_유예.iter().any(|x| &x == r) {
+                보고없음_유예_발화 += 1;
+                false
+            } else {
+                true
+            }
+        })
+        .collect();
+    if 진행중.len() > 1 {
         problems.push(format!(
-            "{회차}: `report.md` 가 없는데 **가장 최근 회차가 아니다** — 진행 중인 회차는 \
-             하나다. §10 이 종료 보고의 자리를 정했고 그것이 「끝난 회차」의 유일한 기계 \
-             정의라, 안 쓰면 표준 표 검사와 종료 보고 검사를 **한 수로** 비껴간다"
+            "종료 보고가 없는 회차가 **{}** 이다: {} — **진행 중인 회차는 하나다.** \
+             §10 이 종료 보고의 자리를 정했고 그것이 「끝난 회차」의 유일한 기계 정의라, \
+             안 쓰면 표준 표 검사와 종료 보고 검사를 **한 수로** 비껴간다",
+            진행중.len(),
+            진행중.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(" · ")
         ));
     }
 
