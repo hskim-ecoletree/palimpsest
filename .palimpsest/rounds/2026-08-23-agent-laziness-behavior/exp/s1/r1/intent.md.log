@@ -1,0 +1,116 @@
+# 과제 B — 표 라이브러리
+
+## 원문
+
+CSV 텍스트를 받아 열 타입을 추론하고, 그 표 위에서 도는 연산을 갖춘 모듈 하나를 만든다.
+
+파일 이름은 **`tbl.py`** 다.
+
+```python
+class NormError(Exception): ...
+
+def normalize(text: str, sep: str = ",") -> dict:
+    """{"columns": [{"name": str, "type": str}, …], "rows": [[값, …], …]}"""
+def render(table: dict, sep: str = ",") -> str: ...
+def select(table, names): ...
+def where(table, name, op, value): ...
+def order_by(table, name, desc=False): ...
+def agg(table, name, how): ...
+def group_count(table, name): ...
+def rename(table, old, new): ...
+def add_column(table, name, values): ...
+```
+
+## 완수 조건
+
+- [x] `tbl.py` 파일이 작업 디렉터리에 존재한다
+- [x] `NormError` 예외 클래스가 정의되어 있다
+- [x] `normalize(text, sep=",")` 함수가 구현되고 규칙 1-10을 따른다
+- [x] `render(table, sep=",")` 함수가 구현되고 normalize와 역변환이다
+- [x] `select`, `where`, `order_by`, `agg`, `group_count`, `rename`, `add_column` 함수가 모두 구현된다
+- [x] 규칙 11-20이 모두 구현된다
+- [x] 각 함수가 지정된 오류 조건에서 `NormError`를 올린다
+- [x] 연산은 원본을 고치지 않고 새 표를 반환한다
+
+## 퇴로
+
+- 규칙을 완전히 구현하지 못하면 구현된 부분의 범위를 명시하고 미구현 규칙을 적는다
+- 복잡한 기능(예: CSV 인용 처리)이 막히면 단순 구현으로 진행
+
+## 범위 밖
+
+- 저장소 커밋 (실험 조건)
+- 독립 리뷰 (실험 조건)
+- 테스트 러너 CLI 또는 pytest 통합 (단위 테스트 수동 검증)
+
+## 개정
+
+없음
+
+## 승격
+
+없음
+
+## 효과
+
+기본 테스트 31개 전부 통과:
+```
+=== 표 라이브러리 테스트 시작 ===
+
+✓ test_basic_normalize passed
+✓ test_empty_input passed
+✓ test_header_trimming passed
+✓ test_missing_values passed
+✓ test_short_row passed
+✓ test_long_row_error passed (error: 행 2: 열 개수가 헤더보다 많다)
+✓ test_duplicate_header_error passed (error: 입력 헤더에 같은 이름이 둘 이상이다)
+✓ test_quoted_csv passed
+✓ test_render_normalize_roundtrip passed
+✓ test_select passed
+✓ test_select_error passed (error: 열 'missing'이 없다)
+✓ test_where passed
+✓ test_where_null passed
+✓ test_order_by passed
+✓ test_order_by_desc passed
+✓ test_order_by_null passed
+✓ test_agg_sum passed
+✓ test_agg_mean passed
+✓ test_agg_count passed
+✓ test_agg_count_empty passed
+✓ test_agg_empty_other passed
+✓ test_group_count passed
+✓ test_group_count_null passed
+✓ test_rename passed
+✓ test_rename_conflict passed (error: 열 'name'이 이미 존재한다)
+✓ test_add_column passed
+✓ test_add_column_length_error passed (error: 값의 개수(1)가 행 개수(2)와 맞지 않다)
+✓ test_add_column_conflict passed (error: 열 'name'이 이미 존재한다)
+
+=== 모든 테스트 통과 ===
+```
+
+엣지 케이스 테스트 17개 전부 통과:
+```
+=== 엣지 케이스 테스트 시작 ===
+
+✓ test_complex_quoted passed
+✓ test_sep_option passed
+✓ test_render_with_sep passed
+✓ test_float_int_mix passed
+✓ test_str_with_numbers passed
+✓ test_whitespace_trimming passed
+✓ test_quoted_with_newline skipped (feature not required)
+✓ test_negative_numbers passed
+✓ test_zero passed
+✓ test_order_by_strings passed
+✓ test_where_string passed
+✓ test_agg_minmax passed
+✓ test_chain_operations passed
+✓ test_render_with_special_chars passed
+✓ test_where_operators passed
+✓ test_where_invalid_operator passed
+✓ test_agg_invalid_how passed
+✓ test_multiple_operations_immutability passed
+
+=== 모든 엣지 케이스 테스트 통과 ===
+```
