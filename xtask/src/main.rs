@@ -3315,6 +3315,43 @@ fn 회차_이름(root: &Path, p: &Path) -> String {
         .to_string()
 }
 
+/// 추출기가 뽑는 **기계 칸** — 사람이 판단하는 칸은 여기 없다.
+const 기계_칸: &[&str] = &["요약", "경로", "모집단", "유효성", "해악도"];
+
+/// 원 반환문에서 레코드를 **기계로** 뽑는 스크립트.
+const 추출기: &str = ".claude/skills/round/bin/extract.py";
+
+/// 추출기를 돌려 그 라운드의 기계 칸을 얻는다.
+///
+/// ★★ **전사를 사람이 안 하면 #92 의 병이 원리상 없어진다.** 앞 판은 메인이 반환문을
+/// 눈으로 읽고 손으로 레코드를 적었고, 그 자리에서 **세 번 조용히 행이 떨어졌다** —
+/// 두 번이 기각 행에 몰렸고 그러면 계기판 ⑧ 이 낮게 나온다. 그리고 합계 검산은
+/// **행 수만** 세므로 **수만 맞고 내용이 다른 20**이 초록으로 지나갔다.
+fn 추출기_산출(
+    root: &Path,
+    파이썬: &str,
+    출처: &str,
+    라운드: i64,
+    raw: &Path,
+) -> Result<Vec<serde_json::Value>> {
+    let out = Command::new(파이썬)
+        .current_dir(root)
+        .arg(root.join(추출기))
+        .arg(출처)
+        .arg(라운드.to_string())
+        .arg(raw)
+        .output()
+        .with_context(|| format!("`{추출기}` 를 못 돌렸다"))?;
+    if !out.status.success() {
+        bail!("{}", String::from_utf8_lossy(&out.stderr).trim().to_string());
+    }
+    String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| serde_json::from_str(l).context("추출기 출력이 JSON 이 아니다"))
+        .collect()
+}
+
 fn check_round_records(root: &Path) -> Result<String> {
     let 산출 = 회차_산출(root)?;
 
@@ -3483,6 +3520,9 @@ fn check_round_records(root: &Path) -> Result<String> {
     //   순간 두 회차가 서로를 거짓 실패시켰다** — 그리고 오류 문장이 그 회차에 없는
     //   수를 「레코드는 N 행이다」로 적었다. 사실이 아닌 것을 사실로 적는 자리다.
     let mut 쌍_수: std::collections::BTreeMap<(String, String, i64), usize> = Default::default();
+    // ★ 기계 칸 대조용 — `(회차, 출처, 라운드)` → 그 라운드의 레코드 행들.
+    let mut 쌍_행: std::collections::BTreeMap<(String, String, i64), Vec<serde_json::Value>> =
+        Default::default();
     let mut 좌표_해소_실패 = Vec::new();
     let mut 좌표_면제 = 0usize;
     let mut 총_행 = 0usize;
@@ -3524,7 +3564,11 @@ fn check_round_records(root: &Path) -> Result<String> {
                 v.get("라운드").and_then(|x| x.as_i64()),
                 v.get("출처").and_then(|x| x.as_str()),
             ) {
-                *쌍_수.entry((회차_이름(root, p), s.to_string(), r)).or_default() += 1;
+                let 열쇠 = (회차_이름(root, p), s.to_string(), r);
+                *쌍_수.entry(열쇠.clone()).or_default() += 1;
+                if 종류_ == "레코드" {
+                    쌍_행.entry(열쇠).or_default().push(v.clone());
+                }
             }
             // ★ `경로` 만 해소한다. `줄` 은 안 잰다 — 회차가 자기 좌표를 밀어내기 때문이다
             //   (실측 2026-08-19: 에이전트 정의를 고치니 인용한 줄이 93 → 95 로 밀렸다).
@@ -3556,6 +3600,8 @@ fn check_round_records(root: &Path) -> Result<String> {
     //   섞였을 때 **멀쩡한 레코드가 거짓 실패**를 내고, ② 반환문 파일이 없는 출처는
     //   **아무 검산도 안 받는다** — 그것이 「측정이 죽은 가지」다(독립 리뷰 2026-08-19).
     let mut 검산 = Vec::new();
+    let mut 손_전사 = 0usize;
+    let mut 진행중_손_전사 = 0usize;
     let mut 면제: std::collections::BTreeMap<String, usize> = Default::default();
     let 회차들 = std::fs::read_dir(root.join(회차_뿌리))?;
     for e in 회차들 {
@@ -3589,6 +3635,64 @@ fn check_round_records(root: &Path) -> Result<String> {
                     .copied()
                     .unwrap_or(0);
                 검산.push(format!("{출처}R{n} {항}↔{적힌}"));
+
+                // ── B2·B4 — **기계 칸을 추출기 산출과 댄다** (#92) ──────────────
+                //
+                // ★★ 합계 검산은 **수**만 댄다. 그래서 **수만 맞고 내용이 다른 20**이
+                //    초록으로 지나갔다(실측). 이제 **추출기를 돌려 기계 칸을 댄다.**
+                //
+                //    | 기계가 결정한다 | 사람이 판단한다 |
+                //    |---|---|
+                //    | `요약`·`경로`·`모집단`·`유효성`·`해악도` | `처분`·`조건`·`사전처분` |
+                //
+                // ⚠ **끝난 회차는 보고만 한다.** 그 라운드들은 추출기가 없던 때에
+                //    손으로 전사됐다 — 하한 없이 걸면 옛 기록을 대량으로 고쳐야 하고
+                //    그것은 「앞 회차의 판정을 다시 열지 마라」에 걸린다.
+                //    **진행 중인 회차(종료 보고가 없는 회차)만 실패로 낸다.**
+                let 진행중 = !dir.join("report.md").is_file();
+                let 행들 = 쌍_행.get(&(회차.clone(), 출처.to_string(), n));
+                if let Some(행들) = 행들 {
+                    let mut 갈림 = Vec::new();
+                    match 추출기_산출(root, 파이썬, 출처, n, &f) {
+                        Ok(뽑은) => {
+                            for e in &뽑은 {
+                                let id = e["id"].as_str().unwrap_or("");
+                                let Some(r) = 행들.iter().find(|r| r["id"].as_str() == Some(id))
+                                else {
+                                    갈림.push(format!("{id}: 레코드에 없다"));
+                                    continue;
+                                };
+                                for 칸 in 기계_칸 {
+                                    let (a, b) = (e[칸].as_str().unwrap_or(""), r[칸].as_str().unwrap_or(""));
+                                    if a != b {
+                                        갈림.push(format!("{id}.{칸}"));
+                                    }
+                                }
+                            }
+                            for r in 행들 {
+                                let id = r["id"].as_str().unwrap_or("");
+                                if !뽑은.iter().any(|e| e["id"].as_str() == Some(id)) {
+                                    갈림.push(format!("{id}: 반환문에 없다"));
+                                }
+                            }
+                        }
+                        Err(e) => 갈림.push(format!("추출기가 못 돌았다: {e:#}")),
+                    }
+                    if !갈림.is_empty() {
+                        if 진행중 {
+                            진행중_손_전사 += 갈림.len();
+                            problems.push(format!(
+                                "{}: 기계 칸이 추출기 산출과 갈린다 ({}건) — **손으로 옮기지 \
+                                 않는다.** `python3 {추출기} {출처} {n} <raw>` 로 뽑아라: {}",
+                                상대_경로(root, &f),
+                                갈림.len(),
+                                갈림.iter().take(6).cloned().collect::<Vec<_>>().join(" · ")
+                            ));
+                        } else {
+                            손_전사 += 갈림.len();
+                        }
+                    }
+                }
                 if 항 != 적힌 {
                     problems.push(format!(
                         "합계 검산 어긋남 — {}: 원 반환문의 항이 {항} 인데 회차 `{회차}` 의 \
@@ -3627,7 +3731,9 @@ fn check_round_records(root: &Path) -> Result<String> {
     }
     Ok(format!(
         "산출 {}개 · 레코드 {}행 · 예외표 {예외_행}행 · 좌표 면제 {좌표_면제}행 \
-         (저장소 밖 절대경로) · 검산 {} · 검산 면제 {} · 파이썬 `{파이썬}`",
+         (저장소 밖 절대경로) · **손으로 채운 칸 — 진행 중 {진행중_손_전사} · 끝난 회차 {손_전사}(보고만)** · \
+         검산 {} · 검산 면제 {} · \
+         파이썬 `{파이썬}`",
         산출.len(),
         총_행 - 예외_행,
         if 검산.is_empty() { "없음".to_string() } else { 검산.join(" · ") },
