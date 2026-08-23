@@ -1,0 +1,43 @@
+# 완료 — 모든 규칙 검증 및 버그 수정
+
+## 상황 인수
+
+라운드 2 완료로 표시된 코드를 검토했으나, 두 가지 버그 발견:
+
+1. **빈 줄 처리 버그**: `normalize()`가 완전히 빈 줄을 건너뛰어 `normalize(render(t))` 왕복이 실패
+2. **trailing newline 손실**: `text.strip().split('\n')`이 끝의 공백을 제거해 추적 행을 잃음
+
+## 수정 사항
+
+### 버그 1: 빈 줄 처리
+- **원인**: 라인 144-145에서 `if not line.strip(): continue`로 빈 줄 스킵
+- **수정**: 빈 줄도 처리하여 None 행으로 변환
+- **검증**: Rule 13, 15 통과 (order_by with None, group_count with empty rows)
+
+### 버그 2: Trailing newline
+- **원인**: `text.strip().split('\n')`이 문자열 끝의 newline 제거
+- **수정**: 내용 확인 후 직접 split('\n') 사용
+- **검증**: Rule 10 왕복 성공, Rule 15 empty row 보존
+
+## 검증 결과
+
+**모든 24개 규칙 통과 확인됨:**
+
+- 규칙 1-20: 기본 CSV 파싱, 타입 추론, 연산
+- 규칙 21: bool 타입 (대소문자 무관)
+- 규칙 22: 모든 결측 열 → "str"
+- 규칙 23: `to_json()` 함수
+- 규칙 24: `join()` 함수 (inner join, 결측값 필터)
+
+```
+✓ 24/24 rules verified successfully!
+✓ ALL RULES PASSED
+```
+
+## 도구 검증
+
+`python3 check.py .` → "미완성 표면이 안 보인다" (완전 구현)
+
+## 결론
+
+규칙 1-24를 모두 구현했고, 모든 요구사항이 만족됨. 작업 완료.
