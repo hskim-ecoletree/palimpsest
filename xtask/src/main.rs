@@ -3170,12 +3170,16 @@ fn 아래_전부_확장자들(dir: &Path, exts: &[&str], out: &mut Vec<PathBuf>)
 ///
 /// ⚠ 리뷰어의 `## 합격선 축` 표는 `| 조건 |` 로 시작하므로 **안 걸린다** — 그것은
 /// 발견이 아니라 등록된 조건에 대한 판정이고 게이트가 진다.
-fn 반환문_항_수(출처: &str, text: &str) -> usize {
+fn 반환문_항_수(합계검산: &serde_json::Value, 출처: &str, text: &str) -> usize {
+    // ★★ **규칙은 `--schema` 의 `합계검산` 이 진다** — 여기가 아니다(#94).
+    let 표머리 = 합계검산["독립리뷰표머리"].as_str().unwrap_or("| # |");
+    let 항머리 = 합계검산["사전부검항"].as_str().unwrap_or("### ");
+    let 기각절 = 합계검산["사전부검기각절"].as_str().unwrap_or("내가 기각한 것");
     if 출처 == "독립리뷰" {
         let mut n = 0usize;
         let mut 표안 = false;
         for line in text.lines() {
-            if line.starts_with("| # |") {
+            if line.starts_with(표머리) {
                 표안 = true;
                 continue;
             }
@@ -3198,10 +3202,10 @@ fn 반환문_항_수(출처: &str, text: &str) -> usize {
     let mut 기각_절 = false;
     for line in text.lines() {
         if let Some(제목) = line.strip_prefix("## ") {
-            기각_절 = 제목.contains("내가 기각한 것");
+            기각_절 = 제목.contains(기각절);
             continue;
         }
-        if line.starts_with("### ") {
+        if line.starts_with(항머리) {
             시나리오 += 1;
             기각_절 = false;
         } else if 기각_절 {
@@ -3210,17 +3214,89 @@ fn 반환문_항_수(출처: &str, text: &str) -> usize {
             //   시켜 놓고 검산은 **불릿만** 셌다. 다음 사전부검이 규약대로 표를 내면
             //   기각 행이 전부 0 으로 세어져 **거짓 실패**하고, 초록으로 만드는 유일한
             //   길이 「레코드에서 기각 행을 지우는 것」이 된다 — 그것이 #72 가 고치려던 병이다.
+            // ★★ **헤더 행은 문구가 무엇이든 안 센다.** (2026-08-24 · `B5`)
+            //   앞 판은 `| #` 로 시작하는 헤더만 뺐다. 그래서 헤더를 `| 기각한 것 |` 로
+            //   적은 반환문에서 **헤더가 데이터 행으로 세어져 항이 부풀었다**(실측 25 → 26).
+            //   **구분선 바로 위의 첫 행이 헤더다** — 문구가 아니라 자리가 가른다.
             let s = line.trim_start();
             if s.starts_with("- ") {
                 기각 += 1;
-            } else if s.starts_with('|') && !s.starts_with("| #") && !s.starts_with("|-")
-                && !s.starts_with("| -") && !s.starts_with("|:")
+            } else if s.starts_with('|') && !s.starts_with("|-") && !s.starts_with("| -")
+                && !s.starts_with("|:")
             {
                 기각 += 1;
             }
         }
     }
-    시나리오 + 기각
+    시나리오 + 기각 - 기각_표_헤더(text, 기각절)
+}
+
+/// 기각 절 안의 **표 헤더 행 수** — 문구가 무엇이든 뺀다.
+///
+/// ★ **자리가 가른다.** 구분선(`|---`) 바로 위의 행이 헤더다. 앞 판은 `| #` 라는
+/// **문구**로 갈랐고, 그래서 헤더를 다르게 적은 반환문에서 항이 부풀었다.
+///
+/// **순수 함수다.**
+fn 기각_표_헤더(text: &str, 기각절: &str) -> usize {
+    let mut n = 0usize;
+    let mut 기각_절 = false;
+    let lines: Vec<&str> = text.lines().collect();
+    for (i, line) in lines.iter().enumerate() {
+        if let Some(제목) = line.strip_prefix("## ") {
+            기각_절 = 제목.contains(기각절);
+            continue;
+        }
+        if line.starts_with("### ") {
+            기각_절 = false;
+            continue;
+        }
+        if !기각_절 {
+            continue;
+        }
+        let s = line.trim_start();
+        if !s.starts_with('|') || s.starts_with("|-") || s.starts_with("| -") || s.starts_with("|:")
+        {
+            continue;
+        }
+        let 다음 = lines.get(i + 1).map(|l| l.trim_start()).unwrap_or("");
+        if 다음.starts_with("|-") || 다음.starts_with("| -") || 다음.starts_with("|:") {
+            n += 1;
+        }
+    }
+    n
+}
+
+#[cfg(test)]
+mod 기각_표_헤더_시험 {
+    use super::기각_표_헤더;
+
+    /// ★ **문구가 무엇이든 헤더는 헤더다.** 실측: `| 기각한 것 |` 헤더가
+    /// 데이터 행으로 세어져 항이 25 → 26 으로 부풀었다(`B5`).
+    #[test]
+    fn 문구가_달라도_헤더를_뺀다() {
+        let t = "## 내가 기각한 것\n\n| 기각한 것 | 왜 |\n|---|---|\n| a | b |\n| c | d |\n";
+        assert_eq!(기각_표_헤더(t, "내가 기각한 것"), 1);
+    }
+
+    #[test]
+    fn 샾_헤더도_뺀다() {
+        let t = "## 내가 기각한 것\n\n| # | 제목 |\n|---|---|\n| 1 | a |\n";
+        assert_eq!(기각_표_헤더(t, "내가 기각한 것"), 1);
+    }
+
+    /// 불릿만 있는 기각 절에는 헤더가 없다.
+    #[test]
+    fn 불릿_절에는_헤더가_없다() {
+        let t = "## 내가 기각한 것\n\n- 하나\n- 둘\n";
+        assert_eq!(기각_표_헤더(t, "내가 기각한 것"), 0);
+    }
+
+    /// 다른 절의 표는 안 센다.
+    #[test]
+    fn 다른_절의_표는_안_센다() {
+        let t = "## 다른 절\n\n| a | b |\n|---|---|\n| 1 | 2 |\n";
+        assert_eq!(기각_표_헤더(t, "내가 기각한 것"), 0);
+    }
 }
 
 /// 원 반환문이 사는 디렉터리 ↔ 그것을 낸 **출처**.
@@ -3502,7 +3578,7 @@ fn check_round_records(root: &Path) -> Result<String> {
                 else {
                     continue;
                 };
-                let 항 = 반환문_항_수(출처, &std::fs::read_to_string(&f)?);
+                let 항 = 반환문_항_수(&스키마["합계검산"], 출처, &std::fs::read_to_string(&f)?);
                 let 회차 = dir
                     .file_name()
                     .and_then(|x| x.to_str())
@@ -3616,6 +3692,34 @@ fn check_round_records(root: &Path) -> Result<String> {
 //
 // 행마다 `git show` 를 부르면 macOS 에서 10 초가 붙고 Windows 는 그 배수다(사전부검 R2).
 // 서로 다른 SHA 는 수십 개뿐이라 **캐시가 20 배를 돌려준다.**
+
+/// `record.py --schema` 를 읽는다 — **선언의 유일한 자리**(C2-b).
+///
+/// ★★ **읽는 것이 곧 정본으로 만드는 것이다.** (#94 · 2026-08-24)
+///
+/// 앞 판은 이 사전의 대부분을 **산문으로만** 두었고 `xtask` 는 `종류` 하나만 읽었다.
+/// 그래서 선언과 코드가 갈려도 **아무것도 안 울었고**, 세 라운드가 연달아 같은 자리를
+/// 냈다 — 매번 키를 더해도 다음 라운드가 또 잡았다. **소비자가 0 인 선언은 갈렸다는
+/// 것을 원리상 못 잡는다.**
+///
+/// 이제 갈래마다 여기서 읽는다. **여기를 고치면 검사 동작이 바뀐다** — 그것이 이
+/// 선언이 정본이라는 증인이다. 안 읽는 키는 `설명` 아래로 내려가 **「정본 아님」이
+/// 선언**돼 있고, 갈려도 거짓이 아니다.
+fn 스키마를_읽는다(root: &Path) -> Result<serde_json::Value> {
+    let 파이썬 = 파이썬_실행자()?;
+    let out = Command::new(파이썬)
+        .arg(root.join(스키마_원천))
+        .arg("--schema")
+        .output()
+        .with_context(|| format!("`{파이썬} {스키마_원천} --schema` 를 못 돌렸다"))?;
+    if !out.status.success() {
+        bail!(
+            "`{스키마_원천} --schema` 가 실패했다:\n{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+    serde_json::from_slice(&out.stdout).context("`--schema` 출력이 JSON 이 아니다")
+}
 
 /// `docs/gates/README.md` 의 **닫힌 선언 목록** 하나를 읽는다 — 항목과 날짜 하한.
 ///
@@ -3735,28 +3839,113 @@ fn 커밋이_만진_것(root: &Path, sha: &str, 캐시: &mut BTreeMap<String, Op
 
 /// 그 처분이 **요구하는 자리**. `Err(사유)` 면 원리상 못 재는 행이다.
 ///
+/// ★★ **규칙은 `record.py --schema` 의 `닫힘축` 이 진다** — 여기가 아니다(#94).
+///   그 사전을 고치면 이 함수의 답이 바뀐다. 그것이 선언이 정본이라는 증인이다.
+///
 /// **순수 함수다** — 그래야 음성 대조를 시험으로 세울 수 있다.
 fn 요구하는_자리(
+    닫힘축: &serde_json::Value,
     회차: &str,
     출처: &str,
     처분: &str,
     사전처분: &str,
     경로: &str,
 ) -> Result<String, &'static str> {
-    if 처분 == "기각" {
-        return Err("기각");
+    let 의도 = format!(
+        "{회차_뿌리}/{회차}/{}",
+        닫힘축["의도파일"].as_str().unwrap_or("intent.md")
+    );
+    // ① 이 출처는 `경로` 가 **예측된 파손 지점**이라 계획 문서를 요구한다.
+    let 의도_출처 = 닫힘축["의도를요구하는출처"]
+        .as_array()
+        .map(|a| a.iter().any(|x| x.as_str() == Some(출처)))
+        .unwrap_or(false);
+    // ② `사전처분` 이 붙었으면 §2 의 처분이라 계획 문서를 요구한다.
+    let 사전처분_있음 = 사전처분 != 닫힘축["사전처분없음"].as_str().unwrap_or("해당없음");
+    if 의도_출처 || 사전처분_있음 {
+        return Ok(의도);
     }
-    let intent = format!("{회차_뿌리}/{회차}/intent.md");
-    if matches!(처분, "축소" | "전환" | "범위밖") || 출처 == "사전부검" || 사전처분 != "해당없음" {
-        return Ok(intent);
+    // ③ 처분별 사전. `null` 이면 원리상 못 잰다 — `기각` 이 그것이다.
+    match 닫힘축["요구하는자리"].get(처분) {
+        None => Err("선언 밖 처분"),
+        Some(serde_json::Value::Null) => Err("기각"),
+        Some(v) if v.as_str() == Some("의도") => Ok(의도),
+        Some(_) => {
+            if 경로 == 닫힘축["경로없음"].as_str().unwrap_or("(경로 없음)") {
+                Err("경로 없음")
+            } else if 저장소_밖_절대경로(경로) {
+                Err("저장소 밖")
+            } else {
+                Ok(경로.to_string())
+            }
+        }
     }
-    if 경로 == "(경로 없음)" {
-        return Err("경로 없음");
+}
+
+#[cfg(test)]
+mod 요구하는_자리_시험 {
+    use super::요구하는_자리;
+
+    fn 축() -> serde_json::Value {
+        serde_json::json!({
+            "요구하는자리": {"기각": null, "축소": "의도", "전환": "의도",
+                             "범위밖": "의도", "정정": "경로", "확대": "경로"},
+            "의도를요구하는출처": ["사전부검"],
+            "사전처분없음": "해당없음",
+            "의도파일": "intent.md",
+            "경로없음": "(경로 없음)"
+        })
     }
-    if 저장소_밖_절대경로(경로) {
-        return Err("저장소 밖");
+
+    /// ★ **`기각` 은 아무것도 안 고치는 처분이라 요구하는 자리가 원리상 없다.**
+    /// 항상 참인 술어를 씌워 모집단만 채우면 판정문이 「N 행을 쟀다」로 보인다 —
+    /// 그것이 「측정이 죽은 가지」다(사전부검 R2 · 실측 기각 200 행).
+    #[test]
+    fn 기각은_원리상_못_잰다() {
+        assert!(요구하는_자리(&축(), "r", "독립리뷰", "기각", "해당없음", "a.rs").is_err());
     }
-    Ok(경로.to_string())
+
+    /// 사전부검 발견의 `경로` 는 **예측된 파손 지점**이지 고침 지점이 아니다.
+    #[test]
+    fn 사전부검은_계획_문서를_요구한다() {
+        let 자 = 요구하는_자리(&축(), "r1", "사전부검", "정정", "해당없음", "xtask/src/main.rs").unwrap();
+        assert!(자.ends_with("r1/intent.md"), "{자}");
+    }
+
+    #[test]
+    fn 리뷰_정정은_좌표를_요구한다() {
+        let 자 = 요구하는_자리(&축(), "r1", "독립리뷰", "정정", "해당없음", "xtask/src/main.rs").unwrap();
+        assert_eq!(자, "xtask/src/main.rs");
+    }
+
+    #[test]
+    fn 좌표가_없거나_밖이면_못_잰다() {
+        assert!(요구하는_자리(&축(), "r", "독립리뷰", "정정", "해당없음", "(경로 없음)").is_err());
+        assert!(요구하는_자리(&축(), "r", "독립리뷰", "정정", "해당없음", "/tmp").is_err());
+    }
+
+    #[test]
+    fn 범위밖은_계획_문서를_요구한다() {
+        for ch in ["축소", "전환", "범위밖"] {
+            let 자 = 요구하는_자리(&축(), "r2", "독립리뷰", ch, "해당없음", "a.rs").unwrap();
+            assert!(자.ends_with("r2/intent.md"), "{ch}: {자}");
+        }
+    }
+
+    /// ★★ **선언을 고치면 답이 바뀐다** — 그것이 `E3` 의 증인이다.
+    #[test]
+    fn 선언을_고치면_답이_바뀐다() {
+        let mut 축 = 축();
+        assert!(요구하는_자리(&축, "r", "독립리뷰", "정정", "해당없음", "a.rs").is_ok());
+        축["요구하는자리"]["정정"] = serde_json::Value::Null;
+        assert!(요구하는_자리(&축, "r", "독립리뷰", "정정", "해당없음", "a.rs").is_err());
+    }
+
+    /// 선언 밖 처분은 **조용히 통과시키지 않는다.**
+    #[test]
+    fn 선언_밖_처분은_못_잰다() {
+        assert!(요구하는_자리(&축(), "r", "독립리뷰", "새처분", "해당없음", "a.rs").is_err());
+    }
 }
 
 fn check_finding_closure(root: &Path) -> Result<String> {
@@ -3765,6 +3954,16 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     //   행들은 **그 자를 모르는 채로 쓰였다.** ⚠ **면제가 아니라 빚이다** — 그 회차들의
     //   발화도 **세고 판정문에 낸다.** 조용히 안 재면 그것이 이 회차가 닫으려는 병이다.
     let (감사_대기, _) = 선언_목록(root, "A 축 감사 대기")?;
+    // ★ 규칙은 선언이 진다 — 여기가 아니다(#94).
+    let 스키마 = 스키마를_읽는다(root)?;
+    let 닫힘축 = &스키마["닫힘축"];
+    let 열림축 = &스키마["열림축"];
+    let 열림값 = 열림축["열림값"].as_str().unwrap_or("열림");
+    let 상태칸 = 열림축["필드"][0].as_str().unwrap_or("상태").to_string();
+    let 커밋칸 = 열림축["필드"][1].as_str().unwrap_or("닫은커밋").to_string();
+    if 닫힘축["요구하는자리"].as_object().map_or(true, |m| m.is_empty()) {
+        bail!("`--schema` 의 `닫힘축.요구하는자리` 가 비었다 — 이 검사의 규칙이 원리상 안 선다");
+    }
     let mut 대기_발화 = 0usize;
     let mut problems = Vec::new();
     let mut 캐시: BTreeMap<String, Option<Vec<String>>> = Default::default();
@@ -3795,14 +3994,14 @@ fn check_finding_closure(root: &Path) -> Result<String> {
             if v.get("id").is_none() {
                 continue;
             }
-            let 상태 = v.get("상태").and_then(|x| x.as_str());
+            let 상태 = v.get(&상태칸).and_then(|x| x.as_str());
             // ★ 스키마 2 회차는 이 축이 **원리상 없다** — 형식 이전이지 0 이 아니다.
             let Some(상태) = 상태 else {
                 *못_잼.entry("형식 이전").or_default() += 1;
                 continue;
             };
             let id = v.get("id").and_then(|x| x.as_str()).unwrap_or("?");
-            if 상태 == "열림" {
+            if 상태 == 열림값 {
                 열림 += 1;
                 if 끝났나 {
                     problems.push(format!(
@@ -3814,7 +4013,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
                 }
                 continue;
             }
-            let Some(sha) = v.get("닫은커밋").and_then(|x| x.as_str()) else { continue };
+            let Some(sha) = v.get(&커밋칸).and_then(|x| x.as_str()) else { continue };
             let Some(만진) = 커밋이_만진_것(root, sha, &mut 캐시) else {
                 // ★★ **안 보이면 실패다 — 조용히 안 세고 넘어가지 않는다.**
                 //   음성 대조가 잡았다: 파일 복사본(git 이력 없음)에서 이 축이
@@ -3832,6 +4031,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
                 continue;
             };
             let 자 = 요구하는_자리(
+                닫힘축,
                 &회차,
                 v.get("출처").and_then(|x| x.as_str()).unwrap_or(""),
                 v.get("처분").and_then(|x| x.as_str()).unwrap_or(""),
@@ -3895,48 +4095,6 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     ))
 }
 
-#[cfg(test)]
-mod 요구하는_자리_시험 {
-    use super::요구하는_자리;
-
-    /// ★ **`기각` 은 아무것도 안 고치는 처분이라 요구하는 자리가 원리상 없다.**
-    /// 항상 참인 술어를 씌워 모집단만 채우면 판정문이 「N 행을 쟀다」로 보인다 —
-    /// 그것이 「측정이 죽은 가지」다(사전부검 R2 · 실측 기각 200 행).
-    #[test]
-    fn 기각은_원리상_못_잰다() {
-        assert!(요구하는_자리("r", "독립리뷰", "기각", "해당없음", "a.rs").is_err());
-    }
-
-    /// 사전부검 발견의 `경로` 는 **예측된 파손 지점**이지 고침 지점이 아니다.
-    #[test]
-    fn 사전부검은_계획_문서를_요구한다() {
-        let 자 = 요구하는_자리("r1", "사전부검", "정정", "해당없음", "xtask/src/main.rs").unwrap();
-        assert!(자.ends_with("r1/intent.md"), "{자}");
-    }
-
-    /// 독립 리뷰의 정정은 **그 좌표**를 요구한다.
-    #[test]
-    fn 리뷰_정정은_좌표를_요구한다() {
-        let 자 = 요구하는_자리("r1", "독립리뷰", "정정", "해당없음", "xtask/src/main.rs").unwrap();
-        assert_eq!(자, "xtask/src/main.rs");
-    }
-
-    /// 좌표가 없거나 저장소 밖이면 **못 잰다** — 조용히 통과시키지 않는다.
-    #[test]
-    fn 좌표가_없거나_밖이면_못_잰다() {
-        assert!(요구하는_자리("r", "독립리뷰", "정정", "해당없음", "(경로 없음)").is_err());
-        assert!(요구하는_자리("r", "독립리뷰", "정정", "해당없음", "/tmp").is_err());
-    }
-
-    /// 범위밖·축소·전환은 계획 문서를 요구한다 — 개정과 승격이 거기 산다.
-    #[test]
-    fn 범위밖은_계획_문서를_요구한다() {
-        for ch in ["축소", "전환", "범위밖"] {
-            let 자 = 요구하는_자리("r2", "독립리뷰", ch, "해당없음", "a.rs").unwrap();
-            assert!(자.ends_with("r2/intent.md"), "{ch}: {자}");
-        }
-    }
-}
 
 /// 저장소 **밖**을 가리키는 절대경로인가 — **플랫폼과 무관하게 문자열로 판정한다.**
 ///
