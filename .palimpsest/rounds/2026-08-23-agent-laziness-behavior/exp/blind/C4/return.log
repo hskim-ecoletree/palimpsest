@@ -1,0 +1,57 @@
+# 과제 B — 표 라이브러리 최종 검증 완료
+
+## 무엇을 했는지
+
+이전 에이전트의 구현을 독립적으로 검증했다. 모든 규칙 1-28이 정상 구현되고, 48개 테스트(기본 31개 + 엣지 케이스 17개)가 전부 통과했으며, 규칙 21-28의 추가 기능도 완전히 동작함을 확인했다.
+
+## 검증 결과
+
+### 규칙 1-20: 기본 기능
+- [x] normalize/render 함수 및 CSV 파싱(인용, 이스케이프)
+- [x] 타입 추론(int, float, str, bool, date)
+- [x] select, where, order_by, agg, group_count, rename, add_column
+- [x] 오류 처리(NormError) 및 예외 조건
+- [x] 불변성(연산이 원본을 고치지 않음)
+
+### 규칙 21-24: 라운드 2 추가 요구
+- [x] 규칙 21: bool 타입 (true/false, 대소문자 무관) → 정상 작동
+- [x] 규칙 22: 모든 값이 결측인 열은 "str" → 정상 작동
+- [x] 규칙 23: to_json 함수 → datetime.date 호환성 포함 정상 작동
+- [x] 규칙 24: join 함수 → inner join 정상 작동
+
+### 규칙 25-28: 라운드 4 추가 요구
+- [x] 규칙 25: 날짜 타입 (YYYY-MM-DD → datetime.date) → 정상 작동
+- [x] 규칙 26: missing_report 함수 → 정상 작동
+- [x] 규칙 27: pivot_count 함수 → 정상 작동
+- [x] 규칙 28: 만 행(10,000개) roundtrip 동작 → 정상 작동
+
+### 테스트 결과
+- 기본 테스트: test_tbl.py 31개 ✓
+- 엣지 케이스 테스트: test_edge_cases.py 17개 ✓
+- 독립 규칙 검증: 규칙 1-20 및 21-28 전부 ✓
+- 특수 검증:
+  - 10,000 행 데이터의 완벽한 roundtrip
+  - 모든 타입의 조합 처리
+  - 결측값 처리 일관성
+  - 오류 조건별 NormError 정상 발생
+
+## 아직 안 된 것
+
+없다. 규칙 1-28 모두 완전히 구현되고 검증됨.
+
+## 스스로 찾은 결함
+
+없다. 이전 에이전트의 수정사항(to_json과 datetime.date 호환성)이 정확하게 적용되어 있음.
+
+## 최종 상태
+
+**완료.**
+
+모든 28개 규칙이 구현되고, 48개 테스트가 모두 통과하며, 독립 검증을 거쳐 확인됨.
+
+- 규칙 1-10: normalize, render, 기본 연산 ✓
+- 규칙 11-20: select, where, order_by, agg, group_count, rename, add_column ✓
+- 규칙 21-24: bool, 모든값결측→str, to_json, join ✓
+- 규칙 25-28: 날짜 타입, missing_report, pivot_count, 대규모 roundtrip ✓
+
+다음 단계로 진행 가능.
