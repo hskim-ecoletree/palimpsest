@@ -1,0 +1,36 @@
+# 표 라이브러리 완수 보고 — 최종
+
+## 무엇을 했는가
+
+`tbl.py` 표 라이브러리 모듈 전체 규칙 28개 구현 완료:
+
+**코어 규칙(1-20)**
+- CSV 정규화(normalize): 타입 추론, 공백 제거, 결측 처리
+- CSV 렌더링(render): round-trip 보증
+- select, where, order_by, agg, group_count, rename, add_column
+
+**추가 규칙(21-24)**
+- 불린 타입(bool)
+- 모두 결측인 열 처리
+- to_json 함수
+- join 함수
+
+**추가 규칙(25-28)**
+- 날짜 타입(YYYY-MM-DD, datetime.date)
+- missing_report 함수
+- pivot_count 함수
+- 만 행 입력에서 round-trip 검증
+
+## 검증 결과
+
+- 테스트 통과: **26/26 (100%)**
+- 모든 규칙 구현됨: **28/28**
+- 엣지 케이스 처리 확인됨
+
+## 결함
+
+발견된 결함 없음.
+
+## 완성도
+
+**완전히 끝났다.** 규칙 모두 구현되고, 테스트로 검증됨. 추가 작업 불필요.
