@@ -95,7 +95,7 @@ grep -c '공격선 전환\|끝난 느낌\|적대적으로 재검\|전수 훑기\
 # ② 「덜 게으르다」를 재는 장치가 0 이다
 #    ⚠ `corpus/tasks/` 는 **추출기 코퍼스**다 — 게으름 과제가 아니다. 헷갈리지 마라.
 grep -rn 'A/B\|조건 P+\|플레이스홀더\|스펙 충족' .claude/skills/round/ scripts/ | wc -l
-ls .palimpsest/rounds/*/exp* 2>/dev/null | wc -l   # 앞 실험의 원자료는 저장소에 없다
+find .palimpsest/rounds -maxdepth 2 -name 'exp*' | wc -l   # 앞 실험의 원자료는 저장소에 없다
 
 # ③ Stop 정책이 없다 — 관측만 했다
 grep -n 'EVENTS' crates/pal-cli/src/hook/policy.rs
