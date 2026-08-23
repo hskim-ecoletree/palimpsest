@@ -613,6 +613,8 @@ fn check(root: &Path) -> Result<()> {
         ("사라진 문서를 현재형으로 안 부른다", check_stale_citation(root)),
         ("회차 레코드", check_round_records(root)),
         ("원장 둘 대조", check_ledger_pair(root)),
+        ("발견이 닫혔나", check_finding_closure(root)),
+        ("선언 목록이 닫혀 있나", check_declared_lists(root)),
     ];
     let total = checks.len();
 
@@ -3564,6 +3566,371 @@ fn check_round_records(root: &Path) -> Result<String> {
             )
         }
     ))
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 검사 22 — **발견이 닫혔나** (「했나」 축 · 2026-08-24)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// # 무엇을 재나
+//
+// 회차 레코드의 `닫은커밋` 을 **읽는다.** 앞 판은 그 칸을 **한 번도 안 읽었다** —
+// `grep -c '닫은커밋' xtask/src/main.rs` 가 착수 시점에 **0** 이었고, 그런 채로
+// 닫힘 행 수백 개가 SHA 를 지고 있었으며 검사는 초록이었다.
+//
+// **검사가 「형식이 맞나」만 보고 「했나」를 안 봤다.**
+//
+// # 자
+//
+// | 처분 | 요구하는 자리 |
+// |---|---|
+// | `기각` | **없다** — 아무것도 안 고치는 처분이다. 「원리상 못 잼」으로 따로 센다 |
+// | `축소`·`전환`·`범위밖` | 그 회차의 `intent.md` (개정·승격·`## 범위 밖` 이 거기 산다) |
+// | 출처가 `사전부검` | 그 회차의 `intent.md` — §2 의 처분 넷이 전부 계획 문서를 만진다 |
+// | `사전처분` 이 붙은 것 | 같음 |
+// | 나머지 `정정`·`확대` | 그 발견의 `경로` |
+//
+// ★ **사전부검 발견의 `경로` 는 「예측된 파손 지점」이지 고침 지점이 아니다.**
+//   그것을 고침 지점으로 읽으면 참인 답이 원리상 없는 행이 대량으로 빨개지고,
+//   초록으로 만드는 유일한 길이 **존재하지 않는 커밋을 지어내는 것**이 된다 —
+//   금지역 「사실이 아닌 것을 사실로」다(사전부검 R1).
+//
+// # 이 자가 **못 보는 것** — 게이트 `## 범위 밖` 과 같은 글이다
+//
+// 1. **만졌지만 안 고친 것.** diff 가 파일을 스쳐도 그 발견은 남아 있을 수 있다.
+// 2. **`경로` 가 없거나 디렉터리인 행.** 좌표가 굵으면 자가 무뎌진다.
+// 3. **여러 발견을 한 커밋이 닫은 경우.** 그중 하나만 고쳐도 전부 초록이다.
+// 4. **다른 커밋이 실제로 고친 경우.** `닫은커밋` 이 틀렸는데 우연히 그 파일을 만졌으면 통과한다.
+//
+// **그러므로 이 축은 「거짓 닫힘을 없앤다」가 아니라 「가장 싼 거짓 닫힘을 못 하게 한다」다.**
+//
+// # ★ 「열림으로 밀기」를 원천 차단한다
+//
+// `상태=열림` 이 되면 그 행은 이 검사의 모집단에서 **빠져 즉시 초록**이 된다 —
+// **가장 싼 경로가 「발견을 열어 두고 방치」**다(사전부검 R3). 그래서
+// **끝난 회차(`report.md` 가 있는 회차)에 열림 행이 있으면 실패**다.
+// 끝난 회차에 열린 발견이 있다는 것은 **그 회차가 안 끝난 것**이다.
+//
+// # 성능 — SHA 단위로 캐시한다
+//
+// 행마다 `git show` 를 부르면 macOS 에서 10 초가 붙고 Windows 는 그 배수다(사전부검 R2).
+// 서로 다른 SHA 는 수십 개뿐이라 **캐시가 20 배를 돌려준다.**
+
+/// `docs/gates/README.md` 의 **닫힌 선언 목록** 하나를 읽는다 — 항목과 날짜 하한.
+///
+/// ★★ **왜 목록이 「손으로 벤 거울」이 아닌가.** 앞 회차가 실측한 병은 *"자라는
+/// 모집단을 손으로 베껴 놓으면 놓은 날부터 갈린다"* 였다. **이 목록은 닫혀 있다** —
+/// 날짜 하한 뒤에 연 회차는 못 들어가고, [`check_declared_lists`] 가 그것을 강제한다.
+/// 거울은 자라고 예외 선언은 닫힌다. **그것이 가르는 문장이다.**
+///
+/// ⚠ **면제가 아니라 빚이다.** 부르는 자리가 **수를 판정문에 실어야** 한다 —
+/// 안 실으면 그것이 조용한 fallback 이고, 이 회차가 닫으려는 병 그 자체다.
+fn 선언_목록(root: &Path, 제목: &str) -> Result<(Vec<String>, String)> {
+    let p = root.join("docs/gates/README.md");
+    let text = std::fs::read_to_string(&p)
+        .with_context(|| format!("선언 목록을 못 읽었다: {}", p.display()))?;
+    let mut 안 = false;
+    let mut 항목 = Vec::new();
+    let mut 하한 = String::new();
+    for line in text.lines() {
+        if let Some(h) = line.strip_prefix("### ") {
+            안 = h.starts_with(제목);
+            continue;
+        }
+        if line.starts_with("## ") {
+            안 = false;
+        }
+        if !안 {
+            continue;
+        }
+        if let Some(rest) = line.trim().strip_prefix("- `") {
+            if let Some(name) = rest.split('`').next() {
+                항목.push(name.to_string());
+            }
+        }
+        if let Some(i) = line.find("**하한: ") {
+            하한 = line[i + "**하한: ".len()..]
+                .split_whitespace()
+                .next()
+                .unwrap_or("")
+                .to_string();
+        }
+    }
+    if 항목.is_empty() || 하한.is_empty() {
+        bail!(
+            "`docs/gates/README.md` 의 `### {제목}` 목록이 비었거나 날짜 하한이 없다 — \
+             **모집단이 비면 실패다.** 0 건은 「안 부른다」가 아니라 「안 봤다」다"
+        );
+    }
+    Ok((항목, 하한))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 검사 23 — **선언 목록이 닫혀 있나** (`C5` · 2026-08-24)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// ★ **목록을 쓰는 자리에서 검증하면 무발화한다.** 새 회차는 표준 표를 갖고 끝나므로
+//   「표준 표가 없을 때만 목록을 읽는」 자연스러운 구현에서는 **그 회차를 목록에 넣어도
+//   분기에 도달하지 않는다**(사전부검 R2). 그래서 **목록 자체를 독립으로 검증한다.**
+fn check_declared_lists(root: &Path) -> Result<String> {
+    let mut problems = Vec::new();
+    let mut 셈 = Vec::new();
+    for 제목 in ["형식 이전", "A 축 감사 대기"] {
+        let (항목, 하한) = 선언_목록(root, 제목)?;
+        for name in &항목 {
+            if !root.join(회차_뿌리).join(name).is_dir() {
+                problems.push(format!(
+                    "`{제목}` 목록의 `{name}` 은 실재하는 회차가 아니다"
+                ));
+            }
+            // ★ **날짜 하한.** 회차 이름이 `YYYY-MM-DD-…` 이므로 문자열 비교로 족하다.
+            if name.as_str() >= 하한.as_str() {
+                problems.push(format!(
+                    "`{제목}` 목록의 `{name}` 이 하한 `{하한}` 이후다 — \
+                     **이 목록은 닫혀 있다.** 새 회차는 못 들어간다"
+                ));
+            }
+        }
+        셈.push(format!("{제목} {}개 (하한 {하한})", 항목.len()));
+    }
+    if !problems.is_empty() {
+        bail!("{}", problems.join("\n    "));
+    }
+    Ok(셈.join(" · "))
+}
+
+/// `닫은커밋` 이 만진 파일 집합. `None` 이면 **이 이력에서 안 보인다**(없는 커밋이 아니다).
+///
+/// ⚠ **「없는 커밋」과 「이력 밖 커밋」을 기계가 못 가른다.** 얕은 클론이나 squash 병합
+/// 뒤에는 실재하는 커밋도 안 읽힌다. 그래서 판정문이 **「이 이력에서 안 보인다」**로
+/// 적는다 — 「그런 커밋이 없다」로 적으면 사실이 아닌 것을 사실로 적는 것이다.
+fn 커밋이_만진_것(root: &Path, sha: &str, 캐시: &mut BTreeMap<String, Option<Vec<String>>>) -> Option<Vec<String>> {
+    if let Some(v) = 캐시.get(sha) {
+        return v.clone();
+    }
+    let out = Command::new("git")
+        .current_dir(root)
+        .args(["show", "--name-only", "--format=", "--no-renames", sha])
+        .output()
+        .ok();
+    let v = match out {
+        Some(o) if o.status.success() => Some(
+            String::from_utf8_lossy(&o.stdout)
+                .lines()
+                .map(|l| l.trim().replace('\\', "/"))
+                .filter(|l| !l.is_empty())
+                .collect::<Vec<_>>(),
+        ),
+        _ => None,
+    };
+    캐시.insert(sha.to_string(), v.clone());
+    v
+}
+
+/// 그 처분이 **요구하는 자리**. `Err(사유)` 면 원리상 못 재는 행이다.
+///
+/// **순수 함수다** — 그래야 음성 대조를 시험으로 세울 수 있다.
+fn 요구하는_자리(
+    회차: &str,
+    출처: &str,
+    처분: &str,
+    사전처분: &str,
+    경로: &str,
+) -> Result<String, &'static str> {
+    if 처분 == "기각" {
+        return Err("기각");
+    }
+    let intent = format!("{회차_뿌리}/{회차}/intent.md");
+    if matches!(처분, "축소" | "전환" | "범위밖") || 출처 == "사전부검" || 사전처분 != "해당없음" {
+        return Ok(intent);
+    }
+    if 경로 == "(경로 없음)" {
+        return Err("경로 없음");
+    }
+    if 저장소_밖_절대경로(경로) {
+        return Err("저장소 밖");
+    }
+    Ok(경로.to_string())
+}
+
+fn check_finding_closure(root: &Path) -> Result<String> {
+    let 산출 = 회차_산출(root)?;
+    // ★ **하한은 닫힌 선언 목록이다.** 이 축이 2026-08-24 에 처음 섰고, 그 전에 닫힌
+    //   행들은 **그 자를 모르는 채로 쓰였다.** ⚠ **면제가 아니라 빚이다** — 그 회차들의
+    //   발화도 **세고 판정문에 낸다.** 조용히 안 재면 그것이 이 회차가 닫으려는 병이다.
+    let (감사_대기, _) = 선언_목록(root, "A 축 감사 대기")?;
+    let mut 대기_발화 = 0usize;
+    let mut problems = Vec::new();
+    let mut 캐시: BTreeMap<String, Option<Vec<String>>> = Default::default();
+    let (mut 잰_것, mut 안_보임, mut 열림) = (0usize, 0usize, 0usize);
+    let mut 못_잼: BTreeMap<&'static str, usize> = Default::default();
+    let mut 발화 = Vec::new();
+
+    for p in &산출 {
+        if p.extension().and_then(|x| x.to_str()) != Some("jsonl") {
+            continue;
+        }
+        let 상대 = 상대_경로(root, p);
+        let text = std::fs::read_to_string(p)?;
+        let 종류 = serde_json::from_str::<serde_json::Value>(text.lines().next().unwrap_or(""))
+            .ok()
+            .and_then(|v| v.get("종류").and_then(|x| x.as_str()).map(str::to_owned))
+            .unwrap_or_else(|| "레코드".into());
+        if 종류 != "레코드" {
+            continue;
+        }
+        let 회차 = 회차_이름(root, p);
+        let 끝났나 = root.join(회차_뿌리).join(&회차).join("report.md").is_file();
+        for (i, line) in text.lines().enumerate() {
+            if line.trim().is_empty() || i == 0 {
+                continue;
+            }
+            let Ok(v) = serde_json::from_str::<serde_json::Value>(line) else { continue };
+            if v.get("id").is_none() {
+                continue;
+            }
+            let 상태 = v.get("상태").and_then(|x| x.as_str());
+            // ★ 스키마 2 회차는 이 축이 **원리상 없다** — 형식 이전이지 0 이 아니다.
+            let Some(상태) = 상태 else {
+                *못_잼.entry("형식 이전").or_default() += 1;
+                continue;
+            };
+            let id = v.get("id").and_then(|x| x.as_str()).unwrap_or("?");
+            if 상태 == "열림" {
+                열림 += 1;
+                if 끝났나 {
+                    problems.push(format!(
+                        "{상대}:{}: `{id}` 가 **열림**인데 그 회차는 끝났다(`report.md` 가 있다) — \
+                         끝난 회차에 열린 발견이 있으면 **그 회차가 안 끝난 것**이다. \
+                         「열림으로 밀기」로 이 검사를 비껴가지 않는다",
+                        i + 1
+                    ));
+                }
+                continue;
+            }
+            let Some(sha) = v.get("닫은커밋").and_then(|x| x.as_str()) else { continue };
+            let Some(만진) = 커밋이_만진_것(root, sha, &mut 캐시) else {
+                // ★★ **안 보이면 실패다 — 조용히 안 세고 넘어가지 않는다.**
+                //   음성 대조가 잡았다: 파일 복사본(git 이력 없음)에서 이 축이
+                //   **616 행을 전부 「안 보임」으로 세고도 초록**이었다 —
+                //   「측정이 죽은 가지」 그 자체다.
+                // ⚠ **까닭 둘을 기계가 못 가른다** — 「그런 커밋이 없다」와 「이 이력
+                //   창 밖이다」. 그래서 문면이 **「이 이력에서 안 보인다」**로 적는다.
+                안_보임 += 1;
+                problems.push(format!(
+                    "{상대}:{}: `{id}` 의 `닫은커밋` `{sha}` 가 **이 이력에서 안 보인다** — \
+                     없는 커밋이거나, 얕은 클론·squash 병합으로 이력 밖이다. \
+                     CI 라면 체크아웃 깊이를 보라",
+                    i + 1
+                ));
+                continue;
+            };
+            let 자 = 요구하는_자리(
+                &회차,
+                v.get("출처").and_then(|x| x.as_str()).unwrap_or(""),
+                v.get("처분").and_then(|x| x.as_str()).unwrap_or(""),
+                v.get("사전처분").and_then(|x| x.as_str()).unwrap_or("해당없음"),
+                v.get("경로").and_then(|x| x.as_str()).unwrap_or("(경로 없음)"),
+            );
+            let 자 = match 자 {
+                Ok(자) => 자,
+                Err(why) => {
+                    *못_잼.entry(why).or_default() += 1;
+                    continue;
+                }
+            };
+            잰_것 += 1;
+            // ★ **디렉터리 좌표는 면제가 아니라 접두 일치로 잰다.** 면제하면 자가
+            //   무뎌지고, 굵은 좌표를 적는 것이 검사를 비껴가는 길이 된다.
+            // ⚠ **끝 슬래시를 먼저 벗긴다.** 안 벗기면 접두가 `<자>//` 가 되어 절대 안
+            //   맞고, 그러면 **디렉터리 좌표가 전부 거짓 발화**한다(실측으로 잡았다).
+            let 자 = 자.trim_end_matches('/').to_string();
+            let 디렉터리 = root.join(&자).is_dir();
+            let 닿았나 = 만진.iter().any(|f| {
+                f == &자
+                    || f.ends_with(&format!("/{자}"))
+                    || (디렉터리 && (f.starts_with(&format!("{자}/")) || f.contains(&format!("/{자}/"))))
+            });
+            if !닿았나 {
+                if 감사_대기.iter().any(|x| x == &회차) {
+                    대기_발화 += 1;
+                } else {
+                    발화.push(format!(
+                        "{상대}:{}: `{id}` 가 `{sha}` 로 닫혔다는데 그 커밋이 `{자}` 를 안 만졌다",
+                        i + 1
+                    ));
+                }
+            }
+        }
+    }
+
+    let 못_잼_합: usize = 못_잼.values().sum();
+    let 못_잼_글 = if 못_잼.is_empty() {
+        "0".to_string()
+    } else {
+        format!(
+            "{못_잼_합} ({})",
+            못_잼.iter().map(|(k, v)| format!("{k} {v}")).collect::<Vec<_>>().join(" · ")
+        )
+    };
+    let 발화_수 = 발화.len();
+    problems.extend(발화);
+    if !problems.is_empty() {
+        bail!(
+            "{}\n\n    잰 것 {잰_것} · 발화 {발화_수} · 원리상 못 잼 {못_잼_글} · \
+             이 이력에서 안 보임 {안_보임} · 열림 {열림}",
+            problems.join("\n    ")
+        );
+    }
+    Ok(format!(
+        "잰 것 {잰_것}행 · 발화 {발화_수} · **감사 대기 발화 {대기_발화}** · \
+         원리상 못 잼 {못_잼_글} · 이 이력에서 안 보임 {안_보임}행 · 열림 {열림}행 · SHA {}개",
+        캐시.len()
+    ))
+}
+
+#[cfg(test)]
+mod 요구하는_자리_시험 {
+    use super::요구하는_자리;
+
+    /// ★ **`기각` 은 아무것도 안 고치는 처분이라 요구하는 자리가 원리상 없다.**
+    /// 항상 참인 술어를 씌워 모집단만 채우면 판정문이 「N 행을 쟀다」로 보인다 —
+    /// 그것이 「측정이 죽은 가지」다(사전부검 R2 · 실측 기각 200 행).
+    #[test]
+    fn 기각은_원리상_못_잰다() {
+        assert!(요구하는_자리("r", "독립리뷰", "기각", "해당없음", "a.rs").is_err());
+    }
+
+    /// 사전부검 발견의 `경로` 는 **예측된 파손 지점**이지 고침 지점이 아니다.
+    #[test]
+    fn 사전부검은_계획_문서를_요구한다() {
+        let 자 = 요구하는_자리("r1", "사전부검", "정정", "해당없음", "xtask/src/main.rs").unwrap();
+        assert!(자.ends_with("r1/intent.md"), "{자}");
+    }
+
+    /// 독립 리뷰의 정정은 **그 좌표**를 요구한다.
+    #[test]
+    fn 리뷰_정정은_좌표를_요구한다() {
+        let 자 = 요구하는_자리("r1", "독립리뷰", "정정", "해당없음", "xtask/src/main.rs").unwrap();
+        assert_eq!(자, "xtask/src/main.rs");
+    }
+
+    /// 좌표가 없거나 저장소 밖이면 **못 잰다** — 조용히 통과시키지 않는다.
+    #[test]
+    fn 좌표가_없거나_밖이면_못_잰다() {
+        assert!(요구하는_자리("r", "독립리뷰", "정정", "해당없음", "(경로 없음)").is_err());
+        assert!(요구하는_자리("r", "독립리뷰", "정정", "해당없음", "/tmp").is_err());
+    }
+
+    /// 범위밖·축소·전환은 계획 문서를 요구한다 — 개정과 승격이 거기 산다.
+    #[test]
+    fn 범위밖은_계획_문서를_요구한다() {
+        for ch in ["축소", "전환", "범위밖"] {
+            let 자 = 요구하는_자리("r2", "독립리뷰", ch, "해당없음", "a.rs").unwrap();
+            assert!(자.ends_with("r2/intent.md"), "{ch}: {자}");
+        }
+    }
 }
 
 /// 저장소 **밖**을 가리키는 절대경로인가 — **플랫폼과 무관하게 문자열로 판정한다.**
