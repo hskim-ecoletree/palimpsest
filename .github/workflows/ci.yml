@@ -80,7 +80,14 @@ jobs:
         if: runner.os == 'Windows'
         run: git config --global core.autocrlf true
 
+      # ★★ **이력 전부를 받는다.** 검사 22(「발견이 닫혔나」)가 회차 레코드의
+      #    `닫은커밋` SHA 를 `git show` 로 읽는다. 기본값(`fetch-depth: 1`)에서는
+      #    **그 SHA 들이 하나도 안 읽혀** 닫힘 행 전량이 「이 이력에서 안 보인다」로
+      #    빨개진다 — 로컬은 초록이고 push 뒤에야 나므로 회차 안에서 안 보인다.
+      #    ⚠ 이 잡만 그 축을 돌린다. 나머지 둘은 기본값 그대로 둔다.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 무엇으로 빌드하는지 적어 둔다
         shell: bash
