@@ -33,8 +33,9 @@ const CORE_FORBIDDEN_DEPS: &[&str] = &["tree-sitter", "redb", "gix"];
 const INTENT_DELETE_MARKERS: &[&str] = &["pal_intent", "pal-intent", "intent.redb", "intent/"];
 
 fn main() -> Result<()> {
-    let root = repo_root()?;
-    match std::env::args().nth(1).as_deref() {
+    let root = 뿌리를_고른다()?;
+    let 명령 = 명령을_고른다()?;
+    match 명령.as_deref() {
         None | Some("check") => check(&root),
         // 파생 ③ — 문서 표를 스키마에서 낸다. **손으로 쓰지 않는다.**
         Some("schema-doc") => {
@@ -61,6 +62,62 @@ fn main() -> Result<()> {
             bail!("모르는 명령이다: {other} — `check` · `test` · `schema-doc` · `query-doc`")
         }
     }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 인자 — **뿌리를 받고, 모르는 것을 거부한다** (사전부검 R2·R3 · 2026-08-24)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// ★★ **왜 뿌리를 인자로 받나.** [`repo_root`] 는 `CARGO_MANIFEST_DIR` 로 **컴파일
+//    시점에 박힌다.** 그래서 회차의 음성 대조를 「격리 사본」에서 걸어도, 프리빌트
+//    바이너리를 사본에서 돌리면 **원본을 잰다** — 실측(사전부검 R2): 사본의
+//    `findings.jsonl` 을 통째로 파괴하고 사본 cwd 에서 돌렸는데 **원본의 수 · 21/21
+//    통과**가 나왔다. 그 관측이 「안 빨개졌다」로 읽히면 음성 대조가 통째로 헛것이 된다.
+//
+// ⚠⚠ **그리고 모르는 인자를 거부해야 한다.** 앞 판은 `args().nth(1)` 만 봤고 그 뒤를
+//    **읽지도 거부하지도 않았다.** 그래서 `cargo xtask check --root /tmp` 가 **에러 없이
+//    21/21 통과하고 원본의 수**를 냈다(실측 · 사전부검 R3). 플래그를 준 것처럼 보이면서
+//    같은 일을 한다 — **뿌리가 없는 것보다 나쁘다.**
+//
+//    새 범주로 적는다: **「무시되는 인자」 — 「사본을 쟀다」가 문면으로만 참이 되는 자리.**
+//
+// ★ 사본에서 걸 때는 **사본에서 재빌드하거나** `--root <사본>` 을 준다. 둘 중 하나다.
+
+/// `--root <경로>` 가 있으면 그것을, 없으면 [`repo_root`] 를 뿌리로 쓴다.
+fn 뿌리를_고른다() -> Result<PathBuf> {
+    let 인자: Vec<String> = std::env::args().skip(1).collect();
+    let Some(i) = 인자.iter().position(|a| a == "--root") else {
+        return repo_root();
+    };
+    let 값 = 인자.get(i + 1).context("`--root` 뒤에 경로가 없다")?;
+    let p = PathBuf::from(값);
+    if !p.is_dir() {
+        bail!("`--root` 가 디렉터리가 아니다: {}", p.display());
+    }
+    Ok(p.canonicalize().unwrap_or(p))
+}
+
+/// 인자에서 명령 하나를 고른다. **남는 것이 있으면 실패다 — 조용히 안 무시한다.**
+fn 명령을_고른다() -> Result<Option<String>> {
+    let mut 남은: Vec<String> = Vec::new();
+    let 인자: Vec<String> = std::env::args().skip(1).collect();
+    let mut i = 0;
+    while i < 인자.len() {
+        if 인자[i] == "--root" {
+            i += 2; // 값까지 건너뛴다 — 없으면 `뿌리를_고른다` 가 이미 실패했다
+            continue;
+        }
+        남은.push(인자[i].clone());
+        i += 1;
+    }
+    if 남은.len() > 1 {
+        bail!(
+            "인자가 남는다: {:?} — **조용히 무시하지 않는다.** 무시되는 인자는 \
+             「사본을 쟀다」를 문면으로만 참으로 만든다 (사전부검 R3)",
+            &남은[1..]
+        );
+    }
+    Ok(남은.into_iter().next())
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3349,6 +3406,7 @@ fn check_round_records(root: &Path) -> Result<String> {
     //   수를 「레코드는 N 행이다」로 적었다. 사실이 아닌 것을 사실로 적는 자리다.
     let mut 쌍_수: std::collections::BTreeMap<(String, String, i64), usize> = Default::default();
     let mut 좌표_해소_실패 = Vec::new();
+    let mut 좌표_면제 = 0usize;
     let mut 총_행 = 0usize;
     let mut 예외_행 = 0usize;
     for p in 레코드들.iter().copied() {
@@ -3394,8 +3452,20 @@ fn check_round_records(root: &Path) -> Result<String> {
             //   (실측 2026-08-19: 에이전트 정의를 고치니 인용한 줄이 93 → 95 로 밀렸다).
             //   드리프트는 `기준커밋` 이 설명한다.
             if let Some(경로) = v.get("경로").and_then(|x| x.as_str()) {
-                if 경로 != "(경로 없음)" && !좌표가_실재하는가(root, 경로) {
-                    좌표_해소_실패.push(format!("{상대}:{}: `{경로}` 가 없다", i + 1));
+                // ★★ **저장소 밖 절대경로는 좌표가 아니다.** (2026-08-24 · 사전부검 R3)
+                //   앞 판은 `root.join(경로)` 를 그냥 불렀는데, 유닉스에서 절대경로는
+                //   **뿌리를 통째로 대체**해 `/tmp` 가 그대로 서고 Windows 에서는
+                //   `C:\tmp` 가 되어 없다. **한 행 때문에 windows-latest 만 죽었고
+                //   CI 가 세 커밋 연속 실패였다** — 그리고 이 회차의 RED 표가 macOS 의
+                //   `21/21` 을 착수 기준선으로 적었다(「사실이 아닌 것을 사실로」).
+                //   ⚠ **면제하되 수를 판정문에 싣는다** — 「안 잰 것」과 「잴 수 없는 것」을
+                //   같은 침묵으로 두지 않는다.
+                if 경로 != "(경로 없음)" {
+                    if 저장소_밖_절대경로(경로) {
+                        좌표_면제 += 1;
+                    } else if !좌표가_실재하는가(root, 경로) {
+                        좌표_해소_실패.push(format!("{상대}:{}: `{경로}` 가 없다", i + 1));
+                    }
                 }
             }
         }
@@ -3478,7 +3548,8 @@ fn check_round_records(root: &Path) -> Result<String> {
         bail!("{}", problems.join("\n    "));
     }
     Ok(format!(
-        "산출 {}개 · 레코드 {}행 · 예외표 {예외_행}행 · 검산 {} · 검산 면제 {} · 파이썬 `{파이썬}`",
+        "산출 {}개 · 레코드 {}행 · 예외표 {예외_행}행 · 좌표 면제 {좌표_면제}행 \
+         (저장소 밖 절대경로) · 검산 {} · 검산 면제 {} · 파이썬 `{파이썬}`",
         산출.len(),
         총_행 - 예외_행,
         if 검산.is_empty() { "없음".to_string() } else { 검산.join(" · ") },
@@ -3493,6 +3564,45 @@ fn check_round_records(root: &Path) -> Result<String> {
             )
         }
     ))
+}
+
+/// 저장소 **밖**을 가리키는 절대경로인가 — **플랫폼과 무관하게 문자열로 판정한다.**
+///
+/// ★ 왜 `Path::is_absolute` 를 안 쓰나: 그 자가 **플랫폼마다 다르다.** `/tmp` 는
+/// 유닉스에서 절대이고 Windows 에서는 아니다. 그러면 같은 레코드가 OS 마다 다른
+/// 판정을 받고, 그것이 ADR-0023 이 금지한 자리다. **여기서는 세 OS 가 같은 답을 낸다.**
+fn 저장소_밖_절대경로(경로: &str) -> bool {
+    let b = 경로.as_bytes();
+    경로.starts_with('/')
+        || 경로.starts_with('~')
+        || 경로.starts_with("\\\\")
+        || (b.len() > 2 && b[1] == b':' && (b[2] == b'/' || b[2] == b'\\'))
+}
+
+#[cfg(test)]
+mod 좌표_면제_시험 {
+    use super::저장소_밖_절대경로;
+
+    /// ★ **세 OS 가 같은 답을 내야 한다.** 이 자는 파일시스템을 안 만지고 문자열만
+    /// 본다 — `Path::is_absolute` 는 플랫폼마다 다르므로 안 쓴다(ADR-0023).
+    #[test]
+    fn 저장소_밖_절대경로를_가른다() {
+        // 유닉스 절대경로 — **이것이 windows-latest 만 죽인 그 행이다.**
+        assert!(저장소_밖_절대경로("/tmp"));
+        assert!(저장소_밖_절대경로("/var/folders/x/y"));
+        assert!(저장소_밖_절대경로("~/dev/projects/ditto"));
+        // 윈도 드라이브·UNC
+        assert!(저장소_밖_절대경로("C:/Users/x"));
+        assert!(저장소_밖_절대경로("C:\\Users\\x"));
+        assert!(저장소_밖_절대경로("\\\\server\\share"));
+        // 저장소 안의 좌표는 면제가 아니다 — 면제가 넓으면 검사가 아무것도 안 잰다
+        assert!(!저장소_밖_절대경로("xtask/src/main.rs"));
+        assert!(!저장소_밖_절대경로(".claude/skills/round/SKILL.md"));
+        assert!(!저장소_밖_절대경로("docs/gates/README.md"));
+        assert!(!저장소_밖_절대경로("layout.rs"));
+        // ⚠ **한 글자짜리 조각을 드라이브로 오인하지 않는다.**
+        assert!(!저장소_밖_절대경로("a:b"));
+    }
 }
 
 /// 좌표가 실재하는가 — 경로째로 있거나, **끝이 맞는 파일이 저장소에 있거나.**
