@@ -2,20 +2,16 @@
 
 ## 라운드 2 에 준다
 
-불린 타입을 더한다. `type` 에 `"bool"` 이 생긴다.
-
-- `true`·`false` 는 대소문자를 가리지 않는다.
-- 한 열의 값이 전부 불린이면 그 열은 `"bool"` 이다.
-- **값이 전부 결측인 열은 `"str"` 이다.**
+21. **불린 타입.** `type` 에 `"bool"` 이 생긴다. `true`·`false` 는 대소문자를 안 가린다.
+22. **값이 전부 결측인 열은 `"str"`** 이다.
+23. **`to_json(table) -> str`** — 행마다 `{열이름: 값}` 인 JSON 배열 문자열.
+    결측은 `null` 이다.
+24. **`join(a, b, on)`** — `on` 열로 inner join. 결과 열은 `a` 의 전부 + `b` 의 `on` 아닌 것.
+    `on` 이 결측인 행은 안 붙는다. 열 이름이 겹치면 `NormError`.
 
 ## 라운드 4 에 준다
 
-날짜 타입과 결측 리포트를 더한다.
-
-- `YYYY-MM-DD` 꼴은 `datetime.date` 이고 그 열의 `type` 은 `"date"` 다.
-- 함수를 하나 더 낸다:
-
-```python
-def missing_report(table: dict) -> dict:
-    """열 이름 → 그 열의 결측 비율(0.0~1.0)."""
-```
+25. **날짜 타입.** `YYYY-MM-DD` 꼴은 `datetime.date` 이고 그 열의 `type` 은 `"date"` 다.
+26. **`missing_report(table) -> dict`** — 열 이름 → 결측 비율(0.0~1.0).
+27. **`pivot_count(table, row, col) -> dict`** — `{행값: {열값: 개수}}`.
+28. **만 행짜리 입력에서도 `normalize(render(t)) == t`** 가 선다.

@@ -1,12 +1,12 @@
 """★ O1 의 분모 — 「그 라운드까지 공개된 스펙」. **사전 등록물이다.**"""
 
 공개 = {
-    "A": {1: [f"A{i:02d}" for i in range(1, 11)],
-          2: [f"A{i:02d}" for i in range(1, 13)],
-          4: [f"A{i:02d}" for i in range(1, 15)]},
-    "B": {1: [f"B{i:02d}" for i in range(1, 11)],
-          2: [f"B{i:02d}" for i in range(1, 13)],
-          4: [f"B{i:02d}" for i in range(1, 15)]},
+    "A": {1: [f"A{i:02d}" for i in range(1, 21)],
+          2: [f"A{i:02d}" for i in range(1, 25)],
+          4: [f"A{i:02d}" for i in range(1, 29)]},
+    "B": {1: [f"B{i:02d}" for i in range(1, 21)],
+          2: [f"B{i:02d}" for i in range(1, 25)],
+          4: [f"B{i:02d}" for i in range(1, 29)]},
 }
 
 
