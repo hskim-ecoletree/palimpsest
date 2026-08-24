@@ -44,7 +44,10 @@ import sys, os, re, json, subprocess
 def 스키마():
     out = subprocess.run(
         [sys.executable, os.path.join(여기, "record.py"), "--schema"],
-        capture_output=True, text=True, check=True)
+        # ⚠ **`encoding` 을 못 박는다.** `text=True` 만 주면 Windows 가 로케일
+        #    인코딩(cp949·cp1252)으로 읽어 한글이 `UnicodeDecodeError` 를 낸다 —
+        #    macOS 에서는 **원리상 안 보이는 자리**다(ADR-0023 · CI 실측 2026-08-24).
+        capture_output=True, text=True, encoding="utf-8", check=True)
     return json.loads(out.stdout)["반환형식"]
 
 
@@ -61,6 +64,24 @@ def 열이름(칭, 별칭):
         if any(c == n or c.startswith(n) for n in 이름들):
             return 칸
     return None
+
+
+def 펜스밖(text):
+    """코드펜스 안을 빈 줄로 만든다.
+
+    ★ 반환문이 **마크다운 형식을 예시로 인용**하면 그 안의 항 표시와 표 머리가
+    발견으로 세어진다 — 항 수 계수기도 추출기도 펜스를 안 봤다. 그러면 **두 원장이
+    같이 부풀고** 초록으로 만드는 자연스러운 길이 「없는 레코드를 지어내기」가 된다
+    (독립 리뷰 R3 · 발견 6).
+    """
+    out, 안 = [], False
+    for l in text.split("\n"):
+        if l.lstrip().startswith("```"):
+            안 = not 안
+            out.append("")
+            continue
+        out.append("" if 안 else l)
+    return "\n".join(out)
 
 
 def 표들(text, 별칭):
@@ -187,7 +208,7 @@ def main(argv):
     출처, 라운드, 경로 = argv[1], int(argv[2]), argv[3]
     s = 스키마()
     별칭, 불릿, 없음 = s["열별칭"], s["사전부검불릿"], s["없음표시"]
-    text = open(경로, encoding="utf-8").read()
+    text = 펜스밖(open(경로, encoding="utf-8").read())
     항 = 독립리뷰(text, 별칭, 없음) if 출처 == "독립리뷰" else 사전부검(text, 별칭, 불릿, 없음)
     접두 = {"독립리뷰": "IR", "사전부검": "PM"}[출처]
     for i, d in enumerate(항, 1):
