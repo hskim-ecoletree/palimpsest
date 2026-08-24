@@ -4872,9 +4872,39 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     //
     //   ⚠ 그 회차의 종료 보고를 **지금 지어내지 않는다** — 그때 쓴 사람만 쓸 수 있다.
     //   그래서 선언 목록으로 **빚**을 세우고 판정문이 매 실행 수를 낸다.
+    // ★★ **접힘 — `folded.md` 가 기계 표시다.** (2026-08-24)
+    //
+    //   접힌 회차는 종료 보고를 안 쓴다(규약 §5 「접힘」). 그래서 `report.md` 만 보면
+    //   **접힌 회차가 영원히 「진행 중」**이 되고, 다음 회차를 여는 순간 이 검사가
+    //   거짓으로 빨개진다(실측 2026-08-24 · 격리 클론에서 재현).
+    //
+    //   ⚠ **산문을 안 읽는다** — 위 C7 주석이 적은 그대로다. `state.md` 의 표기는
+    //   회차마다 갈렸다. 그래서 **파일 하나의 존재**를 표시로 쓴다.
+    //
+    //   ★ **빈 파일로 비껴가지 못한다.** `## 왜 접었나` 가 없으면 표시로 안 쳐 주고
+    //   빨개진다 — 그것이 접힘과 「조용한 축소」를 가르는 유일한 것이다.
+    //   선행 하네스는 `abandoned` 를 열일곱 번 쓰고도 이유 필드가 없어 하나도 못 읽는다.
+    for 회차 in &회차들 {
+        let 접힘문서 = 뿌리.join(회차).join("folded.md");
+        if 접힘문서.is_file() {
+            let 본문 = std::fs::read_to_string(&접힘문서).unwrap_or_default();
+            if !본문.contains("## 왜 접었나") {
+                problems.push(format!(
+                    "`{회차}/folded.md` 에 **`## 왜 접었나` 가 없다** — 사유 없는 접힘은                      접힘이 아니라 **조용한 축소**다. 규약 §5 「접힘」이 그 절을 요구한다"
+                ));
+            }
+            if 뿌리.join(회차).join("report.md").is_file() {
+                problems.push(format!(
+                    "`{회차}` 에 `folded.md` 와 `report.md` 가 **둘 다** 있다 —                      접힘과 종료는 배타다. 하나가 거짓이다"
+                ));
+            }
+        }
+    }
+
     let 진행중: Vec<&String> = 회차들
         .iter()
         .filter(|r| !뿌리.join(r).join("report.md").is_file())
+        .filter(|r| !뿌리.join(r).join("folded.md").is_file())
         .filter(|r| {
             if 보고없음_유예.iter().any(|x| &x == r) {
                 보고없음_유예_발화 += 1;

@@ -76,6 +76,17 @@ pub const PAYLOAD: &[Resource] = &[
         path: ".claude/agents/pal-independent-reviewer.md",
         body: include_str!("../../../../.claude/agents/pal-independent-reviewer.md"),
     },
+    // 정반합 사전 검증 — 규약 §5 「범위 결정은 혼자 하지 않는다」가 이 둘을 부른다.
+    // ★ **둘을 함께 놓는다.** 반(反)만 놓으면 초안을 쓴 메인이 합(合)을 겸하게 되고,
+    // 그러면 자기 확신이 안 깨진다 — 2026-08-18 실증이 스스로 한계로 적은 자리다.
+    Resource {
+        path: ".claude/agents/pal-decision-opponent.md",
+        body: include_str!("../../../../.claude/agents/pal-decision-opponent.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-decision-synthesizer.md",
+        body: include_str!("../../../../.claude/agents/pal-decision-synthesizer.md"),
+    },
     // 계기판 — 규약 §5 「검증 → 수정 착수」 자리가 이것을 부른다.
     // ★ **스킬과 함께 놓아야 한다.** 규약만 놓고 이것을 안 놓으면 설치본의 그 자리가
     // **태어나면서 죽은 가지**가 된다(실측 2026-08-19 · 독립 리뷰 2 라운드가 잡았다).
@@ -151,6 +162,8 @@ pub const OWNED_FILES: &[&str] = &[
     // 회차 규약 — `PAYLOAD` 의 짝이다.
     ".claude/agents/pal-premortem-sweeper.md",
     ".claude/agents/pal-independent-reviewer.md",
+    ".claude/agents/pal-decision-opponent.md",
+    ".claude/agents/pal-decision-synthesizer.md",
     ".claude/skills/pal-round/SKILL.md",
     ".claude/skills/pal-round/bin/dashboard.py",
     ".claude/skills/pal-round/bin/record.py",
