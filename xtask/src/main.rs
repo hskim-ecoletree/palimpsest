@@ -32,6 +32,16 @@ const CORE_FORBIDDEN_DEPS: &[&str] = &["tree-sitter", "redb", "gix"];
 /// 의도를 지우는 경로. `pal-store` 소스에 나타나면 실패 — R-21.
 const INTENT_DELETE_MARKERS: &[&str] = &["pal_intent", "pal-intent", "intent.redb", "intent/"];
 
+/// 회차의 **기록이 확정됐나** — 종료(`report.md`)든 접힘(`folded.md`)이든.
+///
+/// ★ **둘을 같이 봐야 하는 자리와 갈라 봐야 하는 자리가 있다.** (2026-08-24)
+/// 「진행 중인가」를 묻는 자리는 **둘 다** 확정으로 봐야 한다 — 접힌 회차를 「진행 중」으로
+/// 두면 다음 사람이 그것을 이어받아야 할 일로 읽고 **접은 회차를 되살린다.**
+/// 「종료 보고를 썼나」를 묻는 자리는 `report.md` 만 본다.
+fn 기록이_확정됐나(회차_디렉터리: &std::path::Path) -> bool {
+    회차_디렉터리.join("report.md").is_file() || 회차_디렉터리.join("folded.md").is_file()
+}
+
 fn main() -> Result<()> {
     let root = 뿌리를_고른다()?;
     let 명령 = 명령을_고른다()?;
@@ -3821,7 +3831,7 @@ fn check_round_records(root: &Path) -> Result<String> {
                 if 반드시_절.is_empty() {
                     bail!("`--schema` 의 `반환형식.반드시있어야하는절.{출처}` 가 비었다");
                 }
-                if !dir.join("report.md").is_file() {
+                if !기록이_확정됐나(&dir) {
                     for 절 in 반드시_절.iter() {
                         if let Err(e) = 절이_섰나(&raw본문, 절, 없음표시) {
                             problems.push(format!("{}: {e}", 상대_경로(root, &f)));
@@ -3852,7 +3862,7 @@ fn check_round_records(root: &Path) -> Result<String> {
                 //    손으로 전사됐다 — 하한 없이 걸면 옛 기록을 대량으로 고쳐야 하고
                 //    그것은 「앞 회차의 판정을 다시 열지 마라」에 걸린다.
                 //    **진행 중인 회차(종료 보고가 없는 회차)만 실패로 낸다.**
-                let 진행중 = !dir.join("report.md").is_file();
+                let 진행중 = !기록이_확정됐나(&dir);
                 let 행들 = 쌍_행.get(&(회차.clone(), 출처.to_string(), n));
                 if let Some(행들) = 행들 {
                     let mut 갈림 = Vec::new();
@@ -4423,7 +4433,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
             continue;
         }
         let 회차 = 회차_이름(root, p);
-        let 끝났나 = root.join(회차_뿌리).join(&회차).join("report.md").is_file();
+        let 끝났나 = 기록이_확정됐나(&root.join(회차_뿌리).join(&회차));
         // ★ **버전이 낮으면 이 축이 원리상 없다** — 선언이 그 경계를 진다.
         let 버전 = serde_json::from_str::<serde_json::Value>(text.lines().next().unwrap_or(""))
             .ok()
@@ -4849,6 +4859,8 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     let mut 검산줄_유예_발화 = 0usize;
     let mut 보고없음_유예_발화 = 0usize;
     let mut 게이트없음: Vec<String> = Vec::new();
+    // 접힌 회차 — 게이트를 안 진다. **세어서 보고만 한다**(위 「접힌 회차는 게이트를 안 진다」).
+    let mut 접힘: Vec<String> = Vec::new();
     let mut 댄_조건 = 0usize;
     let mut 댄_미측정 = 0usize;
 
@@ -4928,10 +4940,23 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         let 열쇠 = format!("{회차_뿌리}/{회차}/intent.md");
         let 짝: Vec<&(String, String)> =
             게이트들.iter().filter(|(_, 본문)| 본문.contains(&열쇠)).collect();
-        let 끝났나 = 뿌리.join(회차).join("report.md").is_file();
+        // ★★ **접힌 회차는 게이트를 안 진다.** (2026-08-24)
+        //
+        //   이 자리가 요구하는 것은 *"끝난 회차의 판정 원장이 한 자리뿐이다"* 인데,
+        //   **접힌 회차는 판정을 안 했다** — 완수 조건이 「통과」가 아니라 **「안 쟀다」**로
+        //   남는다(규약 §5 「접힘」·§11). 그런 회차에 게이트 문서를 요구하면
+        //   **「안 쟀다」를 「판정했다」로 위장하게 만든다** — 기본 금지역
+        //   「사실이 아닌 것을 사실로」다. 그러므로 요구하지 않고 **세어서 보고만 한다.**
+        //
+        //   ⚠ 그래도 「끝났다」로는 봐야 한다. 안 그러면 접힌 회차가 「게이트 없음」에
+        //   영구히 뜨고, 다음 사람이 그것을 「게이트를 써야 하는데 안 썼다」로 읽어
+        //   **접은 회차를 되살린다.**
+        let 접혔나 = 뿌리.join(회차).join("folded.md").is_file();
+        let 종료보고를_썼나 = 뿌리.join(회차).join("report.md").is_file();
+        let 끝났나 = 종료보고를_썼나;
 
         // ── G1 · G2 — **종료 보고를 검사 모집단에** ──────────────────────────
-        if 끝났나 {
+        if 종료보고를_썼나 {
             let rp = format!("{회차_뿌리}/{회차}/report.md");
             let body = std::fs::read_to_string(뿌리.join(회차).join("report.md"))?;
             종료보고_검사 += 1;
@@ -4989,6 +5014,10 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
                 짝.len(),
                 짝.iter().map(|(p, _)| p.as_str()).collect::<Vec<_>>().join(" · ")
             ));
+            continue;
+        }
+        if 접혔나 {
+            접힘.push(회차.clone());
             continue;
         }
         let Some((게이트, _)) = 짝.first().copied() else {
@@ -5202,11 +5231,12 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     }
     Ok(format!(
         "회차 {} · 검사 안 {} (조건 {댄_조건} · 그중 미측정 {댄_미측정}) · \
-         형식 이전 {} · 게이트 없음 {} · 종료 보고 {종료보고_검사}개 검사 \
+         형식 이전 {} · 게이트 없음 {} · **접힘 {}** · 종료 보고 {종료보고_검사}개 검사 \
          (검산 줄 유예 발화 {검산줄_유예_발화} · 보고 없음 유예 발화 {보고없음_유예_발화}) · {하한}",
         회차들.len(),
         if 검사안.is_empty() { "없음".to_string() } else { 검사안.join(" · ") },
         if 형식이전.is_empty() { "0".to_string() } else { 형식이전.join(" · ") },
         if 게이트없음.is_empty() { "0".to_string() } else { 게이트없음.join(" · ") },
+        if 접힘.is_empty() { "0".to_string() } else { 접힘.join(" · ") },
     ))
 }
