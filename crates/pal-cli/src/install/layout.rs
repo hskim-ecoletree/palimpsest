@@ -76,7 +76,7 @@ pub const PAYLOAD: &[Resource] = &[
         path: ".claude/agents/pal-independent-reviewer.md",
         body: include_str!("../../../../.claude/agents/pal-independent-reviewer.md"),
     },
-    // 정반합 사전 검증 — 규약 §5 「범위 결정은 혼자 하지 않는다」가 이 둘을 부른다.
+    // 정반합 사전 검증 — 규약 §5 「완수 조건 검증은 정반합으로 한다」가 이 둘을 부른다.
     // ★ **둘을 함께 놓는다.** 반(反)만 놓으면 초안을 쓴 메인이 합(合)을 겸하게 되고,
     // 그러면 자기 확신이 안 깨진다 — 2026-08-18 실증이 스스로 한계로 적은 자리다.
     Resource {
