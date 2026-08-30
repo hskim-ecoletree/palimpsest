@@ -18,15 +18,16 @@ Rust 조건 정본·CLI·Python 호환 표면이 같은 fixture를 소비해야 
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A2 A3 A4 A5 A6 A7 A8 A10 |
+| 통과 | A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 |
 | 반증 | — |
 | 대조불가 | — |
-| 미측정 | A9 |
+| 미측정 | — |
 
-**검산** — 통과 9 · 반증 0 · 대조불가 0 · 미측정 1 = 10
+**검산** — 통과 10 · 반증 0 · 대조불가 0 · 미측정 0 = 10
 
-A9는 로컬 시험으로 닫지 않는다. 동일 checked-in fixture를 실행하는 마지막 SHA의
-ubuntu·macOS·Windows CI가 모두 성공할 때만 통과로 옮긴다.
+A9는 로컬 시험으로 닫지 않았다. 동일 checked-in fixture를 실행한 commit `a7214e6`의
+[CI run 33317281903](https://github.com/hskim-ecoletree/palimpsest/actions/runs/33317281903)에서
+ubuntu·macOS·Windows의 `cargo xtask check`와 `cargo xtask test`가 모두 성공한 뒤 통과로 옮겼다.
 
 ### 근거
 

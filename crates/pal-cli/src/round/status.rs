@@ -15,8 +15,6 @@ pub enum VerificationState {
     Unregistered,
     InProgress,
     Met,
-    #[allow(dead_code)]
-    Invalid,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
@@ -273,7 +271,6 @@ fn verification_name(state: VerificationState) -> &'static str {
         VerificationState::Unregistered => "unregistered",
         VerificationState::InProgress => "in_progress",
         VerificationState::Met => "met",
-        VerificationState::Invalid => "invalid",
     }
 }
 

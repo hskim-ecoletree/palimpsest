@@ -77,6 +77,20 @@ ubuntu·macOS·Windows CI와 독립 리뷰 R2, ADR·게이트·종료 보고를 
   `red-observation.md`에 보존했다.
 - 리뷰가 기각한 Invalid enum, stale 회복, golden 독립성, 공용 view 관련 의심은 구현 변경
   없이 근거를 보존했다. R2는 정정된 산출과 마지막 CI 증거만 새로 본다.
+- commit `a7214e6`의 CI run 33317281903에서 ubuntu·macOS·Windows와 양방향 상호운용
+  job이 전부 성공했다. R1-02를 이 외부 terminal observation으로 닫고 A9를 통과로 옮겼다.
+
+## 독립 리뷰 R2
+
+- R2는 R1·state·사전부검·계획을 보지 않고 잠긴 intent, 구현·시험·fixture, RED, gate,
+  ADR, commit `a7214e6`의 check-runs만 보았다.
+- R2-01은 A4 축약 문장이 첫 oracle `pending`과 재등록 뒤 `stale`을 가르지 않은 갈림이다.
+  계획 §2.2·§3.1과 구현 시험의 기존 계약대로 둘을 명시해 문면을 정정했다.
+- R2-02는 오류 `outcome=invalid`와 성공 JSON의 `verification` 필드를 한 enum처럼 적은
+  갈림이다. 잠긴 오류 JSON을 바꾸지 않고 성공 verification을 세 값으로 명시했으며 코드의
+  도달 불가능한 `VerificationState::Invalid`를 제거했다.
+- R2-03은 세 OS 성공 뒤 intent·gate 갱신 시차다. A9와 검산을 10/10 통과로 갱신했다.
+- 등록 상한 2라운드에 도달했다. R2의 참 발견 셋은 모두 정정했고 미측정은 0이다.
 
 ## 효과
 

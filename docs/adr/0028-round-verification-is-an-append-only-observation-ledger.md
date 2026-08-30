@@ -26,12 +26,14 @@
   target을 만들지 않고 `xtask`는 `pal-intent`에 직접 의존한다.
 - 원장은 조건 문장을 복제하지 않는다. oracle의 command·literal·cwd를 닫힌 바이트
   직렬화로 digest하고 evidence는 그 digest를 가리킨다. 시간과 HEAD는 상태 입력이 아니다.
-- oracle과 evidence는 덮어쓰지 않고 append한다. 마지막 oracle 뒤의 마지막 evidence만
-  현재 관측이며 새 oracle은 같은 digest라도 새 evidence 전까지 `stale`이다.
+- oracle과 evidence는 덮어쓰지 않고 append한다. 첫 oracle에 evidence 이력이 없으면
+  `pending`이고, evidence 뒤 oracle을 재등록하면 같은 digest라도 새 evidence 전까지
+  `stale`이다. 마지막 oracle 뒤의 마지막 evidence만 현재 관측이다.
 - `pal round status`는 파일을 읽어 하나의 `StatusView`를 만들고 JSON과 사람 출력이 이를
   함께 소비한다. 명령을 실행하거나 원장을 쓰지 않는다.
-- verification aggregate는 `unregistered|in_progress|met|invalid`다. 이는 전체 `/round`
-  완료가 아니다. report/folded는 별도 terminal observation이다.
+- 성공 status의 verification aggregate는 `unregistered|in_progress|met`다. schema·전이·
+  해소·I/O 실패의 `invalid`는 verification 값이 아니라 별도 오류 outcome이다. 어느 쪽도
+  전체 `/round` 완료가 아니다. report/folded는 별도 terminal observation이다.
 - CI는 원장 condition으로 넣지 않는다. 마지막 SHA의 세 플랫폼 결과를 외부 terminal
   observation으로 확인해 자기 참조를 피한다.
 

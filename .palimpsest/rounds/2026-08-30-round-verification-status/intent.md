@@ -39,7 +39,7 @@
 - [x] A6 current round 자동 해소는 후보 0개를 정상 통과, 후보 2개 이상을 오류로 내며 verification 원장 없는 과거 회차를 후보로 삼지 않는다  · 통과
 - [x] A7 Rust 조건 파서는 전환 전에 보존한 Python golden의 코드펜스·들여쓰기·중복 ID·태그 순서 결과와 같다  · 통과
 - [x] A8 JSON과 사람 출력은 같은 reducer 결과에서 렌더링된다  · 통과
-- [ ] A9 ubuntu·macOS·Windows가 같은 fixture에 같은 상태 enum을 낸다
+- [x] A9 ubuntu·macOS·Windows가 같은 fixture에 같은 상태 enum을 낸다  · 통과
 - [x] A10 `xtask → pal-cli` 의존과 `pal-cli` library target 없이 조건 문법은 `pal-intent`, verification 원장과 상태 기계는 `pal-cli`가 소유한다  · 통과
 
 **RED 관측**: `pal round` 명령과 Rust 조건 파서·verification reducer가 아직 없으므로 §5.1의
@@ -66,13 +66,15 @@ black-box 시험이 구현 전에 실패해야 한다.
   `[mode, check, "literal", expect.literal, cwd]`를 붙인다. 각 값은 UTF-8 바이트 앞에
   u64 little-endian 길이를 붙인다. `command` / `cargo test -q` / `ROUND_OK` / `.`의
   digest는 `4cf3cb926ab8249a040632d0c1e694509ab40eee2eacc8da15d1353392b026dd`다.
-- oracle과 evidence는 append-only이며 마지막 oracle이 현재다. 최신 oracle 뒤에 그
-  digest의 evidence가 없거나, 최신 evidence digest가 다르면 `stale`이다. oracle 없는
+- oracle과 evidence는 append-only이며 마지막 oracle이 현재다. evidence 이력이 전혀 없는
+  첫 oracle 뒤 무증거는 `pending`이다. evidence 뒤 oracle을 재등록하면 같은 digest여도 새
+  evidence 전까지 `stale`이고, 최신 evidence digest가 다를 때도 `stale`이다. oracle 없는
   evidence는 `invalid_transition`, 알 수 없는 필드·kind·mode·type과 중복 schema는
   `invalid_schema`다.
-- 조건 상태는 `unregistered|pending|stale|met|unmet`, aggregate는
-  `unregistered|in_progress|met|invalid`, terminal은 `open|reported|folded`다.
-  오류 code는 `invalid_schema|invalid_transition|resolve_error|io_error`로 닫는다.
+- 조건 상태는 `unregistered|pending|stale|met|unmet`이고, 성공 JSON의 `verification`은
+  `unregistered|in_progress|met`, terminal은 `open|reported|folded`다. `invalid`는
+  `verification` 값이 아니라 별도 오류 `outcome`이며 code는
+  `invalid_schema|invalid_transition|resolve_error|io_error`로 닫는다.
 - 성공과 `no_active_round`는 exit 0, 조건 parser 형식 오류는 exit 1, status의 schema·전이·
   해소·I/O 오류는 exit 2다. JSON과 사람 출력은 같은 `StatusView`에서 렌더링한다.
 
