@@ -383,7 +383,9 @@ impl GitAccess for GixRepo {
     }
 
     fn worktree_digest_excluding(&self, excluded: &[RepoPath]) -> Result<Digest, GitError> {
-        let (mut list, _, _) = self.scan_worktree()?;
+        // 승인·evidence currentness는 보안 경계다. Git의 racy stat cache를 믿으면 같은
+        // 크기와 mtime을 복원한 내용 변조를 놓치므로 이 경로는 tracked blob을 전부 읽는다.
+        let (mut list, _, _) = self.scan_worktree_with_stat(false)?;
         list.retain(|(path, _)| !excluded.contains(path));
         Ok(digest_of(&list))
     }
@@ -595,6 +597,10 @@ impl GixRepo {
     ///
     /// 돌려주는 셋째·넷째는 회계다: 인덱스 stat 을 믿은 수와 다시 해시한 수.
     fn scan_worktree(&self) -> Result<WorktreeScan, GitError> {
+        self.scan_worktree_with_stat(true)
+    }
+
+    fn scan_worktree_with_stat(&self, trust_stat: bool) -> Result<WorktreeScan, GitError> {
         let workdir = self.workdir()?.to_owned();
         let index = self
             .inner
@@ -616,7 +622,7 @@ impl GixRepo {
             // **파일이 없으면 목록에서 빠진다.** 삭제는 요약을 바꿔야 하는 변이 셋째다.
             let Ok(meta) = std::fs::symlink_metadata(&absolute) else { continue };
 
-            if stat_is_unchanged(entry.stat, &meta) {
+            if trust_stat && stat_is_unchanged(entry.stat, &meta) {
                 trusted += 1;
                 list.push((path, to_name(entry.id)));
                 continue;
@@ -712,5 +718,4 @@ impl GixRepo {
             .map_err(|e| GitError::Resolve(e.to_string()))
     }
 }
-
 

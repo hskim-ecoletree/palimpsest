@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Child, Command, ExitStatus, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
+use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use pal_core::RepoPath;
@@ -130,6 +131,9 @@ pub fn verify(config: &Config<'_>) -> Result<VerifyView, VerifyError> {
         config.output_limit,
     )?;
 
+    // 같은 pal writer의 post-check와 append를 한 임계구역으로 묶는다. lock을 무시하는 외부
+    // 편집은 아래의 반복 currentness 검사와 atomic replace에서 fail-closed한다.
+    let append_guard = AppendGuard::acquire(&ledger_path)?;
     let (_, ledger_after, oracle_after) = load(config)?;
     let projected_after = projected_digest(config.repo, config.slug)?;
     let binding_after = approval::binding(
@@ -168,7 +172,7 @@ pub fn verify(config: &Config<'_>) -> Result<VerifyView, VerifyError> {
         "output_bytes": execution.output_bytes,
         "projected_digest": projected_before,
     });
-    append_line(&ledger_path, &event.to_string())?;
+    append_line(&append_guard, &event.to_string())?;
     Ok(VerifyView {
         outcome: "verified",
         round: config.slug.to_owned(),
@@ -275,43 +279,60 @@ fn execute(
     let stderr = Arc::new(Mutex::new(Vec::new()));
     let bytes = Arc::new(AtomicUsize::new(0));
     let overflow = Arc::new(AtomicBool::new(false));
-    drain(
+    let stdout_done = Arc::new(AtomicBool::new(false));
+    let stderr_done = Arc::new(AtomicBool::new(false));
+    let stdout_thread = drain(
         child.stdout.take().expect("piped stdout"),
         Arc::clone(&stdout),
         Arc::clone(&bytes),
         Arc::clone(&overflow),
+        Arc::clone(&stdout_done),
         output_limit,
     );
-    drain(
+    let stderr_thread = drain(
         child.stderr.take().expect("piped stderr"),
         Arc::clone(&stderr),
         Arc::clone(&bytes),
         Arc::clone(&overflow),
+        Arc::clone(&stderr_done),
         output_limit,
     );
 
     let deadline = Instant::now() + Duration::from_secs(timeout_secs);
     let mut fault = None;
-    let status = loop {
-        if let Some(status) = child
-            .try_wait()
-            .map_err(|error| VerifyError::Io(format!("oracle wait: {error}")))?
-        {
-            break Some(status);
+    let mut status = None;
+    loop {
+        if status.is_none() {
+            status = child
+                .try_wait()
+                .map_err(|error| VerifyError::Io(format!("oracle wait: {error}")))?;
         }
+        let drains_done = stdout_done.load(Ordering::SeqCst) && stderr_done.load(Ordering::SeqCst);
         if overflow.load(Ordering::SeqCst) {
             fault = Some("output_limit");
-            terminate_tree(&mut child)?;
-            break bounded_wait(&mut child);
+            if status.is_none() || !drains_done {
+                terminate_tree(&mut child)?;
+            }
+            if status.is_none() {
+                status = bounded_wait(&mut child);
+            }
+            break;
         }
         if Instant::now() >= deadline {
             fault = Some("timeout");
             terminate_tree(&mut child)?;
-            break bounded_wait(&mut child);
+            if status.is_none() {
+                status = bounded_wait(&mut child);
+            }
+            break;
+        }
+        if status.is_some() && drains_done {
+            break;
         }
         std::thread::sleep(Duration::from_millis(10));
-    };
-    std::thread::sleep(Duration::from_millis(20));
+    }
+    join_drain(stdout_thread, "stdout")?;
+    join_drain(stderr_thread, "stderr")?;
     let stdout = stdout.lock().expect("stdout buffer").clone();
     let stderr = stderr.lock().expect("stderr buffer").clone();
     let mut output = stdout;
@@ -336,8 +357,9 @@ fn drain<R: Read + Send + 'static>(
     buffer: Arc<Mutex<Vec<u8>>>,
     bytes: Arc<AtomicUsize>,
     overflow: Arc<AtomicBool>,
+    done: Arc<AtomicBool>,
     limit: usize,
-) {
+) -> JoinHandle<()> {
     std::thread::spawn(move || {
         let mut chunk = [0_u8; 8192];
         loop {
@@ -359,7 +381,14 @@ fn drain<R: Read + Send + 'static>(
                 overflow.store(true, Ordering::SeqCst);
             }
         }
-    });
+        done.store(true, Ordering::SeqCst);
+    })
+}
+
+fn join_drain(handle: JoinHandle<()>, stream: &str) -> Result<(), VerifyError> {
+    handle
+        .join()
+        .map_err(|_| VerifyError::Io(format!("{stream} drain thread가 panic했다")))
 }
 
 fn bounded_wait(child: &mut Child) -> Option<ExitStatus> {
@@ -376,87 +405,113 @@ fn bounded_wait(child: &mut Child) -> Option<ExitStatus> {
 
 #[cfg(unix)]
 fn terminate_tree(child: &mut Child) -> Result<(), VerifyError> {
-    if child
-        .try_wait()
-        .map_err(|error| VerifyError::Io(error.to_string()))?
-        .is_some()
-    {
-        return Ok(());
-    }
     let pid = rustix::process::Pid::from_raw(child.id() as i32)
         .ok_or_else(|| VerifyError::Io("child PID가 유효하지 않다".to_owned()))?;
-    rustix::process::kill_process_group(pid, rustix::process::Signal::KILL)
-        .map_err(|error| VerifyError::Io(format!("process-group cleanup: {error}")))
+    match rustix::process::kill_process_group(pid, rustix::process::Signal::KILL) {
+        Ok(()) | Err(rustix::io::Errno::SRCH) => Ok(()),
+        Err(error) => Err(VerifyError::Io(format!("process-group cleanup: {error}"))),
+    }
 }
 
 #[cfg(windows)]
 fn terminate_tree(child: &mut Child) -> Result<(), VerifyError> {
-    if child
-        .try_wait()
-        .map_err(|error| VerifyError::Io(error.to_string()))?
-        .is_some()
-    {
-        return Ok(());
-    }
-    let root = approval::trusted_windows_root()?;
-    let taskkill = root.join("System32").join("taskkill.exe");
+    let taskkill = approval::cleanup_program()?;
     let pid = child.id().to_string();
-    let result = Command::new(taskkill)
+    let mut killer = Command::new(taskkill)
         .args(["/pid", pid.as_str(), "/f", "/t"])
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .status()
+        .spawn()
         .map_err(|error| VerifyError::Io(format!("taskkill: {error}")))?;
-    if !result.success() {
+    let deadline = Instant::now() + Duration::from_secs(5);
+    let result = loop {
+        if let Some(status) = killer
+            .try_wait()
+            .map_err(|error| VerifyError::Io(format!("taskkill wait: {error}")))?
+        {
+            break Some(status);
+        }
+        if Instant::now() >= deadline {
+            let _ = killer.kill();
+            break killer.wait().ok();
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    };
+    if !result.is_some_and(|status| status.success()) {
         let _ = child.kill();
         return Err(VerifyError::Io(
-            "taskkill이 process tree를 종료하지 못했다".to_owned(),
+            "taskkill이 5초 안에 process tree를 종료하지 못했다".to_owned(),
         ));
     }
     Ok(())
 }
 
-fn append_line(path: &Path, line: &str) -> Result<(), VerifyError> {
-    let lock = path.with_file_name("verification.log.append.lock");
-    let lock_file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&lock)
-        .map_err(|error| VerifyError::Io(format!("append lock: {error}")))?;
-    let guard = LockGuard {
-        path: lock,
-        _file: lock_file,
-    };
+fn append_line(guard: &AppendGuard, line: &str) -> Result<(), VerifyError> {
+    let path = &guard.ledger;
     let metadata = std::fs::symlink_metadata(path)
         .map_err(|error| VerifyError::Io(format!("ledger metadata: {error}")))?;
     if !metadata.is_file() || metadata.file_type().is_symlink() {
         return Err(VerifyError::Io("ledger가 regular file이 아니다".to_owned()));
     }
-    let mut file = std::fs::OpenOptions::new()
-        .append(true)
-        .open(path)
-        .map_err(|error| VerifyError::Io(format!("ledger append: {error}")))?;
-    let mut bytes = line.as_bytes().to_vec();
-    bytes.push(b'\n');
-    let written = std::io::Write::write(&mut file, &bytes)
-        .map_err(|error| VerifyError::Io(format!("evidence append: {error}")))?;
-    if written != bytes.len() {
-        return Err(VerifyError::Io("evidence line이 부분 기록됐다".to_owned()));
+    let current = std::fs::read(path)
+        .map_err(|error| VerifyError::Io(format!("ledger read before replace: {error}")))?;
+    if !current.ends_with(b"\n") {
+        return Err(VerifyError::Io(
+            "ledger가 완전한 줄바꿈으로 끝나지 않는다".to_owned(),
+        ));
     }
-    file.sync_data()
+    let parent = path
+        .parent()
+        .ok_or_else(|| VerifyError::Io("ledger parent가 없다".to_owned()))?;
+    let mut temporary = tempfile::NamedTempFile::new_in(parent)
+        .map_err(|error| VerifyError::Io(format!("evidence temp: {error}")))?;
+    std::io::Write::write_all(&mut temporary, &current)
+        .and_then(|()| std::io::Write::write_all(&mut temporary, line.as_bytes()))
+        .and_then(|()| std::io::Write::write_all(&mut temporary, b"\n"))
+        .map_err(|error| VerifyError::Io(format!("complete evidence ledger: {error}")))?;
+    temporary
+        .as_file()
+        .set_permissions(metadata.permissions())
+        .and_then(|()| temporary.as_file().sync_all())
+        .map_err(|error| VerifyError::Io(format!("evidence temp sync: {error}")))?;
+    let persisted = temporary
+        .persist(path)
+        .map_err(|error| VerifyError::Io(format!("evidence atomic replace: {}", error.error)))?;
+    persisted
+        .sync_all()
         .map_err(|error| VerifyError::Io(format!("evidence sync: {error}")))?;
-    drop(guard);
+    #[cfg(unix)]
+    std::fs::File::open(parent)
+        .and_then(|directory| directory.sync_all())
+        .map_err(|error| VerifyError::Io(format!("evidence directory sync: {error}")))?;
     Ok(())
 }
 
-struct LockGuard {
-    path: PathBuf,
+struct AppendGuard {
+    ledger: PathBuf,
+    lock: PathBuf,
     _file: std::fs::File,
 }
 
-impl Drop for LockGuard {
+impl AppendGuard {
+    fn acquire(path: &Path) -> Result<Self, VerifyError> {
+        let lock = path.with_file_name("verification.log.append.lock");
+        let lock_file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&lock)
+            .map_err(|error| VerifyError::Io(format!("append lock: {error}")))?;
+        Ok(Self {
+            ledger: path.to_path_buf(),
+            lock,
+            _file: lock_file,
+        })
+    }
+}
+
+impl Drop for AppendGuard {
     fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.path);
+        let _ = std::fs::remove_file(&self.lock);
     }
 }

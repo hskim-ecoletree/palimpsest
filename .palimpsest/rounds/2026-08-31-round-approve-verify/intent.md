@@ -49,8 +49,9 @@ Windows process tree, 미실행 negative-control false pass다. 각 검사에는
 
 - 저장소: `PAL_APPROVAL_DIR` 명시값 또는 OS별 사용자 data directory 아래 `palimpsest/approvals`.
   canonical target은 repository 밖이어야 하며 shared artifact에는 위치·비밀을 싣지 않는다.
-- 실행: schema oracle의 command는 OS 기본 shell 하나로만 실행한다. 선택된 shell과 전체 PATH,
-  repo identity, 상대 CWD, timeout/output budget을 external approval identity에 결박한다.
+- 실행: schema oracle의 command는 OS 기본 shell 하나로만 실행한다. `--shell`은 그 canonical
+  기본값을 다시 적을 때만 허용하고 대체 shell은 승인 자체를 거부한다. shell bytes와 전체
+  PATH, repo identity, 상대 CWD, timeout/output budget을 external approval identity에 결박한다.
 - 예산: 기본 120초, combined stdout+stderr 1 MiB. CLI override는 승인 identity를 바꾸므로 재승인한다.
 - 종료: Unix는 새 process group, Windows는 일치하는 `SystemRoot`·`WINDIR`·`SystemDrive`가
   가리키는 `System32/taskkill.exe /t /f`; 못 믿으면 held child handle fallback이며 cleanup 실패는 evidence 성공이 아니다.
@@ -75,7 +76,9 @@ Windows process tree, 미실행 negative-control false pass다. 각 검사에는
 
 ## 개정
 
-- 없음.
+- 독립 리뷰 R1 뒤 shell 허용 경계를 “승인하면 임의 absolute shell 허용”에서 “platform
+  default 하나만 허용”으로 강화했다. 사용자 쓰기 가능한 executable의 hash→spawn TOCTOU를
+  없애기 위한 것이며 A1·A2를 완화하거나 실행 표면을 넓히지 않는다.
 
 ## 승격
 

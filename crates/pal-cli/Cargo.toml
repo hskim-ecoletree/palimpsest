@@ -26,12 +26,14 @@ anyhow.workspace = true
 thiserror.workspace = true
 rayon.workspace = true
 blake3.workspace = true
+tempfile.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 rustix.workspace = true
 
 [dev-dependencies]
 pal-intent.workspace = true
+filetime.workspace = true
 
 [lints]
 workspace = true

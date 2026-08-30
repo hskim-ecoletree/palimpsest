@@ -29,11 +29,13 @@ positive 성공만으로 주 조건을 `met`으로 닫을 수 없다. schema 1�
 
 ### 현재 근거
 
-- A1~A6, A8~A10: `round_approve_verify` black-box 18개가 승인 identity drift, malformed record,
+- A1~A6, A8~A10: `round_approve_verify` black-box 21개가 승인 identity drift, malformed record,
   timeout/output cap, process tree, 중간 oracle/projection 변경, append lock·partial line, stale·rerun,
-  EXPECT 극성, 미실행 음성 대조를 직접 공격한다.
-- A4: `pal-git::GitAccess::worktree_digest_excluding`가 기존 tracked projection 정본에서 현재
-  ledger 하나만 제외한다. evidence는 projected digest를 지니고 reducer가 현재 값과 대조한다.
+  EXPECT 극성, 미실행 음성 대조, racy stat, control-role replay, 부모 선종료 descendant를 직접
+  공격한다.
+- A4: `pal-git::GitAccess::worktree_digest_excluding`가 stat cache 없이 tracked bytes를 다시
+  읽고 현재 ledger 하나만 제외한다. evidence는 projected digest를 지니고 reducer가 현재 값과
+  대조한다.
 - A7·A11: `round_status`의 schema 1 golden과 Python/dashboard 호환은 바뀌지 않았고 schema 2
   version test가 schema 1 read compatibility와 version별 unknown 거부를 잰다. hook/install 회귀와
   의존 방향 검사가 기존 경계를 지킨다.

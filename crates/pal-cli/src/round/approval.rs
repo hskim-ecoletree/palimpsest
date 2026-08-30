@@ -72,9 +72,8 @@ pub fn binding(
     let shell_bytes = std::fs::read(&shell)
         .map_err(|error| ApprovalError::Identity(format!("shell을 읽지 못했다: {error}")))?;
     let shell_digest = blake3::hash(&shell_bytes).to_hex();
-    let mut hasher = blake3::Hasher::new();
-    hasher.update(DOMAIN);
-    for value in [
+    #[allow(unused_mut)]
+    let mut values = vec![
         root.to_string(),
         slug.to_owned(),
         id.to_owned(),
@@ -87,7 +86,19 @@ pub fn binding(
         timeout_secs.to_string(),
         output_limit.to_string(),
         projected_digest.to_owned(),
-    ] {
+    ];
+    #[cfg(windows)]
+    {
+        let helper = cleanup_program()?;
+        let bytes = std::fs::read(&helper).map_err(|error| {
+            ApprovalError::Identity(format!("cleanup helper를 읽지 못했다: {error}"))
+        })?;
+        values.push(helper.to_string_lossy().to_string());
+        values.push(blake3::hash(&bytes).to_hex().to_string());
+    }
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(DOMAIN);
+    for value in values {
         let bytes = value.as_bytes();
         hasher.update(&(bytes.len() as u64).to_le_bytes());
         hasher.update(bytes);
@@ -100,10 +111,14 @@ pub fn binding(
 }
 
 pub fn store_dir(repo: &Path, requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {
-    let path = requested
+    let path = if let Some(path) = requested
         .map(Path::to_path_buf)
         .or_else(|| std::env::var_os("PAL_APPROVAL_DIR").map(PathBuf::from))
-        .unwrap_or_else(default_store);
+    {
+        path
+    } else {
+        default_store()?
+    };
     std::fs::create_dir_all(&path)
         .map_err(|error| ApprovalError::Store(format!("{}: {error}", path.display())))?;
     private_directory(&path)?;
@@ -202,7 +217,7 @@ fn private_directory(path: &Path) -> Result<(), ApprovalError> {
     Ok(())
 }
 
-#[cfg(not(unix))]
+#[cfg(windows)]
 fn private_directory(path: &Path) -> Result<(), ApprovalError> {
     let metadata =
         std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
@@ -211,7 +226,7 @@ fn private_directory(path: &Path) -> Result<(), ApprovalError> {
             "approval directory가 symlink다".to_owned(),
         ));
     }
-    Ok(())
+    secure_windows_acl(path, true)
 }
 
 #[cfg(unix)]
@@ -231,7 +246,7 @@ fn private_file(path: &Path) -> Result<(), ApprovalError> {
     Ok(())
 }
 
-#[cfg(not(unix))]
+#[cfg(windows)]
 fn private_file(path: &Path) -> Result<(), ApprovalError> {
     let metadata =
         std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
@@ -240,21 +255,88 @@ fn private_file(path: &Path) -> Result<(), ApprovalError> {
             "approval record가 regular file이 아니다".to_owned(),
         ));
     }
+    secure_windows_acl(path, false)
+}
+
+#[cfg(windows)]
+fn secure_windows_acl(path: &Path, directory: bool) -> Result<(), ApprovalError> {
+    let system32 = trusted_windows_root()?.join("System32");
+    let whoami = system32.join("whoami.exe");
+    let output = std::process::Command::new(whoami)
+        .args(["/user", "/fo", "csv", "/nh"])
+        .output()
+        .map_err(|error| ApprovalError::Store(format!("whoami: {error}")))?;
+    if !output.status.success() || output.stdout.len() > 4096 {
+        return Err(ApprovalError::Store(
+            "현재 Windows SID를 bounded하게 얻지 못했다".to_owned(),
+        ));
+    }
+    let start = output
+        .stdout
+        .windows(4)
+        .position(|window| window == b"S-1-")
+        .ok_or_else(|| ApprovalError::Store("현재 Windows SID가 없다".to_owned()))?;
+    let tail = &output.stdout[start..];
+    let end = tail
+        .iter()
+        .position(|byte| !byte.is_ascii_digit() && *byte != b'-')
+        .unwrap_or(tail.len());
+    let sid = std::str::from_utf8(&tail[..end])
+        .map_err(|error| ApprovalError::Store(format!("Windows SID ASCII: {error}")))?;
+    let icacls = system32.join("icacls.exe");
+    let reset = std::process::Command::new(&icacls)
+        .arg(path)
+        .arg("/reset")
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map_err(|error| ApprovalError::Store(format!("icacls reset: {error}")))?;
+    if !reset.success() {
+        return Err(ApprovalError::Store(
+            "approval ACL reset이 실패했다".to_owned(),
+        ));
+    }
+    let permission = if directory {
+        format!("*{sid}:(OI)(CI)F")
+    } else {
+        format!("*{sid}:F")
+    };
+    let secured = std::process::Command::new(icacls)
+        .arg(path)
+        .arg("/inheritance:r")
+        .arg("/grant:r")
+        .arg(permission)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map_err(|error| ApprovalError::Store(format!("icacls private ACL: {error}")))?;
+    if !secured.success() {
+        return Err(ApprovalError::Store(
+            "approval ACL을 현재 사용자 전용으로 만들지 못했다".to_owned(),
+        ));
+    }
     Ok(())
 }
 
 fn resolve_shell(requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {
-    let path = match requested {
-        Some(path) => path.to_path_buf(),
-        None => default_shell()?,
-    };
+    let default = default_shell()?
+        .canonicalize()
+        .map_err(|error| ApprovalError::Identity(format!("platform default shell: {error}")))?;
+    let path = requested.map_or_else(|| default.clone(), Path::to_path_buf);
     if !path.is_absolute() {
         return Err(ApprovalError::Identity(
             "shell은 PATH 검색 없는 absolute path여야 한다".to_owned(),
         ));
     }
-    path.canonicalize()
-        .map_err(|error| ApprovalError::Identity(format!("shell: {error}")))
+    let canonical = path
+        .canonicalize()
+        .map_err(|error| ApprovalError::Identity(format!("shell: {error}")))?;
+    if canonical != default {
+        return Err(ApprovalError::Identity(
+            "승인 가능한 shell은 platform default 하나뿐이다".to_owned(),
+        ));
+    }
+    Ok(canonical)
 }
 
 #[cfg(unix)]
@@ -293,30 +375,44 @@ pub fn trusted_windows_root() -> Result<PathBuf, ApprovalError> {
     Ok(root)
 }
 
-fn default_store() -> PathBuf {
+#[cfg(windows)]
+pub fn cleanup_program() -> Result<PathBuf, ApprovalError> {
+    trusted_windows_root()?
+        .join("System32")
+        .join("taskkill.exe")
+        .canonicalize()
+        .map_err(|error| ApprovalError::Identity(format!("taskkill: {error}")))
+}
+
+fn default_store() -> Result<PathBuf, ApprovalError> {
     #[cfg(windows)]
     {
         return std::env::var_os("LOCALAPPDATA")
             .map(PathBuf::from)
-            .unwrap_or_else(std::env::temp_dir)
-            .join("palimpsest")
-            .join("approvals");
+            .map(|path| path.join("palimpsest").join("approvals"))
+            .ok_or_else(|| {
+                ApprovalError::Store("LOCALAPPDATA가 없어 private store를 정할 수 없다".to_owned())
+            });
     }
     #[cfg(target_os = "macos")]
     {
         return std::env::var_os("HOME")
             .map(PathBuf::from)
-            .unwrap_or_else(std::env::temp_dir)
-            .join("Library/Application Support/palimpsest/approvals");
+            .map(|path| path.join("Library/Application Support/palimpsest/approvals"))
+            .ok_or_else(|| {
+                ApprovalError::Store("HOME이 없어 private store를 정할 수 없다".to_owned())
+            });
     }
     #[cfg(all(unix, not(target_os = "macos")))]
     {
         if let Some(path) = std::env::var_os("XDG_DATA_HOME") {
-            return PathBuf::from(path).join("palimpsest/approvals");
+            return Ok(PathBuf::from(path).join("palimpsest/approvals"));
         }
         std::env::var_os("HOME")
             .map(PathBuf::from)
-            .unwrap_or_else(std::env::temp_dir)
-            .join(".local/share/palimpsest/approvals")
+            .map(|path| path.join(".local/share/palimpsest/approvals"))
+            .ok_or_else(|| {
+                ApprovalError::Store("HOME이 없어 private store를 정할 수 없다".to_owned())
+            })
     }
 }

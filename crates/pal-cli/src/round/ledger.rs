@@ -13,6 +13,7 @@ use pal_core::{
 
 const HEX_LEN: usize = 64;
 const DOMAIN: &[u8] = b"pal.round.oracle.v1\0";
+const DOMAIN_V2: &[u8] = b"pal.round.oracle.v2\0";
 
 #[derive(Clone, Debug)]
 pub struct Oracle {
@@ -165,7 +166,17 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                         return Err(schema("negative control은 자신을 가리킬 수 없다"));
                     }
                 }
-                let digest = oracle_digest("command", &check, &expect.literal, &cwd);
+                let digest = if schema_version == 1 {
+                    oracle_digest("command", &check, &expect.literal, &cwd)
+                } else {
+                    oracle_digest_v2(
+                        "command",
+                        &check,
+                        &expect.literal,
+                        &cwd,
+                        negative_for.as_deref(),
+                    )
+                };
                 let state = conditions.entry(id).or_default();
                 state.had_evidence_before_current_oracle |= state.evidence.is_some();
                 state.oracle = Some(Oracle {
@@ -256,6 +267,30 @@ pub fn oracle_digest(mode: &str, check: &str, literal: &str, cwd: &str) -> Strin
     let mut hasher = blake3::Hasher::new();
     hasher.update(DOMAIN);
     for value in [mode, check, "literal", literal, cwd] {
+        let bytes = value.as_bytes();
+        hasher.update(&(bytes.len() as u64).to_le_bytes());
+        hasher.update(bytes);
+    }
+    hasher.finalize().to_hex().to_string()
+}
+
+fn oracle_digest_v2(
+    mode: &str,
+    check: &str,
+    literal: &str,
+    cwd: &str,
+    negative_for: Option<&str>,
+) -> String {
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(DOMAIN_V2);
+    for value in [
+        mode,
+        check,
+        "literal",
+        literal,
+        cwd,
+        negative_for.unwrap_or(""),
+    ] {
         let bytes = value.as_bytes();
         hasher.update(&(bytes.len() as u64).to_le_bytes());
         hasher.update(bytes);

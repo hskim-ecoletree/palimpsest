@@ -242,6 +242,14 @@ fn process_helper() {
                 .expect("descendant");
             let _ = child.wait();
         }
+        "spawn-detached-descendant" => {
+            let _child = Command::new(std::env::current_exe().expect("self"))
+                .args(["--exact", "process_helper", "--nocapture"])
+                .env("PAL_HELPER_MODE", "delayed-marker")
+                .env("PAL_HELPER_TARGET", target.expect("marker"))
+                .spawn()
+                .expect("detached descendant");
+        }
         "delayed-marker" => {
             std::thread::sleep(Duration::from_secs(3));
             std::fs::write(target.expect("marker"), "escaped\n").expect("marker");
@@ -287,7 +295,13 @@ fn 미승인_oracle과_변경된_path_cwd_shell_budget은_spawn전에_거부된�
     std::fs::copy(&default_shell, &alternate_shell).expect("alternate shell fixture");
     let alternate = alternate_shell.to_str().expect("UTF-8 fixture path");
     let changed_shell = verify(&repo, &approvals, "A1", &["--shell", alternate]);
-    assert_eq!(changed_shell.status.code(), Some(3));
+    assert_eq!(changed_shell.status.code(), Some(2));
+    assert_eq!(
+        approve(&repo, &approvals, "A1", &["--shell", alternate])
+            .status
+            .code(),
+        Some(2)
+    );
     assert!(!counter.exists());
 
     let changed_budget = verify(&repo, &approvals, "A1", &["--timeout", "1"]);
@@ -365,6 +379,37 @@ fn 실행된_현재_negative_control없이는_주조건도_met이_아니다() {
 }
 
 #[test]
+fn 과거_evidence를_negative_control로_재분류하면_stale이다() {
+    let (_base, repo, approvals) = root("control-role-tamper");
+    let dir = round(
+        &repo,
+        &["A1", "C1"],
+        &[
+            oracle("A1", "success", None),
+            oracle("C1", "negative-success", None),
+        ],
+    );
+    commit_fixture(&repo);
+    for id in ["A1", "C1"] {
+        assert!(approve(&repo, &approvals, id, &[]).status.success());
+        assert!(verify(&repo, &approvals, id, &[]).status.success());
+    }
+    assert_eq!(status(&repo)["conditions"][0]["state"], "met");
+
+    let path = dir.join("verification.log");
+    let body = std::fs::read_to_string(&path).expect("ledger");
+    let changed = body.replace(
+        "\"id\":\"C1\",\"kind\":\"oracle\"",
+        "\"id\":\"C1\",\"kind\":\"oracle\",\"negative_for\":\"A1\"",
+    );
+    assert_ne!(body, changed, "oracle fixture must be rewritten");
+    std::fs::write(path, changed).expect("role change");
+    let got = status(&repo);
+    assert_eq!(got["conditions"][0]["state"], "stale");
+    assert_eq!(got["conditions"][1]["state"], "stale");
+}
+
+#[test]
 fn timeout_output_cap과_descendant는_bounded_cleanup된다() {
     for (tag, mode, extra) in [
         ("timeout", "sleep", vec!["--timeout", "1"]),
@@ -376,7 +421,13 @@ fn timeout_output_cap과_descendant는_bounded_cleanup된다() {
         assert!(approve(&repo, &approvals, "A1", &extra).status.success());
         let started = std::time::Instant::now();
         let out = verify(&repo, &approvals, "A1", &extra);
-        assert_eq!(out.status.code(), Some(1));
+        assert_eq!(
+            out.status.code(),
+            Some(1),
+            "{tag}: {} / {}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
         assert!(
             started.elapsed() < Duration::from_secs(6),
             "{tag} was unbounded"
@@ -404,6 +455,29 @@ fn timeout_output_cap과_descendant는_bounded_cleanup된다() {
     );
     std::thread::sleep(Duration::from_secs(4));
     assert!(!marker.exists(), "descendant escaped cleanup");
+
+    let (_base, repo, approvals) = root("detached-descendant");
+    let marker = repo.parent().expect("base").join("detached-escaped.txt");
+    round(
+        &repo,
+        &["A1"],
+        &[json!({
+            "kind":"oracle", "id":"A1", "mode":"command",
+            "check":helper_command("spawn-detached-descendant", Some(&marker)),
+            "expect":{"literal":"ROUND_OK"}, "cwd":"."
+        })],
+    );
+    commit_fixture(&repo);
+    let extra = ["--timeout", "1"];
+    assert!(approve(&repo, &approvals, "A1", &extra).status.success());
+    let started = std::time::Instant::now();
+    assert_eq!(
+        verify(&repo, &approvals, "A1", &extra).status.code(),
+        Some(1)
+    );
+    assert!(started.elapsed() < Duration::from_secs(4));
+    std::thread::sleep(Duration::from_secs(3));
+    assert!(!marker.exists(), "detached descendant escaped cleanup");
 }
 
 #[test]
@@ -496,6 +570,25 @@ fn approval_record변조와_stale_projected_evidence는_fail_closed다() {
     assert_eq!(status(&repo)["conditions"][0]["state"], "met");
     std::fs::write(repo.join("tracked.txt"), "later\n").expect("later tree");
     assert_eq!(status(&repo)["conditions"][0]["state"], "stale");
+}
+
+#[test]
+fn 같은_size_mtime의_tracked변조도_승인을_무효화한다() {
+    let (_base, repo, approvals) = root("racy-stat");
+    round(&repo, &["A1"], &[oracle("A1", "success", None)]);
+    commit_fixture(&repo);
+    assert!(approve(&repo, &approvals, "A1", &[]).status.success());
+
+    let tracked = repo.join("tracked.txt");
+    let metadata = std::fs::metadata(&tracked).expect("tracked metadata");
+    let mtime = filetime::FileTime::from_last_modification_time(&metadata);
+    let atime = filetime::FileTime::from_last_access_time(&metadata);
+    std::fs::write(&tracked, "mutated\n").expect("same-size mutation");
+    filetime::set_file_times(&tracked, atime, mtime).expect("restore stat timestamp");
+
+    let denied = verify(&repo, &approvals, "A1", &[]);
+    assert_eq!(denied.status.code(), Some(3));
+    assert_eq!(value(&denied)["outcome"], "approval_required");
 }
 
 #[test]

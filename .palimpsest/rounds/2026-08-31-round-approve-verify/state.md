@@ -48,6 +48,14 @@ approve/verify 19, round status 24, round scripts 15, hook 5, install hooks 20�
 `cargo xtask check` 23/23과 `cargo test --workspace --all-targets`도 통과했다. 기존 release 규모
 benchmark 하나만 선언대로 ignored다.
 
+## 독립 리뷰
+
+R1은 승인 보류와 7개 발견을 냈다. racy stat, 부모 선종료 descendant, control role replay,
+Windows ACL/temp fallback, unbounded·unbound cleanup helper, torn append를 정정했다. 임의 shell은
+platform default 하나로 닫았다. mutable workspace를 immutable snapshot으로 실행하라는 항은
+이 표면의 계약이 current workspace의 전후 동일성 관측과 폐기이며 side effect transaction이
+아님을 ADR에 명시해 기각 판정한다. R2가 정정 결과를 다시 잰다.
+
 ## 실패한 접근
 
 `rustfmt`를 crate root에 직접 주어 module tree의 기존 비정형 파일까지 포맷한 접근은 두 번

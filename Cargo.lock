@@ -1380,6 +1380,7 @@ dependencies = [
  "anyhow",
  "blake3",
  "clap",
+ "filetime",
  "pal-core",
  "pal-extract",
  "pal-git",
@@ -1390,6 +1391,7 @@ dependencies = [
  "rustix",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror",
 ]
 

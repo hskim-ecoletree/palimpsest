@@ -22,19 +22,26 @@ projected tree가 바뀐 뒤에도 권한과 evidence를 재사용할 수 있고
   malformed·symlink·권한 또는 identity 불일치는 spawn 전에 fail-closed한다.
 - command는 PATH에서 shell을 찾지 않는다. Unix는 `/bin/sh`, Windows는 서로 일치하는
   `SystemRoot`·`WINDIR`·`SystemDrive` 아래 `System32/cmd.exe`를 기본으로 쓰며 선택된 shell
-  자체도 승인한다. 기본 실행 예산은 120초와 stdout·stderr 합계 1 MiB다.
-- projected digest는 `pal-git`의 정렬된 tracked worktree projection을 쓰고 현재 round의
-  `verification.log`만 제외한다. 절대 경로, HEAD, untracked·ignored 파일은 모집단이 아니다.
-- verify는 실행 전 승인·oracle·projection을 확인하고 종료 뒤 모두 다시 계산한다. 하나라도
-  바뀌면 결과를 폐기한다. evidence append는 per-ledger lock 아래 완전한 JSON 한 행과 sync로
-  끝내며 실패 뒤 command를 자동 재실행하지 않는다.
+  자체도 승인한다. 다른 shell은 승인하지 않는다. 기본 실행 예산은 120초와 stdout·stderr
+  합계 1 MiB다.
+- projected digest는 `pal-git`의 정렬된 tracked worktree projection을 쓰되 Git index stat
+  cache를 믿지 않고 매번 tracked blob bytes를 읽는다. 현재 round의 `verification.log`만
+  제외한다. 절대 경로, HEAD, untracked·ignored 파일은 모집단이 아니다.
+- verify는 실행 전 승인·oracle·projection을 확인하고 종료 뒤 append lock을 잡은 채 모두
+  다시 계산한다. 하나라도 바뀌면 결과를 폐기한다. evidence append는 기존 완전 원장과 새 JSON
+  한 행을 같은 디렉터리의 임시 파일에 쓰고 sync한 뒤 atomic replace하고 디렉터리까지 sync한다.
+  실패 뒤 command를 자동 재실행하지 않는다.
 - positive command는 `exit == 0`, non-empty EXPECT의 combined output 관측, execution fault 없음이
   함께 있어야 성공이다. `negative_for`가 가리키는 각 control도 자기 oracle과 현재 projection에
   결박된 실제 성공 evidence가 있어야 주 조건이 `met`이다. 미실행·실패·stale control은 주
-  조건을 `pending|unmet|stale`로 낮춘다.
-- Unix는 새 process group을, Windows는 새 process group과 신뢰한 `taskkill.exe /t /f`를 써서
-  timeout·output overflow 때 자식 tree를 bounded하게 종료·회수한다. cleanup 실패는 성공
-  evidence가 아니다.
+  조건을 `pending|unmet|stale`로 낮춘다. schema 2 oracle digest는 `negative_for` 역할도 포함해
+  원장 편집만으로 과거 evidence를 control 성공으로 재분류하지 못한다.
+- 부모가 먼저 끝나도 stdout·stderr EOF까지 기다리며 drain thread를 회수한다. Unix는 새
+  process group을, Windows는 새 process group과 신뢰한 `taskkill.exe /t /f`를 써서 timeout·
+  output overflow 때 자식 tree를 종료한다. Windows helper path와 bytes도 승인 identity에
+  들어가고 helper 자체는 5초 안에 끝나야 한다. cleanup 실패는 성공 evidence가 아니다.
+- Unix approval store는 owner·mode·link count를, Windows store는 `LOCALAPPDATA` 존재와 현재
+  SID 전용 DACL을 요구한다. private user directory를 정할 수 없으면 temp로 후퇴하지 않는다.
 
 schema 1의 직렬화, oracle digest, status JSON과 상태·exit 계약은 바꾸지 않는다. reader는
 schema 1과 2를 version별로 읽고 schema 1에서 schema 2 필드를, schema 2 evidence에서 projected
@@ -47,11 +54,18 @@ digest 누락을 거부한다. 조건 문법은 계속 `pal-intent`, 원장과 �
 승인해야 한다. 실행된 현재 음성 대조 없이 positive 성공 하나만으로 조건이 닫히지 않는다.
 status는 계속 읽기 전용이며 Python/dashboard는 기존 JSON을 그대로 소비한다.
 
-**잃는 것.** PATH나 shell bytes, tracked projection, 예산이 달라져도 재승인이 필요하다.
+**잃는 것.** PATH나 shell bytes, tracked projection, 예산이 달라져도 재승인이 필요하고,
+platform default가 아닌 shell은 승인할 수 없다.
 untracked·ignored 입력을 읽는 oracle은 이 projection만으로 현재성을 증명하지 못하므로 oracle
 자체가 별도 결박 입력을 만들거나 뒤 결정이 모집단을 넓혀야 한다. command 실행과 evidence
 append는 하나의 filesystem transaction이 아니므로 append 실패는 “실행됐지만 증거 없음”으로
 남고 자동 재실행하지 않는다.
+
+executor는 현재 workspace를 읽는 oracle이지 immutable checkout sandbox가 아니다. 동시 tracked
+변경은 사후 currentness 검사에서 evidence를 폐기하지만 이미 실행된 command의 부작용을
+되돌리지는 않는다. 그래서 approve/verify의 허용 모집단은 검증 command이고, mutable build나
+배포 command를 transaction처럼 실행하는 표면이 아니다. 외부 approval 파일 삭제도 취소 API가
+아니며 실행 뒤 재검사에서 evidence를 폐기하는 입력이다.
 
 ## 되돌리는 조건
 

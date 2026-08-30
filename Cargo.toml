@@ -89,6 +89,13 @@ rayon = "1"
 # round verify가 POSIX process group 전체를 안전한 API로 종료한다. `pal-cli`는 unsafe를
 # 금지하므로 libc 직접 호출 대신 이미 lockfile에 있는 rustix의 process 표면만 쓴다.
 rustix = { version = "1.1.4", features = ["process"] }
+# round evidence는 부분 append 대신 같은 디렉터리의 완전한 새 원장을 durable하게 만든 뒤
+# atomic replace한다. `tempfile::NamedTempFile::persist`가 Windows의 replace primitive까지
+# 안전한 API로 감싸므로 pal-cli의 unsafe 금지를 깨지 않는다.
+tempfile = "3.27"
+# security-currentness 회귀가 Git index와 같은 mtime·size 변조를 실제로 만든다. 제품에는
+# 들어가지 않는 dev-only fixture 도구이며 lockfile에 이미 있던 의존이다.
+filetime = "0.2"
 
 # F22 가 들인 하나. stack §3.4 는 "P0 에서 외부 크레이트 신규 추가는 근거를 남긴다" 고
 # 적었고 그 근거는 이렇다: `schema/graph.toml` 이 노드·엣지의 **단일 진실**이고
