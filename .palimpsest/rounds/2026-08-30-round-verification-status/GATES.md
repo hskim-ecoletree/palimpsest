@@ -12,25 +12,25 @@ Scope: deliver the read-only round verification reducer, CLI surfaces, Python co
   CHECK: cargo test -p pal-cli --test round_status
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=fc1cc00b841dbbc8e7313c347e354fc1245856525ff1e59e41a167a52fc7ab29; output-bytes=2012
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=df6a642d65f46273f52bd27dc53fc5ad1db5104a6138f0169d336915197bd921; output-bytes=2012
 
 - [x] G2: the preserved Python golden and compatibility wrappers agree with the Rust condition parser
   CHECK: cargo test -p pal-cli --test round_scripts_run
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=a2ade3a33397febb997ba48a1d3a78719829a4834fb7be4f289ecd630f9d09e6; output-bytes=1337
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=1feb7453672a2ef1e510c338bafcee8de4ebaff7ea32e923b8b845b7bc933799; output-bytes=1337
 
 - [x] G3: existing hook behavior remains green
   CHECK: cargo test -p pal-cli --test hook
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=4af7d9f6653fe341a722f6b515ac55c98e5e33c1e935b5f34ef57808ac43a234; output-bytes=650
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=1d23985f1ecaf3b5ad38ad304207d9ed2e16147a67fa53526d305bc5b4bf7675; output-bytes=650
 
 - [x] G4: existing hook installation behavior remains green
   CHECK: cargo test -p pal-cli --test install_hooks
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=260496b1ee51721a1382aa6652cb6185e6180bb1a88e14d347e703fa89fce844; output-bytes=1578
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=de7a79abe4bded6193bd2ad2c1a28eb2af17c6168e1b24ae30d6463e9e8500fd; output-bytes=1578
 
 - [x] G5: repository governance accepts the implementation
   CHECK: cargo xtask check
@@ -42,7 +42,7 @@ Scope: deliver the read-only round verification reducer, CLI surfaces, Python co
   CHECK: cargo test --workspace --all-targets
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=b0b70bcd1618fe32c5fe2d8d9b9baf256760f6ae2f7bf3d4ffca5865faebffcd; output-bytes=67312
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=76e2bb19c53be969f7c3600da79f82688a7cb5f9aebd103f7b89bb1444394109; output-bytes=67312
 
 - [x] G7: the implementation keeps the required dependency direction and has no pal-cli library target
   EVIDENCE: cargo xtask check reports dependency direction ok; crates/pal-cli has only src/main.rs as its target root; Cargo.toml has xtask -> pal-intent and no xtask -> pal-cli edge
@@ -56,5 +56,5 @@ Scope: deliver the read-only round verification reducer, CLI surfaces, Python co
 - [x] G10: an ADR, gate document, non-test effect observation, graph binding, and clean termination report close the round
   EVIDENCE: ADR-0028; docs/gates/round-verification-status.md; effect/input and output artifacts; live bindings f41129d0619d5ba6, 6e8ef4bfbf6de0b4, ec7b21863a090892; report.md
 
-- [ ] G11: the final pushed SHA has a successful GitHub CI conclusion on all supported platforms
-  EVIDENCE: pending
+- [x] G11: the final pushed SHA has a successful GitHub CI conclusion on all supported platforms
+  EVIDENCE: pushed closure SHA bda299644398c9035e728a26b53e5f5a36e38623; GitHub Actions run 33318236978 success; ubuntu, macOS, Windows, both producer jobs, and both cross-OS consumer jobs succeeded

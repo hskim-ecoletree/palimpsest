@@ -18,8 +18,9 @@ verification 원장과 상태 기계는 `pal-cli`가 소유한다. `pal round co
 
 검증 결과는 `round_status` 24, `round_scripts_run` 15, `hook` 5, `install_hooks` 20 시험
 통과, `cargo xtask check` 23/23, `cargo test --workspace --all-targets` 성공이다. commit
-`a7214e6`의 [CI run 33317281903](https://github.com/hskim-ecoletree/palimpsest/actions/runs/33317281903)은
-ubuntu·macOS·Windows와 양방향 상호운용 job을 전부 성공시켰다.
+pushed closure SHA `bda299644398c9035e728a26b53e5f5a36e38623`의
+[CI run 33318236978](https://github.com/hskim-ecoletree/palimpsest/actions/runs/33318236978)은
+ubuntu·macOS·Windows, 두 producer와 양방향 consumer job을 전부 성공시켰다.
 
 ## 효과
 
