@@ -1,0 +1,322 @@
+//! 사용자별 외부 command-oracle 승인 저장소.
+
+use std::fs::OpenOptions;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
+use pal_git::{GitAccess, GixRepo};
+use serde::{Deserialize, Serialize};
+use thiserror::Error;
+
+use super::ledger::Oracle;
+
+const DOMAIN: &[u8] = b"pal.round.approval.v1\0";
+
+#[derive(Clone, Debug)]
+pub struct Binding {
+    pub digest: String,
+    pub shell: PathBuf,
+    pub cwd: PathBuf,
+}
+
+#[derive(Debug, Error)]
+pub enum ApprovalError {
+    #[error("approval 저장소 오류: {0}")]
+    Store(String),
+    #[error("approval identity 오류: {0}")]
+    Identity(String),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Record {
+    version: u32,
+    digest: String,
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn binding(
+    repo: &Path,
+    slug: &str,
+    id: &str,
+    oracle: &Oracle,
+    projected_digest: &str,
+    requested_shell: Option<&Path>,
+    timeout_secs: u64,
+    output_limit: usize,
+) -> Result<Binding, ApprovalError> {
+    let repo = repo
+        .canonicalize()
+        .map_err(|error| ApprovalError::Identity(format!("repo: {error}")))?;
+    let shell = resolve_shell(requested_shell)?;
+    let cwd = repo.join(&oracle.cwd).canonicalize().map_err(|error| {
+        ApprovalError::Identity(format!("oracle cwd `{}`: {error}", oracle.cwd))
+    })?;
+    if !cwd.starts_with(&repo) {
+        return Err(ApprovalError::Identity(
+            "oracle cwd가 symlink를 통해 저장소 밖으로 나간다".to_owned(),
+        ));
+    }
+    let git = GixRepo::open(&repo).map_err(|error| ApprovalError::Identity(error.to_string()))?;
+    let head = git
+        .head()
+        .map_err(|error| ApprovalError::Identity(error.to_string()))?;
+    let ancestors = git
+        .first_parent_walk(head, usize::MAX)
+        .map_err(|error| ApprovalError::Identity(error.to_string()))?;
+    let root = ancestors
+        .last()
+        .ok_or_else(|| ApprovalError::Identity("repository root commit이 없다".to_owned()))?;
+    let path = std::env::var_os("PATH").unwrap_or_default();
+    let path_digest = blake3::hash(path.to_string_lossy().as_bytes()).to_hex();
+    let shell_bytes = std::fs::read(&shell)
+        .map_err(|error| ApprovalError::Identity(format!("shell을 읽지 못했다: {error}")))?;
+    let shell_digest = blake3::hash(&shell_bytes).to_hex();
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(DOMAIN);
+    for value in [
+        root.to_string(),
+        slug.to_owned(),
+        id.to_owned(),
+        oracle.digest.clone(),
+        oracle.negative_for.clone().unwrap_or_default(),
+        oracle.cwd.clone(),
+        shell.to_string_lossy().to_string(),
+        shell_digest.to_string(),
+        path_digest.to_string(),
+        timeout_secs.to_string(),
+        output_limit.to_string(),
+        projected_digest.to_owned(),
+    ] {
+        let bytes = value.as_bytes();
+        hasher.update(&(bytes.len() as u64).to_le_bytes());
+        hasher.update(bytes);
+    }
+    Ok(Binding {
+        digest: hasher.finalize().to_hex().to_string(),
+        shell,
+        cwd,
+    })
+}
+
+pub fn store_dir(repo: &Path, requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {
+    let path = requested
+        .map(Path::to_path_buf)
+        .or_else(|| std::env::var_os("PAL_APPROVAL_DIR").map(PathBuf::from))
+        .unwrap_or_else(default_store);
+    std::fs::create_dir_all(&path)
+        .map_err(|error| ApprovalError::Store(format!("{}: {error}", path.display())))?;
+    private_directory(&path)?;
+    let canonical = path
+        .canonicalize()
+        .map_err(|error| ApprovalError::Store(format!("{}: {error}", path.display())))?;
+    let repo = repo
+        .canonicalize()
+        .map_err(|error| ApprovalError::Store(format!("repo: {error}")))?;
+    if canonical.starts_with(&repo) {
+        return Err(ApprovalError::Store(
+            "approval 저장소는 repository 밖이어야 한다".to_owned(),
+        ));
+    }
+    Ok(canonical)
+}
+
+pub fn approve(dir: &Path, digest: &str) -> Result<(), ApprovalError> {
+    let target = dir.join(format!("{digest}.json"));
+    reject_link(&target, true)?;
+    let temporary = dir.join(format!(".{digest}.{}.tmp", std::process::id()));
+    let mut options = OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options
+        .open(&temporary)
+        .map_err(|error| ApprovalError::Store(format!("{}: {error}", temporary.display())))?;
+    let body = serde_json::to_vec(&Record {
+        version: 1,
+        digest: digest.to_owned(),
+    })
+    .map_err(|error| ApprovalError::Store(error.to_string()))?;
+    file.write_all(&body)
+        .and_then(|()| file.write_all(b"\n"))
+        .and_then(|()| file.sync_all())
+        .map_err(|error| ApprovalError::Store(format!("approval 기록: {error}")))?;
+    drop(file);
+    #[cfg(windows)]
+    if target.exists() {
+        reject_link(&target, false)?;
+        std::fs::remove_file(&target).map_err(|error| {
+            ApprovalError::Store(format!("기존 approval record를 교체하지 못했다: {error}"))
+        })?;
+    }
+    std::fs::rename(&temporary, &target)
+        .map_err(|error| ApprovalError::Store(format!("approval atomic rename: {error}")))?;
+    private_file(&target)?;
+    Ok(())
+}
+
+pub fn is_approved(dir: &Path, digest: &str) -> Result<bool, ApprovalError> {
+    let path = dir.join(format!("{digest}.json"));
+    if !path.exists() {
+        return Ok(false);
+    }
+    reject_link(&path, false)?;
+    private_file(&path)?;
+    let bytes = std::fs::read(&path)
+        .map_err(|error| ApprovalError::Store(format!("{}: {error}", path.display())))?;
+    let record: Record = serde_json::from_slice(&bytes)
+        .map_err(|error| ApprovalError::Store(format!("approval record가 malformed다: {error}")))?;
+    Ok(record.version == 1 && record.digest == digest)
+}
+
+fn reject_link(path: &Path, missing_ok: bool) -> Result<(), ApprovalError> {
+    match std::fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.file_type().is_symlink() => Err(ApprovalError::Store(format!(
+            "symlink approval target을 거부한다: {}",
+            path.display()
+        ))),
+        Ok(_) => Ok(()),
+        Err(error) if missing_ok && error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(ApprovalError::Store(format!("{}: {error}", path.display()))),
+    }
+}
+
+#[cfg(unix)]
+fn private_directory(path: &Path) -> Result<(), ApprovalError> {
+    use std::os::unix::fs::{MetadataExt, PermissionsExt};
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o700))
+        .map_err(|error| ApprovalError::Store(format!("directory permission: {error}")))?;
+    let metadata =
+        std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
+    if metadata.file_type().is_symlink()
+        || metadata.mode() & 0o077 != 0
+        || metadata.uid() != rustix::process::getuid().as_raw()
+    {
+        return Err(ApprovalError::Store(
+            "approval directory owner/permission이 private가 아니다".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn private_directory(path: &Path) -> Result<(), ApprovalError> {
+    let metadata =
+        std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
+    if metadata.file_type().is_symlink() {
+        return Err(ApprovalError::Store(
+            "approval directory가 symlink다".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+fn private_file(path: &Path) -> Result<(), ApprovalError> {
+    use std::os::unix::fs::MetadataExt;
+    let metadata =
+        std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
+    if !metadata.is_file()
+        || metadata.nlink() != 1
+        || metadata.mode() & 0o077 != 0
+        || metadata.uid() != rustix::process::getuid().as_raw()
+    {
+        return Err(ApprovalError::Store(
+            "approval record owner/link/permission이 private가 아니다".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn private_file(path: &Path) -> Result<(), ApprovalError> {
+    let metadata =
+        std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
+    if !metadata.is_file() || metadata.file_type().is_symlink() {
+        return Err(ApprovalError::Store(
+            "approval record가 regular file이 아니다".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn resolve_shell(requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {
+    let path = match requested {
+        Some(path) => path.to_path_buf(),
+        None => default_shell()?,
+    };
+    if !path.is_absolute() {
+        return Err(ApprovalError::Identity(
+            "shell은 PATH 검색 없는 absolute path여야 한다".to_owned(),
+        ));
+    }
+    path.canonicalize()
+        .map_err(|error| ApprovalError::Identity(format!("shell: {error}")))
+}
+
+#[cfg(unix)]
+fn default_shell() -> Result<PathBuf, ApprovalError> {
+    Ok(PathBuf::from("/bin/sh"))
+}
+
+#[cfg(windows)]
+fn default_shell() -> Result<PathBuf, ApprovalError> {
+    let root = trusted_windows_root()?;
+    Ok(root.join("System32").join("cmd.exe"))
+}
+
+#[cfg(windows)]
+pub fn trusted_windows_root() -> Result<PathBuf, ApprovalError> {
+    let root = std::env::var_os("SystemRoot").map(PathBuf::from);
+    let windir = std::env::var_os("WINDIR").map(PathBuf::from);
+    let drive = std::env::var_os("SystemDrive");
+    let (Some(root), Some(windir), Some(drive)) = (root, windir, drive) else {
+        return Err(ApprovalError::Identity(
+            "Windows system root 환경이 완전하지 않다".to_owned(),
+        ));
+    };
+    let root_text = root.to_string_lossy().replace('/', "\\");
+    let windir_text = windir.to_string_lossy().replace('/', "\\");
+    let drive_text = drive.to_string_lossy();
+    if !root_text.eq_ignore_ascii_case(&windir_text)
+        || root_text.len() < 3
+        || !root_text[2..].eq_ignore_ascii_case("\\Windows")
+        || !root_text[..2].eq_ignore_ascii_case(&drive_text)
+    {
+        return Err(ApprovalError::Identity(
+            "Windows system root 환경이 서로 다르다".to_owned(),
+        ));
+    }
+    Ok(root)
+}
+
+fn default_store() -> PathBuf {
+    #[cfg(windows)]
+    {
+        return std::env::var_os("LOCALAPPDATA")
+            .map(PathBuf::from)
+            .unwrap_or_else(std::env::temp_dir)
+            .join("palimpsest")
+            .join("approvals");
+    }
+    #[cfg(target_os = "macos")]
+    {
+        return std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(std::env::temp_dir)
+            .join("Library/Application Support/palimpsest/approvals");
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        if let Some(path) = std::env::var_os("XDG_DATA_HOME") {
+            return PathBuf::from(path).join("palimpsest/approvals");
+        }
+        std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .unwrap_or_else(std::env::temp_dir)
+            .join(".local/share/palimpsest/approvals")
+    }
+}

@@ -17,6 +17,10 @@ const DOMAIN: &[u8] = b"pal.round.oracle.v1\0";
 #[derive(Clone, Debug)]
 pub struct Oracle {
     pub digest: String,
+    pub check: String,
+    pub literal: String,
+    pub cwd: String,
+    pub negative_for: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -24,6 +28,7 @@ pub struct Evidence {
     pub oracle_digest: String,
     pub exit: i32,
     pub matched: bool,
+    pub projected_digest: Option<String>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -35,6 +40,7 @@ pub struct ConditionLedger {
 
 #[derive(Clone, Debug)]
 pub struct VerificationLedger {
+    pub schema_version: u32,
     pub conditions: BTreeMap<String, ConditionLedger>,
 }
 
@@ -60,6 +66,8 @@ enum Event {
         check: String,
         expect: Expect,
         cwd: String,
+        #[serde(default)]
+        negative_for: Option<String>,
     },
     #[serde(rename = "evidence")]
     Evidence {
@@ -70,6 +78,8 @@ enum Event {
         output_digest: String,
         #[serde(rename = "output_bytes")]
         _output_bytes: u64,
+        #[serde(default)]
+        projected_digest: Option<String>,
     },
 }
 
@@ -110,6 +120,7 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
     }
 
     let mut schema_seen = false;
+    let mut schema_version = 0;
     let mut conditions: BTreeMap<String, ConditionLedger> = BTreeMap::new();
     for (index, event) in events.into_iter().enumerate() {
         match event {
@@ -118,9 +129,10 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                     return Err(schema("schema 행은 첫 행에 정확히 하나여야 한다"));
                 }
                 schema_seen = true;
-                if version != 1 {
+                if !matches!(version, 1 | 2) {
                     return Err(schema(format!("알 수 없는 schema version {version}")));
                 }
+                schema_version = version;
                 validate_string("round", &round, false)?;
                 if !valid_slug(&round) || round != slug {
                     return Err(schema("schema round가 디렉터리 slug와 다르다"));
@@ -132,6 +144,7 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                 check,
                 expect,
                 cwd,
+                negative_for,
             } => {
                 if !schema_seen {
                     return Err(schema("oracle보다 schema가 먼저 와야 한다"));
@@ -143,10 +156,25 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                 if !valid_cwd(&cwd) {
                     return Err(schema("cwd는 정규화된 저장소 상대 경로여야 한다"));
                 }
+                if schema_version == 1 && negative_for.is_some() {
+                    return Err(schema("schema 1 oracle에는 negative_for가 없다"));
+                }
+                if let Some(base) = &negative_for {
+                    validate_id(base)?;
+                    if base == &id {
+                        return Err(schema("negative control은 자신을 가리킬 수 없다"));
+                    }
+                }
                 let digest = oracle_digest("command", &check, &expect.literal, &cwd);
                 let state = conditions.entry(id).or_default();
                 state.had_evidence_before_current_oracle |= state.evidence.is_some();
-                state.oracle = Some(Oracle { digest });
+                state.oracle = Some(Oracle {
+                    digest,
+                    check,
+                    literal: expect.literal,
+                    cwd,
+                    negative_for,
+                });
                 state.evidence = None;
             }
             Event::Evidence {
@@ -156,6 +184,7 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                 matched,
                 output_digest,
                 _output_bytes: _,
+                projected_digest,
             } => {
                 if !schema_seen {
                     return Err(schema("evidence보다 schema가 먼저 와야 한다"));
@@ -163,6 +192,17 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                 validate_id(&id)?;
                 validate_digest("oracle_digest", &oracle_digest)?;
                 validate_digest("output_digest", &output_digest)?;
+                match (schema_version, &projected_digest) {
+                    (1, None) => {}
+                    (1, Some(_)) => {
+                        return Err(schema("schema 1 evidence에는 projected_digest가 없다"));
+                    }
+                    (2, Some(digest)) => validate_digest("projected_digest", digest)?,
+                    (2, None) => {
+                        return Err(schema("schema 2 evidence에는 projected_digest가 필요하다"));
+                    }
+                    _ => unreachable!("schema version was validated"),
+                }
                 let Some(state) = conditions.get_mut(&id) else {
                     return Err(LedgerError::Transition(format!(
                         "oracle 없는 evidence `{id}`"
@@ -172,6 +212,7 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                     oracle_digest,
                     exit,
                     matched,
+                    projected_digest,
                 });
             }
         }
@@ -179,7 +220,36 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
     if !schema_seen {
         return Err(schema("schema 행이 없다"));
     }
-    Ok(VerificationLedger { conditions })
+    if schema_version == 2 {
+        for (id, state) in &conditions {
+            let Some(control) = state
+                .oracle
+                .as_ref()
+                .and_then(|oracle| oracle.negative_for.as_ref())
+            else {
+                continue;
+            };
+            let Some(base) = conditions
+                .get(control)
+                .and_then(|state| state.oracle.as_ref())
+            else {
+                return Err(schema(format!(
+                    "negative control `{id}`의 대상 `{control}` oracle이 없다"
+                )));
+            };
+            let oracle = state.oracle.as_ref().expect("checked above");
+            if base.negative_for.is_some() {
+                return Err(schema("negative control chain은 허용하지 않는다"));
+            }
+            if base.digest == oracle.digest {
+                return Err(schema("negative control은 주 oracle과 같은 실행일 수 없다"));
+            }
+        }
+    }
+    Ok(VerificationLedger {
+        schema_version,
+        conditions,
+    })
 }
 
 pub fn oracle_digest(mode: &str, check: &str, literal: &str, cwd: &str) -> String {
@@ -372,5 +442,32 @@ mod tests {
         let body = "{\"kind\":\"schema\",\"version\":1,\"round\":\"fixture-round\"}\r\n";
         let got = write_read("crlf", body).expect("CRLF ledger");
         assert!(got.conditions.is_empty());
+    }
+
+    #[test]
+    fn schema_two_requires_projected_digest_but_schema_one_stays_readable() {
+        let schema_one = concat!(
+            "{\"kind\":\"schema\",\"version\":1,\"round\":\"fixture-round\"}\n",
+            "{\"kind\":\"oracle\",\"id\":\"A1\",\"mode\":\"command\",",
+            "\"check\":\"x\",\"expect\":{\"literal\":\"y\"},\"cwd\":\".\"}\n",
+        );
+        assert_eq!(
+            write_read("schema-one-compatible", schema_one)
+                .unwrap()
+                .schema_version,
+            1
+        );
+
+        let missing_projected = format!(
+            "{{\"kind\":\"schema\",\"version\":2,\"round\":\"fixture-round\"}}\n\
+             {{\"kind\":\"oracle\",\"id\":\"A1\",\"mode\":\"command\",\"check\":\"x\",\"expect\":{{\"literal\":\"y\"}},\"cwd\":\".\"}}\n\
+             {{\"kind\":\"evidence\",\"id\":\"A1\",\"oracle_digest\":\"{}\",\"exit\":0,\"matched\":true,\"output_digest\":\"{}\",\"output_bytes\":1}}\n",
+            "a".repeat(64),
+            "b".repeat(64),
+        );
+        assert!(matches!(
+            write_read("schema-two-projected", &missing_projected),
+            Err(LedgerError::Schema(_))
+        ));
     }
 }

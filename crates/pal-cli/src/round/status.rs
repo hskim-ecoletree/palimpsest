@@ -1,6 +1,6 @@
 //! verification ledger를 조건·회차 상태로 축약한다.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use pal_intent::round_condition::ConditionsReport;
@@ -187,9 +187,24 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
         }
     }
 
-    let mut conditions = Vec::new();
-    for id in ids {
-        let state = ledger.as_ref().and_then(|l| l.conditions.get(&id));
+    let projected = match &ledger {
+        Some(ledger) if ledger.schema_version == 2 => Some(
+            super::verify::projected_digest(
+                dir.parent()
+                    .and_then(Path::parent)
+                    .and_then(Path::parent)
+                    .ok_or_else(|| {
+                        StatusError::Resolve("repository root를 해소하지 못했다".to_owned())
+                    })?,
+                slug,
+            )
+            .map_err(|error| StatusError::Io(error.to_string()))?,
+        ),
+        _ => None,
+    };
+    let mut raw = BTreeMap::new();
+    for id in &ids {
+        let state = ledger.as_ref().and_then(|l| l.conditions.get(id.as_str()));
         let (condition_state, digest) = match state.and_then(|s| s.oracle.as_ref().map(|o| (s, o)))
         {
             None => (ConditionState::Unregistered, None),
@@ -200,12 +215,61 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
                     Some(evidence) if evidence.oracle_digest != oracle.digest => {
                         ConditionState::Stale
                     }
+                    Some(evidence)
+                        if evidence.projected_digest.as_ref().is_some_and(|digest| {
+                            projected.as_ref().is_some_and(|current| digest != current)
+                        }) =>
+                    {
+                        ConditionState::Stale
+                    }
                     Some(evidence) if evidence.exit == 0 && evidence.matched => ConditionState::Met,
                     Some(_) => ConditionState::Unmet,
                 };
                 (condition_state, Some(oracle.digest.clone()))
             }
         };
+        raw.insert(id.clone(), (condition_state, digest));
+    }
+    if let Some(ledger) = &ledger {
+        let mut controls: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
+        for (id, state) in &ledger.conditions {
+            if let Some(base) = state
+                .oracle
+                .as_ref()
+                .and_then(|oracle| oracle.negative_for.as_deref())
+            {
+                controls.entry(base).or_default().push(id);
+            }
+        }
+        for (base, control_ids) in controls {
+            if raw.get(base).map(|(state, _)| *state) != Some(ConditionState::Met) {
+                continue;
+            }
+            let mut replacement = None;
+            for control in control_ids {
+                let control_state = raw
+                    .get(control)
+                    .map_or(ConditionState::Unregistered, |(state, _)| *state);
+                if control_state != ConditionState::Met {
+                    replacement = Some(match control_state {
+                        ConditionState::Unmet => ConditionState::Unmet,
+                        ConditionState::Stale => ConditionState::Stale,
+                        ConditionState::Pending | ConditionState::Unregistered => {
+                            ConditionState::Pending
+                        }
+                        ConditionState::Met => unreachable!(),
+                    });
+                    break;
+                }
+            }
+            if let Some(replacement) = replacement {
+                raw.get_mut(base).expect("base exists").0 = replacement;
+            }
+        }
+    }
+    let mut conditions = Vec::new();
+    for id in ids {
+        let (condition_state, digest) = raw.remove(&id).expect("all intent ids reduced");
         conditions.push(ConditionView {
             id,
             state: condition_state,

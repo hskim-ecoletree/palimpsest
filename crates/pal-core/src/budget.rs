@@ -173,6 +173,18 @@ pub const ROUND_VERIFICATION_LINE_MAX_BYTES: usize = 64 * 1024;
 /// `verification.log` schema 1의 문자열 값 UTF-8 바이트 상한.
 pub const ROUND_VERIFICATION_STRING_MAX_BYTES: usize = 32 * 1024;
 
+/// command oracle 한 번의 기본 실행 시간 상한.
+///
+/// 이번 수직 경로의 안전 기본값이며 실제 프로젝트 분포로 아직 확정하지 않았다. 사용자가
+/// 값을 바꾸면 그 값은 approval identity에 결박되어 기존 승인을 재사용할 수 없다.
+pub const PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS: u64 = 120;
+
+/// command oracle 한 번이 보존하는 stdout·stderr 합계의 기본 바이트 상한.
+///
+/// 이번 수직 경로의 안전 기본값이며 실제 프로젝트 분포로 아직 확정하지 않았다. 사용자가
+/// 값을 바꾸면 그 값은 approval identity에 결박되어 기존 승인을 재사용할 수 없다.
+pub const PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES: usize = 1024 * 1024;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 질의 예산 — 옛 F05 §5.2. **이 실행기가 존재하는 이유가 이 셋이다.**
 //
@@ -274,7 +286,12 @@ impl Budget {
         depth_max: usize,
         node_max: usize,
     ) -> Self {
-        Self { candidate_set_max, path_product_max, depth_max, node_max }
+        Self {
+            candidate_set_max,
+            path_product_max,
+            depth_max,
+            node_max,
+        }
     }
 
     /// 자리표시 넷으로. **이름이 그 사실을 말한다** — `default()` 였으면 안 말한다.

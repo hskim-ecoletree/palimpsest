@@ -1387,6 +1387,7 @@ dependencies = [
  "pal-query",
  "pal-store",
  "rayon",
+ "rustix",
  "serde",
  "serde_json",
  "thiserror",

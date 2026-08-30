@@ -1,7 +1,9 @@
 //! 읽기 전용 회차 verification 상태 표면.
 
+pub mod approval;
 pub mod ledger;
 pub mod status;
+pub mod verify;
 
 use std::io::Write;
 use std::path::Path;
@@ -54,6 +56,94 @@ pub fn round_status(round: Option<&str>, json: bool) -> Result<()> {
         Err(error) => exit_error(json, 2, error.code(), &error.to_string()),
     }
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn round_approve(
+    repo: &Path,
+    slug: &str,
+    id: &str,
+    approval_dir: Option<&Path>,
+    shell: Option<&Path>,
+    timeout_secs: u64,
+    output_limit: usize,
+    json: bool,
+) -> Result<()> {
+    let config = verify::Config {
+        repo,
+        slug,
+        id,
+        approval_dir,
+        shell,
+        timeout_secs,
+        output_limit,
+    };
+    match verify::approve(&config) {
+        Ok(view) => print_view(json, &view, &format!("approved: {slug}/{id}")),
+        Err(error) => verify_error(json, error),
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn round_verify(
+    repo: &Path,
+    slug: &str,
+    id: &str,
+    approval_dir: Option<&Path>,
+    shell: Option<&Path>,
+    timeout_secs: u64,
+    output_limit: usize,
+    json: bool,
+) -> Result<()> {
+    let config = verify::Config {
+        repo,
+        slug,
+        id,
+        approval_dir,
+        shell,
+        timeout_secs,
+        output_limit,
+    };
+    match verify::verify(&config) {
+        Ok(view) => {
+            let met = view.met;
+            print_view(json, &view, &format!("verified: {slug}/{id} met={met}"));
+            if !met {
+                std::process::exit(1);
+            }
+        }
+        Err(error) => verify_error(json, error),
+    }
+    Ok(())
+}
+
+fn print_view(json: bool, value: &impl serde::Serialize, human: &str) {
+    if json {
+        write_stdout(&serde_json::to_string(value).expect("serializable view"));
+    } else {
+        println!("{human}");
+    }
+}
+
+fn verify_error(json: bool, error: verify::VerifyError) -> ! {
+    let (exit, outcome, code) = match &error {
+        verify::VerifyError::ApprovalRequired => (3, "approval_required", "approval_required"),
+        verify::VerifyError::Discarded(_) => (3, "discarded", "currentness_changed"),
+        verify::VerifyError::Invalid(_) => (2, "invalid", "invalid_schema"),
+        verify::VerifyError::Io(_) => (2, "invalid", "io_error"),
+    };
+    if json {
+        let value = serde_json::json!({
+            "outcome": outcome,
+            "code": code,
+            "message": error.to_string(),
+        });
+        write_stdout(&value.to_string());
+    } else {
+        eprintln!("{code}: {error}");
+    }
+    std::process::exit(exit)
 }
 
 fn write_stdout(text: &str) {

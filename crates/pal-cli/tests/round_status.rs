@@ -210,7 +210,7 @@ fn terminal은_verification과_분리되고_서로_배타다() {
 #[test]
 fn unknown_schema_kind_mode_field는_안정된_code로_거부된다() {
     let cases = [
-        r#"{"kind":"schema","version":2,"round":"fixture-round"}"#,
+        r#"{"kind":"schema","version":3,"round":"fixture-round"}"#,
         r#"{"kind":"mystery","version":1,"round":"fixture-round"}"#,
         r#"{"kind":"schema","version":1,"round":"fixture-round","extra":1}"#,
         r#"{"kind":"schema","version":1,"round":"fixture-round"}

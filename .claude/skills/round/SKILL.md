@@ -136,6 +136,13 @@ Python `record.py conditions` 는 옛 호출자를 위한 호환 래퍼일 뿐�
 `unregistered · pending · stale · met · unmet`을 읽는다. 이 명령은 oracle을 실행하지 않고
 원장도 고치지 않는다. `verification=met`은 실행 증거의 현재성이지 회차 종료 선언이 아니다.
 
+새 schema 2 회차의 command oracle은 먼저 `pal round approve --round <slug> --id <ID>`로
+외부 사용자 저장소에 exact 승인을 남기고, 그 뒤 `pal round verify --round <slug> --id <ID>`로
+실행한다. approve는 실행하지 않고 verify만 evidence를 append한다. `negative_for`로 등록한
+음성 대조가 실제 current evidence를 내지 않으면 연결된 주 조건도 `met`이 아니다. 승인 전
+실행, 실행 중 oracle/projected tree 변화, timeout/output cap은 fail-closed하며 Stop 훅을
+점등하지 않는다.
+
 ## 4. 승인 — 여기서 루프에 들어간다
 
 소유자가 잠긴 의도를 승인한다. **승인은 의도가 잠길 때마다 한 번**이므로, 승격이 일어나면 다시 받는다.

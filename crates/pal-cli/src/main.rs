@@ -420,6 +420,44 @@ enum RoundCommand {
         #[arg(long)]
         json: bool,
     },
+    /// exact command oracle를 외부 사용자 저장소에 승인한다 — 실행하지 않는다
+    Approve {
+        #[arg(long)]
+        round: String,
+        #[arg(long)]
+        id: String,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        approval_dir: Option<PathBuf>,
+        #[arg(long)]
+        shell: Option<PathBuf>,
+        #[arg(long, default_value_t = pal_core::PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS)]
+        timeout: u64,
+        #[arg(long, default_value_t = pal_core::PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES)]
+        output_limit: usize,
+        #[arg(long)]
+        json: bool,
+    },
+    /// 승인된 exact command oracle를 실행하고 current evidence를 append한다
+    Verify {
+        #[arg(long)]
+        round: String,
+        #[arg(long)]
+        id: String,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        approval_dir: Option<PathBuf>,
+        #[arg(long)]
+        shell: Option<PathBuf>,
+        #[arg(long, default_value_t = pal_core::PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS)]
+        timeout: u64,
+        #[arg(long, default_value_t = pal_core::PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES)]
+        output_limit: usize,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -518,6 +556,18 @@ fn main() -> Result<()> {
             RoundCommand::Status { round: slug, json } => {
                 round::round_status(slug.as_deref(), json)
             }
+            RoundCommand::Approve {
+                round: slug, id, repo, approval_dir, shell, timeout, output_limit, json,
+            } => round::round_approve(
+                &repo, &slug, &id, approval_dir.as_deref(), shell.as_deref(), timeout,
+                output_limit, json,
+            ),
+            RoundCommand::Verify {
+                round: slug, id, repo, approval_dir, shell, timeout, output_limit, json,
+            } => round::round_verify(
+                &repo, &slug, &id, approval_dir.as_deref(), shell.as_deref(), timeout,
+                output_limit, json,
+            ),
         },
         Command::Intent { what } => match what {
             IntentCommand::Export { repo, intent, out } => intent::export(&repo, intent, out),

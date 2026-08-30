@@ -88,6 +88,13 @@ pub trait GitAccess {
     /// 워킹트리가 없거나(bare) 인덱스·파일을 읽지 못하면.
     fn worktree_state(&self) -> Result<WorktreeState, GitError>;
 
+    /// 추적 워킹트리에서 정확히 지정한 저장소 상대 경로를 뺀 투영의 요약.
+    ///
+    /// 회차 evidence 파일처럼 관측 자체가 입력을 바꾸는 한 자리를 제외할 때 쓴다.
+    /// 제외 목록은 호출자가 소유하며, 이 함수는 ignored/untracked 파일을 새 모집단으로
+    /// 넓히지 않는다.
+    fn worktree_digest_excluding(&self, excluded: &[RepoPath]) -> Result<Digest, GitError>;
+
     /// 워킹트리의 파일 하나를 읽는다.
     ///
     /// **[`GitAccess::read_blob`] 으로 대신할 수 없다.** 아직 커밋되지 않은 파일은
@@ -373,6 +380,12 @@ impl GitAccess for GixRepo {
             trusted_from_index: trusted,
             rehashed,
         })
+    }
+
+    fn worktree_digest_excluding(&self, excluded: &[RepoPath]) -> Result<Digest, GitError> {
+        let (mut list, _, _) = self.scan_worktree()?;
+        list.retain(|(path, _)| !excluded.contains(path));
+        Ok(digest_of(&list))
     }
 
     fn read_worktree_file(&self, path: &RepoPath) -> Result<Vec<u8>, GitError> {
@@ -699,6 +712,5 @@ impl GixRepo {
             .map_err(|e| GitError::Resolve(e.to_string()))
     }
 }
-
 
 
