@@ -8,9 +8,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use pal_core::{
-    ROUND_VERIFICATION_FILE_MAX_BYTES, ROUND_VERIFICATION_LINE_MAX_BYTES, RepoPath,
-};
+use pal_core::RepoPath;
 use pal_git::{GitAccess, GixRepo};
 use serde::Serialize;
 use thiserror::Error;
@@ -479,13 +477,7 @@ fn append_line(guard: &AppendGuard, line: &str) -> Result<(), VerifyError> {
             "ledger가 완전한 줄바꿈으로 끝나지 않는다".to_owned(),
         ));
     }
-    let added = line
-        .len()
-        .checked_add(1)
-        .ok_or_else(|| VerifyError::Io("evidence line 크기가 넘쳤다".to_owned()))?;
-    if line.len() > ROUND_VERIFICATION_LINE_MAX_BYTES
-        || current.len().saturating_add(added) > ROUND_VERIFICATION_FILE_MAX_BYTES as usize
-    {
+    if !ledger::append_fits(current.len(), line.len()) {
         return Err(VerifyError::Io(
             "evidence를 더하면 verification 원장 상한을 넘는다".to_owned(),
         ));

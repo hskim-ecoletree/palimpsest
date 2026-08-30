@@ -263,6 +263,16 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
     })
 }
 
+/// 새 JSON 행을 더한 원장이 reader의 파일·행 상한 안에 그대로 되읽힐 수 있는가.
+#[must_use]
+pub fn append_fits(current_bytes: usize, line_bytes: usize) -> bool {
+    line_bytes <= ROUND_VERIFICATION_LINE_MAX_BYTES
+        && line_bytes
+            .checked_add(1)
+            .and_then(|added| current_bytes.checked_add(added))
+            .is_some_and(|total| total <= ROUND_VERIFICATION_FILE_MAX_BYTES as usize)
+}
+
 pub fn oracle_digest(mode: &str, check: &str, literal: &str, cwd: &str) -> String {
     let mut hasher = blake3::Hasher::new();
     hasher.update(DOMAIN);
