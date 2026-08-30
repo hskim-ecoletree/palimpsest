@@ -12,49 +12,49 @@ Scope: deliver the read-only round verification reducer, CLI surfaces, Python co
   CHECK: cargo test -p pal-cli --test round_status
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=b6e5d72027729b62c68c7fadf556645f16c80e1e45a35b787e9892ad5793a411; output-bytes=2012
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=fc1cc00b841dbbc8e7313c347e354fc1245856525ff1e59e41a167a52fc7ab29; output-bytes=2012
 
 - [x] G2: the preserved Python golden and compatibility wrappers agree with the Rust condition parser
   CHECK: cargo test -p pal-cli --test round_scripts_run
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=0b40cfc6d220ef7167fd8b50722ff0c347a60086c2e39f26b4f9390567c07863; output-bytes=1337
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=a2ade3a33397febb997ba48a1d3a78719829a4834fb7be4f289ecd630f9d09e6; output-bytes=1337
 
 - [x] G3: existing hook behavior remains green
   CHECK: cargo test -p pal-cli --test hook
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=6f8e02a0242de65e78ee4b7f154164fb005fd716ea441e18d35166b57565715b; output-bytes=650
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=4af7d9f6653fe341a722f6b515ac55c98e5e33c1e935b5f34ef57808ac43a234; output-bytes=650
 
 - [x] G4: existing hook installation behavior remains green
   CHECK: cargo test -p pal-cli --test install_hooks
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=4083443bf53cd0ad650abd233b22959a8294201212738a3fe38746dc03106efd; output-bytes=1578
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=260496b1ee51721a1382aa6652cb6185e6180bb1a88e14d347e703fa89fce844; output-bytes=1578
 
-- [ ] G5: repository governance accepts the implementation
+- [x] G5: repository governance accepts the implementation
   CHECK: cargo xtask check
   EXPECT: 검사 23/23 통과
   CWD: ../../..
-  EVIDENCE: pending
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=08b5959c856e5ed69fed86b5125b6344500eef143b09409d8056fafaea27e17d; output-bytes=4816
 
 - [x] G6: the complete workspace accepts the implementation
   CHECK: cargo test --workspace --all-targets
   EXPECT: test result: ok
   CWD: ../../..
-  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=19249a8942cf9930616082ef0ff1a391f11c03c42711919cda043dde350036b7; output-bytes=67312
+  EVIDENCE: exit=0; shell=/bin/sh; cwd=/Users/incognito/dev/projects/palimpsest-agent-laziness; path=3cccc2fd23fe/30 entries; EXPECT=matched; output-sha256=b0b70bcd1618fe32c5fe2d8d9b9baf256760f6ae2f7bf3d4ffca5865faebffcd; output-bytes=67312
 
-- [ ] G7: the implementation keeps the required dependency direction and has no pal-cli library target
-  EVIDENCE: pending
+- [x] G7: the implementation keeps the required dependency direction and has no pal-cli library target
+  EVIDENCE: cargo xtask check reports dependency direction ok; crates/pal-cli has only src/main.rs as its target root; Cargo.toml has xtask -> pal-intent and no xtask -> pal-cli edge
 
-- [ ] G8: issue 88 and its native blocking relationships describe the implemented vertical path
-  EVIDENCE: pending
+- [x] G8: issue 88 and its native blocking relationships describe the implemented vertical path
+  EVIDENCE: GitHub issue #88 is CLOSED/COMPLETED at 2026-08-30T14:55:44Z; frontier reports #85 and #97 ready after their native blocker #88 closed
 
-- [ ] G9: premortem and independent review findings are fully disposed within their registered caps
-  EVIDENCE: pending
+- [x] G9: premortem and independent review findings are fully disposed within their registered caps
+  EVIDENCE: findings.jsonl has 18 valid closed rows; cargo xtask check reports premortem R1 12↔12, independent review R1 3↔3 and R2 3↔3, with 0 open rows
 
-- [ ] G10: an ADR, gate document, non-test effect observation, graph binding, and clean termination report close the round
-  EVIDENCE: pending
+- [x] G10: an ADR, gate document, non-test effect observation, graph binding, and clean termination report close the round
+  EVIDENCE: ADR-0028; docs/gates/round-verification-status.md; effect/input and output artifacts; live bindings f41129d0619d5ba6, 6e8ef4bfbf6de0b4, ec7b21863a090892; report.md
 
 - [ ] G11: the final pushed SHA has a successful GitHub CI conclusion on all supported platforms
   EVIDENCE: pending

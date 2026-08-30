@@ -2,8 +2,8 @@
 
 ## 지금 단계
 
-구현과 로컬 전량 검증, 효과 관측, 독립 리뷰 R1 처분을 마쳤다. A9를 닫을 마지막 SHA의
-ubuntu·macOS·Windows CI와 독립 리뷰 R2, ADR·게이트·종료 보고를 남겼다.
+구현, 효과 관측, 로컬 전량 검증, 세 OS CI, 사전부검 1라운드와 독립 리뷰 2라운드의
+처분, ADR·게이트·종료 보고, #88 종료를 마쳤다. 최종 push SHA의 외부 CI만 종료 좌표로 확인한다.
 
 ## 인터뷰
 
@@ -128,7 +128,6 @@ ubuntu·macOS·Windows CI와 독립 리뷰 R2, ADR·게이트·종료 보고를 
 
 ## 남은 것
 
-- 독립 리뷰 R2로 R1-01·R1-03 처분을 대조하고, A9는 마지막 SHA 세 OS CI로 닫는다.
-- ADR·게이트·종료 보고와 findings 원장을 완결한다.
-- 새 Rust·Python·문서 좌표를 그래프에 결박하고 #88을 닫는다.
-- 최종 push 뒤 GitHub CI를 전량 확인한다.
+- 구현·판정·발견·효과·결정에 미처분 항목은 0이다.
+- #88은 CLOSED/COMPLETED이고 #85·#97은 native blocker 해소 뒤 frontier의 ready 목록에 있다.
+- 최종 push SHA의 GitHub CI 성공을 외부 terminal observation으로 확인하는 일만 G11이 진다.
