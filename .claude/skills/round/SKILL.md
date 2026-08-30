@@ -118,18 +118,23 @@ description: palimpsest 의 회차를 연다. 의도를 잠그고, 끝날 때까
 된다 — 최근 두 회차가 조건 90 개를 열린 채로 끝낸 것이 그 병이다.
 
 ⚠ **ID 문법을 안 적으면 파서만 엄격해진다.** 옛 회차 둘은 이 문법을 안 지켜
-`record.py conditions` 가 그 조건들을 **전부 「ID 가 없다」로 낸다** — 그 회차들이
+`pal round conditions --file <intent.md> --json` 이 그 조건들을 **전부 「ID 가 없다」로 낸다** — 그 회차들이
 쓰일 때 그 문법이 어디에도 안 적혀 있었기 때문이다(독립 리뷰 R7).
 **엄격한 파서와 안 적힌 문법은 같이 가면 안 된다.**
 
 ⚠ **순서를 못 박는다.** `⟨전사 …⟩` 를 판정 앞에 두면 「마지막 `·` 뒤」 규칙이 enum
 밖 토큰을 읽어 조건 전량이 형식 오류가 된다(사전부검이 격리 사본에서 재현했다).
 
-**세는 자리는 하나다** — `python3 .claude/skills/round/bin/record.py conditions <intent.md>`
-(설치본은 `pal-round/`). `^- \[` 로 세면 코드펜스 안의 형식 예시와 `## 범위 밖` 의
+**세는 자리는 하나다** — `pal round conditions --file <intent.md> --json`.
+Python `record.py conditions` 는 옛 호출자를 위한 호환 래퍼일 뿐이고 문법을 해석하지 않는다.
+`^- \[` 로 세면 코드펜스 안의 형식 예시와 `## 범위 밖` 의
 불릿까지 세어 **분자와 분모가 둘 다 틀린다.** 함정 파일로 재현했고 — **수는 여기 안
 적는다**(사전부검 원 반환문이 진다). ⚠ 앞 판이 이 자리에 적은 비율은 저장소에 보존된
 재현물의 값과 **달랐다**(독립 리뷰 R2).
+
+결정론 조건의 실행 증거를 등록한 회차는 `pal round status --round <slug> --json` 으로
+`unregistered · pending · stale · met · unmet`을 읽는다. 이 명령은 oracle을 실행하지 않고
+원장도 고치지 않는다. `verification=met`은 실행 증거의 현재성이지 회차 종료 선언이 아니다.
 
 ## 4. 승인 — 여기서 루프에 들어간다
 

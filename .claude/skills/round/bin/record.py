@@ -6,7 +6,7 @@
           python3 record.py add    <회차디렉터리> [--기준커밋 <sha>] < 한줄JSON들
           python3 record.py check  <파일…>
           python3 record.py count  <회차디렉터리>
-          python3 record.py conditions <intent.md>   # 완수 조건 파서 — 유일한 자리
+          python3 record.py conditions <intent.md>   # `pal round conditions` 호환 래퍼
           python3 record.py gate       <게이트.md>   # 게이트 표준 표 파서 — 유일한 자리
 
 ★ **호출은 `python3 <경로>` 다.** 설치본은 파일 모드를 0644 로 놓아 직접 실행이 안 된다
@@ -132,103 +132,37 @@ def 필드들(버전):
 }
 
 
-# ── 완수 조건 파서 — **이 저장소에서 상자를 읽는 유일한 자리** ────────────────
+# ── 완수 조건 호환 래퍼 ──────────────────────────────────────────────────────
 #
-# ★ `dashboard.py` 가 이것을 `import` 하고 `xtask` 가 `conditions` 로 **위임**한다.
-#   앞 회차가 `종류` 축을 두 벌로 두었다가 C2-b 반증을 맞았다 — 같은 형태를 안 만든다.
-#
-# ⚠ 실측 2026-08-22 (사전부검 R2·R3, 격리 사본에서 재현):
-#   ① `^- \[` 는 **코드펜스 안의 형식 예시와 `## 범위 밖` 의 불릿까지 센다** → `3/4`
-#   ② 들여쓴 상자를 못 본다. **열림 쪽만 고치면 분모가 깨진다** → `2/3`
-#   그래서 이 파서는 **절을 알고 · 펜스를 알고 · 들여쓰기를 받는다.**
+# 문법의 단일 정본은 `pal-intent`다. Python은 `PAL_BIN`, 없으면 PATH의 `pal`을 호출한다.
+# 기존 JSON/exit 계약을 그대로 전달해 설치본과 옛 호출자가 동시에 이동할 수 있게 한다.
 
-조건절 = "완수 조건"          # 이 절 안의 상자만 조건이다
+조건절 = "완수 조건"
 판정값 = ["통과", "반증", "대조불가", "미측정"]
 
-_상자 = re.compile(r'^(?P<들여>\s*)- \[(?P<표>[ xX])\]\s+(?P<몸>.*)$')
-_아이디 = re.compile(r'^\**([A-Z][0-9]+(?:-[a-z])?)\**\s')
-_코드스팬 = re.compile(r'`[^`]*`')
-_태그 = re.compile(r'·\s*(?P<판정>통과|반증|대조불가|미측정)\s*(?:⟨전사\s*(?P<전사>[0-9]{4}-[0-9]{2}-[0-9]{2})⟩)?\s*$')
+def _pal_conditions(path):
+    pal = os.environ.get("PAL_BIN", "pal")
+    try:
+        return subprocess.run(
+            [pal, "round", "conditions", "--file", path, "--json"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+        )
+    except OSError as e:
+        return subprocess.CompletedProcess([pal], 2, "", f"pal을 실행하지 못했다: {e}\n")
 
 
-def 조건들(본문):
-    """`## 완수 조건` 절의 상자를 낸다. 펜스 안과 다른 절은 안 센다.
-
-    낸다: [{"id","상자","판정","전사","줄","원문","형식오류"}]
-    **첫 줄 끝의 태그만 읽는다** — 조건 열이 여러 줄에 걸치기 때문이다(실측 90 중 10).
-    """
-    out, 안, 펜스 = [], False, False
-    for i, 줄 in enumerate(본문.splitlines(), 1):
-        if 줄.lstrip().startswith("```"):
-            펜스 = not 펜스
-            continue
-        if 펜스:
-            continue
-        h = re.match(r'^(#+)\s+(.*)$', 줄)
-        if h:
-            # ⚠ **깊이를 본다.** 조건은 `### A — …` 같은 하위 절에 산다 —
-            #   깊이를 안 보면 첫 하위 제목이 절을 덮어써 **조건이 0 개가 된다**
-            #   (실측 2026-08-22: 이 파서의 첫 판이 회차 셋 전부에서 0 을 냈다).
-            깊이, 제목 = len(h.group(1)), h.group(2).strip()
-            if 깊이 <= 2:
-                안 = 제목.startswith(조건절)
-            continue
-        if not 안:
-            continue
-        m = _상자.match(줄)
-        if not m:
-            continue
-        몸 = m.group("몸")
-        # ⚠ **인라인 코드 스팬을 지우고 태그를 찾는다.** 펜스만 보고 백틱을 안 보면
-        #   조건이 형식을 **인용**한 것을 태그로 오인한다 — 실측 2026-08-22: 이 파서가
-        #   자기를 만든 `intent.md` 에서 거짓 양성 둘을 냈다(B5·H3).
-        태그면 = _코드스팬.sub(" ", 몸)
-        오류 = []
-        mid = _아이디.match(몸)
-        if not mid:
-            오류.append("ID 가 없다 (`A1` 꼴이 조건 첫 낱말이어야 한다)")
-        mt = _태그.search(태그면)
-        켜짐 = m.group("표") in "xX"
-        if 켜짐 and not mt:
-            오류.append("상자가 켜졌는데 판정 태그가 없다 (`· 통과` 꼴)")
-        if (not 켜짐) and mt:
-            오류.append("상자가 안 켜졌는데 판정 태그가 있다 — 안 켜짐은 미측정이다")
-        # ⚠ 순서를 못 박는다: `· <판정> ⟨전사 …⟩`. 뒤집으면 「마지막 `·` 뒤」 규칙이
-        #   enum 밖 토큰을 읽어 90 개가 전부 실패한다(사전부검 R2 #13).
-        if "⟨전사" in 태그면 and not (mt and mt.group("전사")):
-            # ⚠ 매치가 났어도 `전사` 가 비면 **뒤집힌 것**이다 — 정규식이 줄 끝의
-            #   `· 통과` 만 보고 앞의 `⟨전사…⟩` 를 조용히 버린다. 등록한 음성 대조가
-            #   이 구멍을 찾았다(실측 2026-08-22).
-            오류.append("`⟨전사 …⟩` 가 판정 뒤에 안 왔다 (`· <판정> ⟨전사 …⟩`)")
-        # ⚠ **같은 ID 가 두 번 오면 형식 오류다.** (독립 리뷰 R6)
-        #   게이트 표준 표는 ID 집합이라 중복을 하나로 접고, 계기판 ②는 상자를 **행으로**
-        #   센다 — 그래서 복제 줄 하나로 **같은 회차의 두 자리가 다른 분모**를 말한다.
-        #   실측: 검사는 `(69개)`, 계기판은 `2 / 70`. 그러고도 21/21 초록이었다.
-        if mid and any(c["id"] == mid.group(1) for c in out):
-            오류.append(f"조건 ID `{mid.group(1)}` 가 두 번 있다 — ID 는 한 회차에 한 번이다")
-        out.append({
-            "id": mid.group(1) if mid else None,
-            "상자": 켜짐,
-            "판정": (mt.group("판정") if mt else ("미측정" if not 켜짐 else None)),
-            "전사": (mt.group("전사") if mt else None),
-            "줄": i,
-            "원문": 줄.rstrip(),
-            "형식오류": 오류,
-        })
-    return out
+def 조건파일(path):
+    결과 = _pal_conditions(path)
+    if 결과.returncode not in (0, 1):
+        raise RuntimeError(결과.stderr or 결과.stdout or "pal round conditions 실패")
+    return json.loads(결과.stdout)["조건"]
 
 
 def cmd_conditions(path):
-    본문 = open(path, encoding="utf-8").read()
-    cs = 조건들(본문)
-    print(json.dumps({
-        "파일": path,
-        "조건": cs,
-        "열림": sum(1 for c in cs if not c["상자"]),
-        "닫힘": sum(1 for c in cs if c["상자"]),
-        "형식오류": sum(len(c["형식오류"]) for c in cs),
-    }, ensure_ascii=False, indent=2))
-    return 1 if any(c["형식오류"] for c in cs) else 0
+    결과 = _pal_conditions(path)
+    sys.stdout.write(결과.stdout)
+    sys.stderr.write(결과.stderr)
+    return 결과.returncode
 
 
 # ── 게이트 표준 표 파서 — **원장 둘 중 나머지 하나** ──────────────────────────

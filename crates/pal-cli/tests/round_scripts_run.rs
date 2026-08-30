@@ -24,7 +24,7 @@ mod common;
 use std::path::Path;
 use std::process::Command;
 
-use common::{pal, 저장소};
+use common::{pal, path_앞에, 저장소, PAL};
 
 /// 파이썬 실행자 — 이름은 플랫폼이 정한다. **한 자리에서 정한다.**
 fn 파이썬() -> &'static str {
@@ -44,6 +44,7 @@ fn 파이썬() -> &'static str {
 fn 돌린다(cwd: &Path, args: &[&str]) -> (bool, String, String) {
     let out = Command::new(파이썬())
         .args(args)
+        .env("PAL_BIN", PAL)
         .current_dir(cwd)
         .output()
         .expect("파이썬을 못 띄웠다");
@@ -52,6 +53,61 @@ fn 돌린다(cwd: &Path, args: &[&str]) -> (bool, String, String) {
         String::from_utf8_lossy(&out.stdout).into_owned(),
         String::from_utf8_lossy(&out.stderr).into_owned(),
     )
+}
+
+#[test]
+fn record_conditions는_rust_json과_exit을_그대로_전달한다() {
+    let repo = 저장소("record-conditions-wrapper");
+    pal(&repo, &["install"]);
+    let intent = repo.join("intent.md");
+    std::fs::write(&intent, include_str!("fixtures/round_conditions_traps.md"))
+        .expect("golden intent");
+
+    let direct = Command::new(PAL)
+        .args(["round", "conditions", "--file", "intent.md", "--json"])
+        .current_dir(&repo)
+        .output()
+        .expect("pal conditions");
+    let wrapper = Command::new(파이썬())
+        .args([".claude/skills/pal-round/bin/record.py", "conditions", "intent.md"])
+        .env("PAL_BIN", PAL)
+        .current_dir(&repo)
+        .output()
+        .expect("record wrapper");
+    assert_eq!(direct.status.code(), Some(1));
+    assert_eq!(wrapper.status.code(), Some(1));
+    let direct_json: serde_json::Value =
+        serde_json::from_slice(&direct.stdout).expect("direct JSON");
+    let wrapper_json: serde_json::Value =
+        serde_json::from_slice(&wrapper.stdout).expect("wrapper JSON");
+    assert_eq!(wrapper_json, direct_json);
+}
+
+#[test]
+fn record_conditions는_pal_bin이_없으면_path의_pal을_쓴다() {
+    let repo = 저장소("record-conditions-path");
+    pal(&repo, &["install"]);
+    std::fs::write(repo.join("intent.md"), "## 완수 조건\n- [ ] A1 condition\n")
+        .expect("intent");
+    let bin = repo.join("fixture-bin");
+    std::fs::create_dir_all(&bin).expect("bin");
+    let name = format!("pal{}", std::env::consts::EXE_SUFFIX);
+    std::fs::copy(PAL, bin.join(name)).expect("pal copy");
+
+    let out = Command::new(파이썬())
+        .args([".claude/skills/pal-round/bin/record.py", "conditions", "intent.md"])
+        .env_remove("PAL_BIN")
+        .env("PATH", path_앞에(&bin))
+        .current_dir(&repo)
+        .output()
+        .expect("PATH wrapper");
+    assert!(
+        out.status.success(),
+        "PATH의 pal을 못 썼다:\n{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let json: serde_json::Value = serde_json::from_slice(&out.stdout).expect("JSON");
+    assert_eq!(json["조건"][0]["id"], "A1");
 }
 
 /// ★ **설치본의 쓰는 자가 실제로 돈다.**

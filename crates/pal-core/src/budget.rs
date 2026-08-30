@@ -162,6 +162,17 @@ pub const EXTRACT_CHUNK: usize = 256;
 /// **옛 자리**: `pal_cli::ledger`.
 pub const CORRUPT_NOTES: usize = 5;
 
+/// `verification.log` schema 1이 읽는 파일 바이트 상한.
+///
+/// schema 1의 호환 계약이라 측정으로 조정하지 않고 다음 schema version에서만 바뀐다.
+pub const ROUND_VERIFICATION_FILE_MAX_BYTES: u64 = 8 * 1024 * 1024;
+
+/// `verification.log` schema 1의 한 JSON 행 바이트 상한(줄바꿈 제외).
+pub const ROUND_VERIFICATION_LINE_MAX_BYTES: usize = 64 * 1024;
+
+/// `verification.log` schema 1의 문자열 값 UTF-8 바이트 상한.
+pub const ROUND_VERIFICATION_STRING_MAX_BYTES: usize = 32 * 1024;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 질의 예산 — 옛 F05 §5.2. **이 실행기가 존재하는 이유가 이 셋이다.**
 //

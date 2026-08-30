@@ -1378,6 +1378,7 @@ name = "pal-cli"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "blake3",
  "clap",
  "pal-core",
  "pal-extract",
@@ -1388,6 +1389,7 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -2137,6 +2139,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "pal-core",
+ "pal-intent",
  "serde_json",
 ]
 

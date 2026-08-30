@@ -5121,7 +5121,12 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
             continue;
         }
 
-        let c = 파서에_묻는다(파이썬, &원천, "conditions", &뿌리.join(회차).join("intent.md"))?;
+        let 의도경로 = 뿌리.join(회차).join("intent.md");
+        let 의도본문 = std::fs::read_to_string(&의도경로)?;
+        let c = serde_json::to_value(pal_intent::round_condition::ConditionsReport::parse(
+            의도경로.to_string_lossy(),
+            &의도본문,
+        ))?;
         let 조건들 = c["조건"].as_array().cloned().unwrap_or_default();
 
         // ★ **모집단이 비면 실패다.** (독립 리뷰 R1 · 2026-08-23)

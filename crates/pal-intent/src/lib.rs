@@ -32,6 +32,7 @@
 #![forbid(unsafe_code)]
 
 mod store;
+pub mod round_condition;
 
 pub use store::{
     ImportReport, IntentError, IntentLine, IntentStore, JSONL_SCHEMA_VERSION,

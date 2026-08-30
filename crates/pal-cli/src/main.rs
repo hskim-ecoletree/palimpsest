@@ -25,6 +25,7 @@ mod ledger;
 mod narrative;
 mod plan;
 mod query;
+mod round;
 mod touch;
 mod version;
 
@@ -271,6 +272,11 @@ enum Command {
         /// 사건 이름. **모르는 것은 조용히 통과시킨다**
         event: String,
     },
+    /// 회차의 조건과 verification 상태를 읽는다 — 명령을 실행하지 않는다
+    Round {
+        #[command(subcommand)]
+        what: RoundCommand,
+    },
     /// 의도 저장소를 JSONL 로 내고 되읽는다 — **재구축 불가한 것의 유일한 복구 경로**
     Intent {
         #[command(subcommand)]
@@ -399,6 +405,24 @@ enum IntentCommand {
 }
 
 #[derive(Subcommand)]
+enum RoundCommand {
+    /// `intent.md`의 완수 조건을 Rust 정본으로 읽는다
+    Conditions {
+        #[arg(long)]
+        file: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
+    /// verification 원장을 읽기 전용으로 축약한다
+    Status {
+        #[arg(long)]
+        round: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Subcommand)]
 enum CacheCommand {
     /// 얼마나 차 있는가
     Stats {
@@ -489,6 +513,12 @@ fn main() -> Result<()> {
             hook::run(&event);
             Ok(())
         }
+        Command::Round { what } => match what {
+            RoundCommand::Conditions { file, json } => round::conditions(&file, json),
+            RoundCommand::Status { round: slug, json } => {
+                round::round_status(slug.as_deref(), json)
+            }
+        },
         Command::Intent { what } => match what {
             IntentCommand::Export { repo, intent, out } => intent::export(&repo, intent, out),
             IntentCommand::Import { file, repo, intent, json } => {

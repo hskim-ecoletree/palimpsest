@@ -26,7 +26,7 @@ import subprocess, sys, re, collections, os
 #   앞 회차가 `종류` 축을 두 벌로 두었다가 C2-b 반증을 맞았고, 답이 「불러서 쓴다」였다.
 #   설치본도 같은 `bin/` 에 둘을 놓으므로 이 import 가 양쪽에서 선다.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from record import 조건들
+from record import 조건파일
 
 # ★ **출력 인코딩을 못 박는다.** 이 스크립트의 출력은 전부 한국어이고, Windows 의
 # 파이썬은 **비-tty stdout 에 로케일 인코딩(보통 cp1252)** 을 쓴다. 그러면 파이프로
@@ -128,7 +128,7 @@ def main(착수, 의도파일=None, 종료="HEAD"):
     #   그 파서는 **절을 알고 · 코드펜스와 인라인 스팬을 알고 · 들여쓰기를 받는다.**
     #   옛 `^- \[` 는 형식 예시와 `## 범위 밖` 의 불릿까지 세었다(실측 `3/4`).
     if 의도파일 and os.path.exists(의도파일):
-        cs = 조건들(open(의도파일, encoding='utf-8').read())
+        cs = 조건파일(의도파일)
         열림 = sum(1 for c in cs if not c["상자"])
         오류 = sum(len(c["형식오류"]) for c in cs)
         if not cs:
