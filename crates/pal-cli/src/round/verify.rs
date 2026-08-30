@@ -2,19 +2,26 @@
 
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, ExitStatus, Stdio};
+use std::process::{Command, ExitStatus, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use pal_core::RepoPath;
+use pal_core::{
+    ROUND_VERIFICATION_FILE_MAX_BYTES, ROUND_VERIFICATION_LINE_MAX_BYTES, RepoPath,
+};
 use pal_git::{GitAccess, GixRepo};
 use serde::Serialize;
 use thiserror::Error;
 
 use super::approval::{self, ApprovalError};
 use super::ledger::{self, Oracle, VerificationLedger};
+
+#[cfg(unix)]
+type OracleChild = std::process::Child;
+#[cfg(windows)]
+type OracleChild = Box<dyn process_wrap::std::StdChildWrapper>;
 
 #[derive(Clone, Debug)]
 pub struct Config<'a> {
@@ -260,20 +267,14 @@ fn execute(
     }
     #[cfg(windows)]
     {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        command
-            .args(["/D", "/S", "/C", check])
-            .creation_flags(CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW);
+        command.args(["/D", "/S", "/C", check]);
     }
-    let mut child = command
+    command
         .current_dir(cwd)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|error| VerifyError::Io(format!("oracle spawn: {error}")))?;
+        .stderr(Stdio::piped());
+    let mut child = spawn_child(command)?;
 
     let stdout = Arc::new(Mutex::new(Vec::new()));
     let stderr = Arc::new(Mutex::new(Vec::new()));
@@ -282,7 +283,7 @@ fn execute(
     let stdout_done = Arc::new(AtomicBool::new(false));
     let stderr_done = Arc::new(AtomicBool::new(false));
     let stdout_thread = drain(
-        child.stdout.take().expect("piped stdout"),
+        take_stdout(&mut child).expect("piped stdout"),
         Arc::clone(&stdout),
         Arc::clone(&bytes),
         Arc::clone(&overflow),
@@ -290,7 +291,7 @@ fn execute(
         output_limit,
     );
     let stderr_thread = drain(
-        child.stderr.take().expect("piped stderr"),
+        take_stderr(&mut child).expect("piped stderr"),
         Arc::clone(&stderr),
         Arc::clone(&bytes),
         Arc::clone(&overflow),
@@ -352,6 +353,44 @@ fn execute(
     })
 }
 
+#[cfg(unix)]
+fn spawn_child(mut command: Command) -> Result<OracleChild, VerifyError> {
+    command
+        .spawn()
+        .map_err(|error| VerifyError::Io(format!("oracle spawn: {error}")))
+}
+
+#[cfg(windows)]
+fn spawn_child(command: Command) -> Result<OracleChild, VerifyError> {
+    use process_wrap::std::{JobObject, StdCommandWrap};
+
+    let mut wrapped = StdCommandWrap::from(command);
+    wrapped.wrap(JobObject);
+    wrapped
+        .spawn()
+        .map_err(|error| VerifyError::Io(format!("oracle job spawn: {error}")))
+}
+
+#[cfg(unix)]
+fn take_stdout(child: &mut OracleChild) -> Option<std::process::ChildStdout> {
+    child.stdout.take()
+}
+
+#[cfg(windows)]
+fn take_stdout(child: &mut OracleChild) -> Option<std::process::ChildStdout> {
+    child.stdout().take()
+}
+
+#[cfg(unix)]
+fn take_stderr(child: &mut OracleChild) -> Option<std::process::ChildStderr> {
+    child.stderr.take()
+}
+
+#[cfg(windows)]
+fn take_stderr(child: &mut OracleChild) -> Option<std::process::ChildStderr> {
+    child.stderr().take()
+}
+
 fn drain<R: Read + Send + 'static>(
     mut reader: R,
     buffer: Arc<Mutex<Vec<u8>>>,
@@ -359,39 +398,45 @@ fn drain<R: Read + Send + 'static>(
     overflow: Arc<AtomicBool>,
     done: Arc<AtomicBool>,
     limit: usize,
-) -> JoinHandle<()> {
+) -> JoinHandle<std::io::Result<()>> {
     std::thread::spawn(move || {
-        let mut chunk = [0_u8; 8192];
-        loop {
-            let Ok(count) = reader.read(&mut chunk) else {
-                break;
-            };
-            if count == 0 {
-                break;
+        let result = (|| {
+            let mut chunk = [0_u8; 8192];
+            loop {
+                let count = reader.read(&mut chunk)?;
+                if count == 0 {
+                    break;
+                }
+                let before = bytes.fetch_add(count, Ordering::SeqCst);
+                if before < limit {
+                    let keep = count.min(limit - before);
+                    buffer
+                        .lock()
+                        .expect("output buffer")
+                        .extend_from_slice(&chunk[..keep]);
+                }
+                if before.saturating_add(count) > limit {
+                    overflow.store(true, Ordering::SeqCst);
+                }
             }
-            let before = bytes.fetch_add(count, Ordering::SeqCst);
-            if before < limit {
-                let keep = count.min(limit - before);
-                buffer
-                    .lock()
-                    .expect("output buffer")
-                    .extend_from_slice(&chunk[..keep]);
-            }
-            if before.saturating_add(count) > limit {
-                overflow.store(true, Ordering::SeqCst);
-            }
-        }
+            Ok(())
+        })();
         done.store(true, Ordering::SeqCst);
+        result
     })
 }
 
-fn join_drain(handle: JoinHandle<()>, stream: &str) -> Result<(), VerifyError> {
+fn join_drain(
+    handle: JoinHandle<std::io::Result<()>>,
+    stream: &str,
+) -> Result<(), VerifyError> {
     handle
         .join()
-        .map_err(|_| VerifyError::Io(format!("{stream} drain thread가 panic했다")))
+        .map_err(|_| VerifyError::Io(format!("{stream} drain thread가 panic했다")))?
+        .map_err(|error| VerifyError::Io(format!("{stream} drain: {error}")))
 }
 
-fn bounded_wait(child: &mut Child) -> Option<ExitStatus> {
+fn bounded_wait(child: &mut OracleChild) -> Option<ExitStatus> {
     let deadline = Instant::now() + Duration::from_millis(1500);
     while Instant::now() < deadline {
         if let Ok(Some(status)) = child.try_wait() {
@@ -404,7 +449,7 @@ fn bounded_wait(child: &mut Child) -> Option<ExitStatus> {
 }
 
 #[cfg(unix)]
-fn terminate_tree(child: &mut Child) -> Result<(), VerifyError> {
+fn terminate_tree(child: &mut OracleChild) -> Result<(), VerifyError> {
     let pid = rustix::process::Pid::from_raw(child.id() as i32)
         .ok_or_else(|| VerifyError::Io("child PID가 유효하지 않다".to_owned()))?;
     match rustix::process::kill_process_group(pid, rustix::process::Signal::KILL) {
@@ -414,37 +459,10 @@ fn terminate_tree(child: &mut Child) -> Result<(), VerifyError> {
 }
 
 #[cfg(windows)]
-fn terminate_tree(child: &mut Child) -> Result<(), VerifyError> {
-    let taskkill = approval::cleanup_program()?;
-    let pid = child.id().to_string();
-    let mut killer = Command::new(taskkill)
-        .args(["/pid", pid.as_str(), "/f", "/t"])
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|error| VerifyError::Io(format!("taskkill: {error}")))?;
-    let deadline = Instant::now() + Duration::from_secs(5);
-    let result = loop {
-        if let Some(status) = killer
-            .try_wait()
-            .map_err(|error| VerifyError::Io(format!("taskkill wait: {error}")))?
-        {
-            break Some(status);
-        }
-        if Instant::now() >= deadline {
-            let _ = killer.kill();
-            break killer.wait().ok();
-        }
-        std::thread::sleep(Duration::from_millis(10));
-    };
-    if !result.is_some_and(|status| status.success()) {
-        let _ = child.kill();
-        return Err(VerifyError::Io(
-            "taskkill이 5초 안에 process tree를 종료하지 못했다".to_owned(),
-        ));
-    }
-    Ok(())
+fn terminate_tree(child: &mut OracleChild) -> Result<(), VerifyError> {
+    child
+        .start_kill()
+        .map_err(|error| VerifyError::Io(format!("job-object cleanup: {error}")))
 }
 
 fn append_line(guard: &AppendGuard, line: &str) -> Result<(), VerifyError> {
@@ -459,6 +477,17 @@ fn append_line(guard: &AppendGuard, line: &str) -> Result<(), VerifyError> {
     if !current.ends_with(b"\n") {
         return Err(VerifyError::Io(
             "ledger가 완전한 줄바꿈으로 끝나지 않는다".to_owned(),
+        ));
+    }
+    let added = line
+        .len()
+        .checked_add(1)
+        .ok_or_else(|| VerifyError::Io("evidence line 크기가 넘쳤다".to_owned()))?;
+    if line.len() > ROUND_VERIFICATION_LINE_MAX_BYTES
+        || current.len().saturating_add(added) > ROUND_VERIFICATION_FILE_MAX_BYTES as usize
+    {
+        return Err(VerifyError::Io(
+            "evidence를 더하면 verification 원장 상한을 넘는다".to_owned(),
         ));
     }
     let parent = path
@@ -481,10 +510,6 @@ fn append_line(guard: &AppendGuard, line: &str) -> Result<(), VerifyError> {
     persisted
         .sync_all()
         .map_err(|error| VerifyError::Io(format!("evidence sync: {error}")))?;
-    #[cfg(unix)]
-    std::fs::File::open(parent)
-        .and_then(|directory| directory.sync_all())
-        .map_err(|error| VerifyError::Io(format!("evidence directory sync: {error}")))?;
     Ok(())
 }
 
@@ -513,5 +538,33 @@ impl AppendGuard {
 impl Drop for AppendGuard {
     fn drop(&mut self) {
         let _ = std::fs::remove_file(&self.lock);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct ReadFailure;
+
+    impl Read for ReadFailure {
+        fn read(&mut self, _buffer: &mut [u8]) -> std::io::Result<usize> {
+            Err(std::io::Error::other("injected read failure"))
+        }
+    }
+
+    #[test]
+    fn drain_read_error는_정상_eof가_아니다() {
+        let done = Arc::new(AtomicBool::new(false));
+        let handle = drain(
+            ReadFailure,
+            Arc::new(Mutex::new(Vec::new())),
+            Arc::new(AtomicUsize::new(0)),
+            Arc::new(AtomicBool::new(false)),
+            Arc::clone(&done),
+            1024,
+        );
+        assert!(join_drain(handle, "fixture").is_err());
+        assert!(done.load(Ordering::SeqCst));
     }
 }

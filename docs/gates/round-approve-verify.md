@@ -29,7 +29,7 @@ positive 성공만으로 주 조건을 `met`으로 닫을 수 없다. schema 1�
 
 ### 현재 근거
 
-- A1~A6, A8~A10: `round_approve_verify` black-box 21개가 승인 identity drift, malformed record,
+- A1~A6, A8~A10: `round_approve_verify` black-box 22개가 승인 identity drift, malformed record,
   timeout/output cap, process tree, 중간 oracle/projection 변경, append lock·partial line, stale·rerun,
   EXPECT 극성, 미실행 음성 대조, racy stat, control-role replay, 부모 선종료 descendant를 직접
   공격한다.
@@ -42,8 +42,9 @@ positive 성공만으로 주 조건을 `met`으로 닫을 수 없다. schema 1�
 - A12: 시험이 아닌 빌드된 `pal`의 승인 전 exit 3, positive 뒤 pending, 음성 대조 뒤 met 전이는
   [`effect/observation.md`](../../.palimpsest/rounds/2026-08-31-round-approve-verify/effect/observation.md)에 보존했다.
 - A13: 요구된 다섯 integration suite, `cargo xtask check` 23/23, workspace all-targets가
-  통과했다. workspace의 기존 release 규모 benchmark 하나만 선언대로 ignored이고 새 공격
-  모집단은 19/19 실행됐다.
+  통과했다. workspace의 기존 release 규모 benchmark 하나만 선언대로 ignored이고 새
+  approve/verify 모집단은 22/22 실행됐다. drain read 오류 unit 대조도 오류를 정상 EOF로
+  축약하지 않음을 잰다.
 
 ## 효과
 

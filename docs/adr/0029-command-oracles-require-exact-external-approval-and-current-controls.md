@@ -20,28 +20,37 @@ projected tree가 바뀐 뒤에도 권한과 evidence를 재사용할 수 있고
   root identity, round·condition, oracle digest와 negative-control 역할, 상대 CWD, canonical
   shell path와 shell bytes, PATH, timeout·output budget, 현재 projected digest를 모두 결박한다.
   malformed·symlink·권한 또는 identity 불일치는 spawn 전에 fail-closed한다.
-- command는 PATH에서 shell을 찾지 않는다. Unix는 `/bin/sh`, Windows는 서로 일치하는
-  `SystemRoot`·`WINDIR`·`SystemDrive` 아래 `System32/cmd.exe`를 기본으로 쓰며 선택된 shell
-  자체도 승인한다. 다른 shell은 승인하지 않는다. 기본 실행 예산은 120초와 stdout·stderr
-  합계 1 MiB다.
+- command는 PATH에서 shell을 찾지 않는다. Unix는 `/bin/sh`, Windows는 환경 문자열이 아니라
+  OS Known Folders API의 `System/cmd.exe`를 기본으로 쓰며 선택된 shell 자체도 승인한다. 다른
+  shell은 승인하지 않는다. 기본 실행 예산은 120초와 stdout·stderr 합계 1 MiB다.
 - projected digest는 `pal-git`의 정렬된 tracked worktree projection을 쓰되 Git index stat
   cache를 믿지 않고 매번 tracked blob bytes를 읽는다. 현재 round의 `verification.log`만
   제외한다. 절대 경로, HEAD, untracked·ignored 파일은 모집단이 아니다.
 - verify는 실행 전 승인·oracle·projection을 확인하고 종료 뒤 append lock을 잡은 채 모두
   다시 계산한다. 하나라도 바뀌면 결과를 폐기한다. evidence append는 기존 완전 원장과 새 JSON
-  한 행을 같은 디렉터리의 임시 파일에 쓰고 sync한 뒤 atomic replace하고 디렉터리까지 sync한다.
+  한 행을 같은 디렉터리의 임시 파일에 쓰고 sync한 뒤 atomic replace한다. reader의 파일·행
+  상한을 넘길 append는 교체 전에 거부한다. 여기서 보장하는 것은 성공 뒤 완전 원장 하나가
+  보인다는 것이며 전원 손실 뒤 directory metadata persistence는 이 원장의 계약이 아니다.
   실패 뒤 command를 자동 재실행하지 않는다.
 - positive command는 `exit == 0`, non-empty EXPECT의 combined output 관측, execution fault 없음이
   함께 있어야 성공이다. `negative_for`가 가리키는 각 control도 자기 oracle과 현재 projection에
   결박된 실제 성공 evidence가 있어야 주 조건이 `met`이다. 미실행·실패·stale control은 주
   조건을 `pending|unmet|stale`로 낮춘다. schema 2 oracle digest는 `negative_for` 역할도 포함해
   원장 편집만으로 과거 evidence를 control 성공으로 재분류하지 못한다.
-- 부모가 먼저 끝나도 stdout·stderr EOF까지 기다리며 drain thread를 회수한다. Unix는 새
-  process group을, Windows는 새 process group과 신뢰한 `taskkill.exe /t /f`를 써서 timeout·
-  output overflow 때 자식 tree를 종료한다. Windows helper path와 bytes도 승인 identity에
-  들어가고 helper 자체는 5초 안에 끝나야 한다. cleanup 실패는 성공 evidence가 아니다.
-- Unix approval store는 owner·mode·link count를, Windows store는 `LOCALAPPDATA` 존재와 현재
-  SID 전용 DACL을 요구한다. private user directory를 정할 수 없으면 temp로 후퇴하지 않는다.
+- 부모가 먼저 끝나도 stdout·stderr EOF까지 기다리며 drain thread를 회수하고 read 오류를
+  정상 EOF로 축약하지 않는다. Unix는 새 process group을 쓴다. Windows는 root를 suspended로
+  spawn해 Job Object에 넣은 뒤에만 resume하며 timeout·output overflow 때 root PID가 사라졌어도
+  job handle로 전체 tree를 종료한다. cleanup 실패는 성공 evidence가 아니다.
+- Unix approval store는 owner·mode·link count를 요구한다. Windows는 OS Known Folders API의
+  LocalAppData를 쓰고 owner가 current process token SID인지 handle에서 먼저 확인한다. 그 SID를
+  상속을 끊은 단일 full-control DACL의 유일한 principal로 설정한 뒤 다시 읽어 일치시킨다.
+  approval file은 hard link도
+  거부한다. private user directory를 정할 수 없으면 temp로 후퇴하지 않는다.
+
+Windows 전용 OS 표면은 `known-folders`, `windows-token`, `windows-permissions`, `process-wrap`의
+safe API에 격리한다. 이 네 의존은 각각 환경에 기대지 않는 System/LocalAppData, 현재 token SID,
+owner·DACL 설정/재검증, suspended-spawn Job Object를 제공하며 제품 크레이트의 `unsafe` 금지를
+깨지 않는다.
 
 schema 1의 직렬화, oracle digest, status JSON과 상태·exit 계약은 바꾸지 않는다. reader는
 schema 1과 2를 version별로 읽고 schema 1에서 schema 2 필드를, schema 2 evidence에서 projected

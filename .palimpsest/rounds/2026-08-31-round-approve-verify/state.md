@@ -44,7 +44,7 @@ exit 3, positive 뒤 pending, negative-control 실행 뒤 met을 관측했다. h
 
 ## 검증
 
-approve/verify 19, round status 24, round scripts 15, hook 5, install hooks 20개가 각각 통과했다.
+approve/verify 22, round status 24, round scripts 15, hook 5, install hooks 20개가 각각 통과했다.
 `cargo xtask check` 23/23과 `cargo test --workspace --all-targets`도 통과했다. 기존 release 규모
 benchmark 하나만 선언대로 ignored다.
 
@@ -54,7 +54,14 @@ R1은 승인 보류와 7개 발견을 냈다. racy stat, 부모 선종료 descen
 Windows ACL/temp fallback, unbounded·unbound cleanup helper, torn append를 정정했다. 임의 shell은
 platform default 하나로 닫았다. mutable workspace를 immutable snapshot으로 실행하라는 항은
 이 표면의 계약이 current workspace의 전후 동일성 관측과 폐기이며 side effect transaction이
-아님을 ADR에 명시해 기각 판정한다. R2가 정정 결과를 다시 잰다.
+아님을 ADR에 명시해 범위밖 판정했다. R2는 이 처분과 racy-stat·control-role 폐쇄를 인정했다.
+
+R2의 새 반증은 Windows 환경 기반 ACL helper 선실행, owner 미검증, 죽은 root PID의 taskkill,
+플랫폼 한쪽만의 directory sync 주장, append 뒤 reader 파일 상한 초과, drain read 오류 축약,
+게이트 숫자 drift 일곱이다. helper를 없애고 Known Folders·current token SID owner/protected 단일
+DACL·suspended Job Object로 전환했으며 atomic visibility 계약·append 상한·read 오류 전파와
+대조를 세웠다. Windows GNU cross-check는 Rust std target을 설치한 뒤 제품 코드 전에 zstd C
+compiler 부재로 멈췄고, 실제 Windows compile/runtime은 A14 CI가 판정한다.
 
 ## 실패한 접근
 

@@ -72,8 +72,7 @@ pub fn binding(
     let shell_bytes = std::fs::read(&shell)
         .map_err(|error| ApprovalError::Identity(format!("shell을 읽지 못했다: {error}")))?;
     let shell_digest = blake3::hash(&shell_bytes).to_hex();
-    #[allow(unused_mut)]
-    let mut values = vec![
+    let values = vec![
         root.to_string(),
         slug.to_owned(),
         id.to_owned(),
@@ -87,15 +86,6 @@ pub fn binding(
         output_limit.to_string(),
         projected_digest.to_owned(),
     ];
-    #[cfg(windows)]
-    {
-        let helper = cleanup_program()?;
-        let bytes = std::fs::read(&helper).map_err(|error| {
-            ApprovalError::Identity(format!("cleanup helper를 읽지 못했다: {error}"))
-        })?;
-        values.push(helper.to_string_lossy().to_string());
-        values.push(blake3::hash(&bytes).to_hex().to_string());
-    }
     let mut hasher = blake3::Hasher::new();
     hasher.update(DOMAIN);
     for value in values {
@@ -248,11 +238,13 @@ fn private_file(path: &Path) -> Result<(), ApprovalError> {
 
 #[cfg(windows)]
 fn private_file(path: &Path) -> Result<(), ApprovalError> {
+    use std::os::windows::fs::MetadataExt;
+
     let metadata =
         std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
-    if !metadata.is_file() || metadata.file_type().is_symlink() {
+    if !metadata.is_file() || metadata.file_type().is_symlink() || metadata.number_of_links() != 1 {
         return Err(ApprovalError::Store(
-            "approval record가 regular file이 아니다".to_owned(),
+            "approval record가 단일 regular file이 아니다".to_owned(),
         ));
     }
     secure_windows_acl(path, false)
@@ -260,59 +252,97 @@ fn private_file(path: &Path) -> Result<(), ApprovalError> {
 
 #[cfg(windows)]
 fn secure_windows_acl(path: &Path, directory: bool) -> Result<(), ApprovalError> {
-    let system32 = trusted_windows_root()?.join("System32");
-    let whoami = system32.join("whoami.exe");
-    let output = std::process::Command::new(whoami)
-        .args(["/user", "/fo", "csv", "/nh"])
-        .output()
-        .map_err(|error| ApprovalError::Store(format!("whoami: {error}")))?;
-    if !output.status.success() || output.stdout.len() > 4096 {
-        return Err(ApprovalError::Store(
-            "현재 Windows SID를 bounded하게 얻지 못했다".to_owned(),
-        ));
-    }
-    let start = output
-        .stdout
-        .windows(4)
-        .position(|window| window == b"S-1-")
-        .ok_or_else(|| ApprovalError::Store("현재 Windows SID가 없다".to_owned()))?;
-    let tail = &output.stdout[start..];
-    let end = tail
-        .iter()
-        .position(|byte| !byte.is_ascii_digit() && *byte != b'-')
-        .unwrap_or(tail.len());
-    let sid = std::str::from_utf8(&tail[..end])
-        .map_err(|error| ApprovalError::Store(format!("Windows SID ASCII: {error}")))?;
-    let icacls = system32.join("icacls.exe");
-    let reset = std::process::Command::new(&icacls)
-        .arg(path)
-        .arg("/reset")
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .map_err(|error| ApprovalError::Store(format!("icacls reset: {error}")))?;
-    if !reset.success() {
-        return Err(ApprovalError::Store(
-            "approval ACL reset이 실패했다".to_owned(),
-        ));
-    }
-    let permission = if directory {
-        format!("*{sid}:(OI)(CI)F")
-    } else {
-        format!("*{sid}:F")
+    use std::os::windows::fs::OpenOptionsExt;
+    use windows_permissions::constants::{
+        AccessRights, AceFlags, AceType, SeObjectType, SecurityInformation,
     };
-    let secured = std::process::Command::new(icacls)
-        .arg(path)
-        .arg("/inheritance:r")
-        .arg("/grant:r")
-        .arg(permission)
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .map_err(|error| ApprovalError::Store(format!("icacls private ACL: {error}")))?;
-    if !secured.success() {
+    use windows_permissions::{LocalBox, SecurityDescriptor, Sid};
+
+    const READ_CONTROL: u32 = 0x0002_0000;
+    const WRITE_DAC: u32 = 0x0004_0000;
+    const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+    const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
+
+    let sid_text = windows_token::Token::open_current_process()
+        .and_then(|token| token.user_sid())
+        .map_err(|error| ApprovalError::Store(format!("current token SID: {error}")))?
+        .to_string();
+    let sid: LocalBox<Sid> = sid_text
+        .parse()
+        .map_err(|error| ApprovalError::Store(format!("current SID parse: {error}")))?;
+    let ace_flags = if directory { "OICI" } else { "" };
+    let descriptor: LocalBox<SecurityDescriptor> =
+        format!("O:{sid_text}D:P(A;{ace_flags};FA;;;{sid_text})")
+            .parse()
+            .map_err(|error| ApprovalError::Store(format!("private descriptor: {error}")))?;
+    let mut options = OpenOptions::new();
+    options
+        .access_mode(READ_CONTROL | WRITE_DAC)
+        .share_mode(0)
+        .custom_flags(
+            FILE_FLAG_OPEN_REPARSE_POINT
+                | if directory {
+                    FILE_FLAG_BACKUP_SEMANTICS
+                } else {
+                    0
+                },
+        );
+    let mut handle = options
+        .open(path)
+        .map_err(|error| ApprovalError::Store(format!("private handle: {error}")))?;
+    let before = windows_permissions::wrappers::GetSecurityInfo(
+        &handle,
+        SeObjectType::SE_FILE_OBJECT,
+        SecurityInformation::Owner,
+    )
+    .map_err(|error| ApprovalError::Store(format!("read approval owner: {error}")))?;
+    if before.owner() != Some(&*sid) {
         return Err(ApprovalError::Store(
-            "approval ACL을 현재 사용자 전용으로 만들지 못했다".to_owned(),
+            "approval owner가 current token SID가 아니다".to_owned(),
+        ));
+    }
+    windows_permissions::wrappers::SetSecurityInfo(
+        &mut handle,
+        SeObjectType::SE_FILE_OBJECT,
+        SecurityInformation::Dacl | SecurityInformation::ProtectedDacl,
+        None,
+        None,
+        descriptor.dacl(),
+        None,
+    )
+    .map_err(|error| ApprovalError::Store(format!("set private descriptor: {error}")))?;
+    let actual = windows_permissions::wrappers::GetSecurityInfo(
+        &handle,
+        SeObjectType::SE_FILE_OBJECT,
+        SecurityInformation::Owner | SecurityInformation::Dacl,
+    )
+    .map_err(|error| ApprovalError::Store(format!("read private descriptor: {error}")))?;
+    let dacl = actual
+        .dacl()
+        .ok_or_else(|| ApprovalError::Store("approval DACL이 없다".to_owned()))?;
+    let sddl = windows_permissions::wrappers::ConvertSecurityDescriptorToStringSecurityDescriptor(
+        &actual,
+        SecurityInformation::Owner | SecurityInformation::Dacl,
+    )
+    .map_err(|error| ApprovalError::Store(format!("render private descriptor: {error}")))?;
+    let ace = dacl
+        .get_ace(0)
+        .ok_or_else(|| ApprovalError::Store("approval DACL이 비었다".to_owned()))?;
+    let expected_flags = if directory {
+        AceFlags::ObjectInherit | AceFlags::ContainerInherit
+    } else {
+        AceFlags::empty()
+    };
+    if !sddl.to_string_lossy().contains("D:P")
+        || actual.owner() != Some(&*sid)
+        || dacl.len() != 1
+        || ace.ace_type() != AceType::ACCESS_ALLOWED_ACE_TYPE
+        || ace.sid() != Some(&*sid)
+        || ace.mask() != AccessRights::FileAllAccess
+        || ace.flags() != expected_flags
+    {
+        return Err(ApprovalError::Store(
+            "approval owner/DACL이 현재 SID 하나로 고정되지 않았다".to_owned(),
         ));
     }
     Ok(())
@@ -346,52 +376,18 @@ fn default_shell() -> Result<PathBuf, ApprovalError> {
 
 #[cfg(windows)]
 fn default_shell() -> Result<PathBuf, ApprovalError> {
-    let root = trusted_windows_root()?;
-    Ok(root.join("System32").join("cmd.exe"))
-}
-
-#[cfg(windows)]
-pub fn trusted_windows_root() -> Result<PathBuf, ApprovalError> {
-    let root = std::env::var_os("SystemRoot").map(PathBuf::from);
-    let windir = std::env::var_os("WINDIR").map(PathBuf::from);
-    let drive = std::env::var_os("SystemDrive");
-    let (Some(root), Some(windir), Some(drive)) = (root, windir, drive) else {
-        return Err(ApprovalError::Identity(
-            "Windows system root 환경이 완전하지 않다".to_owned(),
-        ));
-    };
-    let root_text = root.to_string_lossy().replace('/', "\\");
-    let windir_text = windir.to_string_lossy().replace('/', "\\");
-    let drive_text = drive.to_string_lossy();
-    if !root_text.eq_ignore_ascii_case(&windir_text)
-        || root_text.len() < 3
-        || !root_text[2..].eq_ignore_ascii_case("\\Windows")
-        || !root_text[..2].eq_ignore_ascii_case(&drive_text)
-    {
-        return Err(ApprovalError::Identity(
-            "Windows system root 환경이 서로 다르다".to_owned(),
-        ));
-    }
-    Ok(root)
-}
-
-#[cfg(windows)]
-pub fn cleanup_program() -> Result<PathBuf, ApprovalError> {
-    trusted_windows_root()?
-        .join("System32")
-        .join("taskkill.exe")
-        .canonicalize()
-        .map_err(|error| ApprovalError::Identity(format!("taskkill: {error}")))
+    known_folders::get_known_folder_path(known_folders::KnownFolder::System)
+        .map(|path| path.join("cmd.exe"))
+        .ok_or_else(|| ApprovalError::Identity("Windows System known folder가 없다".to_owned()))
 }
 
 fn default_store() -> Result<PathBuf, ApprovalError> {
     #[cfg(windows)]
     {
-        return std::env::var_os("LOCALAPPDATA")
-            .map(PathBuf::from)
+        return known_folders::get_known_folder_path(known_folders::KnownFolder::LocalAppData)
             .map(|path| path.join("palimpsest").join("approvals"))
             .ok_or_else(|| {
-                ApprovalError::Store("LOCALAPPDATA가 없어 private store를 정할 수 없다".to_owned())
+                ApprovalError::Store("Windows LocalAppData known folder가 없다".to_owned())
             });
     }
     #[cfg(target_os = "macos")]

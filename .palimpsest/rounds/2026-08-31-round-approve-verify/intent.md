@@ -24,7 +24,7 @@
 
 - [x] A1 사용자별 외부 approval 저장소는 저장소 밖의 private 위치에서 exact repo·round·condition·oracle·CWD·shell·PATH·timeout·output identity만 승인하고 malformed·symlink·권한 불일치를 spawn 전에 fail-closed한다 · 통과
 - [x] A2 `pal round approve`는 명령을 실행하지 않고 승인을 기록하며 `pal round verify`는 exact 승인이 없는 oracle, PATH·CWD·shell·budget이 달라진 oracle을 실행하지 않는다 · 통과
-- [x] A3 executor는 기본 timeout 120초와 stdout+stderr 1 MiB 상한을 지키고 cap·timeout 때 POSIX process group 또는 신뢰된 Windows `taskkill` 경로로 자식 tree를 종료한 뒤 bounded하게 회수한다 · 통과
+- [x] A3 executor는 기본 timeout 120초와 stdout+stderr 1 MiB 상한을 지키고 cap·timeout 때 POSIX process group 또는 suspended-spawn Windows Job Object로 자식 tree를 종료한 뒤 bounded하게 회수한다 · 통과
 - [x] A4 projected content-tree digest는 정렬된 tracked `(repo-relative path, blob identity)`에서 현재 round의 `verification.log` 하나만 제외하며 HEAD·절대 경로·줄바꿈 표현을 상태 입력으로 쓰지 않는다 · 통과
 - [x] A5 실행 전후 oracle과 projected digest가 같을 때만 evidence를 append하고 중간 변경·승인 교체·append 실패에서는 결과를 폐기하며 명령을 자동 재실행하지 않는다 · 통과
 - [x] A6 evidence writer는 단일 완전 JSON line만 append하고 동시 append·직전/도중 실패·trailing partial line을 성공으로 축약하지 않는다 · 통과
@@ -53,8 +53,8 @@ Windows process tree, 미실행 negative-control false pass다. 각 검사에는
   기본값을 다시 적을 때만 허용하고 대체 shell은 승인 자체를 거부한다. shell bytes와 전체
   PATH, repo identity, 상대 CWD, timeout/output budget을 external approval identity에 결박한다.
 - 예산: 기본 120초, combined stdout+stderr 1 MiB. CLI override는 승인 identity를 바꾸므로 재승인한다.
-- 종료: Unix는 새 process group, Windows는 일치하는 `SystemRoot`·`WINDIR`·`SystemDrive`가
-  가리키는 `System32/taskkill.exe /t /f`; 못 믿으면 held child handle fallback이며 cleanup 실패는 evidence 성공이 아니다.
+- 종료: Unix는 새 process group, Windows는 root를 suspended로 spawn해 OS Job Object에 넣고
+  resume한다. root가 먼저 끝나도 job handle로 descendant를 회수하며 cleanup 실패는 evidence 성공이 아니다.
 - snapshot: `pal-git`의 tracked worktree projection을 재사용해 현재 round verification ledger만
   제외한다. untracked·ignored 파일은 이 projection의 모집단이 아니며 raw evidence output도 아니다.
 - 폐기: spawn 직전과 종료 직후 approval/oracle/projected identity를 다시 읽고 하나라도 다르면
@@ -79,6 +79,9 @@ Windows process tree, 미실행 negative-control false pass다. 각 검사에는
 - 독립 리뷰 R1 뒤 shell 허용 경계를 “승인하면 임의 absolute shell 허용”에서 “platform
   default 하나만 허용”으로 강화했다. 사용자 쓰기 가능한 executable의 hash→spawn TOCTOU를
   없애기 위한 것이며 A1·A2를 완화하거나 실행 표면을 넓히지 않는다.
+- 독립 리뷰 R2 뒤 Windows `taskkill`/`icacls` helper 설계를 폐기했다. 환경 문자열로 system
+  directory를 증명할 수 없고 죽은 root PID는 descendant lifetime container가 아니기 때문이다.
+  Known Folders·current token SID·protected DACL·suspended Job Object의 safe OS 표면으로 전환했다.
 
 ## 승격
 

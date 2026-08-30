@@ -602,3 +602,37 @@ fn 같은_oracle재실행은_새_current_evidence를_append한다() {
     assert_eq!(evidence_count(&dir), 2);
     assert_eq!(status(&repo)["conditions"][0]["state"], "met");
 }
+
+#[test]
+fn evidence_append가_reader파일상한을_넘기기_전에_거부된다() {
+    use pal_core::{ROUND_VERIFICATION_FILE_MAX_BYTES, ROUND_VERIFICATION_LINE_MAX_BYTES};
+
+    let (_base, repo, approvals) = root("ledger-file-cap");
+    let dir = round(&repo, &["A1"], &[oracle("A1", "success", None)]);
+    commit_fixture(&repo);
+    assert!(approve(&repo, &approvals, "A1", &[]).status.success());
+
+    let ledger = dir.join("verification.log");
+    let mut body = std::fs::read(&ledger).expect("initial ledger");
+    let oracle_line = oracle("A1", "success", None).to_string();
+    let target = ROUND_VERIFICATION_FILE_MAX_BYTES as usize - 1;
+    let remaining = target - body.len();
+    let max_total = ROUND_VERIFICATION_LINE_MAX_BYTES + 1;
+    let line_count = remaining.div_ceil(max_total);
+    for index in 0..line_count {
+        let lines_left = line_count - index;
+        let bytes_left = target - body.len();
+        let total = bytes_left / lines_left;
+        assert!(total > oracle_line.len() && total <= max_total);
+        body.extend_from_slice(oracle_line.as_bytes());
+        body.resize(body.len() + total - oracle_line.len() - 1, b' ');
+        body.push(b'\n');
+    }
+    assert_eq!(body.len(), target);
+    std::fs::write(&ledger, &body).expect("near-limit valid ledger");
+
+    let denied = verify(&repo, &approvals, "A1", &[]);
+    assert_eq!(denied.status.code(), Some(2));
+    assert_eq!(std::fs::read(&ledger).expect("unchanged ledger"), body);
+    assert_eq!(evidence_count(&dir), 0);
+}

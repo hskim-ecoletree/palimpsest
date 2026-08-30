@@ -96,6 +96,13 @@ tempfile = "3.27"
 # security-currentness 회귀가 Git index와 같은 mtime·size 변조를 실제로 만든다. 제품에는
 # 들어가지 않는 dev-only fixture 도구이며 lockfile에 이미 있던 의존이다.
 filetime = "0.2"
+# Windows approval 경계는 환경 변수나 승인 전 helper spawn을 믿지 않는다. Known Folders,
+# current-token SID, security descriptor, suspended-spawn Job Object의 safe 표면만 Windows
+# target에서 링크한다. 제품 크레이트의 unsafe 금지는 그대로다.
+known-folders = "1.4.2"
+windows-permissions = "0.2.4"
+windows-token = "0.2.1"
+process-wrap = { version = "8.2.1", default-features = false, features = ["std", "job-object"] }
 
 # F22 가 들인 하나. stack §3.4 는 "P0 에서 외부 크레이트 신규 추가는 근거를 남긴다" 고
 # 적었고 그 근거는 이렇다: `schema/graph.toml` 이 노드·엣지의 **단일 진실**이고
