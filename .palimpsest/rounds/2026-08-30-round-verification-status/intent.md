@@ -31,16 +31,16 @@
 
 ## 완수 조건
 
-- [ ] A1 verification oracle ID는 intent 조건 ID의 부분집합이며, intent 밖 ID는 오류이고 oracle 없는 intent 조건은 `unregistered`다
-- [ ] A2 알 수 없는 schema version·event kind·ID·mode·필드와 잘못된 타입은 오류다
-- [ ] A3 schema 중복과 oracle보다 앞선 evidence를 포함한 불가능한 상태 전이는 오류다
-- [ ] A4 verification 원장은 조건 문장을 복제하지 않고 잠긴 schema와 digest 직렬화를 그대로 지킨다
-- [ ] A5 `status`는 명령을 실행하거나 파일을 수정하지 않는다
-- [ ] A6 current round 자동 해소는 후보 0개를 정상 통과, 후보 2개 이상을 오류로 내며 verification 원장 없는 과거 회차를 후보로 삼지 않는다
-- [ ] A7 Rust 조건 파서는 전환 전에 보존한 Python golden의 코드펜스·들여쓰기·중복 ID·태그 순서 결과와 같다
-- [ ] A8 JSON과 사람 출력은 같은 reducer 결과에서 렌더링된다
+- [x] A1 verification oracle ID는 intent 조건 ID의 부분집합이며, intent 밖 ID는 오류이고 oracle 없는 intent 조건은 `unregistered`다  · 통과
+- [x] A2 알 수 없는 schema version·event kind·ID·mode·필드와 잘못된 타입은 오류다  · 통과
+- [x] A3 schema 중복과 oracle보다 앞선 evidence를 포함한 불가능한 상태 전이는 오류다  · 통과
+- [x] A4 verification 원장은 조건 문장을 복제하지 않고 잠긴 schema와 digest 직렬화를 그대로 지킨다  · 통과
+- [x] A5 `status`는 명령을 실행하거나 파일을 수정하지 않는다  · 통과
+- [x] A6 current round 자동 해소는 후보 0개를 정상 통과, 후보 2개 이상을 오류로 내며 verification 원장 없는 과거 회차를 후보로 삼지 않는다  · 통과
+- [x] A7 Rust 조건 파서는 전환 전에 보존한 Python golden의 코드펜스·들여쓰기·중복 ID·태그 순서 결과와 같다  · 통과
+- [x] A8 JSON과 사람 출력은 같은 reducer 결과에서 렌더링된다  · 통과
 - [ ] A9 ubuntu·macOS·Windows가 같은 fixture에 같은 상태 enum을 낸다
-- [ ] A10 `xtask → pal-cli` 의존과 `pal-cli` library target 없이 조건 문법은 `pal-intent`, verification 원장과 상태 기계는 `pal-cli`가 소유한다
+- [x] A10 `xtask → pal-cli` 의존과 `pal-cli` library target 없이 조건 문법은 `pal-intent`, verification 원장과 상태 기계는 `pal-cli`가 소유한다  · 통과
 
 **RED 관측**: `pal round` 명령과 Rust 조건 파서·verification reducer가 아직 없으므로 §5.1의
 black-box 시험이 구현 전에 실패해야 한다.

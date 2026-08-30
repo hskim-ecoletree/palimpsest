@@ -84,6 +84,19 @@ ubuntu·macOS·Windows CI와 독립 리뷰 R2, ADR·게이트·종료 보고를 
 - JSON과 사람 출력 모두 A1 `met`, A2 `pending`, aggregate `in_progress`, terminal `open`을
   냈다. 입력과 출력 전문은 `effect/`가 진다.
 
+## 결정과 결박
+
+- ADR-0028은 조건 parser=`pal-intent`, 원장 reducer=`pal-cli`, append-only current evidence,
+  읽기 전용 공용 view, CI의 외부 terminal observation을 채택했다.
+- `ConditionsReport`, `oracle_digest`, `read_round`에 ADR 결정을 각각 결박했고 `pal touch`가
+  세 결박을 `live`로 다시 냈다.
+- 그래프는 Rust L1 좌표와 files 반경은 담았지만 cross-file resolution(F07), unresolved
+  refs(F08), effects(F13), judgment(F15)는 능력 부재다. 이 네 축을 추정으로 채우지 않는다.
+- unlazy gate의 최초 승인 실행은 기본 CWD가 회차 디렉터리임을 드러냈다. G0~G6에
+  `CWD: ../../..`를 명시해 저장소 루트로 잠갔다. 정정 뒤 G0~G4·G6은 통과했고 G5는
+  A1~A8·A10의 판정 상자를 켜지 않아 한 번 빨개졌다. gate 표와 같은 아홉 조건만
+  `통과`로 켰고 A9는 세 플랫폼 CI 전까지 미측정으로 남긴다.
+
 ## 로컬 검증
 
 - `cargo test -p pal-cli --test round_status` — 24 통과
