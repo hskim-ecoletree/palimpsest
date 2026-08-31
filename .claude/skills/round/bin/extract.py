@@ -36,7 +36,7 @@
 유효성이 전부 「참」**이 된다(사전부검 R3 실측). 지금 형식은 그 칸들을 **직접
 적으므로 읽으면 된다.**
 """
-import sys, os, re, json, subprocess
+import sys, os, re, json, subprocess, difflib
 
 여기 = os.path.dirname(os.path.abspath(__file__))
 
@@ -92,8 +92,11 @@ def 표들(text, 별칭):
     """
     lines = text.split("\n")
     i = 0
+    절 = ""
     while i < len(lines):
         s = lines[i].lstrip()
+        if s.startswith("#"):
+            절 = 정규화(s.lstrip("# "))
         다음 = lines[i + 1].lstrip() if i + 1 < len(lines) else ""
         if s.startswith("|") and 다음.startswith(("|-", "| -", "|:")):
             헤더 = [열이름(c, 별칭) for c in s.strip().strip("|").split("|")]
@@ -104,33 +107,42 @@ def 표들(text, 별칭):
                 행들.append([정규화(c) for c in 셀])
                 원문행들.append([c.strip() for c in 셀])
                 j += 1
-            yield 헤더, 행들, 원문행들
+            yield 절, 헤더, 행들, 원문행들
             i = j
             continue
         i += 1
 
 
-def 독립리뷰(text, 별칭, 없음):
+def 독립리뷰(text, 별칭, 없음, 프로필="current"):
     out = []
-    for 헤더, 행들, 원문행들 in 표들(text, 별칭):
-        if "요약" not in 헤더:
+    for 절, 헤더, 행들, 원문행들 in 표들(text, 별칭):
+        역사조건표 = 프로필 == "legacy-2022" and 헤더 and 헤더[0] is None and "조건" in 헤더
+        if "요약" not in 헤더 and not 역사조건표:
             continue
         for 행, 원문 in zip(행들, 원문행들):
             d = {}
+            if 헤더 and 헤더[0] is None and 행:
+                d["_표시"] = 정규화(행[0])
             for k, v, raw in zip(헤더, 행, 원문):
                 if k and k not in d:
                     d[k] = raw if k == "경로" else v
-            요약 = d.get("요약", "")
+            요약 = d.get("요약", d.get("조건", "") if 역사조건표 else "")
+            if 프로필 != "current" and 요약 in (없음, "—", "-"):
+                요약 = f"{절} — 없음"
+            d["요약"] = 요약
+            if 역사조건표:
+                d["요약"] = 요약
             # ★ **자리 채우기 행은 발견이 아니다** — #93. 「없음」만 적힌 행을 세면
             #   계기판 ⑦⑧ 이 조용히 커진다.
-            if not 요약 or 요약 in (없음, "—", "-"):
+            if not 요약 or (프로필 == "current" and 요약 in (없음, "—", "-")):
                 continue
             out.append(d)
     return out
 
 
-def 사전부검(text, 별칭, 불릿, 없음):
+def 사전부검(text, 별칭, 불릿, 없음, 프로필="current", 역사별칭=None):
     out = []
+    기각불릿 = []
     현재 = None
     기각절 = False
     for line in text.split("\n"):
@@ -139,6 +151,19 @@ def 사전부검(text, 별칭, 불릿, 없음):
             if 현재:
                 out.append(현재)
                 현재 = None
+            continue
+        if 기각절 and 프로필 != "current" and line.startswith("- "):
+            원문 = line[2:].strip()
+            d = {"요약": 원문}
+            for 칸, 값들 in {
+                "모집단": ("원의도", "저장소", "자기장치", "회차기록", "규약"),
+                "유효성": ("참", "추정", "거짓"),
+                "해악도": ("금지역", "실패", "거짓신호", "미관"),
+            }.items():
+                m = re.search(칸 + r"\s*:\s*(" + "|".join(값들) + r")", 정규화(원문))
+                if m:
+                    d[칸] = m.group(1)
+            기각불릿.append(d)
             continue
         if line.startswith("### "):
             if 현재:
@@ -150,27 +175,168 @@ def 사전부검(text, 별칭, 불릿, 없음):
             m = re.match(r"\s*-\s*([^:]+):\s*(.*)$", line)
             if m:
                 이름 = 정규화(m.group(1))
-                for 칸, 라벨 in 불릿.items():
+                후보들 = {k: [v] for k, v in 불릿.items()}
+                if 프로필 != "current":
+                    for 칸, 라벨들 in (역사별칭 or {}).items():
+                        후보들.setdefault(칸, []).extend(라벨들)
+                for 칸, 라벨들 in 후보들.items():
                     # ⚠ 좌표는 **원문**으로 담는다 — 백틱이 벗겨지면 못 찾는다.
                     값 = m.group(2).strip() if 칸 == "경로" else 정규화(m.group(2))
                     # ★ **접두로 맞춘다.** 실측: 같은 회차 안에서도 라벨이
                     #   「어디가 걸리나」와 「어디가 걸리나 (경로)」로 갈렸다.
-                    if 이름 == 라벨 or 이름.startswith(라벨):
-                        현재.setdefault(칸, 값)
+                    if any(이름 == 라벨 or 이름.startswith(라벨) for 라벨 in 라벨들):
+                        # 같은 항에 옛 보조 축(`획득`)과 정본 축(`유효성`)이 함께
+                        # 있으면 정본 축이 이긴다. 보조 축을 먼저 본 순서 때문에
+                        # 뒤의 명시 값을 삼키면 현재 형식의 산출까지 달라진다.
+                        if 이름 == 불릿.get(칸) or 이름.startswith(불릿.get(칸, "\0")):
+                            현재[칸] = 값
+                        else:
+                            현재.setdefault(칸, 값)
     if 현재:
         out.append(현재)
     # 기각 절의 표
-    for 헤더, 행들, 원문행들 in 표들(text, 별칭):
+    for _절, 헤더, 행들, 원문행들 in 표들(text, 별칭):
         if "요약" not in 헤더:
             continue
         for 행, 원문 in zip(행들, 원문행들):
             d = {}
+            if 헤더 and 헤더[0] is None and 행:
+                d["_표시"] = 정규화(행[0])
             for k, v, raw in zip(헤더, 행, 원문):
                 if k and k not in d:
                     d[k] = raw if k == "경로" else v
             if d.get("요약") and d["요약"] not in (없음, "—", "-"):
                 out.append(d)
+    out.extend(기각불릿)
+    if 프로필 == "legacy-2019":
+        for d in out:
+            if d in 기각불릿:
+                d.setdefault("모집단", "자기장치")
+                d.setdefault("유효성", "거짓")
+                d.setdefault("해악도", "미관")
+                continue
+            대상 = 정규화(d.pop("모집단", ""))
+            d["모집단"] = "자기장치" if "계획자신" in 대상 else "원의도"
+            근거 = 정규화(d.pop("유효성", ""))
+            d["유효성"] = "추정" if "추정" in 근거 else "참"
+            if not d.get("해악도"):
+                d["해악도"] = "거짓신호"
+    elif 프로필 != "current":
+        for d in out:
+            합친값 = " · ".join(정규화(str(v)) for v in d.values())
+            for 칸, 값들, 기본 in (
+                ("모집단", ("원의도", "저장소", "자기장치", "회차기록", "규약"), "원의도"),
+                ("유효성", ("참", "추정", "거짓"), "참"),
+                ("해악도", ("금지역", "실패", "거짓신호", "미관"), "거짓신호"),
+            ):
+                직접 = 정규화(str(d.get(칸, "")))
+                m = re.search(칸 + r"\s*:\s*(" + "|".join(값들) + r")", 합친값)
+                d[칸] = (직접 if 직접 in 값들 else (m.group(1) if m else
+                         next((v for v in 값들 if v in 직접), 기본)))
     return out
+
+
+def _정체성없는비용(a, b):
+    """원문 항 `a`와 역사 레코드 `b`의 결합 비용. 작을수록 가깝다."""
+    sa, sb = 정규화(a.get("요약", "")), 정규화(b.get("요약", ""))
+    비슷함 = difflib.SequenceMatcher(None, sa, sb).ratio()
+    비용 = int((1.0 - 비슷함) * 10_000)
+    표시 = a.get("_표시", "")
+    if 표시:
+        옛요약 = 정규화(str(b.get("요약", "")))
+        표시일치 = (str(b.get("id", "")).endswith("-" + 표시) or
+                옛요약 == 표시 or 옛요약.startswith(표시 + " ") or
+                옛요약.startswith("#" + 표시 + " "))
+        비용 += -20_000 if 표시일치 else 20_000
+    for 칸, 가중 in (("경로", 1800), ("조건", 900), ("모집단", 300), ("해악도", 200)):
+        av, bv = a.get(칸), b.get(칸)
+        if av and bv and av != bv:
+            비용 += 가중
+    return 비용
+
+
+def _헝가리(cost):
+    """정사각 비용 행렬의 최소 배정 `(합, 행별 열)`을 낸다."""
+    n = len(cost)
+    u, v, p, way = [0] * (n + 1), [0] * (n + 1), [0] * (n + 1), [0] * (n + 1)
+    for i in range(1, n + 1):
+        p[0] = i
+        minv, used = [10**18] * (n + 1), [False] * (n + 1)
+        j0 = 0
+        while True:
+            used[j0] = True
+            i0, delta, j1 = p[j0], 10**18, 0
+            for j in range(1, n + 1):
+                if not used[j]:
+                    cur = cost[i0 - 1][j - 1] - u[i0] - v[j]
+                    if cur < minv[j]:
+                        minv[j], way[j] = cur, j0
+                    if minv[j] < delta:
+                        delta, j1 = minv[j], j
+            for j in range(n + 1):
+                if used[j]:
+                    u[p[j]] += delta
+                    v[j] -= delta
+                else:
+                    minv[j] -= delta
+            j0 = j1
+            if p[j0] == 0:
+                break
+        while True:
+            j1 = way[j0]
+            p[j0] = p[j1]
+            j0 = j1
+            if j0 == 0:
+                break
+    배정 = [0] * n
+    for j in range(1, n + 1):
+        배정[p[j] - 1] = j - 1
+    return -v[0], 배정
+
+
+def 역사병합(기존, 뽑은, 기계칸):
+    """역사 ID·사람 판단은 보존하고 원문 순서와 기계 칸만 되돌린다.
+
+    결합의 최소해가 둘이면 아무것도 쓰지 않고 실패한다.
+    """
+    if len(기존) != len(뽑은):
+        raise ValueError(f"행 수가 다르다: 레코드 {len(기존)} · 원문 {len(뽑은)}")
+    if not 기존:
+        return []
+    비용 = [[_정체성없는비용(e, r) for r in 기존] for e in 뽑은]
+    최솟값, 배정 = _헝가리(비용)
+    큰값 = 10**12
+    for i, j in enumerate(배정):
+        바꾼 = [row[:] for row in 비용]
+        바꾼[i][j] = 큰값
+        다음값, _ = _헝가리(바꾼)
+        if 다음값 == 최솟값:
+            raise ValueError(f"유일하게 결합할 수 없다: 원문 {i + 1}번째")
+    out = []
+    for i, j in enumerate(배정):
+        row = dict(기존[j])
+        for 칸 in 기계칸:
+            row[칸] = 뽑은[i].get(칸, "")
+        out.append(row)
+    return out
+
+
+def 자동프로필(text, 출처):
+    """경로나 날짜가 아니라 원 반환문 자체의 옛 형식 표지로 가른다."""
+    if 출처 == "사전부검":
+        if re.search(r"(?m)^-\s*대상\s*:", text) and re.search(r"(?m)^-\s*근거\s*:", text):
+            return "legacy-2019"
+        if re.search(r"(?m)^-\s*(?:획득|아픔|얼마나 아픈가)\s*:", text):
+            return "legacy-2022"
+        return "current"
+    if "| 조건 | 내 판정 | 게이트의 판정 |" in text:
+        return "legacy-behavior"
+    if ("| 조건 | 판정 | 잰 수 |" in text or
+            "| 조건 | 판정 | 근거 |" in text or
+            "| # | 조건 | 지금 | 근거 |" in text or
+            "좌표(파일:줄)" in text):
+        return "legacy-2022"
+    return "current"
 
 
 확장자 = r"\.(?:rs|py|md|toml|yml|yaml|jsonl|json|txt|log|sh|ts|tsv|lock)$"
@@ -209,7 +375,21 @@ def main(argv):
     s = 스키마()
     별칭, 불릿, 없음 = s["열별칭"], s["사전부검불릿"], s["없음표시"]
     text = 펜스밖(open(경로, encoding="utf-8").read())
-    항 = 독립리뷰(text, 별칭, 없음) if 출처 == "독립리뷰" else 사전부검(text, 별칭, 불릿, 없음)
+    프로필 = 자동프로필(text, 출처)
+    항 = (독립리뷰(text, 별칭, 없음, 프로필) if 출처 == "독립리뷰" else
+          사전부검(text, 별칭, 불릿, 없음, 프로필, s.get("역사불릿별칭", {})))
+    if 프로필 != "current":
+        for d in 항:
+            합친값 = " · ".join(정규화(str(v)) for v in d.values())
+            for 칸, 값들, 기본 in (
+                ("모집단", ("원의도", "저장소", "자기장치", "회차기록", "규약"), "저장소"),
+                ("유효성", ("참", "추정", "거짓"), "참"),
+                ("해악도", ("금지역", "실패", "거짓신호", "미관"), "미관"),
+            ):
+                직접 = 정규화(str(d.get(칸, "")))
+                d[칸] = (직접 if 직접 in 값들 else
+                         next((v for v in 값들 if re.search(r"(?:^|[ ·(])" + v, 직접)),
+                              next((v for v in 값들 if re.search(칸 + r"\s*:\s*" + v, 합친값)), 기본)))
     접두 = {"독립리뷰": "IR", "사전부검": "PM"}[출처]
     for i, d in enumerate(항, 1):
         print(json.dumps({
@@ -225,6 +405,7 @@ def main(argv):
             #   앞 판은 별칭만 있고 뽑지 않아 그 키의 소비자가 0 이었다(독립 리뷰 R2).
             **({"조건": d.get("조건", "없음") or "없음"}
                if "조건" in s["기계칸"].get(출처, []) else {}),
+            **({"_프로필": 프로필} if os.environ.get("PAL_ROUND_EXTRACT_REPORT_PROFILE") else {}),
         }, ensure_ascii=False))
     return 0
 

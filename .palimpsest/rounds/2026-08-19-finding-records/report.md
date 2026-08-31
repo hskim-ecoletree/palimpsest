@@ -9,8 +9,7 @@
 ## 남지 않은 것
 
 **완수 조건 46 개를 재고 판정했다.** 등록은 [`intent.md`](intent.md), 판정은
-[게이트](../../../docs/gates/round-finding-records.md) 에 있다 —
-**통과 44 · 반증 0 · 대조 불가 2 · 미측정 0 = 46** ✔
+[게이트](../../../docs/gates/round-finding-records.md) 에 있다.
 
 ### 만든 것 여덟
 

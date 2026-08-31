@@ -32,6 +32,23 @@ const CORE_FORBIDDEN_DEPS: &[&str] = &["tree-sitter", "redb", "gix"];
 /// 의도를 지우는 경로. `pal-store` 소스에 나타나면 실패 — R-21.
 const INTENT_DELETE_MARKERS: &[&str] = &["pal_intent", "pal-intent", "intent.redb", "intent/"];
 
+/// 종료 보고의 파일 위치가 정해지기 전에 실제로 닫힌 유일한 회차.
+const 종료보고_형식이전_회차: &str = "2026-08-18-round-protocol";
+
+fn 종료했나(회차_디렉터리: &Path) -> bool {
+    if 회차_디렉터리.join("report.md").is_file() {
+        return true;
+    }
+    if 회차_디렉터리.file_name().and_then(|x| x.to_str()) != Some(종료보고_형식이전_회차) {
+        return false;
+    }
+    std::fs::read_to_string(회차_디렉터리.join("state.md"))
+        .map(|본문| 본문.lines().any(|줄| {
+            줄.trim() == "**단계**: 종료. 완수 조건 전부 닫힘 · 효과 관측 · CI 초록."
+        }))
+        .unwrap_or(false)
+}
+
 /// 회차의 **기록이 확정됐나** — 종료(`report.md`)든 접힘(`folded.md`)이든.
 ///
 /// ★ **둘을 같이 봐야 하는 자리와 갈라 봐야 하는 자리가 있다.** (2026-08-24)
@@ -39,7 +56,7 @@ const INTENT_DELETE_MARKERS: &[&str] = &["pal_intent", "pal-intent", "intent.red
 /// 두면 다음 사람이 그것을 이어받아야 할 일로 읽고 **접은 회차를 되살린다.**
 /// 「종료 보고를 썼나」를 묻는 자리는 `report.md` 만 본다.
 fn 기록이_확정됐나(회차_디렉터리: &std::path::Path) -> bool {
-    회차_디렉터리.join("report.md").is_file() || 회차_디렉터리.join("folded.md").is_file()
+    종료했나(회차_디렉터리) || 회차_디렉터리.join("folded.md").is_file()
 }
 
 fn main() -> Result<()> {
@@ -3500,6 +3517,9 @@ fn 추출기_산출(
         .arg(출처)
         .arg(라운드.to_string())
         .arg(raw)
+        // 역사 형식은 원문 자체의 고유 표지로 추출기가 판별한다. 이 내부 표시는
+        // 레코드에 저장하지 않고, 대조할 기계 칸 집합을 고르는 데만 쓴다.
+        .env("PAL_ROUND_EXTRACT_REPORT_PROFILE", "1")
         .output()
         .with_context(|| format!("`{추출기}` 를 못 돌렸다"))?;
     if !out.status.success() {
@@ -3510,6 +3530,47 @@ fn 추출기_산출(
         .filter(|l| !l.trim().is_empty())
         .map(|l| serde_json::from_str(l).context("추출기 출력이 JSON 이 아니다"))
         .collect()
+}
+
+fn 원문순서_대조(
+    뽑은: &[serde_json::Value],
+    행들: &[serde_json::Value],
+    기계_칸: &[String],
+) -> (usize, usize, Vec<String>) {
+    let mut 갈린_칸 = 0;
+    let 빠진_행 = 뽑은.len().abs_diff(행들.len());
+    let mut 갈림 = Vec::new();
+    for (i, (e, r)) in 뽑은.iter().zip(행들).enumerate() {
+        for 칸 in 기계_칸 {
+            let (a, b) = (e[칸].as_str().unwrap_or(""), r[칸].as_str().unwrap_or(""));
+            if a != b {
+                갈린_칸 += 1;
+                갈림.push(format!("원문 {}번째.{칸}", i + 1));
+            }
+        }
+    }
+    if 빠진_행 > 0 {
+        갈림.push(format!("원문과 레코드의 행 수가 {}↔{}", 뽑은.len(), 행들.len()));
+    }
+    (갈린_칸, 빠진_행, 갈림)
+}
+
+#[cfg(test)]
+mod 원문순서_대조_시험 {
+    use super::원문순서_대조;
+    use serde_json::json;
+
+    #[test]
+    fn 역사_id는_대조하지_않고_기계칸과_빠진행을_가른다() {
+        let 칸 = vec!["요약".to_string()];
+        let a = vec![json!({"id":"IR1-01", "요약":"같음"})];
+        let b = vec![json!({"id":"IR1-M01", "요약":"같음"})];
+        let 같음 = 원문순서_대조(&a, &b, &칸);
+        assert_eq!((같음.0, 같음.1), (0, 0));
+        let c = vec![json!({"요약":"다름"}), json!({"요약":"추가"})];
+        let r = 원문순서_대조(&c, &b, &칸);
+        assert_eq!((r.0, r.1), (1, 1));
+    }
 }
 
 fn check_round_records(root: &Path) -> Result<String> {
@@ -3868,29 +3929,17 @@ fn check_round_records(root: &Path) -> Result<String> {
                     let mut 갈림 = Vec::new();
                     match 추출기_산출(root, 파이썬, 출처, n, &f) {
                         Ok(뽑은) => {
-                            for e in &뽑은 {
-                                let id = e["id"].as_str().unwrap_or("");
-                                let Some(r) = 행들.iter().find(|r| r["id"].as_str() == Some(id))
-                                else {
-                                    빠진_행 += 1;
-                                    갈림.push(format!("{id}: 레코드에 없다"));
-                                    continue;
-                                };
-                                for 칸 in &기계_칸 {
-                                    let (a, b) = (e[칸].as_str().unwrap_or(""), r[칸].as_str().unwrap_or(""));
-                                    if a != b {
-                                        갈린_칸 += 1;
-                                        갈림.push(format!("{id}.{칸}"));
-                                    }
-                                }
-                            }
-                            for r in 행들 {
-                                let id = r["id"].as_str().unwrap_or("");
-                                if !뽑은.iter().any(|e| e["id"].as_str() == Some(id)) {
-                                    빠진_행 += 1;
-                                    갈림.push(format!("{id}: 반환문에 없다"));
-                                }
-                            }
+                            let 프로필 = 뽑은
+                                .first()
+                                .and_then(|행| 행.get("_프로필"))
+                                .and_then(|값| 값.as_str())
+                                .unwrap_or("current");
+                            let 역사_칸 = 문자열들(&반환형식["역사기계칸"][프로필][출처]);
+                            let 대조_칸 = if 역사_칸.is_empty() { &기계_칸 } else { &역사_칸 };
+                            let (칸수, 행수, 세부) = 원문순서_대조(&뽑은, 행들, 대조_칸);
+                            갈린_칸 += 칸수;
+                            빠진_행 += 행수;
+                            갈림.extend(세부);
                         }
                         Err(e) => 갈림.push(format!("추출기가 못 돌았다: {e:#}")),
                     }
@@ -4065,7 +4114,11 @@ fn 스키마를_읽는다(root: &Path) -> Result<serde_json::Value> {
 ///
 /// ⚠ **면제가 아니라 빚이다.** 부르는 자리가 **수를 판정문에 실어야** 한다 —
 /// 안 실으면 그것이 조용한 fallback 이고, 이 회차가 닫으려는 병 그 자체다.
-fn 선언_목록(root: &Path, 제목: &str) -> Result<(Vec<String>, String)> {
+fn 선언_목록(
+    root: &Path,
+    제목: &str,
+    빈항목_허용: bool,
+) -> Result<(Vec<String>, String)> {
     let p = root.join("docs/gates/README.md");
     let text = std::fs::read_to_string(&p)
         .with_context(|| format!("선언 목록을 못 읽었다: {}", p.display()))?;
@@ -4096,13 +4149,69 @@ fn 선언_목록(root: &Path, 제목: &str) -> Result<(Vec<String>, String)> {
                 .to_string();
         }
     }
-    if 항목.is_empty() || 하한.is_empty() {
+    if 하한.is_empty() || (!빈항목_허용 && 항목.is_empty()) {
         bail!(
-            "`docs/gates/README.md` 의 `### {제목}` 목록이 비었거나 날짜 하한이 없다 — \
-             **모집단이 비면 실패다.** 0 건은 「안 부른다」가 아니라 「안 봤다」다"
+            "`docs/gates/README.md` 의 `### {제목}` 목록에 날짜 하한이 없거나 빈 목록을 \
+             허용하지 않는다 — 예외 목록의 0 건과 검사 모집단의 0 건은 다르다"
         );
     }
     Ok((항목, 하한))
+}
+
+#[cfg(test)]
+mod 종료와_선언_목록_시험 {
+    use super::{기록이_확정됐나, 선언_목록, 종료보고_형식이전_회차, 종료했나};
+    use std::fs;
+
+    fn 임시_뿌리(이름: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("pal-xtask-{이름}-{}", std::process::id()))
+    }
+
+    #[test]
+    fn 형식이전_종료는_정확한_회차와_표지만_받는다() {
+        let 뿌리 = 임시_뿌리("legacy-close");
+        let 회차 = 뿌리.join(종료보고_형식이전_회차);
+        fs::create_dir_all(&회차).unwrap();
+        fs::write(
+            회차.join("state.md"),
+            "# 상태\n\n**단계**: 종료. 완수 조건 전부 닫힘 · 효과 관측 · CI 초록.\n",
+        )
+        .unwrap();
+        assert!(종료했나(&회차));
+        assert!(기록이_확정됐나(&회차));
+
+        let 다른_회차 = 뿌리.join("2026-08-18-not-the-legacy-round");
+        fs::create_dir_all(&다른_회차).unwrap();
+        fs::copy(회차.join("state.md"), 다른_회차.join("state.md")).unwrap();
+        assert!(!종료했나(&다른_회차));
+
+        fs::write(회차.join("state.md"), "**단계**: 종료.\n").unwrap();
+        assert!(!종료했나(&회차));
+        let _ = fs::remove_dir_all(&뿌리);
+    }
+
+    #[test]
+    fn 빚_목록은_비어도_하한은_필수다() {
+        let 뿌리 = 임시_뿌리("empty-declaration");
+        // 실행 시점 docs 모집단은 소스의 `join("docs/…")` 리터럴에서 만들어진다.
+        // 시험용 임시 경로가 제품 모집단을 넓히지 않도록 두 조각으로 만든다.
+        fs::create_dir_all(뿌리.join("docs").join("gates")).unwrap();
+        fs::write(
+            뿌리.join("docs").join("gates/README.md"),
+            "### 빚\n\n현재 항목 없음.\n\n**하한: 2026-08-24 이전에 연 회차만.**\n",
+        )
+        .unwrap();
+        assert_eq!(선언_목록(&뿌리, "빚", true).unwrap().0.len(), 0);
+        assert!(선언_목록(&뿌리, "빚", false).is_err());
+
+        fs::write(
+            뿌리.join("docs").join("gates/README.md"),
+            "### 빚\n\n현재 항목 없음.\n",
+        )
+        .unwrap();
+        assert!(선언_목록(&뿌리, "빚", true).is_err());
+        let _ = fs::remove_dir_all(&뿌리);
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4121,7 +4230,8 @@ fn check_declared_lists(root: &Path) -> Result<String> {
         "종료 보고 검산 줄 유예",
         "종료 보고 없음 유예",
     ] {
-        let (항목, 하한) = 선언_목록(root, 제목)?;
+        let 빈항목_허용 = 제목 != "형식 이전";
+        let (항목, 하한) = 선언_목록(root, 제목, 빈항목_허용)?;
         for name in &항목 {
             if !root.join(회차_뿌리).join(name).is_dir() {
                 problems.push(format!(
@@ -4395,7 +4505,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     // ★ **하한은 닫힌 선언 목록이다.** 이 축이 2026-08-24 에 처음 섰고, 그 전에 닫힌
     //   행들은 **그 자를 모르는 채로 쓰였다.** ⚠ **면제가 아니라 빚이다** — 그 회차들의
     //   발화도 **세고 판정문에 낸다.** 조용히 안 재면 그것이 이 회차가 닫으려는 병이다.
-    let (감사_대기, _) = 선언_목록(root, "A 축 감사 대기")?;
+    let (감사_대기, _) = 선언_목록(root, "A 축 감사 대기", true)?;
     // ★ 규칙은 선언이 진다 — 여기가 아니다(#94).
     let 스키마 = 스키마를_읽는다(root)?;
     let 닫힘축 = &스키마["닫힘축"];
@@ -4857,9 +4967,9 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         bail!("파서 원천이 없다: {스키마_원천}");
     }
 
-    let (형식이전_선언, _) = 선언_목록(root, "형식 이전")?;
-    let (검산줄_유예, _) = 선언_목록(root, "종료 보고 검산 줄 유예")?;
-    let (보고없음_유예, _) = 선언_목록(root, "종료 보고 없음 유예")?;
+    let (형식이전_선언, _) = 선언_목록(root, "형식 이전", false)?;
+    let (검산줄_유예, _) = 선언_목록(root, "종료 보고 검산 줄 유예", true)?;
+    let (보고없음_유예, _) = 선언_목록(root, "종료 보고 없음 유예", true)?;
     // ★ 금지 네 이름은 선언이 진다 — 여기가 아니다(독립 리뷰 R1 · 발견 12).
     let 스키마 = 스키마를_읽는다(root)?;
     let 금지_절: Vec<String> = 문자열들(&스키마["반환형식"]["종료보고금지절"]);
@@ -4930,8 +5040,7 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
 
     let 진행중: Vec<&String> = 회차들
         .iter()
-        .filter(|r| !뿌리.join(r).join("report.md").is_file())
-        .filter(|r| !뿌리.join(r).join("folded.md").is_file())
+        .filter(|r| !기록이_확정됐나(&뿌리.join(r)))
         .filter(|r| {
             if 보고없음_유예.iter().any(|x| &x == r) {
                 보고없음_유예_발화 += 1;
@@ -4968,7 +5077,8 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         //   **접은 회차를 되살린다.**
         let 접혔나 = 뿌리.join(회차).join("folded.md").is_file();
         let 종료보고를_썼나 = 뿌리.join(회차).join("report.md").is_file();
-        let 끝났나 = 종료보고를_썼나;
+        let 끝났나 = 종료했나(&뿌리.join(회차));
+        let 종료보고_형식이전 = 끝났나 && !종료보고를_썼나;
 
         // ── G1 · G2 — **종료 보고를 검사 모집단에** ──────────────────────────
         if 종료보고를_썼나 {
@@ -5050,7 +5160,7 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         let Some((게이트, _)) = 짝.first().copied() else {
             // ③ 짝이 없다 — 「게이트 없음」.
             게이트없음.push(회차.clone());
-            if 끝났나 {
+            if 끝났나 && !종료보고_형식이전 {
                 problems.push(format!(
                     "{회차}: 게이트 없음 — `report.md` 가 있는데 `{열쇠}` 를 가리키는 \
                      게이트가 `{게이트_뿌리}/` 에 없다. 끝난 회차의 판정 원장이 한 자리뿐이다"
