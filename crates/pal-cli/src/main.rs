@@ -267,7 +267,7 @@ enum Command {
     /// 하네스의 훅이 부르는 자리 — **표준입력으로 페이로드를 받는다**
     ///
     /// 사람이 손으로 부를 일이 없다. `pal install` 이 이 커맨드를 대상 프로젝트의
-    /// `settings.json` 에 등록하고, 하네스가 `/bin/sh -c` 로 실행한다.
+    /// `settings.json` 에 exec form 으로 등록하고, 하네스가 셸 없이 실행한다.
     Hook {
         /// 사건 이름. **모르는 것은 조용히 통과시킨다**
         event: String,
@@ -458,6 +458,44 @@ enum RoundCommand {
         #[arg(long)]
         json: bool,
     },
+    /// Stop 정책의 명시적 활성화·비활성화·상태 조회
+    Stop {
+        #[command(subcommand)]
+        what: RoundStopCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum RoundStopCommand {
+    /// 현재 프로젝트의 지정 회차에 Stop 정책을 명시적으로 활성화한다
+    Enable {
+        #[arg(long)]
+        round: String,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        approval_dir: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// activation record 내용이 손상됐어도 Stop 정책을 즉시 비활성화한다
+    Disable {
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        approval_dir: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Stop activation과 operational progress 상태를 읽는다
+    Status {
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        approval_dir: Option<PathBuf>,
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -568,6 +606,17 @@ fn main() -> Result<()> {
                 &repo, &slug, &id, approval_dir.as_deref(), shell.as_deref(), timeout,
                 output_limit, json,
             ),
+            RoundCommand::Stop { what } => match what {
+                RoundStopCommand::Enable { round: slug, repo, approval_dir, json } => {
+                    round::stop::command_enable(&repo, &slug, approval_dir.as_deref(), json)
+                }
+                RoundStopCommand::Disable { repo, approval_dir, json } => {
+                    round::stop::command_disable(&repo, approval_dir.as_deref(), json)
+                }
+                RoundStopCommand::Status { repo, approval_dir, json } => {
+                    round::stop::command_status(&repo, approval_dir.as_deref(), json)
+                }
+            },
         },
         Command::Intent { what } => match what {
             IntentCommand::Export { repo, intent, out } => intent::export(&repo, intent, out),

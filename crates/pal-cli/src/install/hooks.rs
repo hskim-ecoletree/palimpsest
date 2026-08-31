@@ -132,14 +132,34 @@ const SUBCOMMAND: &str = "hook";
 ///
 /// # Errors
 /// 자기 실행 파일의 경로를 못 알아내면.
-pub fn desired(events: &[&str]) -> Result<Vec<HookEntry>> {
-    if events.is_empty() {
+pub fn desired() -> Result<Vec<HookEntry>> {
+    if crate::hook::catalog::EVENTS.is_empty() {
         return Ok(Vec::new());
     }
     // **자기 실행 파일을 여전히 확인한다** — 등록 문자열에 안 실을 뿐이다.
     // 여기가 실패하면 우리가 무엇인지도 모르는 상태이고, 그때는 아무것도 등록하지 않는다.
     let _ = 실행_파일()?;
-    Ok(events.iter().map(|e| entry(e)).collect())
+    Ok(crate::hook::catalog::EVENTS
+        .iter()
+        .map(|spec| entry(spec.name))
+        .collect())
+}
+
+#[cfg(test)]
+mod catalog_tests {
+    use super::*;
+
+    #[test]
+    fn 등록과_dispatch는_같은_catalog의_양방향_집합이다() {
+        let mut names: Vec<_> = crate::hook::catalog::EVENTS.iter().map(|spec| spec.name).collect();
+        names.sort_unstable();
+        names.dedup();
+        assert_eq!(names.len(), crate::hook::catalog::EVENTS.len(), "event 이름이 중복됐다");
+        for name in names {
+            assert!(crate::hook::catalog::find(name).is_some(), "dispatch가 `{name}`을 모른다");
+            assert_eq!(entry(name).event, name, "install entry가 `{name}`을 바꿨다");
+        }
+    }
 }
 
 /// `PATH` 의 그 이름이 **지금 도는 이 프로그램을 가리키나** — 아니면 그 까닭.

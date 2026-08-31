@@ -2,6 +2,7 @@
 
 pub mod approval;
 pub mod ledger;
+pub mod stop;
 pub mod status;
 pub mod verify;
 

@@ -42,8 +42,16 @@ fn root(tag: &str) -> (PathBuf, PathBuf) {
 }
 
 fn git(repo: &Path, args: &[&str]) {
-    let out = Command::new("git").args(args).current_dir(repo).output().expect("git");
-    assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+    let out = Command::new("git")
+        .args(args)
+        .current_dir(repo)
+        .output()
+        .expect("git");
+    assert!(
+        out.status.success(),
+        "git {args:?}: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
 }
 
 fn oracle() -> Value {
@@ -81,8 +89,14 @@ fn evidence(met: bool) -> Value {
 
 fn append(repo: &Path, event: &Value) {
     use std::io::Write;
-    let path = repo.join(".palimpsest/rounds").join(SLUG).join("verification.log");
-    let mut file = std::fs::OpenOptions::new().append(true).open(path).expect("ledger");
+    let path = repo
+        .join(".palimpsest/rounds")
+        .join(SLUG)
+        .join("verification.log");
+    let mut file = std::fs::OpenOptions::new()
+        .append(true)
+        .open(path)
+        .expect("ledger");
     writeln!(file, "{event}").expect("append");
 }
 
@@ -101,7 +115,11 @@ fn enable(repo: &Path, store: &Path) -> Value {
         store,
         &["round", "stop", "enable", "--round", SLUG, "--json"],
     );
-    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
     serde_json::from_slice(&out.stdout).expect("enable JSON")
 }
 
@@ -116,7 +134,12 @@ fn stop(repo: &Path, store: &Path, payload: &Value) -> Output {
         .stderr(std::process::Stdio::piped())
         .spawn()
         .expect("hook");
-    child.stdin.as_mut().expect("stdin").write_all(payload.to_string().as_bytes()).expect("write");
+    child
+        .stdin
+        .as_mut()
+        .expect("stdin")
+        .write_all(payload.to_string().as_bytes())
+        .expect("write");
     child.wait_with_output().expect("wait")
 }
 
@@ -143,15 +166,32 @@ fn 등록과_activation은_분리되고_disable은_즉시_복구한다() {
     let transcript = repo.parent().expect("base").join("transcript.jsonl");
     std::fs::write(&transcript, "inactive\n").expect("transcript");
     let p = payload(&repo, "s1", &transcript, json!(false));
-    assert!(!blocked(&stop(&repo, &store, &p)), "등록 전제가 정책 활성으로 새었다");
+    assert!(
+        !blocked(&stop(&repo, &store, &p)),
+        "등록 전제가 정책 활성으로 새었다"
+    );
 
     let activation = enable(&repo, &store);
     assert_eq!(activation["outcome"], "enabled");
-    assert!(blocked(&stop(&repo, &store, &p)), "pending round를 차단하지 않았다");
+    assert!(
+        blocked(&stop(&repo, &store, &p)),
+        "pending round를 차단하지 않았다"
+    );
 
     let out = pal(&repo, &store, &["round", "stop", "disable", "--json"]);
     assert!(out.status.success());
-    assert!(!blocked(&stop(&repo, &store, &p)), "disable 뒤에도 차단했다");
+    assert!(
+        !blocked(&stop(&repo, &store, &p)),
+        "disable 뒤에도 차단했다"
+    );
+
+    enable(&repo, &store);
+    let status = pal(&repo, &store, &["round", "stop", "status", "--json"]);
+    let state: Value = serde_json::from_slice(&status.stdout).expect("status JSON");
+    assert_eq!(
+        state["no_progress"], 0,
+        "재활성화가 stale counter를 물려받았다"
+    );
 }
 
 #[test]
@@ -161,14 +201,20 @@ fn reentry와_unknown은_항상_먼저_통과하고_active_malformed는_차단�
     let missing = repo.parent().expect("base").join("missing-transcript");
 
     let reentry = payload(&repo, "s1", &missing, json!(true));
-    assert!(!blocked(&stop(&repo, &store, &reentry)), "reentry가 상태 읽기보다 뒤에 섰다");
+    assert!(
+        !blocked(&stop(&repo, &store, &reentry)),
+        "reentry가 상태 읽기보다 뒤에 섰다"
+    );
 
     for active in [Value::Null, json!("false"), json!(0)] {
         let out = stop(&repo, &store, &payload(&repo, "s2", &missing, active));
         assert!(blocked(&out), "active Stop의 잘못된 타입을 통과시켰다");
     }
     let mut absent = payload(&repo, "s3", &missing, json!(false));
-    absent.as_object_mut().expect("object").remove("stop_hook_active");
+    absent
+        .as_object_mut()
+        .expect("object")
+        .remove("stop_hook_active");
     assert!(blocked(&stop(&repo, &store, &absent)));
 
     let unknown = pal(&repo, &store, &["hook", "Unknown"]);
@@ -192,19 +238,52 @@ fn 의미_진행만_counter를_reset하고_complete만_통과한다() {
     }
 
     // JSON 표현만 바꾼다. reducer의 의미는 같다.
-    let ledger = repo.join(".palimpsest/rounds").join(SLUG).join("verification.log");
-    let formatted = format!("{}\n{}\n", serde_json::to_string_pretty(&json!({"kind":"schema","version":1,"round":SLUG})).expect("json").replace('\n', " "), serde_json::to_string_pretty(&oracle()).expect("json").replace('\n', " "));
+    let ledger = repo
+        .join(".palimpsest/rounds")
+        .join(SLUG)
+        .join("verification.log");
+    let formatted = format!(
+        "{}\n{}\n",
+        serde_json::to_string_pretty(&json!({"kind":"schema","version":1,"round":SLUG}))
+            .expect("json")
+            .replace('\n', " "),
+        serde_json::to_string_pretty(&oracle())
+            .expect("json")
+            .replace('\n', " ")
+    );
     std::fs::write(&ledger, formatted).expect("rewrite");
     std::fs::write(&transcript, "format-only\n").expect("transcript");
-    assert!(blocked(&stop(&repo, &store, &payload(&repo, "s3", &transcript, json!(false)))));
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "s3", &transcript, json!(false))
+    )));
 
     append(&repo, &evidence(true));
     std::fs::write(&transcript, "met\n").expect("transcript");
-    assert!(blocked(&stop(&repo, &store, &payload(&repo, "s4", &transcript, json!(false)))), "report 없는 met round를 통과시켰다");
+    assert!(
+        blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "s4", &transcript, json!(false))
+        )),
+        "report 없는 met round를 통과시켰다"
+    );
 
-    std::fs::write(repo.join(".palimpsest/rounds").join(SLUG).join("report.md"), "# report\n").expect("report");
+    std::fs::write(
+        repo.join(".palimpsest/rounds").join(SLUG).join("report.md"),
+        "# report\n",
+    )
+    .expect("report");
     std::fs::write(&transcript, "reported\n").expect("transcript");
-    assert!(!blocked(&stop(&repo, &store, &payload(&repo, "s5", &transcript, json!(false)))), "완료 상태를 통과시키지 않았다");
+    assert!(
+        !blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "s5", &transcript, json!(false))
+        )),
+        "완료 상태를 통과시키지 않았다"
+    );
 }
 
 #[test]
@@ -212,27 +291,57 @@ fn replay는_한번만_세고_여섯_무진행에서_truthful_handoff로_끝난�
     let (repo, store) = root("cap");
     enable(&repo, &store);
     let transcript = repo.parent().expect("base").join("transcript.jsonl");
-    let before = std::fs::read(repo.join(".palimpsest/rounds").join(SLUG).join("verification.log")).expect("before");
+    let before = std::fs::read(
+        repo.join(".palimpsest/rounds")
+            .join(SLUG)
+            .join("verification.log"),
+    )
+    .expect("before");
 
     std::fs::write(&transcript, "same\n").expect("transcript");
     let same = payload(&repo, "same-session", &transcript, json!(false));
     for _ in 0..3 {
-        assert!(blocked(&stop(&repo, &store, &same)), "replay만으로 상한에 닿았다");
+        assert!(
+            blocked(&stop(&repo, &store, &same)),
+            "replay만으로 상한에 닿았다"
+        );
     }
     for n in 2..=5 {
         std::fs::write(&transcript, format!("attempt {n}\n")).expect("transcript");
-        assert!(blocked(&stop(&repo, &store, &payload(&repo, "same-session", &transcript, json!(false)))));
+        assert!(blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "same-session", &transcript, json!(false))
+        )));
     }
     std::fs::write(&transcript, "attempt 6\n").expect("transcript");
-    let released = stop(&repo, &store, &payload(&repo, "same-session", &transcript, json!(false)));
+    let released = stop(
+        &repo,
+        &store,
+        &payload(&repo, "same-session", &transcript, json!(false)),
+    );
     assert!(!blocked(&released), "6회 무진행에서 session을 풀지 않았다");
 
     let status = pal(&repo, &store, &["round", "stop", "status", "--json"]);
     let state: Value = serde_json::from_slice(&status.stdout).expect("status JSON");
     assert_eq!(state["handoff"], "blocked");
     assert_eq!(state["no_progress"], 6);
-    assert_eq!(before, std::fs::read(repo.join(".palimpsest/rounds").join(SLUG).join("verification.log")).expect("after"));
-    assert!(!repo.join(".palimpsest/rounds").join(SLUG).join("report.md").exists());
+    assert_eq!(
+        before,
+        std::fs::read(
+            repo.join(".palimpsest/rounds")
+                .join(SLUG)
+                .join("verification.log")
+        )
+        .expect("after")
+    );
+    assert!(
+        !repo
+            .join(".palimpsest/rounds")
+            .join(SLUG)
+            .join("report.md")
+            .exists()
+    );
 }
 
 #[test]
@@ -241,14 +350,287 @@ fn 손상된_active_round는_block하고_손상_activation도_disable된다() {
     enable(&repo, &store);
     let transcript = repo.parent().expect("base").join("transcript.jsonl");
     std::fs::write(&transcript, "corrupt\n").expect("transcript");
-    std::fs::write(repo.join(".palimpsest/rounds").join(SLUG).join("verification.log"), "{\n").expect("corrupt ledger");
-    assert!(blocked(&stop(&repo, &store, &payload(&repo, "s", &transcript, json!(false)))));
+    std::fs::write(
+        repo.join(".palimpsest/rounds")
+            .join(SLUG)
+            .join("verification.log"),
+        "{\n",
+    )
+    .expect("corrupt ledger");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "s", &transcript, json!(false))
+    )));
+
+    let activation_path = std::fs::read_dir(&store)
+        .expect("store")
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|path| {
+            path.file_name()
+                .is_some_and(|name| name.to_string_lossy().starts_with("round-stop-activation-"))
+        })
+        .expect("activation record");
+    std::fs::write(&activation_path, "{").expect("corrupt activation");
+    let disabled = pal(&repo, &store, &["round", "stop", "disable", "--json"]);
+    assert!(
+        disabled.status.success(),
+        "{}",
+        String::from_utf8_lossy(&disabled.stderr)
+    );
+    assert!(!blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "s2", &transcript, json!(false))
+    )));
+}
+
+#[test]
+fn unregistered_unmet_stale_없는회차_terminal충돌을_모두_차단하고_folded는_통과한다() {
+    let (repo, store) = root("states");
+    enable(&repo, &store);
+    let transcript = repo.parent().expect("base").join("transcript.jsonl");
+    let dir = repo.join(".palimpsest/rounds").join(SLUG);
+
+    std::fs::remove_file(dir.join("verification.log")).expect("remove ledger");
+    std::fs::write(&transcript, "unregistered\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "u", &transcript, json!(false))
+    )));
+
+    std::fs::write(
+        dir.join("verification.log"),
+        format!(
+            "{}\n{}\n{}\n",
+            json!({"kind":"schema","version":1,"round":SLUG}),
+            oracle(),
+            evidence(false)
+        ),
+    )
+    .expect("unmet ledger");
+    std::fs::write(&transcript, "unmet\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "m", &transcript, json!(false))
+    )));
+
+    append(&repo, &oracle());
+    std::fs::write(&transcript, "stale\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "s", &transcript, json!(false))
+    )));
+
+    std::fs::write(dir.join("report.md"), "# report\n").expect("report");
+    std::fs::write(dir.join("folded.md"), "## 왜 접었나\nfixture\n").expect("folded");
+    std::fs::write(&transcript, "conflict\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "c", &transcript, json!(false))
+    )));
+
+    std::fs::remove_file(dir.join("report.md")).expect("remove report");
+    std::fs::write(&transcript, "folded\n").expect("transcript");
+    assert!(!blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "f", &transcript, json!(false))
+    )));
+
+    std::fs::remove_dir_all(&dir).expect("remove round");
+    std::fs::write(&transcript, "missing\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "x", &transcript, json!(false))
+    )));
+}
+
+#[test]
+fn regression과_진동은_progress_reset이_아니다() {
+    let (repo, store) = root("regression");
+    enable(&repo, &store);
+    let transcript = repo.parent().expect("base").join("transcript.jsonl");
+
+    std::fs::write(&transcript, "pending\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "p", &transcript, json!(false))
+    )));
+    append(&repo, &evidence(true));
+    std::fs::write(&transcript, "met\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "m", &transcript, json!(false))
+    )));
+    append(&repo, &oracle());
+    std::fs::write(&transcript, "stale\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "s", &transcript, json!(false))
+    )));
+    append(&repo, &evidence(true));
+    std::fs::write(&transcript, "met-again\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "a", &transcript, json!(false))
+    )));
 
     let status = pal(&repo, &store, &["round", "stop", "status", "--json"]);
     let state: Value = serde_json::from_slice(&status.stdout).expect("status JSON");
-    let activation_path = PathBuf::from(state["activation_record"].as_str().expect("record path"));
-    std::fs::write(&activation_path, "{").expect("corrupt activation");
-    let disabled = pal(&repo, &store, &["round", "stop", "disable", "--json"]);
-    assert!(disabled.status.success(), "{}", String::from_utf8_lossy(&disabled.stderr));
-    assert!(!blocked(&stop(&repo, &store, &payload(&repo, "s2", &transcript, json!(false)))));
+    assert_eq!(
+        state["no_progress"], 3,
+        "regression 또는 같은 최고점이 reset됐다: {state}"
+    );
+}
+
+#[test]
+fn corrupt_progress와_trailing_partial_crlf를_보수적으로_판정한다() {
+    let (repo, store) = root("files");
+    enable(&repo, &store);
+    let transcript = repo.parent().expect("base").join("transcript.jsonl");
+    std::fs::write(&transcript, "first\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "a", &transcript, json!(false))
+    )));
+
+    let progress = std::fs::read_dir(&store)
+        .expect("store")
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|path| {
+            path.file_name().is_some_and(|name| {
+                name.to_string_lossy().starts_with("round-stop-progress-")
+                    && name.to_string_lossy().ends_with(".json")
+            })
+        })
+        .expect("progress");
+    std::fs::write(&progress, "{").expect("corrupt progress");
+    std::fs::write(&transcript, "second\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "b", &transcript, json!(false))
+    )));
+
+    let ledger = repo
+        .join(".palimpsest/rounds")
+        .join(SLUG)
+        .join("verification.log");
+    std::fs::write(
+        &ledger,
+        format!(
+            "{}\r\n{}",
+            json!({"kind":"schema","version":1,"round":SLUG}),
+            oracle()
+        ),
+    )
+    .expect("partial CRLF");
+    std::fs::write(&transcript, "partial\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "c", &transcript, json!(false))
+    )));
+}
+
+#[test]
+fn 동시_session은_원자적으로_여섯에서_멈춘다() {
+    let (repo, store) = root("concurrent");
+    enable(&repo, &store);
+    let transcript = repo.parent().expect("base").join("transcript.jsonl");
+    std::fs::write(&transcript, "shared\n").expect("transcript");
+
+    let mut threads = Vec::new();
+    for n in 0..8 {
+        let repo = repo.clone();
+        let store = store.clone();
+        let transcript = transcript.clone();
+        threads.push(std::thread::spawn(move || {
+            stop(
+                &repo,
+                &store,
+                &payload(&repo, &format!("session-{n}"), &transcript, json!(false)),
+            )
+        }));
+    }
+    let outputs: Vec<_> = threads
+        .into_iter()
+        .map(|thread| thread.join().expect("thread"))
+        .collect();
+    assert!(outputs.iter().all(|out| out.status.success()));
+    let status = pal(&repo, &store, &["round", "stop", "status", "--json"]);
+    let state: Value = serde_json::from_slice(&status.stdout).expect("status JSON");
+    assert_eq!(state["no_progress"], 6);
+    assert_eq!(state["handoff"], "blocked");
+}
+
+#[test]
+fn stale_lock은_복구되고_uninstall은_activation을_남기지_않는다() {
+    let (repo, store) = root("rollback");
+    let installed = pal(&repo, &store, &["install"]);
+    assert!(
+        installed.status.success(),
+        "{}",
+        String::from_utf8_lossy(&installed.stderr)
+    );
+    enable(&repo, &store);
+    let transcript = repo.parent().expect("base").join("transcript.jsonl");
+    std::fs::write(&transcript, "first\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "a", &transcript, json!(false))
+    )));
+
+    let progress = std::fs::read_dir(&store)
+        .expect("store")
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|path| {
+            path.file_name().is_some_and(|name| {
+                name.to_string_lossy().starts_with("round-stop-progress-")
+                    && name.to_string_lossy().ends_with(".json")
+            })
+        })
+        .expect("progress");
+    let lock = progress.with_extension("lock");
+    std::fs::write(&lock, r#"{"token":"dead","created_millis":0}"#).expect("stale lock");
+    std::fs::write(&transcript, "second\n").expect("transcript");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "b", &transcript, json!(false))
+    )));
+    assert!(!lock.exists(), "stale lock이 남았다");
+
+    let uninstalled = pal(&repo, &store, &["uninstall"]);
+    assert!(
+        uninstalled.status.success(),
+        "{}",
+        String::from_utf8_lossy(&uninstalled.stderr)
+    );
+    let reinstalled = pal(&repo, &store, &["install"]);
+    assert!(reinstalled.status.success());
+    std::fs::write(&transcript, "after reinstall\n").expect("transcript");
+    assert!(
+        !blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "c", &transcript, json!(false)),
+        )),
+        "uninstall 뒤 activation이 되살아났다"
+    );
 }

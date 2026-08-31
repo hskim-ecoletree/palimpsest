@@ -47,7 +47,7 @@ pub use doctor::{Check, checks, print};
 
 use inside::{Rel, Root};
 use layout::{
-    AGENT_KEY, AGENT_VALUE, CLAUDE_DIR, DERIVED, DIRS, HOOK_EVENTS, IGNORE_FILE, IGNORE_MARKERS,
+    AGENT_KEY, AGENT_VALUE, CLAUDE_DIR, DERIVED, DIRS, IGNORE_FILE, IGNORE_MARKERS,
     IMPORT_LINE, LOCK, MANIFEST, MANIFEST_HOME, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD,
     ROOT_INSTRUCTION_FILE, SETTINGS,
 };
@@ -641,7 +641,7 @@ fn 설정_병합(
     // **적어 둔 것과 바라는 것을 대서 계획을 낸다.** 실행 파일이 옮겨 갔으면 옛 등록이
     // 여기서 빠진다 — 안 빼면 죽은 등록이 남고 그 실패는 침묵한다.
     let 적힌_훅 = 옛것.as_ref().map(|e| e.hooks.clone()).unwrap_or_default();
-    let 바라는_훅 = hooks::desired(HOOK_EVENTS)?;
+    let 바라는_훅 = hooks::desired()?;
     let plan = hooks::plan(read.current.as_ref(), &적힌_훅, &바라는_훅);
     for entry in &plan.remove {
         report.say("훅 뺌", &format!("{}  ·  {}", entry.event, entry.보임()));
@@ -879,7 +879,7 @@ pub fn update(target: &Path) -> Result<()> {
     let 훅_계획 = hooks::plan(
         read.current.as_ref(),
         &m.settings.as_ref().map(|e| e.hooks.clone()).unwrap_or_default(),
-        &hooks::desired(HOOK_EVENTS)?,
+        &hooks::desired()?,
     );
     let 낡음 = m.pal_version != now;
     if !낡음 && 훅_계획.is_empty() {
@@ -1027,6 +1027,11 @@ pub fn uninstall(target: &Path) -> Result<()> {
     if !막힌_자리.is_empty() {
         bail!("아무것도 지우지 않았다.\n\n{}", 막힌_자리.join("\n\n"));
     }
+
+    // 등록을 걷기 시작하면 다음 설치가 옛 activation을 조용히 되살리면 안 된다.
+    // activation record 내용이 손상돼도 project identity 파일 이름만으로 제거한다.
+    crate::round::stop::disable_if_supported(root.path())
+        .context("Stop 정책을 비활성화하지 못해 uninstall을 시작하지 않았다")?;
 
     // ── 2단계 · 적용. ★ **기록이 걸음마다 앞선다 — 그러나 걸음마다 쓰지는 않는다** ──
     //

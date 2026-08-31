@@ -185,6 +185,20 @@ pub const PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS: u64 = 120;
 /// 값을 바꾸면 그 값은 approval identity에 결박되어 기존 승인을 재사용할 수 없다.
 pub const PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES: usize = 1024 * 1024;
 
+/// 활성 Stop이 같은 의미 상태에서 연속으로 차단하는 횟수의 자기 상한.
+///
+/// unlazy의 실사용 기본값 6을 채택했고, Claude Code 자체의 연속 Stop 차단 상한 8보다 먼저
+/// truthful blocked handoff로 빠져나온다. 진행이 확인되면 0으로 reset된다.
+pub const ROUND_STOP_NO_PROGRESS_LIMIT: u32 = 6;
+
+/// Stop event identity를 만들 때 읽는 transcript의 최대 바이트.
+///
+/// 원문은 저장하지 않으며 이 상한 안의 내용 hash만 private operational state에 들어간다.
+pub const ROUND_STOP_TRANSCRIPT_MAX_BYTES: u64 = 8 * 1024 * 1024;
+
+/// replay를 가르기 위해 private operational state에 보존하는 event hash의 최대 개수.
+pub const ROUND_STOP_EVENT_HISTORY_MAX: usize = 64;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 질의 예산 — 옛 F05 §5.2. **이 실행기가 존재하는 이유가 이 셋이다.**
 //

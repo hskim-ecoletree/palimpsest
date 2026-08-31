@@ -57,16 +57,7 @@ pub fn binding(
             "oracle cwd가 symlink를 통해 저장소 밖으로 나간다".to_owned(),
         ));
     }
-    let git = GixRepo::open(&repo).map_err(|error| ApprovalError::Identity(error.to_string()))?;
-    let head = git
-        .head()
-        .map_err(|error| ApprovalError::Identity(error.to_string()))?;
-    let ancestors = git
-        .first_parent_walk(head, usize::MAX)
-        .map_err(|error| ApprovalError::Identity(error.to_string()))?;
-    let root = ancestors
-        .last()
-        .ok_or_else(|| ApprovalError::Identity("repository root commit이 없다".to_owned()))?;
+    let root = repository_root_identity(&repo)?;
     let path = std::env::var_os("PATH").unwrap_or_default();
     let path_digest = blake3::hash(path.to_string_lossy().as_bytes()).to_hex();
     let shell_bytes = std::fs::read(&shell)
@@ -100,15 +91,22 @@ pub fn binding(
     })
 }
 
+pub(super) fn repository_root_identity(repo: &Path) -> Result<String, ApprovalError> {
+    let git = GixRepo::open(repo).map_err(|error| ApprovalError::Identity(error.to_string()))?;
+    let head = git
+        .head()
+        .map_err(|error| ApprovalError::Identity(error.to_string()))?;
+    let ancestors = git
+        .first_parent_walk(head, usize::MAX)
+        .map_err(|error| ApprovalError::Identity(error.to_string()))?;
+    ancestors
+        .last()
+        .map(ToString::to_string)
+        .ok_or_else(|| ApprovalError::Identity("repository root commit이 없다".to_owned()))
+}
+
 pub fn store_dir(repo: &Path, requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {
-    let path = if let Some(path) = requested
-        .map(Path::to_path_buf)
-        .or_else(|| std::env::var_os("PAL_APPROVAL_DIR").map(PathBuf::from))
-    {
-        path
-    } else {
-        default_store()?
-    };
+    let path = store_location(requested)?;
     std::fs::create_dir_all(&path)
         .map_err(|error| ApprovalError::Store(format!("{}: {error}", path.display())))?;
     private_directory(&path)?;
@@ -124,6 +122,17 @@ pub fn store_dir(repo: &Path, requested: Option<&Path>) -> Result<PathBuf, Appro
         ));
     }
     Ok(canonical)
+}
+
+pub(super) fn store_location(requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {
+    if let Some(path) = requested
+        .map(Path::to_path_buf)
+        .or_else(|| std::env::var_os("PAL_APPROVAL_DIR").map(PathBuf::from))
+    {
+        Ok(path)
+    } else {
+        default_store()
+    }
 }
 
 pub fn approve(dir: &Path, digest: &str) -> Result<(), ApprovalError> {
@@ -220,7 +229,7 @@ fn private_directory(path: &Path) -> Result<(), ApprovalError> {
 }
 
 #[cfg(unix)]
-fn private_file(path: &Path) -> Result<(), ApprovalError> {
+pub(super) fn private_file(path: &Path) -> Result<(), ApprovalError> {
     use std::os::unix::fs::MetadataExt;
     let metadata =
         std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
@@ -237,7 +246,7 @@ fn private_file(path: &Path) -> Result<(), ApprovalError> {
 }
 
 #[cfg(windows)]
-fn private_file(path: &Path) -> Result<(), ApprovalError> {
+pub(super) fn private_file(path: &Path) -> Result<(), ApprovalError> {
     let metadata =
         std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
     if !metadata.is_file() || metadata.file_type().is_symlink() {

@@ -326,6 +326,26 @@ fn 두_번_설치해도_훅이_하나다() {
 
     assert_eq!(첫째, 둘째, "두 번째 설치가 설정 바이트를 바꿨다");
     assert_eq!(걸린_명령(&설정(&root), "SubagentStop").len(), 1, "훅이 둘이다");
+    assert_eq!(걸린_명령(&설정(&root), "Stop").len(), 1, "Stop 등록이 하나가 아니다");
+}
+
+/// 등록 catalog는 Stop을 포함하지만 install은 activation record를 만들지 않는다.
+#[test]
+fn stop은_등록되지만_설치만으로_정책이_켜지지_않는다() {
+    let root = 프로젝트("stop등록");
+    let exe = 공백이_든_곳의_pal(root.parent().expect("부모"), "stop등록");
+    성공(&exe, &root, &["install"]);
+
+    let settings = 설정(&root);
+    let stop = 걸린_항목(&settings, "Stop");
+    assert_eq!(stop.len(), 1, "Stop 등록이 하나가 아니다: {stop:?}");
+    assert_eq!(stop[0]["args"], serde_json::json!(["hook", "Stop"]));
+    assert!(
+        !root.join(".palimpsest").join("round-stop.json").exists(),
+        "install이 Stop activation을 프로젝트에 만들었다"
+    );
+    성공(&exe, &root, &["update"]);
+    assert_eq!(걸린_항목(&설정(&root), "Stop").len(), 1);
 }
 
 /// **남이 같은 사건에 걸어 둔 것을 하나도 안 건드린다** — 그리고 왕복하면 그것만 남는다.
