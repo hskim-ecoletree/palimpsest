@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 """보존된 원 반환문에서 발견을 **기계로** 뽑는다 — 손으로 옮기지 않는다.
 
-    사용: python3 extract.py <출처> <라운드> <r<n>-raw.md>
+    사용: python3 extract.py <출처> <라운드> <r<n>-raw.md> [기존-findings.jsonl]
           출처는 `사전부검` 또는 `독립리뷰`.
+
+    넷째 인자를 주면 역사 ID·사람 판단을 보존한 재이주 행을 출력한다.
 
 ## 왜 이것이 있나 — #92
 
@@ -368,7 +370,7 @@ def 좌표만(s):
 
 
 def main(argv):
-    if len(argv) != 4:
+    if len(argv) not in (4, 5):
         print(__doc__.split("\n\n")[1].strip(), file=sys.stderr)
         return 2
     출처, 라운드, 경로 = argv[1], int(argv[2]), argv[3]
@@ -391,8 +393,9 @@ def main(argv):
                          next((v for v in 값들 if re.search(r"(?:^|[ ·(])" + v, 직접)),
                               next((v for v in 값들 if re.search(칸 + r"\s*:\s*" + v, 합친값)), 기본)))
     접두 = {"독립리뷰": "IR", "사전부검": "PM"}[출처]
+    산출 = []
     for i, d in enumerate(항, 1):
-        print(json.dumps({
+        산출.append({
             "id": f"{접두}{라운드}-{i:02d}",
             "라운드": 라운드,
             "출처": 출처,
@@ -405,8 +408,27 @@ def main(argv):
             #   앞 판은 별칭만 있고 뽑지 않아 그 키의 소비자가 0 이었다(독립 리뷰 R2).
             **({"조건": d.get("조건", "없음") or "없음"}
                if "조건" in s["기계칸"].get(출처, []) else {}),
-            **({"_프로필": 프로필} if os.environ.get("PAL_ROUND_EXTRACT_REPORT_PROFILE") else {}),
-        }, ensure_ascii=False))
+            **({"_표시": d["_표시"]} if d.get("_표시") else {}),
+        })
+    if len(argv) == 5:
+        기존 = []
+        with open(argv[4], encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                row = json.loads(line)
+                if row.get("schema_version") is not None:
+                    continue
+                if row.get("출처") == 출처 and row.get("라운드") == 라운드:
+                    기존.append(row)
+        역사칸 = s.get("역사기계칸", {}).get(프로필, {}).get(출처, [])
+        기계칸 = 역사칸 or s["기계칸"][출처]
+        산출 = 역사병합(기존, 산출, 기계칸)
+    for row in 산출:
+        row.pop("_표시", None)
+        if os.environ.get("PAL_ROUND_EXTRACT_REPORT_PROFILE"):
+            row["_프로필"] = 프로필
+        print(json.dumps(row, ensure_ascii=False))
     return 0
 
 
