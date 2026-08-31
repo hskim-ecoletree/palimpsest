@@ -191,11 +191,6 @@ pub const PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES: usize = 1024 * 1024;
 /// truthful blocked handoff로 빠져나온다. 진행이 확인되면 0으로 reset된다.
 pub const ROUND_STOP_NO_PROGRESS_LIMIT: u32 = 6;
 
-/// Stop event identity를 만들 때 읽는 transcript의 최대 바이트.
-///
-/// 원문은 저장하지 않으며 이 상한 안의 내용 hash만 private operational state에 들어간다.
-pub const ROUND_STOP_TRANSCRIPT_MAX_BYTES: u64 = 8 * 1024 * 1024;
-
 /// replay를 가르기 위해 private operational state에 보존하는 event hash의 최대 개수.
 pub const ROUND_STOP_EVENT_HISTORY_MAX: usize = 64;
 

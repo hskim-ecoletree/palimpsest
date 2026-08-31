@@ -100,6 +100,32 @@ fn append(repo: &Path, event: &Value) {
     writeln!(file, "{event}").expect("append");
 }
 
+fn write_report(repo: &Path) {
+    let path = repo
+        .join(".palimpsest/rounds")
+        .join(SLUG)
+        .join("report.md");
+    std::fs::write(
+        path,
+        "# report\n\n## 남지 않은 것\n없음.\n\n## 다음 회차가 받는 것\n없음.\n\n## 범위 밖\n없음.\n\n## 원리상 못 잰 것\n없음.\n\n## 능력 부재\n없음.\n",
+    )
+    .expect("report");
+}
+
+fn write_folded(repo: &Path) {
+    let dir = repo.join(".palimpsest/rounds").join(SLUG);
+    std::fs::write(
+        dir.join("folded.md"),
+        "# 접힘 — fixture\n\n## 왜 접었나\n목표 밖이다.\n\n## 접으면서 남기는 것과 버리는 것\n없음.\n\n## 다음에 여는 것\n없음.\n",
+    )
+    .expect("folded");
+    std::fs::write(
+        dir.join("state.md"),
+        "# 상태\n\n## 지금 단계\n접힘 — `folded.md`를 본다.\n",
+    )
+    .expect("state");
+}
+
 fn pal(repo: &Path, store: &Path, args: &[&str]) -> Output {
     Command::new(PAL)
         .args(args)
@@ -176,6 +202,15 @@ fn 등록과_activation은_분리되고_disable은_즉시_복구한다() {
     assert!(
         blocked(&stop(&repo, &store, &p)),
         "pending round를 차단하지 않았다"
+    );
+
+    let nested = repo.join("nested/worktree/cwd");
+    std::fs::create_dir_all(&nested).expect("nested cwd");
+    let mut nested_payload = payload(&repo, "nested", &transcript, json!(false));
+    nested_payload["cwd"] = json!(nested);
+    assert!(
+        blocked(&stop(&repo, &store, &nested_payload)),
+        "하위 cwd가 activation을 우회했다"
     );
 
     let out = pal(&repo, &store, &["round", "stop", "disable", "--json"]);
@@ -270,6 +305,10 @@ fn 의미_진행만_counter를_reset하고_complete만_통과한다() {
         "report 없는 met round를 통과시켰다"
     );
 
+    let status = pal(&repo, &store, &["round", "stop", "status", "--json"]);
+    let state: Value = serde_json::from_slice(&status.stdout).expect("status JSON");
+    assert_eq!(state["no_progress"], 0, "의미 진행 뒤 counter가 0이 아니다: {state}");
+
     std::fs::write(
         repo.join(".palimpsest/rounds").join(SLUG).join("report.md"),
         "# report\n",
@@ -277,10 +316,20 @@ fn 의미_진행만_counter를_reset하고_complete만_통과한다() {
     .expect("report");
     std::fs::write(&transcript, "reported\n").expect("transcript");
     assert!(
-        !blocked(&stop(
+        blocked(&stop(
             &repo,
             &store,
             &payload(&repo, "s5", &transcript, json!(false))
+        )),
+        "빈 종료 보고를 완료로 통과시켰다"
+    );
+    write_report(&repo);
+    std::fs::write(&transcript, "reported-valid\n").expect("transcript");
+    assert!(
+        !blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "s6", &transcript, json!(false))
         )),
         "완료 상태를 통과시키지 않았다"
     );
@@ -342,6 +391,26 @@ fn replay는_한번만_세고_여섯_무진행에서_truthful_handoff로_끝난�
             .join("report.md")
             .exists()
     );
+}
+
+#[test]
+fn 긴_transcript도_streaming_hash해_자기_상한을_죽이지_않는다() {
+    let (repo, store) = root("large-transcript");
+    enable(&repo, &store);
+    let transcript = repo.parent().expect("base").join("transcript.jsonl");
+    std::fs::write(&transcript, vec![b'x'; 8 * 1024 * 1024 + 1]).expect("large transcript");
+    for n in 1..=6 {
+        let out = stop(
+            &repo,
+            &store,
+            &payload(&repo, &format!("large-{n}"), &transcript, json!(false)),
+        );
+        assert_eq!(blocked(&out), n < 6, "large transcript attempt {n}");
+    }
+    let status = pal(&repo, &store, &["round", "stop", "status", "--json"]);
+    let state: Value = serde_json::from_slice(&status.stdout).expect("status JSON");
+    assert_eq!(state["no_progress"], 6);
+    assert_eq!(state["handoff"], "blocked");
 }
 
 #[test]
@@ -426,7 +495,7 @@ fn unregistered_unmet_stale_없는회차_terminal충돌을_모두_차단하고_f
         &payload(&repo, "s", &transcript, json!(false))
     )));
 
-    std::fs::write(dir.join("report.md"), "# report\n").expect("report");
+    write_report(&repo);
     std::fs::write(dir.join("folded.md"), "## 왜 접었나\nfixture\n").expect("folded");
     std::fs::write(&transcript, "conflict\n").expect("transcript");
     assert!(blocked(&stop(
@@ -437,6 +506,16 @@ fn unregistered_unmet_stale_없는회차_terminal충돌을_모두_차단하고_f
 
     std::fs::remove_file(dir.join("report.md")).expect("remove report");
     std::fs::write(&transcript, "folded\n").expect("transcript");
+    assert!(
+        blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "f0", &transcript, json!(false))
+        )),
+        "불완전한 folded 종료문을 통과시켰다"
+    );
+    write_folded(&repo);
+    std::fs::write(&transcript, "folded-valid\n").expect("transcript");
     assert!(!blocked(&stop(
         &repo,
         &store,
@@ -489,7 +568,7 @@ fn regression과_진동은_progress_reset이_아니다() {
     let status = pal(&repo, &store, &["round", "stop", "status", "--json"]);
     let state: Value = serde_json::from_slice(&status.stdout).expect("status JSON");
     assert_eq!(
-        state["no_progress"], 3,
+        state["no_progress"], 2,
         "regression 또는 같은 최고점이 reset됐다: {state}"
     );
 }
@@ -517,6 +596,20 @@ fn corrupt_progress와_trailing_partial_crlf를_보수적으로_판정한다() {
             })
         })
         .expect("progress");
+    let mut contradictory: Value =
+        serde_json::from_slice(&std::fs::read(&progress).expect("progress bytes"))
+            .expect("progress json");
+    contradictory["handoff"] = json!("blocked");
+    contradictory["no_progress"] = json!(1);
+    std::fs::write(&progress, serde_json::to_vec(&contradictory).expect("json")).expect("write");
+    assert!(
+        blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "a", &transcript, json!(false))
+        )),
+        "의미상 모순인 progress의 replay가 handoff로 통과했다"
+    );
     std::fs::write(&progress, "{").expect("corrupt progress");
     std::fs::write(&transcript, "second\n").expect("transcript");
     assert!(blocked(&stop(
@@ -578,7 +671,7 @@ fn 동시_session은_원자적으로_여섯에서_멈춘다() {
 }
 
 #[test]
-fn stale_lock은_복구되고_uninstall은_activation을_남기지_않는다() {
+fn 죽은_process의_lock은_재사용되고_uninstall은_activation을_남기지_않는다() {
     let (repo, store) = root("rollback");
     let installed = pal(&repo, &store, &["install"]);
     assert!(
@@ -614,7 +707,7 @@ fn stale_lock은_복구되고_uninstall은_activation을_남기지_않는다() {
         &store,
         &payload(&repo, "b", &transcript, json!(false))
     )));
-    assert!(!lock.exists(), "stale lock이 남았다");
+    assert!(lock.exists(), "커널 잠금의 안정된 inode가 사라졌다");
 
     let uninstalled = pal(&repo, &store, &["uninstall"]);
     assert!(

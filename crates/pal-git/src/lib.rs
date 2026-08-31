@@ -280,6 +280,23 @@ impl GixRepo {
         Ok(Self { inner, attributes: OnceLock::new() })
     }
 
+    /// 하위 작업 디렉터리에서 가장 가까운 저장소를 발견한다.
+    ///
+    /// hook payload의 `cwd`는 저장소 루트라는 보장이 없으므로, 그 소비자는 `open`으로
+    /// 흉내 내지 않고 이 문을 쓴다.
+    pub fn discover(path: &Path) -> Result<Self, GitError> {
+        let inner =
+            gix::discover(path).map_err(|e| GitError::Open(format!("{}: {e}", path.display())))?;
+        Ok(Self { inner, attributes: OnceLock::new() })
+    }
+
+    /// 발견한 저장소의 워킹트리 루트.
+    pub fn work_dir(&self) -> Result<&Path, GitError> {
+        self.inner
+            .workdir()
+            .ok_or_else(|| GitError::NoWorktree("bare repository".to_owned()))
+    }
+
     /// 사람이 쓴 것을 커밋 이름으로 푼다 — 짧은 SHA · 브랜치 · 태그 전부.
     ///
     /// **S1 의 코퍼스는 12자 축약 SHA 로 고정돼 있다**(`a29cad0bf6a8`). 그것이 브랜치
@@ -718,4 +735,3 @@ impl GixRepo {
             .map_err(|e| GitError::Resolve(e.to_string()))
     }
 }
-

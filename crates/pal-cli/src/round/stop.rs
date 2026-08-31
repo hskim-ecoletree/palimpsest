@@ -1,11 +1,12 @@
 //! 명시적으로 활성화된 Stop 정책과 진행 인지형 자기 상한.
 
-use std::fs::{OpenOptions, symlink_metadata};
+use std::fs::{File, OpenOptions, symlink_metadata};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
+use pal_git::GixRepo;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -20,10 +21,8 @@ const SEMANTIC_DOMAIN: &[u8] = b"pal.round.stop.semantic.v1\0";
 const EVENT_DOMAIN: &[u8] = b"pal.round.stop.event.v1\0";
 use pal_core::{
     ROUND_STOP_EVENT_HISTORY_MAX as EVENT_HISTORY_MAX,
-    ROUND_STOP_NO_PROGRESS_LIMIT as NO_PROGRESS_LIMIT,
-    ROUND_STOP_TRANSCRIPT_MAX_BYTES as TRANSCRIPT_MAX_BYTES,
+    ROUND_STOP_NO_PROGRESS_LIMIT as NO_PROGRESS_LIMIT, ROUND_VERIFICATION_FILE_MAX_BYTES,
 };
-const LOCK_STALE_MILLIS: u64 = 30_000;
 const LOCK_WAIT_MILLIS: u64 = 2_000;
 
 #[derive(Debug)]
@@ -202,6 +201,9 @@ pub fn command_status(repo: &Path, requested: Option<&Path>, json: bool) -> Resu
                 path.parent().expect("activation parent"),
                 &activation.digest,
             ))?;
+            if let Some(progress) = &progress {
+                validate_progress(progress, &activation)?;
+            }
             let view = CommandView {
                 outcome: "enabled",
                 round: Some(&activation.round),
@@ -278,13 +280,18 @@ pub fn decide(payload: &Value) -> PolicyDecision {
         Ok(view) => view,
         Err(error) => return PolicyDecision::Block(format!("활성 round 상태가 손상됐다: {error}")),
     };
-    if view.terminal == Terminal::Folded {
-        return PolicyDecision::Pass("회차가 folded 종료문을 가졌다".to_owned());
-    }
-    if view.terminal == Terminal::Reported && view.verification == VerificationState::Met {
-        return PolicyDecision::Pass(
-            "필수 condition의 current evidence와 report가 모두 있다".to_owned(),
-        );
+    if view.terminal != Terminal::Open {
+        if let Err(error) = valid_terminal_document(&repo, &activation.round, view.terminal) {
+            return PolicyDecision::Block(format!("회차 종료문이 불완전하다: {error}"));
+        }
+        if view.terminal == Terminal::Folded {
+            return PolicyDecision::Pass("회차가 사유를 갖춘 folded 종료문을 가졌다".to_owned());
+        }
+        if view.verification == VerificationState::Met {
+            return PolicyDecision::Pass(
+                "필수 condition의 current evidence와 종료 보고가 모두 있다".to_owned(),
+            );
+        }
     }
 
     let semantic_digest = semantic_digest(&view);
@@ -312,9 +319,15 @@ pub fn decide(payload: &Value) -> PolicyDecision {
 }
 
 fn canonical_repo(repo: &Path) -> Result<PathBuf> {
-    let repo = repo
+    let cwd = repo
         .canonicalize()
         .with_context(|| format!("repo `{}`", repo.display()))?;
+    let git = GixRepo::discover(&cwd).map_err(anyhow::Error::from)?;
+    let repo = git
+        .work_dir()
+        .map_err(anyhow::Error::from)?
+        .canonicalize()
+        .context("repository worktree root")?;
     approval::repository_root_identity(&repo).map_err(anyhow::Error::from)?;
     Ok(repo)
 }
@@ -386,6 +399,55 @@ fn read_status(repo: &Path, slug: &str) -> Result<StatusView> {
     }
 }
 
+fn valid_terminal_document(repo: &Path, slug: &str, terminal: Terminal) -> Result<()> {
+    let dir = repo.join(".palimpsest/rounds").join(slug);
+    let (path, headings): (PathBuf, &[&str]) = match terminal {
+        Terminal::Open => return Ok(()),
+        Terminal::Reported => (
+            dir.join("report.md"),
+            &[
+                "## 남지 않은 것",
+                "## 다음 회차가 받는 것",
+                "## 범위 밖",
+                "## 원리상 못 잰 것",
+                "## 능력 부재",
+            ],
+        ),
+        Terminal::Folded => (
+            dir.join("folded.md"),
+            &[
+                "## 왜 접었나",
+                "## 접으면서 남기는 것과 버리는 것",
+                "## 다음에 여는 것",
+            ],
+        ),
+    };
+    let metadata = symlink_metadata(&path).with_context(|| "종료문 metadata를 읽지 못했다")?;
+    if !metadata.is_file() || metadata.file_type().is_symlink() {
+        bail!("종료문이 regular file이 아니다");
+    }
+    if metadata.len() > ROUND_VERIFICATION_FILE_MAX_BYTES {
+        bail!("종료문이 8 MiB 상한을 넘었다");
+    }
+    let body = std::fs::read_to_string(&path).with_context(|| "종료문을 읽지 못했다")?;
+    for heading in headings {
+        if !body.lines().any(|line| line.starts_with(heading)) {
+            bail!("필수 절 `{heading}`이 없다");
+        }
+    }
+    if terminal == Terminal::Folded {
+        let state = std::fs::read_to_string(dir.join("state.md"))
+            .with_context(|| "folded 회차의 state.md를 읽지 못했다")?;
+        if !state.contains("## 지금 단계")
+            || !state.contains("접힘")
+            || !state.contains("folded.md")
+        {
+            bail!("state.md가 접힘 단계와 folded.md를 가리키지 않는다");
+        }
+    }
+    Ok(())
+}
+
 fn semantic_digest(view: &StatusView) -> String {
     let mut values = vec![
         view.round.clone(),
@@ -426,11 +488,11 @@ fn event_hash(session_id: &str, transcript: &Path) -> Result<String> {
     if !metadata.is_file() || metadata.file_type().is_symlink() {
         bail!("transcript가 regular file이 아니다");
     }
-    if metadata.len() > TRANSCRIPT_MAX_BYTES {
-        bail!("transcript가 8 MiB 상한을 넘었다");
-    }
-    let bytes = std::fs::read(transcript).with_context(|| "transcript를 읽지 못했다")?;
-    let transcript_digest = blake3::hash(&bytes).to_hex().to_string();
+    let mut file = File::open(transcript).with_context(|| "transcript를 읽지 못했다")?;
+    let mut transcript_hasher = blake3::Hasher::new();
+    std::io::copy(&mut file, &mut transcript_hasher)
+        .with_context(|| "transcript를 끝까지 hash하지 못했다")?;
+    let transcript_digest = transcript_hasher.finalize().to_hex().to_string();
     Ok(digest_values(
         EVENT_DOMAIN,
         &[session_id, &transcript_digest],
@@ -456,24 +518,20 @@ fn record_attempt(
             event_hashes: Vec::new(),
             handoff: None,
         },
-        Some(progress)
-            if progress.version == PROGRESS_VERSION
-                && progress.activation_digest == activation.digest =>
-        {
+        Some(progress) => {
+            validate_progress(&progress, activation)?;
             progress
         }
-        Some(_) => bail!("progress identity가 현재 activation과 다르다"),
     };
-    if progress.event_hashes.iter().any(|seen| seen == event_hash) {
-        return Ok(progress);
-    }
     if rank.advances(progress.best) {
         progress.best = rank;
-        progress.no_progress = 1;
+        progress.no_progress = 0;
         progress.event_hashes.clear();
         progress.handoff = None;
-    } else {
+    } else if !progress.event_hashes.iter().any(|seen| seen == event_hash) {
         progress.no_progress = progress.no_progress.saturating_add(1);
+    } else {
+        return Ok(progress);
     }
     progress.semantic_digest = semantic_digest.to_owned();
     progress.event_hashes.push(event_hash.to_owned());
@@ -498,6 +556,45 @@ fn read_progress(path: &Path) -> Result<Option<Progress>> {
         bail!("알 수 없는 progress version {}", progress.version);
     }
     Ok(Some(progress))
+}
+
+fn validate_progress(progress: &Progress, activation: &Activation) -> Result<()> {
+    let hex64 = |value: &str| {
+        value.len() == 64
+            && value
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    };
+    if progress.version != PROGRESS_VERSION || progress.activation_digest != activation.digest {
+        bail!("progress identity가 현재 activation과 다르다");
+    }
+    if !hex64(&progress.semantic_digest)
+        || progress.event_hashes.len() > EVENT_HISTORY_MAX
+        || progress.event_hashes.iter().any(|hash| !hex64(hash))
+    {
+        bail!("progress digest 또는 event history가 유효하지 않다");
+    }
+    let mut unique = progress.event_hashes.clone();
+    unique.sort_unstable();
+    unique.dedup();
+    if unique.len() != progress.event_hashes.len()
+        || progress.best.terminal > 1
+        || progress.best.met > progress.best.observed
+        || progress.best.observed > progress.best.registered
+    {
+        bail!("progress rank 또는 replay history가 모순이다");
+    }
+    let expected_handoff = if progress.no_progress == activation.no_progress_limit {
+        Some("blocked")
+    } else {
+        None
+    };
+    if progress.no_progress > activation.no_progress_limit
+        || progress.handoff.as_deref() != expected_handoff
+    {
+        bail!("progress counter와 handoff가 모순이다");
+    }
+    Ok(())
 }
 
 fn block_reason(view: &StatusView, no_progress: u32) -> String {
@@ -571,50 +668,41 @@ fn write_private_json(path: &Path, value: &impl Serialize) -> Result<()> {
     Ok(())
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct LeaseRecord {
-    token: String,
-    created_millis: u64,
-}
-
 struct Lease {
-    path: PathBuf,
-    token: String,
+    file: File,
 }
 
 impl Lease {
     fn acquire(path: &Path) -> Result<Self> {
-        let token = format!("{}-{}", std::process::id(), now_millis());
-        let started = now_millis();
+        if path.exists() {
+            let metadata = symlink_metadata(path)?;
+            if !metadata.is_file() || metadata.file_type().is_symlink() {
+                bail!("progress lock이 regular file이 아니다");
+            }
+        }
+        let file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(false)
+            .open(path)
+            .context("progress lock 열기")?;
+        #[cfg(unix)]
+        file.set_permissions(std::os::unix::fs::PermissionsExt::from_mode(0o600))?;
+        let mut waited = 0;
         loop {
-            let record = LeaseRecord {
-                token: token.clone(),
-                created_millis: now_millis(),
-            };
-            match OpenOptions::new().write(true).create_new(true).open(path) {
-                Ok(mut file) => {
-                    #[cfg(unix)]
-                    file.set_permissions(std::os::unix::fs::PermissionsExt::from_mode(0o600))?;
-                    serde_json::to_writer(&mut file, &record)?;
-                    file.write_all(b"\n")?;
-                    file.sync_all()?;
-                    return Ok(Self {
-                        path: path.to_path_buf(),
-                        token,
-                    });
-                }
-                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
-                    if stale_lease(path)? {
-                        let _ = std::fs::remove_file(path);
-                        continue;
-                    }
-                    if now_millis().saturating_sub(started) >= LOCK_WAIT_MILLIS {
-                        bail!("progress lock을 2초 안에 얻지 못했다");
-                    }
+            match file.try_lock() {
+                Ok(()) => return Ok(Self { file }),
+                Err(std::fs::TryLockError::WouldBlock) if waited < LOCK_WAIT_MILLIS => {
                     std::thread::sleep(Duration::from_millis(10));
+                    waited += 10;
                 }
-                Err(error) => return Err(error).context("progress lock 생성"),
+                Err(std::fs::TryLockError::WouldBlock) => {
+                    bail!("progress lock을 2초 안에 얻지 못했다")
+                }
+                Err(std::fs::TryLockError::Error(error)) => {
+                    return Err(error).context("progress lock 획득");
+                }
             }
         }
     }
@@ -622,39 +710,8 @@ impl Lease {
 
 impl Drop for Lease {
     fn drop(&mut self) {
-        let owned = read_json::<LeaseRecord>(&self.path)
-            .ok()
-            .is_some_and(|record| record.token == self.token);
-        if owned {
-            let _ = std::fs::remove_file(&self.path);
-        }
+        let _ = self.file.unlock();
     }
-}
-
-fn stale_lease(path: &Path) -> Result<bool> {
-    let record: LeaseRecord = match read_json(path) {
-        Ok(record) => record,
-        Err(_) => {
-            let modified = symlink_metadata(path)?
-                .modified()
-                .unwrap_or(SystemTime::now());
-            return Ok(SystemTime::now()
-                .duration_since(modified)
-                .unwrap_or_default()
-                .as_millis()
-                > u128::from(LOCK_STALE_MILLIS));
-        }
-    };
-    Ok(now_millis().saturating_sub(record.created_millis) > LOCK_STALE_MILLIS)
-}
-
-fn now_millis() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis()
-        .try_into()
-        .unwrap_or(u64::MAX)
 }
 
 fn print_view(json: bool, value: &impl Serialize, human: &str) {
