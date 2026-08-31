@@ -379,10 +379,18 @@ fn 실행된_현재_negative_control없이는_주조건도_met이_아니다() {
         .join(SLUG)
         .join("verification.log");
     let body = std::fs::read_to_string(&path).expect("ledger");
+    let old = serde_json::to_string(&helper_command("no-marker", None)).expect("old JSON string");
+    let new =
+        serde_json::to_string(&helper_command("negative-success", None)).expect("new JSON string");
     let repaired = body.replace(
-        &helper_command("no-marker", None),
-        &helper_command("negative-success", None),
+        old.strip_prefix('"')
+            .and_then(|value| value.strip_suffix('"'))
+            .expect("quoted old JSON string"),
+        new.strip_prefix('"')
+            .and_then(|value| value.strip_suffix('"'))
+            .expect("quoted new JSON string"),
     );
+    assert_ne!(body, repaired, "control oracle fixture must be rewritten");
     std::fs::write(&path, repaired).expect("new control oracle");
     git(&repo, &["add", "."]);
     git(&repo, &["commit", "-q", "-m", "repair control"]);
