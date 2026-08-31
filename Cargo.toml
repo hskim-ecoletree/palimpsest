@@ -102,7 +102,7 @@ filetime = "0.2"
 known-folders = "1.4.2"
 windows-permissions = "0.2.4"
 windows-token = "0.2.1"
-process-wrap = { version = "8.2.1", default-features = false, features = ["std", "job-object"] }
+process-wrap = { version = "8.2.1", default-features = false, features = ["std", "job-object", "tracing"] }
 
 # F22 가 들인 하나. stack §3.4 는 "P0 에서 외부 크레이트 신규 추가는 근거를 남긴다" 고
 # 적었고 그 근거는 이렇다: `schema/graph.toml` 이 노드·엣지의 **단일 진실**이고
