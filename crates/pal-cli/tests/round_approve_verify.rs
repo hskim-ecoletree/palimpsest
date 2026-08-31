@@ -160,6 +160,16 @@ fn value(out: &Output) -> Value {
     })
 }
 
+fn assert_success(out: &Output) {
+    assert!(
+        out.status.success(),
+        "exit={:?}\nstdout={}\nstderr={}",
+        out.status.code(),
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+}
+
 fn evidence_count(dir: &Path) -> usize {
     std::fs::read_to_string(dir.join("verification.log"))
         .expect("ledger")
@@ -274,11 +284,17 @@ fn 미승인_oracle과_변경된_path_cwd_shell_budget은_spawn전에_거부된�
     commit_fixture(&repo);
 
     let denied = verify(&repo, &approvals, "A1", &[]);
-    assert_eq!(denied.status.code(), Some(3));
+    assert_eq!(
+        denied.status.code(),
+        Some(3),
+        "stdout={}\nstderr={}",
+        String::from_utf8_lossy(&denied.stdout),
+        String::from_utf8_lossy(&denied.stderr)
+    );
     assert_eq!(value(&denied)["outcome"], "approval_required");
     assert!(!counter.exists());
 
-    assert!(approve(&repo, &approvals, "A1", &[]).status.success());
+    assert_success(&approve(&repo, &approvals, "A1", &[]));
     let changed_path = verify_with_path(&repo, &approvals, "A1", "");
     assert_eq!(changed_path.status.code(), Some(3));
     assert!(!counter.exists());
