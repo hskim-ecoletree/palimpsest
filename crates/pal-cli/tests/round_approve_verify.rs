@@ -364,7 +364,7 @@ fn 실행된_현재_negative_control없이는_주조건도_met이_아니다() {
     );
     commit_fixture(&repo);
     assert!(approve(&repo, &approvals, "A1", &[]).status.success());
-    assert!(verify(&repo, &approvals, "A1", &[]).status.success());
+    assert_success(&verify(&repo, &approvals, "A1", &[]));
     let before = status(&repo);
     assert_ne!(before["conditions"][0]["state"], "met");
     assert_eq!(before["verification"], "in_progress");
@@ -387,7 +387,7 @@ fn 실행된_현재_negative_control없이는_주조건도_met이_아니다() {
     git(&repo, &["add", "."]);
     git(&repo, &["commit", "-q", "-m", "repair control"]);
     assert!(approve(&repo, &approvals, "A1-n", &[]).status.success());
-    assert!(verify(&repo, &approvals, "A1-n", &[]).status.success());
+    assert_success(&verify(&repo, &approvals, "A1-n", &[]));
     let after = status(&repo);
     assert_eq!(after["conditions"][0]["state"], "met");
     assert_eq!(after["conditions"][1]["state"], "met");
@@ -408,7 +408,7 @@ fn 과거_evidence를_negative_control로_재분류하면_stale이다() {
     commit_fixture(&repo);
     for id in ["A1", "C1"] {
         assert!(approve(&repo, &approvals, id, &[]).status.success());
-        assert!(verify(&repo, &approvals, id, &[]).status.success());
+        assert_success(&verify(&repo, &approvals, id, &[]));
     }
     assert_eq!(status(&repo)["conditions"][0]["state"], "met");
 
@@ -522,7 +522,13 @@ fn 실행중_oracle이나_projected_tree변화는_evidence없이_폐기된다() 
         assert!(approve(&repo, &approvals, "A1", &[]).status.success());
         let before = evidence_count(&dir);
         let out = verify(&repo, &approvals, "A1", &[]);
-        assert_eq!(out.status.code(), Some(3), "{tag}");
+        assert_eq!(
+            out.status.code(),
+            Some(3),
+            "{tag}: stdout={} stderr={}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
         assert_eq!(value(&out)["outcome"], "discarded");
         assert_eq!(evidence_count(&dir), before);
     }
@@ -582,7 +588,7 @@ fn approval_record변조와_stale_projected_evidence는_fail_closed다() {
     assert_eq!(verify(&repo, &approvals, "A1", &[]).status.code(), Some(3));
 
     assert!(approve(&repo, &approvals, "A1", &[]).status.success());
-    assert!(verify(&repo, &approvals, "A1", &[]).status.success());
+    assert_success(&verify(&repo, &approvals, "A1", &[]));
     assert_eq!(status(&repo)["conditions"][0]["state"], "met");
     std::fs::write(repo.join("tracked.txt"), "later\n").expect("later tree");
     assert_eq!(status(&repo)["conditions"][0]["state"], "stale");
@@ -613,8 +619,8 @@ fn 같은_oracle재실행은_새_current_evidence를_append한다() {
     let dir = round(&repo, &["A1"], &[oracle("A1", "success", None)]);
     commit_fixture(&repo);
     assert!(approve(&repo, &approvals, "A1", &[]).status.success());
-    assert!(verify(&repo, &approvals, "A1", &[]).status.success());
-    assert!(verify(&repo, &approvals, "A1", &[]).status.success());
+    assert_success(&verify(&repo, &approvals, "A1", &[]));
+    assert_success(&verify(&repo, &approvals, "A1", &[]));
     assert_eq!(evidence_count(&dir), 2);
     assert_eq!(status(&repo)["conditions"][0]["state"], "met");
 }
