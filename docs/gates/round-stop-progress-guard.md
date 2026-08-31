@@ -21,12 +21,12 @@ disable은 즉시 원래 종료 가능 상태를 복구해야 한다. 마지막 
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | — |
+| 통과 | A1 A2 B1 B2 B3 C1 C2 D1 D2 E1 E2 F1 F2 G1 G2 H1 H2 H3 |
 | 반증 | — |
 | 대조불가 | — |
-| 미측정 | A1 A2 B1 B2 B3 C1 C2 D1 D2 E1 E2 F1 F2 G1 G2 H1 H2 H3 |
+| 미측정 | — |
 
-**검산** — 통과 0 · 반증 0 · 대조불가 0 · 미측정 18 = 18
+**검산** — 통과 18 · 반증 0 · 대조불가 0 · 미측정 0 = 18
 
 ### 현재 근거
 
@@ -40,7 +40,16 @@ disable은 즉시 원래 종료 가능 상태를 복구해야 한다. 마지막 
   condition/terminal write가 없음을 잰다.
 - H1: 시험이 아닌 실제 Claude Code 소비 장면은
   [`effect/observation.md`](../../.palimpsest/rounds/2026-08-31-round-stop-progress-guard/effect/observation.md)에 보존했다.
-- H2·H3: ADR, 발견 원장, 그래프 결박, 종료 보고와 전체 검증·최종 CI는 종료 판정에서 갱신한다.
+- H2: 사전부검 17건과 독립 리뷰 18건은 정정 24·기각 11로 전부 닫혔다. ADR-0030,
+  이 게이트, portable graph export의 새 결박 세 건, 효과 관측과 종료 보고가 함께 선다.
+  `pal doctor --full`은 그래프 전수 위반·Residual 0을 냈고 source checkout의 미설치 상태는
+  설치 진단에서 별도 Residual/red로 숨김없이 발화했다.
+- H3: 지정 integration suite는 `round_stop` 20, `hook` 5, `install_hooks` 21,
+  `round_status` 24, `round_approve_verify` 22, `round_scripts_run` 15개가 전부 통과했다.
+  `cargo xtask check` 23/23과 workspace all-targets도 통과했다. 구현·evidence SHA
+  `f9691cc37f531ecfd50cae59f54cc3a052696bf9`의
+  [CI run 33361658434](https://github.com/hskim-ecoletree/palimpsest/actions/runs/33361658434)에서
+  ubuntu·macOS·Windows, 두 producer와 양방향 consumer 7개 job이 모두 성공했다.
 
 ## 효과
 

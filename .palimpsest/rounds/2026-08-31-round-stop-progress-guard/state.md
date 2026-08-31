@@ -2,7 +2,8 @@
 
 ## 지금 단계
 
-구현·독립 리뷰·격리된 실제 Claude Code 효과 관측까지 끝났다. 기준 SHA
+종료 보고 작성과 최종 push 직전. 구현·독립 리뷰·격리된 실제 Claude Code 효과 관측,
+18/18 current evidence와 첫 pushed CI까지 끝났다. 기준 SHA
 `9831bdcb09b3db7be7ac614b8e2191867ee0112c` 뒤 Stop catalog/activation/status/progress guard와
 리뷰 수정이 `4ca7bc0`·`15af743`에 섰다. 현재 사용자 저장소·전역 설정의 Stop은 활성화하지
 않았다.
@@ -26,8 +27,7 @@ cross-file consumption은 답하지 못했다. `stop_hook_active`는 symbol로 �
 
 ## 남은 것
 
-완수 조건 oracle 승인·실행, 지정 국소 시험과 workspace 전체 검증, 그래프 결박, 종료 보고,
-push와 마지막 SHA의 CI, #85·#86 종료.
+종료 보고 commit을 push하고 그 마지막 SHA의 7-job CI를 확인한 뒤 #85를 닫는다.
 
 ## 실패한 접근
 

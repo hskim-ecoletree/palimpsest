@@ -79,24 +79,24 @@
 
 ## 완수 조건
 
-- [ ] A1 단일 event catalog에서 Stop 등록이 렌더링되지만 activation 전 hook은 pass한다.
-- [ ] A2 명시적 enable만 portable private activation record를 만들고 install/update는 만들지 않는다.
-- [ ] B1 활성 Stop은 open round의 unregistered·pending·unmet·stale condition을 각각 block한다.
-- [ ] B2 손상된 intent·부분/trailing 원장·없는 round·서로 충돌하는 terminal은 fail-closed한다.
-- [ ] B3 current positive·negative evidence 전부가 met이고 terminal=reported인 round와 folded round만 pass한다.
-- [ ] C1 `stop_hook_active=true`는 다른 모든 판정보다 먼저 무조건 pass한다.
-- [ ] C2 Stop의 active payload에서 false는 정책을 실행하고 누락·잘못된 타입은 block하며 unknown event/input fail-open은 보존한다.
-- [ ] D1 semantic digest는 실제 condition/aggregate/terminal 변화만 진행으로 세고 표현·timestamp·순서·동일 의미 evidence는 세지 않는다.
-- [ ] D2 의미 진행만 counter를 reset하고 regression·A→B→A 진동은 reset하거나 complete/met로 취급하지 않는다.
-- [ ] E1 같은 의미 상태의 서로 다른 session 6회에서 pass+blocked handoff가 나고 round 상태를 쓰지 않는다.
-- [ ] E2 replay·restart·동시 session·stale/corrupt progress record와 원자 갱신을 Linux·macOS·Windows 계약으로 고정한다.
-- [ ] F1 Stop 판정 중 command/oracle/approve/verify/evidence append/condition·terminal 쓰기가 일어나지 않는다.
-- [ ] F2 disable은 정상·손상 activation에서 즉시 pass로 복구하고 update/uninstall과 갈리지 않는다.
-- [ ] G1 기존 SubagentStop, hook transport 바이트, install/update/uninstall/doctor 계약이 회귀하지 않는다.
-- [ ] G2 #86의 등록/settings drift는 단일 catalog와 양방향 음성 대조로 구조적으로 닫힌다.
-- [ ] H1 격리된 실제 Claude Code에서 inactive pass, incomplete block, progress 인식, complete pass, cap handoff, re-entry pass, disable pass를 보존한다.
-- [ ] H2 ADR·게이트·그래프 결박·구조화 발견 원장·종료 보고가 `/round` 계약대로 닫힌다.
-- [ ] H3 지정된 국소 시험, `cargo xtask check`, workspace all-targets와 마지막 pushed SHA의 세 OS·양방향 상호운용 CI가 성공한다.
+- [x] A1 단일 event catalog에서 Stop 등록이 렌더링되지만 activation 전 hook은 pass한다. · 통과
+- [x] A2 명시적 enable만 portable private activation record를 만들고 install/update는 만들지 않는다. · 통과
+- [x] B1 활성 Stop은 open round의 unregistered·pending·unmet·stale condition을 각각 block한다. · 통과
+- [x] B2 손상된 intent·부분/trailing 원장·없는 round·서로 충돌하는 terminal은 fail-closed한다. · 통과
+- [x] B3 current positive·negative evidence 전부가 met이고 terminal=reported인 round와 folded round만 pass한다. · 통과
+- [x] C1 `stop_hook_active=true`는 다른 모든 판정보다 먼저 무조건 pass한다. · 통과
+- [x] C2 Stop의 active payload에서 false는 정책을 실행하고 누락·잘못된 타입은 block하며 unknown event/input fail-open은 보존한다. · 통과
+- [x] D1 semantic digest는 실제 condition/aggregate/terminal 변화만 진행으로 세고 표현·timestamp·순서·동일 의미 evidence는 세지 않는다. · 통과
+- [x] D2 의미 진행만 counter를 reset하고 regression·A→B→A 진동은 reset하거나 complete/met로 취급하지 않는다. · 통과
+- [x] E1 같은 의미 상태의 서로 다른 session 6회에서 pass+blocked handoff가 나고 round 상태를 쓰지 않는다. · 통과
+- [x] E2 replay·restart·동시 session·stale/corrupt progress record와 원자 갱신을 Linux·macOS·Windows 계약으로 고정한다. · 통과
+- [x] F1 Stop 판정 중 command/oracle/approve/verify/evidence append/condition·terminal 쓰기가 일어나지 않는다. · 통과
+- [x] F2 disable은 정상·손상 activation에서 즉시 pass로 복구하고 update/uninstall과 갈리지 않는다. · 통과
+- [x] G1 기존 SubagentStop, hook transport 바이트, install/update/uninstall/doctor 계약이 회귀하지 않는다. · 통과
+- [x] G2 #86의 등록/settings drift는 단일 catalog와 양방향 음성 대조로 구조적으로 닫힌다. · 통과
+- [x] H1 격리된 실제 Claude Code에서 inactive pass, incomplete block, progress 인식, complete pass, cap handoff, re-entry pass, disable pass를 보존한다. · 통과
+- [x] H2 ADR·게이트·그래프 결박·구조화 발견 원장·종료 보고가 `/round` 계약대로 닫힌다. · 통과
+- [x] H3 지정된 국소 시험, `cargo xtask check`, workspace all-targets와 마지막 pushed SHA의 세 OS·양방향 상호운용 CI가 성공한다. · 통과
 
 ## 퇴로
 
