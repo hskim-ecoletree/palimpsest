@@ -258,6 +258,7 @@ fn secure_windows_acl(path: &Path, directory: bool) -> Result<(), ApprovalError>
 
     const READ_CONTROL: u32 = 0x0002_0000;
     const WRITE_DAC: u32 = 0x0004_0000;
+    const WRITE_OWNER: u32 = 0x0008_0000;
     const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
     const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
 
@@ -275,7 +276,7 @@ fn secure_windows_acl(path: &Path, directory: bool) -> Result<(), ApprovalError>
             .map_err(|error| ApprovalError::Store(format!("private descriptor: {error}")))?;
     let mut options = OpenOptions::new();
     options
-        .access_mode(READ_CONTROL | WRITE_DAC)
+        .access_mode(READ_CONTROL | WRITE_DAC | WRITE_OWNER)
         .share_mode(0)
         .custom_flags(
             FILE_FLAG_OPEN_REPARSE_POINT
@@ -288,27 +289,18 @@ fn secure_windows_acl(path: &Path, directory: bool) -> Result<(), ApprovalError>
     let mut handle = options
         .open(path)
         .map_err(|error| ApprovalError::Store(format!("private handle: {error}")))?;
-    let before = windows_permissions::wrappers::GetSecurityInfo(
-        &handle,
-        SeObjectType::SE_FILE_OBJECT,
-        SecurityInformation::Owner,
-    )
-    .map_err(|error| ApprovalError::Store(format!("read approval owner: {error}")))?;
-    if before.owner() != Some(&*sid) {
-        return Err(ApprovalError::Store(
-            "approval owner가 current token SID가 아니다".to_owned(),
-        ));
-    }
     windows_permissions::wrappers::SetSecurityInfo(
         &mut handle,
         SeObjectType::SE_FILE_OBJECT,
-        SecurityInformation::Dacl | SecurityInformation::ProtectedDacl,
-        None,
+        SecurityInformation::Owner
+            | SecurityInformation::Dacl
+            | SecurityInformation::ProtectedDacl,
+        Some(&*sid),
         None,
         descriptor.dacl(),
         None,
     )
-    .map_err(|error| ApprovalError::Store(format!("set private descriptor: {error}")))?;
+    .map_err(|error| ApprovalError::Store(format!("set private owner/descriptor: {error}")))?;
     let actual = windows_permissions::wrappers::GetSecurityInfo(
         &handle,
         SeObjectType::SE_FILE_OBJECT,

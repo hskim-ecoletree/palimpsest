@@ -42,8 +42,9 @@ projected tree가 바뀐 뒤에도 권한과 evidence를 재사용할 수 있고
   spawn해 Job Object에 넣은 뒤에만 resume하며 timeout·output overflow 때 root PID가 사라졌어도
   job handle로 전체 tree를 종료한다. cleanup 실패는 성공 evidence가 아니다.
 - Unix approval store는 owner·mode·link count를 요구한다. Windows는 OS Known Folders API의
-  LocalAppData를 쓰고 owner가 current process token SID인지 handle에서 먼저 확인한다. 그 SID를
-  상속을 끊은 단일 full-control DACL의 유일한 principal로 설정한 뒤 다시 읽어 일치시킨다.
+  LocalAppData를 쓰고 handle에서 owner를 current process token SID로 바꾼다. 그 SID를 상속을
+  끊은 단일 full-control DACL의 유일한 principal로 함께 설정한 뒤 owner와 DACL을 다시 읽어
+  일치시킨다. 부모에서 Administrators owner가 상속된 정상 Windows 디렉터리도 같은 결과가 된다.
   Windows는 [ADR-0023](0023-consistent-method-and-result-across-platforms.md)의 기존 판정대로
   stable safe API로 link count를 보려 하지 않는다. 쓰기는 임시 파일의 rename으로 기존 link를
   끊고, 읽기는 digest 이름과 exact record 내용 및 공유 없는 handle의 owner·DACL을 함께 확인한다.
