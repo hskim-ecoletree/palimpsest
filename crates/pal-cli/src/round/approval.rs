@@ -238,13 +238,11 @@ fn private_file(path: &Path) -> Result<(), ApprovalError> {
 
 #[cfg(windows)]
 fn private_file(path: &Path) -> Result<(), ApprovalError> {
-    use std::os::windows::fs::MetadataExt;
-
     let metadata =
         std::fs::symlink_metadata(path).map_err(|error| ApprovalError::Store(error.to_string()))?;
-    if !metadata.is_file() || metadata.file_type().is_symlink() || metadata.number_of_links() != 1 {
+    if !metadata.is_file() || metadata.file_type().is_symlink() {
         return Err(ApprovalError::Store(
-            "approval record가 단일 regular file이 아니다".to_owned(),
+            "approval record가 regular file이 아니다".to_owned(),
         ));
     }
     secure_windows_acl(path, false)

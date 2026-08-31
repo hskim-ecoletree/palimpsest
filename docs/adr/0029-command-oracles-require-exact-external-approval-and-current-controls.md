@@ -44,8 +44,10 @@ projected tree가 바뀐 뒤에도 권한과 evidence를 재사용할 수 있고
 - Unix approval store는 owner·mode·link count를 요구한다. Windows는 OS Known Folders API의
   LocalAppData를 쓰고 owner가 current process token SID인지 handle에서 먼저 확인한다. 그 SID를
   상속을 끊은 단일 full-control DACL의 유일한 principal로 설정한 뒤 다시 읽어 일치시킨다.
-  approval file은 hard link도
-  거부한다. private user directory를 정할 수 없으면 temp로 후퇴하지 않는다.
+  Windows는 [ADR-0023](0023-consistent-method-and-result-across-platforms.md)의 기존 판정대로
+  stable safe API로 link count를 보려 하지 않는다. 쓰기는 임시 파일의 rename으로 기존 link를
+  끊고, 읽기는 digest 이름과 exact record 내용 및 공유 없는 handle의 owner·DACL을 함께 확인한다.
+  private user directory를 정할 수 없으면 temp로 후퇴하지 않는다.
 
 Windows 전용 OS 표면은 `known-folders`, `windows-token`, `windows-permissions`, `process-wrap`의
 safe API에 격리한다. 이 네 의존은 각각 환경에 기대지 않는 System/LocalAppData, 현재 token SID,
