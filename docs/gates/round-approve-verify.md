@@ -20,12 +20,12 @@ positive 성공만으로 주 조건을 `met`으로 닫을 수 없다. schema 1�
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 A11 A12 A13 |
+| 통과 | A1 A2 A3 A4 A5 A6 A7 A8 A9 A10 A11 A12 A13 A14 A15 |
 | 반증 | — |
 | 대조불가 | — |
-| 미측정 | A14 A15 |
+| 미측정 | — |
 
-**검산** — 통과 13 · 반증 0 · 대조불가 0 · 미측정 2 = 15
+**검산** — 통과 15 · 반증 0 · 대조불가 0 · 미측정 0 = 15
 
 ### 현재 근거
 
@@ -45,6 +45,12 @@ positive 성공만으로 주 조건을 `met`으로 닫을 수 없다. schema 1�
   통과했다. workspace의 기존 release 규모 benchmark 하나만 선언대로 ignored이고 새
   approve/verify 모집단은 22/22 실행됐다. drain read 오류 unit 대조도 오류를 정상 EOF로
   축약하지 않음을 잰다.
+- A14: 구현 SHA `52a13bec5c53ff02a636429685d932f7e1bba713`의
+  [CI run 33346399805](https://github.com/hskim-ecoletree/palimpsest/actions/runs/33346399805)에서
+  ubuntu·macOS·Windows, 두 producer와 양방향 consumer 일곱 job이 전부 성공했다.
+- A15: 사전부검 21건과 독립 리뷰 36건은 정정 33·기각 23·범위 밖 1로 전부
+  닫혔다. ADR-0029, 이 게이트, 구현 SHA의 결박과 `pal doctor --full`, 효과 관측,
+  종료 보고가 설고 #97은 CLOSED/COMPLETED다.
 
 ## 효과
 

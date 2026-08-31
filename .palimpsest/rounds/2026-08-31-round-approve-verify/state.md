@@ -3,7 +3,7 @@
 ## 지금 단계
 
 의도 잠금과 승인, 인터뷰 1라운드, 사전부검 1라운드, 그래프 우선 조회, RED, 구현, 실제 격리
-효과와 로컬 전량 검증을 마쳤다. 기준 HEAD는
+효과, 독립 리뷰 2라운드, 로컬 전량 검증과 세 OS CI, #97 종료를 마쳤다. 기준 HEAD는
 `e9a1da762e42d6cf1f4b2424387f8ec1fe668ee6`이다. 독립 리뷰 상한은 2라운드다.
 
 ## 승인
@@ -47,6 +47,8 @@ exit 3, positive 뒤 pending, negative-control 실행 뒤 met을 관측했다. h
 approve/verify 22, round status 24, round scripts 15, hook 5, install hooks 20개가 각각 통과했다.
 `cargo xtask check` 23/23과 `cargo test --workspace --all-targets`도 통과했다. 기존 release 규모
 benchmark 하나만 선언대로 ignored다.
+구현 SHA `52a13bec5c53ff02a636429685d932f7e1bba713`의 CI run 33346399805에서
+ubuntu·macOS·Windows, 두 producer와 양방향 consumer 일곱 job이 모두 성공했다.
 
 ## 독립 리뷰
 
@@ -61,7 +63,9 @@ R2의 새 반증은 Windows 환경 기반 ACL helper 선실행, owner 미검증,
 게이트 숫자 drift 일곱이다. helper를 없애고 Known Folders·current token SID owner/protected 단일
 DACL·suspended Job Object로 전환했으며 atomic visibility 계약·append 상한·read 오류 전파와
 대조를 세웠다. Windows GNU cross-check는 Rust std target을 설치한 뒤 제품 코드 전에 zstd C
-compiler 부재로 멈췄고, 실제 Windows compile/runtime은 A14 CI가 판정한다.
+compiler 부재로 멈췄고, 실제 Windows compile/runtime은 A14 CI가 통과로 판정했다.
+두 리뷰와 사전부검의 구조화 레코드 57건은 정정 33·기각 23·범위 밖 1,
+열림 0으로 처분했다.
 
 ## 실패한 접근
 
@@ -69,6 +73,9 @@ compiler 부재로 멈췄고, 실제 Windows compile/runtime은 A14 CI가 판정
 불필요한 diff를 만들었다. 매번 의미 변경 파일을 보존하고 나머지 포맷 diff만 역적용했으며,
 최종 diff에서 관련 없는 파일이 0임을 다시 확인했다.
 
-## 남은 것
+## 종료
 
-독립 리뷰, 발견 원장 처분, 그래프 결박, 종료 보고, push/세 OS CI, #97 종료.
+현재 구현을 `append_line`에 files:5 반경으로 재결박했다. `pal doctor --at HEAD
+--full --json`의 graph violations·residuals·coverage gaps는 0이다. 설치되지 않은 이 개발
+worktree의 install residual은 그래프 검사와 분리해 보존했다. #97은 CLOSED/COMPLETED이고
+종료 보고가 설다. 뒤 경로는 frontier의 #85이며 이번 회차에서 hook은 점등하지 않았다.

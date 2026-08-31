@@ -35,8 +35,8 @@
 - [x] A11 approve/verify CLI black-box와 기존 round status·Python/dashboard·hook/install 소비 경로는 같은 reducer·소유 경계를 유지하고 `xtask → pal-cli` 또는 `pal-cli` library target을 만들지 않는다 · 통과
 - [x] A12 실제 격리 회차에서 승인 전 block, 승인, positive 실행, negative-control 실행, evidence append, status `met`의 순서를 테스트 아닌 출력으로 보존한다 · 통과
 - [x] A13 새 suite와 `round_status`·`round_scripts_run`·`hook`·`install_hooks`·`cargo xtask check`·workspace all-targets가 전부 통과한다 · 통과
-- [ ] A14 ubuntu·macOS·Windows와 양방향 상호운용 job이 마지막 pushed SHA에서 모두 성공한다
-- [ ] A15 사전부검·독립 리뷰 발견이 구조화 원장에 전부 처분되고 ADR·게이트·그래프 결박·효과·종료 보고와 #97 종료가 실제 장치 근거를 가진다
+- [x] A14 ubuntu·macOS·Windows와 양방향 상호운용 job이 마지막 pushed SHA에서 모두 성공한다 · 통과
+- [x] A15 사전부검·독립 리뷰 발견이 구조화 원장에 전부 처분되고 ADR·게이트·그래프 결박·효과·종료 보고와 #97 종료가 실제 장치 근거를 가진다 · 통과
 
 **RED 관측**: 새 approve/verify black-box 공격은 구현 전 subcommand 부재로 실패해야 한다.
 
