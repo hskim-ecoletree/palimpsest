@@ -265,7 +265,7 @@ fn execute(
     }
     #[cfg(windows)]
     {
-        command.args(["/D", "/S", "/C", check]);
+        command.args(["/D", "/C", check]);
     }
     command
         .current_dir(cwd)
