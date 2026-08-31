@@ -109,7 +109,7 @@ def migration_cli_rejects_unsafe_matches():
 
 
 def main():
-    assert current_digest() == "1472ccb3084474e989fc8c6781709a5a4f1d3f494046d4641279083f022daddf"
+    assert current_digest() == "5b36506733dd9411361312c89f3f66dbc7934a57202b9e6b6a5167e3f4778915"
     assert protected_digest() == PROTECTED_SHA256
     assert extract.자동프로필("- 대상: 계획자신\n- 근거: 조회", "사전부검") == "legacy-2019"
     assert extract.자동프로필("- 획득: 조회", "사전부검") == "legacy-2022"
