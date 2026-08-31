@@ -8,12 +8,12 @@
 | 회차 | ID | 판정 | 교정할 SHA | 실제 처분 자리 | 근거 |
 |---|---|---|---|---|---|
 | 2026-08-22-agent-laziness | IR1-05 | A | `0bdf66e` | `.github/workflows/ci.yml` | `fix(ci): K9`가 checkout 깊이를 고쳐 K9 SHA 실행을 실제로 보게 했다. |
-| 〃 | IR3-11 | B | `1b5a11f` | `docs/gates/agent-laziness.md` | 중복 K2/K9 관측을 게이트 판정에서 처분했다. 잠긴 intent를 고치는 일이 아니었다. |
+| 〃 | IR3-11 | B | `336b744` | `.palimpsest/rounds/2026-08-22-agent-laziness/intent.md` | `1b5a11f`가 게이트에서 처분했지만 intent 근거는 없었다. 이번 감사가 그 빠진 범위 밖 처분을 명시했다. |
 | 〃 | IR4-17 | B | `052f871` | `.palimpsest/rounds/2026-08-22-agent-laziness/red/e9-negative-controls-rerun.txt` | 낡은 원본 대신 새 재실행 증거를 만들었다. |
-| 〃 | R4-01 | C→A | `2bd9cd5` | `xtask/src/main.rs` | 옛 회차에서는 #92로 넘기기만 했지만, #92 구현이 수 대조를 내용 대조로 바꿨다. |
-| 〃 | IR5-09 | B | `3453b9f` | `docs/gates/agent-laziness.md` | ⑦ 제거와 ⑧의 #93 분할을 게이트에 기록했다. |
-| 〃 | IR5-12 | B | `3453b9f` | `docs/gates/agent-laziness.md` | 선언면 결함을 #94로 분할해 기록했다. |
-| 〃 | IR5-13 | B | `3453b9f` | `docs/gates/agent-laziness.md` | 다중 조건 손실을 #92로 분할해 기록했다. |
+| 〃 | R4-01 | C→A | `336b744` | `.palimpsest/rounds/2026-08-22-agent-laziness/intent.md` | 옛 회차에서는 #92로 넘겼다는 intent 근거가 없었다. 이번 감사가 분할을 명시했고, #92 구현 `2bd9cd5`가 수 대조를 내용 대조로 바꿨다. |
+| 〃 | IR5-09 | B | `336b744` | `.palimpsest/rounds/2026-08-22-agent-laziness/intent.md` | `3453b9f`가 게이트에서 #93 분할을 기록했지만 intent에는 없었다. 이번 감사가 보완했다. |
+| 〃 | IR5-12 | B | `336b744` | `.palimpsest/rounds/2026-08-22-agent-laziness/intent.md` | `3453b9f`가 게이트에서 #94 분할을 기록했지만 intent에는 없었다. 이번 감사가 보완했다. |
+| 〃 | IR5-13 | B | `336b744` | `.palimpsest/rounds/2026-08-22-agent-laziness/intent.md` | `3453b9f`가 게이트에서 #92 분할을 기록했지만 intent에는 없었다. 이번 감사가 보완했다. |
 | 2026-08-23-agent-laziness-behavior | IR1-02 | B | `196f461` | `docs/gates/agent-laziness-behavior.md` | D6을 대조 불가로 고쳐 결박이 없다는 사실을 판정했다. |
 | 〃 | IR1-09 | A | `e6aa2b6` | `.palimpsest/rounds/2026-08-23-agent-laziness-behavior/state.md` | 상태의 다음 단계를 독립 리뷰 안으로 직접 고쳤다. |
 | 〃 | IR1-10 | A | `a333d44` | `.palimpsest/rounds/2026-08-23-agent-laziness-behavior/exp/pilot/observation.log` | 누락된 `pb` 행을 원자료 표에 추가했다. |
@@ -47,7 +47,7 @@
 | 〃 | IR4-7 | B | `27a1fe1` | `docs/gates/agent-laziness-behavior.md` | P 브리핑 범위와 포화 해석을 좁혔다. |
 | 〃 | IR4-8 | B | `27a1fe1` | `docs/gates/agent-laziness-behavior.md` | 승격하지 않은 자율경계 위반을 명시했다. |
 | 〃 | IR4-9 | A | `27a1fe1` | `docs/gates/agent-laziness-behavior.md` | 원 의도에 답했는지와 미해결 이유를 직접 추가했다. |
-| 〃 | IR4-10 | C→정정 | 이번 회차 구현 커밋 | `docs/gates/agent-laziness-behavior.md` | 옛 게이트의 범위 밖 목록을 잠긴 intent와 대어 #88·진행 원장을 제거하고 #85·unlazy를 복원했다. |
+| 〃 | IR4-10 | C→정정 | `c796065` | `docs/gates/agent-laziness-behavior.md` | 옛 게이트의 범위 밖 목록을 잠긴 intent와 대어 #88·진행 원장을 제거하고 #85·unlazy를 복원했다. |
 
 ## 결론
 

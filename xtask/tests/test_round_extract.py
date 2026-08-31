@@ -23,7 +23,8 @@ CURRENT = [
 PROTECTED = ["id", "처분", "조건변경", "승격됨", "사전처분", "상태", "닫은커밋", "줄", "기준커밋"]
 HISTORICAL = ("2026-08-19-finding-records", "2026-08-20-rust-extractor",
               "2026-08-22-agent-laziness", "2026-08-23-agent-laziness-behavior")
-PROTECTED_SHA256 = "9375b354e4b2bab3605856c22c1dd7de8bfc92192772a9b6bfc4d5b6dda01c56"
+# #99가 보존한 사람 판단에 #98이 전수 감사한 `닫은커밋` 교정을 반영한 최종 골든.
+PROTECTED_SHA256 = "a7b07204ff6e371864807adb6cd0554d39385e4ff3886ec2fcbe34dfbb78fceb"
 
 
 def run(source, n, raw):
