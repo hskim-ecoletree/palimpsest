@@ -265,7 +265,9 @@ fn execute(
     }
     #[cfg(windows)]
     {
-        command.args(["/D", "/C", check]);
+        use std::os::windows::process::CommandExt;
+
+        command.args(["/D", "/C"]).raw_arg(check);
     }
     command
         .current_dir(cwd)
