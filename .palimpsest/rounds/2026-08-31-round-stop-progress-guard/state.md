@@ -2,8 +2,10 @@
 
 ## 지금 단계
 
-의도 잠금과 사전부검. #85를 assign하고 `ready-for-agent`·`slice`로 정리했다. 기준 SHA와
-원격은 `9831bdcb09b3db7be7ac614b8e2191867ee0112c`, 제한 diff는 없었다.
+구현·독립 리뷰·격리된 실제 Claude Code 효과 관측까지 끝났다. 기준 SHA
+`9831bdcb09b3db7be7ac614b8e2191867ee0112c` 뒤 Stop catalog/activation/status/progress guard와
+리뷰 수정이 `4ca7bc0`·`15af743`에 섰다. 현재 사용자 저장소·전역 설정의 Stop은 활성화하지
+않았다.
 
 ## 잠긴 계약
 
@@ -24,9 +26,15 @@ cross-file consumption은 답하지 못했다. `stop_hook_active`는 symbol로 �
 
 ## 남은 것
 
-사전부검 처분, RED test와 실패 보존, 구현, 전체 검증, 격리 Claude Code 효과 관측,
-독립 리뷰와 발견 처분, ADR·게이트·결박·보고, push와 최종 CI, #85·#86 종료.
+완수 조건 oracle 승인·실행, 지정 국소 시험과 workspace 전체 검증, 그래프 결박, 종료 보고,
+push와 마지막 SHA의 CI, #85·#86 종료.
 
 ## 실패한 접근
 
-없음.
+- 독립 리뷰가 종료문 파일 존재만 믿는 거짓 통과, progress counter off-by-one, 모순 record,
+  stale-lock ABA, nested cwd fail-open, 장기 transcript 상한을 찾았다. `15af743`에서 종료문 구조
+  검증, counter=0, semantic invariant, kernel advisory lock, repository discovery, streaming
+  hash로 닫았다.
+- 격리 Claude Code 비활성 재관측 첫 시도는 임시 HOME의 PATH에 `pal`이 없어 transport
+  fail-open했다. 그 결과는 버리고 빌드 디렉터리를 PATH에 명시해 실제 `pal hook Stop`의
+  inactive pass를 다시 관측했다.
