@@ -93,6 +93,8 @@
 - R1-05에 따라 판정문은 잠긴 intent를 직접 가리키고 범위 밖 절을 가진다.
 - R1-06에 따라 doctor는 checked와 명시적 `not_built` 능력 부재를 전부 분류하고 malformed
   outcome을 거부하며, 그 단일 명령을 세 OS CI가 실행한다.
+- CI1-01에 따라 fake checkpoint 공격 쓰기는 판정 전에 writer를 명시적으로 닫는다. Unix의
+  열린 파일 rename 허용에 기대지 않고 Windows에서도 같은 완료 상태를 재는 fixture로 맞췄다.
 
 ## 승격
 

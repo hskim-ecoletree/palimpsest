@@ -17,7 +17,7 @@ Scope: close every issue 101 merge blocker and merge pull request 91 only after 
 - [x] G3: the full repository test harness passes
   CHECK: cargo xtask test && echo MERGE_BLOCKER_TEST_OK
   EXPECT: MERGE_BLOCKER_TEST_OK
-  EVIDENCE: exit=0 and EXPECT matched; workspace tests and doctests passed with only the registered release benchmark ignored
+  EVIDENCE: exit=0 and EXPECT matched after CI1-01 closed the Windows-only open-writer fixture failure; workspace tests and doctests passed with only the registered release benchmark ignored
 
 - [x] G4: full graph doctor classifies every invariant as clean checked or explicit capability absence and returns empty violation, residual, coverage-gap, and unanchored-cutoff sets
   CHECK: cargo run -q -p pal-cli -- doctor --full --json | node scripts/check-round-doctor.mjs
@@ -28,7 +28,7 @@ Scope: close every issue 101 merge blocker and merge pull request 91 only after 
   EVIDENCE: #95 CLOSED/COMPLETED, #96 CLOSED/NOT_PLANNED with the prior #95/#101 priority named; #101 remains OPEN and both native blocker nodes remain linked but CLOSED
 
 - [x] G6: independent artifact review leaves zero merge-blocking findings
-  EVIDENCE: R2 at 45d483d found zero new merge blockers after independently rerunning focused 25/28/23, policy 23/23, full tests, and doctor structure checks
+  EVIDENCE: R2 at 45d483d found zero product merge blockers; R3 at 2c068aa found CI1-01 preserves direct-forgery, rerun, race, and currentness attacks and leaves zero new merge blockers
 
 - [x] G7: tracked release artifacts contain no self-referential claim that their own commit already passed CI, and the external terminal procedure names final-SHA CI, merge, and origin/main containment in order
   CHECK: node -e "const fs=require('fs');const p='.palimpsest/rounds/2026-09-02-agent-laziness-merge-blockers';const g=fs.readFileSync(p+'/GATES.md','utf8');const i=fs.readFileSync(p+'/intent.md','utf8');const e=g.split(/\\r?\\n/).filter(l=>l.trimStart().startsWith('EVIDENCE:')).join('\\n');if(/(?:7.*success|CI.*success)/i.test(e))throw Error('self-referential CI evidence');for(const s of ['최종 PR SHA','CI 작업 7개 success','PR #91을 main에 병합'])if(!i.includes(s))throw Error('missing '+s);console.log('EXTERNAL_TERMINAL_PROCEDURE_OK')"
