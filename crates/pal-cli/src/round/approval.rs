@@ -4,7 +4,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use pal_git::{GitAccess, GixRepo};
+use pal_git::GixRepo;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -93,16 +93,8 @@ pub fn binding(
 
 pub(super) fn repository_root_identity(repo: &Path) -> Result<String, ApprovalError> {
     let git = GixRepo::open(repo).map_err(|error| ApprovalError::Identity(error.to_string()))?;
-    let head = git
-        .head()
-        .map_err(|error| ApprovalError::Identity(error.to_string()))?;
-    let ancestors = git
-        .first_parent_walk(head, usize::MAX)
-        .map_err(|error| ApprovalError::Identity(error.to_string()))?;
-    ancestors
-        .last()
-        .map(ToString::to_string)
-        .ok_or_else(|| ApprovalError::Identity("repository root commit이 없다".to_owned()))
+    git.stable_repository_identity()
+        .map_err(|error| ApprovalError::Identity(error.to_string()))
 }
 
 pub fn store_dir(repo: &Path, requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {

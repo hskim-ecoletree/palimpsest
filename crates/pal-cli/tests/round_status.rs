@@ -188,6 +188,7 @@ fn met은_exit_zero와_expect_match를_함께_요구한다() {
     );
     let got = value(&status(&root, SLUG));
     assert_eq!(got["verification"], "met");
+    assert_eq!(got["completion"], "unavailable");
     assert_eq!(got["conditions"][0]["state"], "met");
     assert_eq!(got["conditions"][0]["oracle_digest"], ORACLE_DIGEST);
 }
@@ -210,7 +211,7 @@ fn terminal은_verification과_분리되고_서로_배타다() {
 #[test]
 fn unknown_schema_kind_mode_field는_안정된_code로_거부된다() {
     let cases = [
-        r#"{"kind":"schema","version":3,"round":"fixture-round"}"#,
+        r#"{"kind":"schema","version":4,"round":"fixture-round"}"#,
         r#"{"kind":"mystery","version":1,"round":"fixture-round"}"#,
         r#"{"kind":"schema","version":1,"round":"fixture-round","extra":1}"#,
         r#"{"kind":"schema","version":1,"round":"fixture-round"}
@@ -226,6 +227,64 @@ fn unknown_schema_kind_mode_field는_안정된_code로_거부된다() {
         assert_eq!(out.status.code(), Some(2), "case {i}");
         assert_eq!(value(&out)["code"], "invalid_schema", "case {i}");
     }
+}
+
+#[test]
+fn schema3의_명시적_정반합만_command와_같은_aggregate에_들어간다() {
+    let root = root("dialectic");
+    Command::new("git").args(["init", "-q"]).current_dir(&root).status().expect("git");
+    Command::new("git")
+        .args(["config", "user.email", "fixture@example.invalid"])
+        .current_dir(&root)
+        .status()
+        .expect("git config");
+    Command::new("git")
+        .args(["config", "user.name", "Fixture"])
+        .current_dir(&root)
+        .status()
+        .expect("git config");
+    let dir = round(&root, SLUG, &["D1"]);
+    for name in ["thesis.md", "antithesis.md", "synthesis.md"] {
+        std::fs::write(root.join(name), format!("{name}\n")).expect("ref");
+    }
+    let reference = |name: &str| {
+        json!({
+            "path": name,
+            "digest": blake3::hash(&std::fs::read(root.join(name)).expect("ref")).to_hex().to_string()
+        })
+    };
+    ledger(
+        &dir,
+        &[
+            json!({"kind":"schema","version":3,"round":SLUG}).to_string(),
+            json!({
+                "kind":"judgment", "id":"D1", "verdict":"met",
+                "thesis":reference("thesis.md"),
+                "antithesis":reference("antithesis.md"),
+                "synthesis":reference("synthesis.md")
+            })
+            .to_string(),
+        ],
+    );
+    Command::new("git")
+        .args(["add", "."])
+        .current_dir(&root)
+        .status()
+        .expect("git add");
+    Command::new("git")
+        .args(["commit", "-q", "-m", "fixture"])
+        .current_dir(&root)
+        .status()
+        .expect("git commit");
+    let got = value(&status(&root, SLUG));
+    assert_eq!(got["conditions"][0]["state"], "met");
+    assert_eq!(got["verification"], "met");
+    assert_eq!(got["completion"], "in_progress");
+
+    std::fs::write(root.join("antithesis.md"), "changed\n").expect("change ref");
+    let stale = value(&status(&root, SLUG));
+    assert_eq!(stale["conditions"][0]["state"], "stale");
+    assert_eq!(stale["verification"], "in_progress");
 }
 
 #[test]

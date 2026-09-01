@@ -32,10 +32,31 @@ pub struct Evidence {
     pub projected_digest: Option<String>,
 }
 
+#[derive(Clone, Debug)]
+pub struct EvidenceRef {
+    pub path: String,
+    pub digest: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct Judgment {
+    pub met: bool,
+    pub thesis: EvidenceRef,
+    pub antithesis: EvidenceRef,
+    pub synthesis: EvidenceRef,
+}
+
+#[derive(Clone, Debug)]
+pub struct Checkpoint {
+    pub projected_digest: String,
+    pub aggregate_digest: String,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct ConditionLedger {
     pub oracle: Option<Oracle>,
     pub evidence: Option<Evidence>,
+    pub judgment: Option<Judgment>,
     pub had_evidence_before_current_oracle: bool,
 }
 
@@ -43,6 +64,7 @@ pub struct ConditionLedger {
 pub struct VerificationLedger {
     pub schema_version: u32,
     pub conditions: BTreeMap<String, ConditionLedger>,
+    pub checkpoint: Option<Checkpoint>,
 }
 
 #[derive(Debug, Error)]
@@ -82,12 +104,40 @@ enum Event {
         #[serde(default)]
         projected_digest: Option<String>,
     },
+    #[serde(rename = "judgment")]
+    Judgment {
+        id: String,
+        verdict: Verdict,
+        thesis: EventRef,
+        antithesis: EventRef,
+        synthesis: EventRef,
+    },
+    #[serde(rename = "checkpoint")]
+    Checkpoint {
+        projected_digest: String,
+        aggregate_digest: String,
+    },
 }
 
 #[derive(Debug, Deserialize)]
 enum Mode {
     #[serde(rename = "command")]
     Command,
+}
+
+#[derive(Debug, Deserialize)]
+enum Verdict {
+    #[serde(rename = "met")]
+    Met,
+    #[serde(rename = "unmet")]
+    Unmet,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EventRef {
+    path: String,
+    digest: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -123,6 +173,7 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
     let mut schema_seen = false;
     let mut schema_version = 0;
     let mut conditions: BTreeMap<String, ConditionLedger> = BTreeMap::new();
+    let mut checkpoint = None;
     for (index, event) in events.into_iter().enumerate() {
         match event {
             Event::Schema { version, round } => {
@@ -130,7 +181,7 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                     return Err(schema("schema 행은 첫 행에 정확히 하나여야 한다"));
                 }
                 schema_seen = true;
-                if !matches!(version, 1 | 2) {
+                if !matches!(version, 1 | 2 | 3) {
                     return Err(schema(format!("알 수 없는 schema version {version}")));
                 }
                 schema_version = version;
@@ -179,6 +230,9 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                 };
                 let state = conditions.entry(id).or_default();
                 state.had_evidence_before_current_oracle |= state.evidence.is_some();
+                if state.judgment.is_some() {
+                    return Err(schema("condition은 command와 dialectic을 함께 가질 수 없다"));
+                }
                 state.oracle = Some(Oracle {
                     digest,
                     check,
@@ -208,9 +262,9 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                     (1, Some(_)) => {
                         return Err(schema("schema 1 evidence에는 projected_digest가 없다"));
                     }
-                    (2, Some(digest)) => validate_digest("projected_digest", digest)?,
-                    (2, None) => {
-                        return Err(schema("schema 2 evidence에는 projected_digest가 필요하다"));
+                    (2 | 3, Some(digest)) => validate_digest("projected_digest", digest)?,
+                    (2 | 3, None) => {
+                        return Err(schema("schema 2/3 evidence에는 projected_digest가 필요하다"));
                     }
                     _ => unreachable!("schema version was validated"),
                 }
@@ -226,12 +280,57 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
                     projected_digest,
                 });
             }
+            Event::Judgment {
+                id,
+                verdict,
+                thesis,
+                antithesis,
+                synthesis,
+            } => {
+                if schema_version != 3 {
+                    return Err(schema("judgment는 schema 3에서만 쓴다"));
+                }
+                validate_id(&id)?;
+                let thesis = validate_ref("thesis", thesis)?;
+                let antithesis = validate_ref("antithesis", antithesis)?;
+                let synthesis = validate_ref("synthesis", synthesis)?;
+                if thesis.path == antithesis.path
+                    || thesis.path == synthesis.path
+                    || antithesis.path == synthesis.path
+                {
+                    return Err(schema("정·반·합 evidence 경로는 서로 달라야 한다"));
+                }
+                let state = conditions.entry(id).or_default();
+                if state.oracle.is_some() {
+                    return Err(schema("condition은 command와 dialectic을 함께 가질 수 없다"));
+                }
+                state.judgment = Some(Judgment {
+                    met: matches!(verdict, Verdict::Met),
+                    thesis,
+                    antithesis,
+                    synthesis,
+                });
+            }
+            Event::Checkpoint {
+                projected_digest,
+                aggregate_digest,
+            } => {
+                if schema_version != 3 {
+                    return Err(schema("checkpoint는 schema 3에서만 쓴다"));
+                }
+                validate_digest("projected_digest", &projected_digest)?;
+                validate_digest("aggregate_digest", &aggregate_digest)?;
+                checkpoint = Some(Checkpoint {
+                    projected_digest,
+                    aggregate_digest,
+                });
+            }
         }
     }
     if !schema_seen {
         return Err(schema("schema 행이 없다"));
     }
-    if schema_version == 2 {
+    if schema_version >= 2 {
         for (id, state) in &conditions {
             let Some(control) = state
                 .oracle
@@ -260,6 +359,7 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
     Ok(VerificationLedger {
         schema_version,
         conditions,
+        checkpoint,
     })
 }
 
@@ -338,6 +438,20 @@ fn validate_digest(name: &str, value: &str) -> Result<(), LedgerError> {
         return Err(schema(format!("{name}는 소문자 64자리 hex여야 한다")));
     }
     Ok(())
+}
+
+fn validate_ref(name: &str, value: EventRef) -> Result<EvidenceRef, LedgerError> {
+    validate_string(&format!("{name}.path"), &value.path, true)?;
+    if !valid_cwd(&value.path) || value.path == "." {
+        return Err(schema(format!(
+            "{name}.path는 정규화된 저장소 상대 파일 경로여야 한다"
+        )));
+    }
+    validate_digest(&format!("{name}.digest"), &value.digest)?;
+    Ok(EvidenceRef {
+        path: value.path,
+        digest: value.digest,
+    })
 }
 
 fn valid_slug(value: &str) -> bool {

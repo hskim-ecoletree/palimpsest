@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::approval;
-use super::status::{self, ConditionState, StatusView, Terminal, VerificationState};
+use super::status::{self, CompletionState, ConditionState, StatusView, Terminal};
 
 const ACTIVATION_VERSION: u32 = 1;
 const PROGRESS_VERSION: u32 = 1;
@@ -287,9 +287,10 @@ pub fn decide(payload: &Value) -> PolicyDecision {
         if view.terminal == Terminal::Folded {
             return PolicyDecision::Pass("회차가 사유를 갖춘 folded 종료문을 가졌다".to_owned());
         }
-        if view.verification == VerificationState::Met {
+        if view.completion == CompletionState::Complete {
             return PolicyDecision::Pass(
-                "필수 condition의 current evidence와 종료 보고가 모두 있다".to_owned(),
+                "종료 직전 전수 재검증, 정반합, 해악 finding과 종료 보고가 모두 현재다"
+                    .to_owned(),
             );
         }
     }
@@ -431,8 +432,19 @@ fn valid_terminal_document(repo: &Path, slug: &str, terminal: Terminal) -> Resul
     }
     let body = std::fs::read_to_string(&path).with_context(|| "종료문을 읽지 못했다")?;
     for heading in headings {
-        if !body.lines().any(|line| line.starts_with(heading)) {
+        let lines: Vec<&str> = body.lines().collect();
+        let Some(index) = lines.iter().position(|line| line.trim_end() == *heading) else {
             bail!("필수 절 `{heading}`이 없다");
+        };
+        let has_body = lines[index + 1..]
+            .iter()
+            .take_while(|line| !line.starts_with("## "))
+            .any(|line| {
+                let line = line.trim();
+                !line.is_empty() && !line.starts_with("<!--") && !line.ends_with("-->")
+            });
+        if !has_body {
+            bail!("필수 절 `{heading}`의 본문이 비었다");
         }
     }
     if terminal == Terminal::Folded {
@@ -453,6 +465,9 @@ fn semantic_digest(view: &StatusView) -> String {
         view.round.clone(),
         format!("{:?}", view.verification),
         format!("{:?}", view.terminal),
+        format!("{:?}", view.completion),
+        view.open_harmful_findings.to_string(),
+        view.aggregate_digest.clone(),
     ];
     for condition in &view.conditions {
         values.push(condition.id.clone());

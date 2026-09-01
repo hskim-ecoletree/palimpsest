@@ -52,6 +52,14 @@ pub struct VerifyView {
     pub fault: Option<&'static str>,
 }
 
+#[derive(Debug, Serialize)]
+pub struct FinalizeView {
+    pub outcome: &'static str,
+    pub round: String,
+    pub rerun: Vec<String>,
+    pub completion: &'static str,
+}
+
 #[derive(Debug, Error)]
 pub enum VerifyError {
     #[error("approval이 필요하다")]
@@ -73,9 +81,9 @@ impl From<ApprovalError> for VerifyError {
 pub fn approve(config: &Config<'_>) -> Result<ApproveView, VerifyError> {
     validate_config(config)?;
     let (_, ledger, oracle) = load(config)?;
-    if ledger.schema_version != 2 {
+    if ledger.schema_version < 2 {
         return Err(VerifyError::Invalid(
-            "approve/verify는 schema 2의 새 회차에서만 쓴다".to_owned(),
+            "approve/verify는 schema 2 이상의 새 회차에서만 쓴다".to_owned(),
         ));
     }
     let projected = projected_digest(config.repo, config.slug)?;
@@ -102,9 +110,9 @@ pub fn approve(config: &Config<'_>) -> Result<ApproveView, VerifyError> {
 pub fn verify(config: &Config<'_>) -> Result<VerifyView, VerifyError> {
     validate_config(config)?;
     let (ledger_path, ledger_before, oracle_before) = load(config)?;
-    if ledger_before.schema_version != 2 {
+    if ledger_before.schema_version < 2 {
         return Err(VerifyError::Invalid(
-            "approve/verify는 schema 2의 새 회차에서만 쓴다".to_owned(),
+            "approve/verify는 schema 2 이상의 새 회차에서만 쓴다".to_owned(),
         ));
     }
     let projected_before = projected_digest(config.repo, config.slug)?;
@@ -161,7 +169,7 @@ pub fn verify(config: &Config<'_>) -> Result<VerifyView, VerifyError> {
             "실행 중 oracle, projected tree 또는 approval identity가 바뀌었다".to_owned(),
         ));
     }
-    if ledger_after.schema_version != 2 {
+    if ledger_after.schema_version < 2 {
         return Err(VerifyError::Discarded(
             "schema가 실행 중 바뀌었다".to_owned(),
         ));
@@ -186,6 +194,109 @@ pub fn verify(config: &Config<'_>) -> Result<VerifyView, VerifyError> {
         exit: execution.exit,
         matched: execution.matched,
         fault: execution.fault,
+    })
+}
+
+/// schema 3 회차를 닫기 직전에 모든 command oracle을 다시 실행하고, 정반합과
+/// findings까지 같은 aggregate가 현재일 때만 completion checkpoint를 append한다.
+pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
+    let dir = config.repo.join(".palimpsest/rounds").join(config.slug);
+    let ledger_path = dir.join("verification.log");
+    let ledger = ledger::read(&ledger_path, config.slug)
+        .map_err(|error| VerifyError::Invalid(error.to_string()))?;
+    if ledger.schema_version != 3 {
+        return Err(VerifyError::Invalid(
+            "종료 직전 전수 재검증은 schema 3 회차에서만 쓴다".to_owned(),
+        ));
+    }
+    let ids: Vec<String> = ledger
+        .conditions
+        .iter()
+        .filter_map(|(id, state)| state.oracle.as_ref().map(|_| id.clone()))
+        .collect();
+    for id in &ids {
+        let one = Config {
+            repo: config.repo,
+            slug: config.slug,
+            id,
+            approval_dir: config.approval_dir,
+            shell: config.shell,
+            timeout_secs: config.timeout_secs,
+            output_limit: config.output_limit,
+        };
+        let result = verify(&one)?;
+        if !result.met {
+            return Err(VerifyError::Discarded(format!(
+                "종료 직전 재검증에서 `{id}`가 unmet이다"
+            )));
+        }
+    }
+
+    let view = match super::status::read(config.repo, Some(config.slug))
+        .map_err(|error| VerifyError::Invalid(error.to_string()))?
+    {
+        super::status::Outcome::Status(view) => view,
+        super::status::Outcome::NoActiveRound => {
+            return Err(VerifyError::Invalid("round를 해소하지 못했다".to_owned()));
+        }
+    };
+    if view.terminal != super::status::Terminal::Reported {
+        return Err(VerifyError::Invalid(
+            "완전한 report.md를 쓴 뒤 종료 직전 재검증해야 한다".to_owned(),
+        ));
+    }
+    if view.verification != super::status::VerificationState::Met {
+        return Err(VerifyError::Invalid(
+            "command와 dialectic condition aggregate가 met가 아니다".to_owned(),
+        ));
+    }
+    if !view.findings_current {
+        return Err(VerifyError::Invalid(
+            "schema 3 findings 원장이 없거나 열림 축 이전 형식이다".to_owned(),
+        ));
+    }
+    if view.open_harmful_findings != 0 {
+        return Err(VerifyError::Invalid(format!(
+            "열린 금지역·실패 finding {}건이 남았다",
+            view.open_harmful_findings
+        )));
+    }
+    let projected = projected_digest(config.repo, config.slug)?;
+    let append_guard = AppendGuard::acquire(&ledger_path)?;
+    let stable = match super::status::read(config.repo, Some(config.slug))
+        .map_err(|error| VerifyError::Invalid(error.to_string()))?
+    {
+        super::status::Outcome::Status(view) => view,
+        super::status::Outcome::NoActiveRound => unreachable!("explicit round was read above"),
+    };
+    let projected_after = projected_digest(config.repo, config.slug)?;
+    if projected != projected_after || view.aggregate_digest != stable.aggregate_digest {
+        return Err(VerifyError::Discarded(
+            "checkpoint 기록 전 projected tree 또는 aggregate가 바뀌었다".to_owned(),
+        ));
+    }
+    let event = serde_json::json!({
+        "kind": "checkpoint",
+        "projected_digest": projected,
+        "aggregate_digest": stable.aggregate_digest,
+    });
+    append_line(&append_guard, &event.to_string())?;
+    let complete = match super::status::read(config.repo, Some(config.slug))
+        .map_err(|error| VerifyError::Invalid(error.to_string()))?
+    {
+        super::status::Outcome::Status(view) => view.completion,
+        super::status::Outcome::NoActiveRound => unreachable!("explicit round was read above"),
+    };
+    if complete != super::status::CompletionState::Complete {
+        return Err(VerifyError::Discarded(
+            "방금 쓴 checkpoint가 complete로 되읽히지 않았다".to_owned(),
+        ));
+    }
+    Ok(FinalizeView {
+        outcome: "finalized",
+        round: config.slug.to_owned(),
+        rerun: ids,
+        completion: "complete",
     })
 }
 

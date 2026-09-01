@@ -443,8 +443,11 @@ enum RoundCommand {
     Verify {
         #[arg(long)]
         round: String,
-        #[arg(long)]
-        id: String,
+        #[arg(long, required_unless_present = "all", conflicts_with = "all")]
+        id: Option<String>,
+        /// 이미 met인 command까지 전부 재실행하고 completion checkpoint를 쓴다
+        #[arg(long, required_unless_present = "id", conflicts_with = "id")]
+        all: bool,
         #[arg(long, default_value = ".")]
         repo: PathBuf,
         #[arg(long)]
@@ -601,11 +604,20 @@ fn main() -> Result<()> {
                 output_limit, json,
             ),
             RoundCommand::Verify {
-                round: slug, id, repo, approval_dir, shell, timeout, output_limit, json,
-            } => round::round_verify(
-                &repo, &slug, &id, approval_dir.as_deref(), shell.as_deref(), timeout,
-                output_limit, json,
-            ),
+                round: slug, id, all, repo, approval_dir, shell, timeout, output_limit, json,
+            } => {
+                if all {
+                    round::round_finalize(
+                        &repo, &slug, approval_dir.as_deref(), shell.as_deref(), timeout,
+                        output_limit, json,
+                    )
+                } else {
+                    round::round_verify(
+                        &repo, &slug, id.as_deref().expect("clap requires id"),
+                        approval_dir.as_deref(), shell.as_deref(), timeout, output_limit, json,
+                    )
+                }
+            }
             RoundCommand::Stop { what } => match what {
                 RoundStopCommand::Enable { round: slug, repo, approval_dir, json } => {
                     round::stop::command_enable(&repo, &slug, approval_dir.as_deref(), json)

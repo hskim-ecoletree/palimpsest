@@ -119,6 +119,32 @@ pub fn round_verify(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
+pub fn round_finalize(
+    repo: &Path,
+    slug: &str,
+    approval_dir: Option<&Path>,
+    shell: Option<&Path>,
+    timeout_secs: u64,
+    output_limit: usize,
+    json: bool,
+) -> Result<()> {
+    let config = verify::Config {
+        repo,
+        slug,
+        id: "",
+        approval_dir,
+        shell,
+        timeout_secs,
+        output_limit,
+    };
+    match verify::finalize(&config) {
+        Ok(view) => print_view(json, &view, &format!("finalized: {slug} complete")),
+        Err(error) => verify_error(json, error),
+    }
+    Ok(())
+}
+
 fn print_view(json: bool, value: &impl serde::Serialize, human: &str) {
     if json {
         write_stdout(&serde_json::to_string(value).expect("serializable view"));

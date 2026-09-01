@@ -35,12 +35,22 @@ pub enum Terminal {
     Folded,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CompletionState {
+    Unavailable,
+    InProgress,
+    Complete,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct ConditionView {
     pub id: String,
     pub state: ConditionState,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub oracle_digest: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub evidence_digest: Option<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -49,6 +59,12 @@ pub struct StatusView {
     pub round: String,
     pub verification: VerificationState,
     pub terminal: Terminal,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema_version: Option<u32>,
+    pub completion: CompletionState,
+    pub findings_current: bool,
+    pub open_harmful_findings: usize,
+    pub aggregate_digest: String,
     pub conditions: Vec<ConditionView>,
 }
 
@@ -188,7 +204,7 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
     }
 
     let projected = match &ledger {
-        Some(ledger) if ledger.schema_version == 2 => Some(
+        Some(ledger) if ledger.schema_version >= 2 => Some(
             super::verify::projected_digest(
                 dir.parent()
                     .and_then(Path::parent)
@@ -202,12 +218,35 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
         ),
         _ => None,
     };
+    let repo = dir
+        .parent()
+        .and_then(Path::parent)
+        .and_then(Path::parent)
+        .ok_or_else(|| StatusError::Resolve("repository root를 해소하지 못했다".to_owned()))?;
     let mut raw = BTreeMap::new();
     for id in &ids {
         let state = ledger.as_ref().and_then(|l| l.conditions.get(id.as_str()));
-        let (condition_state, digest) = match state.and_then(|s| s.oracle.as_ref().map(|o| (s, o)))
+        let (condition_state, digest, evidence_digest) = match state
+            .and_then(|s| s.oracle.as_ref().map(|o| (s, o)))
         {
-            None => (ConditionState::Unregistered, None),
+            None => match state.and_then(|state| state.judgment.as_ref()) {
+                None => (ConditionState::Unregistered, None, None),
+                Some(judgment) => {
+                    let current = judgment_current(repo, judgment)?;
+                    let state = if !current {
+                        ConditionState::Stale
+                    } else if judgment.met {
+                        ConditionState::Met
+                    } else {
+                        ConditionState::Unmet
+                    };
+                    (
+                        state,
+                        None,
+                        Some(judgment_digest(judgment)),
+                    )
+                }
+            },
             Some((state, oracle)) => {
                 let condition_state = match &state.evidence {
                     None if state.had_evidence_before_current_oracle => ConditionState::Stale,
@@ -225,10 +264,24 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
                     Some(evidence) if evidence.exit == 0 && evidence.matched => ConditionState::Met,
                     Some(_) => ConditionState::Unmet,
                 };
-                (condition_state, Some(oracle.digest.clone()))
+                (
+                    condition_state,
+                    Some(oracle.digest.clone()),
+                    state.evidence.as_ref().map(|evidence| {
+                        let mut hasher = blake3::Hasher::new();
+                        hasher.update(b"pal.round.command-evidence.v1\0");
+                        hasher.update(evidence.oracle_digest.as_bytes());
+                        hasher.update(&evidence.exit.to_le_bytes());
+                        hasher.update(&[u8::from(evidence.matched)]);
+                        if let Some(projected) = &evidence.projected_digest {
+                            hasher.update(projected.as_bytes());
+                        }
+                        hasher.finalize().to_hex().to_string()
+                    }),
+                )
             }
         };
-        raw.insert(id.clone(), (condition_state, digest));
+        raw.insert(id.clone(), (condition_state, digest, evidence_digest));
     }
     if let Some(ledger) = &ledger {
         let mut controls: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
@@ -242,14 +295,14 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
             }
         }
         for (base, control_ids) in controls {
-            if raw.get(base).map(|(state, _)| *state) != Some(ConditionState::Met) {
+            if raw.get(base).map(|(state, _, _)| *state) != Some(ConditionState::Met) {
                 continue;
             }
             let mut replacement = None;
             for control in control_ids {
                 let control_state = raw
                     .get(control)
-                    .map_or(ConditionState::Unregistered, |(state, _)| *state);
+                    .map_or(ConditionState::Unregistered, |(state, _, _)| *state);
                 if control_state != ConditionState::Met {
                     replacement = Some(match control_state {
                         ConditionState::Unmet => ConditionState::Unmet,
@@ -269,21 +322,172 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
     }
     let mut conditions = Vec::new();
     for id in ids {
-        let (condition_state, digest) = raw.remove(&id).expect("all intent ids reduced");
+        let (condition_state, digest, evidence_digest) =
+            raw.remove(&id).expect("all intent ids reduced");
         conditions.push(ConditionView {
             id,
             state: condition_state,
             oracle_digest: digest,
+            evidence_digest,
         });
     }
     let verification = aggregate(&conditions, ledger.is_some());
+    let (findings_current, open_harmful_findings) = findings_state(dir)?;
+    let schema_version = ledger.as_ref().map(|ledger| ledger.schema_version);
+    let aggregate_digest = aggregate_digest(
+        slug,
+        schema_version,
+        terminal,
+        verification,
+        &conditions,
+        findings_current,
+        open_harmful_findings,
+    );
+    let completion = match (&ledger, &projected) {
+        (Some(ledger), Some(projected))
+            if ledger.schema_version == 3
+                && terminal == Terminal::Reported
+                && verification == VerificationState::Met
+                && findings_current
+                && open_harmful_findings == 0
+                && ledger.checkpoint.as_ref().is_some_and(|checkpoint| {
+                    checkpoint.projected_digest == *projected
+                        && checkpoint.aggregate_digest == aggregate_digest
+                }) =>
+        {
+            CompletionState::Complete
+        }
+        (Some(ledger), _) if ledger.schema_version == 3 => CompletionState::InProgress,
+        _ => CompletionState::Unavailable,
+    };
     Ok(StatusView {
         outcome: "status",
         round: slug.to_owned(),
         verification,
         terminal,
+        schema_version,
+        completion,
+        findings_current,
+        open_harmful_findings,
+        aggregate_digest,
         conditions,
     })
+}
+
+fn judgment_current(repo: &Path, judgment: &ledger::Judgment) -> Result<bool, StatusError> {
+    for evidence in [
+        &judgment.thesis,
+        &judgment.antithesis,
+        &judgment.synthesis,
+    ] {
+        let path = repo.join(&evidence.path);
+        let metadata = match std::fs::symlink_metadata(&path) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+            Err(error) => return Err(StatusError::Io(format!("{}: {error}", evidence.path))),
+        };
+        if !metadata.is_file() || metadata.file_type().is_symlink() {
+            return Ok(false);
+        }
+        let bytes = std::fs::read(&path).map_err(|error| StatusError::Io(error.to_string()))?;
+        if blake3::hash(&bytes).to_hex().as_str() != evidence.digest {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+fn judgment_digest(judgment: &ledger::Judgment) -> String {
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(b"pal.round.dialectic-evidence.v1\0");
+    hasher.update(&[u8::from(judgment.met)]);
+    for evidence in [
+        &judgment.thesis,
+        &judgment.antithesis,
+        &judgment.synthesis,
+    ] {
+        hasher.update(evidence.path.as_bytes());
+        hasher.update(evidence.digest.as_bytes());
+    }
+    hasher.finalize().to_hex().to_string()
+}
+
+fn findings_state(dir: &Path) -> Result<(bool, usize), StatusError> {
+    let path = dir.join("findings.jsonl");
+    if !path.is_file() {
+        return Ok((false, 0));
+    }
+    let body = std::fs::read_to_string(&path).map_err(|error| StatusError::Io(error.to_string()))?;
+    let mut lines = body.lines();
+    let Some(header) = lines.next() else {
+        return Ok((false, 0));
+    };
+    let header: serde_json::Value = serde_json::from_str(header)
+        .map_err(|error| StatusError::InvalidSchema(format!("findings header: {error}")))?;
+    if header.get("schema_version").and_then(serde_json::Value::as_u64) != Some(3)
+        || header.get("종류").and_then(serde_json::Value::as_str) != Some("레코드")
+        || header.get("회차").and_then(serde_json::Value::as_str)
+            != dir.file_name().and_then(std::ffi::OsStr::to_str)
+    {
+        return Ok((false, 0));
+    }
+    let mut harmful = 0;
+    for (index, line) in lines.enumerate() {
+        let row: serde_json::Value = serde_json::from_str(line).map_err(|error| {
+            StatusError::InvalidSchema(format!("findings {}행: {error}", index + 2))
+        })?;
+        let state = row.get("상태").and_then(serde_json::Value::as_str);
+        let severity = row.get("해악도").and_then(serde_json::Value::as_str);
+        if !matches!(state, Some("열림" | "닫힘"))
+            || !matches!(severity, Some("금지역" | "실패" | "거짓신호" | "미관"))
+        {
+            return Ok((false, 0));
+        }
+        if state == Some("닫힘")
+            && row
+                .get("닫은커밋")
+                .and_then(serde_json::Value::as_str)
+                .is_none_or(str::is_empty)
+        {
+            return Ok((false, 0));
+        }
+        if state == Some("열림") && matches!(severity, Some("금지역" | "실패")) {
+            harmful += 1;
+        }
+    }
+    Ok((true, harmful))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn aggregate_digest(
+    slug: &str,
+    schema_version: Option<u32>,
+    terminal: Terminal,
+    verification: VerificationState,
+    conditions: &[ConditionView],
+    findings_current: bool,
+    harmful: usize,
+) -> String {
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(b"pal.round.completion-aggregate.v1\0");
+    for value in [
+        slug.to_owned(),
+        schema_version.map_or_else(String::new, |value| value.to_string()),
+        format!("{terminal:?}"),
+        format!("{verification:?}"),
+        findings_current.to_string(),
+        harmful.to_string(),
+    ] {
+        hasher.update(value.as_bytes());
+        hasher.update(&[0]);
+    }
+    for condition in conditions {
+        hasher.update(condition.id.as_bytes());
+        hasher.update(format!("{:?}", condition.state).as_bytes());
+        hasher.update(condition.oracle_digest.as_deref().unwrap_or("").as_bytes());
+        hasher.update(condition.evidence_digest.as_deref().unwrap_or("").as_bytes());
+    }
+    hasher.finalize().to_hex().to_string()
 }
 
 fn aggregate(conditions: &[ConditionView], has_ledger: bool) -> VerificationState {
@@ -325,8 +529,18 @@ pub fn print_human(view: &StatusView) {
     println!("round: {}", view.round);
     println!("verification: {}", verification_name(view.verification));
     println!("terminal: {}", terminal_name(view.terminal));
+    println!("completion: {}", completion_name(view.completion));
+    println!("open harmful findings: {}", view.open_harmful_findings);
     for condition in &view.conditions {
         println!("{}: {}", condition.id, condition_name(condition.state));
+    }
+}
+
+fn completion_name(state: CompletionState) -> &'static str {
+    match state {
+        CompletionState::Unavailable => "unavailable",
+        CompletionState::InProgress => "in_progress",
+        CompletionState::Complete => "complete",
     }
 }
 

@@ -1,0 +1,3 @@
+{"kind":"schema","version":2,"round":"2026-09-02-agent-laziness-merge-blockers"}
+{"kind":"oracle","id":"F1","mode":"command","check":"cargo xtask check && cargo xtask test","expect":{"literal":"test result: ok."},"cwd":"."}
+{"kind":"oracle","id":"F2","mode":"command","check":"cargo run -q -p pal-cli -- doctor --full --json","expect":{"literal":"\"violations\": []"},"cwd":"."}

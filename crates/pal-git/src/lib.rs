@@ -297,6 +297,30 @@ impl GixRepo {
             .ok_or_else(|| GitError::NoWorktree("bare repository".to_owned()))
     }
 
+    /// clone 깊이와 무관한 저장소 이름. origin이 있는 clone은 그 URL의 바이트를,
+    /// origin이 없는 로컬 저장소는 최초 first-parent commit을 쓴다.
+    ///
+    /// shallow boundary를 "최초 commit"으로 오인하지 않는다. 그 값은 deepen할 때
+    /// 바뀌어 외부 approval과 Stop activation namespace를 조용히 갈라놓는다.
+    pub fn stable_repository_identity(&self) -> Result<String, GitError> {
+        if let Some(origin) = self.inner.config_snapshot().string("remote.origin.url") {
+            let bytes: &[u8] = origin.as_ref();
+            if !bytes.is_empty() {
+                let mut hasher = blake3::Hasher::new();
+                hasher.update(b"pal.repository.origin.v1\0");
+                hasher.update(&(bytes.len() as u64).to_le_bytes());
+                hasher.update(bytes);
+                return Ok(hasher.finalize().to_hex().to_string());
+            }
+        }
+        let head = self.head()?;
+        let ancestors = self.first_parent_walk(head, usize::MAX)?;
+        ancestors
+            .last()
+            .map(ToString::to_string)
+            .ok_or_else(|| GitError::Resolve("repository root commit이 없다".to_owned()))
+    }
+
     /// 사람이 쓴 것을 커밋 이름으로 푼다 — 짧은 SHA · 브랜치 · 태그 전부.
     ///
     /// **S1 의 코퍼스는 12자 축약 SHA 로 고정돼 있다**(`a29cad0bf6a8`). 그것이 브랜치

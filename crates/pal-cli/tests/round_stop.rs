@@ -326,13 +326,117 @@ fn 의미_진행만_counter를_reset하고_complete만_통과한다() {
     write_report(&repo);
     std::fs::write(&transcript, "reported-valid\n").expect("transcript");
     assert!(
-        !blocked(&stop(
+        blocked(&stop(
             &repo,
             &store,
             &payload(&repo, "s6", &transcript, json!(false))
         )),
-        "완료 상태를 통과시키지 않았다"
+        "schema 1 성공 기록을 Stop 종료 근거로 통과시켰다"
     );
+}
+
+#[test]
+fn schema3의_정반합_finding_전수재검증_checkpoint만_complete다() {
+    let (repo, store) = root("schema3-complete");
+    enable(&repo, &store);
+    let dir = repo.join(".palimpsest/rounds").join(SLUG);
+    let refs = ["thesis.md", "antithesis.md", "synthesis.md"];
+    for name in refs {
+        std::fs::write(repo.join(name), format!("{name}\n")).expect("dialectic ref");
+    }
+    let reference = |name: &str| {
+        json!({
+            "path": name,
+            "digest": blake3::hash(&std::fs::read(repo.join(name)).expect("ref")).to_hex().to_string()
+        })
+    };
+    std::fs::write(
+        dir.join("verification.log"),
+        format!(
+            "{}\n{}\n",
+            json!({"kind":"schema","version":3,"round":SLUG}),
+            json!({
+                "kind":"judgment", "id":"A1", "verdict":"met",
+                "thesis":reference("thesis.md"),
+                "antithesis":reference("antithesis.md"),
+                "synthesis":reference("synthesis.md")
+            })
+        ),
+    )
+    .expect("schema3 ledger");
+    std::fs::write(
+        dir.join("findings.jsonl"),
+        format!(
+            "{}\n{}\n",
+            json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
+            json!({"id":"F1","상태":"닫힘","해악도":"금지역","닫은커밋":"abc1234"})
+        ),
+    )
+    .expect("findings");
+    write_report(&repo);
+    git(&repo, &["add", "."]);
+    git(&repo, &["commit", "-q", "-m", "schema3 terminal"]);
+
+    let finalized = pal(
+        &repo,
+        &store,
+        &["round", "verify", "--round", SLUG, "--all", "--json"],
+    );
+    assert!(
+        finalized.status.success(),
+        "{}",
+        String::from_utf8_lossy(&finalized.stderr)
+    );
+    let transcript = repo.parent().expect("base").join("transcript.jsonl");
+    std::fs::write(&transcript, "complete\n").expect("transcript");
+    assert!(
+        !blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "complete", &transcript, json!(false))
+        )),
+        "schema 3 completion checkpoint를 통과시키지 않았다"
+    );
+}
+
+#[test]
+fn 필수_heading만_있고_본문이_빈_report와_folded는_차단한다() {
+    let (repo, store) = root("heading-only-terminal");
+    enable(&repo, &store);
+    let dir = repo.join(".palimpsest/rounds").join(SLUG);
+    let transcript = repo.parent().expect("base").join("transcript.jsonl");
+    std::fs::write(&transcript, "heading-only\n").expect("transcript");
+    std::fs::write(
+        dir.join("report.md"),
+        "# report\n\n## 남지 않은 것\n\n## 다음 회차가 받는 것\n\n## 범위 밖\n\n## 원리상 못 잰 것\n\n## 능력 부재\n",
+    )
+    .expect("report");
+    let report = stop(
+        &repo,
+        &store,
+        &payload(&repo, "report", &transcript, json!(false)),
+    );
+    assert!(blocked(&report));
+    assert!(String::from_utf8_lossy(&report.stdout).contains("본문이 비었다"));
+
+    std::fs::remove_file(dir.join("report.md")).expect("remove report");
+    std::fs::write(
+        dir.join("folded.md"),
+        "# folded\n\n## 왜 접었나\n\n## 접으면서 남기는 것과 버리는 것\n\n## 다음에 여는 것\n",
+    )
+    .expect("folded");
+    std::fs::write(
+        dir.join("state.md"),
+        "# state\n\n## 지금 단계\n접힘 — `folded.md`\n",
+    )
+    .expect("state");
+    let folded = stop(
+        &repo,
+        &store,
+        &payload(&repo, "folded", &transcript, json!(false)),
+    );
+    assert!(blocked(&folded));
+    assert!(String::from_utf8_lossy(&folded.stdout).contains("본문이 비었다"));
 }
 
 #[test]

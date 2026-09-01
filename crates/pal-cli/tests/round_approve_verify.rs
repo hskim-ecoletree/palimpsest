@@ -46,6 +46,10 @@ fn commit_fixture(repo: &Path) {
 }
 
 fn round(repo: &Path, ids: &[&str], oracles: &[Value]) -> PathBuf {
+    round_version(repo, 2, ids, oracles)
+}
+
+fn round_version(repo: &Path, version: u32, ids: &[&str], events: &[Value]) -> PathBuf {
     let dir = repo.join(".palimpsest/rounds").join(SLUG);
     std::fs::create_dir_all(&dir).expect("round dir");
     let mut intent = String::from("# fixture\n\n## 완수 조건\n\n");
@@ -53,8 +57,8 @@ fn round(repo: &Path, ids: &[&str], oracles: &[Value]) -> PathBuf {
         intent.push_str(&format!("- [ ] {id} condition {id}\n"));
     }
     std::fs::write(dir.join("intent.md"), intent).expect("intent");
-    let mut lines = vec![json!({"kind":"schema","version":2,"round":SLUG})];
-    lines.extend_from_slice(oracles);
+    let mut lines = vec![json!({"kind":"schema","version":version,"round":SLUG})];
+    lines.extend_from_slice(events);
     let body = lines
         .iter()
         .map(Value::to_string)
@@ -127,6 +131,14 @@ fn approve(repo: &Path, approvals: &Path, id: &str, extra: &[&str]) -> Output {
     let mut args = vec!["round", "approve", "--round", SLUG, "--id", id, "--json"];
     args.extend_from_slice(extra);
     run(repo, approvals, &args)
+}
+
+fn finalize(repo: &Path, approvals: &Path) -> Output {
+    run(
+        repo,
+        approvals,
+        &["round", "verify", "--round", SLUG, "--all", "--json"],
+    )
 }
 
 fn verify(repo: &Path, approvals: &Path, id: &str, extra: &[&str]) -> Output {
@@ -266,6 +278,195 @@ fn process_helper() {
         }
         other => panic!("unknown helper mode {other}"),
     }
+}
+
+fn terminal_report(dir: &Path) {
+    std::fs::write(
+        dir.join("report.md"),
+        "# report\n\n## 남지 않은 것\n없음.\n\n## 다음 회차가 받는 것\n없음.\n\n## 범위 밖\n없음.\n\n## 원리상 못 잰 것\n없음.\n\n## 능력 부재\n없음.\n",
+    )
+    .expect("report");
+}
+
+fn dialectic_event(repo: &Path, id: &str) -> Value {
+    for name in ["thesis.md", "antithesis.md", "synthesis.md"] {
+        std::fs::write(repo.join(name), format!("{name}\n")).expect("dialectic ref");
+    }
+    let reference = |name: &str| {
+        json!({
+            "path": name,
+            "digest": blake3::hash(&std::fs::read(repo.join(name)).expect("ref")).to_hex().to_string()
+        })
+    };
+    json!({
+        "kind":"judgment", "id":id, "verdict":"met",
+        "thesis":reference("thesis.md"),
+        "antithesis":reference("antithesis.md"),
+        "synthesis":reference("synthesis.md")
+    })
+}
+
+#[test]
+fn 종료직전_전수재실행은_이미_met인_command와_정반합_finding을_같이_닫는다() {
+    let (base, repo, approvals) = root("finalize-all");
+    let counter = base.join("finalize-counter.txt");
+    let judgment = dialectic_event(&repo, "D1");
+    let dir = round_version(
+        &repo,
+        3,
+        &["A1", "D1"],
+        &[
+            json!({
+                "kind":"oracle", "id":"A1", "mode":"command",
+                "check":helper_command("counter", Some(&counter)),
+                "expect":{"literal":"ROUND_OK"}, "cwd":"."
+            }),
+            judgment,
+        ],
+    );
+    std::fs::write(
+        dir.join("findings.jsonl"),
+        format!(
+            "{}\n{}\n",
+            json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
+            json!({"id":"F1","상태":"닫힘","해악도":"금지역","닫은커밋":"abc1234"})
+        ),
+    )
+    .expect("findings");
+    terminal_report(&dir);
+    commit_fixture(&repo);
+
+    assert_success(&approve(&repo, &approvals, "A1", &[]));
+    assert_success(&verify(&repo, &approvals, "A1", &[]));
+    assert_eq!(
+        std::fs::read_to_string(&counter).expect("counter").lines().count(),
+        1
+    );
+    let before = status(&repo);
+    assert_eq!(before["verification"], "met");
+    assert_eq!(before["completion"], "in_progress");
+
+    let out = finalize(&repo, &approvals);
+    assert_success(&out);
+    assert_eq!(value(&out)["rerun"], json!(["A1"]));
+    assert_eq!(
+        std::fs::read_to_string(&counter).expect("counter").lines().count(),
+        2,
+        "이미 met인 command를 종료 직전에 다시 실행하지 않았다"
+    );
+    assert_eq!(status(&repo)["completion"], "complete");
+
+    std::fs::write(repo.join("tracked.txt"), "changed after completion\n").expect("tracked");
+    let stale = status(&repo);
+    assert_eq!(stale["conditions"][0]["state"], "stale");
+    assert_eq!(stale["completion"], "in_progress");
+}
+
+#[test]
+fn 열린_금지역실패와_구형_findings는_complete_checkpoint를_거부한다() {
+    for (tag, findings) in [
+        (
+            "open-harmful",
+            format!(
+                "{}\n{}\n",
+                json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
+                json!({"id":"F1","상태":"열림","해악도":"실패"})
+            ),
+        ),
+        (
+            "legacy-findings",
+            format!(
+                "{}\n{}\n",
+                json!({"schema_version":2,"종류":"레코드","회차":SLUG}),
+                json!({"id":"F1","해악도":"미관"})
+            ),
+        ),
+        (
+            "malformed-current-findings",
+            format!(
+                "{}\n{}\n",
+                json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
+                json!({"id":"F1","상태":"닫힘","해악도":"금지역"})
+            ),
+        ),
+    ] {
+        let (_base, repo, approvals) = root(tag);
+        let judgment = dialectic_event(&repo, "D1");
+        let dir = round_version(&repo, 3, &["D1"], &[judgment]);
+        std::fs::write(dir.join("findings.jsonl"), findings).expect("findings");
+        terminal_report(&dir);
+        commit_fixture(&repo);
+        let out = finalize(&repo, &approvals);
+        assert_eq!(out.status.code(), Some(2), "{tag}: {}", String::from_utf8_lossy(&out.stdout));
+        assert_ne!(status(&repo)["completion"], "complete");
+    }
+}
+
+#[test]
+fn depth1_shallow_clone에서_approve와_stop_activation이_서고_deepen과_local_commit뒤에도_유지된다() {
+    let (base, source, _unused) = root("shallow-source");
+    round(&source, &["A1"], &[oracle("A1", "success", None)]);
+    commit_fixture(&source);
+    std::fs::write(source.join("second.txt"), "tip\n").expect("second");
+    commit_fixture(&source);
+
+    let shallow = base.join("shallow");
+    let clone = Command::new("git")
+        .args(["clone", "-q", "--depth", "1", "--no-local"])
+        .arg(&source)
+        .arg(&shallow)
+        .output()
+        .expect("shallow clone");
+    assert!(clone.status.success(), "{}", String::from_utf8_lossy(&clone.stderr));
+    let shallow_check = Command::new("git")
+        .args(["rev-parse", "--is-shallow-repository"])
+        .current_dir(&shallow)
+        .output()
+        .expect("shallow check");
+    assert_eq!(String::from_utf8_lossy(&shallow_check.stdout).trim(), "true");
+    let count = Command::new("git")
+        .args(["rev-list", "--count", "HEAD"])
+        .current_dir(&shallow)
+        .output()
+        .expect("count");
+    assert_eq!(String::from_utf8_lossy(&count.stdout).trim(), "1");
+    let parent = Command::new("git")
+        .args(["cat-file", "-e", "HEAD^"])
+        .current_dir(&shallow)
+        .output()
+        .expect("parent probe");
+    assert!(!parent.status.success(), "parent object가 있어 shallow 공격이 서지 않았다");
+
+    let approvals = base.join("shallow-approvals");
+    std::fs::create_dir_all(&approvals).expect("approvals");
+    assert_success(&approve(&shallow, &approvals, "A1", &[]));
+    let enabled = run(
+        &shallow,
+        &approvals,
+        &["round", "stop", "enable", "--round", SLUG, "--json"],
+    );
+    assert_success(&enabled);
+
+    git(&shallow, &["fetch", "--unshallow"]);
+    let deepened = run(
+        &shallow,
+        &approvals,
+        &["round", "stop", "status", "--json"],
+    );
+    assert_success(&deepened);
+    assert_eq!(value(&deepened)["outcome"], "enabled");
+
+    git(&shallow, &["config", "user.email", "fixture@example.invalid"]);
+    git(&shallow, &["config", "user.name", "Fixture"]);
+    std::fs::write(shallow.join("local.txt"), "local\n").expect("local");
+    commit_fixture(&shallow);
+    let status = run(
+        &shallow,
+        &approvals,
+        &["round", "stop", "status", "--json"],
+    );
+    assert_success(&status);
+    assert_eq!(value(&status)["outcome"], "enabled");
 }
 
 #[test]
