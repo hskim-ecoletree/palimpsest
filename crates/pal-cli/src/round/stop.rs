@@ -21,7 +21,7 @@ const SEMANTIC_DOMAIN: &[u8] = b"pal.round.stop.semantic.v1\0";
 const EVENT_DOMAIN: &[u8] = b"pal.round.stop.event.v1\0";
 use pal_core::{
     ROUND_STOP_EVENT_HISTORY_MAX as EVENT_HISTORY_MAX,
-    ROUND_STOP_NO_PROGRESS_LIMIT as NO_PROGRESS_LIMIT, ROUND_VERIFICATION_FILE_MAX_BYTES,
+    ROUND_STOP_NO_PROGRESS_LIMIT as NO_PROGRESS_LIMIT,
 };
 const LOCK_WAIT_MILLIS: u64 = 2_000;
 
@@ -281,7 +281,7 @@ pub fn decide(payload: &Value) -> PolicyDecision {
         Err(error) => return PolicyDecision::Block(format!("활성 round 상태가 손상됐다: {error}")),
     };
     if view.terminal != Terminal::Open {
-        if let Err(error) = valid_terminal_document(&repo, &activation.round, view.terminal) {
+        if let Err(error) = status::valid_terminal_document(&repo, &activation.round, view.terminal) {
             return PolicyDecision::Block(format!("회차 종료문이 불완전하다: {error}"));
         }
         if view.terminal == Terminal::Folded {
@@ -398,66 +398,6 @@ fn read_status(repo: &Path, slug: &str) -> Result<StatusView> {
         Ok(status::Outcome::NoActiveRound) => bail!("round `{slug}`가 없다"),
         Err(error) => Err(anyhow::anyhow!(error)),
     }
-}
-
-fn valid_terminal_document(repo: &Path, slug: &str, terminal: Terminal) -> Result<()> {
-    let dir = repo.join(".palimpsest/rounds").join(slug);
-    let (path, headings): (PathBuf, &[&str]) = match terminal {
-        Terminal::Open => return Ok(()),
-        Terminal::Reported => (
-            dir.join("report.md"),
-            &[
-                "## 남지 않은 것",
-                "## 다음 회차가 받는 것",
-                "## 범위 밖",
-                "## 원리상 못 잰 것",
-                "## 능력 부재",
-            ],
-        ),
-        Terminal::Folded => (
-            dir.join("folded.md"),
-            &[
-                "## 왜 접었나",
-                "## 접으면서 남기는 것과 버리는 것",
-                "## 다음에 여는 것",
-            ],
-        ),
-    };
-    let metadata = symlink_metadata(&path).with_context(|| "종료문 metadata를 읽지 못했다")?;
-    if !metadata.is_file() || metadata.file_type().is_symlink() {
-        bail!("종료문이 regular file이 아니다");
-    }
-    if metadata.len() > ROUND_VERIFICATION_FILE_MAX_BYTES {
-        bail!("종료문이 8 MiB 상한을 넘었다");
-    }
-    let body = std::fs::read_to_string(&path).with_context(|| "종료문을 읽지 못했다")?;
-    for heading in headings {
-        let lines: Vec<&str> = body.lines().collect();
-        let Some(index) = lines.iter().position(|line| line.trim_end() == *heading) else {
-            bail!("필수 절 `{heading}`이 없다");
-        };
-        let has_body = lines[index + 1..]
-            .iter()
-            .take_while(|line| !line.starts_with("## "))
-            .any(|line| {
-                let line = line.trim();
-                !line.is_empty() && !line.starts_with("<!--") && !line.ends_with("-->")
-            });
-        if !has_body {
-            bail!("필수 절 `{heading}`의 본문이 비었다");
-        }
-    }
-    if terminal == Terminal::Folded {
-        let state = std::fs::read_to_string(dir.join("state.md"))
-            .with_context(|| "folded 회차의 state.md를 읽지 못했다")?;
-        if !state.contains("## 지금 단계")
-            || !state.contains("접힘")
-            || !state.contains("folded.md")
-        {
-            bail!("state.md가 접힘 단계와 folded.md를 가리키지 않는다");
-        }
-    }
-    Ok(())
 }
 
 fn semantic_digest(view: &StatusView) -> String {

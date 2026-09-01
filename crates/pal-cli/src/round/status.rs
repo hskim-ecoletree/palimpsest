@@ -4,10 +4,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use pal_intent::round_condition::ConditionsReport;
+use pal_core::ROUND_VERIFICATION_FILE_MAX_BYTES;
 use serde::Serialize;
 use thiserror::Error;
 
 use super::ledger::{self, LedgerError};
+use super::approval;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -64,6 +66,7 @@ pub struct StatusView {
     pub completion: CompletionState,
     pub findings_current: bool,
     pub open_harmful_findings: usize,
+    pub terminal_document_current: bool,
     pub aggregate_digest: String,
     pub conditions: Vec<ConditionView>,
 }
@@ -333,6 +336,8 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
     }
     let verification = aggregate(&conditions, ledger.is_some());
     let (findings_current, open_harmful_findings) = findings_state(dir)?;
+    let (terminal_document_current, terminal_document_digest) =
+        terminal_document_state(repo, slug, terminal);
     let schema_version = ledger.as_ref().map(|ledger| ledger.schema_version);
     let aggregate_digest = aggregate_digest(
         slug,
@@ -342,17 +347,37 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
         &conditions,
         findings_current,
         open_harmful_findings,
+        terminal_document_current,
+        &terminal_document_digest,
     );
     let completion = match (&ledger, &projected) {
         (Some(ledger), Some(projected))
             if ledger.schema_version == 3
                 && terminal == Terminal::Reported
+                && terminal_document_current
                 && verification == VerificationState::Met
                 && findings_current
                 && open_harmful_findings == 0
                 && ledger.checkpoint.as_ref().is_some_and(|checkpoint| {
                     checkpoint.projected_digest == *projected
                         && checkpoint.aggregate_digest == aggregate_digest
+                        && checkpoint.finalization_seal
+                            == approval::finalization_digest(
+                                repo,
+                                slug,
+                                projected,
+                                &aggregate_digest,
+                            )
+                            .unwrap_or_default()
+                        && approval::store_location(None)
+                            .ok()
+                            .is_some_and(|store| {
+                                approval::is_approved(
+                                    &store,
+                                    &checkpoint.finalization_seal,
+                                )
+                                .unwrap_or(false)
+                            })
                 }) =>
         {
             CompletionState::Complete
@@ -369,6 +394,7 @@ fn read_round(dir: &Path, slug: &str) -> Result<StatusView, StatusError> {
         completion,
         findings_current,
         open_harmful_findings,
+        terminal_document_current,
         aggregate_digest,
         conditions,
     })
@@ -436,6 +462,33 @@ fn findings_state(dir: &Path) -> Result<(bool, usize), StatusError> {
         let row: serde_json::Value = serde_json::from_str(line).map_err(|error| {
             StatusError::InvalidSchema(format!("findings {}행: {error}", index + 2))
         })?;
+        let required_strings = [
+            "id", "출처", "모집단", "유효성", "해악도", "처분", "경로", "요약",
+        ];
+        if row.get("라운드").and_then(serde_json::Value::as_u64).is_none()
+            || required_strings.iter().any(|field| {
+                row.get(*field)
+                    .and_then(serde_json::Value::as_str)
+                    .is_none_or(str::is_empty)
+            })
+        {
+            return Ok((false, 0));
+        }
+        if !matches!(
+            row.get("출처").and_then(serde_json::Value::as_str),
+            Some("독립리뷰" | "사전부검" | "인터뷰" | "실측")
+        ) || !matches!(
+            row.get("모집단").and_then(serde_json::Value::as_str),
+            Some("원의도" | "저장소" | "자기장치" | "회차기록" | "규약")
+        ) || !matches!(
+            row.get("유효성").and_then(serde_json::Value::as_str),
+            Some("참" | "추정" | "거짓")
+        ) || !matches!(
+            row.get("처분").and_then(serde_json::Value::as_str),
+            Some("정정" | "확대" | "축소" | "전환" | "범위밖" | "기각")
+        ) {
+            return Ok((false, 0));
+        }
         let state = row.get("상태").and_then(serde_json::Value::as_str);
         let severity = row.get("해악도").and_then(serde_json::Value::as_str);
         if !matches!(state, Some("열림" | "닫힘"))
@@ -467,6 +520,8 @@ fn aggregate_digest(
     conditions: &[ConditionView],
     findings_current: bool,
     harmful: usize,
+    terminal_document_current: bool,
+    terminal_document_digest: &str,
 ) -> String {
     let mut hasher = blake3::Hasher::new();
     hasher.update(b"pal.round.completion-aggregate.v1\0");
@@ -477,6 +532,8 @@ fn aggregate_digest(
         format!("{verification:?}"),
         findings_current.to_string(),
         harmful.to_string(),
+        terminal_document_current.to_string(),
+        terminal_document_digest.to_owned(),
     ] {
         hasher.update(value.as_bytes());
         hasher.update(&[0]);
@@ -488,6 +545,88 @@ fn aggregate_digest(
         hasher.update(condition.evidence_digest.as_deref().unwrap_or("").as_bytes());
     }
     hasher.finalize().to_hex().to_string()
+}
+
+pub(crate) fn valid_terminal_document(
+    repo: &Path,
+    slug: &str,
+    terminal: Terminal,
+) -> Result<(), String> {
+    let dir = repo.join(".palimpsest/rounds").join(slug);
+    let (path, headings): (std::path::PathBuf, &[&str]) = match terminal {
+        Terminal::Open => return Ok(()),
+        Terminal::Reported => (
+            dir.join("report.md"),
+            &[
+                "## 남지 않은 것",
+                "## 다음 회차가 받는 것",
+                "## 범위 밖",
+                "## 원리상 못 잰 것",
+                "## 능력 부재",
+            ],
+        ),
+        Terminal::Folded => (
+            dir.join("folded.md"),
+            &[
+                "## 왜 접었나",
+                "## 접으면서 남기는 것과 버리는 것",
+                "## 다음에 여는 것",
+            ],
+        ),
+    };
+    let metadata = std::fs::symlink_metadata(&path)
+        .map_err(|error| format!("종료문 metadata를 읽지 못했다: {error}"))?;
+    if !metadata.is_file() || metadata.file_type().is_symlink() {
+        return Err("종료문이 regular file이 아니다".to_owned());
+    }
+    if metadata.len() > ROUND_VERIFICATION_FILE_MAX_BYTES {
+        return Err("종료문이 8 MiB 상한을 넘었다".to_owned());
+    }
+    let body = std::fs::read_to_string(&path)
+        .map_err(|error| format!("종료문을 읽지 못했다: {error}"))?;
+    let lines: Vec<&str> = body.lines().collect();
+    for heading in headings {
+        let Some(index) = lines.iter().position(|line| line.trim_end() == *heading) else {
+            return Err(format!("필수 절 `{heading}`이 없다"));
+        };
+        let has_body = lines[index + 1..]
+            .iter()
+            .take_while(|line| !line.starts_with("## "))
+            .any(|line| {
+                let line = line.trim();
+                !line.is_empty() && !line.starts_with("<!--") && !line.ends_with("-->")
+            });
+        if !has_body {
+            return Err(format!("필수 절 `{heading}`의 본문이 비었다"));
+        }
+    }
+    if terminal == Terminal::Folded {
+        let state = std::fs::read_to_string(dir.join("state.md"))
+            .map_err(|error| format!("folded 회차의 state.md를 읽지 못했다: {error}"))?;
+        if !state.contains("## 지금 단계")
+            || !state.contains("접힘")
+            || !state.contains("folded.md")
+        {
+            return Err("state.md가 접힘 단계와 folded.md를 가리키지 않는다".to_owned());
+        }
+    }
+    Ok(())
+}
+
+fn terminal_document_state(repo: &Path, slug: &str, terminal: Terminal) -> (bool, String) {
+    if terminal == Terminal::Open {
+        return (true, String::new());
+    }
+    let name = if terminal == Terminal::Reported {
+        "report.md"
+    } else {
+        "folded.md"
+    };
+    let path = repo.join(".palimpsest/rounds").join(slug).join(name);
+    let digest = std::fs::read(path)
+        .map(|bytes| blake3::hash(&bytes).to_hex().to_string())
+        .unwrap_or_default();
+    (valid_terminal_document(repo, slug, terminal).is_ok(), digest)
 }
 
 fn aggregate(conditions: &[ConditionView], has_ledger: bool) -> VerificationState {

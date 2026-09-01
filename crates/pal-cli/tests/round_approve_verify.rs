@@ -150,6 +150,10 @@ fn verify(repo: &Path, approvals: &Path, id: &str, extra: &[&str]) -> Output {
 fn status(repo: &Path) -> Value {
     let out = Command::new(PAL)
         .args(["round", "status", "--round", SLUG, "--json"])
+        .env(
+            "PAL_APPROVAL_DIR",
+            repo.parent().expect("fixture base").join("approvals"),
+        )
         .current_dir(repo)
         .output()
         .expect("status");
@@ -329,7 +333,12 @@ fn 종료직전_전수재실행은_이미_met인_command와_정반합_finding을
         format!(
             "{}\n{}\n",
             json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
-            json!({"id":"F1","상태":"닫힘","해악도":"금지역","닫은커밋":"abc1234"})
+            json!({
+                "id":"F1","라운드":1,"출처":"실측","모집단":"자기장치",
+                "유효성":"참","해악도":"금지역","처분":"정정",
+                "경로":"tracked.txt","요약":"closed fixture",
+                "상태":"닫힘","닫은커밋":"abc1234"
+            })
         ),
     )
     .expect("findings");
@@ -345,6 +354,30 @@ fn 종료직전_전수재실행은_이미_met인_command와_정반합_finding을
     let before = status(&repo);
     assert_eq!(before["verification"], "met");
     assert_eq!(before["completion"], "in_progress");
+
+    let projected = std::fs::read_to_string(dir.join("verification.log"))
+        .expect("ledger")
+        .lines()
+        .rev()
+        .find_map(|line| serde_json::from_str::<Value>(line).ok())
+        .and_then(|event| event["projected_digest"].as_str().map(str::to_owned))
+        .expect("evidence projected digest");
+    let fake = json!({
+        "kind":"checkpoint",
+        "projected_digest":projected,
+        "aggregate_digest":before["aggregate_digest"],
+        "finalization_seal":"0".repeat(64)
+    });
+    let mut ledger = OpenOptions::new()
+        .append(true)
+        .open(dir.join("verification.log"))
+        .expect("append fake checkpoint");
+    writeln!(ledger, "{fake}").expect("fake checkpoint");
+    assert_eq!(
+        status(&repo)["completion"],
+        "in_progress",
+        "외부 finalization seal 없는 직접 checkpoint를 완료로 읽었다"
+    );
 
     let out = finalize(&repo, &approvals);
     assert_success(&out);
@@ -370,7 +403,11 @@ fn 열린_금지역실패와_구형_findings는_complete_checkpoint를_거부한
             format!(
                 "{}\n{}\n",
                 json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
-                json!({"id":"F1","상태":"열림","해악도":"실패"})
+                json!({
+                    "id":"F1","라운드":1,"출처":"실측","모집단":"자기장치",
+                    "유효성":"참","해악도":"실패","처분":"정정",
+                    "경로":"tracked.txt","요약":"open fixture","상태":"열림"
+                })
             ),
         ),
         (
@@ -400,6 +437,39 @@ fn 열린_금지역실패와_구형_findings는_complete_checkpoint를_거부한
         assert_eq!(out.status.code(), Some(2), "{tag}: {}", String::from_utf8_lossy(&out.stdout));
         assert_ne!(status(&repo)["completion"], "complete");
     }
+}
+
+#[test]
+fn schema3은_canonical_profile과_완전한_report만_finalization에_쓴다() {
+    let (_base, repo, approvals) = root("canonical-finalize");
+    let judgment = dialectic_event(&repo, "D1");
+    let dir = round_version(&repo, 3, &["D1"], &[judgment]);
+    std::fs::write(
+        dir.join("findings.jsonl"),
+        format!("{}\n", json!({"schema_version":3,"종류":"레코드","회차":SLUG})),
+    )
+    .expect("findings");
+    std::fs::write(
+        dir.join("report.md"),
+        "# report\n\n## 남지 않은 것\n\n## 다음 회차가 받는 것\n\n## 범위 밖\n\n## 원리상 못 잰 것\n\n## 능력 부재\n",
+    )
+    .expect("empty report");
+    commit_fixture(&repo);
+    let empty = finalize(&repo, &approvals);
+    assert_eq!(empty.status.code(), Some(2));
+    assert_ne!(status(&repo)["completion"], "complete");
+
+    let command_dir = round_version(&repo, 3, &["A1"], &[oracle("A1", "success", None)]);
+    std::fs::write(
+        command_dir.join("findings.jsonl"),
+        format!("{}\n", json!({"schema_version":3,"종류":"레코드","회차":SLUG})),
+    )
+    .expect("findings");
+    terminal_report(&command_dir);
+    commit_fixture(&repo);
+    let noncanonical = approve(&repo, &approvals, "A1", &["--timeout", "121"]);
+    assert_eq!(noncanonical.status.code(), Some(2));
+    assert_success(&approve(&repo, &approvals, "A1", &[]));
 }
 
 #[test]

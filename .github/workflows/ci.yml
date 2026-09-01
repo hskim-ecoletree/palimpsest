@@ -132,6 +132,10 @@ jobs:
       - name: cargo xtask test
         run: cargo xtask test
 
+      - name: pal doctor full 구조 판정
+        shell: bash
+        run: cargo run -q -p pal-cli -- doctor --full --json | node scripts/check-round-doctor.mjs
+
 
   # ───────────────────────────────────────────────────────────────────────────
   # ★ **크로스 플랫폼 상호운용 — 한쪽이 놓고 커밋한 것을 다른 쪽이 받는다**

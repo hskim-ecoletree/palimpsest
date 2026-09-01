@@ -41,19 +41,19 @@
 
 ## 완수 조건
 
-- [ ] A1 schema 1 원장은 읽기 호환을 유지하되 승인·검증 실행과 projected digest가 없는 성공 기록을 Stop 종료 근거로 쓰지 않는다
-- [ ] A2 tracked 작업 트리가 바뀌면 과거 성공 evidence가 현재 완료를 유지하지 않는다
-- [ ] B1 `report.md`와 `folded.md`의 필수 절은 제목뿐 아니라 비어 있지 않은 본문을 요구한다
-- [ ] C1 depth-1 shallow clone에서도 approve와 Stop 활성화가 같은 방법으로 성공한다
-- [ ] D1 종료 직전 이미 met인 결정론 조건까지 재실행하고 그 실행 뒤의 현재 aggregate만 완료에 쓴다
-- [ ] D2 비결정론 조건의 정반합 evidence가 결정론 조건과 같은 aggregate에 반영된다
-- [ ] D3 열린 금지역·실패 finding이 complete를 차단한다
-- [ ] D4 #95와 #96을 구현·흡수·명시적 접힘 중 하나로 근거와 함께 처분한다
-- [ ] E1 기존 실행 계획 `GATES.md`에서 macOS 절대 경로와 사라진 `gate-lint.mjs` 의존을 제거한다
-- [ ] F1 각 결함의 정상·음성 대조 시험과 `cargo xtask check`, `cargo xtask test`가 현재 작업 트리에서 성공한다
-- [ ] F2 `pal doctor --full --json`의 그래프 전수 결과에 위반·Residual·coverage gap·미결박 cutoff가 없다
-- [ ] G1 독립 검토에서 병합을 막는 금지역·실패 발견이 0이다
-- [ ] G2 추적 산출물은 자기 CI 성공을 완료 조건 값으로 쓰지 않으며 외부 종료 절차가 수정된 최종 PR SHA의 CI 작업 7개 success 뒤에만 PR #91을 main에 병합한다
+- [x] A1 schema 1 원장은 읽기 호환을 유지하되 승인·검증 실행과 projected digest가 없는 성공 기록을 Stop 종료 근거로 쓰지 않는다 · 통과 ⟨전사 2026-09-02⟩
+- [x] A2 tracked 작업 트리가 바뀌면 과거 성공 evidence가 현재 완료를 유지하지 않는다 · 통과 ⟨전사 2026-09-02⟩
+- [x] B1 `report.md`와 `folded.md`의 필수 절은 제목뿐 아니라 비어 있지 않은 본문을 요구한다 · 통과 ⟨전사 2026-09-02⟩
+- [x] C1 depth-1 shallow clone에서도 approve와 Stop 활성화가 같은 방법으로 성공한다 · 통과 ⟨전사 2026-09-02⟩
+- [x] D1 종료 직전 이미 met인 결정론 조건까지 재실행하고 그 실행 뒤의 현재 aggregate만 완료에 쓴다 · 통과 ⟨전사 2026-09-02⟩
+- [x] D2 비결정론 조건의 정반합 evidence가 결정론 조건과 같은 aggregate에 반영된다 · 통과 ⟨전사 2026-09-02⟩
+- [x] D3 열린 금지역·실패 finding이 complete를 차단한다 · 통과 ⟨전사 2026-09-02⟩
+- [x] D4 #95와 #96을 구현·흡수·명시적 접힘 중 하나로 근거와 함께 처분한다 · 통과 ⟨전사 2026-09-02⟩
+- [x] E1 기존 실행 계획 `GATES.md`에서 macOS 절대 경로와 사라진 `gate-lint.mjs` 의존을 제거한다 · 통과 ⟨전사 2026-09-02⟩
+- [x] F1 각 결함의 정상·음성 대조 시험과 `cargo xtask check`, `cargo xtask test`가 현재 작업 트리에서 성공한다 · 통과 ⟨전사 2026-09-02⟩
+- [x] F2 `pal doctor --full --json`의 그래프 전수 결과에 위반·Residual·coverage gap·미결박 cutoff가 없다 · 통과 ⟨전사 2026-09-02⟩
+- [x] G1 독립 검토에서 병합을 막는 금지역·실패 발견이 0이다  · 반증 ⟨전사 2026-09-02⟩
+- [x] G2 추적 산출물은 자기 CI 성공을 완료 조건 값으로 쓰지 않으며 외부 종료 절차가 수정된 최종 PR SHA의 CI 작업 7개 success 뒤에만 PR #91을 main에 병합한다 · 통과 ⟨전사 2026-09-02⟩
 
 **RED 관측**: 평가 회차가 재현한 schema 1 stale 성공, 제목뿐인 종료문, depth-1 실패와
 §8 미구현 조건을 구현 전 정상 시험과 짝지어 다시 관측한다.
@@ -86,6 +86,13 @@
   소비 가능한 종료 경계에 더 가까우므로 그 근거를 적어 명시적 접힘 처분한다.
 - PM1-10에 따라 최종 CI·병합·origin/main 확인은 추적 파일을 다시 쓰지 않는 외부 종료
   절차로 둔다. G2가 재는 것은 그 절차를 우회할 자기 CI 주장 부재다.
+- 독립리뷰 R1-01·R1-04에 따라 schema 3 command profile을 canonical 값 하나로 고정하고,
+  checkpoint는 외부 private store의 exact finalization seal 없이는 complete가 아니다.
+- R1-02에 따라 report의 본문 유효성과 bytes digest를 status aggregate 자체에 넣는다.
+- R1-03에 따라 completion reader도 finding 정본의 필수 축과 enum을 fail-closed한다.
+- R1-05에 따라 판정문은 잠긴 intent를 직접 가리키고 범위 밖 절을 가진다.
+- R1-06에 따라 doctor는 checked와 명시적 `not_built` 능력 부재를 전부 분류하고 malformed
+  outcome을 거부하며, 그 단일 명령을 세 OS CI가 실행한다.
 
 ## 승격
 

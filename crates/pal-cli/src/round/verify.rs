@@ -86,6 +86,7 @@ pub fn approve(config: &Config<'_>) -> Result<ApproveView, VerifyError> {
             "approve/verify는 schema 2 이상의 새 회차에서만 쓴다".to_owned(),
         ));
     }
+    validate_schema_profile(&ledger, config)?;
     let projected = projected_digest(config.repo, config.slug)?;
     let binding = approval::binding(
         config.repo,
@@ -115,6 +116,7 @@ pub fn verify(config: &Config<'_>) -> Result<VerifyView, VerifyError> {
             "approve/verify는 schema 2 이상의 새 회차에서만 쓴다".to_owned(),
         ));
     }
+    validate_schema_profile(&ledger_before, config)?;
     let projected_before = projected_digest(config.repo, config.slug)?;
     let binding_before = approval::binding(
         config.repo,
@@ -200,6 +202,7 @@ pub fn verify(config: &Config<'_>) -> Result<VerifyView, VerifyError> {
 /// schema 3 회차를 닫기 직전에 모든 command oracle을 다시 실행하고, 정반합과
 /// findings까지 같은 aggregate가 현재일 때만 completion checkpoint를 append한다.
 pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
+    validate_config(config)?;
     let dir = config.repo.join(".palimpsest/rounds").join(config.slug);
     let ledger_path = dir.join("verification.log");
     let ledger = ledger::read(&ledger_path, config.slug)
@@ -209,6 +212,7 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
             "종료 직전 전수 재검증은 schema 3 회차에서만 쓴다".to_owned(),
         ));
     }
+    validate_schema_profile(&ledger, config)?;
     let ids: Vec<String> = ledger
         .conditions
         .iter()
@@ -240,7 +244,7 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
             return Err(VerifyError::Invalid("round를 해소하지 못했다".to_owned()));
         }
     };
-    if view.terminal != super::status::Terminal::Reported {
+    if view.terminal != super::status::Terminal::Reported || !view.terminal_document_current {
         return Err(VerifyError::Invalid(
             "완전한 report.md를 쓴 뒤 종료 직전 재검증해야 한다".to_owned(),
         ));
@@ -275,12 +279,21 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
             "checkpoint 기록 전 projected tree 또는 aggregate가 바뀌었다".to_owned(),
         ));
     }
+    let finalization_seal = approval::finalization_digest(
+        config.repo,
+        config.slug,
+        &projected,
+        &stable.aggregate_digest,
+    )?;
     let event = serde_json::json!({
         "kind": "checkpoint",
         "projected_digest": projected,
         "aggregate_digest": stable.aggregate_digest,
+        "finalization_seal": finalization_seal,
     });
     append_line(&append_guard, &event.to_string())?;
+    let approval_dir = approval::store_dir(config.repo, config.approval_dir)?;
+    approval::approve(&approval_dir, &finalization_seal)?;
     let complete = match super::status::read(config.repo, Some(config.slug))
         .map_err(|error| VerifyError::Invalid(error.to_string()))?
     {
@@ -298,6 +311,23 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
         rerun: ids,
         completion: "complete",
     })
+}
+
+fn validate_schema_profile(
+    ledger: &VerificationLedger,
+    config: &Config<'_>,
+) -> Result<(), VerifyError> {
+    if ledger.schema_version == 3
+        && (config.shell.is_some()
+            || config.timeout_secs != pal_core::PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS
+            || config.output_limit != pal_core::PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES)
+    {
+        return Err(VerifyError::Invalid(
+            "schema 3 command는 종료 전수 재실행을 위해 canonical shell·timeout·output profile만 쓴다"
+                .to_owned(),
+        ));
+    }
+    Ok(())
 }
 
 fn validate_config(config: &Config<'_>) -> Result<(), VerifyError> {

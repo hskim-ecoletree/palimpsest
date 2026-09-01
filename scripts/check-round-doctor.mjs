@@ -18,8 +18,16 @@ function check(document) {
   }
   for (const invariant of answer.invariants) {
     const checked = invariant?.outcome?.checked;
-    if (checked && (checked.violations !== 0 || checked.skipped !== 0)) {
-      throw new Error(`doctor invariant ${invariant.number} is not clean`);
+    if (checked) {
+      if (!Number.isInteger(checked.checked) || checked.checked <= 0 || checked.violations !== 0 || checked.skipped !== 0) {
+        throw new Error(`doctor invariant ${invariant.number} is not clean`);
+      }
+    } else if (invariant?.outcome === "not_built") {
+      if (!Array.isArray(invariant.absent) || invariant.absent.length === 0) {
+        throw new Error(`doctor invariant ${invariant.number} lacks capability evidence`);
+      }
+    } else {
+      throw new Error(`doctor invariant ${invariant.number} has an unknown outcome`);
     }
   }
 }
@@ -42,6 +50,22 @@ try {
 }
 if (!rejected) {
   throw new Error("doctor negative control was accepted");
+}
+
+for (const malformed of [
+  { answer: { scope: "full", invariants: [], violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
+  { answer: { scope: "full", invariants: [{ number: 1, outcome: {} }], violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
+  { answer: { scope: "full", invariants: [{ number: 1, outcome: "not_built", absent: [] }], violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
+]) {
+  let malformedRejected = false;
+  try {
+    check(malformed);
+  } catch {
+    malformedRejected = true;
+  }
+  if (!malformedRejected) {
+    throw new Error("doctor malformed negative control was accepted");
+  }
 }
 
 check(JSON.parse(fs.readFileSync(0, "utf8")));

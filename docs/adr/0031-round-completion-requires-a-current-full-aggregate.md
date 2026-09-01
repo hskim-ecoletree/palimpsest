@@ -26,9 +26,15 @@ Stop activation identity를 만들지 못했다.
   열린 `금지역`·`실패` finding 하나라도 complete를 막는다.
 - report의 필수 heading마다 다음 `##` 전의 비어 있지 않은 본문을 요구한다. folded도 같은
   방식으로 접은 사유와 더 먼저인 일을 실제 본문으로 요구한다.
-- `pal round verify --all`만 checkpoint를 쓴다. report가 선 뒤 승인된 command 전부를 이미
+- `pal round verify --all`만 checkpoint를 쓴다. schema 3 command는 platform default shell과
+  고정 timeout·output budget의 canonical profile만 받아 조건별 profile 복원 갈림을 없앤다.
+  report가 선 뒤 승인된 command 전부를 이미
   met인 것까지 다시 실행하고, current judgment·finding·terminal을 다시 읽은 뒤 projected
-  digest와 aggregate digest를 append한다. status는 둘을 현재 값과 대조한다.
+  digest와 aggregate digest를 append한다. 같은 digest에 결박된 exact finalization seal을
+  repository 밖 private store에도 쓴다. status는 두 digest, seal record와 current 값을 모두
+  대조하므로 원장 checkpoint만 직접 추가해서는 complete가 아니다.
+- report의 절 본문 유효성과 file digest는 Stop만이 아니라 status aggregate 자체에 든다.
+  findings reader도 정본의 필수 축·enum과 닫힘 SHA를 확인하며 축약 행을 current로 보지 않는다.
 - clone identity는 origin URL의 길이 결박 hash를 우선하고, origin 없는 저장소만 first-parent
   root를 쓴다. 따라서 shallow boundary나 뒤 deepen·local commit이 identity를 바꾸지 않는다.
   이 값은 외부 private 승인·activation namespace에만 있고 공유 산출물에 machine path를 싣지
@@ -42,13 +48,14 @@ Stop activation identity를 만들지 못했다.
 파일, 열린 해악 finding 중 하나라도 있으면 Stop이 complete를 소비하지 않는다. 얕은 clone도
 일반 clone과 같은 approve·activation 명령을 쓴다.
 
-**잃는 것.** schema 1·2 회차는 자동으로 complete가 되지 않는다. schema 3 회차는 report 뒤
+**잃는 것.** schema 1·2 회차는 자동으로 complete가 되지 않는다. schema 3은 custom shell·
+timeout·output profile을 쓸 수 없다. schema 3 회차는 report 뒤
 전수 command 비용을 다시 내며, judgment 근거 파일과 findings ledger를 명시적으로 유지해야
 한다. origin URL 변경은 새 repository identity이므로 재승인·재활성화가 필요하다.
 
 ## 되돌리는 조건
 
-checkpoint를 직접 쓴 구형 또는 stale 기록이 complete가 되거나, current judgment·finding이
+external seal 없이 checkpoint를 직접 쓴 구형 또는 stale 기록이 complete가 되거나, current judgment·finding이
 aggregate 밖으로 빠지거나, 이미 met인 command가 `verify --all`에서 재실행되지 않거나, 실제
 depth-1 clone의 approve·Stop identity가 deepen 또는 local commit으로 바뀌면 이 결정을 다시
 연다. 추적 산출물이 자기 CI 성공을 완료 근거로 요구해 마지막 commit을 만들 수 없게 되어도

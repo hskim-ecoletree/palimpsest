@@ -369,7 +369,12 @@ fn schema3의_정반합_finding_전수재검증_checkpoint만_complete다() {
         format!(
             "{}\n{}\n",
             json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
-            json!({"id":"F1","상태":"닫힘","해악도":"금지역","닫은커밋":"abc1234"})
+            json!({
+                "id":"F1","라운드":1,"출처":"실측","모집단":"자기장치",
+                "유효성":"참","해악도":"금지역","처분":"정정",
+                "경로":"tracked.txt","요약":"closed fixture",
+                "상태":"닫힘","닫은커밋":"abc1234"
+            })
         ),
     )
     .expect("findings");

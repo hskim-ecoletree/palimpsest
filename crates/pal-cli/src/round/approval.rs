@@ -11,6 +11,7 @@ use thiserror::Error;
 use super::ledger::Oracle;
 
 const DOMAIN: &[u8] = b"pal.round.approval.v1\0";
+const FINALIZATION_DOMAIN: &[u8] = b"pal.round.finalization.v1\0";
 
 #[derive(Clone, Debug)]
 pub struct Binding {
@@ -95,6 +96,22 @@ pub(super) fn repository_root_identity(repo: &Path) -> Result<String, ApprovalEr
     let git = GixRepo::open(repo).map_err(|error| ApprovalError::Identity(error.to_string()))?;
     git.stable_repository_identity()
         .map_err(|error| ApprovalError::Identity(error.to_string()))
+}
+
+pub fn finalization_digest(
+    repo: &Path,
+    slug: &str,
+    projected_digest: &str,
+    aggregate_digest: &str,
+) -> Result<String, ApprovalError> {
+    let project = repository_root_identity(repo)?;
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(FINALIZATION_DOMAIN);
+    for value in [project.as_str(), slug, projected_digest, aggregate_digest] {
+        hasher.update(&(value.len() as u64).to_le_bytes());
+        hasher.update(value.as_bytes());
+    }
+    Ok(hasher.finalize().to_hex().to_string())
 }
 
 pub fn store_dir(repo: &Path, requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {

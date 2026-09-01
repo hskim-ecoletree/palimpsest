@@ -148,8 +148,11 @@ synthesis 파일의 digest와 판정을 가진 `judgment` event로 같은 aggreg
 `findings.jsonl`의 열린 축이 current여야 하고 열린 `금지역`·`실패`가 없어야 한다. report 본문을
 쓴 뒤 `pal round verify --round <slug> --all`이 승인된 command를 이미 met인 것까지 전부 다시
 실행하고, 그 뒤의 projected digest와 aggregate digest를 묶은 checkpoint를 append한다. schema
-1·2는 읽을 수 있지만 checkpoint가 없으므로 Stop의 complete 자격은 없다. `verification=met`만
-보고 종료하지 않는다.
+3 command는 이 전수 재실행을 복원할 수 있도록 기본 shell·timeout·output의 canonical
+profile만 허용한다. checkpoint와 같은 digest의 external private finalization seal이 함께 있어야
+complete이며 원장 행만 직접 써서는 complete가 아니다. report 본문·bytes digest와 finding
+정본의 필수 축·enum도 aggregate currentness에 든다. schema 1·2는 읽을 수 있지만 checkpoint가
+없으므로 Stop의 complete 자격은 없다. `verification=met`만 보고 종료하지 않는다.
 
 ## 4. 승인 — 여기서 루프에 들어간다
 

@@ -50,6 +50,7 @@ pub struct Judgment {
 pub struct Checkpoint {
     pub projected_digest: String,
     pub aggregate_digest: String,
+    pub finalization_seal: String,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -116,6 +117,7 @@ enum Event {
     Checkpoint {
         projected_digest: String,
         aggregate_digest: String,
+        finalization_seal: String,
     },
 }
 
@@ -314,15 +316,18 @@ pub fn read(path: &Path, slug: &str) -> Result<VerificationLedger, LedgerError> 
             Event::Checkpoint {
                 projected_digest,
                 aggregate_digest,
+                finalization_seal,
             } => {
                 if schema_version != 3 {
                     return Err(schema("checkpoint는 schema 3에서만 쓴다"));
                 }
                 validate_digest("projected_digest", &projected_digest)?;
                 validate_digest("aggregate_digest", &aggregate_digest)?;
+                validate_digest("finalization_seal", &finalization_seal)?;
                 checkpoint = Some(Checkpoint {
                     projected_digest,
                     aggregate_digest,
+                    finalization_seal,
                 });
             }
         }
