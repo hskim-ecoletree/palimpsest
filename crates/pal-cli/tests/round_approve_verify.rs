@@ -388,6 +388,9 @@ fn 종료직전_전수재실행은_이미_met인_command와_정반합_finding을
         .open(dir.join("verification.log"))
         .expect("append fake checkpoint");
     writeln!(ledger, "{fake}").expect("fake checkpoint");
+    // Windows는 열린 append handle 위의 atomic replace를 거부한다. 공격 쓰기가 끝난
+    // 실제 상태를 판정하는 시험이므로 reader를 부르기 전에 writer를 닫는다.
+    drop(ledger);
     assert_eq!(
         status(&repo)["completion"],
         "in_progress",
