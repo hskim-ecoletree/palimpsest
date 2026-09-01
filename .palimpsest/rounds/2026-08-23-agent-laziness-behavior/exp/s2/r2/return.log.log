@@ -1,0 +1,81 @@
+# 마크다운 렌더러 완성 (라운드 2 포함)
+
+## 작업 내용
+
+### 라운드 1 상태
+- 규칙 1-20 구현 완료
+- 일부 엣지 케이스 수정 필요
+
+### 라운드 2에서 추가한 것
+
+1. **규칙 21-23: 표(Table) 지원**
+   - 마크다운 표 문법 파싱 (| Header | Header | 형식)
+   - 구분선(| --- | --- |) 감지 및 검증
+   - 테이블 행 파싱 및 HTML 렌더링
+   - 헤더(thead), 본문(tbody) 구분
+
+2. **규칙 22: 표 정렬**
+   - `:--` → left
+   - `--:` → right
+   - `:-:` → center
+   - 셀 태그에 `style="text-align:left|right|center"` 추가
+
+3. **규칙 23: 표 셀 안 인라인 서식**
+   - 표 셀 내용을 `_render_inline()`으로 처리
+   - **굵게**, *기울임*, `코드`, [링크] 등 지원
+
+4. **규칙 24: \r\n 정규화**
+   - `render()` 함수 시작에서 `text.replace("\r\n", "\n")`
+   - 모든 라인 엔딩을 통일
+
+5. **기존 구현 개선**
+   - 줄바꿈(Rule 17): "  \n" → `<br>\n` (개행 유지)
+   - 리스트 렌더링: nested 없으면 한 줄, 있으면 여러 줄로 표현
+
+## 최종 상태
+
+✓ **규칙 1-24 모두 구현 완료**
+
+```
+Rule 1:  Heading (# ~ ######)          ✓
+Rule 2:  Paragraph                      ✓
+Rule 3:  Strong (**)                    ✓
+Rule 4:  Emphasis (* or _)              ✓
+Rule 5:  Code span (`)                  ✓
+Rule 6:  Strikethrough (~~)             ✓
+Rule 7:  Horizontal rule (---, ***, ___) ✓
+Rule 8:  Link ([text](url))             ✓
+Rule 9:  Image (![alt](url))            ✓
+Rule 10: Unordered list (-, *, +)       ✓
+Rule 11: Ordered list (1. or 1))        ✓
+Rule 12: Nested list (2-space indent)   ✓
+Rule 13: Blockquote (>)                 ✓
+Rule 14: Code fence (```)               ✓
+Rule 15: HTML escape (<, >, &)          ✓
+Rule 16: Backslash escape (\*)          ✓
+Rule 17: Line break (2 spaces)          ✓
+Rule 18: Empty paragraphs               ✓
+Rule 19: Unclosed fence error           ✓
+Rule 20: Heading trailing # removal     ✓
+Rule 21: Table basic                    ✓
+Rule 22: Table alignment (:--:, :--:)   ✓
+Rule 23: Table inline formatting        ✓
+Rule 24: CRLF normalization             ✓
+```
+
+## 파일
+
+- `/tmp/pal-x-34/s2/md.py` - 완성된 마크다운 렌더러
+  - `class MarkdownError(Exception)` 정의
+  - `def render(text: str) -> str` 함수
+  - 블록마다 한 줄, 끝에 개행 하나
+
+## 인터페이스 확인
+
+✓ `MarkdownError` 예외 클래스 구현
+✓ `render()` 함수 시그니처 정확
+✓ 결과 형식: 블록마다 한 줄 + 끝 개행
+✓ 빈 입력: 빈 문자열 반환
+✓ 에러 처리: MarkdownError만 발생
+
+완성됨.

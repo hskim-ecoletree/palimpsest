@@ -1,0 +1,3 @@
+{"kind":"schema","version":2,"round":"fixture-stop-effect"}
+{"kind":"oracle","id":"A1","mode":"command","check":"grep -F 'effect input' .palimpsest/rounds/fixture-stop-effect/tracked.txt && printf 'ROUND_OK\\n'","expect":{"literal":"ROUND_OK"},"cwd":"."}
+{"kind":"oracle","id":"A1-n","mode":"command","check":"grep -F 'known broken detector fixture' .palimpsest/rounds/fixture-stop-effect/known-broken.txt && printf 'ROUND_OK\\n'","expect":{"literal":"ROUND_OK"},"cwd":".","negative_for":"A1"}

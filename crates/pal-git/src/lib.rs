@@ -88,6 +88,13 @@ pub trait GitAccess {
     /// 워킹트리가 없거나(bare) 인덱스·파일을 읽지 못하면.
     fn worktree_state(&self) -> Result<WorktreeState, GitError>;
 
+    /// 추적 워킹트리에서 정확히 지정한 저장소 상대 경로를 뺀 투영의 요약.
+    ///
+    /// 회차 evidence 파일처럼 관측 자체가 입력을 바꾸는 한 자리를 제외할 때 쓴다.
+    /// 제외 목록은 호출자가 소유하며, 이 함수는 ignored/untracked 파일을 새 모집단으로
+    /// 넓히지 않는다.
+    fn worktree_digest_excluding(&self, excluded: &[RepoPath]) -> Result<Digest, GitError>;
+
     /// 워킹트리의 파일 하나를 읽는다.
     ///
     /// **[`GitAccess::read_blob`] 으로 대신할 수 없다.** 아직 커밋되지 않은 파일은
@@ -273,6 +280,47 @@ impl GixRepo {
         Ok(Self { inner, attributes: OnceLock::new() })
     }
 
+    /// 하위 작업 디렉터리에서 가장 가까운 저장소를 발견한다.
+    ///
+    /// hook payload의 `cwd`는 저장소 루트라는 보장이 없으므로, 그 소비자는 `open`으로
+    /// 흉내 내지 않고 이 문을 쓴다.
+    pub fn discover(path: &Path) -> Result<Self, GitError> {
+        let inner =
+            gix::discover(path).map_err(|e| GitError::Open(format!("{}: {e}", path.display())))?;
+        Ok(Self { inner, attributes: OnceLock::new() })
+    }
+
+    /// 발견한 저장소의 워킹트리 루트.
+    pub fn work_dir(&self) -> Result<&Path, GitError> {
+        self.inner
+            .workdir()
+            .ok_or_else(|| GitError::NoWorktree("bare repository".to_owned()))
+    }
+
+    /// clone 깊이와 무관한 저장소 이름. origin이 있는 clone은 그 URL의 바이트를,
+    /// origin이 없는 로컬 저장소는 최초 first-parent commit을 쓴다.
+    ///
+    /// shallow boundary를 "최초 commit"으로 오인하지 않는다. 그 값은 deepen할 때
+    /// 바뀌어 외부 approval과 Stop activation namespace를 조용히 갈라놓는다.
+    pub fn stable_repository_identity(&self) -> Result<String, GitError> {
+        if let Some(origin) = self.inner.config_snapshot().string("remote.origin.url") {
+            let bytes: &[u8] = origin.as_ref();
+            if !bytes.is_empty() {
+                let mut hasher = blake3::Hasher::new();
+                hasher.update(b"pal.repository.origin.v1\0");
+                hasher.update(&(bytes.len() as u64).to_le_bytes());
+                hasher.update(bytes);
+                return Ok(hasher.finalize().to_hex().to_string());
+            }
+        }
+        let head = self.head()?;
+        let ancestors = self.first_parent_walk(head, usize::MAX)?;
+        ancestors
+            .last()
+            .map(ToString::to_string)
+            .ok_or_else(|| GitError::Resolve("repository root commit이 없다".to_owned()))
+    }
+
     /// 사람이 쓴 것을 커밋 이름으로 푼다 — 짧은 SHA · 브랜치 · 태그 전부.
     ///
     /// **S1 의 코퍼스는 12자 축약 SHA 로 고정돼 있다**(`a29cad0bf6a8`). 그것이 브랜치
@@ -373,6 +421,14 @@ impl GitAccess for GixRepo {
             trusted_from_index: trusted,
             rehashed,
         })
+    }
+
+    fn worktree_digest_excluding(&self, excluded: &[RepoPath]) -> Result<Digest, GitError> {
+        // 승인·evidence currentness는 보안 경계다. Git의 racy stat cache를 믿으면 같은
+        // 크기와 mtime을 복원한 내용 변조를 놓치므로 이 경로는 tracked blob을 전부 읽는다.
+        let (mut list, _, _) = self.scan_worktree_with_stat(false)?;
+        list.retain(|(path, _)| !excluded.contains(path));
+        Ok(digest_of(&list))
     }
 
     fn read_worktree_file(&self, path: &RepoPath) -> Result<Vec<u8>, GitError> {
@@ -582,6 +638,10 @@ impl GixRepo {
     ///
     /// 돌려주는 셋째·넷째는 회계다: 인덱스 stat 을 믿은 수와 다시 해시한 수.
     fn scan_worktree(&self) -> Result<WorktreeScan, GitError> {
+        self.scan_worktree_with_stat(true)
+    }
+
+    fn scan_worktree_with_stat(&self, trust_stat: bool) -> Result<WorktreeScan, GitError> {
         let workdir = self.workdir()?.to_owned();
         let index = self
             .inner
@@ -603,7 +663,7 @@ impl GixRepo {
             // **파일이 없으면 목록에서 빠진다.** 삭제는 요약을 바꿔야 하는 변이 셋째다.
             let Ok(meta) = std::fs::symlink_metadata(&absolute) else { continue };
 
-            if stat_is_unchanged(entry.stat, &meta) {
+            if trust_stat && stat_is_unchanged(entry.stat, &meta) {
                 trusted += 1;
                 list.push((path, to_name(entry.id)));
                 continue;
@@ -699,6 +759,3 @@ impl GixRepo {
             .map_err(|e| GitError::Resolve(e.to_string()))
     }
 }
-
-
-

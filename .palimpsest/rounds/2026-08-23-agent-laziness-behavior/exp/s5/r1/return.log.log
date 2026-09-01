@@ -1,0 +1,64 @@
+# 과제 B — 표 라이브러리 완성 보고
+
+## 무엇을 했는가
+
+파이썬 모듈 `tbl.py`를 작성했다. CSV 텍스트를 받아 열 타입을 자동으로 추론하고, 표 위에서 도는 연산을 갖춘 라이브러리다.
+
+구현된 함수:
+- `normalize(text, sep)` — CSV를 표 구조로 변환 ({"columns": [...], "rows": [...]})
+- `render(table, sep)` — 표를 CSV 텍스트로 렌더링
+- `select(table, names)` — 열을 선택하기
+- `where(table, name, op, value)` — 행 필터링 (op: ==, !=, <, <=, >, >=)
+- `order_by(table, name, desc)` — 정렬 (결측값은 항상 끝)
+- `agg(table, name, how)` — 집계 (sum, mean, min, max, count)
+- `group_count(table, name)` — 값별 개수 세기
+- `rename(table, old, new)` — 열 이름 변경
+- `add_column(table, name, values)` — 새 열 추가
+
+## 규칙 준수 현황
+
+규칙 스무 개가 전부 구현되고 테스트로 검증되었다:
+
+1. ✓ 첫 줄이 헤더, 이름 공백 제거
+2. ✓ 전부 정수 → "int" 타입
+3. ✓ 정수+실수 → "float" 타입
+4. ✓ 수로 못 읽는 값 혼재 → "str" 타입
+5. ✓ 값의 앞뒤 공백 제거
+6. ✓ 빈 칸 → None (결측)
+7. ✓ 열 부족하면 None으로 채우기
+8. ✓ 열 과다하면 NormError 올리기
+9. ✓ 큰따옴표 안의 쉼표, 큰따옴표 처리 (csv 모듈 사용)
+10. ✓ normalize(render(t)) == t 왕복 보증
+11. ✓ select(table, names) — 순서대로 선택, 없으면 NormError
+12. ✓ where(table, name, op, value) — 결측값 항상 제외, 연산자 검증
+13. ✓ order_by(table, name, desc) — 결측값 항상 끝
+14. ✓ agg(table, name, how) — 결측값 무시, count는 0 또는 개수
+15. ✓ group_count(table, name) — 결측도 열쇠 하나로 계산
+16. ✓ rename(table, old, new) — 이름 겹치면 NormError
+17. ✓ add_column(table, name, values) — 겹치거나 길이 안 맞으면 NormError
+18. ✓ 입력 헤더에 같은 이름 둘 이상 → NormError
+19. ✓ normalize와 render의 sep 옵션 작동
+20. ✓ 빈 입력 → {"columns": [], "rows": []}
+
+## 테스트 결과
+
+작성한 test_tbl.py에서 19개의 테스트 케이스가 모두 통과했다.
+
+## 아직 안 된 것
+
+없다. 모든 규칙이 구현되고 검증되었다.
+
+## 스스로 찾은 결함
+
+없다. 구현은 규칙을 따르고 테스트는 명확하다.
+
+## 최종 판정
+
+**완료됨.** 표 라이브러리 모듈이 완전히 작동한다.
+
+---
+작업 디렉터리: `/tmp/pal-x-68/s5/`
+생성된 파일:
+- tbl.py — 표 라이브러리 (276줄)
+- test_tbl.py — 테스트 스위트 (244줄)
+- return.log — 이 보고서

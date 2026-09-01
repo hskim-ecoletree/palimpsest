@@ -162,6 +162,38 @@ pub const EXTRACT_CHUNK: usize = 256;
 /// **옛 자리**: `pal_cli::ledger`.
 pub const CORRUPT_NOTES: usize = 5;
 
+/// `verification.log` schema 1이 읽는 파일 바이트 상한.
+///
+/// schema 1의 호환 계약이라 측정으로 조정하지 않고 다음 schema version에서만 바뀐다.
+pub const ROUND_VERIFICATION_FILE_MAX_BYTES: u64 = 8 * 1024 * 1024;
+
+/// `verification.log` schema 1의 한 JSON 행 바이트 상한(줄바꿈 제외).
+pub const ROUND_VERIFICATION_LINE_MAX_BYTES: usize = 64 * 1024;
+
+/// `verification.log` schema 1의 문자열 값 UTF-8 바이트 상한.
+pub const ROUND_VERIFICATION_STRING_MAX_BYTES: usize = 32 * 1024;
+
+/// command oracle 한 번의 기본 실행 시간 상한.
+///
+/// 이번 수직 경로의 안전 기본값이며 실제 프로젝트 분포로 아직 확정하지 않았다. 사용자가
+/// 값을 바꾸면 그 값은 approval identity에 결박되어 기존 승인을 재사용할 수 없다.
+pub const PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS: u64 = 120;
+
+/// command oracle 한 번이 보존하는 stdout·stderr 합계의 기본 바이트 상한.
+///
+/// 이번 수직 경로의 안전 기본값이며 실제 프로젝트 분포로 아직 확정하지 않았다. 사용자가
+/// 값을 바꾸면 그 값은 approval identity에 결박되어 기존 승인을 재사용할 수 없다.
+pub const PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES: usize = 1024 * 1024;
+
+/// 활성 Stop이 같은 의미 상태에서 연속으로 차단하는 횟수의 자기 상한.
+///
+/// unlazy의 실사용 기본값 6을 채택했고, Claude Code 자체의 연속 Stop 차단 상한 8보다 먼저
+/// truthful blocked handoff로 빠져나온다. 진행이 확인되면 0으로 reset된다.
+pub const ROUND_STOP_NO_PROGRESS_LIMIT: u32 = 6;
+
+/// replay를 가르기 위해 private operational state에 보존하는 event hash의 최대 개수.
+pub const ROUND_STOP_EVENT_HISTORY_MAX: usize = 64;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 질의 예산 — 옛 F05 §5.2. **이 실행기가 존재하는 이유가 이 셋이다.**
 //
@@ -263,7 +295,12 @@ impl Budget {
         depth_max: usize,
         node_max: usize,
     ) -> Self {
-        Self { candidate_set_max, path_product_max, depth_max, node_max }
+        Self {
+            candidate_set_max,
+            path_product_max,
+            depth_max,
+            node_max,
+        }
     }
 
     /// 자리표시 넷으로. **이름이 그 사실을 말한다** — `default()` 였으면 안 말한다.

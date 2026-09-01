@@ -25,6 +25,7 @@ mod ledger;
 mod narrative;
 mod plan;
 mod query;
+mod round;
 mod touch;
 mod version;
 
@@ -266,10 +267,15 @@ enum Command {
     /// 하네스의 훅이 부르는 자리 — **표준입력으로 페이로드를 받는다**
     ///
     /// 사람이 손으로 부를 일이 없다. `pal install` 이 이 커맨드를 대상 프로젝트의
-    /// `settings.json` 에 등록하고, 하네스가 `/bin/sh -c` 로 실행한다.
+    /// `settings.json` 에 exec form 으로 등록하고, 하네스가 셸 없이 실행한다.
     Hook {
         /// 사건 이름. **모르는 것은 조용히 통과시킨다**
         event: String,
+    },
+    /// 회차의 조건과 verification 상태를 읽는다 — 명령을 실행하지 않는다
+    Round {
+        #[command(subcommand)]
+        what: RoundCommand,
     },
     /// 의도 저장소를 JSONL 로 내고 되읽는다 — **재구축 불가한 것의 유일한 복구 경로**
     Intent {
@@ -399,6 +405,97 @@ enum IntentCommand {
 }
 
 #[derive(Subcommand)]
+enum RoundCommand {
+    /// `intent.md`의 완수 조건을 Rust 정본으로 읽는다
+    Conditions {
+        #[arg(long)]
+        file: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
+    /// verification 원장을 읽기 전용으로 축약한다
+    Status {
+        #[arg(long)]
+        round: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// exact command oracle를 외부 사용자 저장소에 승인한다 — 실행하지 않는다
+    Approve {
+        #[arg(long)]
+        round: String,
+        #[arg(long)]
+        id: String,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        approval_dir: Option<PathBuf>,
+        #[arg(long)]
+        shell: Option<PathBuf>,
+        #[arg(long, default_value_t = pal_core::PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS)]
+        timeout: u64,
+        #[arg(long, default_value_t = pal_core::PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES)]
+        output_limit: usize,
+        #[arg(long)]
+        json: bool,
+    },
+    /// 승인된 exact command oracle를 실행하고 current evidence를 append한다
+    Verify {
+        #[arg(long)]
+        round: String,
+        #[arg(long, required_unless_present = "all", conflicts_with = "all")]
+        id: Option<String>,
+        /// 이미 met인 command까지 전부 재실행하고 completion checkpoint를 쓴다
+        #[arg(long, required_unless_present = "id", conflicts_with = "id")]
+        all: bool,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        approval_dir: Option<PathBuf>,
+        #[arg(long)]
+        shell: Option<PathBuf>,
+        #[arg(long, default_value_t = pal_core::PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS)]
+        timeout: u64,
+        #[arg(long, default_value_t = pal_core::PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES)]
+        output_limit: usize,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Stop 정책의 명시적 활성화·비활성화·상태 조회
+    Stop {
+        #[command(subcommand)]
+        what: RoundStopCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum RoundStopCommand {
+    /// 현재 프로젝트의 지정 회차에 Stop 정책을 명시적으로 활성화한다
+    Enable {
+        #[arg(long)]
+        round: String,
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
+    /// activation record 내용이 손상됐어도 Stop 정책을 즉시 비활성화한다
+    Disable {
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Stop activation과 operational progress 상태를 읽는다
+    Status {
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Subcommand)]
 enum CacheCommand {
     /// 얼마나 차 있는가
     Stats {
@@ -489,6 +586,44 @@ fn main() -> Result<()> {
             hook::run(&event);
             Ok(())
         }
+        Command::Round { what } => match what {
+            RoundCommand::Conditions { file, json } => round::conditions(&file, json),
+            RoundCommand::Status { round: slug, json } => {
+                round::round_status(slug.as_deref(), json)
+            }
+            RoundCommand::Approve {
+                round: slug, id, repo, approval_dir, shell, timeout, output_limit, json,
+            } => round::round_approve(
+                &repo, &slug, &id, approval_dir.as_deref(), shell.as_deref(), timeout,
+                output_limit, json,
+            ),
+            RoundCommand::Verify {
+                round: slug, id, all, repo, approval_dir, shell, timeout, output_limit, json,
+            } => {
+                if all {
+                    round::round_finalize(
+                        &repo, &slug, approval_dir.as_deref(), shell.as_deref(), timeout,
+                        output_limit, json,
+                    )
+                } else {
+                    round::round_verify(
+                        &repo, &slug, id.as_deref().expect("clap requires id"),
+                        approval_dir.as_deref(), shell.as_deref(), timeout, output_limit, json,
+                    )
+                }
+            }
+            RoundCommand::Stop { what } => match what {
+                RoundStopCommand::Enable { round: slug, repo, json } => {
+                    round::stop::command_enable(&repo, &slug, None, json)
+                }
+                RoundStopCommand::Disable { repo, json } => {
+                    round::stop::command_disable(&repo, None, json)
+                }
+                RoundStopCommand::Status { repo, json } => {
+                    round::stop::command_status(&repo, None, json)
+                }
+            },
+        },
         Command::Intent { what } => match what {
             IntentCommand::Export { repo, intent, out } => intent::export(&repo, intent, out),
             IntentCommand::Import { file, repo, intent, json } => {

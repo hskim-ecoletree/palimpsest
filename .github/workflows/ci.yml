@@ -80,7 +80,14 @@ jobs:
         if: runner.os == 'Windows'
         run: git config --global core.autocrlf true
 
+      # ★★ **이력 전부를 받는다.** 검사 22(「발견이 닫혔나」)가 회차 레코드의
+      #    `닫은커밋` SHA 를 `git show` 로 읽는다. 기본값(`fetch-depth: 1`)에서는
+      #    **그 SHA 들이 하나도 안 읽혀** 닫힘 행 전량이 「이 이력에서 안 보인다」로
+      #    빨개진다 — 로컬은 초록이고 push 뒤에야 나므로 회차 안에서 안 보인다.
+      #    ⚠ 이 잡만 그 축을 돌린다. 나머지 둘은 기본값 그대로 둔다.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: 무엇으로 빌드하는지 적어 둔다
         shell: bash
@@ -108,7 +115,8 @@ jobs:
         run: command -v cargo-deny >/dev/null || cargo install --locked cargo-deny
 
       # 게이트 — 검사 수는 여기 안 적는다. ⚠ 앞 판은 「열여섯」이라 벤 거울을 두었고
-      # 착수 전부터 낡아 있었다(지금 20). **세는 자리는 `xtask` 의 `checks.len()` 이다.**
+      # 착수 전부터 낡아 있었다. **한 번 고쳤더니 그 자리가 다시 낡았다** — 고친 수마저
+      # 손으로 벤 거울이었기 때문이다. **세는 자리는 `xtask` 의 `checks.len()` 이다.**
       # 여기에 `cargo-deny` 도 든다.
       - name: cargo xtask check
         run: cargo xtask check
@@ -123,6 +131,10 @@ jobs:
       # 표면이 바로 `pal-cli` 라, 거기 `///` 예제를 적어도 아무도 컴파일하지 않는다.
       - name: cargo xtask test
         run: cargo xtask test
+
+      - name: pal doctor full 구조 판정
+        shell: bash
+        run: cargo run -q -p pal-cli -- doctor --full --json | node scripts/check-round-doctor.mjs
 
 
   # ───────────────────────────────────────────────────────────────────────────

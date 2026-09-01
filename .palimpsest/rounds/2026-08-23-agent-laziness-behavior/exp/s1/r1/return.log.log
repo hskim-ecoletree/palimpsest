@@ -1,0 +1,45 @@
+# 과제 B — 표 라이브러리 완료
+
+## 무엇을 했는지
+
+1. `tbl.py` 모듈을 구현했다
+   - NormError 예외 클래스
+   - normalize(text, sep=",") — CSV 파싱 및 타입 추론
+   - render(table, sep=",") — CSV로 다시 변환
+   - select(table, names) — 열 선택
+   - where(table, name, op, value) — 행 필터링
+   - order_by(table, name, desc=False) — 정렬
+   - agg(table, name, how) — 집계 (sum, mean, min, max, count)
+   - group_count(table, name) — 값별 개수 카운팅
+   - rename(table, old, new) — 열 이름 변경
+   - add_column(table, name, values) — 새 열 추가
+
+2. 규칙 20개를 모두 구현했다
+   - 규칙 1-8: CSV 파싱, 타입 추론, 오류 처리
+   - 규칙 9: 큰따옴표 안의 쉼표 처리, "" → "
+   - 규칙 10: normalize(render(t)) == t 왕복 보장
+   - 규칙 11-20: 모든 연산 함수의 규칙 구현
+
+3. 테스트 작성 및 검증
+   - 기본 테스트 31개: 모두 통과
+   - 엣지 케이스 테스트 17개: 모두 통과
+   - CSV 인용 처리, sep 옵션, 타입 혼합, 불변성 등 검증
+
+## 아직 안 된 것
+
+없다. 모든 규칙이 구현되고 테스트를 통과했다.
+
+## 스스로 찾은 결함
+
+1. CSV 파싱에서 구간 내 줄바꿈(\n)은 처리하지 않는다
+   - 규칙에 명시되지 않았으므로 선택적 기능으로 간주
+   - 일반적인 CSV 파서와 달리 한 줄씩만 처리
+   - 필요하면 split('\n') 전에 인용 처리를 재구성해야 함
+
+2. render에서 값을 str()로 변환할 때 None은 빈 문자열로 처리
+   - normalize(render(t)) == t 를 유지하기 위해 설계
+   - 이는 규칙 6(빈 칸은 None)과 일치
+
+## 상태
+
+완료. 모든 완수 조건을 만족했다.

@@ -1,0 +1,30 @@
+# E8 — RED 관측 (전사 전) · 2026-08-23 · HEAD 0ae2402
+
+## `cargo xtask check` 의 21 번째 — 원장 둘 대조
+
+```
+  FAIL  원장 둘 대조
+
+원장 둘 대조: 2026-08-20-rust-extractor: 게이트 없음 — `report.md` 가 있는데 `.palimpsest/rounds/2026-08-20-rust-extractor/intent.md` 를 가리키는 게이트가 `docs/gates/` 에 없다. 끝난 회차의 판정 원장이 한 자리뿐이다
+    하한 미충족: 끝난 회차 중 가장 최근인 `2026-08-20-rust-extractor` 가 이 검사 밖이다 — 표준 표를 세우거나 게이트를 짝지어야 한다. 전역 개수 하한은 과거로 영구 충족되므로 하한을 여기 건다
+Error: 1개 검사가 실패했다
+```
+
+## 게이트마다 표준 표가 있나 — `record.py gate` (저장소에서 표를 읽는 유일한 자리)
+
+```
+docs/gates/agent-laziness.md               표준표=False
+docs/gates/round-completion-condition.md   표준표=False
+docs/gates/round-finding-records.md        표준표=False
+docs/gates/rust-extractor.md               표준표=False
+docs/gates/inventory-disposal.md           표준표=False
+```
+
+## 짝짓기 — 게이트가 가리키는 `intent.md`
+
+```
+docs/gates/agent-laziness.md:rounds/2026-08-22-agent-laziness/intent.md
+docs/gates/inventory-disposal.md:rounds/2026-08-18-inventory-disposal/intent.md
+docs/gates/round-completion-condition.md:rounds/2026-08-18-completion-condition/intent.md
+docs/gates/round-finding-records.md:rounds/2026-08-19-finding-records/intent.md
+```

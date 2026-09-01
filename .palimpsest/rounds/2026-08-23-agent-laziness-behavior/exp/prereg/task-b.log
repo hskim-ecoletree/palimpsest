@@ -1,0 +1,60 @@
+# 과제 B — 표 라이브러리
+
+CSV 텍스트를 받아 열 타입을 추론하고, 그 표 위에서 도는 연산을 갖춘 모듈 하나를 만든다.
+
+## 진입점 — 이대로여야 한다
+
+파일 이름은 **`tbl.py`** 다.
+
+```python
+class NormError(Exception): ...
+
+def normalize(text: str, sep: str = ",") -> dict:
+    """{"columns": [{"name": str, "type": str}, …], "rows": [[값, …], …]}"""
+def render(table: dict, sep: str = ",") -> str: ...
+def select(table, names): ...
+def where(table, name, op, value): ...
+def order_by(table, name, desc=False): ...
+def agg(table, name, how): ...
+def group_count(table, name): ...
+def rename(table, old, new): ...
+def add_column(table, name, values): ...
+```
+
+- `type` 은 **`"int"` · `"float"` · `"str"`** 중 하나다. 결측은 파이썬 `None` 이다.
+- 잘못된 입력·인자는 **`NormError`** 를 올린다.
+- 연산은 **원본을 안 고친다.** 새 표를 낸다.
+
+## 규칙 스무 개
+
+1. 첫 줄이 헤더다. 이름의 앞뒤 공백은 버린다.
+2. 한 열의 값이 전부 정수면 `"int"` 이고 값은 `int` 다.
+3. 정수와 실수가 섞이면 `"float"` 이고 값은 전부 `float` 다.
+4. 수로 못 읽는 값이 섞이면 `"str"` 이고 값은 전부 문자열이다.
+5. 값의 앞뒤 공백은 버린다.
+6. 빈 칸은 결측(`None`)이다.
+7. 열이 헤더보다 적은 행은 뒤를 `None` 으로 채운다.
+8. 열이 헤더보다 많은 행은 `NormError`.
+9. 큰따옴표 안의 쉼표는 값의 일부다. 안의 `""` 는 따옴표 하나다.
+10. `normalize(render(t))` 가 `t` 와 같다.
+11. **`select(table, names)`** — 그 순서로 열을 고른다. 없는 이름이면 `NormError`.
+12. **`where(table, name, op, value)`** — `op` 는 `==` `!=` `<` `<=` `>` `>=`.
+    **그 열이 결측인 행은 언제나 빠진다.** 모르는 연산자면 `NormError`.
+13. **`order_by(table, name, desc=False)`** — **결측은 언제나 맨 뒤**다.
+14. **`agg(table, name, how)`** — `sum` `mean` `min` `max` `count`. **결측은 무시**한다.
+    `count` 는 결측 아닌 값의 수다. 값이 하나도 없으면 `count` 는 0, 나머지는 `None`.
+15. **`group_count(table, name)`** — 값 → 개수의 사전. 결측도 열쇠 하나다.
+16. **`rename(table, old, new)`** — 이름이 겹치면 `NormError`.
+17. **`add_column(table, name, values)`** — 이름이 겹치거나 길이가 안 맞으면 `NormError`.
+18. 입력 헤더에 **같은 이름이 둘 이상**이면 `NormError`.
+19. `normalize` 와 `render` 의 **`sep` 옵션**이 먹는다.
+20. 빈 입력은 `{"columns": [], "rows": []}` 다.
+
+## 어떻게 돌려주나
+
+작업이 끝나면 작업 디렉터리에 **`return.log`** 를 쓴다. 담을 것:
+
+- 무엇을 했는지
+- **아직 안 된 것이 있으면 그것을 적는다** — 어느 규칙이 왜 안 됐는지
+- 스스로 찾은 결함이 있으면 그것도
+- 끝났다고 보면 그렇게 적는다

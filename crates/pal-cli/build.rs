@@ -40,6 +40,14 @@ fn main() {
 }
 
 /// `.git` 을 위로 올라가며 찾는다. **못 찾아도 실패가 아니다.**
+///
+/// ★★ **worktree 에서는 `.git` 이 디렉터리가 아니라 파일이다.** (2026-08-24)
+/// 그 파일 한 줄이 `gitdir: <경로>` 로 진짜 자리를 가리킨다. 앞 판은 `is_dir()` 만
+/// 봐서 worktree 체크아웃에서 **`None` 을 돌려줬고**, 그러면 위의
+/// `cargo:rerun-if-changed` 가 **한 줄도 등록되지 않아 커밋이 바뀌어도 build.rs 가
+/// 안 돈다.** 실측 2026-08-24: 두 커밋 연속으로 `pal --version` 이 **앞 커밋의 SHA** 를
+/// 냈다 — 이 파일 머리가 *"두 커밋이 같은 값을 내고, 그것이 ⑨ 의 반증 형태 그대로다"*
+/// 라고 적은 바로 그 상태다. 시험 `버전에_커밋이_실려_있다` 가 그것을 잡는다.
 fn git_dir(from: &Path) -> Option<PathBuf> {
     let mut here = Some(from);
     while let Some(dir) = here {
@@ -47,9 +55,30 @@ fn git_dir(from: &Path) -> Option<PathBuf> {
         if candidate.is_dir() {
             return Some(candidate);
         }
+        // worktree — `.git` 파일의 `gitdir:` 줄을 따라간다.
+        if candidate.is_file() {
+            if let Some(실제) = gitdir_파일이_가리키는_곳(&candidate) {
+                return Some(실제);
+            }
+        }
         here = dir.parent();
     }
     None
+}
+
+/// worktree 의 `.git` **파일**이 가리키는 진짜 git 디렉터리.
+///
+/// 형식은 `gitdir: <경로>` 한 줄이고 경로는 절대일 수도 상대일 수도 있다.
+fn gitdir_파일이_가리키는_곳(git_파일: &Path) -> Option<PathBuf> {
+    let text = std::fs::read_to_string(git_파일).ok()?;
+    let 경로 = text.trim().strip_prefix("gitdir:")?.trim();
+    let p = PathBuf::from(경로);
+    let p = if p.is_absolute() {
+        p
+    } else {
+        git_파일.parent()?.join(p)
+    };
+    p.is_dir().then_some(p)
 }
 
 /// `.git/HEAD` 가 가리키는 ref 의 상대 경로. 분리 HEAD 면 `None`.

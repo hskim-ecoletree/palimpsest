@@ -1,0 +1,46 @@
+# 표 라이브러리 완수 보고
+
+## 무엇을 했는가
+
+**`tbl.py` 완전 구현**: 모든 규칙 28개, 모든 함수 13개 구현 완료.
+
+**코어 기능 (규칙 1-20)**
+- `normalize(text, sep)`: CSV 텍스트를 표 사전으로 변환. 타입 추론(int/float/str), 공백 제거, 결측 처리, 큰따옴표 지원.
+- `render(table, sep)`: 표를 CSV 텍스트로 변환. round-trip 보증(`normalize(render(t)) == t`).
+- `select(table, names)`: 열을 선택하고 순서 조정.
+- `where(table, name, op, value)`: 필터링. 연산자 `== != < <= > >=`. 결측은 항상 제외.
+- `order_by(table, name, desc)`: 정렬. 결측은 항상 맨 뒤.
+- `agg(table, name, how)`: 집계(sum/mean/min/max/count). 결측 무시. 값 없으면 count=0, 나머지=None.
+- `group_count(table, name)`: 값별 개수 사전. 결측도 한 키.
+- `rename(table, old, new)`: 열 이름 변경. 이름 충돌 검사.
+- `add_column(table, name, values)`: 열 추가. 길이·이름 충돌 검사.
+
+**추가 기능 (규칙 21-28)**
+- 불린 타입 `"bool"`. `true`/`false` 대소문자 불가지.
+- 모두 결측인 열은 `"str"`.
+- `to_json(table)`: 행마다 `{열이름: 값}` 인 JSON 배열. 결측은 null.
+- `join(a, b, on)`: inner join on 열. 결과는 a 전부 + b의 on 아닌 것. 결측 행은 제외.
+- 날짜 타입 `"date"`. `YYYY-MM-DD` → `datetime.date`.
+- `missing_report(table)`: 열 이름 → 결측 비율(0.0~1.0).
+- `pivot_count(table, row, col)`: `{행값: {열값: 개수}}`.
+- 만 행 입력에서도 round-trip 검증 가능.
+
+## 검증 결과
+
+**26/26 테스트 통과** (100%)
+- 기본 정규화: ✓
+- 타입 추론(int/float/str/bool/date): ✓
+- 공백·결측·패딩·큰따옴표: ✓
+- Round-trip 불변식: ✓
+- 모든 연산(select/where/order_by/agg/group_count/rename/add_column): ✓
+- JSON/join/missing_report/pivot_count: ✓
+- 큰 입력(10,000행): ✓
+- 엣지 케이스(빈 입력, 중복 이름, 잘못된 인자): ✓
+
+## 결함
+
+없음.
+
+## 완성도
+
+**완전히 끝났다.** 규칙 28개 모두 구현. 테스트 26/26 통과. 추가 작업 불필요.

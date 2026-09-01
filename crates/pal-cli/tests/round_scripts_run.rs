@@ -24,7 +24,7 @@ mod common;
 use std::path::Path;
 use std::process::Command;
 
-use common::{pal, 저장소};
+use common::{pal, path_앞에, 저장소, PAL};
 
 /// 파이썬 실행자 — 이름은 플랫폼이 정한다. **한 자리에서 정한다.**
 fn 파이썬() -> &'static str {
@@ -44,6 +44,7 @@ fn 파이썬() -> &'static str {
 fn 돌린다(cwd: &Path, args: &[&str]) -> (bool, String, String) {
     let out = Command::new(파이썬())
         .args(args)
+        .env("PAL_BIN", PAL)
         .current_dir(cwd)
         .output()
         .expect("파이썬을 못 띄웠다");
@@ -52,6 +53,61 @@ fn 돌린다(cwd: &Path, args: &[&str]) -> (bool, String, String) {
         String::from_utf8_lossy(&out.stdout).into_owned(),
         String::from_utf8_lossy(&out.stderr).into_owned(),
     )
+}
+
+#[test]
+fn record_conditions는_rust_json과_exit을_그대로_전달한다() {
+    let repo = 저장소("record-conditions-wrapper");
+    pal(&repo, &["install"]);
+    let intent = repo.join("intent.md");
+    std::fs::write(&intent, include_str!("fixtures/round_conditions_traps.md"))
+        .expect("golden intent");
+
+    let direct = Command::new(PAL)
+        .args(["round", "conditions", "--file", "intent.md", "--json"])
+        .current_dir(&repo)
+        .output()
+        .expect("pal conditions");
+    let wrapper = Command::new(파이썬())
+        .args([".claude/skills/pal-round/bin/record.py", "conditions", "intent.md"])
+        .env("PAL_BIN", PAL)
+        .current_dir(&repo)
+        .output()
+        .expect("record wrapper");
+    assert_eq!(direct.status.code(), Some(1));
+    assert_eq!(wrapper.status.code(), Some(1));
+    let direct_json: serde_json::Value =
+        serde_json::from_slice(&direct.stdout).expect("direct JSON");
+    let wrapper_json: serde_json::Value =
+        serde_json::from_slice(&wrapper.stdout).expect("wrapper JSON");
+    assert_eq!(wrapper_json, direct_json);
+}
+
+#[test]
+fn record_conditions는_pal_bin이_없으면_path의_pal을_쓴다() {
+    let repo = 저장소("record-conditions-path");
+    pal(&repo, &["install"]);
+    std::fs::write(repo.join("intent.md"), "## 완수 조건\n- [ ] A1 condition\n")
+        .expect("intent");
+    let bin = repo.join("fixture-bin");
+    std::fs::create_dir_all(&bin).expect("bin");
+    let name = format!("pal{}", std::env::consts::EXE_SUFFIX);
+    std::fs::copy(PAL, bin.join(name)).expect("pal copy");
+
+    let out = Command::new(파이썬())
+        .args([".claude/skills/pal-round/bin/record.py", "conditions", "intent.md"])
+        .env_remove("PAL_BIN")
+        .env("PATH", path_앞에(&bin))
+        .current_dir(&repo)
+        .output()
+        .expect("PATH wrapper");
+    assert!(
+        out.status.success(),
+        "PATH의 pal을 못 썼다:\n{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let json: serde_json::Value = serde_json::from_slice(&out.stdout).expect("JSON");
+    assert_eq!(json["조건"][0]["id"], "A1");
 }
 
 /// ★ **설치본의 쓰는 자가 실제로 돈다.**
@@ -147,5 +203,80 @@ fn 계기판이_레코드가_없으면_못_셌다고_말한다() {
     assert!(
         후.contains("⑦ 원 의도 비율") && 후.contains("1/1"),
         "레코드를 놓았는데 수가 안 나온다:\n{후}"
+    );
+}
+
+/// **음성 대조 둘째** — 빈 커밋 범위에서 칸이 **사라지지 않고 「못 셌다」**를 낸다.
+///
+/// # 왜 (2026-08-22 · 사전부검 R2·R3)
+///
+/// 2026-08-19 가 조기 return 밖으로 **⑦⑧ 만** 뺐고 **②③④⑤⑥ 은 그대로 삼켜졌다** —
+/// 갓 설치한 저장소·잘못된 인자·착수==종료 어디서나 그 다섯 칸이 **아예 안 떴다.**
+/// 그리고 위 `계기판이_레코드가_없으면_못_셌다고_말한다` 는 착수로 `HEAD` 를 줘서
+/// **언제나 빈 범위**라 그 경로를 한 번도 안 지났다 — 시험이 회귀를 못 봤다.
+///
+/// 걷기만 하는 것도 안 된다: 그러면 ③④⑤⑥ 이 **거짓 0** 을 낸다. 그래서 **양방향**으로
+/// 잰다 — 빈 범위면 「못 셌다」, 안 비면 수.
+#[test]
+fn 계기판이_빈_범위에서_칸을_안_삼킨다() {
+    let repo = 저장소("dashboard-empty-range");
+    pal(&repo, &["install"]);
+
+    let 계기판 = ".claude/skills/pal-round/bin/dashboard.py";
+    let 회차 = repo.join(".palimpsest/rounds/시험회차");
+    std::fs::create_dir_all(&회차).expect("회차 디렉터리");
+
+    // ★ 파서 함정을 함께 심는다 — 진짜 조건은 **셋**(A1 닫힘 · A1-a·A2 열림)이고
+    //   코드펜스 안의 예시 둘과 `## 범위 밖` 의 불릿 하나는 **조건이 아니다.**
+    let 의도 = 회차.join("intent.md");
+    std::fs::write(
+        &의도,
+        concat!(
+            "## 완수 조건\n",
+            "- [x] A1 진짜 조건 · 통과\n",
+            "  - [ ] A1-a 들여쓴 하위 조건\n",
+            "- [ ] A2 진짜 조건 둘\n",
+            "\n```markdown\n- [ ] X1 예시다\n- [x] X2 예시다\n```\n\n",
+            "## 범위 밖\n",
+            "- [ ] 이것도 조건이 아니다\n",
+        ),
+    )
+    .expect("의도 파일");
+    let 의도_인자 = ".palimpsest/rounds/시험회차/intent.md";
+
+    // ① 빈 범위 — 다섯 칸이 **뜨고** 「못 셌다」다.
+    let (ok, 빈, err) = 돌린다(&repo, &[계기판, "HEAD", 의도_인자, "HEAD"]);
+    assert!(ok, "계기판이 안 돈다:\n{err}");
+    for 칸 in ["③ 진자", "④ 연쇄 깊이", "⑤ 라운드", "⑥ 승격 횟수"] {
+        assert!(빈.contains(칸), "빈 범위에서 `{칸}` 이 사라졌다:\n{빈}");
+    }
+    for 칸 in ["③ 진자 (P1)     — **못 셌다**", "④ 연쇄 깊이      — **못 셌다**"] {
+        assert!(빈.contains(칸), "빈 범위에서 0 을 냈다 — 「못 셌다」여야 한다:\n{빈}");
+    }
+    // ⑦⑧ 은 **한 번만** 난다 — 앞 판은 빈-범위 분기와 정상 분기에서 두 번 불렀다.
+    assert_eq!(
+        빈.matches("⑦ 원 의도 비율").count(),
+        1,
+        "⑦ 이 중복 출력됐다:\n{빈}"
+    );
+
+    // ② 파서 — 펜스 안과 `## 범위 밖` 을 안 세고, 들여쓴 상자는 센다.
+    assert!(
+        빈.contains("② 미판정 잔액    2 / 3"),
+        "조건 셋(닫힘 1·열림 2)이어야 한다 — 펜스·범위 밖을 세거나 들여쓰기를 놓쳤다:\n{빈}"
+    );
+
+    // ③ 안 빈 범위 — 같은 칸이 **수**를 낸다. 한 방향만 재면 「언제나 못 셌다」를 못 가른다.
+    let git = |args: &[&str]| {
+        let st = Command::new("git").args(args).current_dir(&repo).status().expect("git");
+        assert!(st.success(), "git {args:?} 실패");
+    };
+    git(&["add", "-A"]);
+    git(&["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "시험 커밋"]);
+    let (ok, 찬, err) = 돌린다(&repo, &[계기판, "HEAD~1", 의도_인자, "HEAD"]);
+    assert!(ok, "계기판이 안 돈다:\n{err}");
+    assert!(
+        !찬.contains("③ 진자 (P1)     — **못 셌다**"),
+        "범위가 안 비었는데 「못 셌다」다 — 이 칸은 죽은 가지다:\n{찬}"
     );
 }

@@ -1,0 +1,4 @@
+{"kind":"schema","version":1,"round":"effect-round"}
+{"kind":"oracle","id":"A1","mode":"command","check":"cargo test -q","expect":{"literal":"ROUND_OK"},"cwd":"."}
+{"kind":"evidence","id":"A1","oracle_digest":"4cf3cb926ab8249a040632d0c1e694509ab40eee2eacc8da15d1353392b026dd","exit":0,"matched":true,"output_digest":"0000000000000000000000000000000000000000000000000000000000000000","output_bytes":9}
+{"kind":"oracle","id":"A2","mode":"command","check":"cargo test -q","expect":{"literal":"ROUND_OK"},"cwd":"."}

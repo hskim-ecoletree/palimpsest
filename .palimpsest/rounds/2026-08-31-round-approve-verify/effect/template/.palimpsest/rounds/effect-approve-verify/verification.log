@@ -1,0 +1,3 @@
+{"kind":"schema","version":2,"round":"effect-approve-verify"}
+{"kind":"oracle","id":"A1","mode":"command","check":"test -f tracked.txt && printf POSITIVE_OK","expect":{"literal":"POSITIVE_OK"},"cwd":"."}
+{"kind":"oracle","id":"A1-n","mode":"command","check":"test -f known-broken.txt && printf NEGATIVE_OK","expect":{"literal":"NEGATIVE_OK"},"cwd":".","negative_for":"A1"}

@@ -1,0 +1,38 @@
+## 과제 B — 표 라이브러리 완성
+
+### 만든 것
+
+**`tbl.py`** 모듈을 작성했다. 20개 규칙을 모두 만족하는 구현:
+
+- **진입점**: `NormError` 예외 + 13개 함수 (normalize, render, select, where, order_by, agg, group_count, rename, add_column)
+- **CSV 파싱**: 따옴표 처리, 공백 제거, 빈 칸 처리
+- **타입 추론**: int/float/str 자동 판별
+- **연산**: 모든 필터·정렬·집계 구현
+- **불변성**: 모든 연산이 새 표를 반환
+
+### 핵심 구현
+
+1. **`_parse_csv_line()`**: 큰따옴표 안의 쉼표·이스케이프(`""`) 처리
+2. **`_infer_type()`**: 열의 값들로 타입 결정 (정수만→int, 섞임→float, 문자→str)
+3. **`normalize()`**: 20개 규칙 적용 → 정규화된 사전
+   - 헤더 중복 검사
+   - 행 길이 검사 (부족하면 None 채움, 초과하면 오류)
+   - 타입별 값 변환
+4. **`render()`**: normalize의 역함수 (idempotent)
+5. **`where()`**: 필드 결측일 때 항상 제외
+6. **`order_by()`**: 결측을 항상 맨 뒤에
+7. **`agg()`**: sum/mean/min/max/count (결측 무시, count만 0)
+8. **`group_count()`**: None도 열쇠 하나로 포함
+
+### 검사
+
+```
+python3 check.py .
+→ 미완성 표면이 안 보인다.
+```
+
+TODO/FIXME/XXX, NotImplementedError, 빈 함수 본문 없음.
+
+### 상태
+
+**완성됨.** 규칙 20개 모두 구현되었고, 도구도 통과.

@@ -1,0 +1,3 @@
+{"kind":"schema","version":2,"round":"fixture-approve-verify-effect"}
+{"kind":"oracle","id":"A1","mode":"command","check":"grep -F 'effect input' tracked.txt && printf 'ROUND_OK\\n'","expect":{"literal":"ROUND_OK"},"cwd":"."}
+{"kind":"oracle","id":"A1-n","mode":"command","check":"grep -F 'known broken detector fixture' known-broken.txt && printf 'ROUND_OK\\n'","expect":{"literal":"ROUND_OK"},"cwd":".","negative_for":"A1"}
