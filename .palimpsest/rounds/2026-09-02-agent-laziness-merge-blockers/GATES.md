@@ -7,7 +7,7 @@ Scope: close every issue 101 merge blocker and merge pull request 91 only after 
 - [x] G1: focused round status, approve, and Stop tests cover every positive and negative blocker path
   CHECK: cargo test -p pal-cli --test round_status && cargo test -p pal-cli --test round_approve_verify && cargo test -p pal-cli --test round_stop && echo MERGE_BLOCKER_FOCUSED_OK
   EXPECT: MERGE_BLOCKER_FOCUSED_OK
-  EVIDENCE: exit=0 and EXPECT matched; round_status 25, round_approve_verify 25, round_stop 22 passed
+  EVIDENCE: exit=0 and EXPECT matched; round_status 25, round_approve_verify 28, round_stop 22 passed
 
 - [x] G2: repository policy checks accept code, round records, gates, and decisions
   CHECK: cargo xtask check && echo MERGE_BLOCKER_CHECK_OK
@@ -22,7 +22,7 @@ Scope: close every issue 101 merge blocker and merge pull request 91 only after 
 - [x] G4: full graph doctor classifies every invariant as clean checked or explicit capability absence and returns empty violation, residual, coverage-gap, and unanchored-cutoff sets
   CHECK: cargo run -q -p pal-cli -- doctor --full --json | node scripts/check-round-doctor.mjs
   EXPECT: MERGE_BLOCKER_DOCTOR_OK
-  EVIDENCE: checker rejected its embedded violation fixture, then accepted the full doctor answer with enumerated invariants and four empty finding arrays
+  EVIDENCE: checker rejected embedded violation, malformed, truncated, and duplicated invariant fixtures, then accepted exact invariants 1-8 and four empty finding arrays
 
 - [x] G5: issues 95 and 96 have explicit implemented, absorbed, or folded dispositions and issue 101 has no quietly removed item
   EVIDENCE: #95 CLOSED/COMPLETED, #96 CLOSED/NOT_PLANNED with the prior #95/#101 priority named; #101 remains OPEN and both native blocker nodes remain linked but CLOSED

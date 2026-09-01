@@ -33,8 +33,14 @@ Stop activation identity를 만들지 못했다.
   digest와 aggregate digest를 append한다. 같은 digest에 결박된 exact finalization seal을
   repository 밖 private store에도 쓴다. status는 두 digest, seal record와 current 값을 모두
   대조하므로 원장 checkpoint만 직접 추가해서는 complete가 아니다.
-- report의 절 본문 유효성과 file digest는 Stop만이 아니라 status aggregate 자체에 든다.
-  findings reader도 정본의 필수 축·enum과 닫힘 SHA를 확인하며 축약 행을 current로 보지 않는다.
+  시작 원장 bytes와 각 command가 덧붙인 evidence suffix도 checkpoint lock 아래 다시 대조해
+  실행 중 대상·oracle·judgment event가 하나라도 예상 밖으로 바뀌면 seal하지 않는다.
+  command에 명시한 approval store와 달리 finalization seal은 status가 읽는 환경/default store
+  한 자리에 쓴다.
+- report의 여러 줄 HTML 주석을 제거한 절 본문과 file digest는 Stop만이 아니라 status
+  aggregate 자체에 든다. folded state는 `## 지금 단계` 절 자체가 `접힘`과 `folded.md`를
+  가리켜야 한다. findings reader도 정본의 필수·선택 enum, 대응 조합, 상태/닫은커밋 모순,
+  미지 필드를 확인하며 축약 행을 current로 보지 않는다.
 - clone identity는 origin URL의 길이 결박 hash를 우선하고, origin 없는 저장소만 first-parent
   root를 쓴다. 따라서 shallow boundary나 뒤 deepen·local commit이 identity를 바꾸지 않는다.
   이 값은 외부 private 승인·activation namespace에만 있고 공유 산출물에 machine path를 싣지

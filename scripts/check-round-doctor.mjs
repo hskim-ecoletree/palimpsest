@@ -8,6 +8,11 @@ function check(document) {
   if (answer.invariants.length === 0) {
     throw new Error("doctor did not enumerate invariants");
   }
+  const numbers = answer.invariants.map((invariant) => invariant?.number);
+  const expectedNumbers = [1, 2, 3, 4, 5, 6, 7, 8];
+  if (JSON.stringify(numbers) !== JSON.stringify(expectedNumbers)) {
+    throw new Error(`doctor invariant set is incomplete or duplicated: ${JSON.stringify(numbers)}`);
+  }
   for (const field of ["violations", "residuals", "coverage_gaps", "unanchored_cutoff"]) {
     if (!Array.isArray(answer[field])) {
       throw new Error(`doctor ${field} is not an array`);
@@ -52,10 +57,16 @@ if (!rejected) {
   throw new Error("doctor negative control was accepted");
 }
 
+const cleanInvariants = Array.from({ length: 8 }, (_, index) => ({
+  number: index + 1,
+  outcome: "not_built",
+  absent: ["fixture"],
+}));
 for (const malformed of [
   { answer: { scope: "full", invariants: [], violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
-  { answer: { scope: "full", invariants: [{ number: 1, outcome: {} }], violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
-  { answer: { scope: "full", invariants: [{ number: 1, outcome: "not_built", absent: [] }], violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
+  { answer: { scope: "full", invariants: cleanInvariants.map((item, index) => index === 0 ? { number: 1, outcome: {} } : item), violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
+  { answer: { scope: "full", invariants: cleanInvariants.map((item, index) => index === 0 ? { number: 1, outcome: "not_built", absent: [] } : item), violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
+  { answer: { scope: "full", invariants: Array(8).fill({ number: 1, outcome: "not_built", absent: ["fixture"] }), violations: [], residuals: [], coverage_gaps: [], unanchored_cutoff: [] } },
 ]) {
   let malformedRejected = false;
   try {

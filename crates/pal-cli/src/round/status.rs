@@ -465,7 +465,15 @@ fn findings_state(dir: &Path) -> Result<(bool, usize), StatusError> {
         let required_strings = [
             "id", "출처", "모집단", "유효성", "해악도", "처분", "경로", "요약",
         ];
+        let known_fields = [
+            "id", "라운드", "출처", "모집단", "유효성", "해악도", "처분", "경로",
+            "요약", "승격됨", "조건변경", "사전처분", "조건", "줄", "기준커밋", "상태",
+            "닫은커밋",
+        ];
         if row.get("라운드").and_then(serde_json::Value::as_u64).is_none()
+            || row
+                .as_object()
+                .is_none_or(|object| object.keys().any(|field| !known_fields.contains(&field.as_str())))
             || required_strings.iter().any(|field| {
                 row.get(*field)
                     .and_then(serde_json::Value::as_str)
@@ -486,7 +494,33 @@ fn findings_state(dir: &Path) -> Result<(bool, usize), StatusError> {
         ) || !matches!(
             row.get("처분").and_then(serde_json::Value::as_str),
             Some("정정" | "확대" | "축소" | "전환" | "범위밖" | "기각")
+        ) || !matches!(
+            row.get("승격됨").and_then(serde_json::Value::as_str),
+            None | Some("예" | "아니오")
+        ) || !matches!(
+            row.get("조건변경").and_then(serde_json::Value::as_str),
+            None | Some("강화" | "완화" | "없음")
+        ) || !matches!(
+            row.get("사전처분").and_then(serde_json::Value::as_str),
+            None | Some("계획수정" | "탐지수단" | "완수조건전환" | "수용사유" | "해당없음")
         ) {
+            return Ok((false, 0));
+        }
+        if row.get("조건").is_some_and(|value| !value.is_string())
+            || row
+                .get("줄")
+                .is_some_and(|value| !value.is_null() && value.as_u64().is_none())
+            || row
+                .get("기준커밋")
+                .is_some_and(|value| !value.is_null() && value.as_str().is_none())
+            || row
+                .get("닫은커밋")
+                .is_some_and(|value| !value.is_null() && value.as_str().is_none())
+            || (row.get("처분").and_then(serde_json::Value::as_str) == Some("전환")
+                && row.get("승격됨").and_then(serde_json::Value::as_str) == Some("아니오"))
+            || (row.get("조건변경").and_then(serde_json::Value::as_str) == Some("완화")
+                && row.get("처분").and_then(serde_json::Value::as_str) != Some("축소"))
+        {
             return Ok((false, 0));
         }
         let state = row.get("상태").and_then(serde_json::Value::as_str);
@@ -502,6 +536,9 @@ fn findings_state(dir: &Path) -> Result<(bool, usize), StatusError> {
                 .and_then(serde_json::Value::as_str)
                 .is_none_or(str::is_empty)
         {
+            return Ok((false, 0));
+        }
+        if state == Some("열림") && row.get("닫은커밋").is_some_and(|value| !value.is_null()) {
             return Ok((false, 0));
         }
         if state == Some("열림") && matches!(severity, Some("금지역" | "실패")) {
@@ -589,13 +626,7 @@ pub(crate) fn valid_terminal_document(
         let Some(index) = lines.iter().position(|line| line.trim_end() == *heading) else {
             return Err(format!("필수 절 `{heading}`이 없다"));
         };
-        let has_body = lines[index + 1..]
-            .iter()
-            .take_while(|line| !line.starts_with("## "))
-            .any(|line| {
-                let line = line.trim();
-                !line.is_empty() && !line.starts_with("<!--") && !line.ends_with("-->")
-            });
+        let has_body = section_visible_text(&lines[index + 1..]).is_some();
         if !has_body {
             return Err(format!("필수 절 `{heading}`의 본문이 비었다"));
         }
@@ -603,14 +634,45 @@ pub(crate) fn valid_terminal_document(
     if terminal == Terminal::Folded {
         let state = std::fs::read_to_string(dir.join("state.md"))
             .map_err(|error| format!("folded 회차의 state.md를 읽지 못했다: {error}"))?;
-        if !state.contains("## 지금 단계")
-            || !state.contains("접힘")
-            || !state.contains("folded.md")
-        {
+        let state_lines: Vec<&str> = state.lines().collect();
+        let stage = state_lines
+            .iter()
+            .position(|line| line.trim_end() == "## 지금 단계")
+            .and_then(|index| section_visible_text(&state_lines[index + 1..]));
+        if !stage.is_some_and(|body| body.contains("접힘") && body.contains("folded.md")) {
             return Err("state.md가 접힘 단계와 folded.md를 가리키지 않는다".to_owned());
         }
     }
     Ok(())
+}
+
+fn section_visible_text(lines: &[&str]) -> Option<String> {
+    let mut visible = String::new();
+    let mut in_comment = false;
+    for raw in lines.iter().take_while(|line| !line.starts_with("## ")) {
+        let mut rest = *raw;
+        loop {
+            if in_comment {
+                let Some((_, after)) = rest.split_once("-->") else {
+                    break;
+                };
+                in_comment = false;
+                rest = after;
+                continue;
+            }
+            if let Some((before, after)) = rest.split_once("<!--") {
+                visible.push_str(before);
+                in_comment = true;
+                rest = after;
+                continue;
+            }
+            visible.push_str(rest);
+            break;
+        }
+        visible.push('\n');
+    }
+    let visible = visible.trim();
+    (!visible.is_empty()).then(|| visible.to_owned())
 }
 
 fn terminal_document_state(repo: &Path, slug: &str, terminal: Terminal) -> (bool, String) {

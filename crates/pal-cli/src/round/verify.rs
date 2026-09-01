@@ -205,6 +205,8 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
     validate_config(config)?;
     let dir = config.repo.join(".palimpsest/rounds").join(config.slug);
     let ledger_path = dir.join("verification.log");
+    let initial_bytes = std::fs::read(&ledger_path)
+        .map_err(|error| VerifyError::Io(format!("{}: {error}", ledger_path.display())))?;
     let ledger = ledger::read(&ledger_path, config.slug)
         .map_err(|error| VerifyError::Invalid(error.to_string()))?;
     if ledger.schema_version != 3 {
@@ -267,6 +269,9 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
     }
     let projected = projected_digest(config.repo, config.slug)?;
     let append_guard = AppendGuard::acquire(&ledger_path)?;
+    let current_bytes = std::fs::read(&ledger_path)
+        .map_err(|error| VerifyError::Io(format!("{}: {error}", ledger_path.display())))?;
+    validate_finalize_suffix(&initial_bytes, &current_bytes, &ledger, &ids)?;
     let stable = match super::status::read(config.repo, Some(config.slug))
         .map_err(|error| VerifyError::Invalid(error.to_string()))?
     {
@@ -292,7 +297,7 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
         "finalization_seal": finalization_seal,
     });
     append_line(&append_guard, &event.to_string())?;
-    let approval_dir = approval::store_dir(config.repo, config.approval_dir)?;
+    let approval_dir = approval::store_dir(config.repo, None)?;
     approval::approve(&approval_dir, &finalization_seal)?;
     let complete = match super::status::read(config.repo, Some(config.slug))
         .map_err(|error| VerifyError::Invalid(error.to_string()))?
@@ -311,6 +316,49 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
         rerun: ids,
         completion: "complete",
     })
+}
+
+fn validate_finalize_suffix(
+    initial: &[u8],
+    current: &[u8],
+    ledger: &ledger::VerificationLedger,
+    ids: &[String],
+) -> Result<(), VerifyError> {
+    let Some(suffix) = current.strip_prefix(initial) else {
+        return Err(VerifyError::Discarded(
+            "전수 재검증 중 verification 원장의 기존 내용이 바뀌었다".to_owned(),
+        ));
+    };
+    let text = std::str::from_utf8(suffix)
+        .map_err(|_| VerifyError::Discarded("전수 재검증 evidence가 UTF-8이 아니다".to_owned()))?;
+    let lines: Vec<&str> = text.lines().collect();
+    if lines.len() != ids.len() || (!suffix.is_empty() && !suffix.ends_with(b"\n")) {
+        return Err(VerifyError::Discarded(
+            "전수 재검증 중 예상하지 않은 verification event가 추가됐다".to_owned(),
+        ));
+    }
+    for (line, id) in lines.iter().zip(ids) {
+        let event: serde_json::Value = serde_json::from_str(line).map_err(|_| {
+            VerifyError::Discarded("전수 재검증 evidence JSON이 깨졌다".to_owned())
+        })?;
+        let expected_digest = ledger
+            .conditions
+            .get(id)
+            .and_then(|state| state.oracle.as_ref())
+            .map(|oracle| oracle.digest.as_str());
+        if event.get("kind").and_then(serde_json::Value::as_str) != Some("evidence")
+            || event.get("id").and_then(serde_json::Value::as_str) != Some(id)
+            || event
+                .get("oracle_digest")
+                .and_then(serde_json::Value::as_str)
+                != expected_digest
+        {
+            return Err(VerifyError::Discarded(
+                "전수 재검증 대상 또는 oracle 정의가 실행 중 바뀌었다".to_owned(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn validate_schema_profile(

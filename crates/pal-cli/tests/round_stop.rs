@@ -424,6 +424,17 @@ fn 필수_heading만_있고_본문이_빈_report와_folded는_차단한다() {
     assert!(blocked(&report));
     assert!(String::from_utf8_lossy(&report.stdout).contains("본문이 비었다"));
 
+    std::fs::write(
+        dir.join("report.md"),
+        "# report\n\n## 남지 않은 것\n<!--\nplaceholder\n-->\n\n## 다음 회차가 받는 것\n<!--\nplaceholder\n-->\n\n## 범위 밖\n<!--\nplaceholder\n-->\n\n## 원리상 못 잰 것\n<!--\nplaceholder\n-->\n\n## 능력 부재\n<!--\nplaceholder\n-->\n",
+    )
+    .expect("comment-only report");
+    assert!(blocked(&stop(
+        &repo,
+        &store,
+        &payload(&repo, "comment-report", &transcript, json!(false))
+    )));
+
     std::fs::remove_file(dir.join("report.md")).expect("remove report");
     std::fs::write(
         dir.join("folded.md"),
@@ -442,6 +453,20 @@ fn 필수_heading만_있고_본문이_빈_report와_folded는_차단한다() {
     );
     assert!(blocked(&folded));
     assert!(String::from_utf8_lossy(&folded.stdout).contains("본문이 비었다"));
+
+    write_folded(&repo);
+    std::fs::write(
+        dir.join("state.md"),
+        "# state\n\n## 지금 단계\n착수\n\n## 메모\n접힘은 folded.md에 기록한다.\n",
+    )
+    .expect("misleading state");
+    let misleading = stop(
+        &repo,
+        &store,
+        &payload(&repo, "misleading-state", &transcript, json!(false)),
+    );
+    assert!(blocked(&misleading));
+    assert!(String::from_utf8_lossy(&misleading.stdout).contains("state.md"));
 }
 
 #[test]

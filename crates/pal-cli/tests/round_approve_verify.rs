@@ -249,6 +249,21 @@ fn process_helper() {
             writeln!(file, "{event}").expect("oracle line");
             println!("ROUND_OK");
         }
+        "duplicate-judgment" => {
+            let path = target.expect("ledger");
+            let body = std::fs::read_to_string(&path).expect("read ledger");
+            let judgment = body
+                .lines()
+                .find(|line| line.contains("\"kind\":\"judgment\""))
+                .expect("judgment event")
+                .to_owned();
+            let mut file = OpenOptions::new()
+                .append(true)
+                .open(path)
+                .expect("append judgment");
+            writeln!(file, "{judgment}").expect("judgment line");
+            println!("ROUND_OK");
+        }
         "counter" => {
             let path = target.expect("counter");
             let mut file = OpenOptions::new()
@@ -396,6 +411,74 @@ fn 종료직전_전수재실행은_이미_met인_command와_정반합_finding을
 }
 
 #[test]
+fn 종료직전_전수대상이나_event가_실행중_바뀌면_seal하지_않는다() {
+    let (_base, repo, approvals) = root("finalize-ledger-race");
+    let dir = repo.join(".palimpsest/rounds").join(SLUG);
+    let judgment = dialectic_event(&repo, "D1");
+    let command = json!({
+        "kind":"oracle", "id":"A1", "mode":"command",
+        "check":helper_command("duplicate-judgment", Some(&dir.join("verification.log"))),
+        "expect":{"literal":"ROUND_OK"}, "cwd":"."
+    });
+    let dir = round_version(&repo, 3, &["A1", "D1"], &[command, judgment]);
+    std::fs::write(
+        dir.join("findings.jsonl"),
+        format!("{}\n", json!({"schema_version":3,"종류":"레코드","회차":SLUG})),
+    )
+    .expect("findings");
+    terminal_report(&dir);
+    commit_fixture(&repo);
+    assert_success(&approve(&repo, &approvals, "A1", &[]));
+
+    let denied = finalize(&repo, &approvals);
+    assert_eq!(denied.status.code(), Some(3));
+    assert_eq!(value(&denied)["outcome"], "discarded");
+    assert_ne!(status(&repo)["completion"], "complete");
+    assert!(!std::fs::read_to_string(dir.join("verification.log"))
+        .expect("ledger")
+        .contains("\"kind\":\"checkpoint\""));
+}
+
+#[test]
+fn 명시적_oracle_store와_default_finalization_store를_같이_쓴다() {
+    let (base, repo, explicit) = root("explicit-store-finalize");
+    let default_store = base.join("default-approvals");
+    std::fs::create_dir_all(&default_store).expect("default store");
+    let dir = round_version(&repo, 3, &["A1"], &[oracle("A1", "success", None)]);
+    std::fs::write(
+        dir.join("findings.jsonl"),
+        format!("{}\n", json!({"schema_version":3,"종류":"레코드","회차":SLUG})),
+    )
+    .expect("findings");
+    terminal_report(&dir);
+    commit_fixture(&repo);
+
+    let invoke = |subcommand: &str| {
+        Command::new(PAL)
+            .args(["round", subcommand, "--round", SLUG])
+            .args(if subcommand == "approve" {
+                vec!["--id", "A1"]
+            } else {
+                vec!["--all"]
+            })
+            .args(["--approval-dir", explicit.to_str().expect("explicit path"), "--json"])
+            .env("PAL_APPROVAL_DIR", &default_store)
+            .current_dir(&repo)
+            .output()
+            .expect("pal")
+    };
+    assert_success(&invoke("approve"));
+    assert_success(&invoke("verify"));
+    let out = Command::new(PAL)
+        .args(["round", "status", "--round", SLUG, "--json"])
+        .env("PAL_APPROVAL_DIR", &default_store)
+        .current_dir(&repo)
+        .output()
+        .expect("status");
+    assert_eq!(value(&out)["completion"], "complete");
+}
+
+#[test]
 fn 열린_금지역실패와_구형_findings는_complete_checkpoint를_거부한다() {
     for (tag, findings) in [
         (
@@ -424,6 +507,45 @@ fn 열린_금지역실패와_구형_findings는_complete_checkpoint를_거부한
                 "{}\n{}\n",
                 json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
                 json!({"id":"F1","상태":"닫힘","해악도":"금지역"})
+            ),
+        ),
+        (
+            "invalid-optional-enum",
+            format!(
+                "{}\n{}\n",
+                json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
+                json!({
+                    "id":"F1","라운드":1,"출처":"실측","모집단":"자기장치",
+                    "유효성":"참","해악도":"미관","처분":"정정",
+                    "경로":"tracked.txt","요약":"bad enum","승격됨":"아마도",
+                    "상태":"닫힘","닫은커밋":"abc1234"
+                })
+            ),
+        ),
+        (
+            "open-with-closed-commit",
+            format!(
+                "{}\n{}\n",
+                json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
+                json!({
+                    "id":"F1","라운드":1,"출처":"실측","모집단":"자기장치",
+                    "유효성":"참","해악도":"미관","처분":"정정",
+                    "경로":"tracked.txt","요약":"contradictory state",
+                    "상태":"열림","닫은커밋":"abc1234"
+                })
+            ),
+        ),
+        (
+            "unknown-finding-field",
+            format!(
+                "{}\n{}\n",
+                json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
+                json!({
+                    "id":"F1","라운드":1,"출처":"실측","모집단":"자기장치",
+                    "유효성":"참","해악도":"미관","처분":"정정",
+                    "경로":"tracked.txt","요약":"unknown field","상태":"닫힘",
+                    "닫은커밋":"abc1234","몰라요":"x"
+                })
             ),
         ),
     ] {
