@@ -435,6 +435,24 @@ fn 필수_heading만_있고_본문이_빈_report와_folded는_차단한다() {
         &payload(&repo, "comment-report", &transcript, json!(false))
     )));
 
+    for (session, hidden) in [
+        (
+            "open-comment-headings",
+            "# report\n\n## 남지 않은 것\n실제 본문\n<!--\n## 다음 회차가 받는 것\nplaceholder\n## 범위 밖\nplaceholder\n## 원리상 못 잰 것\nplaceholder\n## 능력 부재\nplaceholder\n",
+        ),
+        (
+            "fenced-headings",
+            "# report\n\n## 남지 않은 것\n실제 본문\n```md\n## 다음 회차가 받는 것\nplaceholder\n## 범위 밖\nplaceholder\n## 원리상 못 잰 것\nplaceholder\n## 능력 부재\nplaceholder\n```\n",
+        ),
+    ] {
+        std::fs::write(dir.join("report.md"), hidden).expect("hidden headings report");
+        assert!(blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, session, &transcript, json!(false))
+        )));
+    }
+
     std::fs::remove_file(dir.join("report.md")).expect("remove report");
     std::fs::write(
         dir.join("folded.md"),
@@ -467,6 +485,33 @@ fn 필수_heading만_있고_본문이_빈_report와_folded는_차단한다() {
     );
     assert!(blocked(&misleading));
     assert!(String::from_utf8_lossy(&misleading.stdout).contains("state.md"));
+}
+
+#[test]
+fn stop_store는_hook이_되읽는_environment_or_default_한자리뿐이다() {
+    let (repo, store) = root("stop-store-surface");
+    let explicit = repo.parent().expect("base").join("other-store");
+    let denied = pal(
+        &repo,
+        &store,
+        &[
+            "round",
+            "stop",
+            "enable",
+            "--round",
+            SLUG,
+            "--approval-dir",
+            explicit.to_str().expect("path"),
+            "--json",
+        ],
+    );
+    assert_eq!(denied.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&denied.stderr).contains("unexpected argument"));
+    assert!(!explicit.exists());
+
+    enable(&repo, &store);
+    let status = pal(&repo, &store, &["round", "stop", "status", "--json"]);
+    assert_eq!(serde_json::from_slice::<Value>(&status.stdout).expect("status")["outcome"], "enabled");
 }
 
 #[test]

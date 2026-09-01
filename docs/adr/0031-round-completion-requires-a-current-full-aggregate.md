@@ -45,6 +45,9 @@ Stop activation identity를 만들지 못했다.
   root를 쓴다. 따라서 shallow boundary나 뒤 deepen·local commit이 identity를 바꾸지 않는다.
   이 값은 외부 private 승인·activation namespace에만 있고 공유 산출물에 machine path를 싣지
   않는다.
+- Stop activation은 hook이 되읽는 `PAL_APPROVAL_DIR` 또는 platform default store 한 자리만
+  쓴다. CLI의 별도 `--approval-dir`은 제공하지 않아 성공 출력 뒤 hook이 inactive가 되는
+  locator 갈림을 만들지 않는다.
 - 마지막 SHA CI는 계속 원장 밖 terminal observation이다. 추적 파일이 자기 커밋의 CI 성공을
   주장하지 않고, 외부에서 일곱 job을 확인한 뒤에만 병합한다.
 

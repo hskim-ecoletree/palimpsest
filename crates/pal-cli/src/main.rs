@@ -477,8 +477,6 @@ enum RoundStopCommand {
         #[arg(long, default_value = ".")]
         repo: PathBuf,
         #[arg(long)]
-        approval_dir: Option<PathBuf>,
-        #[arg(long)]
         json: bool,
     },
     /// activation record 내용이 손상됐어도 Stop 정책을 즉시 비활성화한다
@@ -486,16 +484,12 @@ enum RoundStopCommand {
         #[arg(long, default_value = ".")]
         repo: PathBuf,
         #[arg(long)]
-        approval_dir: Option<PathBuf>,
-        #[arg(long)]
         json: bool,
     },
     /// Stop activation과 operational progress 상태를 읽는다
     Status {
         #[arg(long, default_value = ".")]
         repo: PathBuf,
-        #[arg(long)]
-        approval_dir: Option<PathBuf>,
         #[arg(long)]
         json: bool,
     },
@@ -619,14 +613,14 @@ fn main() -> Result<()> {
                 }
             }
             RoundCommand::Stop { what } => match what {
-                RoundStopCommand::Enable { round: slug, repo, approval_dir, json } => {
-                    round::stop::command_enable(&repo, &slug, approval_dir.as_deref(), json)
+                RoundStopCommand::Enable { round: slug, repo, json } => {
+                    round::stop::command_enable(&repo, &slug, None, json)
                 }
-                RoundStopCommand::Disable { repo, approval_dir, json } => {
-                    round::stop::command_disable(&repo, approval_dir.as_deref(), json)
+                RoundStopCommand::Disable { repo, json } => {
+                    round::stop::command_disable(&repo, None, json)
                 }
-                RoundStopCommand::Status { repo, approval_dir, json } => {
-                    round::stop::command_status(&repo, approval_dir.as_deref(), json)
+                RoundStopCommand::Status { repo, json } => {
+                    round::stop::command_status(&repo, None, json)
                 }
             },
         },

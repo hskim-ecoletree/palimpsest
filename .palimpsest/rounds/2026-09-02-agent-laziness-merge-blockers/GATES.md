@@ -7,7 +7,7 @@ Scope: close every issue 101 merge blocker and merge pull request 91 only after 
 - [x] G1: focused round status, approve, and Stop tests cover every positive and negative blocker path
   CHECK: cargo test -p pal-cli --test round_status && cargo test -p pal-cli --test round_approve_verify && cargo test -p pal-cli --test round_stop && echo MERGE_BLOCKER_FOCUSED_OK
   EXPECT: MERGE_BLOCKER_FOCUSED_OK
-  EVIDENCE: exit=0 and EXPECT matched; round_status 25, round_approve_verify 28, round_stop 22 passed
+  EVIDENCE: exit=0 and EXPECT matched; round_status 25, round_approve_verify 28, round_stop 23 passed
 
 - [x] G2: repository policy checks accept code, round records, gates, and decisions
   CHECK: cargo xtask check && echo MERGE_BLOCKER_CHECK_OK

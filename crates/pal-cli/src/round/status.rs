@@ -621,36 +621,38 @@ pub(crate) fn valid_terminal_document(
     }
     let body = std::fs::read_to_string(&path)
         .map_err(|error| format!("종료문을 읽지 못했다: {error}"))?;
-    let lines: Vec<&str> = body.lines().collect();
+    let sections = document_sections(&body, headings);
     for heading in headings {
-        let Some(index) = lines.iter().position(|line| line.trim_end() == *heading) else {
-            return Err(format!("필수 절 `{heading}`이 없다"));
-        };
-        let has_body = section_visible_text(&lines[index + 1..]).is_some();
-        if !has_body {
-            return Err(format!("필수 절 `{heading}`의 본문이 비었다"));
+        match sections.get(*heading) {
+            None => return Err(format!("필수 절 `{heading}`이 없다")),
+            Some(body) if body.trim().is_empty() => {
+                return Err(format!("필수 절 `{heading}`의 본문이 비었다"));
+            }
+            Some(_) => {}
         }
     }
     if terminal == Terminal::Folded {
         let state = std::fs::read_to_string(dir.join("state.md"))
             .map_err(|error| format!("folded 회차의 state.md를 읽지 못했다: {error}"))?;
-        let state_lines: Vec<&str> = state.lines().collect();
-        let stage = state_lines
-            .iter()
-            .position(|line| line.trim_end() == "## 지금 단계")
-            .and_then(|index| section_visible_text(&state_lines[index + 1..]));
-        if !stage.is_some_and(|body| body.contains("접힘") && body.contains("folded.md")) {
+        let stage = document_sections(&state, &["## 지금 단계"]);
+        if !stage
+            .get("## 지금 단계")
+            .is_some_and(|body| body.contains("접힘") && body.contains("folded.md"))
+        {
             return Err("state.md가 접힘 단계와 folded.md를 가리키지 않는다".to_owned());
         }
     }
     Ok(())
 }
 
-fn section_visible_text(lines: &[&str]) -> Option<String> {
-    let mut visible = String::new();
+fn document_sections(body: &str, headings: &[&str]) -> BTreeMap<String, String> {
+    let mut sections = BTreeMap::new();
+    let mut current: Option<String> = None;
     let mut in_comment = false;
-    for raw in lines.iter().take_while(|line| !line.starts_with("## ")) {
-        let mut rest = *raw;
+    let mut in_fence = false;
+    for raw in body.lines() {
+        let mut visible = String::new();
+        let mut rest = raw;
         loop {
             if in_comment {
                 let Some((_, after)) = rest.split_once("-->") else {
@@ -669,10 +671,32 @@ fn section_visible_text(lines: &[&str]) -> Option<String> {
             visible.push_str(rest);
             break;
         }
-        visible.push('\n');
+        let trimmed = visible.trim();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            if let Some(heading) = &current {
+                sections.entry(heading.clone()).or_insert_with(String::new).push_str(&visible);
+                sections.get_mut(heading).expect("section").push('\n');
+            }
+            in_fence = !in_fence;
+            continue;
+        }
+        if !in_fence {
+            if let Some(heading) = headings.iter().find(|heading| visible.trim_end() == **heading) {
+                current = Some((*heading).to_string());
+                sections.entry((*heading).to_string()).or_insert_with(String::new);
+                continue;
+            }
+            if visible.starts_with("## ") {
+                current = None;
+                continue;
+            }
+        }
+        if let Some(heading) = &current {
+            sections.entry(heading.clone()).or_insert_with(String::new).push_str(&visible);
+            sections.get_mut(heading).expect("section").push('\n');
+        }
     }
-    let visible = visible.trim();
-    (!visible.is_empty()).then(|| visible.to_owned())
+    sections
 }
 
 fn terminal_document_state(repo: &Path, slug: &str, terminal: Terminal) -> (bool, String) {

@@ -150,8 +150,11 @@ synthesis 파일의 digest와 판정을 가진 `judgment` event로 같은 aggreg
 실행하고, 그 뒤의 projected digest와 aggregate digest를 묶은 checkpoint를 append한다. schema
 3 command는 이 전수 재실행을 복원할 수 있도록 기본 shell·timeout·output의 canonical
 profile만 허용한다. checkpoint와 같은 digest의 external private finalization seal이 함께 있어야
-complete이며 원장 행만 직접 써서는 complete가 아니다. report 본문·bytes digest와 finding
-정본의 필수 축·enum도 aggregate currentness에 든다. schema 1·2는 읽을 수 있지만 checkpoint가
+complete이며 원장 행만 직접 써서는 complete가 아니다. 전수 실행 중 원장 event가 예상 밖으로
+늘거나 바뀌어도 seal하지 않는다. report의 주석·code fence 밖 본문, bytes digest와 finding
+정본의 전체 축·enum·대응 조합도 aggregate currentness에 든다. Stop activation store는 hook이
+되읽을 수 있는 `PAL_APPROVAL_DIR` 또는 platform default 한 자리만 쓰며 별도 CLI 경로를 받지 않는다.
+schema 1·2는 읽을 수 있지만 checkpoint가
 없으므로 Stop의 complete 자격은 없다. `verification=met`만 보고 종료하지 않는다.
 
 ## 4. 승인 — 여기서 루프에 들어간다
