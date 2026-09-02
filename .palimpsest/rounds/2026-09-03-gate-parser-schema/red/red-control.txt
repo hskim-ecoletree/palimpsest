@@ -1,0 +1,32 @@
+  ok    의존 방향  — 크레이트 8개, 규칙 4
+  ok    코어 어휘 금지  — 금지어 16개 · 허용 예외 0개
+  ok    의도 저장소 폐기 경로 부재  — pal-store 소스에 의도 경로 언급 0건
+  ok    unsafe 금지  — 크레이트 루트 7개
+  ok    의존 정책  — advisories ok, bans ok, licenses ok, sources ok
+  ok    gix 격리  — gix 직접 의존은 pal-git 하나
+  ok    스키마 정합  — 노드 라벨 10개 · 엣지 타입 8개 · 양방향 0건
+  ok    카탈로그 정합  — 질의 10개 · 양방향 0건 · 표면 1곳의 소스 33개에 박힌 이름 0건
+  ok    선택 필드 금지 (1단계)  — `pub struct` 104개 · 선택 필드 0
+  ok    예산 상수 단일 위치  — 예산 상수 21개 · 다른 파일 88개에 0건
+  ok    벗어나는 경로 부재  — 봉투 4개 · 예산 4개 낱말에 0건
+  ok    앵커는 신고받지 않는다  — `WatchEntry` 생성 자리 3개 · 등록된 자리 3개
+  ok    낡음이 생성기를 안 부른다  — 낡음을 다루는 파일 2개 · 생성 낱말 6개에 0건
+  ok    인입이 자연어 유사도를 안 쓴다  — 인입 파일 2개 · 유사도 낱말 10개에 0건
+  ok    승격이 원본을 안 고친다  — 승격을 다루는 파일 2개 · 제자리 수정 5개 형태에 0건
+  ok    설치 경로가 홈을 안 부른다  — 설치 소스 17개 · 홈 낱말 7개에 0건
+  ok    죽은 링크 부재  — 문서 286개 · 링크 479건 · 죽은 것 0건
+  ok    sunset 선언  — 선언 2건 · 트리거 `.palimpsest/rounds/*/*.json` 는 아직 0건 — 그날이 오면 여기가 빨개진다
+  ok    사라진 문서를 현재형으로 안 부른다  — 파일 203개 · 사라진 문서 인용 490곳 · 전부 「옛」 표기
+  FAIL  회차 레코드
+  ok    원장 둘 대조  — 회차 8 · 검사 안 2026-08-19-finding-records (46개) · 2026-08-20-rust-extractor (44개) · 2026-08-22-agent-laziness (69개) · 2026-08-23-agent-laziness-behavior (39개) (조건 198 · 그중 미측정 0) · 형식 이전 2026-08-18-completion-condition (docs/gates/round-completion-condition.md) · 2026-08-18-inventory-disposal (docs/gates/inventory-disposal.md) · 게이트 없음 2026-08-18-round-protocol · 2026-08-23-check-verifies-work · 종료 보고 6개 검사 (검산 줄 유예 발화 2 · 보고 없음 유예 발화 1) · 최근 끝난 회차 `2026-08-23-agent-laziness-behavior` 가 검사에 들었다
+  ok    발견이 닫혔나  — 잰 것 417행 · 발화 0 · **감사 대기 발화 41** · 원리상 못 잼 635 (경로 없음 3 · 기각 200 · 형식 이전 432) · 이 이력에서 안 보임 0행 · 열림 0행 · SHA 31개
+  ok    선언 목록이 닫혀 있나  — 형식 이전 2개 (하한 2026-08-19) · A 축 감사 대기 4개 (하한 2026-08-24) · 종료 보고 검산 줄 유예 2개 (하한 2026-08-24) · 종료 보고 없음 유예 1개 (하한 2026-08-19)
+
+회차 레코드: .palimpsest/rounds/2026-08-19-finding-records/findings.jsonl: 머리 줄의 `종류` 가 원천이 선언한 ["XX_거짓_종류_XX"] 밖이다
+    .palimpsest/rounds/2026-08-19-finding-records/premortem/disposal-overrides.jsonl: 머리 줄의 `종류` 가 원천이 선언한 ["XX_거짓_종류_XX"] 밖이다
+    .palimpsest/rounds/2026-08-19-finding-records/review/disposal-overrides.jsonl: 머리 줄의 `종류` 가 원천이 선언한 ["XX_거짓_종류_XX"] 밖이다
+    .palimpsest/rounds/2026-08-20-rust-extractor/findings.jsonl: 머리 줄의 `종류` 가 원천이 선언한 ["XX_거짓_종류_XX"] 밖이다
+    .palimpsest/rounds/2026-08-22-agent-laziness/findings.jsonl: 머리 줄의 `종류` 가 원천이 선언한 ["XX_거짓_종류_XX"] 밖이다
+    .palimpsest/rounds/2026-08-23-agent-laziness-behavior/findings.jsonl: 머리 줄의 `종류` 가 원천이 선언한 ["XX_거짓_종류_XX"] 밖이다
+    .palimpsest/rounds/2026-08-23-check-verifies-work/findings.jsonl: 머리 줄의 `종류` 가 원천이 선언한 ["XX_거짓_종류_XX"] 밖이다
+Error: 1개 검사가 실패했다
