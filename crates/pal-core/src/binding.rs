@@ -715,6 +715,114 @@ mod 저장된_옛_표기 {
     }
 }
 
+/// **와이어 대조 — 두 축의 직렬화 토큰이 서로소인가** (`A2-a`).
+///
+/// `A2` 의 원 문면은 *"두 축이 같은 낱말을 쓰는지 아닌지가 **근거에 적힌다**"* 였다.
+/// 산문은 그 충돌을 못 잡는다. 실제 충돌은 `--json` 위에 있다 —
+/// [`BindingStatus`] 는 한 구조체이고 `{"code":{"freshness":"…"},"lineage":"…"}` 를
+/// 내므로, 두 축이 같은 문자열을 쓰면 기계 소비자가 축을 못 가른다.
+/// 축이 둘인 것이 [`BindingStatus`] 의 설계 근거다.
+///
+/// # 이 시험은 태어나면서 초록이다 — 그래서 음성 대조를 함께 세운다
+///
+/// `A1` 이 `Current` 를 피했으므로 지금 두 집합은 자명하게 서로소다. 그대로 두면
+/// 검사 하나가 「측정이 죽은 가지」로 남고, 뒤에 [`Lineage`] 를 손대는 회차가
+/// *"검사가 있으니 안전하다"* 고 잘못 믿는다. 그러므로 판정을 **순수 함수**로 떼어
+/// 일부러 겹치게 만든 값을 먹이고 **발화를 관측한다.**
+#[cfg(test)]
+mod 두_축의_와이어 {
+    use super::{CodeFreshness, Lineage, SymbolId, UndeterminableReason};
+
+    /// 겹치는 토큰을 돌려준다. **순수 함수다** — 그래야 음성 대조가 선다.
+    fn 겹치는_토큰(a: &[String], b: &[String]) -> Vec<String> {
+        let mut 겹침: Vec<String> =
+            a.iter().filter(|t| b.contains(t)).cloned().collect();
+        겹침.sort();
+        겹침.dedup();
+        겹침
+    }
+
+    /// 직렬화된 값에서 **축을 가르는 토큰**을 뽑는다.
+    ///
+    /// `CodeFreshness` 는 내부 태그(`tag = "freshness"`)라 객체의 그 필드가 토큰이고,
+    /// `Lineage` 는 외부 태그라 문자열 자체이거나 객체의 유일한 키가 토큰이다.
+    /// **하드코딩하지 않는다** — 누가 `rename` 을 붙이면 이 시험이 그것을 따라간다.
+    fn 토큰(v: &serde_json::Value, 태그: Option<&str>) -> String {
+        match (v, 태그) {
+            (serde_json::Value::String(s), _) => s.clone(),
+            (serde_json::Value::Object(m), Some(k)) => {
+                m[k].as_str().expect("내부 태그가 문자열이 아니다").to_owned()
+            }
+            (serde_json::Value::Object(m), None) => {
+                let mut keys: Vec<_> = m.keys().cloned().collect();
+                assert_eq!(keys.len(), 1, "외부 태그 객체의 키가 하나가 아니다");
+                keys.pop().expect("키 하나")
+            }
+            _ => panic!("토큰을 못 뽑는 형태다: {v}"),
+        }
+    }
+
+    fn 신선도_토큰들() -> Vec<String> {
+        let 심볼: Vec<SymbolId> = Vec::new();
+        [
+            CodeFreshness::Fresh,
+            CodeFreshness::Stale { triggered_by: 심볼.clone() },
+            CodeFreshness::Orphaned { missing: 심볼.clone() },
+            CodeFreshness::Undeterminable {
+                reason: UndeterminableReason::IdentityGrade,
+                at: 심볼,
+            },
+        ]
+        .iter()
+        .map(|v| 토큰(&serde_json::to_value(v).expect("직렬화"), Some("freshness")))
+        .collect()
+    }
+
+    fn 계보_토큰들() -> Vec<String> {
+        let 대체자 =
+            crate::EntityId::mint(crate::EntityKind::new("decision"), crate::EntityOrigin::Hand);
+        [Lineage::Current, Lineage::Superseded { by: 대체자 }]
+            .iter()
+            .map(|v| 토큰(&serde_json::to_value(v).expect("직렬화"), None))
+            .collect()
+    }
+
+    /// **본 시험** — 지금 두 축은 같은 낱말을 안 쓴다.
+    #[test]
+    fn 두_축의_토큰_집합은_서로소다() {
+        let 신선도 = 신선도_토큰들();
+        let 계보 = 계보_토큰들();
+        assert_eq!(신선도.len(), 4, "신선도 변형이 넷이 아니다");
+        assert_eq!(계보.len(), 2, "계보 변형이 둘이 아니다");
+        let 겹침 = 겹치는_토큰(&신선도, &계보);
+        assert!(
+            겹침.is_empty(),
+            "두 축이 같은 와이어 토큰을 쓴다: {겹침:?} — \
+             `{{\"code\":{{\"freshness\":..}},\"lineage\":..}}` 를 읽는 쪽이 축을 못 가른다"
+        );
+    }
+
+    /// **음성 대조** — 일부러 겹치게 만든 값을 먹이면 발화한다.
+    ///
+    /// 이것이 없으면 위 시험은 *"넷과 둘을 셌다"* 만 보증하고 **겹침을 재지 않는다.**
+    #[test]
+    fn 겹치면_발화한다() {
+        let 신선도 = 신선도_토큰들();
+        // 실제로 기각된 후보다 — `Live → Current` 로 갔다면 이 값이 나왔다.
+        let 겹치는_계보 = vec!["current".to_owned(), "superseded".to_owned()];
+        let 겹치도록_바꾼_신선도: Vec<String> = 신선도
+            .iter()
+            .map(|t| if t == "fresh" { "current".to_owned() } else { t.clone() })
+            .collect();
+        let 겹침 = 겹치는_토큰(&겹치도록_바꾼_신선도, &겹치는_계보);
+        assert_eq!(
+            겹침,
+            vec!["current".to_owned()],
+            "일부러 겹치게 만들었는데 판정이 침묵했다 — 이 검사는 아무것도 안 잰다"
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
