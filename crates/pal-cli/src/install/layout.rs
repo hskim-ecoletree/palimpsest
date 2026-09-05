@@ -87,6 +87,26 @@ pub const PAYLOAD: &[Resource] = &[
         path: ".claude/agents/pal-decision-synthesizer.md",
         body: include_str!("../../../../.claude/agents/pal-decision-synthesizer.md"),
     },
+    // 정반합 나머지 넷 — #112 가 세웠다. **여섯이 한 벌이다.**
+    // ★ **여섯을 함께 놓는다.** 하나라도 빠지면 그 자리를 메인이 겸하게 되고,
+    // 그러면 소유자 지시(*"메인에이전트의 역할은 스킬을 발동시키고 결과 보고를 받는것
+    // 외에는 일절 관여하지 않도록"*)가 문서에만 남는다.
+    Resource {
+        path: ".claude/agents/pal-debate-designer.md",
+        body: include_str!("../../../../.claude/agents/pal-debate-designer.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-decision-proposer.md",
+        body: include_str!("../../../../.claude/agents/pal-decision-proposer.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-debate-referee.md",
+        body: include_str!("../../../../.claude/agents/pal-debate-referee.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-debate-reporter.md",
+        body: include_str!("../../../../.claude/agents/pal-debate-reporter.md"),
+    },
     // 계기판 — 규약 §5 「검증 → 수정 착수」 자리가 이것을 부른다.
     // ★ **스킬과 함께 놓아야 한다.** 규약만 놓고 이것을 안 놓으면 설치본의 그 자리가
     // **태어나면서 죽은 가지**가 된다(실측 2026-08-19 · 독립 리뷰 2 라운드가 잡았다).
@@ -164,6 +184,10 @@ pub const OWNED_FILES: &[&str] = &[
     ".claude/agents/pal-independent-reviewer.md",
     ".claude/agents/pal-decision-opponent.md",
     ".claude/agents/pal-decision-synthesizer.md",
+    ".claude/agents/pal-debate-designer.md",
+    ".claude/agents/pal-decision-proposer.md",
+    ".claude/agents/pal-debate-referee.md",
+    ".claude/agents/pal-debate-reporter.md",
     ".claude/skills/pal-round/SKILL.md",
     ".claude/skills/pal-round/bin/dashboard.py",
     ".claude/skills/pal-round/bin/record.py",
