@@ -1,0 +1,50 @@
+# 효과 — palimpsest 의 실제 노드를 OpenMetadata JSON Schema 에 넣어 돌린 출력
+
+돌린 날: 2026-09-05 · 커밋 a26d468 · OpenMetadata 2.0.1 (2026-09-02 릴리스)
+명령:
+  python3 effect/fetch-om-schema.py entity/data/contextFile.json entity/data/ontologyAxiom.json type/entityRelationship.json
+  python3 effect/validate.py <om-schema> <export.cypher> .palimpsest/intent/bindings.jsonl schema/graph.toml
+
+노드 원천: pal export --format cypher (built_for_this_snapshot=true · 2 층을 새로 세운 뒤)
+---
+
+palimpsest 실측: File 133 · Symbol 3018 · 결박 18
+
+팔   통과    이름
+────────────────────────────────────────────────────────────────────────────────────────────────
+P   ○     최소 contextFile
+P   ○     최소 entityRelationship
+T   ×     File 노드를 contextFile 로 (path=corpus/tasks/f03-normalize-seeds.ts)
+          └ Additional properties are not allowed ('grade', 'language' were unexpected)
+T   ○     File 노드에서 language·grade 를 버리고
+T   ○     Symbol 노드를 contextFile 로 (id=00227a4ddc51…)
+T   ×     결박을 ontologyAxiom 으로 (id=262fef9e5483d7bf)
+          └ 'displayName' is a required property
+T   ×     결박을 ontologyAxiom 으로 · required 11 개를 전부 채운다
+          └ 'Derived' is not one of ['Manual', 'Inferred', 'Imported', 'AiSuggested']
+T   ×     REFERENCES 엣지를 entityRelationship 으로
+          └ 'REFERENCES' is not one of ['contains', 'createdBy', 'repliedTo', 'isAbout', 'addressedTo', 'mentionedIn', 'testedBy', 'uses', 'owns', 'parentOf', 'ha
+N   ×     contextFile 에서 required `name` 을 뺀다
+          └ 'name' is a required property
+N   ×     contextFile 에 규격 밖 속성 `palimpsestGrade` 를 넣는다
+          └ Additional properties are not allowed ('palimpsestGrade' was unexpected)
+N   ×     entityRelationship 에서 required `relationshipType` 을 뺀다
+          └ 'relationshipType' is a required property
+
+── 음성 대조 ──
+P (통과해야 한다): 2/2 통과 → 검증기가 선다
+N (실패해야 한다): 3/3 실패 → 검증기가 실제로 잰다
+
+T (판정 대상): 2/6 통과
+
+── 엣지 어휘 대조 — palimpsest 엣지 8 vs OpenMetadata relationshipType enum 27 ──
+  BOUND_TO         → (없다)
+  AUTHORED_BY      → (없다)
+  TOUCHES          → (없다)
+  FOLLOWS          → follows
+  MANIFESTS_AT     → (없다)
+  INTRODUCED_BY    → (없다)
+  RESOLVED_BY      → (없다)
+  REFERENCES       → (없다)
+
+정확히 대응하는 엣지: 1/8
