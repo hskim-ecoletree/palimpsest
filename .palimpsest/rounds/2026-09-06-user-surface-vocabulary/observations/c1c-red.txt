@@ -1,0 +1,18 @@
+# C1-c RED 관측 — 2026-09-06
+# 처치: `ResolutionGrade::name()` 의 `Self::Exact` 팔을 `"exact"` → `"정확(exact)"` 로 바꿔
+#      「왕복 파서를 진 표시 함수에 병기를 얹은」 상황을 실제로 만들었다. 관측 후 즉시 되돌렸다.
+
+$ cargo test -p pal-core 왕복_파서
+test graph::왕복_파서를_진_표시_함수::출처가_왕복한다 ... ok
+test graph::왕복_파서를_진_표시_함수::질의_이름이_왕복한다 ... ok
+test graph::왕복_파서를_진_표시_함수::병기를_얹으면_판정기가_잡는다 ... FAILED
+test graph::왕복_파서를_진_표시_함수::해소_등급이_왕복한다 ... FAILED
+
+panicked at crates/pal-core/src/graph.rs:342:13
+panicked at crates/pal-core/src/graph.rs:378:9
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 226 filtered out
+
+# 되돌린 뒤
+$ cargo test -p pal-core 왕복_파서
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 225 filtered out

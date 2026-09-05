@@ -21,6 +21,7 @@ mod export;
 mod hook;
 mod install;
 mod intent;
+mod label;
 mod ledger;
 mod narrative;
 mod plan;

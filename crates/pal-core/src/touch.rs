@@ -149,8 +149,11 @@ impl NearKind {
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
-            Self::Spelling => "표기",
-            Self::Substring => "부분",
+            // **기계 토큰이다** — 이 저장소에서 `name()` 은 와이어 표기이고
+            // serde 가 내는 값(`rename_all = "snake_case"`)과 같아야 한다.
+            // 사람이 읽는 병기는 `pal-cli` 의 `label` 이 진다.
+            Self::Spelling => "spelling",
+            Self::Substring => "substring",
         }
     }
 }

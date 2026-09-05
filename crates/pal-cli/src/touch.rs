@@ -317,7 +317,7 @@ pub fn print_near(near: &[pal_core::NearName], elision: &Elision) {
         return;
     }
     for n in near {
-        println!("  [{}] {}", n.kind.name(), n.name);
+        println!("  [{}] {}", crate::label::가까움(n.kind).병기(), n.name);
     }
     let 자른 = elision.count_of(pal_core::ElisionReason::BindingMaxExceeded);
     if 자른 > 0 {
@@ -343,16 +343,19 @@ fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elisio
     }
     for item in items {
         let BoundItem::Note { binding, note, status, radius, watch, at, .. } = item;
+        // **병기는 `label` 이 진다** — `pal-core` 의 `name()` 에 얹으면 그것이 그대로
+        // 와이어로 나간다(`label` 모듈 머리 · ADR-0033).
+        let 병기 = crate::label::신선도(&status.code).병기();
         let mark = match &status.code {
-            pal_core::CodeFreshness::Fresh => "fresh".to_owned(),
+            pal_core::CodeFreshness::Fresh => 병기.to_owned(),
             pal_core::CodeFreshness::Stale { triggered_by } =>
-                format!("STALE ← {} 개가 변했습니다", triggered_by.len()),
+                format!("{병기} ← {} 개가 변했습니다", triggered_by.len()),
             pal_core::CodeFreshness::Orphaned { missing } =>
-                format!("ORPHANED ← 좌표 {} 개가 사라졌습니다", missing.len()),
-            // **`live` 와 같은 화면이 되면 안 된다** — *"유효하다"* 와 *"유효한지 알 수
+                format!("{병기} ← 좌표 {} 개가 사라졌습니다", missing.len()),
+            // **`fresh` 와 같은 화면이 되면 안 된다** — *"유효하다"* 와 *"유효한지 알 수
             // 없다"* 가 같은 줄로 나오는 것이 R16 이 겨냥한 실패다.
             pal_core::CodeFreshness::Undeterminable { reason, at } =>
-                format!("판정 불가 ← {} ({} 개 좌표)", reason.name(), at.len()),
+                format!("{병기} ← {} ({} 개 좌표)", reason.name(), at.len()),
         };
         // **반경을 함께 낸다** — *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은
         // 유효하다"* 와 다른 문장이다(옛 F09 §3).

@@ -787,4 +787,28 @@ key        = ["id"]
         let s = 성한.replace("rust_type  = \"SymbolNode\"", "rust_typ   = \"SymbolNode\"");
         assert!(matches!(GraphSchema::parse(&s), Err(SchemaError::Syntax(_))));
     }
+
+    /// **왕복 파서를 진 표시 함수** — `C1-c` 의 넷째 자리.
+    ///
+    /// [`Cardinality::parse`] 가 `name()` 의 문자열을 그대로 열쇠로 쓴다. 병기를 얹으면
+    /// 스키마 파일의 `cardinality = "one-to-many"` 가 안 읽히고, 그때 나는 것은
+    /// **조용한 [`None`]** 이다.
+    #[test]
+    fn 다중도가_왕복한다() {
+        for c in [
+            Cardinality::OneToOne,
+            Cardinality::ManyToOne,
+            Cardinality::OneToMany,
+            Cardinality::ManyToMany,
+        ] {
+            let 이름 = c.name();
+            assert!(
+                !이름.chars().any(|ch| ch >= '\u{AC00}' && ch <= '\u{D7A3}'),
+                "`{이름}` 에 한국어가 얹혔다 — 스키마 파일이 안 읽힌다"
+            );
+            assert_eq!(Cardinality::parse(이름), Some(c), "`{이름}` 이 되읽히지 않는다");
+        }
+        // 음성 대조 — 얹으면 실제로 죽는다.
+        assert_eq!(Cardinality::parse("일대다(one-to-many)"), None);
+    }
 }

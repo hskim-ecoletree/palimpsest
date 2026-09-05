@@ -18,7 +18,7 @@ use pal_core::{
     Attributes, Bucket, CORRUPT_NOTES, Containment, DetectorFreshness, Discriminator,
     EXTRACT_CHUNK, ExtractGrade, FileRow, FileState, OVERSIZE_BYTES, RefCounts, ReferenceEdge,
     Slot,
-    IdentityGrade, LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath,
+    LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath,
     ScopeSource, Snapshot, SymbolId, SymbolNode, TreeRef, UnsupportedReason,
 };
 use pal_extract::FileOutcome;
@@ -594,7 +594,6 @@ pub fn print_table(report: &LedgerReport) {
                     )
                 }
             }
-            Bucket::Unrecognized if n > 0 => "  언어 미인식".to_owned(),
             Bucket::Partial if n > 0 => "  회복 지점 기록됨".to_owned(),
             Bucket::Excluded if n > 0 => {
                 let rules: Vec<String> = l
@@ -606,7 +605,9 @@ pub fn print_table(report: &LedgerReport) {
             }
             _ => String::new(),
         };
-        println!("  {:<16}{:>6}{note}", b.name(), n);
+        // **고정폭 열에는 원 표기만 넣는다** — `{:<N}` 은 char 수로 채우고 한글은
+        // 터미널에서 두 열을 먹어 정렬이 어긋난다. 병기는 열 뒤에 붙인다(ADR-0033 §3).
+        println!("  {:<16}{:>6}  {}{note}", b.name(), n, crate::label::파일_상태(b).사용자_언어);
     }
 
     println!();
@@ -615,11 +616,18 @@ pub fn print_table(report: &LedgerReport) {
     } else {
         for (i, c) in l.languages.iter().enumerate() {
             let head = if i == 0 { "언어    " } else { "        " };
-            let identity = match c.identity {
-                IdentityGrade::Unavailable => "결박 불가".to_owned(),
-                g => format!("identity: {}", g.name()),
-            };
-            println!("{head}  {:<18}{:<4}{:<14}{:>6} 파일", c.language.as_str(), c.grade.name(), identity, c.files);
+            let identity = c.identity.name();
+            // 같은 규칙이다 — 고정폭 열은 원 표기, 병기는 줄 끝. 앞 판은 `{:<14}` 안에
+            // 「결박 불가」를 넣어 그 열의 정렬이 이미 어긋나 있었다.
+            println!(
+                "{head}  {:<18}{:<4}{:<14}{:>6} 파일  ·  {} · {}",
+                c.language.as_str(),
+                c.grade.name(),
+                identity,
+                c.files,
+                crate::label::추출_등급(c.grade).사용자_언어,
+                crate::label::정체성_등급(c.identity).사용자_언어,
+            );
         }
         let unbindable = l.unbindable_languages();
         if !unbindable.is_empty() {
@@ -655,6 +663,7 @@ pub fn print_table(report: &LedgerReport) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pal_core::IdentityGrade;
     use pal_core::{BodyDigest, LocalIx, Span, Symbol, SymbolKind};
 
     fn 심볼(name: &str, kind: SymbolKind, at: usize) -> Symbol {

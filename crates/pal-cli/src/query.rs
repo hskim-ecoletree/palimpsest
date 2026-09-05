@@ -351,18 +351,20 @@ fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::Det
     println!("  결박 {}건", bindings.len());
     println!();
     for b in bindings {
+        // **병기는 `label` 이 진다** — `crate::label` 모듈 머리를 보라.
+        let 병기 = crate::label::신선도(&b.status.code).병기();
         let mark = match &b.status.code {
-            pal_core::CodeFreshness::Fresh => "fresh".to_owned(),
+            pal_core::CodeFreshness::Fresh => 병기.to_owned(),
             pal_core::CodeFreshness::Stale { triggered_by } => {
-                format!("STALE ← {} 개가 변했습니다", triggered_by.len())
+                format!("{병기} ← {} 개가 변했습니다", triggered_by.len())
             }
             pal_core::CodeFreshness::Orphaned { missing } => {
-                format!("ORPHANED ← 좌표 {} 개가 사라졌습니다", missing.len())
+                format!("{병기} ← 좌표 {} 개가 사라졌습니다", missing.len())
             }
-            // **`live` 와 같은 화면이 되면 안 된다** — *"유효하다"* 와 *"유효한지 알 수
+            // **`fresh` 와 같은 화면이 되면 안 된다** — *"유효하다"* 와 *"유효한지 알 수
             // 없다"* 가 같은 줄로 나오는 것이 R16 이 겨냥한 실패다.
             pal_core::CodeFreshness::Undeterminable { reason, at } => {
-                format!("판정 불가 ← {} ({} 개 좌표)", reason.name(), at.len())
+                format!("{병기} ← {} ({} 개 좌표)", reason.name(), at.len())
             }
         };
         let 계보 = match &b.status.lineage {

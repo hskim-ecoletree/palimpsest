@@ -312,3 +312,71 @@ mod tests {
         }
     }
 }
+
+/// **왕복 파서를 진 표시 함수** — `name()` 이 화면 문자열이면서 동시에 `parse` 의 키인 자리.
+///
+/// 이 저장소에 그런 자리가 넷이다 — [`crate::ResolutionGrade`] · [`crate::Provenance`] ·
+/// [`crate::QueryName`] · `schema::Cardinality`. `C1` 이 든 「해소 등급」이 그 첫째다.
+///
+/// # 왜 이 시험이 필요한가 (`C1-c`)
+///
+/// 병기를 `name()` 에 얹으면 `parse("exact")` 가 [`None`] 을 돌려주고 저장된 엣지의
+/// 등급이 되읽기에서 전부 사라진다. 그런데 **`parse` 가 [`Option`] 을 돌려주므로
+/// 아무 검사도 그것을 안 잡는다** — 조용히 값이 없어진다.
+///
+/// 그래서 왕복이 성립하는지를 여기서 잰다. **병기는 `pal-cli` 의 `label` 이 지고
+/// `pal-core` 의 `name()` 은 안 건드린다** — 그 분리가 이 시험이 지키는 것이다.
+#[cfg(test)]
+mod 왕복_파서를_진_표시_함수 {
+    /// 한글 음절·자모가 하나라도 있으면 참. **순수 함수다** — 그래야 음성 대조가 선다.
+    fn 한국어가_있나(s: &str) -> bool {
+        s.chars().any(|c| {
+            matches!(c, '\u{AC00}'..='\u{D7A3}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')
+        })
+    }
+
+    #[test]
+    fn 해소_등급이_왕복한다() {
+        for g in crate::ResolutionGrade::ALL {
+            let 이름 = g.name();
+            assert!(!한국어가_있나(이름), "`{이름}` 에 한국어가 얹혔다 — parse 가 죽는다");
+            assert_eq!(
+                crate::ResolutionGrade::parse(이름),
+                Some(g),
+                "`{이름}` 이 되읽히지 않는다 — 저장된 엣지의 등급이 조용히 사라진다"
+            );
+        }
+    }
+
+    #[test]
+    fn 출처가_왕복한다() {
+        for p in crate::Provenance::ALL {
+            let 이름 = p.name();
+            assert!(!한국어가_있나(이름), "`{이름}` 에 한국어가 얹혔다 — parse 가 죽는다");
+            assert_eq!(crate::Provenance::parse(이름), Some(p), "`{이름}` 이 되읽히지 않는다");
+        }
+    }
+
+    #[test]
+    fn 질의_이름이_왕복한다() {
+        for q in crate::QueryName::ALL {
+            let 이름 = q.name();
+            assert!(!한국어가_있나(이름), "`{이름}` 에 한국어가 얹혔다 — parse 가 죽는다");
+            assert_eq!(crate::QueryName::parse(이름), Some(q), "`{이름}` 이 되읽히지 않는다");
+        }
+    }
+
+    /// **음성 대조** — 판정기가 일부러 얹은 병기를 실제로 잡는가.
+    ///
+    /// 위 셋은 지금 전부 초록이다. 이 시험이 없으면 그 초록이 *"왕복이 성립한다"* 를
+    /// 뜻하는지 *"판정기가 아무것도 안 본다"* 를 뜻하는지 갈리지 않는다.
+    #[test]
+    fn 병기를_얹으면_판정기가_잡는다() {
+        assert!(한국어가_있나("정확(exact)"), "병기가 얹힌 문자열을 판정기가 못 잡았다");
+        assert!(!한국어가_있나("exact"));
+        // 그리고 얹힌 문자열은 실제로 되읽히지 않는다.
+        assert_eq!(crate::ResolutionGrade::parse("정확(exact)"), None);
+        assert_eq!(crate::Provenance::parse("추출(extracted)"), None);
+        assert_eq!(crate::QueryName::parse("결박 상태(binding.status)"), None);
+    }
+}

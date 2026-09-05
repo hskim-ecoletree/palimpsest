@@ -98,7 +98,10 @@ impl IdentityGrade {
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
-            Self::Unavailable => "없음",
+            // **한국어를 여기 두지 않는다.** 이 값은 `pal export` 의 Cypher 속성
+            // (`identity: "…"`)과 `BindingReport::watch_grades` 의 **키**로 나간다 —
+            // 기계가 읽는 토큰이다. 사람이 읽는 병기는 `pal-cli` 의 `label` 이 진다.
+            Self::Unavailable => "unavailable",
             Self::Ordinal => "ordinal",
             Self::Exact => "exact",
         }
@@ -137,7 +140,8 @@ impl BinaryReason {
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
-            Self::NulByte => "NUL 바이트",
+            // 위 [`IdentityGrade::name`] 과 같은 자리다 — 기계 토큰이다.
+            Self::NulByte => "nul-byte",
         }
     }
 }

@@ -621,6 +621,7 @@ fn check(root: &Path) -> Result<()> {
     let checks = [
         ("의존 방향", check_dependency_direction(root)),
         ("코어 어휘 금지", check_vocabulary(root)),
+        ("기계 토큰에 한국어 금지", check_machine_tokens(root)),
         ("의도 저장소 폐기 경로 부재", check_intent_untouched(root)),
         ("unsafe 금지", check_forbid_unsafe(root)),
         ("의존 정책", check_deny(root)),
@@ -826,6 +827,162 @@ fn check_vocabulary(root: &Path) -> Result<String> {
         bail!("pal-core 에 금지 어휘가 있다:\n    {}", hits.join("\n    "));
     }
     Ok(format!("금지어 {}개 · 허용 예외 {}개", banned.len(), allow.len()))
+}
+
+// ── 검사 24 — 기계 토큰에 한국어 금지 (`C2-a` · 회차 2026-09-06) ─────────────
+
+/// 이 저장소의 **기계 토큰**에 한국어가 섞이지 않았는가.
+///
+/// # 무엇이 대상이고 무엇이 아닌가 — 문면 그대로 걸면 사용자 데이터를 금지한다
+///
+/// 대상은 **enum·토큰 필드의 값**이다: `fn name(` 이 돌려주는 문자열 리터럴과
+/// `#[serde(rename = …)]` · `#[serde(tag = …)]` · `#[serde(rename_all = …)]`.
+/// **자유 본문 필드는 대상 밖이다** — 실측: `.palimpsest/intent/bindings.jsonl` 에서
+/// 한국어가 든 필드는 사용자가 손으로 쓴 `.note` 뿐이고, 「JSON 에 한국어 금지」를
+/// 문면대로 걸면 그 노트를 금지하는 검사가 된다.
+///
+/// # 왜 이것이 필요한가
+///
+/// `name()` 은 화면 문자열처럼 생겼지만 실제로는 와이어 토큰이다. `pal export` 가
+/// Cypher 속성 값으로 쓰고(`identity: "…"`), `pal-query` 가 `watch_grades` 의 키로
+/// 쓰고, 넷은 자기 `parse` 의 열쇠다. 착수 시점에 **이미 위반 둘**이 있었다 —
+/// `IdentityGrade::Unavailable => "없음"` 과 `BinaryReason::NulByte => "NUL 바이트"`.
+/// 앞엣것은 `identity: "없음"` 으로 그래프 산출까지 나가고 있었다.
+fn check_machine_tokens(root: &Path) -> Result<String> {
+    let mut hits = Vec::new();
+    let mut 잰_리터럴 = 0usize;
+    let mut 잰_파일 = 0usize;
+    for dir in ["crates/pal-core/src", "crates/pal-query/src", "crates/pal-store/src"] {
+        for file in rust_sources(&root.join(dir))? {
+            let text = std::fs::read_to_string(&file)?;
+            잰_파일 += 1;
+            let (found, 셈) = 한국어가_든_기계_토큰(&text);
+            잰_리터럴 += 셈;
+            for (n, lit) in found {
+                hits.push(format!("{}:{n} `{lit}`", file.display()));
+            }
+        }
+    }
+    if !hits.is_empty() {
+        bail!(
+            "기계 토큰에 한국어가 있다 — 이 값은 `--json` · Cypher · 파서 열쇠로 나간다:\n    {}",
+            hits.join("\n    ")
+        );
+    }
+    Ok(format!("파일 {잰_파일}개 · 기계 토큰 {잰_리터럴}개 · 한국어 0건"))
+}
+
+/// **순수 함수다** — 그래야 음성 대조를 시험으로 세울 수 있고, 검사가 자기가 만든
+/// 조건 위에서 발화 여부를 묻는 항등식이 되지 않는다.
+///
+/// 돌려주는 것은 `(위반 목록, 잰 리터럴 수)` 다. 둘째 값이 없으면 *"한국어 0건"* 이
+/// **아무것도 안 봤다**는 뜻인지 갈리지 않는다.
+fn 한국어가_든_기계_토큰(text: &str) -> (Vec<(usize, String)>, usize) {
+    let mut hits = Vec::new();
+    let mut 셈 = 0usize;
+    // `fn name(` 본문 안인가 — 중괄호 깊이로 센다.
+    let mut 안에 = false;
+    let mut 깊이 = 0i32;
+    for (i, line) in text.lines().enumerate() {
+        // 주석은 산문이다 — `///` 와 `//` 를 먼저 잘라낸다.
+        let code = match line.find("//") {
+            Some(p) => &line[..p],
+            None => line,
+        };
+        let serde_속성 = code.contains("#[serde(")
+            && (code.contains("rename") || code.contains("tag ") || code.contains("tag="));
+        if !안에 && code.contains("fn name(") {
+            안에 = true;
+            깊이 = 0;
+        }
+        if 안에 || serde_속성 {
+            for lit in 문자열_리터럴(code) {
+                셈 += 1;
+                if lit.chars().any(|c| ('\u{AC00}'..='\u{D7A3}').contains(&c)) {
+                    hits.push((i + 1, lit));
+                }
+            }
+        }
+        if 안에 {
+            깊이 += i32::try_from(code.matches('{').count()).unwrap_or(0);
+            깊이 -= i32::try_from(code.matches('}').count()).unwrap_or(0);
+            if 깊이 <= 0 && code.contains('}') {
+                안에 = false;
+            }
+        }
+    }
+    (hits, 셈)
+}
+
+/// 한 줄에서 큰따옴표 리터럴만 걷는다. 이스케이프는 안 본다 — 토큰에는 안 나온다.
+fn 문자열_리터럴(code: &str) -> Vec<String> {
+    code.split('"').skip(1).step_by(2).map(str::to_owned).collect()
+}
+
+#[cfg(test)]
+mod 기계_토큰_시험 {
+    use super::한국어가_든_기계_토큰;
+
+    /// **음성 대조** — 일부러 섞으면 발화한다.
+    ///
+    /// 이 시험이 없으면 저장소가 초록인 것이 *"한국어가 없다"* 를 뜻하는지
+    /// *"판정기가 아무것도 안 본다"* 를 뜻하는지 갈리지 않는다.
+    #[test]
+    fn 한국어를_섞으면_발화한다() {
+        let 소스 = r#"
+impl IdentityGrade {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Unavailable => "없음",
+            Self::Exact => "exact",
+        }
+    }
+}
+"#;
+        let (hits, 셈) = 한국어가_든_기계_토큰(소스);
+        assert_eq!(hits.len(), 1, "섞은 것을 못 잡았다: {hits:?}");
+        assert_eq!(hits[0].1, "없음");
+        assert_eq!(셈, 2, "리터럴을 다 세지 않았다");
+    }
+
+    /// serde 속성도 본다.
+    #[test]
+    fn serde_속성의_한국어도_잡는다() {
+        let 소스 = "#[serde(rename = \"낡음\")]\npub enum X { A }\n";
+        let (hits, _) = 한국어가_든_기계_토큰(소스);
+        assert_eq!(hits.len(), 1);
+    }
+
+    /// **주석과 `name()` 밖의 문자열은 대상이 아니다.**
+    ///
+    /// 자유 본문·화면 문자열까지 걸면 이 검사는 사용자 데이터를 금지하는 것이 된다.
+    #[test]
+    fn 주석과_바깥_문자열은_안_본다() {
+        let 소스 = r#"
+/// `Self::Unavailable => "없음"` 이었다 — 이 줄은 주석이다.
+fn 화면() -> String {
+    format!("결박 불가 언어 {}개", 3) // 화면 문자열이다
+}
+impl X {
+    pub const fn name(self) -> &'static str {
+        "exact"
+    }
+}
+fn 나중() -> &'static str { "판정 불가" }
+"#;
+        let (hits, 셈) = 한국어가_든_기계_토큰(소스);
+        assert!(hits.is_empty(), "대상 밖을 잡았다: {hits:?}");
+        assert_eq!(셈, 1, "`name()` 의 리터럴 하나만 세야 한다");
+    }
+
+    /// 그리고 **깨끗한 입력에는 침묵한다** — 「무엇이든 잡는다」로 통과하는 것을 막는다.
+    #[test]
+    fn 깨끗하면_침묵한다() {
+        let 소스 = "impl X {\n    pub const fn name(self) -> &'static str {\n        \"nul-byte\"\n    }\n}\n";
+        let (hits, 셈) = 한국어가_든_기계_토큰(소스);
+        assert!(hits.is_empty());
+        assert_eq!(셈, 1);
+    }
 }
 
 /// `vocab.toml` 의 `allow = [...]` 에서 따옴표 안의 것만 걷는다.
