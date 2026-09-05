@@ -3,6 +3,9 @@
 **회차** `2026-09-05-openmetadata-decision` · **이슈** [#104](https://github.com/hskim-ecoletree/palimpsest/issues/104)
 **착수** `930a295` · **판정일** 2026-09-05
 
+> 잠긴 의도 [`intent.md`](../../.palimpsest/rounds/2026-09-05-openmetadata-decision/intent.md) ·
+> 종료 보고 [`report.md`](../../.palimpsest/rounds/2026-09-05-openmetadata-decision/report.md)
+
 ---
 
 ## 합격선
