@@ -5,7 +5,7 @@
 
   ① **2층을 통째로 지운 뒤에도 결박이 그대로** — R-21 을 처음으로 실물에서 시험한다
   ② `touch` 의 `bindings` 가 `NotBuilt` 가 아니라 `Present`
-  ③ 낡음 **양방향** — 안 바뀌면 `live`, 바뀌면 `stale{triggered_by}`
+  ③ 낡음 **양방향** — 안 바뀌면 `fresh`, 바뀌면 `stale{triggered_by}`
   ④ 심볼이 사라지면 `stale` 이 아니라 `orphaned`
   ⑤ `pal-intent` 에 지우는 공개 API 가 없다
 
@@ -81,10 +81,10 @@ def main() -> int:
             b = e["answer"]["bindings"]["present"][0]
             return b["status"]["code"]["freshness"], b["status"]["code"]
 
-        # ③-앞 안 바뀌면 live
+        # ③-앞 안 바뀌면 fresh
         f, _ = freshness(env)
         print(f"③ 낡음  변경 전 → {f}")
-        if f != "live":
+        if f != "fresh":
             failures.append(f"③ 안 바꿨는데 {f} 다")
 
         # ① 2층을 통째로 지운다 — **R-21 의 실물 시험**

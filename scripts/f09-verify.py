@@ -321,8 +321,8 @@ def 합성_변형(tmp: Path, skip_prettier: bool) -> None:
             fail(f"① {이름}", f"결박이 {len(걸린)}건뿐이다 (하한 {MIN_BINDINGS})")
             continue
         전_상태 = [b["status"]["code"]["freshness"] for b in 걸린]
-        if any(f != "live" for f in 전_상태):
-            fail(f"① {이름}", f"변형 **전**에 이미 live 가 아닌 것이 있다: {set(전_상태)}")
+        if any(f != "fresh" for f in 전_상태):
+            fail(f"① {이름}", f"변형 **전**에 이미 fresh 가 아닌 것이 있다: {set(전_상태)}")
             continue
 
         전 = 소스_바이트(repo, ".ts")
@@ -440,12 +440,12 @@ def 의미_변형(tmp: Path) -> None:
     # 실제로 켜졌다. 픽스처가 아니라 **코퍼스 위에서** 난 사유이고, `[f09.pass]` 의
     # *"사유 최소 둘이 실제로 산출"* 이 그것으로 선다.
     #
-    # **분모는 살아남은 것들이다** — `stale` + `live`. 그 수에 하한을 박는다:
+    # **분모는 살아남은 것들이다** — `stale` + `fresh`. 그 수에 하한을 박는다:
     # 살아남은 것이 적으면 비율이 표본 하나에 흔들린다.
     stale = 갈래.get("stale", 0)
-    live = 갈래.get("live", 0)
+    fresh = 갈래.get("fresh", 0)
     깨진것 = 갈래.get("orphaned", 0) + 갈래.get("undeterminable", 0)
-    살아남은 = stale + live
+    살아남은 = stale + fresh
     # ★ 실물에서 난 사유를 모은다 — ⑥의 하한(사유 최소 둘)이 이것을 쓴다.
     for b in 뒤:
         c = b["status"]["code"]
@@ -464,8 +464,8 @@ def 의미_변형(tmp: Path) -> None:
           f"stale {stale}/{살아남은} = **{비율}%** (하한 {SEMANTIC_DETECTION_MIN_PCT}%) "
           f"· 변형이 훼손한 파일의 결박 {깨진것}건은 분모 밖")
     if 비율 < SEMANTIC_DETECTION_MIN_PCT:
-        안_켜진 = [b["binding"][:8] for b in 뒤 if b["status"]["code"]["freshness"] == "live"]
-        fail("② 의미 변경", f"{값} — **본문을 바꿨는데 live 인 결박**: {안_켜진[:10]}")
+        안_켜진 = [b["binding"][:8] for b in 뒤 if b["status"]["code"]["freshness"] == "fresh"]
+        fail("② 의미 변경", f"{값} — **본문을 바꿨는데 fresh 인 결박**: {안_켜진[:10]}")
     else:
         ok("② 의미 변경", 값)
     shutil.rmtree(box, ignore_errors=True)
@@ -528,17 +528,17 @@ def 판정_불가(tmp: Path) -> None:
         e2 = json.loads(p.stdout)
         이_스냅샷 = e2["projection"]["built_for_this_snapshot"]
         상태 = [b["status"]["code"] for b in e2["answer"]["bindings"]]
-        샌_것 = [c for c in 상태 if c["freshness"] == "live"]
+        샌_것 = [c for c in 상태 if c["freshness"] == "fresh"]
         사유 = sorted({c.get("reason") for c in 상태 if c["freshness"] == "undeterminable"})
         관측된_사유.update(x for x in 사유 if x)
         값 = (f"2층이 이 스냅샷 것인가 {이_스냅샷} · 판정 불가 {len(상태) - len(샌_것)}/{len(상태)} · "
-              f"사유 {사유} · **`live` 로 샌 것 {len(샌_것)}** (상한 {UNDETERMINABLE_LEAK_MAX})")
+              f"사유 {사유} · **`fresh` 로 샌 것 {len(샌_것)}** (상한 {UNDETERMINABLE_LEAK_MAX})")
         if 이_스냅샷:
             skip("③ 판정 불가", f"2층이 이 스냅샷 것이라 이 대조가 안 켜졌다 — **대조 불가**: {값}")
         elif len(샌_것) > UNDETERMINABLE_LEAK_MAX:
-            fail("③ 판정 불가가 `live` 로 샜다", 값)
+            fail("③ 판정 불가가 `fresh` 로 샜다", 값)
         else:
-            ok("③ 판정 불가가 `live` 로 안 샌다", 값)
+            ok("③ 판정 불가가 `fresh` 로 안 샌다", 값)
 
     shutil.rmtree(box, ignore_errors=True)
 
@@ -683,9 +683,9 @@ def 실_이력(tmp: Path, corpus: Path, pin: str, ext: str, tag: str, radius: st
         fail(f"⑤ {tag}/{radius}", f"결박이 {len(기준)}건뿐이다 (하한 {MIN_BINDINGS})")
         shutil.rmtree(box, ignore_errors=True)
         return
-    안_live = [b["status"]["code"]["freshness"] for b in 기준 if b["status"]["code"]["freshness"] != "live"]
-    if 안_live:
-        fail(f"⑤ {tag}/{radius}", f"결박 직후에 live 가 아닌 것이 {len(안_live)}건 있다: {set(안_live)}")
+    안_fresh = [b["status"]["code"]["freshness"] for b in 기준 if b["status"]["code"]["freshness"] != "fresh"]
+    if 안_fresh:
+        fail(f"⑤ {tag}/{radius}", f"결박 직후에 fresh 가 아닌 것이 {len(안_fresh)}건 있다: {set(안_fresh)}")
         shutil.rmtree(box, ignore_errors=True)
         return
 

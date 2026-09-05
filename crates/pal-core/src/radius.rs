@@ -125,7 +125,7 @@ pub trait Neighborhood {
 ///
 /// # 빈 감시 집합은 만들 수 없다
 ///
-/// 대상을 먼저 넣으므로 결과가 비지 않는다. **빈 감시 집합은 언제나 `Live` 이고,
+/// 대상을 먼저 넣으므로 결과가 비지 않는다. **빈 감시 집합은 언제나 `Fresh` 이고,
 /// 그러면 이 기능의 반대 방향 넷 중 셋이 공짜로 통과한다** —
 /// `[f09].control_off_modes` 의 열다섯째 후보다.
 #[must_use]
@@ -258,7 +258,7 @@ mod tests {
 
     #[test]
     fn 감시_집합은_절대_비지_않는다() {
-        // **빈 감시 집합은 언제나 `Live` 다** — 이웃이 하나도 없어도 대상은 남는다.
+        // **빈 감시 집합은 언제나 `Fresh` 다** — 이웃이 하나도 없어도 대상은 남는다.
         let a = 심볼("없는.ts", "혼자");
         for r in [Radius::Symbol, Radius::Callers, Radius::Closure { k: 3 }] {
             assert_eq!(expand(a, &r, &표::default()), vec![a], "{} 에서 비었다", r.name());

@@ -469,7 +469,7 @@ impl UndeterminableReason {
         }
     }
 
-    /// 사유 넷 — **`[f09.2.pass]` 가 넷을 각각 만들어 `Live` 가 안 나오는지 센다.**
+    /// 사유 넷 — **`[f09.2.pass]` 가 넷을 각각 만들어 `Fresh` 가 안 나오는지 센다.**
     pub const ALL: [Self; 4] =
         [Self::IdentityGrade, Self::PartialParse, Self::WatchMemberGone, Self::ProjectionStale];
 }
@@ -479,7 +479,7 @@ impl UndeterminableReason {
 /// # 왜 `Option<BodyDigest>` 가 아닌가
 ///
 /// `None` 이 *"사라졌다"* 인지 *"비교할 수 없다"* 인지 구별되지 않는다. 그 구별이
-/// 이 기능의 전부이고([R16]), 뭉개면 판정 불가가 조용히 `Orphaned` 나 `Live` 로 샌다.
+/// 이 기능의 전부이고([R16]), 뭉개면 판정 불가가 조용히 `Orphaned` 나 `Fresh` 로 샌다.
 ///
 /// [R16]: ../../../docs/evidence-map.md
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -529,7 +529,7 @@ pub enum CodeFreshness {
     /// **`target` 이 사라졌을 때만이다.** 감시 집합의 다른 원소가 사라진 것은
     /// [`UndeterminableReason::WatchMemberGone`] 이고 다른 사건이다.
     Orphaned { missing: Vec<SymbolId> },
-    /// **판정할 수 없다.** `Live` 로 접지 않는다 — 그것이 [R16] 의 자리다.
+    /// **판정할 수 없다.** `Fresh` 로 접지 않는다 — 그것이 [R16] 의 자리다.
     ///
     /// `at` 은 그 사유를 진 감시 원소들이다([`Stale::triggered_by`] 와 같은 형태) —
     /// *"어디를 못 보는가"* 가 실려야 사람이 무엇을 고칠지 안다.
@@ -594,13 +594,13 @@ impl BindingStatus {
     ///
     /// ```text
     /// ① target 이 사라졌나        → Orphaned      (결정적이다. 더 볼 것이 없다)
-    /// ② 못 보는 원소가 있나        → Undeterminable (**Live 로 접지 않는다** · R16)
+    /// ② 못 보는 원소가 있나        → Undeterminable (**Fresh 로 접지 않는다** · R16)
     /// ③ 변한 원소가 있나          → Stale
-    /// ④ 아니면                   → Live
+    /// ④ 아니면                   → Fresh
     /// ```
     ///
     /// **②가 ③보다 먼저인 것이 요구다.** 뒤로 보내면 *"하나는 못 보지만 나머지가
-    /// 안 변했으니 Live"* 가 되고, 그것이 선행 구현이 `stale=False` 로 접었던 자리다.
+    /// 안 변했으니 Fresh"* 가 되고, 그것이 선행 구현이 `stale=False` 로 접었던 자리다.
     ///
     /// **①이 ②보다 먼저인 것도 요구다.** 좌표가 사라졌으면 *"판정할 수 없다"* 가 아니라
     /// *"결정을 다시 해야 한다"* 이고, 둘은 사람이 다르게 처리한다.
@@ -633,7 +633,7 @@ impl BindingStatus {
         // 대상이 아닌 원소가 사라진 것은 **다른 사건**이다 — 지켜보던 것 하나를 못 본다.
         못_봄.extend(gone.into_iter().map(|s| (UndeterminableReason::WatchMemberGone, s)));
 
-        // ② **못 보는 것이 있으면 `Live` 가 될 수 없다** — R16 의 자리.
+        // ② **못 보는 것이 있으면 `Fresh` 가 될 수 없다** — R16 의 자리.
         if let Some(reason) = UndeterminableReason::ALL
             .into_iter()
             .find(|r| 못_봄.iter().any(|(had, _)| had == r))
@@ -673,7 +673,7 @@ impl BindingStatus {
     /// 이 상태가 **판정 입력 자격**을 갖는가 — [`crate::NodeFreshness::admissible`] 과
     /// 같은 자리이고 같은 규율이다.
     ///
-    /// `Live ∧ Current` 만 갖는다. **`Undeterminable` 은 판정 입력에서
+    /// `Fresh ∧ Current` 만 갖는다. **`Undeterminable` 은 판정 입력에서
     /// `Residual{사유=결박 판정 불가}` 가 된다**(옛 F09 §2.1) — 안 그러면 *"화면에는 뜨는데
     /// 판정은 그것을 유효로 센다"* 가 된다.
     #[must_use]
@@ -925,7 +925,7 @@ mod tests {
     #[test]
     fn 못_보는_것이_있으면_나머지가_그대로여도_fresh_가_아니다() {
         // **②가 ③보다 먼저인 것이 요구다.** 뒤로 보내면 *"하나는 못 보지만 나머지가
-        // 안 변했으니 Live"* 가 되고, 그것이 접는 자리다.
+        // 안 변했으니 Fresh"* 가 되고, 그것이 접는 자리다.
         let a = 심볼("a");
         let b = 심볼("b");
         let d = BodyDigest::of_normalized(b"x");
@@ -1017,7 +1017,7 @@ mod tests {
                 "대체되자 코드 신선도가 굳었다 — 한 열거로 접힌 것과 같다");
         assert!(matches!(superseded_live.lineage, Lineage::Superseded { .. }));
 
-        // 판정 입력 자격은 `Live ∧ Current` 뿐이다.
+        // 판정 입력 자격은 `Fresh ∧ Current` 뿐이다.
         assert!(current_live.admissible());
         assert!(!current_stale.admissible());
         assert!(!superseded_live.admissible(), "대체된 결정이 유효로 보증됐다 — 낡음보다 나쁜 거짓 신호다");
@@ -1177,7 +1177,7 @@ mod tests {
 
     #[test]
     fn 시각은_판정에_안_들어간다() {
-        // **★ 반대 방향** — 시각만 바뀌고 요약이 그대로면 `Live` 여야 한다.
+        // **★ 반대 방향** — 시각만 바뀌고 요약이 그대로면 `Fresh` 여야 한다.
         // 켜지면 R-07 이 치명이라 부른 실패(포매팅 커밋에 stale)를 그대로 맞는다.
         let s = 심볼("f");
         let d = BodyDigest::of_normalized(b"x");
@@ -1203,7 +1203,7 @@ mod tests {
 /// # `matches_head` 가 이 타입의 전부다
 ///
 /// 대장이 계산될 때의 HEAD 와 이 답이 선 트리를 댄다. 다르면 **대장이 그 사이의
-/// 커밋들을 보지 않았다**는 뜻이고, 그러면 `Live` 는 *"그때 기준으로"* 가 된다.
+/// 커밋들을 보지 않았다**는 뜻이고, 그러면 `Fresh` 는 *"그때 기준으로"* 가 된다.
 /// **켜지지 않으면 이 값은 아무것도 안 말한다** — 그래서 산출에 늘 실린다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DetectorReport {
@@ -1214,7 +1214,7 @@ pub struct DetectorReport {
     /// 대장이 선 HEAD 와 이 답이 선 트리가 같은가.
     ///
     /// **거짓이면 판정 전부가 「그때 기준」이다.** 조용히 넘기면 낡은 감지기가 낸
-    /// `Live` 가 지금의 `Live` 로 읽힌다.
+    /// `Fresh` 가 지금의 `Fresh` 로 읽힌다.
     pub matches_head: bool,
 }
 

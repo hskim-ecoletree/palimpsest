@@ -196,7 +196,7 @@ pub enum QueryResult {
     /// 결박마다 한 줄. **빈 목록이 정직한 답이다** — 능력이 있고 값이 없는 것이다.
     ///
     /// `detector` 는 **낡음을 재는 자의 낡음**이다(옛 F09 §5). 안 실으면 낡은 감지기가 낸
-    /// `Live` 가 지금의 `Live` 로 읽힌다 — 그것이 *"감지기가 낡는다"* 의 실패 형태다.
+    /// `Fresh` 가 지금의 `Fresh` 로 읽힌다 — 그것이 *"감지기가 낡는다"* 의 실패 형태다.
     Bindings { bindings: Vec<BindingReport>, detector: DetectorReport },
     /// 좌표를 못 찾은 문서 조각들 — **이것이 사람의 작업 목록이다** (옛 F10 §2).
     ///
@@ -704,7 +704,7 @@ pub fn freshness(
 /// 결박 하나의 두 축 — **`binding.status` 와 `binding.touch` 가 같은 함수를 지난다.**
 ///
 /// 두 벌로 두면 한쪽만 고쳐지고, 그러면 같은 결박이 표면에 따라 다른 상태로 나간다.
-/// 옛 F09 §2.1 이 요구한 것은 *"못 보는 것을 `Live` 로 접지 않는다"* 이고 그 규율은
+/// 옛 F09 §2.1 이 요구한 것은 *"못 보는 것을 `Fresh` 로 접지 않는다"* 이고 그 규율은
 /// **표면마다가 아니라 한 곳에** 있어야 한다.
 fn 결박_상태(ctx: &QueryCtx, b: &Binding) -> BindingStatus {
     let p = ctx.projection;

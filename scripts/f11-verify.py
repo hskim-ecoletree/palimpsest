@@ -417,7 +417,7 @@ def 반대_방향(repo: Path, box: Path, 판정: list[dict]) -> None:
     elif 이름:
         a = pal(["touch", 이름, "--binding-max", "1", "--json"], repo, box, at=DITTO_PIN)
         실린목록 = a["answer"]["bindings"]["present"]
-        낡은 = sum(1 for b in 실린목록 if b["status"]["code"].get("freshness") != "live")
+        낡은 = sum(1 for b in 실린목록 if b["status"]["code"].get("freshness") != "fresh")
         잘린 = sum(t["count"] for t in a["elision"]["truncated"]
                    if t["reason"] == "binding_max_exceeded")
         # ★ **낡은 것은 상한을 안 탄다.** 상한을 1 로 낮춰도 낡은 것이 전부 실리는 것이
