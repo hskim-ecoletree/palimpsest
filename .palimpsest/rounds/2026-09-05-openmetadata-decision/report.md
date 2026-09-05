@@ -32,7 +32,7 @@ palimpsest 가 실제로 서 있는 층(소프트웨어 산출물 + 코드 좌�
 **0** 이었다. SARIF 는 `graph`·`node`·`edge` 와 `physicalLocation`·`region`(코드 좌표)과
 `message`(사람이 쓴 글)와 `logicalLocation`(심볼)을 한 스키마에 다 갖는다.
 
-**이슈로 세운다.** ADR-0032 의 「이 결정의 경계」 절이 그 물음을 명시적으로 남긴다.
+**[#105](https://github.com/hskim-ecoletree/palimpsest/issues/105) 로 섰다.** ADR-0032 의 「이 결정의 경계」 절이 그 물음을 명시적으로 남긴다.
 
 ---
 
