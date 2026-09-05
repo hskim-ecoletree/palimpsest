@@ -344,7 +344,7 @@ fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elisio
     for item in items {
         let BoundItem::Note { binding, note, status, radius, watch, at, .. } = item;
         let mark = match &status.code {
-            pal_core::CodeFreshness::Live => "live".to_owned(),
+            pal_core::CodeFreshness::Fresh => "fresh".to_owned(),
             pal_core::CodeFreshness::Stale { triggered_by } =>
                 format!("STALE ← {} 개가 변했습니다", triggered_by.len()),
             pal_core::CodeFreshness::Orphaned { missing } =>

@@ -107,7 +107,7 @@ fn 방향_넷이_서로를_막는다() {
     pal(&repo, &["bind", "도움", "--note", "이 함수의 계약", "--radius", "callers"]);
 
     let (code, watch, radius) = 상태(&repo, &[]);
-    assert_eq!(code, "live", "막 걸었는데 live 가 아니다");
+    assert_eq!(code, "fresh", "막 걸었는데 fresh 가 아니다");
     assert_eq!(radius, "callers");
     // **반경이 실제로 자랐다** — 1 이면 `callers` 가 `symbol` 과 같은 것을 잰 것이고,
     // 그러면 반경이 아무것도 안 가른다. `pal bind` 가 엣지를 지우면 여기서 잡힌다.
@@ -116,7 +116,7 @@ fn 방향_넷이_서로를_막는다() {
     // ── ① 포매팅만 바꾸면 stale 0 ────────────────────────────────────────────
     쓰기(&repo, 소스_포매팅만());
     let (code, _, _) = 상태(&repo, &[]);
-    assert_eq!(code, "live", "★ 포매팅만 바꿨는데 낡음이 켜졌다 — R-07 이 치명이라 부른 실패다");
+    assert_eq!(code, "fresh", "★ 포매팅만 바꿨는데 낡음이 켜졌다 — R-07 이 치명이라 부른 실패다");
 
     // ── ② 의미를 바꾸면 반드시 stale ─────────────────────────────────────────
     //
@@ -137,7 +137,7 @@ fn 방향_넷이_서로를_막는다() {
 }
 
 #[test]
-fn 판정_불가가_live_로_새지_않는다() {
+fn 판정_불가가_fresh_로_새지_않는다() {
     // ── ③ **R16 의 자리다.** 선행 구현이 `stale=False` 로 접었던 그것.
     //
     // 2층이 **다른 스냅샷**에 서 있는 채로 읽기 전용으로 물으면 판정할 수 없다 —
@@ -172,7 +172,7 @@ fn 판정_불가가_live_로_새지_않는다() {
 
     // 2층은 c1 에 서 있다.
     let (code, _, _) = 상태(&repo, &["--at", &c1]);
-    assert_eq!(code, "live");
+    assert_eq!(code, "fresh");
 
     // **c2 를 읽기 전용으로 묻는다** — 2층은 여전히 c1 것이다.
     let v: serde_json::Value = serde_json::from_str(&pal(

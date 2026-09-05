@@ -195,7 +195,7 @@ fn 낡은_것은_상한에_걸려도_실린다() {
     let v = touch(&root, &방, "mirrorVerdicts", &["--binding-max", "1"]);
     let items = 걸린_것(&v);
     // ★ **하한** — 키가 없으면 여기서 죽는다. 앞 판은 `["state"]` 를 읽었는데 실제 태그는
-    //   `"freshness"` 라 값이 늘 `null` 이었고, `null != "live"` 가 항상 참이라 아래 필터가
+    //   `"freshness"` 라 값이 늘 `null` 이었고, `null != "fresh"` 가 항상 참이라 아래 필터가
     //   전수 통과했다. **아무것도 안 재면서 초록이었다.**
     for i in items {
         assert!(
@@ -204,7 +204,7 @@ fn 낡은_것은_상한에_걸려도_실린다() {
         );
     }
     let 낡은: Vec<&serde_json::Value> =
-        items.iter().filter(|i| i["status"]["code"]["freshness"] != "live").collect();
+        items.iter().filter(|i| i["status"]["code"]["freshness"] != "fresh").collect();
     assert_eq!(낡은.len(), 3, "낡은 것이 상한에 잘렸다: {v}");
     assert_eq!(items.len(), 3, "낡지 않은 것까지 실렸다: {v}");
     // 낡은 것만 남았으므로 자를 것이 없다 — **상한이 낡음을 이기지 않는다.**
@@ -217,7 +217,7 @@ fn 낡은_것은_상한에_걸려도_실린다() {
         맨앞["status"]["code"]["freshness"].is_string(),
         "`status.code.freshness` 가 없다 — 정렬 검사가 아무것도 안 잰다: {맨앞}"
     );
-    assert_ne!(맨앞["status"]["code"]["freshness"], "live");
+    assert_ne!(맨앞["status"]["code"]["freshness"], "fresh");
 
     let _ = std::fs::remove_dir_all(&root);
 }

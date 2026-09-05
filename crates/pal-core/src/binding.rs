@@ -510,7 +510,15 @@ pub enum Now {
 #[serde(rename_all = "snake_case", tag = "freshness")]
 pub enum CodeFreshness {
     /// 좌표가 있고 감시 집합 전체의 요약이 그대로다.
-    Live,
+    ///
+    /// # 왜 `Live` 가 아닌가 — 잘못 읽히는 낱말은 병기로 안 고쳐진다
+    ///
+    /// 소유자 실측(2026-09-06): *"'live' 는 최신, 신선한, 유효한이라는 뉘앙스가 약하기도
+    /// 하고 한국어권 사용자들에게는 **on-air 같은 느낌**으로 받아들여짐."*
+    /// 뜻이 약한 것은 사용자 언어를 병기해 메울 수 있지만, **다른 뜻으로 읽히는 것**은
+    /// 병기해도 그 다른 뜻이 먼저 붙는다. 그래서 넷 중 이것만 바꿨다(ADR · 회차
+    /// `2026-09-06-user-surface-vocabulary`).
+    Fresh,
     /// 감시 집합의 무언가가 변했다. **무엇이 켰는지 함께 싣는다** —
     /// *"본체가 변해서"* 와 *"호출자가 변해서"* 를 사람이 다르게 처리하기 때문이다.
     Stale { triggered_by: Vec<SymbolId> },
@@ -636,7 +644,7 @@ impl BindingStatus {
 
         // ③④
         let code = if changed.is_empty() {
-            CodeFreshness::Live
+            CodeFreshness::Fresh
         } else {
             CodeFreshness::Stale { triggered_by: changed }
         };
@@ -670,7 +678,40 @@ impl BindingStatus {
     /// 판정은 그것을 유효로 센다"* 가 된다.
     #[must_use]
     pub const fn admissible(&self) -> bool {
-        matches!(self.code, CodeFreshness::Live) && matches!(self.lineage, Lineage::Current)
+        matches!(self.code, CodeFreshness::Fresh) && matches!(self.lineage, Lineage::Current)
+    }
+}
+
+#[cfg(test)]
+mod 저장된_옛_표기 {
+    use super::CodeFreshness;
+
+    /// **양성 대조 — 읽기 경로가 옛 토큰을 실제로 거부하는가.**
+    ///
+    /// `B2` 는 *"저장된 데이터를 어떻게 처리하나"* 를 묻고 `B2-a` 는 그 답이 「처리할
+    /// 데이터가 없다」일 때 **침묵이 정보가 되게** 하라고 요구한다. 심을 자리가 없으면
+    /// 음성 대조가 항상 초록이고, 그 초록은 *"저장된 것이 없다"* 를 뜻하지 않는다 —
+    /// *"검사가 아무것도 안 본다"* 를 뜻한다.
+    ///
+    /// 그래서 **먼저 이것을 관측한다**: 옛 토큰 `"live"` 를 읽기 경로에 직접 먹여
+    /// `serde` 가 거부하는 것을 본다. 이 시험이 초록이어야 «저장소 전수에서 `"live"` 가
+    /// 0 건» 이라는 관측이 「없다」의 증거가 된다.
+    #[test]
+    fn 옛_토큰은_읽기에서_거부된다() {
+        let 옛: Result<CodeFreshness, _> =
+            serde_json::from_str(r#"{"freshness":"live"}"#);
+        assert!(
+            옛.is_err(),
+            "옛 토큰 `live` 가 읽혔다 — 별칭이 남아 있으면 개명이 안 끝난 것이다"
+        );
+    }
+
+    /// 그리고 새 토큰은 읽힌다 — 위 시험이 «무엇이든 거부한다» 로 통과하는 것을 막는다.
+    #[test]
+    fn 새_토큰은_읽힌다() {
+        let 새: CodeFreshness =
+            serde_json::from_str(r#"{"freshness":"fresh"}"#).expect("새 토큰이 안 읽힌다");
+        assert_eq!(새, CodeFreshness::Fresh);
     }
 }
 
@@ -721,7 +762,7 @@ mod tests {
     fn 안_변하면_살아_있다() {
         let s = 심볼("f");
         let d = BodyDigest::of_normalized(b"x");
-        assert_eq!(상태(&결박(s, d), |_| Now::Digest(d)), CodeFreshness::Live);
+        assert_eq!(상태(&결박(s, d), |_| Now::Digest(d)), CodeFreshness::Fresh);
     }
 
     #[test]
@@ -746,7 +787,7 @@ mod tests {
     }
 
     #[test]
-    fn 판정_불가는_live_로_새지_않는다() {
+    fn 판정_불가는_fresh_로_새지_않는다() {
         // **★ 반대 방향 ③ — R16 의 자리다.** 선행 구현이 `stale=False` 로 접었던 그것이고,
         // **사유 넷을 각각** 센다 — 하나만 시험하면 나머지 셋이 접혀도 통과한다.
         let s = 심볼("f");
@@ -769,12 +810,12 @@ mod tests {
                 CodeFreshness::Undeterminable { reason: r, at: vec![s] },
                 "{} 가 판정 불가로 안 나온다", r.name()
             );
-            assert_ne!(code, CodeFreshness::Live, "{} 가 Live 로 샜다", r.name());
+            assert_ne!(code, CodeFreshness::Fresh, "{} 가 Fresh 로 샜다", r.name());
         }
     }
 
     #[test]
-    fn 못_보는_것이_있으면_나머지가_그대로여도_live_가_아니다() {
+    fn 못_보는_것이_있으면_나머지가_그대로여도_fresh_가_아니다() {
         // **②가 ③보다 먼저인 것이 요구다.** 뒤로 보내면 *"하나는 못 보지만 나머지가
         // 안 변했으니 Live"* 가 되고, 그것이 접는 자리다.
         let a = 심볼("a");
@@ -860,10 +901,10 @@ mod tests {
         let superseded_live = 조합(sup.clone(), false);
         let superseded_stale = 조합(sup, true);
 
-        assert_eq!(current_live.code, CodeFreshness::Live);
+        assert_eq!(current_live.code, CodeFreshness::Fresh);
         assert!(matches!(current_stale.code, CodeFreshness::Stale { .. }));
         // **대체된 뒤에도 코드 신선도가 계속 계산된다** — 축이 둘인 이유가 그것이다.
-        assert_eq!(superseded_live.code, CodeFreshness::Live);
+        assert_eq!(superseded_live.code, CodeFreshness::Fresh);
         assert!(matches!(superseded_stale.code, CodeFreshness::Stale { .. }),
                 "대체되자 코드 신선도가 굳었다 — 한 열거로 접힌 것과 같다");
         assert!(matches!(superseded_live.lineage, Lineage::Superseded { .. }));
@@ -1037,13 +1078,13 @@ mod tests {
         let mut 이른 = 결박(s, d);
         이른.bound_at_time = BoundTime::Worktree;
         assert_eq!(상태(&늦은, |_| Now::Digest(d)), 상태(&이른, |_| Now::Digest(d)));
-        assert_eq!(상태(&늦은, |_| Now::Digest(d)), CodeFreshness::Live);
+        assert_eq!(상태(&늦은, |_| Now::Digest(d)), CodeFreshness::Fresh);
     }
 }
 
 /// **낡음을 재는 자의 낡음** — 옛 F09 §5 의 다섯째 행 · 옛 DESIGN §6.3.
 ///
-/// > 마지막 재추출이 3주 전이면 *"live"* 는 *"3주 전 기준으로 유효했다"* 다.
+/// > 마지막 재추출이 3주 전이면 *"fresh"* 는 *"3주 전 기준으로 유효했다"* 다.
 /// > **상수 시간 검사이므로 무한 후퇴하지 않는다.**
 ///
 /// # 왜 판정마다가 아니라 답마다인가

@@ -209,7 +209,7 @@ pub fn 정렬_열쇠(item: &BoundItem) -> (u8, u8, i64, String) {
         crate::binding::CodeFreshness::Stale { .. }
         | crate::binding::CodeFreshness::Orphaned { .. } => 0,
         crate::binding::CodeFreshness::Undeterminable { .. } => 1,
-        crate::binding::CodeFreshness::Live => 3,
+        crate::binding::CodeFreshness::Fresh => 3,
     };
     let 계보 = match &status.lineage {
         crate::binding::Lineage::Superseded { .. } => 0,
@@ -232,7 +232,7 @@ pub fn 정렬_열쇠(item: &BoundItem) -> (u8, u8, i64, String) {
 #[must_use]
 pub fn 낡았나(item: &BoundItem) -> bool {
     let BoundItem::Note { status, .. } = item;
-    !matches!(status.code, crate::binding::CodeFreshness::Live)
+    !matches!(status.code, crate::binding::CodeFreshness::Fresh)
 }
 
 /// 이 심볼이 하는 것 — **F07(참조 해소)이 채운다.**
