@@ -94,7 +94,7 @@ KG·투영 중심이라 **하네스를 안 담았다**
 | **선택 필드 금지** — 도메인 타입의 `Option<T>`(범위 정의는 [stack §5.4](00-stack.md#54-타입으로-강제하는-일곱)) | F03 [#6](https://github.com/hskim-ecoletree/palimpsest/issues/6) |
 | **재구축 등가성** — 2층 삭제 후 **1층 + 의도 저장소**로 재구축 → `extracted`·`asserted`·`observed` 전부 복원 + **의도 파일 불변** | F05 [#8](https://github.com/hskim-ecoletree/palimpsest/issues/8) |
 | **캐시 폐기 격리** — `pal cache prune` 후 결박·승인 건수 불변 | F05 [#8](https://github.com/hskim-ecoletree/palimpsest/issues/8) |
-| **`Envelope` 누락 불가** — 표면 응답 골든 JSON에 봉투 필드 전부 | F05 [#8](https://github.com/hskim-ecoletree/palimpsest/issues/8) |
+| **`Envelope` 누락 불가** — 표면 응답 골든 JSON에 응답 묶음 필드 전부 | F05 [#8](https://github.com/hskim-ecoletree/palimpsest/issues/8) |
 | **예산 회귀** — 상수가 `pal-core::budget` 한 곳 + 변경 시 벤치 동반([stack §5.5](00-stack.md#55-예산-상수는-한-곳에-있고-초기값은-자리표시다)) | F05 [#8](https://github.com/hskim-ecoletree/palimpsest/issues/8) |
 | **표면 카탈로그 동기** — `queries.toml` ↔ 코드 (MCP 축은 2026-08-18 에 폐기 · ADR-0025) | F06 [#9](https://github.com/hskim-ecoletree/palimpsest/issues/9) |
 | **호스트 없는 코어** — 호스트 미설치에서 테스트 전건 통과 + 관측 0건에서 모든 질의가 답(공백 포함) | F06 [#9](https://github.com/hskim-ecoletree/palimpsest/issues/9) |

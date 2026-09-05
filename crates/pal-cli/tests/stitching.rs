@@ -96,7 +96,7 @@ fn 파일_내_엣지가_스코프_해소와_일치한다() {
     assert!(!부르는.contains(&helper.id), "선언 자리가 자기 엣지로 남았다");
 
     // ── 그리고 그것이 답에 실린다 ──────────────────────────────────────────
-    let v: serde_json::Value = serde_json::from_str(&답).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&답).expect("응답 묶음 JSON");
     let facts = &v["answer"]["facts"]["present"];
     assert_eq!(facts["callers"].as_u64().expect("callers"), 부르는.len() as u64);
     assert!(v["coverage"]["unresolved"].as_u64().expect("unresolved") > 0, "미해소가 0 이다");
@@ -162,12 +162,12 @@ fn 파일_노드와_내보내기가_실제로_찬다() {
 }
 
 #[test]
-fn 봉투가_재구축_상태와_스냅샷을_값으로_싣는다() {
+fn 응답묶음이_재구축_상태와_스냅샷을_값으로_싣는다() {
     // 이 둘은 지금까지 **관측이 아니라 기본값**이었다 —
     // `rebuild` 는 `NotBuilt{F05}` 였고 `built_for_this_snapshot` 은 `true` 로 박혀 있었다.
     let repo = 저장소("envelope");
     let 답 = pal(&repo, &["touch", "helper", "--json"]);
-    let v: serde_json::Value = serde_json::from_str(&답).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&답).expect("응답 묶음 JSON");
 
     assert_eq!(
         v["projection"]["rebuild"]["present"], "settled",

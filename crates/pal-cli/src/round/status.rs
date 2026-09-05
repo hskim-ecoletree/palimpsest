@@ -590,24 +590,29 @@ pub(crate) fn valid_terminal_document(
     terminal: Terminal,
 ) -> Result<(), String> {
     let dir = repo.join(".palimpsest/rounds").join(slug);
-    let (path, headings): (std::path::PathBuf, &[&str]) = match terminal {
+    // **바깥 slice 한 칸이 절 하나이고, 안쪽은 그 절의 별칭들이다.**
+    let (path, headings): (std::path::PathBuf, &[&[&str]]) = match terminal {
         Terminal::Open => return Ok(()),
         Terminal::Reported => (
             dir.join("report.md"),
             &[
-                "## 남지 않은 것",
-                "## 다음 회차가 받는 것",
-                "## 범위 밖",
-                "## 원리상 못 잰 것",
-                "## 능력 부재",
+                &["## 남지 않은 것"],
+                &["## 다음 회차가 받는 것"],
+                &["## 범위 밖"],
+                &["## 원리상 못 잰 것"],
+                &["## 능력 부재"],
             ],
         ),
         Terminal::Folded => (
             dir.join("folded.md"),
+            // ★ **옛 표기도 계속 읽는다** — 이 문자열을 지는 `folded.md` 는 전부
+            //   지난 회차의 종결 기록이고, 그것을 고치면 증거 위조다. 고치지 않고
+            //   검사만 새 표기로 옮기면 그 회차들이 전부 빨개진다. 그래서 **별칭**이다
+            //   (회차 `2026-09-06-user-surface-vocabulary` `D3-b` · ADR-0034).
             &[
-                "## 왜 접었나",
-                "## 접으면서 남기는 것과 버리는 것",
-                "## 다음에 여는 것",
+                &["## 왜 철회했나", "## 왜 접었나"],
+                &["## 철회하면서 남기는 것과 버리는 것", "## 접으면서 남기는 것과 버리는 것"],
+                &["## 다음에 여는 것"],
             ],
         ),
     };
@@ -621,14 +626,16 @@ pub(crate) fn valid_terminal_document(
     }
     let body = std::fs::read_to_string(&path)
         .map_err(|error| format!("종료문을 읽지 못했다: {error}"))?;
-    let sections = document_sections(&body, headings);
-    for heading in headings {
-        match sections.get(*heading) {
-            None => return Err(format!("필수 절 `{heading}`이 없다")),
-            Some(body) if body.trim().is_empty() => {
-                return Err(format!("필수 절 `{heading}`의 본문이 비었다"));
-            }
-            Some(_) => {}
+    let 찾을_것: Vec<&str> = headings.iter().flat_map(|별칭| 별칭.iter().copied()).collect();
+    let sections = document_sections(&body, &찾을_것);
+    for 별칭 in headings {
+        // 별칭 중 **하나라도** 있으면 그 절이 있는 것이다. 여럿이 있으면 첫째를 본다.
+        let Some((이름, 본문)) = 별칭.iter().find_map(|h| sections.get(*h).map(|b| (*h, b)))
+        else {
+            return Err(format!("필수 절 `{}`이 없다", 별칭[0]));
+        };
+        if 본문.trim().is_empty() {
+            return Err(format!("필수 절 `{이름}`의 본문이 비었다"));
         }
     }
     if terminal == Terminal::Folded {
@@ -637,9 +644,12 @@ pub(crate) fn valid_terminal_document(
         let stage = document_sections(&state, &["## 지금 단계"]);
         if !stage
             .get("## 지금 단계")
-            .is_some_and(|body| body.contains("접힘") && body.contains("folded.md"))
+            // 같은 별칭 규칙이다 — 지난 회차의 `state.md` 는 「접힘」으로 적혀 있다.
+            .is_some_and(|body| {
+                (body.contains("철회") || body.contains("접힘")) && body.contains("folded.md")
+            })
         {
-            return Err("state.md가 접힘 단계와 folded.md를 가리키지 않는다".to_owned());
+            return Err("state.md가 철회 단계와 folded.md를 가리키지 않는다".to_owned());
         }
     }
     Ok(())

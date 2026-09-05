@@ -9,7 +9,7 @@
 //!
 //! `--depth-max` · `--node-max` 로 낮출 수 있다. **끄는 손잡이는 없다** — `Budget` 에
 //! `Default` 도 `unlimited()` 도 없고, 안 주면 자리표시가 들어간다.
-//! 낮추면 절단이 일어나고 **어느 상한에 얼마나 걸렸는지가 봉투에 실린다.**
+//! 낮추면 생략이 일어나고 **어느 상한에 얼마나 걸렸는지가 응답 묶음에 실린다.**
 
 use std::path::{Path, PathBuf};
 
@@ -277,7 +277,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
         QueryResult::Ledger { ledger } => {
             println!("  파일 {} · parsed {} · partial {}", ledger.files_total, ledger.parsed, ledger.partial);
         }
-        // 둘의 화면이 같다 — 답의 모양이 같고, 다른 것은 봉투가 진다.
+        // 둘의 화면이 같다 — 답의 모양이 같고, 다른 것은 응답 묶음이 진다.
         QueryResult::Symbols { symbols } | QueryResult::Reached { symbols, .. } => {
             print_symbols(symbols);
         }
@@ -408,13 +408,13 @@ fn 시각(t: pal_core::BoundTime) -> String {
     }
 }
 
-/// **자른 것을 화면에도 적는다.** 산출에만 있고 화면에 없으면 사람은 그 공백을 못 본다.
+/// **생략한 것을 화면에도 적는다.** 산출에만 있고 화면에 없으면 사람은 그 공백을 못 본다.
 fn print_elision(e: &Envelope<QueryResult>) {
     if e.elision.is_none() {
-        println!("  절단      없음 (명시)");
+        println!("  생략      없음 (명시)");
         return;
     }
-    println!("  절단      {}건", e.elision.dropped());
+    println!("  생략      {}건", e.elision.dropped());
     for t in &e.elision.truncated {
         println!("            {} {}건", t.reason.name(), t.count);
     }

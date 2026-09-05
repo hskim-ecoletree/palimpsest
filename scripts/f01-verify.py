@@ -148,7 +148,7 @@ def main() -> int:
                               "--intent", str(tmp / "t.redb"), "--json"]))
         mw = env["projection"]["matches_worktree"]
         rb = env["projection"]["rebuild"]
-        print(f"  봉투     matches_worktree={mw} · rebuild={'not_built' if 'not_built' in rb else rb}")
+        print(f"  응답 묶음     matches_worktree={mw} · rebuild={'not_built' if 'not_built' in rb else rb}")
         if "present" not in mw:
             failures.append(f"① `matches_worktree` 가 아직 값이 아니다: {mw}")
         elif mw["present"] is not True:

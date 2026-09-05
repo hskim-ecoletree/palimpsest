@@ -172,7 +172,7 @@ pub enum Introduction {
     /// 지목했다. **신뢰도와 나머지 후보가 함께 실린다.**
     ///
     /// `change` 는 *"하나를 고른 것"* 이 아니라 **순위의 머리**다. 최빈이 아닌 후보를
-    /// 버리면 그것이 곧 조용한 절단이고, 이 제품이 금지한 것이다(stack §5.4).
+    /// 버리면 그것이 곧 조용한 생략이고, 이 제품이 금지한 것이다(stack §5.4).
     Found { change: ChangeId, confidence: Confidence, others: Vec<ChangeId> },
     /// 지목하지 못했다.
     NotFound { reason: NotFoundReason },

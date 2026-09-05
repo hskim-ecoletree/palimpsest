@@ -25,7 +25,7 @@
 //! # 예산에 걸리면 멈추는 것이 아니다 (§6.4-2)
 //!
 //! 파생 사슬은 길어질 수 있으므로 이어달리기에도 예산이 붙는다. **걸리면 잔여다** —
-//! [`crate::ResidualReason::CascadeBudgetExceeded`]. 조용한 절단 금지가 여기에도 걸린다.
+//! [`crate::ResidualReason::CascadeBudgetExceeded`]. 조용한 생략 금지가 여기에도 걸린다.
 //!
 //! **끄는 손잡이를 두지 않는다.** 예산은 값이고 손잡이는 [옛 DESIGN §10](../../../docs/plan/disposal-map.md)
 //! 이 세는 협상 대상이다. 끌 수 있으면 그것이 게이트 오염의 가장 값싼 경로가 된다.

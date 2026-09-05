@@ -3,7 +3,7 @@
 
 합격선 정본은 `corpus/criteria.toml` `[s2]`.
 
-  ① 봉투 필드 누락 0 + **`elision` 이 명시적 `none()`**
+  ① 응답 묶음 필드 누락 0 + **`elision` 이 명시적 `none()`**
   ② **빈 자리가 `[]` 가 아니라 `not_built{기능번호}`**
   ③ 정규화 양방향 (포매팅에 불변 · 의미에 가변)
   ④ 정체성 (같은 심볼은 같은 id · 이동하면 id 는 바뀌고 digest 는 그대로)
@@ -29,7 +29,7 @@
     관측 없이 단언된다"*). 조용히가 아니다 — ADR-0010 의 무대 테이블이 관측이다
 
 **그리고 반대 방향을 넣는다** — 검사를 리터럴에서 요구로 옮기면 **아무것도 안 세는
-검사**가 되기 쉽다. `--self-test` 가 방향마다 봉투를 망가뜨려 **잡히는지** 센다.
+검사**가 되기 쉽다. `--self-test` 가 방향마다 응답 묶음을 망가뜨려 **잡히는지** 센다.
 """
 
 from __future__ import annotations
@@ -66,26 +66,26 @@ def is_empty_bucket(v) -> bool:
 
 
 def audit(env: dict) -> tuple[list[str], list[str]]:
-    """봉투 하나를 합격선 ①②⑥ 에 댄다. **순수하다** — 그래야 반대 방향을 걸 수 있다.
+    """응답 묶음 하나를 합격선 ①②⑥ 에 댄다. **순수하다** — 그래야 반대 방향을 걸 수 있다.
 
     반환은 `(어긋난 것, 발견)`. **발견은 합격선이 아니다** — 판정에 안 쓰고 찍기만 한다.
     """
     failures: list[str] = []
     notes: list[str] = []
 
-    # ── ① 봉투 필드
+    # ── ① 응답 묶음 필드
     missing = [f for f in ENVELOPE_FIELDS if f not in env]
     if missing:
-        failures.append(f"① 봉투 필드 누락: {missing}")
+        failures.append(f"① 응답 묶음 필드 누락: {missing}")
 
     # ── ① `elision` 이 **명시적** `none()` 인가
     #
     # **모양이 아니라 요구를 잰다.** F05-1 이 `{dropped, reasons}` 를
     # `{truncated, limits_hit}` 로 바꿨고 그것은 F05 문서 §5.2 가 요구한 것이다.
-    # 요구(stack §5.4 — 조용한 절단 금지)는 새 모양에서도 그대로 참이다.
+    # 요구(stack §5.4 — 조용한 생략 금지)는 새 모양에서도 그대로 참이다.
     el = env.get("elision")
     if not isinstance(el, dict):
-        failures.append(f"① elision 이 자리에 없다 — 조용한 절단 금지의 정면 위반: {el!r}")
+        failures.append(f"① elision 이 자리에 없다 — 조용한 생략 금지의 정면 위반: {el!r}")
     elif not el:
         # **`{}` 는 실패다.** 선언된 통이 0 이면 *"안 잘랐다"* 가 아니라
         # *"아무 말도 안 했다"* 이고, 그것이 stack §5.4 가 금한 바로 그것이다.
@@ -151,7 +151,7 @@ def audit(env: dict) -> tuple[list[str], list[str]]:
 # 음성 대조 — **방향마다 망가뜨려서 잡는다**
 #
 # 검사를 리터럴에서 요구로 옮기면 **아무것도 안 세는 검사**가 되기 쉽다. 여덟을 각각
-# 깨뜨려 `audit` 이 잡는지 세고, **성한 봉투는 안 잡는지도** 함께 센다.
+# 깨뜨려 `audit` 이 잡는지 세고, **성한 응답 묶음은 안 잡는지도** 함께 센다.
 # ─────────────────────────────────────────────────────────────────────────────
 
 def 망가뜨리기() -> list[tuple[str, callable]]:
@@ -165,7 +165,7 @@ def 망가뜨리기() -> list[tuple[str, callable]]:
         ("elision 을 `{}` 로 — 통이 하나도 없다", lambda e: e.__setitem__("elision", {})),
         ("elision 에 자른 것을 싣는다", lambda e: e["elision"].__setitem__(
             "truncated", [{"reason": "budget", "count": 1}])),
-        ("봉투 필드 하나(coverage)를 지운다", 지우기("coverage")),
+        ("응답 묶음 필드 하나(coverage)를 지운다", 지우기("coverage")),
         ("안 만든 자리 하나를 `[]` 로", lambda e: e["answer"].__setitem__("unresolved", [])),
         ("안 만든 자리에서 기능 번호를 지운다", lambda e: e["answer"]["effects"]["not_built"]
             .__setitem__("capability", {})),
@@ -181,17 +181,17 @@ def self_test(env: dict) -> list[str]:
     problems: list[str] = []
 
     성한것, _ = audit(env)
-    print(f"  {'✓' if not 성한것 else '✗'} 성한 봉투는 안 잡는다{'':<22}"
+    print(f"  {'✓' if not 성한것 else '✗'} 성한 응답 묶음은 안 잡는다{'':<22}"
           f"{'그대로' if not 성한것 else 성한것}")
     if 성한것:
-        problems.append(f"성한 봉투에서 어긋남이 났다: {성한것}")
+        problems.append(f"성한 응답 묶음에서 어긋남이 났다: {성한것}")
 
     for 이름, 깨기 in 망가뜨리기():
         상한것 = copy.deepcopy(env)
         try:
             깨기(상한것)
         except (KeyError, TypeError) as e:
-            problems.append(f"「{이름}」 을 만들지 못했다 (봉투의 모양이 바뀌었다): {e}")
+            problems.append(f"「{이름}」 을 만들지 못했다 (응답 묶음의 모양이 바뀌었다): {e}")
             print(f"  ✗ {이름:<44} 만들지 못했다")
             continue
         잡힌것, _ = audit(상한것)
@@ -244,7 +244,7 @@ def main() -> int:
 
         answer = env["answer"]
         el = env.get("elision") or {}
-        print(f"① 봉투  필드 {len(ENVELOPE_FIELDS) - len([x for x in ENVELOPE_FIELDS if x not in env])}"
+        print(f"① 응답 묶음  필드 {len(ENVELOPE_FIELDS) - len([x for x in ENVELOPE_FIELDS if x not in env])}"
               f"/{len(ENVELOPE_FIELDS)} · elision 통 {len(el)} 개 · 전부 비었나 "
               f"{'예' if all(is_empty_bucket(v) for v in el.values()) else '아니오'}")
         print(f"⑥ 실물  outcome={answer.get('outcome')} · 2층 심볼 {env['projection']['symbols_indexed']}")

@@ -1,4 +1,4 @@
-//! 질의 실행기 — **모든 답이 봉투를 지고 나간다** (옛 F05 §5).
+//! 질의 실행기 — **모든 답이 응답 묶음을 지고 나간다** (옛 F05 §5).
 //!
 //! > 실행기 진입점이 `Envelope` 만 반환한다 → 벌거벗은 답을 낼 방법이 없다.
 //!
@@ -22,7 +22,7 @@
 //! [`pal_core::ElisionReason::PathProductExceeded`] 는 **이 빌드에서 일어날 수 없다.**
 //! 규칙은 서 있고 시험되지만(`pal_core::traverse` 의 단위 시험) **실물 모집단이 0** 이고,
 //! [ADR-0002](../../../docs/adr/0002-empty-population-is-not-zero-violations.md) 그대로
-//! 그것을 *"절단 없음"* 으로 세지 않는다. 후보 엣지를 만드는 것은 F07 이다.
+//! 그것을 *"생략 없음"* 으로 세지 않는다. 후보 엣지를 만드는 것은 F07 이다.
 
 #![forbid(unsafe_code)]
 
@@ -73,9 +73,9 @@ pub enum NamedQuery {
     SymbolContains { name: String },
     /// 이 심볼을 가리키는 것들 — 1홉 역방향.
     SymbolCallers { name: String },
-    /// 이 심볼에서 닿는 것들 — **예산 절단이 있는 BFS.**
+    /// 이 심볼에서 닿는 것들 — **예산 생략이 있는 BFS.**
     SymbolReaches { name: String },
-    /// 노드와 엣지 전부 — 바깥 오라클이 읽는 창.
+    /// 노드와 엣지 전부 — 바깥 대조 도구가 읽는 창.
     GraphDump,
     /// 결박마다 상태 + **반경** + 무엇이 켰는가.
     BindingStatus,
@@ -238,7 +238,7 @@ pub enum QueryResult {
     Deviation { deviation: Box<Deviation> },
     /// 이름이 여럿으로 해소됐다. **하나를 고르지 않는다.**
     Ambiguous { name: String, candidates: Vec<SymbolNode> },
-    /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 봉투가 진다.
+    /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 응답 묶음이 진다.
     ///
     /// # `near` — **이것을 뜻했습니까** (옛 F11 §4)
     ///
@@ -291,7 +291,7 @@ pub enum DeviationInput {
 
 /// 질의 하나가 서는 바닥.
 ///
-/// **봉투의 성분을 부르는 쪽이 지고 온다.** 대장을 만드는 것은 표면이고(`pal-cli`),
+/// **응답 묶음의 성분을 부르는 쪽이 지고 온다.** 대장을 만드는 것은 표면이고(`pal-cli`),
 /// 이 크레이트가 그것을 다시 계산하면 같은 사실이 두 곳에서 계산된다.
 pub struct QueryCtx<'a> {
     pub projection: &'a Projection,
@@ -321,7 +321,7 @@ pub struct QueryCtx<'a> {
     /// `cargo xtask check` 는 `pal-store → pal-intent` 만 막는다. 여기는 읽기 경로라
     /// 그 규칙에 안 걸린다 — **그래도 안 붙인다.**
     ///
-    /// 이 구조체의 머리가 이미 그 근거를 적었다: *"봉투의 성분을 부르는 쪽이 지고 온다.
+    /// 이 구조체의 머리가 이미 그 근거를 적었다: *"응답 묶음의 성분을 부르는 쪽이 지고 온다.
     /// 대장을 만드는 것은 표면이고, 이 크레이트가 그것을 다시 계산하면 같은 사실이 두
     /// 곳에서 계산된다."* **결박도 같은 자격이다** — 표면이 이미 의도 저장소를 연다
     /// (`pal touch`). 여기서 또 열면 **한 명령이 같은 파일을 두 번 연다.**
@@ -371,7 +371,7 @@ pub struct QueryCtx<'a> {
     pub partial_files: BTreeSet<RepoPath>,
 }
 
-/// 질의 하나를 돌린다. **반환 타입이 봉투뿐이다.**
+/// 질의 하나를 돌린다. **반환 타입이 응답 묶음뿐이다.**
 ///
 /// # Errors
 /// 2층을 읽지 못하면.
@@ -385,7 +385,7 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
     let fold = fold_of(&answer, &ctx.ledger);
 
     // **로그는 답보다 먼저 남는다** — 답을 못 낸 질의도 일어난 사건이다.
-    // 그런데 절단과 걸린 시간은 답을 낸 뒤에야 안다. 그래서 여기다.
+    // 그런데 생략과 걸린 시간은 답을 낸 뒤에야 안다. 그래서 여기다.
     //
     // ⚠ **읽기 전용으로 붙었으면 못 남긴다.** 조용히 건너뛰지 않는다 — F17 이 그
     // 공백을 「조회 안 됨」으로 세면 미조회를 **과대 계상**하고, 그것이 이 제품이
@@ -393,7 +393,7 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
     let log = if ctx.projection.is_read_only() {
         LogStatus::NotRecorded { why: NotRecorded::ReadOnlyAttach }
     } else {
-        // **한 번만 잰다.** 로그의 값과 봉투의 값이 같은 `Instant` 에서 나와야
+        // **한 번만 잰다.** 로그의 값과 응답 묶음의 값이 같은 `Instant` 에서 나와야
         // *"산출의 숫자와 로그의 숫자가 다르다"* 가 일어나지 않는다.
         let duration_micros =
             u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX);
@@ -425,7 +425,7 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
 ///
 /// # 접기는 이미 일어나고 있었다 — 없던 것은 그 사실의 기록이다
 ///
-/// 모든 봉투가 [`LedgerRef`] 를 싣는데 그것은 대장 전체가 아니라 **요약 여섯 값**이다.
+/// 모든 응답 묶음이 [`LedgerRef`] 를 싣는데 그것은 대장 전체가 아니라 **요약 여섯 값**이다.
 /// 즉 부피는 이미 옮겨져 있고, 옮겼다는 사실만 산출에 없었다. 그것이 이 함수가
 /// 닫는 구멍이다.
 ///
@@ -867,7 +867,7 @@ fn bound_item(
 /// > **낡은 것이 안 보이면 이 기능의 존재 이유가 사라진다.**
 ///
 /// 그래서 자르는 것은 **낡지 않은 것의 꼬리**뿐이고, 자른 수가
-/// [`ElisionReason::BindingMaxExceeded`] 로 실린다. **조용한 절단이 없다.**
+/// [`ElisionReason::BindingMaxExceeded`] 로 실린다. **조용한 생략이 없다.**
 fn 회상(items: &mut Vec<BoundItem>, max: usize, elision: &mut Elision) {
     items.sort_by_key(pal_core::정렬_열쇠);
     if items.len() <= max {
@@ -944,7 +944,7 @@ fn 조립(
 
 /// 좌표 하나를 만진다 — **표면이 부르는 자리.**
 ///
-/// [`execute`] 를 그대로 지나므로 **봉투도 질의 로그도 같은 경로에서 난다.**
+/// [`execute`] 를 그대로 지나므로 **응답 묶음도 질의 로그도 같은 경로에서 난다.**
 /// 답의 모양만 벗겨 낸다 — `pal touch --json` 의 형태가 S2 이래 그대로여야 하고,
 /// 그것을 위해 계산을 두 벌 두면 그 순간 둘이 갈린다.
 ///

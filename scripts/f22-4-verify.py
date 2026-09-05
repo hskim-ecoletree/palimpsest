@@ -269,9 +269,9 @@ def main() -> int:
         d = env["answer"]
 
         빠진 = [f for f in ENVELOPE_FIELDS if f not in env]
-        print(f"  {'✓' if not 빠진 else '✗'} ④ 봉투 필드 일곱  누락 {len(빠진)}")
+        print(f"  {'✓' if not 빠진 else '✗'} ④ 응답 묶음 필드 일곱  누락 {len(빠진)}")
         if 빠진:
-            failures.append(f"④ 봉투 필드 누락: {빠진}")
+            failures.append(f"④ 응답 묶음 필드 누락: {빠진}")
 
         위반 = d["violations"]
         print(f"  {'✓' if not 위반 else '✗'} ② 전수에서 위반 {len(위반)} 건")

@@ -1,0 +1,39 @@
+# D3-a 음성 대조 — 2026-09-06
+# 「철회(folded)」의 기계 표시가 **정말** 검사에 걸려 있는가.
+
+## ⓪ 먼저 사본이 사본을 재는지 확인한다
+`cargo xtask` 의 `repo_root()` 는 `CARGO_MANIFEST_DIR` 로 컴파일 시점에 박힌다.
+그래서 사본에서 `cd` 만 하면 원본을 잰다. 이 저장소는 `--root <경로>` 를 받고
+**모르는 인자를 거부한다**(`뿌리를_고른다`). 사본은 `cp -R` 이 아니라 `git clone` 으로 떴다 —
+파일 복사본에는 이력이 없어 git 을 보는 축이 전량 「안 보임」으로 세고도 초록이 된다.
+
+$ git clone -q . <사본>
+$ ls <사본>/.palimpsest/rounds/*/folded.md
+  2026-08-23-check-verifies-work/folded.md
+  2026-09-01-agent-laziness-merge-evaluation/folded.md
+
+## ① 손대지 않은 사본 — 통과
+$ cargo xtask check --root <사본>
+검사 24/24 통과
+
+## ② 옛 표기도 새 표기도 아닌 것으로 바꾼다 (`## 왜 접었나` → `## 사유`) — 발화
+$ cargo xtask check --root <사본>
+  FAIL  원장 둘 대조
+원장 둘 대조: `2026-08-23-check-verifies-work/folded.md` 에 **`## 왜 철회했나` 가 없다** —
+사유 없는 철회는 철회가 아니라 **조용한 축소**다. 규약 §5 「철회」가 그 절을 요구한다
+Error: 1개 검사가 실패했다
+
+## ③ 새 표기만 든 사본 (`## 사유` → `## 왜 철회했나`) — 통과
+$ cargo xtask check --root <사본>
+검사 24/24 통과
+
+  → 별칭이 **양쪽을 다 받고**, 어느 쪽도 아니면 **발화한다.**
+    ②가 없으면 ①③의 초록은 「검사가 아무것도 안 본다」와 구별되지 않는다.
+
+## ④ `pal round stop` 쪽 — 시험으로 잠갔다
+`crates/pal-cli/tests/round_stop.rs` 의 `write_folded`(옛 표기)에 더해
+`write_folded_new`(새 표기)를 세우고 같은 시험에서 둘 다 통과하는 것을 잰다.
+옛 표기 픽스처만 두면 별칭이 「옛 것만 받는다」로 퇴화해도 아무것도 안 울린다.
+
+$ cargo test -p pal-cli --test round_stop
+test result: ok. 23 passed; 0 failed

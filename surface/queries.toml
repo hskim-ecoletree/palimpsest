@@ -90,13 +90,13 @@ returns    = "Symbols"
 introduced = "F05"
 
 [query."symbol.reaches"]
-summary    = "이 심볼에서 닿는 것들 — **예산 절단이 있는 BFS**"
+summary    = "이 심볼에서 닿는 것들 — **예산 생략이 있는 BFS**"
 args       = [{ name = "name", type = "SymbolName", required = true }]
 returns    = "Reached"
 introduced = "F05"
 
 [query."graph.dump"]
-summary    = "노드와 엣지 전부 — 바깥 오라클이 읽는 창"
+summary    = "노드와 엣지 전부 — 바깥 대조 도구가 읽는 창"
 args       = []
 returns    = "Graph"
 introduced = "F05"

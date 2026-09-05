@@ -48,10 +48,10 @@ pub enum QueryName {
     /// 이 심볼을 가리키는 것들 — 1홉 역방향.
     #[serde(rename = "symbol.callers")]
     SymbolCallers,
-    /// 이 심볼에서 닿는 것들 — 예산 절단이 있는 BFS.
+    /// 이 심볼에서 닿는 것들 — 예산 생략이 있는 BFS.
     #[serde(rename = "symbol.reaches")]
     SymbolReaches,
-    /// 노드와 엣지 전부 — **바깥 오라클(SQLite CTE)이 읽는 창**이다.
+    /// 노드와 엣지 전부 — **바깥 대조 도구(SQLite CTE)가 읽는 창**이다.
     #[serde(rename = "graph.dump")]
     GraphDump,
     /// 결박마다 **상태 + 반경 + 무엇이 켰는가** (옛 F09 §8).
@@ -148,7 +148,7 @@ pub struct QueryLogEntry {
     pub args_digest: String,
     /// 이 답이 **실제로 만진** 좌표. F17 의 커버리지가 이것을 센다.
     pub accessed: Vec<SymbolId>,
-    /// 잘린 것. **절단이 없어도 실린다** — 로그에서도 조용한 절단은 금지다.
+    /// 잘린 것. **생략이 없어도 실린다** — 로그에서도 조용한 생략은 금지다.
     pub elision: Elision,
     /// 걸린 시간(마이크로초). **벤치가 아니라 관측이다.**
     pub duration_micros: u64,

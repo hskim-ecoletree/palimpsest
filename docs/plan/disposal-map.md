@@ -170,7 +170,7 @@
 
 | 절 | 결정 | 한 줄 | 원문 좌표 | 처분 |
 |---|---|---|---|---|
-| 1 설계 결정 요약 | `§1-1` | **강제 규칙 일곱** — "일곱 중 다섯은 타입으로, 둘은 검사로 강제된다" (`evidence_refs` 비면 저장 불가 / 선택 필드 금지 / 출처 불변·승격은 새 노드 / 속성 출처 동질성 / `clean`이 없다 / 조용한 절단 금지 / 능력 부재를 값으로) | docs/DESIGN.md:283 | **코드** — `crates/pal-core/src/doctor.rs:66`(evidence_refs) · `xtask/src/main.rs:546`+`613`(선택 필드 금지) · `xtask/src/main.rs:552`+`1949`(승격이 원본을 안 고친다) · `doctor.rs:65`(producer↔provenance) · `judgment.rs:52`(clean 없음) · `envelope.rs:190`(Elision) · `capable.rs:17`(Capable) |
+| 1 설계 결정 요약 | `§1-1` | **강제 규칙 일곱** — "일곱 중 다섯은 타입으로, 둘은 검사로 강제된다" (`evidence_refs` 비면 저장 불가 / 선택 필드 금지 / 출처 불변·승격은 새 노드 / 속성 출처 동질성 / `clean`이 없다 / 조용한 생략 금지 / 능력 부재를 값으로) | docs/DESIGN.md:283 | **코드** — `crates/pal-core/src/doctor.rs:66`(evidence_refs) · `xtask/src/main.rs:546`+`613`(선택 필드 금지) · `xtask/src/main.rs:552`+`1949`(승격이 원본을 안 고친다) · `doctor.rs:65`(producer↔provenance) · `judgment.rs:52`(clean 없음) · `envelope.rs:190`(Elision) · `capable.rs:17`(Capable) |
 | 1 | `§1-2` | "**자리는 처음부터 있고 값이 "미구축"이다.** `Capable<T> = Present(T) \| NotBuilt{capability}`" | docs/DESIGN.md:305 | **코드** — `crates/pal-core/src/capable.rs:17`(`Capable<T>`) · `:50`(`CapabilityId`) · `:85`(`Declared<T>`) |
 | 1 | `§1-3` | `Actor`의 `종류`가 표에서 내려갔다 (2026-08-12) — git 정체성만 지고 등록 노드는 "그것을 저작할 기능이 없어 만들지 않았다" | docs/DESIGN.md:280 | **코드** — `schema/graph.toml:249`(`[node.Actor]`) · `crates/pal-core/src/chain.rs:74`(`Actor`) — 종류 필드가 없는 것이 곧 강제 |
 | 1 | **D25** | "**그래프 스키마가 1급 산출이다.**" — `schema/graph.toml` 하나에서 코드·JSON 스키마·문서 표·`pal export`가 파생. "코드에만 있고 스키마에 없는 노드·엣지는 CI 실패" | docs/DESIGN.md:189 · 311 | **ADR-0012** — 단일 진실 파일은 코드 쪽 짝이 있는 것만 선언한다 (양방향 대조: `xtask/src/main.rs:544`+`951`) |
@@ -216,7 +216,7 @@
 |---|---|---|---|---|
 | 5 엣지 해소 등급 | **D5** | "엣지는 해소 등급을 갖는다 `exact / scoped / candidate / contract`" | docs/DESIGN.md:169 · 636 | **코드** — `crates/pal-core/src/graph.rs:163`(`ResolutionGrade`) · `:176`(`ALL: [Self; 4]`) |
 | 5 | **D6** | "해소 실패는 미해소 참조 노드로 기록된다 — 공백이 1급 사실" | docs/DESIGN.md:170 · 681 | **B** — F07·F08. `touch.rs:253` 은 `pub enum UnresolvedRef {}`(거주 불가) 이고 `schema/graph.toml:195` 가 `status = "not_built"` 다 |
-| 5 | `§5-1` | 후보 집합 상한 `K` · 경로 곱 예산 `B` · "절단은 산출에 남는다"; "**값 없이 켜지지 않는다**는 것이 여기서의 결정이다" | docs/DESIGN.md:654 | **코드** — `crates/pal-core/src/budget.rs:246`(`Budget`) · `xtask/src/main.rs:547`+`1580`("예산 상수 단일 위치") · `envelope.rs:190`(`Elision`) · `:169`(`LimitHit`) |
+| 5 | `§5-1` | 후보 집합 상한 `K` · 경로 곱 예산 `B` · "생략은 산출에 남는다"; "**값 없이 켜지지 않는다**는 것이 여기서의 결정이다" | docs/DESIGN.md:654 | **코드** — `crates/pal-core/src/budget.rs:246`(`Budget`) · `xtask/src/main.rs:547`+`1580`("예산 상수 단일 위치") · `envelope.rs:190`(`Elision`) · `:169`(`LimitHit`) |
 | 5 | `§5-2` | 경계 엣지 — `contract` 는 "증거 아티팩트 필수" | docs/DESIGN.md:659 | **B** — F07 (`contract` 등급의 모집단이 0) |
 | 5 | `§5-3` | "`UnresolvedRef`는 실행 관측의 작업 목록이다" | docs/DESIGN.md:696 | **B** — F08·F16 |
 
@@ -296,7 +296,7 @@
 |---|---|---|---|---|
 | 12 물리 설계 | **D14** | "단일 정적 바이너리 + 단일 파일 저장소 + 소비자 중립 표면, 플러그인은 어댑터" | docs/DESIGN.md:178 · 1382 | **뒤집힘** — ADR-0025 §3 이 *"소비자 중립 표면"*·*"플러그인은 어댑터"* 를 폐기하고 표면을 넷(스킬·에이전트 정의·훅·`pal` CLI)으로 고정했다. 단일 바이너리·단일 파일 저장소는 §12-1 이 진다 |
 | 12 | **D16** | "예산과 수명이 설계의 일부다 — … 넘으면 능력이 아니라 예산을 먼저 의심한다"; 자리표시 셋은 초기값 칸에 `미측정` | docs/DESIGN.md:180 · 1451 · 1482 | **코드** — `crates/pal-core/src/budget.rs:246`(`Budget`) · `xtask/src/main.rs:547`+`1580`("예산 상수 단일 위치") · `envelope.rs:134`(`BudgetName`). ⚠ 보존 정책 M 은 §0-3 미정에 걸려 있다 |
-| 12 | **D19** | "코어는 뷰 모델까지, 픽셀은 어댑터. 시각화의 절단은 그림이 아니라 데이터로 남는다" (`elision`) | docs/DESIGN.md:183 · 1506 | **ADR-0011** — 옮긴 부피(`Fold`)와 못 본 부피(`Elision`)는 다른 필드다 |
+| 12 | **D19** | "코어는 뷰 모델까지, 픽셀은 어댑터. 시각화의 생략은 그림이 아니라 데이터로 남는다" (`elision`) | docs/DESIGN.md:183 · 1506 | **ADR-0011** — 옮긴 부피(`Fold`)와 못 본 부피(`Elision`)는 다른 필드다 |
 | 12 | **D21** | "거버넌스는 이 층 위에 서되 이 층이 아니다. … 게이트 집행과 fail-closed 차단은 수입하지 않는다 — 형태를 `Residual`로 바꾼다" | docs/DESIGN.md:185 · 1527 | **ADR-0026** — 코어는 판정을 산출하고 하네스가 그것을 강제한다. 차단은 코어의 일이 아니다 (짝: `xtask/src/main.rs:539`+`713` "코어 어휘 금지") |
 | 12 | **D30** | "**표면의 1급은 CLI다.** MCP·플러그인은 어댑터이고 배치·CI·훅 경로가 그와 대등하다. 전달 형태가 능력의 전제가 되지 않는다" | docs/DESIGN.md:194 · 1415 | **뒤집힘** — ADR-0025 §3: *"MCP 어댑터는 이 결정으로 값을 잃는다. MCP 는 호스트 중립성을 사는 값이고, 호스트가 하나면 살 이유가 없다"* |
 | 12 | **D31** | "**git 워크플로와 결합한다** — 결박은 커밋 트레일러로 git에 남고, 의도의 정본은 텍스트이며, 판정의 단위는 브랜치·PR의 델타다" | docs/DESIGN.md:195 · 1608 | **B** — F23 |

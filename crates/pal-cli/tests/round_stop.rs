@@ -112,6 +112,24 @@ fn write_report(repo: &Path) {
     .expect("report");
 }
 
+/// **새 표기로 쓴 종결문** — `D3-b` 의 별칭이 양쪽을 다 받는지 잰다.
+///
+/// 옛 표기(`## 왜 접었나`)는 [`write_folded`] 가 잰다. 그 픽스처만 두면 별칭이
+/// 「옛 것만 받는다」로 퇴화해도 아무것도 안 울린다.
+fn write_folded_new(repo: &Path) {
+    let dir = repo.join(".palimpsest/rounds").join(SLUG);
+    std::fs::write(
+        dir.join("folded.md"),
+        "# 철회 — fixture\n\n## 왜 철회했나\n목표 밖이다.\n\n## 철회하면서 남기는 것과 버리는 것\n없음.\n\n## 다음에 여는 것\n없음.\n",
+    )
+    .expect("folded");
+    std::fs::write(
+        dir.join("state.md"),
+        "# 상태\n\n## 지금 단계\n철회 — `folded.md`를 본다.\n",
+    )
+    .expect("state");
+}
+
 fn write_folded(repo: &Path) {
     let dir = repo.join(".palimpsest/rounds").join(SLUG);
     std::fs::write(
@@ -700,6 +718,18 @@ fn unregistered_unmet_stale_없는회차_terminal충돌을_모두_차단하고_f
         &store,
         &payload(&repo, "f", &transcript, json!(false))
     )));
+
+    // **새 표기도 통과한다** — 별칭이 한쪽만 받으면 여기서 걸린다(`D3-b`).
+    write_folded_new(&repo);
+    std::fs::write(&transcript, "folded-new\n").expect("transcript");
+    assert!(
+        !blocked(&stop(
+            &repo,
+            &store,
+            &payload(&repo, "fn", &transcript, json!(false))
+        )),
+        "새 표기로 쓴 folded.md 를 막았다 — 별칭이 옛 표기만 받는다"
+    );
 
     std::fs::remove_dir_all(&dir).expect("remove round");
     std::fs::write(&transcript, "missing\n").expect("transcript");

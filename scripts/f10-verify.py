@@ -149,7 +149,7 @@ def 도구설정인가(path: str) -> bool:
 
 
 def 걸러낸다(got: dict) -> tuple[list[dict], int]:
-    """도구 설정 아래를 뺀다. **뺀 수를 함께 낸다 — 조용한 절단 금지.**"""
+    """도구 설정 아래를 뺀다. **뺀 수를 함께 낸다 — 조용한 생략 금지.**"""
     안 = [p for p in got["proposals"] if not 도구설정인가(p["fragment"]["path"])]
     return 안, len(got["proposals"]) - len(안)
 

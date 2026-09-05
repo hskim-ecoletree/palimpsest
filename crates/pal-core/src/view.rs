@@ -167,9 +167,9 @@ pub enum EdgeTarget {
     Candidates {
         /// 실제로 저장된 후보. **불변식 5 가 `K` 와 댄다.**
         kept: Vec<NodeKey>,
-        /// 절단 전의 후보 수. `kept.len()` 과 다르면 잘린 것이다.
+        /// 생략 전의 후보 수. `kept.len()` 과 다르면 잘린 것이다.
         total: usize,
-        /// 초과분에 대응하는 `UnresolvedRef`. **없으면 절단이 조용해진다**(§5.1).
+        /// 초과분에 대응하는 `UnresolvedRef`. **없으면 생략이 조용해진다**(§5.1).
         demoted_to: Option<NodeKey>,
     },
 }

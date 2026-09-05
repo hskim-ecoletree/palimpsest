@@ -131,7 +131,7 @@ impl InvariantId {
             Self::RegisteredAndRequired => "\"필수이거나 없거나\"가 저장 층에서 무효",
             Self::ProducerFitsProvenance => "출처 파티션이 거짓이 된다",
             Self::InferredCarriesEvidence => "P3 이 문장으로 되돌아간다",
-            Self::CandidateSetWithinLimit => "절단이 조용해진다",
+            Self::CandidateSetWithinLimit => "생략이 조용해진다",
             Self::ResidualAnchored => "잔여가 유령이 된다",
             Self::BindingIndexResolves => "승인 노동의 유실이 조용히 일어난다",
             Self::FreshnessConsistent => "KG 의 일부만 신선하다",
@@ -795,7 +795,7 @@ impl<'a> Context<'a> {
             }
             if *total > kept.len() && demoted_to.is_none() {
                 problems.push(format!(
-                    "후보 {total}개 중 {}개만 남았는데 초과분의 UnresolvedRef 가 없다 — 절단이 조용해진다",
+                    "후보 {total}개 중 {}개만 남았는데 초과분의 UnresolvedRef 가 없다 — 생략이 조용해진다",
                     kept.len()
                 ));
             }
@@ -1276,7 +1276,7 @@ snapshot    = "at"
 
     #[test]
     fn 불변식_5_잘린_후보에는_미해소_참조가_붙는다() {
-        // **절단이 조용해지는 자리다.** 후보 40 개 중 하나만 남기고 강등 기록을 지운다.
+        // **생략이 조용해지는 자리다.** 후보 40 개 중 하나만 남기고 강등 기록을 지운다.
         let mut edges = 성한().edges().to_vec();
         edges[1].to = EdgeTarget::Candidates {
             kept: vec![심볼_키("g")],

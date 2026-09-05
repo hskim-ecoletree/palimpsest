@@ -77,7 +77,7 @@ fn 상태(repo: &Path, args: &[&str]) -> (String, u64, String) {
     let mut all = vec!["query", "binding.status"];
     all.extend_from_slice(args);
     all.push("--json");
-    let v: serde_json::Value = serde_json::from_str(&pal(repo, &all)).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&pal(repo, &all)).expect("응답 묶음 JSON");
     let b = &v["answer"]["bindings"];
     let list = b.as_array().expect("bindings 가 배열이 아니다");
     assert_eq!(list.len(), 1, "결박이 1 건이 아니다 — 이 시험이 아무것도 안 잰다");
@@ -179,7 +179,7 @@ fn 판정_불가가_fresh_로_새지_않는다() {
         &repo,
         &["query", "binding.status", "--at", &c2, "--read-only", "--json"],
     ))
-    .expect("봉투 JSON");
+    .expect("응답 묶음 JSON");
     assert_eq!(
         v["projection"]["built_for_this_snapshot"].as_bool(),
         Some(false),
@@ -218,15 +218,15 @@ fn 반경이_넓어지면_감시_집합이_커진다() {
 }
 
 #[test]
-fn 결박이_없어도_봉투를_지고_빈_목록으로_답한다() {
+fn 결박이_없어도_응답묶음을_지고_빈_목록으로_답한다() {
     // **결박 0 건과 「안 만듦」은 다르다.** 이 빌드에는 결박 능력이 있고 아무도 안
     // 걸었을 뿐이다 — `not_built` 로 내면 거짓말이고, 그것이 이 도구가 고발하는 형태다.
     let repo = 저장소("empty");
     let v: serde_json::Value =
-        serde_json::from_str(&pal(&repo, &["query", "binding.status", "--json"])).expect("봉투");
+        serde_json::from_str(&pal(&repo, &["query", "binding.status", "--json"])).expect("응답 묶음");
     assert_eq!(v["answer"]["outcome"].as_str(), Some("bindings"));
     assert!(v["answer"]["bindings"].as_array().expect("배열").is_empty());
-    // 봉투는 그대로 진다.
+    // 응답 묶음은 그대로 진다.
     for 필드 in ["snapshot", "projection", "coverage", "capabilities", "ledger", "elision"] {
         assert!(v.get(필드).is_some(), "결박이 0 건인데 `{필드}` 가 빠졌다");
     }

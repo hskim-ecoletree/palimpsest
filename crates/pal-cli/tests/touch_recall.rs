@@ -56,7 +56,7 @@ fn touch(root: &Path, 방: &[String], name: &str, 더: &[&str]) -> serde_json::V
     args.extend(방.iter().map(String::as_str));
     args.extend(더);
     args.push("--json");
-    serde_json::from_str(&pal(root, &args)).expect("봉투 JSON")
+    serde_json::from_str(&pal(root, &args)).expect("응답 묶음 JSON")
 }
 
 fn bind(root: &Path, 방: &[String], target: &str, note: &str, radius: &str) {
@@ -158,7 +158,7 @@ fn 상한을_넘으면_자르고_그_수를_싣는다() {
 
     let v = touch(&root, &방, "deriveVerdicts", &[]);
     assert_eq!(걸린_것(&v).len(), 상한, "상한이 안 걸렸다: {}", 걸린_것(&v).len());
-    // **조용한 절단이 없다.**
+    // **조용한 생략이 없다.**
     assert_eq!(잘린_수(&v), 2, "잘린 수가 안 실렸다: {v}");
 
     // 손잡이를 낮추면 더 잘린다 — 상한이 실재한다는 증거다.
@@ -272,7 +272,7 @@ fn 두_표면이_같은_답을_내고_로그를_남긴다() {
     let mut args: Vec<&str> = vec!["query", "binding.touch", "writeHandoff"];
     args.extend(방.iter().map(String::as_str));
     args.push("--json");
-    let q: serde_json::Value = serde_json::from_str(&pal(&root, &args)).expect("봉투 JSON");
+    let q: serde_json::Value = serde_json::from_str(&pal(&root, &args)).expect("응답 묶음 JSON");
     // 같은 실행기를 지나므로 **답의 알맹이가 같다.** 겉옷만 다르다.
     assert_eq!(q["answer"]["outcome"], "touch");
     assert_eq!(q["answer"]["result"]["symbol"]["name"], "writeHandoff");

@@ -62,8 +62,8 @@ fn capabilities() -> CapabilitySet {
     )
 }
 
-/// 이 답에서 접힌 것 — **대장 하나.**
-fn 접힌_대장(report: &ledger::LedgerReport) -> Fold {
+/// 이 답에서 이관한 것 — **대장 하나.**
+fn 이관한_대장(report: &ledger::LedgerReport) -> Fold {
     let mut fold = Fold::none();
     fold.push(FoldedPart::Ledger, report.ledger.total(), QueryName::LedgerSnapshot);
     fold
@@ -85,9 +85,9 @@ pub struct Args<'a> {
     pub json: bool,
 }
 
-/// 봉투 옆에 설치 검사를 **나란히** 싣는다.
+/// 응답 묶음 옆에 설치 검사를 **나란히** 싣는다.
 ///
-/// 봉투 안에 넣지 않는 이유: [`Diagnosis`] 는 `schema/graph.toml` 이 정한 불변식의
+/// 응답 묶음 안에 넣지 않는 이유: [`Diagnosis`] 는 `schema/graph.toml` 이 정한 불변식의
 /// 자리이고 설치는 그 스키마의 라벨이 아니다. 안에 넣으면 `[f22.4]` 의 모집단이
 /// 움직인다 — **재는 것이 달라지지 않게 옆에 둔다.**
 #[derive(serde::Serialize)]
@@ -169,10 +169,10 @@ pub fn run(args: Args) -> Result<()> {
         },
         capabilities(),
         LedgerRef::of(&report.ledger),
-        // 검사가 절단하는 것은 없다 — 표본은 **잔여**로 나가고 그것이 절단과 다른 것이다.
+        // 검사가 생략하는 것은 없다 — 표본은 **잔여**로 나가고 그것이 생략과 다른 것이다.
         Elision::none(),
-        // **대장이 접혀 있다** — 절단이 아니라 부피를 옮긴 것이다(옛 F06 §4.3).
-        접힌_대장(&report),
+        // **대장을 이관했다** — 생략이 아니라 부피를 옮긴 것이다(옛 F06 §4.3).
+        이관한_대장(&report),
         // ⚠ **이 표면은 질의 로그를 안 쓴다.** `pal touch` 와 같은 자리다.
         LogStatus::NotRecorded { why: NotRecorded::SurfaceDoesNotLog },
     );
@@ -441,7 +441,7 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
         e.ledger.files_total
     );
     println!("  2층       심볼 {} 색인됨", e.projection.symbols_indexed);
-    println!("  절단      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
+    println!("  생략      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
     crate::evidence::print(e);
     println!(
         "  능력      {} · 미구축 {}",

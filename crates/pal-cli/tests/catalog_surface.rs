@@ -109,7 +109,7 @@ fn 목록은_저장소_없이_선다() {
 }
 
 #[test]
-fn 모르는_이름은_봉투_없이_1_이고_못_찾은_이름은_봉투와_함께_0_이다() {
+fn 모르는_이름은_응답묶음_없이_1_이고_못_찾은_이름은_응답묶음과_함께_0_이다() {
     // `[f06].exit_code_decision` — **「못 찾았다」는 실패가 아니다.**
     let repo = 저장소("f06-exit");
 
@@ -128,9 +128,9 @@ fn 모르는_이름은_봉투_없이_1_이고_못_찾은_이름은_봉투와_함
         .output()
         .expect("pal");
     assert_eq!(못찾음.status.code(), Some(0), "못 찾은 이름이 실패로 끝났다");
-    let v: serde_json::Value = serde_json::from_slice(&못찾음.stdout).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_slice(&못찾음.stdout).expect("응답 묶음 JSON");
     assert_eq!(v["answer"]["outcome"].as_str(), Some("unknown"), "빈 목록으로 답했다");
-    // **봉투가 근거를 지고 있다** — 그래서 이것이 실패가 아니라 답이다.
+    // **응답 묶음이 근거를 지고 있다** — 그래서 이것이 실패가 아니라 답이다.
     assert!(v["coverage"].is_object() && v["capabilities"].is_object());
 
     let _ = std::fs::remove_dir_all(&repo);

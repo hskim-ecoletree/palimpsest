@@ -293,10 +293,10 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
         Capable::NotBuilt { capability } => println!(
             "  재구축    (이 빌드는 재구축 중인지 모릅니다 — {} 미구축)", capability.feature),
     }
-    println!("  절단      {}", if e.elision.is_none() {
+    println!("  생략      {}", if e.elision.is_none() {
         "없음 (명시)".to_owned()
     } else {
-        format!("{}건 — 상한을 넘어 잘렸습니다", e.elision.dropped())
+        format!("{}건 — 상한을 넘어 생략했습니다", e.elision.dropped())
     });
     crate::evidence::print(e);
     println!("  능력      {} · 미구축 {}",
@@ -393,7 +393,7 @@ fn print_facts(value: &Capable<pal_core::SymbolFacts>) {
             "  (이 빌드에는 {} 능력이 없습니다 — {} 미구축)", capability.what, capability.feature),
         Capable::Present(f) => {
             println!("  호출자 {} · 피호출자 {}", f.callers, f.callees);
-            // ⚠ **파일 경계를 넘는 것은 여기 없다.** 그 수는 봉투의 `coverage.unresolved`
+            // ⚠ **파일 경계를 넘는 것은 여기 없다.** 그 수는 응답 묶음의 `coverage.unresolved`
             // 가 지고, 그 사실을 화면에서 지우면 0 이 *"아무도 안 부른다"* 로 읽힌다.
             println!("  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다");
         }

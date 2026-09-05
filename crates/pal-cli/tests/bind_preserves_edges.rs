@@ -35,9 +35,9 @@ mod common;
 
 use common::{pal, 저장소};
 
-/// 봉투에서 `(노드 수, 엣지 수, built_for_this_snapshot)`.
+/// 응답 묶음에서 `(노드 수, 엣지 수, built_for_this_snapshot)`.
 fn 그래프(out: &str) -> (usize, usize, bool) {
-    let v: serde_json::Value = serde_json::from_str(out).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(out).expect("응답 묶음 JSON");
     (
         v["answer"]["nodes"].as_array().expect("nodes").len(),
         v["answer"]["edges"].as_array().expect("edges").len(),

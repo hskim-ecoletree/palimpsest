@@ -1895,7 +1895,7 @@ fn check_budget_constants(root: &Path) -> Result<String> {
 //
 // | | 무엇을 막나 | 합격선 |
 // |---|---|---|
-// | `Envelope` | 봉투를 버리고 `T` 만 들고 나가는 경로 | `[f05.3.pass]` ① |
+// | `Envelope` | 응답 묶음을 버리고 `T` 만 들고 나가는 경로 | `[f05.3.pass]` ① |
 // | `Budget` | 예산을 끄는 손잡이 | `[f05.1.pass]` ④ |
 //
 // # 이 검사가 지금 재는 것은 **회귀 방지**다
@@ -1909,7 +1909,7 @@ fn check_budget_constants(root: &Path) -> Result<String> {
 //     골든이 진다(`[f05].pass.everything_that_answers_carries_an_envelope`)
 //   · 다른 크레이트가 `Envelope` 를 감싸 벗기는 것 — `pal-core` 밖은 안 본다
 
-/// 봉투를 벗기는 문. **낱말이 코드에 나타나면 실패.**
+/// 응답 묶음을 벗기는 문. **낱말이 코드에 나타나면 실패.**
 const ENVELOPE_ESCAPES: &[&str] = &["into_answer", "impl Deref", "Deref for Envelope", "into_inner"];
 
 /// 예산을 끄는 손잡이.
@@ -1962,7 +1962,7 @@ fn check_no_escape_hatch(root: &Path) -> Result<String> {
         );
     }
     Ok(format!(
-        "봉투 {}개 · 예산 {}개 낱말에 0건",
+        "응답 묶음 {}개 · 예산 {}개 낱말에 0건",
         ENVELOPE_ESCAPES.len(),
         BUDGET_ESCAPES.len()
     ))
@@ -5193,9 +5193,13 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         let 접힘문서 = 뿌리.join(회차).join("folded.md");
         if 접힘문서.is_file() {
             let 본문 = std::fs::read_to_string(&접힘문서).unwrap_or_default();
-            if !본문.contains("## 왜 접었나") {
+            // ★ **옛 표기도 계속 읽는다** — 이 문자열을 지는 `folded.md` 둘이 전부
+            //   지난 회차의 종결 기록이고 「범위 밖」이 그것을 영구히 잠갔다.
+            //   고치면 증거 위조이고, 안 고치고 검사만 옮기면 빨개진다
+            //   (회차 `2026-09-06-user-surface-vocabulary` `D3-b` · ADR-0034).
+            if !본문.contains("## 왜 철회했나") && !본문.contains("## 왜 접었나") {
                 problems.push(format!(
-                    "`{회차}/folded.md` 에 **`## 왜 접었나` 가 없다** — 사유 없는 접힘은                      접힘이 아니라 **조용한 축소**다. 규약 §5 「접힘」이 그 절을 요구한다"
+                    "`{회차}/folded.md` 에 **`## 왜 철회했나` 가 없다** — 사유 없는 철회는                      철회가 아니라 **조용한 축소**다. 규약 §5 「철회」가 그 절을 요구한다"
                 ));
             }
             if 뿌리.join(회차).join("report.md").is_file() {
