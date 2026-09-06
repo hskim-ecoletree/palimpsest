@@ -4531,10 +4531,53 @@ const 동결_경로: &[&str] = &["docs/adr", "docs/gates", "docs/instructions", 
 ///
 /// 위 뿌리에는 `.palimpsest` 가 없고 `docs/gates` 는 동결이라, 그 규칙을 재는 자리가
 /// 원리상 없었다(독립 리뷰 R1 · 발견 4).
-const 이_회차_종결문서: &[&str] = &[
-    ".palimpsest/rounds/2026-09-06-user-surface-vocabulary/report.md",
-    "docs/gates/user-surface-vocabulary.md",
-];
+///
+/// # 회차 이름을 손으로 안 적는다 (`E5-a` · 2026-09-06)
+///
+/// 앞 판은 앞 회차의 파일 이름 **두 문자열**을 상수로 지고 있었다. 그러면 회차가 하나
+/// 열릴 때마다 그 두 줄을 손으로 바꿔야 하고, **안 바꾸면 새 회차의 종결 문서가 어느
+/// 검사에도 안 든다** — 앞 회차가 세운 장치가 다음 회차를 여는 순간 죽은 가지가 된다.
+///
+/// ★ **「원장 둘 대조」가 이미 쓰는 선택자를 그대로 쓴다** — 끝난 회차(종료 보고가 있는
+/// 회차) 중 가장 최근 것을 고르고, 게이트는 **본문에 그 회차 슬러그가 든 것**을 찾는다.
+///
+/// ⚠ **진행 중 회차를 고르는 데 사전순을 쓰면 안 된다**(`check_ledger_pair` 의 C7 이
+/// 그것을 반증했다 — 같은 날짜에 여는 다음 회차의 슬러그가 앞서면 새 회차가 거짓 실패한다).
+/// **여기는 그 위험이 없다** — 종료 보고가 **있는** 것만 고르므로 아직 안 끝난 회차는
+/// 애초에 후보가 아니다.
+fn 이_회차_종결문서(root: &Path) -> Vec<PathBuf> {
+    let 뿌리 = root.join(회차_뿌리);
+    let mut 회차들: Vec<String> = match std::fs::read_dir(&뿌리) {
+        Ok(it) => it
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().is_dir())
+            .filter_map(|e| e.file_name().into_string().ok())
+            .collect(),
+        Err(_) => return Vec::new(),
+    };
+    회차들.sort();
+    let Some(최근) = 회차들
+        .iter()
+        .rev()
+        .find(|회차| 뿌리.join(회차).join("report.md").is_file())
+    else {
+        return Vec::new();
+    };
+    let mut out = vec![뿌리.join(최근).join("report.md")];
+    // 게이트는 이름 규칙이 아니라 **본문이 그 회차를 대는지**로 찾는다.
+    if let Ok(it) = std::fs::read_dir(root.join(게이트_뿌리)) {
+        for e in it.filter_map(|e| e.ok()) {
+            let p = e.path();
+            if p.extension().and_then(|x| x.to_str()) != Some("md") {
+                continue;
+            }
+            if std::fs::read_to_string(&p).is_ok_and(|t| t.contains(최근.as_str())) {
+                out.push(p);
+            }
+        }
+    }
+    out
+}
 
 /// **검출 수단 자신은 대상 밖이다.** 이 파일의 패턴 표와 시험 픽스처가 바로 그 낱말들을
 /// 지고 있어서, 안 가르면 검사가 자기를 잡고 원리상 초록에 못 닿는다.
@@ -4610,8 +4653,7 @@ fn check_awkward_phrases(root: &Path) -> Result<String> {
     for 뿌리 in 교정_뿌리 {
         모으기(root, &root.join(뿌리), &mut 파일들)?;
     }
-    for 종결 in 이_회차_종결문서 {
-        let p = root.join(종결);
+    for p in 이_회차_종결문서(root) {
         if p.is_file() {
             파일들.push(p);
         }
