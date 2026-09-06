@@ -19,7 +19,7 @@
 //! - 파일을 되쓸 때는 **그 파일의 기존 줄바꿈을 보존한다.**
 //! - **사용자 프로젝트에 `.gitattributes` 를 추가하지 않는다** — 우리가 소유하는 파일이
 //!   하나 더 늘고 병합 표면이 커진다.
-//! - **줄바꿈만 다른 변화는 「사용자가 고쳤다」로 안 센다.**
+//! - **줄바꿈만 다른 변화는 「사용자가 고쳤다」로 안 잰다.**
 //!
 //! # 이 시험이 재는 것은 **전 경로**다
 //!
@@ -82,9 +82,9 @@ fn 값(path: &Path) -> serde_json::Value {
     serde_json::from_slice(&std::fs::read(path).expect("읽기")).expect("JSON")
 }
 
-/// ★ **`core.autocrlf` 로 받은 클론에서 전 경로가 선다.**
+/// ★ **`core.autocrlf` 로 받은 클론에서 전 경로가 성립한다.**
 #[test]
-fn autocrlf_클론에서_설치_진단_갱신_제거가_전부_선다() {
+fn autocrlf_클론에서_설치_진단_갱신_제거가_전부_성립한다() {
     let base = 방("전경로");
     let src = base.join("src");
     std::fs::create_dir_all(&src).expect("src");
@@ -192,7 +192,7 @@ fn crlf_파일에_넣은_블록도_crlf_다() {
 /// ★ **`settings.json` 도 그 파일의 줄바꿈으로 되쓴다.**
 ///
 /// 블록(`CLAUDE.md`·`.gitignore`)에는 이 규율이 이미 서 있었는데 `settings.json` 만
-/// 문 밖에 있었다 — `serde_json::to_string_pretty` 는 언제나 LF 를 낸다. 그래서
+/// 문 밖에 있었다 — `serde_json::to_string_pretty` 는 언제나 LF 를 산출한다. 그래서
 /// `core.autocrlf=true` 워킹트리에서는 **되쓸 때마다 파일의 모든 줄이 바뀌고**, git 이
 /// *"LF will be replaced by CRLF"* 를 매번 냈다.
 ///

@@ -1,5 +1,5 @@
 //! **음성 대조군** — 손 표본이 고장이면 여기서 드러난다.
-//! tree-sitter 와 다른 파서(`syn`)로 같은 규칙을 적용해 선언을 센다.
+//! tree-sitter 와 다른 파서(`syn`)로 같은 규칙을 적용해 선언을 잰다.
 use syn::{Item, ImplItem, TraitItem, Type};
 
 fn 타입이름(t: &Type) -> Option<String> {

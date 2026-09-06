@@ -7,7 +7,7 @@
 //! # 조립만 한다
 //!
 //! git 접근은 `pal-git`, 분류는 `pal-extract`, 캐시는 `pal-store` 다. 표면은 그 셋을
-//! 잇고 사람이 읽는 표로 낸다 — **정책이 여기 있으면 안 된다.**
+//! 잇고 사람이 읽는 표로 제출한다 — **정책이 여기 있으면 안 된다.**
 
 use std::collections::BTreeMap;
 use std::num::NonZeroUsize;
@@ -45,10 +45,10 @@ pub struct LedgerReport {
     /// 2층에 들어갈 파일치 — **1패스 스티칭의 입력**(옛 F05 §4).
     ///
     /// **여기서 만들어지는 것이 요점이다.** 1층 캐시가 이미 `scopes`·`export_digest` 를
-    /// 싣고 있으므로(F04) **재파싱 없이** 만들어진다 — 적중한 파일도 엣지를 낸다.
+    /// 싣고 있으므로(F04) **재파싱 없이** 만들어진다 — 적중한 파일도 엣지를 산출한다.
     #[serde(skip)]
     pub stitches: Vec<FileStitch>,
-    /// 깨져서 격리된 엔트리의 자리 몇 — **수는 `cache.corrupt` 가 전부 센다.**
+    /// 깨져서 격리된 엔트리의 자리 몇 — **수는 `cache.corrupt` 가 전부 잰다.**
     ///
     /// 비어 있는 것이 정상 상태다. 비어 있지 않으면 화면에 뜬다.
     pub corrupt: Vec<String>,
@@ -256,7 +256,7 @@ fn assemble(
 
 /// 각 심볼의 **컨테이너 체인** — 바깥에서 안으로.
 ///
-/// # 이것이 없으면 좌표가 `ordinal` 위에 선다
+/// # 이것이 없으면 좌표가 `ordinal` 위에 세워진다
 ///
 /// 옛 F03 §3.2 가 체인을 `symbol_id` 의 성분으로 적었다. 비워 두면 같은 파일의
 /// `class A { m() {} }` 와 `class B { m() {} }` 가 **컨테이너가 아니라 선언 순서로만**
@@ -287,7 +287,7 @@ fn container_chains(symbols: &[pal_core::Symbol], contains: &[Containment]) -> V
 
 /// 파일 하나의 심볼들에 좌표를 붙인다.
 ///
-/// # `ordinal` 을 여기서 센다 — **그리고 컨테이너마다 따로 센다** ([R-16])
+/// # `ordinal` 을 여기서 헤아린다 — **그리고 컨테이너마다 따로 헤아린다** ([R-16])
 ///
 /// 같은 (컨테이너 체인, 이름, 종류)가 여럿이면 **선언 순서**로 가른다. 그러면 순서가
 /// 바뀌는 것만으로 정체성이 뒤바뀌므로, 그런 심볼은 정체성 등급이 `Ordinal` 로 묶인다 —
@@ -400,7 +400,7 @@ fn stitch_of(
 ///
 /// 없으면 `None` 이고 대장이 [`ScopeSource::InferredFromPath`] 를 싣는다. **깨졌으면
 /// 오류다** — 잘못 쓴 매니페스트를 없는 것으로 삼키면 사용자가 선언한 제외 규칙이
-/// 조용히 안 걸리고, 대장은 그것을 *"제외 0 건"* 으로 낸다.
+/// 조용히 안 걸리고, 대장은 그것을 *"제외 0 건"* 으로 산출한다.
 fn load_manifest(repo_path: &Path) -> Result<Option<Manifest>> {
     let file = repo_path.join(".palimpsest/manifest.toml");
     let text = match std::fs::read_to_string(&file) {
@@ -459,7 +459,7 @@ fn language_capabilities(entries: &[LedgerEntry]) -> Vec<LanguageCapability> {
                 (language.clone(), *grade)
             }
             // **읽지 못한 파일의 등급은 L0 이다.** 그 파일에서 아무것도 못 뽑으므로
-            // 심볼 정체성이 없고, 대장 머리에 "결박 불가"로 선다(옛 DESIGN §4.1).
+            // 심볼 정체성이 없고, 대장 머리에 "결박 불가"로 잡힌다(옛 DESIGN §4.1).
             //
             // 이유 둘을 여기서 가르지 않는다 — 등급은 **그 파일에서 무엇을 뽑았는가**의
             // 함수이고 둘 다 0 이다. 이유가 갈리는 곳은 아래 `bucket_note` 다.
@@ -485,7 +485,7 @@ fn language_capabilities(entries: &[LedgerEntry]) -> Vec<LanguageCapability> {
 }
 
 /// 옛 `how-it-works §2.2` 의 화면 (그 문서는 2026-08-18 에 지웠다 — `docs/plan/disposal-map.md`).
-/// 좌표를 붙인 심볼을 **한 줄에 하나씩** 낸다 — 옛 F03 §6.3 의 골든이 읽는 표면.
+/// 좌표를 붙인 심볼을 **한 줄에 하나씩** 산출한다 — 옛 F03 §6.3 의 골든이 읽는 표면.
 ///
 /// # 왜 줄 단위인가
 ///
@@ -564,7 +564,7 @@ pub fn print_table(report: &LedgerReport) {
     println!();
     println!("파일      {}", l.total());
 
-    // **일곱 칸을 전부 낸다. 0 도 낸다** — 생략하면 "그 칸이 없다"와 "0 건"이 같아진다.
+    // **일곱 칸을 전부 출력한다. 0 도 출력한다** — 생략하면 "그 칸이 없다"와 "0 건"이 같아진다.
     for b in Bucket::ALL {
         let n = counts.get(&b).copied().unwrap_or(0);
         let note = match b {

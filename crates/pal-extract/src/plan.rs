@@ -93,7 +93,7 @@ pub fn ingest_plan(path: &RepoPath, source: &str) -> Result<Plan, PlanRefusal> {
 ///
 /// ⚠ **목록 표시(`- `·`* `)는 대개 이미 떼어져 있다.** [`crate::fragment`] 가
 /// `pulldown-cmark` 의 이벤트에서 본문을 짓기 때문이다 — 그래서 둘 다 받는다.
-/// (`ENABLE_TASKLISTS` 는 안 켜져 있으므로 `[ ]` 는 본문에 글자로 남는다.)
+/// (`ENABLE_TASKLISTS` 는 안 걸려 있으므로 `[ ]` 는 본문에 글자로 남는다.)
 fn 체크박스(line: &str) -> Option<&str> {
     let t = line.trim_start();
     let t = t.strip_prefix("- ").or_else(|| t.strip_prefix("* ")).unwrap_or(t);
@@ -366,7 +366,7 @@ mod tests {
     }
 
     #[test]
-    fn 세_형태를_전부_낸다() {
+    fn 세_형태를_전부_산출한다() {
         let p = 계획(
             "# 머리\n설명\n\n## a-1\n`OrderService.cancel` 을 고치고 \
              `OrderService.refund` (신규) 를 만든다. src/order/cancel.ts 도 만진다\n",

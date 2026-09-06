@@ -42,7 +42,7 @@ use crate::ledger;
 /// 이 빌드가 답하는 것과 아직 못 만든 것. **응답마다 실린다**(stack §5.3).
 ///
 /// **질의 이름을 손으로 안 적는다** — [`pal_query::capabilities`] 가 `QueryName::ALL`
-/// 에서 낸다. 손으로 적으면 카탈로그가 늘 때 이 목록만 뒤처지고, 그 어긋남은
+/// 에서 산출한다. 손으로 적으면 카탈로그가 늘 때 이 목록만 뒤처지고, 그 어긋남은
 /// `cargo xtask check` 의 카탈로그 정합이 **표면의 능력 목록까지는 안 본다.**
 fn capabilities() -> CapabilitySet {
     let base = pal_query::capabilities();
@@ -86,7 +86,7 @@ impl BoundIndex for IntentIndex<'_> {
 /// **구조체인 것은 `bind`·`query` 와 같은 형태다.** 자리 여덟을 위치로 넘기면 같은 타입
 /// 셋(`Option<PathBuf>`)이 나란히 서서 **바꿔 넣어도 컴파일된다** — 캐시와 2층과 의도가
 /// 서로의 자리에 들어가는 것이 이 저장소에서 가장 비싼 실수다(방마다 파일이 따로여야
-/// 대조가 안 꺼진다 · `[f04].self_judged` ③).
+/// 대조가 안 멎는다 · `[f04].self_judged` ③).
 pub struct Args<'a> {
     pub repo: &'a Path,
     pub rev: Option<&'a str>,
@@ -96,7 +96,7 @@ pub struct Args<'a> {
     pub name: &'a str,
     /// 한 구역이 싣는 결박의 상한. `None` 이면 자리표시.
     pub binding_max: Option<usize>,
-    /// 걸린 시간을 **표준오류**로 낸다 — `elapsed_micros=<n>`.
+    /// 걸린 시간을 **표준오류**로 출력한다 — `elapsed_micros=<n>`.
     ///
     /// # 왜 산출이 아니라 표준오류인가
     ///
@@ -191,7 +191,7 @@ pub fn run(a: Args) -> Result<()> {
         print_screen(&envelope);
     }
 
-    // **두 시계를 둘 다 낸다** — 합격선은 질의 시간에만 걸리고(`[f11.pass]` ⑦),
+    // **두 시계를 둘 다 산출한다** — 합격선은 질의 시간에만 걸리고(`[f11.pass]` ⑦),
     // 프로세스 시간은 기록이다. 하나만 내면 *"500ms 안에 답한다"* 가 사용자가 겪을 수
     // 없는 문장이 되거나(질의만), `touch` 가 아닌 것을 재게 된다(프로세스만).
     if timing {
@@ -212,7 +212,7 @@ pub fn intent_file(repo_path: &Path, given: Option<PathBuf>) -> PathBuf {
     given.unwrap_or_else(|| repo_path.join(".palimpsest/intent.redb"))
 }
 
-/// 답의 모양 한 줄 — `pal query binding.touch` 가 이것만 낸다.
+/// 답의 모양 한 줄 — `pal query binding.touch` 가 이것만 출력한다.
 ///
 /// **전문을 두 표면이 각자 그리지 않는다.** 같은 답이 표면마다 다른 모양으로 나가면
 /// 그것이 곧 두 곳에 적힌 같은 것이다(계획 §7 의 넷째).
@@ -226,7 +226,7 @@ pub fn 한_줄_found(r: &pal_core::TouchResult) -> String {
     )
 }
 
-/// 능력이 없으면 수가 아니라 그 사실을 낸다.
+/// 능력이 없으면 수가 아니라 그 사실을 산출한다.
 fn 수(v: &Capable<Vec<BoundItem>>) -> String {
     match v {
         Capable::Present(items) => items.len().to_string(),
@@ -285,7 +285,7 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
         Capable::NotBuilt { capability } => println!(
             "  워킹트리  (이 빌드는 워킹트리 상태를 모릅니다 — {} 미구축)", capability.feature),
     }
-    // **모른다는 것도 화면에 선다.** 산출에만 있고 화면에 없으면 사람은 그 공백을 못 본다.
+    // **모른다는 것도 화면에 성립한다.** 산출에만 있고 화면에 없으면 사람은 그 공백을 못 본다.
     match &e.projection.rebuild {
         Capable::Present(RebuildState::Rebuilding) =>
             println!("  재구축    진행 중 — 이 답은 열린 스냅샷 위에 섰습니다"),
@@ -355,9 +355,9 @@ fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elisio
             // **`fresh` 와 같은 화면이 되면 안 된다** — *"유효하다"* 와 *"유효한지 알 수
             // 없다"* 가 같은 줄로 나오는 것이 R16 이 겨냥한 실패다.
             pal_core::CodeFreshness::Undeterminable { reason, at } =>
-                format!("{병기} ← {} ({} 개 좌표)", reason.name(), at.len()),
+                format!("{병기} ← {} ({} 개 좌표)", crate::label::판정_불가_사유(*reason).병기(), at.len()),
         };
-        // **반경을 함께 낸다** — *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은
+        // **반경을 함께 싣는다** — *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은
         // 유효하다"* 와 다른 문장이다(옛 F09 §3).
         println!("  [{}] {mark}  ·  {radius} 반경 · 감시 {watch}", binding.as_str());
         // ★ **어디에 걸렸는지가 다음 행동을 정한다.**
@@ -385,7 +385,7 @@ fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elisio
     }
 }
 
-/// 이 심볼이 하는 것 — **수를 낸다. `(있음)` 은 아무것도 안 말한다.**
+/// 이 심볼이 하는 것 — **수를 산출한다. `(있음)` 은 아무것도 안 말한다.**
 fn print_facts(value: &Capable<pal_core::SymbolFacts>) {
     println!("■ 이 심볼이 하는 것");
     match value {
@@ -400,7 +400,7 @@ fn print_facts(value: &Capable<pal_core::SymbolFacts>) {
     }
 }
 
-/// 미구축 자리를 **빈 목록이 아니라 문장으로** 낸다.
+/// 미구축 자리를 **빈 목록이 아니라 문장으로** 산출한다.
 fn slot<T>(title: &str, value: &Capable<T>) {
     println!("■ {title}");
     match value {

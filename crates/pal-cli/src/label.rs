@@ -1,6 +1,6 @@
 //! 사용자 언어 병기 — **사람이 보는 화면에만 쓴다.**
 //!
-//! [ADR-0033] §3·§4 가 정한 형식을 여기 한 곳에서 낸다: `사용자 언어(원 표기)` ·
+//! [ADR-0033] §3·§4 가 정한 형식을 여기 한 곳에서 산출한다: `사용자 언어(원 표기)` ·
 //! 괄호 안은 소문자 · 원 표기는 `pal-core` 의 `name()` 이나 serde 토큰과 같은 문자열.
 //!
 //! # 왜 `pal-core` 가 아니라 여기인가 — 두 사고를 구조로 막는다
@@ -28,7 +28,7 @@
 //!
 //! [ADR-0033]: ../../../docs/adr/0033-a-word-that-reads-wrong-is-not-fixed-by-a-gloss.md
 
-use pal_core::{Bucket, CodeFreshness, ExtractGrade, IdentityGrade, NearKind};
+use pal_core::{Bucket, CodeFreshness, ExtractGrade, IdentityGrade, NearKind, ResidualReason, UndeterminableReason};
 
 /// 값 하나의 두 표기.
 pub struct Label {
@@ -62,7 +62,7 @@ pub const fn 신선도(c: &CodeFreshness) -> Label {
     }
 }
 
-/// `pal ledger` 의 파일 상태 일곱.
+/// `pal ledger` 가 내는 7개의 파일 상태.
 #[must_use]
 pub const fn 파일_상태(b: Bucket) -> Label {
     match b {
@@ -119,6 +119,70 @@ pub const fn 가까움(k: NearKind) -> Label {
     }
 }
 
+/// 판정 불가 사유 넷.
+///
+/// `UndeterminableReason::name()` 은 영어만 돌려준다(`identity-grade` 등). 그것이 `pal touch`
+/// 화면에 그대로 나가고 있었다 — **반대 방향의 같은 결함**이다.
+#[must_use]
+pub const fn 판정_불가_사유(r: UndeterminableReason) -> Label {
+    match r {
+        UndeterminableReason::IdentityGrade => {
+            Label { 원_표기: "identity-grade", 사용자_언어: "정체성 등급이 모자람" }
+        }
+        UndeterminableReason::PartialParse => {
+            Label { 원_표기: "partial-parse", 사용자_언어: "일부만 파싱됨" }
+        }
+        UndeterminableReason::WatchMemberGone => {
+            Label { 원_표기: "watch-member-gone", 사용자_언어: "감시 대상이 사라짐" }
+        }
+        UndeterminableReason::ProjectionStale => {
+            Label { 원_표기: "projection-stale", 사용자_언어: "색인이 이 스냅샷 것이 아님" }
+        }
+    }
+}
+
+/// 판정하지 못한 사유 열하나 — `pal doctor` 가 찍는다.
+///
+/// `ResidualReason::label()` 은 한국어만 돌려준다. serde 는 `kebab-case` 로 영어를 내므로
+/// 화면과 `--json` 이 다른 낱말이었다 — [ADR-0033] §3 이 그 둘을 눈으로 대조하게 하려면
+/// 화면이 원 표기를 함께 보여야 한다.
+#[must_use]
+pub const fn 잔여_사유(r: ResidualReason) -> Label {
+    match r {
+        ResidualReason::ViaUnresolvedRef => {
+            Label { 원_표기: "via-unresolved-ref", 사용자_언어: "미해소 참조 경유" }
+        }
+        ResidualReason::NoLabel => Label { 원_표기: "no-label", 사용자_언어: "라벨 없음" },
+        ResidualReason::LanguageGradeBelow => {
+            Label { 원_표기: "language-grade-below", 사용자_언어: "언어 등급 미달" }
+        }
+        ResidualReason::ViaOutOfScopeRepo => {
+            Label { 원_표기: "via-out-of-scope-repo", 사용자_언어: "범위 밖 저장소 경유" }
+        }
+        ResidualReason::DynamicDispatch => {
+            Label { 원_표기: "dynamic-dispatch", 사용자_언어: "동적 디스패치" }
+        }
+        ResidualReason::CandidateSetTooLarge => {
+            Label { 원_표기: "candidate-set-too-large", 사용자_언어: "후보 집합 과다" }
+        }
+        ResidualReason::ObservationStale => {
+            Label { 원_표기: "observation-stale", 사용자_언어: "관측 낡음" }
+        }
+        ResidualReason::VerificationCoverageBelow => {
+            Label { 원_표기: "verification-coverage-below", 사용자_언어: "검증 커버리지 미달" }
+        }
+        ResidualReason::SearchBudgetExceeded => {
+            Label { 원_표기: "search-budget-exceeded", 사용자_언어: "탐색 예산 초과" }
+        }
+        ResidualReason::CascadeBudgetExceeded => {
+            Label { 원_표기: "cascade-budget-exceeded", 사용자_언어: "낡음 전파 예산 초과" }
+        }
+        ResidualReason::OutsideSample => {
+            Label { 원_표기: "outside-sample", 사용자_언어: "표본 밖" }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -145,6 +209,19 @@ mod tests {
         }
         for k in [NearKind::Spelling, NearKind::Substring] {
             assert_eq!(가까움(k).원_표기, k.name());
+        }
+        for r in UndeterminableReason::ALL {
+            assert_eq!(판정_불가_사유(r).원_표기, r.name());
+        }
+        // `ResidualReason` 은 `name()` 이 없다 — serde 의 `kebab-case` 가 정본이다.
+        for r in [
+            ResidualReason::ViaUnresolvedRef,
+            ResidualReason::NoLabel,
+            ResidualReason::OutsideSample,
+            ResidualReason::CandidateSetTooLarge,
+        ] {
+            let v = serde_json::to_value(r).expect("직렬화");
+            assert_eq!(잔여_사유(r).원_표기, v.as_str().expect("문자열"));
         }
     }
 

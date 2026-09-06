@@ -26,7 +26,7 @@ use crate::shell::{GraphShell, shell_of};
 /// 캐시의 자리와 이 빌드의 능력이 어긋났다.
 ///
 /// **능력 축이 키에 있으므로 일어날 수 없다.** 일어나면 키가 새는 것이고, 그 사실이
-/// 조용한 오답이 되지 않게 오류로 낸다.
+/// 조용한 오답이 되지 않게 오류로 처리한다.
 #[derive(Debug, thiserror::Error)]
 pub enum RestoreError {
     #[error("캐시가 모르는 언어를 담았다: {0}")]

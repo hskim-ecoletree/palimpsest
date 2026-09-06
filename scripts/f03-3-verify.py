@@ -4,7 +4,7 @@
 합격선은 `corpus/criteria.toml` `[f03.3]` 에 있고 **코드보다 먼저 등록됐다**
 (커밋 `3621f6d`).
 
-    ① 별칭 테이블이 **의도 저장소**에 산다 · 파생층을 지워도 남는다 ★
+    ① 별칭 테이블이 **의도 저장소**에 있다 · 파생층을 지워도 남는다 ★
     ② 재결박 제안 신호 — **자동이 아니다** ★
     ③ `(symbol_id, body_digest)` 골든 스냅샷
     ④ 선택 필드 금지 CI 검사 1단계 ★
@@ -130,7 +130,7 @@ def main() -> int:
     if missing:
         print(f"  FAIL  시험이 없다: {missing}")
         return 1
-    print(f"  ok    ① · ② 의 시험 {len(필수)} 개가 선다")
+    print(f"  ok    ① · ② 의 시험 {len(필수)} 개가 성립한다")
 
     x = run(["cargo", "xtask", "check"], cwd=ROOT)
     if "선택 필드 금지" not in x.stdout:

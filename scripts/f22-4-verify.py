@@ -16,9 +16,9 @@
 하나씩 지우고 **그 픽스처가 통과해 버리는지**를 본다.
 
 변이는 **자라는 값에 묶지 않는다** — 규모·개수·라벨 수에 걸면 그것이 자랄 때 변이가
-아무것도 바꾸지 않게 되고 그 자리가 조용히 꺼진다(F22-1 에서 실제로 그렇게 됐다:
+아무것도 바꾸지 않게 되고 그 자리가 조용히 멎는다(F22-1 에서 실제로 그렇게 됐다:
 `7fe6b62`). 여기서는 조건식을 `false` 로 바꾼다. 그리고 **치환 대상이 소스에 없으면
-그 자체를 오류로 낸다** — 변이가 낡으면 조용히 넘어가는 대신 소리를 낸다.
+그 자체를 오류로 처리한다** — 변이가 낡으면 조용히 넘어가는 대신 소리 내어 알린다.
 """
 
 from __future__ import annotations
@@ -159,14 +159,14 @@ ISOLATION = ROOT / "crates/pal-store/tests/isolation.rs"
         CASCADE,
         "            if depth + 1 > depth_budget {",
         "            if false {",
-        "cascade::tests::예산에_걸리면_멈추지_않고_잔여를_낸다",
+        "cascade::tests::예산에_걸리면_멈추지_않고_잔여를_산출한다",
     ),
     (
         "계산하지 못한 자리를 live 로 적음",
         CASCADE,
         "        if cutoff.contains(&&n.key) {\n            continue;\n        }\n        grades.entry",
         "        grades.entry",
-        "cascade::tests::예산에_걸리면_멈추지_않고_잔여를_낸다",
+        "cascade::tests::예산에_걸리면_멈추지_않고_잔여를_산출한다",
     ),
 ]
 
@@ -190,12 +190,12 @@ def 시험(name: str) -> bool:
 
 
 def mutate(path: Path, old: str, new: str) -> None:
-    """치환한다. **없으면 오류다** — 변이가 낡으면 조용히 넘어가는 대신 소리를 낸다."""
+    """치환한다. **없으면 오류다** — 변이가 낡으면 조용히 넘어가는 대신 소리 내어 알린다."""
     text = path.read_text(encoding="utf-8")
     if old not in text:
         raise SystemExit(
             f"변이 대상을 찾지 못했다: {path.name}\n  찾은 것: {old!r}\n"
-            "  **소스가 바뀌어 변이가 낡았다.** 변이를 고치지 않으면 이 자리가 조용히 꺼진다."
+            "  **소스가 바뀌어 변이가 낡았다.** 변이를 고치지 않으면 이 자리가 조용히 멎는다."
         )
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
@@ -243,7 +243,7 @@ def main() -> int:
     for name in [
         "cascade::tests::자기가_낡은_것과_입력이_낡은_것은_다른_등급이다",
         "cascade::tests::입력이_낡으면_파생물은_stale_derived_다",
-        "cascade::tests::예산에_걸리면_멈추지_않고_잔여를_낸다",
+        "cascade::tests::예산에_걸리면_멈추지_않고_잔여를_산출한다",
         "cascade::tests::낡은_것이_없으면_전부_live_다",
     ]:
         ok = 시험(name)

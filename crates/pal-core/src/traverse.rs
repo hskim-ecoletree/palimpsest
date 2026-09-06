@@ -43,7 +43,7 @@ use crate::envelope::{BudgetName, Elision, ElisionReason};
 /// 값이고, 그것 없이는 `B` 가 잴 것이 없다.
 ///
 /// **유일 해소(`Exact`·`Scoped`)는 `candidates = 1` 이다** — 0 이 아니다. 0 이면 곱이
-/// 0 이 되어 어떤 상한도 안 걸리고, 그 순간 `B` 는 꺼진 예산이다.
+/// 0 이 되어 어떤 상한도 안 걸리고, 그 순간 `B` 는 멎은 예산이다.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Step<N> {
     pub to: N,
@@ -65,7 +65,7 @@ impl<N> Step<N> {
     }
 }
 
-/// 예산을 들고 걷는다. **닿은 노드를 방문 순서로 낸다** (`start` 를 포함한다).
+/// 예산을 들고 걷는다. **닿은 노드를 방문 순서로 산출한다** (`start` 를 포함한다).
 ///
 /// 자른 것은 `elision` 에 **쌓인다** — 이 함수는 `elision` 을 비우지 않는다.
 /// 여러 질의가 한 응답 묶음에 실릴 수 있고, 그때 생략은 합산되어야 한다.
@@ -99,7 +99,7 @@ where
         let steps = neighbors(&node);
 
         if depth >= budget.depth_max {
-            // **깊이 너머는 「안 간」 것이지 「없는」 것이 아니다.** 서로 다른 노드만 센다 —
+            // **깊이 너머는 「안 간」 것이지 「없는」 것이 아니다.** 서로 다른 노드만 잰다 —
             // 같은 노드로 가는 두 엣지를 둘로 세면 건수가 그래프의 모양이 아니라
             // 엣지의 수를 잰다.
             let beyond: BTreeSet<&N> =
@@ -172,7 +172,7 @@ mod tests {
 
     #[test]
     fn 넉넉하면_생략이_0_이다() {
-        // ★ **`[f05.1.pass]` ② 다.** 늘 자르는 구현이 ③ 을 통과하므로 이것이 먼저 선다.
+        // ★ **`[f05.1.pass]` ② 다.** 늘 자르는 구현이 ③ 을 통과하므로 이것이 먼저 성립한다.
         let mut el = Elision::none();
         let got = traverse(&0, &넉넉한(), &mut el, 사슬(10));
         // **하한이다** — 그래프가 비면 생략 0 은 아무것도 말하지 않는다.
@@ -274,7 +274,7 @@ mod tests {
 
     #[test]
     fn 유일_해소는_경로_곱을_안_올린다() {
-        // `candidates = 1` 이 아니라 0 이면 곱이 0 이 되어 `B` 가 꺼진다.
+        // `candidates = 1` 이 아니라 0 이면 곱이 0 이 되어 `B` 가 멎는다.
         // 여기서는 반대로 **1 이라서 안 올라간다**는 것을 잰다.
         let mut el = Elision::none();
         let b = Budget::new(CANDIDATE_LIMIT, 1, 100, 10_000);

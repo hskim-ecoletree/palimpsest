@@ -1,5 +1,5 @@
-<!-- 이 파일은 `cargo xtask query-doc` 이 낸다. 손으로 고치지 않는다. -->
-<!-- 정본은 surface/queries.toml 이고 CI 가 둘의 일치를 센다. -->
+<!-- 이 파일은 `cargo xtask query-doc` 이 산출한다. 손으로 고치지 않는다. -->
+<!-- 정본은 surface/queries.toml 이고 CI 가 둘의 일치를 잰다. -->
 
 # 질의 카탈로그 v1
 
@@ -10,7 +10,7 @@
 | 질의 | 인자 | 반환 | 도입 | 요약 |
 |---|---|---|---|---|
 | `binding.status` | — | `Bindings` | F09 | 결박마다 상태 + **반경** + 무엇이 켰는가 |
-| `binding.touch` | `name: SymbolName` | `Touch` | F11 | 좌표 하나를 만진다 — **걸린 것**과 ★ **지켜보는 것**을 함께 낸다 |
+| `binding.touch` | `name: SymbolName` | `Touch` | F11 | 좌표 하나를 만진다 — **걸린 것**과 ★ **지켜보는 것**을 함께 싣는다 |
 | `graph.dump` | — | `Graph` | F05 | 노드와 엣지 전부 — 바깥 대조 도구가 읽는 창 |
 | `ledger.snapshot` | — | `Ledger` | F01 | 이 스냅샷의 관측 범위 대장 |
 | `narrative.unbound` | — | `Narrative` | F10 | 좌표를 못 찾은 문서 조각들 — **사람의 작업 목록** |

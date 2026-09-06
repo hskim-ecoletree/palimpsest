@@ -26,7 +26,7 @@
 - exact oracle 승인이 없으면 명령을 실행하지 않는다.
 - `--reverify`는 이미 통과한 gate도 다시 실행한다.
 - Stop은 검사를 실행하지 않고 저장된 상태만 축약한다.
-- Stop의 무진척 guard는 메타데이터 수정이 아니라 semantic state 변화만 진척으로 센다.
+- Stop의 무진척 guard는 메타데이터 수정이 아니라 semantic state 변화만 진척으로 잰다.
 
 근거는 upstream [README](https://github.com/Leonxlnx/unlazy/blob/473d4b80421c36d733042434cd4b938f81a19ef1/README.md),
 [gate checker](https://github.com/Leonxlnx/unlazy/blob/473d4b80421c36d733042434cd4b938f81a19ef1/scripts/gate-check.mjs),
@@ -89,7 +89,7 @@ Claude Code의 현재 공식 훅 계약도 `Stop`에 `stop_hook_active`와 `last
 
 ### 2.2 이번 회차의 소비 장면
 
-다음 명령 하나가 실제 진행 중 fixture를 보고 조건별 상태와 전체 상태를 같은 값으로 낸다.
+다음 명령 하나가 실제 진행 중 fixture를 보고 조건별 상태와 전체 상태를 같은 값으로 산출한다.
 
 ```bash
 cargo run -q -p pal-cli -- round status \
@@ -127,11 +127,11 @@ cargo run -q -p pal-cli -- round status \
 - schema 중복과 oracle보다 앞선 evidence 같은 불가능한 전이는 오류다.
 - 조건 문장을 verification 원장에 복제하지 않는다.
 - `status`는 명령을 실행하거나 파일을 수정하지 않는다.
-- current round 자동 해소는 후보 0개를 정상 통과, 2개 이상을 오류로 낸다.
+- current round 자동 해소는 후보 0개를 정상 통과, 2개 이상을 오류로 처리한다.
 - 과거 report 없는 회차는 verification 원장이 없으므로 active 후보가 아니다.
 - Rust 파서가 전환 전에 보존한 Python golden의 코드펜스·들여쓰기·중복 ID·태그 순서 결과와 같다.
 - JSON과 사람 출력이 같은 reducer 결과에서 렌더링된다.
-- ubuntu·macOS·Windows가 같은 fixture에 같은 상태 enum을 낸다.
+- ubuntu·macOS·Windows가 같은 fixture에 같은 상태 enum을 산출한다.
 
 ## 3. 잠글 결정
 
@@ -220,7 +220,7 @@ finding·정반합 통합, Stop 무진척 상한은 실행기와 Stop 회차의 
 ### 3.2 CLI 경계
 
 `pal round conditions --file <path> --json`은 현재 `record.py conditions`의 JSON 키를
-그대로 낸다: 최상위 `파일`, `조건`, `열림`, `닫힘`, `형식오류`; 각 조건의 `id`, `상자`,
+그대로 출력한다: 최상위 `파일`, `조건`, `열림`, `닫힘`, `형식오류`; 각 조건의 `id`, `상자`,
 `판정`, `전사`, `줄`, `원문`, `형식오류`. 조건 형식 오류는 이 JSON을 출력하고 exit 1,
 정상은 exit 0, 사용법·I/O·schema 오류는 exit 2다. 이것이 Python 래퍼 제거 전 parity 계약이다.
 
@@ -384,7 +384,7 @@ negative control을 심어 실제 `decision:block`을 보고, semantic state 변
 8. §5.2를 실행하고, 실제 진행 중 fixture에서 사람/JSON 출력을 둘 다 본다.
 9. 독립 리뷰가 닫히면 ADR을 발행하고 #88을 닫는다. #92도 코드와 이슈의 drift를 해소한다.
 10. 다음 프론티어는 approve+verify다. 그 회차를 실제로 즉시 열 수 있을 때만 #85·#97의
-   blocking 관계를 따라 진행한다. 열지 않기로 판정하면 목표/우선순위 사유로 접는다.
+   blocking 관계를 따라 진행한다. 열지 않기로 판정하면 목표·우선순위 사유로 철회한다.
 
 projected snapshot digest spike는 첫 회차의 선행 조사가 아니다. approve+verify 회차를 열 때
 `pal-git::WorktreeState.tree_digest`의 기존 API 확장으로 verification 원장 하나를 제외할 수

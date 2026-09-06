@@ -64,7 +64,7 @@ pub fn 사상(bytes: &[u8]) -> (Vec<u8>, Vec<usize>) {
 /// 이 내용이 CRLF 를 쓰나 — **첫 줄바꿈이 정한다.**
 ///
 /// 다수결이 아니라 첫 줄이다. 섞여 있는 파일에서 우리가 고를 것은 하나뿐이고, 첫 줄은
-/// 어느 편집기가 열어도 같은 답을 낸다.
+/// 어느 편집기가 열어도 같은 답을 돌려준다.
 #[must_use]
 pub fn crlf_인가(bytes: &[u8]) -> bool {
     match bytes.iter().position(|b| *b == b'\n') {

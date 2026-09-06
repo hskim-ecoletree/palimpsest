@@ -36,7 +36,7 @@
 기능 문서는 *"어떻게 만드나"* 를 적었고 게이트는 *"무엇이 실제로 섰나"* 를 적는다.
 **만들어진 뒤에는 뒤가 정본이다.** 계획은 낡고 판정은 안 낡는다.
 
-| F | 무엇 | 판정이 사는 곳 | 이슈 |
+| F | 무엇 | 판정이 있는 자리 | 이슈 |
 |---|---|---|---|
 | **P0** | 코드 전 실측 (preflight) | [`gates/preflight.md`](../gates/preflight.md) | #1 (닫힘) |
 | **F01** | 저장소 접근 · 관측 범위 대장 | [`gates/F01.md`](../gates/F01.md) | #4 (닫힘) |
@@ -145,7 +145,7 @@
 
 ⚠ **`§12-2` 의 `P7` 반증 조건이 소유자 없이 뜨지 않게 했다.** 그 조건
 (*"코어 시험이 어떤 호스트도 없는 환경에서 전부 통과 · 관측 0 건에서도 모든 질의가
-답을 낸다"*)을 실제로 재는 것은 `crates/pal-cli/tests/host_free.rs` 이고, 이 회차가
+답을 돌려준다"*)을 실제로 재는 것은 `crates/pal-cli/tests/host_free.rs` 이고, 이 회차가
 그 파일의 근거를 **ADR-0025 로 재결박했다** — ADR-0025 가 내린 것은 **하네스 층**이고
 *"다른 호스트 사용자는 코어만 쓴다"* 는 남았으므로 코어 계약은 살아 있다.
 
@@ -183,7 +183,7 @@
 |---|---|---|---|---|
 | 2 좌표계 | **D1** | "좌표는 `(저장소, 커밋, 추출기 버전)` 3축 + 정규화된 심볼 정체성" | docs/DESIGN.md:165 · 361 · 417 | **코드** — `crates/pal-core/src/coord.rs:286`(`Coord`) · `:200`(`SymbolIdentity`) · `version.rs:10`(`ExtractorVersion`) · `repo.rs:229`(`TreeRef`) |
 | 2 | **D2** | "git이 SoT, 투영은 콘텐츠 주소 캐시이며 재구축 가능" | docs/DESIGN.md:166 · 462 | **ADR-0009** — 파생 색인은 재생 경로를 같은 커밋에 세운다 (`xtask/src/main.rs:543`+`811` gix 격리가 짝) |
-| 2 | `§2-1` | 시간축은 커밋만이 아니다 — `TreeRef = Committed(sha) \| Worktree{base, tree_digest}`, "커밋 전 순간에도 좌표가 있다" | docs/DESIGN.md:374 | **ADR-0003** — 워킹트리는 커밋과 같은 자격의 `TreeRef` 이고 그 좌표는 git 의 blob 이름 위에 선다 |
+| 2 | `§2-1` | 시간축은 커밋만이 아니다 — `TreeRef = Committed(sha) \| Worktree{base, tree_digest}`, "커밋 전 순간에도 좌표가 있다" | docs/DESIGN.md:374 | **ADR-0003** — 워킹트리는 커밋과 같은 자격의 `TreeRef` 이고 그 좌표는 git 의 blob 이름 위에 성립한다 |
 | 2 | `§2-2` | "버전 축은 하나가 아니라 셋이다 — 합치면 캐시가 상시 전량 무효화된다" (추출기 / 투영 / 팩 지문) | docs/DESIGN.md:389 | **ADR-0004** — 캐시 키는 산출을 정하는 입력 전부를 담는다 (팩 지문 축은 아직 모집단 없음) |
 | 2 | `§2-3` | `EntityId` — 좌표를 갖지 않는 것들의 식별자 | docs/DESIGN.md:403 | **코드** — `crates/pal-core/src/entity.rs:86`(`EntityId`) · `:48`(`EntityKind`) · `:76`(`EntityOrigin`) · `:252`(`EntityRegistry`) |
 | 2 | `§2-4` | "판별자는 언어 등급에 의존한다" + 정체성 규칙 | docs/DESIGN.md:430 · 446 | **ADR-0006** — 정체성 등급은 언어가 아니라 심볼이 진다. 그리고 그것이 정규화를 정한다 |
@@ -206,7 +206,7 @@
 |---|---|---|---|---|
 | 4 관측 범위 대장 | **D4** | "관측 범위 대장이 1급 산출이고 모든 질의 응답에 첨부된다" | docs/DESIGN.md:168 · 597 | **코드** — `crates/pal-core/src/ledger.rs:330`(`Ledger`) · `envelope.rs:474`(`LedgerRef`) · `envelope.rs:513`(`Envelope<T>`) · `surface/queries.toml:60` |
 | 4 | `§4-1` | "**완전성(재정의)**: 기계는 선언된 관측 범위 안에서 전수임을 보증한다. … 범위 밖은 "없음"이 아니라 **"보지 않음"**으로 산출된다" | docs/DESIGN.md:601 | **ADR-0002** — 모집단이 없는 검사는 "위반 0" 을 내지 않는다 |
-| 4 | `§4-2` | 대장 스키마 — 파일 상태 일곱(`parsed`/`partial`/`unsupported`/`unrecognized`/`excluded`/`binary`/`generated`) + 언어 능력 등급 `L0~L4` | docs/DESIGN.md:605 | **코드** — `crates/pal-core/src/ledger.rs:185`(`FileState` 일곱) · `:248`(`Bucket`) · `:47`(`ExtractGrade`) · `:88`(`IdentityGrade`) |
+| 4 | `§4-2` | 대장 스키마 — 7개의 파일 상태(`parsed`/`partial`/`unsupported`/`unrecognized`/`excluded`/`binary`/`generated`) + 언어 능력 등급 `L0~L4` | docs/DESIGN.md:605 | **코드** — `crates/pal-core/src/ledger.rs:185`(`FileState` 일곱) · `:248`(`Bucket`) · `:47`(`ExtractGrade`) · `:88`(`IdentityGrade`) |
 | 4 | `§4-3` | "모든 응답은 자기 답이 어느 범위 위에서 계산됐는지를 동반한다" | docs/DESIGN.md:622 | **코드** — `crates/pal-core/src/envelope.rs:513`(`Envelope<T>`) · `:474`(`LedgerRef`) · `:65`(`Coverage`) |
 | 4 | `§4-4` | 뿌리의 공백 — "매니페스트는 `asserted`이며 대장은 항상 "선언된 저장소 N개"를 머리에 적는다" | docs/DESIGN.md:626 | **코드** — `crates/pal-core/src/manifest.rs:55`(`RepoDecl`) · `ledger.rs:330`(`Ledger`) |
 

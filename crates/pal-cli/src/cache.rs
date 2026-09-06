@@ -106,7 +106,7 @@ pub fn prune(a: PruneArgs) -> Result<()> {
     let cache = BlobCache::open(&root).context("캐시를 열지 못했다")?;
     let before = cache.usage().context("캐시를 훑지 못했다")?;
     let report = cache.evict_to(budget).context("축출하지 못했다")?;
-    // **지운 뒤에 다시 센다.** 보고가 스스로를 확인하면 그것은 확인이 아니다 —
+    // **지운 뒤에 다시 헤아린다.** 보고가 스스로를 확인하면 그것은 확인이 아니다 —
     // 숫자만 내고 안 지우는 구현이 통과한다(`[f04.pass]` ④).
     // ── F04 가 넘긴 둘 — **기본은 안 지운다** (`[f05.5]`) ────────────────────
     //
@@ -165,7 +165,7 @@ pub fn prune(a: PruneArgs) -> Result<()> {
             s.scanned, s.removed, s.too_young, 사람이_읽는(s.freed_bytes)
         );
     }
-    // **보고와 실물을 나란히 적는다.** 다르면 그것이 곧 꺼진 대조의 신호다.
+    // **보고와 실물을 나란히 적는다.** 다르면 그것이 곧 멎은 대조의 신호다.
     if after.entries != report.kept_entries {
         println!(
             "⚠ 보고    남긴다고 적은 {} 와 실제 {} 가 다르다",

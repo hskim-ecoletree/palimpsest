@@ -12,7 +12,7 @@
 //! `pal defect` 가 **계산만 하고 저장하지 않고**, `inferred` 노드도 후보 집합도 저장된
 //! 잔여도 없다. 그것을 *"위반 0"* 으로 내면 이 도구가 자기가 고발한 문제를 저지른다 —
 //! 그래서 [`ViewCoverage`] 가 라벨마다 **어느 기능이 그것을 만드는지**를 싣고,
-//! `doctor` 는 그 자리를 `not_built` 로 낸다.
+//! `doctor` 는 그 자리를 `not_built` 로 산출한다.
 //!
 //! # 심볼의 낡음 등급을 `live` 로 적는 근거
 //!
@@ -116,7 +116,7 @@ pub fn run(args: Args) -> Result<()> {
     let install =
         crate::install::checks(&repo_path.canonicalize().unwrap_or_else(|_| repo_path.to_owned()));
 
-    // **설치 검사는 그래프 없이도 선다.** 하위 디렉터리에서 부르는 것이 검사 3 의
+    // **설치 검사는 그래프 없이도 성립한다.** 하위 디렉터리에서 부르는 것이 검사 3 의
     // 고장 fixture 인데, 그 자리에서 그래프를 세우려 들면 재려는 것과 무관한 실패가 난다.
     if install_only {
         if json {
@@ -213,7 +213,7 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
             )
             .with_attr("path", Producer::Extractor)
             // **`symbol_id` 의 성분이므로 스키마가 필수로 적는다**(F03-1). 빠뜨리면
-            // `pal doctor` 의 불변식 2 가 심볼 전부를 위반으로 센다 — 코퍼스에서
+            // `pal doctor` 의 불변식 2 가 심볼 전부를 위반으로 헤아린다 — 코퍼스에서
             // 1,296 건이 그렇게 나왔다.
             .with_attr("container", Producer::Extractor)
             .with_attr("name", Producer::Extractor)
@@ -234,7 +234,7 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
                 Anchor::At(coord(b.target)),
             )
             // **F09 가 셋을 더했다.** 스키마가 `required` 로 적었으므로 여기서 안 실으면
-            // 불변식 ②가 결박 전부를 위반으로 센다 — 그것이 F22-1 의 계약이고,
+            // 불변식 ②가 결박 전부를 위반으로 헤아린다 — 그것이 F22-1 의 계약이고,
             // *"스키마를 코드에 맞추지 않고 코드를 스키마에 맞춘다"* 의 실제 하중이다.
             .with_attr("subject", Producer::Human)
             .with_attr("note", Producer::Human)
@@ -264,7 +264,7 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
         .with_binding_index(Vec::new(), BTreeSet::new())
 }
 
-/// 이 뷰가 담을 수 있는 것 — **선언이 빠지면 `doctor` 가 구멍으로 센다.**
+/// 이 뷰가 담을 수 있는 것 — **선언이 빠지면 `doctor` 가 구멍으로 헤아린다.**
 fn coverage() -> pal_core::ViewCoverage {
     pal_core::ViewCoverage::new()
         // 값이 서는 둘.
@@ -407,7 +407,7 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
     println!();
     println!("■ 잔여 ({}) — **검사하지 못한 것은 \"이상 없음\"이 아닙니다**", d.residuals.len());
     for r in &d.residuals {
-        println!("  {} · 좌표 {}건", r.reason.label(), r.bound_to().len());
+        println!("  {} · 좌표 {}건", crate::label::잔여_사유(r.reason).병기(), r.bound_to().len());
         println!("      {}", r.predicate);
         println!("      해소: {}", r.resolved_when);
     }

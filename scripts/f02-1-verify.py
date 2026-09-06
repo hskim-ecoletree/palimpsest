@@ -50,7 +50,7 @@ DITTO_SHA = "aded7ce7f88feb3c03238c5f9760f3a2ade4a6c1"
 
 # ── 음성 대조 — **고정 SHA 의 실재 경로와 실재 식별자에만 묶는다** ──────────────
 #
-# 자라는 값(파일 수·심볼 수)에 묶으면 코퍼스가 자랄 때 조용히 꺼진다(`7fe6b62`).
+# 자라는 값(파일 수·심볼 수)에 묶으면 코퍼스가 자랄 때 조용히 멎는다(`7fe6b62`).
 # 치환 대상이 소스에 없으면 `✓` 를 내는 대신 **멈춘다**.
 #
 # (이름, 파일, 찾을 것, 바꿀 것, 꼬리에 붙일 것)
@@ -196,7 +196,7 @@ def apply_mutation(source: bytes, find: str, replace: str, tail: str, label: str
     if find not in text:
         raise SystemExit(
             f"변이 대상을 찾지 못했다 — 「{label}」\n  찾은 것: {find!r}\n"
-            "  **코퍼스 핀이 움직였거나 변이가 낡았다.** 고치지 않으면 이 자리가 조용히 꺼진다."
+            "  **코퍼스 핀이 움직였거나 변이가 낡았다.** 고치지 않으면 이 자리가 조용히 멎는다."
         )
     return (text.replace(find, replace, 1) + tail).encode("utf-8")
 
@@ -315,7 +315,7 @@ def main() -> int:
         print(f"  {'✓' if ok else '✗'} {label:<28} {'산출이 그대로다' if ok else '**바뀌었다**'}   ({path})")
         if not ok:
             failures.append(
-                f"③ 「{label}」 가 산출을 바꿨다 — 포매터 한 번에 전 심볼이 stale 로 켜진다(R-07)"
+                f"③ 「{label}」 가 산출을 바꿨다 — 포매터 한 번에 전 심볼이 stale 로 바뀐다(R-07)"
             )
 
     if tested != len(MUST_CHANGE) + len(MUST_NOT_CHANGE):
@@ -362,7 +362,7 @@ def main() -> int:
     ok = cap.get("what") == "javascript-extraction"
     print(f"  JavaScript  {'NotBuilt(' + cap.get('what', '?') + ')' if cap else '**Present — 켜면 안 된다**'}   ({js_path})")
     if not ok:
-        failures.append("⑤ JavaScript 가 켜졌다 — 넷이 같은 층에 선다는 것이 넷을 한꺼번에 켠다는 뜻이 아니다")
+        failures.append("⑤ JavaScript 가 걸렸다 — 넷이 같은 층에 성립한다는 것이 넷을 한꺼번에 건다는 뜻이 아니다")
 
     print()
     if failures:

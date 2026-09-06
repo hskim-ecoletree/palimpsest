@@ -40,7 +40,7 @@ palimpsest는 지금 다음 경로다.
 이 보고서의 권고는 다음과 같다.
 
 1. 기존 [#88]의 「다섯 문장 약 13줄 기입」은 최신 unlazy 2.1 비교로 대체됐음을 이유로
-   **그 형태로는 접는다.**
+   **그 형태로는 철회한다.**
 2. [#85]·[#95]·[#96]·[#97]의 직접 관련 부분을 **실행 가능한 완수 원장** 한 회차로 묶는다.
 3. `pal` 안에 `round status/approve/verify` 상태 관리 경로를 만들고, `Stop` 훅이
    `round status`의 같은 축약값만 읽게 한다.
@@ -132,7 +132,7 @@ palimpsest는 지금 다음 경로다.
 
 `/round`는 unlazy보다 넓은 다음 문제를 이미 다룬다.
 
-- 목적 밖 또는 지금 우선순위가 아닌 일을 이유와 함께 접는다.
+- 목적 밖 또는 지금 우선순위가 아닌 일을 이유와 함께 철회한다.
 - 어렵다·시간이 없다·컨텍스트가 부족하다는 이유로 조용히 축소하지 않는다.
 - 결정론적 조건과 해석 조건을 분리한다.
 - 해석 조건은 정반합으로 판정한다.
@@ -373,7 +373,7 @@ pal round status --round <slug> [--json]
 
 - `intent.md` 조건 집합을 읽는다.
 - verification 원장을 읽고 스키마·ID·oracle·evidence를 검증한다.
-- 조건별 `unregistered/pending/met/stale/unmeasured/contradicted`를 낸다.
+- 조건별 `unregistered/pending/met/stale/unmeasured/contradicted`를 산출한다.
 - `findings.jsonl`의 열린 금지역·실패를 함께 축약한다.
 - 회차 상태를 `in_progress/complete/blocked/folded` 중 하나로 계산한다.
 - 명령은 실행하지 않고 파일도 고치지 않는다.
@@ -386,7 +386,7 @@ pal round approve --round <slug> --id <ID>
 
 하는 일:
 
-- 실행할 정확한 command, EXPECT, CWD, shell, PATH와 제한을 화면에 낸다.
+- 실행할 정확한 command, EXPECT, CWD, shell, PATH와 제한을 화면에 출력한다.
 - 명시 호출에서만 승인 레코드를 쓴다.
 - 승인 레코드는 저장소 밖 사용자 전용 데이터 디렉터리에 둔다.
 - 승인 서명은 절대 원장 경로·round·ID·oracle digest·플랫폼·환경을 포함한다.
@@ -408,7 +408,7 @@ pal round verify --round <slug> [--id <ID>] [--reverify]
 - 승인된 결정론적 oracle만 실행한다.
 - timeout과 출력 상한을 적용한다.
 - exit와 EXPECT를 별개로 판정한다.
-- 성공 출력은 digest와 byte count를 기록하고 실패 출력은 bounded diagnostic으로 낸다.
+- 성공 출력은 digest와 byte count를 기록하고 실패 출력은 bounded diagnostic으로 출력한다.
 - 실행 중 oracle이 바뀌면 결과를 기록하지 않는다.
 - `--reverify`면 met 조건도 다시 실행한다.
 - 결과 event를 원자적으로 append한다.
@@ -583,7 +583,7 @@ Python과 Rust가 같은 조건 문법을 두 벌로 해석하게 되는 순간,
 - exit 0과 EXPECT가 모두 맞아야 evidence가 생긴다.
 - 실행 중 oracle 변경 결과는 stale로 버린다.
 - `--reverify` 실패는 기존 met를 stale/unmet로 내린다.
-- LF/CRLF와 세 OS에서 같은 상태를 낸다.
+- LF/CRLF와 세 OS에서 같은 상태를 산출한다.
 
 ### 단계 3 — 음성 대조와 비결정론 판정
 
@@ -652,7 +652,7 @@ Python과 Rust가 같은 조건 문법을 두 벌로 해석하게 되는 순간,
 ### A — 단일 상태 기계
 
 - [ ] 조건·oracle·evidence·terminal state의 정본이 각각 한 자리다.
-- [ ] `pal round status --json` 하나가 조건별 상태와 aggregate 상태를 낸다.
+- [ ] `pal round status --json` 하나가 조건별 상태와 aggregate 상태를 산출한다.
 - [ ] 다른 소비자는 상태 enum과 schema를 다시 구현하지 않는다.
 - [ ] 알 수 없는 schema와 불가능한 transition은 fail closed다.
 
@@ -681,8 +681,8 @@ Python과 Rust가 같은 조건 문법을 두 벌로 해석하게 되는 순간,
 
 ### E — 회귀와 플랫폼
 
-- [ ] #90·#92·#94·#95·#97의 실패 모양이 회귀 시험으로 선다.
-- [ ] ubuntu·macOS·Windows에서 같은 방법과 같은 상태를 낸다.
+- [ ] #90·#92·#94·#95·#97의 실패 모양이 회귀 시험으로 성립한다.
+- [ ] ubuntu·macOS·Windows에서 같은 방법과 같은 상태를 산출한다.
 - [ ] 설치·업데이트·제거 왕복이 사용자 승인과 evidence를 손상시키지 않는다.
 - [ ] 현재 `cargo xtask check`와 전체 CI가 초록이다.
 
@@ -715,7 +715,7 @@ Python과 Rust가 같은 조건 문법을 두 벌로 해석하게 되는 순간,
 ### 15.1 `CHECK`는 코드다
 
 - 저장소에서 읽은 명령을 자동 실행하지 않는다.
-- 승인 화면에 exact command, EXPECT, CWD, shell, PATH, timeout, output limit을 낸다.
+- 승인 화면에 exact command, EXPECT, CWD, shell, PATH, timeout, output limit을 산출한다.
 - 승인 저장소는 저장소 바깥 사용자 전용 디렉터리이며 symlink·권한·교체 공격에 fail closed한다.
 - 승인은 sandbox가 아니고 transitive script 안전을 보증하지 않는다고 명시한다.
 
@@ -728,7 +728,7 @@ Python과 Rust가 같은 조건 문법을 두 벌로 해석하게 되는 순간,
 ### 15.3 성공 증거와 실패 진단
 
 - 성공 출력은 기본적으로 digest와 byte count만 영속한다.
-- 실패 출력은 터미널에 bounded diagnostic으로 낸다.
+- 실패 출력은 터미널에 bounded diagnostic으로 출력한다.
 - 원문 보존이 필요한 gate는 명시적 artifact 경로와 보존 정책을 등록한다.
 - 비밀이 출력 digest 바깥의 로그·report로 새지 않는지 시험한다.
 
@@ -769,7 +769,7 @@ Python과 Rust가 같은 조건 문법을 두 벌로 해석하게 되는 순간,
 | R6 | 실제 이슈 효과 | 사용자 작업 한 건이 차단→수정→재검증→통과로 끝남 |
 
 각 회차의 자기 장치 발견은 금지역이면 그 회차에서 닫고, 그렇지 않으면 다음 회차를 실제로
-즉시 열 수 있을 때만 분할한다. 열지 않을 것은 목표/우선순위 사유로 접는다. 단순히 이슈를
+즉시 열 수 있을 때만 분할한다. 열지 않을 것은 목표·우선순위 사유로 철회한다. 단순히 이슈를
 만드는 행위는 처분으로 세지 않는다.
 
 ## 18. 예상 위험과 퇴로

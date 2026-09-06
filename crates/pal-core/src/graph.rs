@@ -293,7 +293,7 @@ mod tests {
     }
 
     #[test]
-    fn 계약_등급은_추론에서만_선다() {
+    fn 계약_등급은_추론에서만_성립한다() {
         // 명세는 계약을 선언할 뿐 호출의 실재를 보증하지 않는다 — §5.2 의 명시적 금지.
         assert!(ResolutionGrade::Contract.allows(Provenance::Inferred));
         for p in [Provenance::Extracted, Provenance::Observed, Provenance::Asserted] {
@@ -328,7 +328,7 @@ mod tests {
 /// `pal-core` 의 `name()` 은 안 건드린다** — 그 분리가 이 시험이 지키는 것이다.
 #[cfg(test)]
 mod 왕복_파서를_진_표시_함수 {
-    /// 한글 음절·자모가 하나라도 있으면 참. **순수 함수다** — 그래야 음성 대조가 선다.
+    /// 한글 음절·자모가 하나라도 있으면 참. **순수 함수다** — 그래야 음성 대조가 성립한다.
     fn 한국어가_있나(s: &str) -> bool {
         s.chars().any(|c| {
             matches!(c, '\u{AC00}'..='\u{D7A3}' | '\u{1100}'..='\u{11FF}' | '\u{3130}'..='\u{318F}')

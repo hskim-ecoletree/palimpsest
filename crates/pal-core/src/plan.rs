@@ -148,7 +148,7 @@ pub enum PatternSource {
     /// 계획이 좌표를 **명시**했다 — `좌표:` 줄. 사람이 적은 것이라 가장 강하다.
     ///
     /// [옛 F12 §4] 가 이슈의 대응 ③ 으로 적은 *"계획 작성 시 좌표를 요구하는 템플릿"* 이
-    /// 이 신호를 낸다. ⚠ **실 코퍼스에서 0 일 수 있고, 0 이면 그 사실을 적는다** —
+    /// 이 신호를 산출한다. ⚠ **실 코퍼스에서 0 일 수 있고, 0 이면 그 사실을 적는다** —
     /// ditto 의 계획 항목은 이 표기를 안 쓴다.
     Declared,
     /// 인라인 코드 스팬 — `` `OrderService.cancel` ``.
@@ -385,7 +385,7 @@ impl UnresolvedWhy {
 /// 패턴 하나의 상태.
 ///
 /// ⚠ **[`crate::CodeFreshness`] 를 안 쓴다.** 모집단이 다르다 — 저기는 **결박** 위에
-/// 서고 여기는 **계획 항목** 위에 선다. 합치면 `[f22.4]` 불변식 8 의 모집단이 바뀐다
+/// 서고 여기는 **계획 항목** 위에 성립한다. 합치면 `[f22.4]` 불변식 8 의 모집단이 바뀐다
 /// (`[f09].freshness_boundary` ⓑ 와 같은 근거).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "state")]
@@ -757,7 +757,7 @@ pub fn symbol_delta(base: &[SymbolNode], head: &[SymbolNode]) -> SymbolDelta {
             d.removed.push(*id);
         }
     }
-    // **정렬한다** — 산출이 회차마다 달라지면 골든도 대조도 안 선다.
+    // **정렬한다** — 산출이 회차마다 달라지면 골든도 대조도 성립하지 않는다.
     d.changed.sort();
     d.added.sort();
     d.removed.sort();
@@ -773,7 +773,7 @@ pub fn symbol_delta(base: &[SymbolNode], head: &[SymbolNode]) -> SymbolDelta {
 pub struct Planned {
     pub item: PlanItemId,
     pub coord: SymbolId,
-    /// 어느 신호가 이 좌표를 냈나 — 게이트가 **층화해서** 센다.
+    /// 어느 신호가 이 좌표를 냈나 — 게이트가 **층화해서** 잰다.
     pub by: PatternSource,
 }
 
@@ -881,7 +881,7 @@ pub enum DeviationRate {
     Undefined,
 }
 
-/// 좌표 해소율 — **분자와 분모를 함께 낸다**(값 하나만 내는 보고는 `[outcome]` 위반).
+/// 좌표 해소율 — **분자와 분모를 함께 싣는다**(값 하나만 내는 보고는 `[outcome]` 위반).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Resolution {
     pub resolved: usize,
@@ -1023,7 +1023,7 @@ mod tests {
 
     #[test]
     fn 포매팅만_바뀌면_변경_심볼이_0_이고_본문이_바뀌면_1_이다() {
-        // ★ [옛 F12 §5] 가 파일 단위 diff 를 기각한 이유가 이것이다 — **양쪽을 함께 센다.**
+        // ★ [옛 F12 §5] 가 파일 단위 diff 를 기각한 이유가 이것이다 — **양쪽을 함께 헤아린다.**
         let base = vec![심볼("a", "src/a.ts", 1), 심볼("b", "src/a.ts", 2)];
         let 같음 = vec![심볼("a", "src/a.ts", 1), 심볼("b", "src/a.ts", 2)];
         assert!(symbol_delta(&base, &같음).is_empty(), "포매팅에 반응했다");
@@ -1148,7 +1148,7 @@ mod tests {
     }
 
     #[test]
-    fn 넷이_각각_선다() {
+    fn 넷이_각각_성립한다() {
         // ★ `[f12.pass]` ① — 셋 중 하나라도 0 이면 그 분류는 이름만 있는 자리다.
         // 그리고 ② — `unmeasurable` 이 나머지에 안 섞인다.
         let base = vec![

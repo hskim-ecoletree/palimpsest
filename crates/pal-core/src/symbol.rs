@@ -104,7 +104,7 @@ pub struct Span {
 /// 추출된 심볼 하나.
 ///
 /// `Coord` 는 여기 없다 — 좌표는 저장소·트리·추출기 버전을 알아야 하고 그것들은 파일
-/// 하나 바깥의 사실이다. 추출기는 **파일 안에서 아는 것만** 낸다.
+/// 하나 바깥의 사실이다. 추출기는 **파일 안에서 아는 것만** 산출한다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Symbol {
     pub name: String,

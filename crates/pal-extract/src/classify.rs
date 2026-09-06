@@ -2,7 +2,7 @@
 //!
 //! 분류가 전수 분할이 아니면 대장은 *"무엇을 안 보았는가"* 를 말할 수 없고, 그것이
 //! 이 제품의 정체성이다(옛 DESIGN §4). 그래서 이 함수는 **반드시** [`pal_core::FileState`]
-//! 하나를 낸다 — 판단이 서지 않는 경우까지 `Unrecognized` 라는 이름의 답이 있다.
+//! 하나를 산출한다 — 판단이 서지 않는 경우까지 `Unrecognized` 라는 이름의 답이 있다.
 //!
 //! 순서가 곧 규칙이다:
 //!
@@ -98,7 +98,7 @@ impl Extraction {
     /// 캐시에 실린 그래프 — **없으면 없다.**
     ///
     /// F05 의 1패스가 `scopes`·`export_digest`·`exports` 를 읽는 자리다.
-    /// **그래프가 없는 파일은 2층에 파일 노드도 안 선다** — 이진·생성물·범위 밖은
+    /// **그래프가 없는 파일은 2층에 파일 노드도 성립하지 않는다** — 이진·생성물·범위 밖은
     /// 추출의 대상이 아니었고, 그 사실은 대장이 싣는다.
     #[must_use]
     pub const fn graph(&self) -> Option<&CachedGraph> {
@@ -174,7 +174,7 @@ pub fn classify(
     //
     // `partial` 은 *"일부는 읽었다"* 라는 뜻이다. `ERROR` 가 파일을 통째로 삼킨 경우
     // 그 문장은 **거짓이다** — 읽은 것이 없다. 이 코퍼스에서 그 형태가 27 건이고
-    // 그중 26 이 선언을 하나도 못 낸다(`PROVISIONAL_ERROR_RATIO_PERCENT` 의 주석).
+    // 그중 26 이 선언을 하나도 못 만든다(`PROVISIONAL_ERROR_RATIO_PERCENT` 의 주석).
     //
     // **심볼을 버린다.** 강등된 파일은 *"이 빌드가 못 읽은 파일"* 이고, 그런 파일에서
     // 건진 선언 한둘을 대장에 실으면 **범위가 그만큼 넓어 보인다.** 못 읽었다고 적는
@@ -326,7 +326,7 @@ mod tests {
     #[test]
     fn error_가_파일을_삼키면_partial_이_아니라_강등이다() {
         // **`partial` 은 *"일부는 읽었다"* 라는 뜻이고 여기서 그 문장은 거짓이다.**
-        // 실물에서 이 형태가 27 건이고 그중 26 이 선언을 하나도 못 낸다(`[f02.2.pass]` ④).
+        // 실물에서 이 형태가 27 건이고 그중 26 이 선언을 하나도 못 만든다(`[f02.2.pass]` ④).
         let out = classify(&RepoPath::new("A.kt"), b"@@@ !!! @@@ ??? &&&", OVERSIZE_BYTES, None)
             .unwrap();
         let FileState::Unsupported { language, reason } = out.state else {
@@ -406,7 +406,7 @@ mod tests {
     #[test]
     fn 포함_관계가_분류와_함께_나온다() {
         // **캐시가 담는 값이다** — 없으면 좌표를 만드는 쪽이 캐시 적중일 때 컨테이너
-        // 체인을 잃고, 그러면 같은 커밋이 캐시 상태에 따라 다른 좌표를 낸다(#51).
+        // 체인을 잃고, 그러면 같은 커밋이 캐시 상태에 따라 다른 좌표를 산출한다(#51).
         let out =
             classify(&RepoPath::new("a.ts"), b"class C { m() {} }", OVERSIZE_BYTES, None).unwrap();
         assert_eq!(out.graph.symbols().len(), 2, "클래스와 메서드가 나와야 한다");

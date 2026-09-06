@@ -69,15 +69,15 @@ pub fn run(a: &Args) -> Result<()> {
     Ok(())
 }
 
-/// **조립해서 답 하나를 낸다** — 출력하지 않는다.
+/// **조립해서 답 하나를 산출한다** — 출력하지 않는다.
 ///
 /// # 왜 `run` 에서 이것을 뽑았는가
 ///
 /// `run` 은 *"조립 → 실행 → 출력"* 셋을 한 몸으로 했다. 그런데 **이 조립을 출력과
 /// 떼어 놔야 한다** — 여기 있는 것 전부(대장 · 2층 붙기 · 의도 저장소 · 예산 · 낡음 ·
-/// 대장에서 뜬 부분 파싱 목록)를 지나야 같은 질의가 같은 답을 낸다. 출력과 붙어 있으면
+/// 대장에서 뜬 부분 파싱 목록)를 지나야 같은 질의가 같은 답을 돌려준다. 출력과 붙어 있으면
 /// 다른 소비자가 **자기 조립을 새로 쓰게 되고, 그 순간 둘이 갈린다** — 예산 하나가
-/// 달라도 같은 질의가 다른 답을 낸다.
+/// 달라도 같은 질의가 다른 답을 돌려준다.
 ///
 /// ★ **2026-08-18 — 이 분리를 요구했던 소비자는 사라졌다.** 옛 주석은 MCP 어댑터
 /// (`crates/pal-mcp`)가 이 조립을 지나야 한다고 적었는데, 어댑터는
@@ -99,7 +99,7 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
     // **붙는 방법이 둘이고 그 갈림이 답에 실린다**(`[f06.3.pass]` ③).
     //
     // 기본은 **쓰기**다. 읽기가 기본이면 질의 로그가 조용히 안 쌓이고, F17 은
-    // 데이터가 없어 착수할 수 없다(옛 F05 §5.3). `--read-only` 는 명시해야 켜진다.
+    // 데이터가 없어 착수할 수 없다(옛 F05 §5.3). `--read-only` 는 명시해야 걸린다.
     let attached = attach::attach(
         &index,
         &report,
@@ -113,7 +113,7 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
     let intent = IntentStore::open_read_only(&touch::intent_file(a.repo, a.intent.clone()))
         .context("의도 저장소를 열지 못했다")?;
     // ⚠ **`binding.status` 만 전수가 필요하다** — 그 질의의 답이 결박 전부다.
-    // 다른 질의에서 전수를 들면 좌표 하나에 답하는 데 O(전체 결박)을 낸다(옛 F11 §3.1).
+    // 다른 질의에서 전수를 들면 좌표 하나에 답하는 데 O(전체 결박)을 산출한다(옛 F11 §3.1).
     let bindings = if matches!(query, NamedQuery::BindingStatus) {
         intent.all().context("결박을 읽지 못했다")?
     } else {
@@ -208,13 +208,13 @@ fn 이탈(
     Ok(pal_query::DeviationInput::Computed(Box::new(c.deviation)))
 }
 
-/// `--list` — **답하는 것과 아직 못 만든 것을 함께 낸다.**
+/// `--list` — **답하는 것과 아직 못 만든 것을 함께 싣는다.**
 ///
 /// # 왜 둘을 함께 내는가
 ///
 /// 카탈로그가 **여섯만** 담는다(`[f06].catalog_scope_decision`). 문서 §3 의 표는 26 인데
 /// 이 빌드가 답하는 것은 여섯이고, 목록이 여섯만 보이면 소비자가 *"이것이 이 제품의
-/// 전부"* 로 읽는다. 그래서 **못 만든 것이 같은 화면에 선다.**
+/// 전부"* 로 읽는다. 그래서 **못 만든 것이 같은 화면에 성립한다.**
 ///
 /// **그러나 못 만든 것은 이름으로 적지 않는다** — 이름을 적으면 그것이 곧 스무 개의
 /// 빈 자리이고 *"있는데 비어 있다"* 로 읽힌다(S2 의 규율). 기능 번호와 능력 이름으로
@@ -335,7 +335,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
     println!();
 }
 
-/// 결박마다 한 줄 — **상태 · 반경 · 무엇이 켰는가를 함께 낸다.**
+/// 결박마다 한 줄 — **상태 · 반경 · 무엇이 켰는가를 함께 싣는다.**
 ///
 /// 옛 F09 §5 의 마지막 행이 요구한 것이다: *"`stale` 출력에 **`triggered_by` 와 반경을
 /// 항상 붙여** 행동 가능하게 만든다."* 상태만 적으면 사람이 어디를 볼지 모르고,
@@ -364,7 +364,7 @@ fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::Det
             // **`fresh` 와 같은 화면이 되면 안 된다** — *"유효하다"* 와 *"유효한지 알 수
             // 없다"* 가 같은 줄로 나오는 것이 R16 이 겨냥한 실패다.
             pal_core::CodeFreshness::Undeterminable { reason, at } => {
-                format!("{병기} ← {} ({} 개 좌표)", reason.name(), at.len())
+                format!("{병기} ← {} ({} 개 좌표)", crate::label::판정_불가_사유(*reason).병기(), at.len())
             }
         };
         let 계보 = match &b.status.lineage {
@@ -436,7 +436,7 @@ fn print_symbols(symbols: &[pal_core::SymbolNode]) {
 
 /// 미결박 목록 — **이것이 사람의 작업 목록이다** (옛 F10 §2).
 ///
-/// # 세 갈래를 함께 낸다
+/// # 세 갈래를 함께 싣는다
 ///
 /// 미결박만 내면 *"이 저장소의 문서가 코드에 전혀 안 걸린다"* 로 읽힌다. 걸린 것과
 /// 후보가 있는 것의 **수**가 같은 화면에 있어야 그 목록이 무엇에 대한 목록인지 읽힌다.

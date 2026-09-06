@@ -380,7 +380,7 @@ mod tests {
     }
 
     #[test]
-    fn 개체의_이름은_종류와_id_를_함께_낸다() {
+    fn 개체의_이름은_종류와_id_를_함께_산출한다() {
         let e = EntityId::mint(EntityKind::new("decision"), EntityOrigin::Hand);
         let s = e.to_display();
         assert!(s.starts_with("decision/"), "{s}");

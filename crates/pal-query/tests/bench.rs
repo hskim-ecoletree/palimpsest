@@ -97,7 +97,7 @@ fn 그래프(n: usize) -> Vec<FileStitch> {
     out
 }
 
-/// 회차 셋을 돌고 **최솟값과 분산**을 낸다.
+/// 회차 셋을 돌고 **최솟값과 분산**을 산출한다.
 fn 잰다(name: &str, mut f: impl FnMut() -> usize) -> Duration {
     let mut times = Vec::with_capacity(회차);
     let mut 확인 = 0usize;

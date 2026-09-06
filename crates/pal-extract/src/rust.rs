@@ -94,7 +94,7 @@ fn kind_of(kind: &str) -> Option<SymbolKind> {
 ///
 /// `function_item` 이 여기 **없는 것이 결정이다.** Rust 는 함수 본문 어디에나
 /// `fn`·`struct`·`const` 를 놓을 수 있고 그것은 클로저가 아니라 진짜 아이템인데,
-/// **그래도 안 센다** — 가르는 것은 「아이템인가」가 아니라 **「함수 안인가」**다
+/// **그래도 안 잰다** — 가르는 것은 「아이템인가」가 아니라 **「함수 안인가」**다
 /// (표본 규칙 ②). 세면 폭발한다.
 ///
 /// `macro_definition` 도 없다 — 본문의 `fn $field` 는 선언이 아니라 **틀**이다.
@@ -357,7 +357,7 @@ mod tests {
     #[test]
     fn 함수_안은_안_본다() {
         // 규칙 ② — 가르는 것은 「아이템인가」가 아니라 「함수 안인가」다.
-        // `return` 뒤의 진짜 아이템도 안 센다(표본 작성이 지목한 가장 큰 판단).
+        // `return` 뒤의 진짜 아이템도 안 잰다(표본 작성이 지목한 가장 큰 판단).
         assert_eq!(심볼("fn outer() { fn inner() {} struct Local; }").len(), 1);
     }
 
@@ -376,14 +376,14 @@ mod tests {
     }
 
     #[test]
-    fn 매크로는_정의만_센다() {
+    fn 매크로는_정의만_잰다() {
         // 규칙 ⑦ — 본문의 `fn $x` 는 선언이 아니라 틀이다.
         let s = 심볼("macro_rules! m { () => { fn generated() {} } }");
         assert_eq!(s, [("m".to_owned(), SymbolKind::Macro)]);
     }
 
     #[test]
-    fn cfg_test_도_센다() {
+    fn cfg_test_도_잰다() {
         // 소유자 지시 2026-08-20 §3 — *"번복할게 #[cfg(test)] 도 진행해"*.
         // 추출기는 `cfg` 를 해석하지 않는다.
         let s = 심볼("#[cfg(test)]\nmod tests { fn t() {} }");
@@ -391,7 +391,7 @@ mod tests {
     }
 
     #[test]
-    fn 종류_열이_다_선다() {
+    fn 종류_열이_다_성립한다() {
         let s = 심볼(
             "struct S; enum E {} trait T {} type A = u8; const C: u8 = 0;\n\
              static X: u8 = 0; mod m {} union U { a: u8 } fn f() {}",
@@ -404,7 +404,7 @@ mod tests {
     }
 
     #[test]
-    fn 본문_없는_trait_시그니처는_안_센다() {
+    fn 본문_없는_trait_시그니처는_안_잰다() {
         // 규칙 ⑤ — 가르는 것은 **본문의 유무**다. 표본 작성이 12 건을 이 규칙으로 뺐고,
         // 안 지키는 추출기는 정확히 그만큼 과잉 검출한다.
         let s = 심볼("trait T { fn 시그니처(&self); fn 기본(&self) {} }");

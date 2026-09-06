@@ -45,7 +45,7 @@ const H0: [u32; 8] = [
 ///
 /// # ★ 줄바꿈을 맞춘 뒤에 뜬다 — 소유자 결정 (2026-08-16)
 ///
-/// `core.autocrlf` 가 켜진 클론에서는 우리 파일이 전부 CRLF 로 앉는다. 바이트 그대로
+/// `core.autocrlf` 가 걸린 클론에서는 우리 파일이 전부 CRLF 로 앉는다. 바이트 그대로
 /// 뜨면 다섯이 전부 불일치가 되고, 그러면 `doctor` 가 빨개지고 재설치가 그것을
 /// `user_modified` 로 도장 찍어 **영원히 갱신 대상에서 뺀다.** **줄바꿈만 다른 변화는
 /// 「사용자가 고쳤다」가 아니다**([`super::eol`]).
@@ -54,7 +54,7 @@ pub fn 내용(bytes: &[u8]) -> String {
     hex(&super::eol::정규화(bytes))
 }
 
-/// 바이트열의 SHA-256 을 소문자 16진 64자로 낸다.
+/// 바이트열의 SHA-256 을 소문자 16진 64자로 산출한다.
 #[must_use]
 pub fn hex(bytes: &[u8]) -> String {
     let digest = digest(bytes);
@@ -176,7 +176,7 @@ mod tests {
 
     /// **NUL 바이트를 먹는다.** 텍스트로 다루면 여기서 잘린다.
     #[test]
-    fn 널_바이트가_있어도_전부_센다() {
+    fn 널_바이트가_있어도_전부_잰다() {
         assert_ne!(hex(b"a\0b"), hex(b"a"));
         assert_ne!(hex(b"a\0b"), hex(b"ab"));
         assert_eq!(hex(b"a\0b").len(), 64);

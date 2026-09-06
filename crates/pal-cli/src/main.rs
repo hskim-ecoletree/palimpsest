@@ -41,9 +41,9 @@ mod version;
     //   있었다** — 살아 있는 표면에 박힌 거짓 신호이고, 문서만 보는 검사도 효과 세션도
     //   못 봤다(독립 리뷰 4 라운드가 잡았다).
     //
-    //   ⚠ **코어는 여전히 호스트 없이 선다** — 내려간 것은 하네스 층이다. 그래서
-    //   「종속되지 않는다」를 「없이도 선다」로 바꾼다. 재는 것은 `host_free.rs` 다.
-    about = "코드 좌표에 결박된 사실과 의도를 내는 상태 관리자 — 호스트 없이도 선다"
+    //   ⚠ **코어는 여전히 호스트 없이 성립한다** — 내려간 것은 하네스 층이다. 그래서
+    //   「종속되지 않는다」를 「없이도 성립한다」로 바꾼다. 재는 것은 `host_free.rs` 다.
+    about = "코드 좌표에 결박된 사실과 의도를 내는 상태 관리자 — 호스트 없이도 동작한다"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -81,7 +81,7 @@ struct NarrativeArgs {
     /// 이 경로 아래의 조각을 **일괄 승인**한다 — 하나라도 걸리면 묶음 전체가 거부된다
     #[arg(long)]
     all_of: Option<String>,
-    /// 사람이 읽는 화면 대신 JSON 으로 낸다
+    /// 사람이 읽는 화면 대신 JSON 으로 출력한다
     #[arg(long)]
     json: bool,
 }
@@ -102,21 +102,21 @@ struct PlanArgs {
     at: Option<String>,
     #[arg(long)]
     cache_dir: Option<PathBuf>,
-    /// 사람이 읽는 화면 대신 JSON 으로 낸다
+    /// 사람이 읽는 화면 대신 JSON 으로 출력한다
     #[arg(long)]
     json: bool,
 }
 
 #[derive(Subcommand)]
 enum Command {
-    /// 파일 하나의 최상위 심볼을 낸다
+    /// 파일 하나의 최상위 심볼을 산출한다
     Symbols {
         /// 대상 파일
         path: PathBuf,
-        /// 사람이 읽는 표 대신 JSON 으로 낸다
+        /// 사람이 읽는 표 대신 JSON 으로 출력한다
         #[arg(long)]
         json: bool,
-        /// 심볼 목록이 아니라 **파일 그래프 전부**를 JSON 으로 낸다.
+        /// 심볼 목록이 아니라 **파일 그래프 전부**를 JSON 으로 출력한다.
         ///
         /// `--json` 의 형태를 건드리지 않는 이유: `scripts/s0-compare.py` 가 그것을
         /// **JSON 배열**로 파싱하고, 배열의 길이가 S0 대조의 선언 수다. 형태를 바꾸면
@@ -154,14 +154,14 @@ enum Command {
     },
     /// 문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
     ///
-    /// 인자 없이 부르면 3분류를 낸다. `--approve` 는 사람의 승인이고 `--refuse` 는
+    /// 인자 없이 부르면 3분류를 산출한다. `--approve` 는 사람의 승인이고 `--refuse` 는
     /// 거부이며 **둘 다 기록된다.**
     ///
     /// 손잡이를 **평탄화한 구조체**로 받는다 — 다른 명령들처럼 변형 안에 늘어놓으면
     /// `main` 의 한 팔이 열한 줄이 되고, 그때 `main` 이 *"조립"* 이 아니라
     /// *"손잡이 목록"* 이 된다.
     Narrative(NarrativeArgs),
-    /// 수정 커밋 하나에서 결함을 소급 결박한다 — **못 담은 것도 센다**
+    /// 수정 커밋 하나에서 결함을 소급 결박한다 — **못 담은 것도 헤아린다**
     Defect {
         /// 수정 커밋
         rev: String,
@@ -171,7 +171,7 @@ enum Command {
         /// 이력을 얼마나 거슬러 올라가는가. 걸리면 그 사실이 산출에 남는다
         #[arg(long)]
         history_limit: Option<usize>,
-        /// 사람이 읽는 화면 대신 JSON 으로 낸다
+        /// 사람이 읽는 화면 대신 JSON 으로 출력한다
         #[arg(long)]
         json: bool,
     },
@@ -185,7 +185,7 @@ enum Command {
     /// ⚠ **`--base <ref>` 가 없다.** 기준선은 계획 문서의 프론트매터가 진다
     /// (옛 F12 §4) — 그 손잡이의 소유자는 F23 이다.
     Deviation(PlanArgs),
-    /// 좌표 하나를 만진다 — **빈 답도 정직하게 낸다**
+    /// 좌표 하나를 만진다 — **빈 답도 정직하게 산출한다**
     Touch {
         /// 심볼 이름
         name: String,
@@ -210,10 +210,10 @@ enum Command {
         /// 이유가 없다. 잘린 수는 `elision` 에 실린다.
         #[arg(long)]
         binding_max: Option<usize>,
-        /// 걸린 시간을 **표준오류**로 낸다 — 산출에 안 섞는다
+        /// 걸린 시간을 **표준오류**로 출력한다 — 산출에 안 섞는다
         #[arg(long)]
         timing: bool,
-        /// 사람이 읽는 화면 대신 JSON 으로 낸다
+        /// 사람이 읽는 화면 대신 JSON 으로 출력한다
         #[arg(long)]
         json: bool,
     },
@@ -243,7 +243,7 @@ enum Command {
         /// 있는 자리와 없는 자리가 다르다.
         #[arg(long)]
         install: bool,
-        /// 사람이 읽는 화면 대신 JSON 으로 낸다
+        /// 사람이 읽는 화면 대신 JSON 으로 출력한다
         #[arg(long)]
         json: bool,
     },
@@ -295,7 +295,7 @@ enum Command {
         name: String,
         /// 인자 — 심볼 이름
         arg: Option<String>,
-        /// 이 빌드가 답하는 질의를 전부 낸다
+        /// 이 빌드가 답하는 질의를 전부 출력한다
         #[arg(long)]
         list: bool,
         /// 저장소 경로. 기본값은 현재 디렉터리
@@ -324,11 +324,11 @@ enum Command {
         /// 그것도 응답 묶음에 실린다 — 조용히 빠지면 F17 이 미조회를 과대 계상한다.
         #[arg(long)]
         read_only: bool,
-        /// 사람이 읽는 화면 대신 JSON 으로 낸다
+        /// 사람이 읽는 화면 대신 JSON 으로 출력한다
         #[arg(long)]
         json: bool,
     },
-    /// 2층을 우리 밖 도구가 읽는 형식으로 낸다 — **못 낸 라벨을 함께 적는다**
+    /// 2층을 우리 밖 도구가 읽는 형식으로 출력한다 — **못 낸 라벨을 함께 적는다**
     Export {
         /// 저장소 경로. 기본값은 현재 디렉터리
         #[arg(long, default_value = ".")]
@@ -346,11 +346,11 @@ enum Command {
         /// 낼 파일. 없으면 표준출력으로 가고 근거는 표준오류로 간다
         #[arg(long)]
         out: Option<PathBuf>,
-        /// 근거를 JSON 응답 묶음으로 낸다. **`--out` 이 있어야 한다**
+        /// 근거를 JSON 응답 묶음으로 산출한다. **`--out` 이 있어야 한다**
         #[arg(long)]
         json: bool,
     },
-    /// 저장소 하나의 관측 범위 대장을 낸다 — **무엇을 보았고 무엇을 보지 않았는가**
+    /// 저장소 하나의 관측 범위 대장을 산출한다 — **무엇을 보았고 무엇을 보지 않았는가**
     Ledger {
         /// 저장소 경로. 기본값은 현재 디렉터리
         #[arg(default_value = ".")]
@@ -361,10 +361,10 @@ enum Command {
         /// 1층 캐시 위치. 기본값은 `<저장소>/.palimpsest/cache`
         #[arg(long)]
         cache_dir: Option<PathBuf>,
-        /// 사람이 읽는 표 대신 JSON 으로 낸다
+        /// 사람이 읽는 표 대신 JSON 으로 출력한다
         #[arg(long)]
         json: bool,
-        /// 대장이 아니라 **좌표를 붙인 심볼 전부**를 한 줄에 하나씩 JSON 으로 낸다.
+        /// 대장이 아니라 **좌표를 붙인 심볼 전부**를 한 줄에 하나씩 JSON 으로 출력한다.
         ///
         /// 옛 F03 §6.3 의 골든(`(symbol_id, body_digest)` 스냅샷)이 읽는 표면이다.
         /// **줄 단위인 이유**: 골든의 일은 *"얼마나 움직였는가"* 를 보이는 것이고,
@@ -379,7 +379,7 @@ enum Command {
 
 #[derive(Subcommand)]
 enum IntentCommand {
-    /// 전부를 JSONL 로 낸다 — **상시 유지되지 않는 내보내기는 없는 것과 같다**
+    /// 전부를 JSONL 로 산출한다 — **상시 유지되지 않는 내보내기는 없는 것과 같다**
     Export {
         /// 저장소 경로. 기본값은 현재 디렉터리
         #[arg(long, default_value = ".")]
@@ -582,7 +582,7 @@ fn main() -> Result<()> {
         Command::Install { target } => install::install(&target),
         Command::Update { target } => install::update(&target),
         Command::Uninstall { target } => install::uninstall(&target),
-        // **훅은 실패를 안 낸다** — 그 사실이 `hook::run` 의 타입에 적혀 있다.
+        // **훅은 실패를 내놓지 않는다** — 그 사실이 `hook::run` 의 타입에 적혀 있다.
         Command::Hook { event } => {
             hook::run(&event);
             Ok(())

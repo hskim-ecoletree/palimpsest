@@ -56,7 +56,7 @@ pub struct WatchEntry {
 /// # 앵커로 쓰지 않는 것이 이 타입의 전부다 (옛 F09 §6)
 ///
 /// 선행 구현은 `code_bound_at`(커밋 시각)을 앵커로 썼고, 그러면 **포매팅 커밋에도
-/// `stale` 이 켜진다** — [R-07](../../../docs/plan/00-risks.md#r-07)이 치명이라 부른
+/// `stale` 이 붙는다** — [R-07](../../../docs/plan/00-risks.md#r-07)이 치명이라 부른
 /// 실패를 그대로 맞는다. `body_digest` 가 더 강하다.
 ///
 /// > **다만 시각은 표시용으로 함께 싣는다** — *"3주 전 코드 기준"* 이 *"12커밋 전"* 보다
@@ -157,7 +157,7 @@ pub struct Binding {
     /// 무엇을 지켜보나 — [`Radius`] 가 편 결과.
     ///
     /// **결박 시점에 기계가 대상 좌표에서 읽은 값이다.** 생산자의 신고를 여기 넣는
-    /// 경로가 없고([`Binding`] 머리 · 옛 F09 §4.1 D32), `cargo xtask check` 가 그 부재를 센다.
+    /// 경로가 없고([`Binding`] 머리 · 옛 F09 §4.1 D32), `cargo xtask check` 가 그 부재를 잰다.
     pub watch: Vec<WatchEntry>,
     /// **어떻게 섰나** — 손으로 걸었나, 제안을 승인해서 섰나 ([`PromotedBy`] · 옛 F10 §3.3).
     pub promoted_by: PromotedBy,
@@ -310,7 +310,7 @@ impl Binding {
     ///
     /// 그리고 [`crate::Provenance`] 에 setter 가 없는 것이 그 짝이다(`graph.rs`) —
     /// *"고쳐 쓰는 경로가 없는 것 자체가 세탁 방지의 구현 형태"*.
-    /// `cargo xtask check` 의 검사 15 가 그 부재를 센다.
+    /// `cargo xtask check` 의 검사 15 가 그 부재를 잰다.
     ///
     /// # 왜 `pick` 을 받는가 — **고르는 것은 사람의 일이다**
     ///
@@ -407,7 +407,7 @@ impl Binding {
 
 /// **판정할 수 없는 이유** — 옛 F09 §2.1 · [R16].
 ///
-/// 선행 구현은 앵커를 계산할 수 없을 때 **낡지 않은 것으로 접었다**(`stale=False`).
+/// 선행 구현은 앵커를 계산할 수 없을 때 **낡지 않은 것으로 뭉갰다**(`stale=False`).
 /// 방향은 같다 — 모르는 것을 낡았다고 하지 않는다. 그러나 **`false` 와 「판정 불가」를
 /// 구별하지 않은 결과는 *"이 결정은 유효합니다"* 와 *"유효한지 알 수 없습니다"* 가
 /// 같은 화면이 되는 것**이고, 그것이 [목표 §3.1] 의 정면 위반이다.
@@ -429,7 +429,7 @@ impl Binding {
 /// | 지역 이름을 **안 지운다**(ADR-0006) | **약하다.** 거짓 양성의 원천이고 `[f09.4]` 가 잰다 |
 /// | 요약 값이 **있다** | **비교가 가능하다.** 판정 불가가 아니다 |
 ///
-/// 그래서 [`Self::IdentityGrade`] 는 **비교할 값이 아예 없을 때**만 켠다 —
+/// 그래서 [`Self::IdentityGrade`] 는 **비교할 값이 아예 없을 때**만 건다 —
 /// 등급이 [`crate::IdentityGrade::Unavailable`](L0)일 때다.
 /// 근거 전문은 `corpus/criteria.toml` `[f09].ordinal_is_not_undeterminable`.
 ///
@@ -469,7 +469,7 @@ impl UndeterminableReason {
         }
     }
 
-    /// 사유 넷 — **`[f09.2.pass]` 가 넷을 각각 만들어 `Fresh` 가 안 나오는지 센다.**
+    /// 사유 넷 — **`[f09.2.pass]` 가 넷을 각각 만들어 `Fresh` 가 안 나오는지 잰다.**
     pub const ALL: [Self; 4] =
         [Self::IdentityGrade, Self::PartialParse, Self::WatchMemberGone, Self::ProjectionStale];
 }
@@ -600,15 +600,15 @@ impl BindingStatus {
     /// ```
     ///
     /// **②가 ③보다 먼저인 것이 요구다.** 뒤로 보내면 *"하나는 못 보지만 나머지가
-    /// 안 변했으니 Fresh"* 가 되고, 그것이 선행 구현이 `stale=False` 로 접었던 자리다.
+    /// 안 변했으니 Fresh"* 가 되고, 그것이 선행 구현이 `stale=False` 로 뭉갰던 자리다.
     ///
     /// **①이 ②보다 먼저인 것도 요구다.** 좌표가 사라졌으면 *"판정할 수 없다"* 가 아니라
     /// *"결정을 다시 해야 한다"* 이고, 둘은 사람이 다르게 처리한다.
     ///
     /// # 이 계산은 [`Binding::bound_at_time`] 을 **안 읽는다**
     ///
-    /// 커밋 시각을 앵커로 쓰면 포매팅 커밋에도 `stale` 이 켜진다(옛 F09 §6 · R-07).
-    /// 계산 경로와 표시 경로가 갈려 있어야 하고, `cargo xtask check` 가 그 갈림을 센다.
+    /// 커밋 시각을 앵커로 쓰면 포매팅 커밋에도 `stale` 이 붙는다(옛 F09 §6 · R-07).
+    /// 계산 경로와 표시 경로가 갈려 있어야 하고, `cargo xtask check` 가 그 갈림을 잰다.
     #[must_use]
     pub fn evaluate(binding: &Binding, lineage: Lineage, now: impl Fn(SymbolId) -> Now) -> Self {
         let mut changed = Vec::new();
@@ -675,7 +675,7 @@ impl BindingStatus {
     ///
     /// `Fresh ∧ Current` 만 갖는다. **`Undeterminable` 은 판정 입력에서
     /// `Residual{사유=결박 판정 불가}` 가 된다**(옛 F09 §2.1) — 안 그러면 *"화면에는 뜨는데
-    /// 판정은 그것을 유효로 센다"* 가 된다.
+    /// 판정은 그것을 유효로 잰다"* 가 된다.
     #[must_use]
     pub const fn admissible(&self) -> bool {
         matches!(self.code, CodeFreshness::Fresh) && matches!(self.lineage, Lineage::Current)
@@ -733,7 +733,7 @@ mod 저장된_옛_표기 {
 mod 두_축의_와이어 {
     use super::{CodeFreshness, Lineage, SymbolId, UndeterminableReason};
 
-    /// 겹치는 토큰을 돌려준다. **순수 함수다** — 그래야 음성 대조가 선다.
+    /// 겹치는 토큰을 돌려준다. **순수 함수다** — 그래야 음성 대조가 성립한다.
     fn 겹치는_토큰(a: &[String], b: &[String]) -> Vec<String> {
         let mut 겹침: Vec<String> =
             a.iter().filter(|t| b.contains(t)).cloned().collect();
@@ -896,8 +896,8 @@ mod tests {
 
     #[test]
     fn 판정_불가는_fresh_로_새지_않는다() {
-        // **★ 반대 방향 ③ — R16 의 자리다.** 선행 구현이 `stale=False` 로 접었던 그것이고,
-        // **사유 넷을 각각** 센다 — 하나만 시험하면 나머지 셋이 접혀도 통과한다.
+        // **★ 반대 방향 ③ — R16 의 자리다.** 선행 구현이 `stale=False` 로 뭉갰던 그것이고,
+        // **사유 넷을 각각** 잰다 — 하나만 시험하면 나머지 셋이 접혀도 통과한다.
         let s = 심볼("f");
         let d = BodyDigest::of_normalized(b"x");
         for r in UndeterminableReason::ALL {
@@ -1218,7 +1218,7 @@ pub struct DetectorReport {
     pub matches_head: bool,
 }
 
-/// 결박 하나의 **산출 한 줄** — `binding.status` 가 이것을 낸다 (옛 F09 §8).
+/// 결박 하나의 **산출 한 줄** — `binding.status` 가 이것을 산출한다 (옛 F09 §8).
 ///
 /// # 무엇이 실려야 하는가 — 문서 §5 의 마지막 행이 요구한 것
 ///

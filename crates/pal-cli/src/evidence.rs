@@ -24,7 +24,7 @@ pub fn print<T>(e: &Envelope<T>) {
     }
 }
 
-/// 같은 셋을 **줄로** 낸다 — 산출이 표준출력을 쓰고 있으면 부르는 쪽이 표준오류로 보낸다.
+/// 같은 셋을 **줄로** 산출한다 — 산출이 표준출력을 쓰고 있으면 부르는 쪽이 표준오류로 보낸다.
 pub fn lines<T>(e: &Envelope<T>) -> Vec<String> {
     let mut o = Vec::new();
     if e.fold.is_none() {
@@ -38,7 +38,7 @@ pub fn lines<T>(e: &Envelope<T>) -> Vec<String> {
 
     match e.log {
         // ⚠ **시간을 여기 안 적는다.** 화면도 산출이고, 회차마다 달라지는 값이 섞이면
-        // 화면을 대는 검사가 시간에 대해 참이 아니게 된다. `--timing` 이 표준오류로 낸다.
+        // 화면을 대는 검사가 시간에 대해 참이 아니게 된다. `--timing` 이 표준오류로 출력한다.
         LogStatus::Recorded { .. } => o.push("  질의 로그  남았습니다".to_owned()),
         LogStatus::NotRecorded { why } => {
             let 사유 = match why {

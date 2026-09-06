@@ -185,9 +185,9 @@ impl IntentStore {
     /// # `WATCH` 의 낡은 자리를 지우는 것은 「의도를 지우는 것」이 아니다
     ///
     /// 같은 결박을 더 좁은 반경으로 다시 걸면 옛 감시 원소가 `WATCH` 에 남는다. 그것을
-    /// 안 지우면 색인이 실체와 갈리고 위 검사가 반증을 낸다. **지우는 것은 색인의 한
+    /// 안 지우면 색인이 실체와 갈리고 위 검사가 반증을 산출한다. **지우는 것은 색인의 한
     /// 줄이지 결박이 아니다** — `pal-intent` 에 **지우는 공개 API 가 없다**는 R-21 의
-    /// 대응은 그대로다(S3 합격선 ⑤ 는 `pub fn` 의 이름을 센다).
+    /// 대응은 그대로다(S3 합격선 ⑤ 는 `pub fn` 의 이름을 잰다).
     pub fn record(&self, binding: &Binding) -> Result<(), IntentError> {
         let raw =
             postcard::to_allocvec(binding).map_err(|e| IntentError::Decode(e.to_string()))?;
@@ -234,7 +234,7 @@ impl IntentStore {
     /// > 재추출 시 digest 가 바뀐 심볼 집합을 알고 있으므로(F04), `WATCH` 테이블의
     /// > 역방향 조회로 **영향받는 결박만** 재계산한다. 전체 재계산이 아니다.
     ///
-    /// **결박 id 순으로 정렬한다** — 같은 저장소가 같은 순서를 낸다.
+    /// **결박 id 순으로 정렬한다** — 같은 저장소가 같은 순서를 산출한다.
     ///
     /// # Errors
     /// 읽기가 실패하거나 값을 풀지 못하면.
@@ -472,7 +472,7 @@ impl IntentStore {
         Ok(got.is_some())
     }
 
-    /// 거부 전부 — **결박 id 처럼 정렬해서 낸다.**
+    /// 거부 전부 — **결박 id 처럼 정렬해서 산출한다.**
     ///
     /// # Errors
     /// 읽기가 실패하거나 값을 풀지 못하면.
@@ -497,7 +497,7 @@ impl IntentStore {
     /// 읽기가 실패하면.
     pub fn count(&self) -> Result<usize, IntentError> {
         // **파일이 없으면 0 이고 그것이 정확한 값이다** — 아직 아무도 안 걸었다.
-        // 깨진 경우는 여기 못 온다(`open_read_only` 가 오류를 낸다).
+        // 깨진 경우는 여기 못 온다(`open_read_only` 가 오류를 일으킨다).
         let Some(read) = self.read()? else { return Ok(0) };
         let Ok(t) = read.open_table(BINDING) else {
             return Ok(0);
@@ -517,7 +517,7 @@ impl IntentStore {
     ///
     /// *"이 저장소가 저 저장소였다"* 는 **코드에서 유도되지 않는다.** 파생층에 두면
     /// *"2층을 지우고 재구축"* 이 그 선언을 지우고, 재구축 등가성 검사는 그 상태에서도
-    /// 통과하므로 **검사가 유실을 정상으로 승인한다.** 결박과 같은 처지이고 같은 방에 산다.
+    /// 통과하므로 **검사가 유실을 정상으로 승인한다.** 결박과 같은 처지이고 같은 방에 있다.
     ///
     /// # Errors
     /// 쓰기가 실패하면.
@@ -634,7 +634,7 @@ pub struct ImportReport {
 }
 
 impl IntentStore {
-    /// 전부를 JSONL 로. **결박 id 순 → 별칭 옛 이름 순** — 같은 저장소가 같은 파일을 낸다.
+    /// 전부를 JSONL 로. **결박 id 순 → 별칭 옛 이름 순** — 같은 저장소가 같은 파일을 산출한다.
     ///
     /// # Errors
     /// 읽기가 실패하거나 직렬화가 실패하면.

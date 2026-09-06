@@ -7,8 +7,8 @@
 //!
 //! | | 어떻게 서나 | 여기서 |
 //! |---|---|---|
-//! | `Change` · `Actor` | git 에서 **결정론적으로** 나온다 | 값이 선다 |
-//! | `Defect` | 수정 커밋에서 **소급 결박**된다([T10ⓐ](../../../docs/gates/preflight.md)) | 값이 선다 — 단, 못 지목한 것을 **세어서 표시한다** |
+//! | `Change` · `Actor` | git 에서 **결정론적으로** 나온다 | 값이 정해진다 |
+//! | `Defect` | 수정 커밋에서 **소급 결박**된다([T10ⓐ](../../../docs/gates/preflight.md)) | 값이 정해진다 — 단, 못 지목한 것을 **세어서 표시한다** |
 //! | `Journey` | **저작 노동이다.** 진입점 좌표 0/3 으로 반증됐다(T10ⓑ) | **자리만.** 값을 만들 수 없다 |
 //!
 //! # 소급 결박이 줄이 아니라 심볼 위에서 일어나는 이유
@@ -132,7 +132,7 @@ impl ChangeId {
 ///
 /// [옛 F23](../../../docs/plan/disposal-map.md)의 git 결합과
 /// [옛 F20](../../../docs/plan/disposal-map.md)의 델타가 전부 이
-/// 마디 위에 선다. 없으면 델타에 기준선이 없다.
+/// 마디 위에 성립한다. 없으면 델타에 기준선이 없다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Change {
     pub id: ChangeId,
@@ -257,7 +257,7 @@ pub enum NotFoundReason {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Defect {
     /// **파생 노드의 id 규칙을 따른다**([`crate::DerivedId`]) — 출처·생산자·재현 입력이
-    /// 성분이다. 같은 수정 커밋을 정적 도구가 다시 읽어도 **다른 노드로 선다.**
+    /// 성분이다. 같은 수정 커밋을 정적 도구가 다시 읽어도 **다른 노드가 된다.**
     pub id: crate::DerivedId,
     /// 수정 커밋의 첫 줄.
     pub description: String,
@@ -343,7 +343,7 @@ pub struct RetrobindingSummary {
 }
 
 impl RetrobindingSummary {
-    /// 결과 목록에서 센다. **따로 들고 있지 않는 것이 합의 보증이다** —
+    /// 결과 목록에서 잰다. **따로 들고 있지 않는 것이 합의 보증이다** —
     /// [`crate::Ledger::counts`] 와 같은 규율이다.
     #[must_use]
     pub fn of(results: &[Retrobinding]) -> Self {
@@ -391,7 +391,7 @@ impl RetrobindingSummary {
 /// 사람의 선언이다.
 ///
 /// T10ⓑ 가 그것을 실측했고 **진입점 좌표 0/3 으로 반증됐다.** goals §0.1 의 (c)가
-/// *"진입점에서 시작하는 도달 하한"* 으로 줄었고, 그 하한은 이 타입 없이 선다.
+/// *"진입점에서 시작하는 도달 하한"* 으로 줄었고, 그 하한은 이 타입 없이도 성립한다.
 ///
 /// **그래서 여기 값이 없다.** 만들 수 없는 변형을 미리 두면 그것이 곧 *"있는데 안 나오는"*
 /// 상태가 되고, 이 제품이 고발한 문제를 스스로 저지르는 것이다. 저작 경로는 F19 다.
@@ -431,7 +431,7 @@ mod tests {
     }
 
     #[test]
-    fn 요약은_담기지_않은_것을_센다() {
+    fn 요약은_담기지_않은_것을_잰다() {
         // **T10 의 표본이 이 모양이다** — 5 중 1 이 코드 밖이었다.
         let 놓침 = Retrobinding::Missed(Uncapturable::OutsideCode {
             change: ChangeId::new("afcfefab"),

@@ -2,7 +2,7 @@
 """S1 대조 — `pal ledger` 의 산출을 등록된 합격선 다섯에 댄다.
 
 합격선 정본은 `corpus/criteria.toml` `[s1]` 이다. 여기서 재는 것은 넷이고,
-다섯째(gix 격리)는 구조의 합격선이라 `cargo xtask check` 가 센다.
+다섯째(gix 격리)는 구조의 합격선이라 `cargo xtask check` 가 잰다.
 
   ① 경로 집합이 `git ls-tree -r` 와 같은가 — 양방향, 불일치 0
   ② 상태 분할이 전수인가 — 모든 파일이 정확히 한 칸, 합이 파일 수
@@ -179,7 +179,7 @@ def main() -> int:
             print(f"  · {f}")
         print("\n반증이다")
         return 1
-    print("넷 다 통과 — ⑤ gix 격리는 `cargo xtask check` 가 센다")
+    print("넷 다 통과 — ⑤ gix 격리는 `cargo xtask check` 가 잰다")
     return 0
 
 

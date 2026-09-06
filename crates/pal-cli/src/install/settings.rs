@@ -184,10 +184,10 @@ pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<Unmerged> {
 ///
 /// # 왜 여기에도 [`super::eol`] 이 필요한가
 ///
-/// `serde_json::to_string_pretty` 는 언제나 LF 를 낸다. `core.autocrlf=true` 로 클론한
+/// `serde_json::to_string_pretty` 는 언제나 LF 를 산출한다. `core.autocrlf=true` 로 클론한
 /// 워킹트리에서 `settings.json` 은 CRLF 인데, 우리가 LF 로 되쓰면 **파일 전체의 모든
 /// 줄이 바뀐다** — 사용자의 `git status` 에 우리 파일이 매번 뜨고, git 이 되쓰기마다
-/// *"LF will be replaced by CRLF"* 를 낸다.
+/// *"LF will be replaced by CRLF"* 를 산출한다.
 ///
 /// 블록(`CLAUDE.md`·`.gitignore`)에는 이 규율이 이미 서 있었다(소유자 결정 2026-08-16:
 /// **판정은 정규화해서, 되쓰기는 있던 대로**). `settings.json` 만 그 문 밖에 있었고,

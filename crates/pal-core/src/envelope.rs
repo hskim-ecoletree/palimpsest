@@ -258,7 +258,7 @@ impl Elision {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum FoldedPart {
-    /// 대장 — 요약 여섯 값만 싣고 전체는 `ledger.snapshot` 이 낸다.
+    /// 대장 — 요약 여섯 값만 싣고 전체는 `ledger.snapshot` 이 산출한다.
     Ledger,
 }
 
@@ -276,7 +276,7 @@ impl FoldedPart {
 /// **`capabilities` 는 여기 올 수 없다** — [`FoldedPart`] 에 변형이 없다. 옛 F06 §4.3 이
 /// 못 박았다: *"**능력 목록은 이관하지 않는다.** 부피가 작고, 이것을 이관하면 소비자가 공백을
 /// 「이상 없음」으로 읽는다."* 타입이 그것을 지고, `[f06.2.pass]` ②가 **산출에서** 다시
-/// 센다 — 타입만으로 막고 안 재면 그 문장이 검사되지 않는다.
+/// 잰다 — 타입만으로 막고 안 재면 그 문장이 검사되지 않는다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Folded {
     pub what: FoldedPart,
@@ -539,7 +539,7 @@ impl<T: Serialize> Envelope<T> {
     /// 잊는 경로가 하나라도 있으면 그것이 곧 조용한 답이 나가는 경로다 — 이 타입이
     /// `Default` 도 빌더도 두지 않는 것과 같은 이유다.
     ///
-    /// **자기 자신은 못 센다.** `tokens` 자리를 0 으로 둔 응답 묶음을 재고 그 값을 채운다.
+    /// **자기 자신은 못 잰다.** `tokens` 자리를 0 으로 둔 응답 묶음을 재고 그 값을 채운다.
     /// 그 차이는 밖에서 잴 수 있고 `[f06.2.pass]` ③이 그것을 잰다.
     ///
     /// # 인자가 아홉인 것은 결함이 아니라 계약이다
@@ -634,7 +634,7 @@ mod tests {
     }
 
     #[test]
-    fn 같은_사유는_합쳐지고_같은_상한은_두_번_안_선다() {
+    fn 같은_사유는_합쳐지고_같은_상한은_두_번_안_실린다() {
         // 목록이 아니라 계수기다 — 목록이면 같은 사유가 여러 줄로 서고 건수가 안 세어진다.
         let mut e = Elision::none();
         e.push(ElisionReason::DepthExceeded, 2);

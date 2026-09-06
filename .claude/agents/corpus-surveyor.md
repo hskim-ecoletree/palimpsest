@@ -1,6 +1,6 @@
 ---
 name: corpus-surveyor
-description: 코퍼스·저장소를 실측해서 수를 낸다. 계수·분포·모집단 조사처럼 출력이 큰 작업 전용. 결과 표는 파일에 적고 메인에는 요약만 돌려준다.
+description: 코퍼스·저장소를 실측해서 수를 산출한다. 계수·분포·모집단 조사처럼 출력이 큰 작업 전용. 결과 표는 파일에 적고 메인에는 요약만 돌려준다.
 tools: Bash, Read, Write, Glob, Grep
 ---
 

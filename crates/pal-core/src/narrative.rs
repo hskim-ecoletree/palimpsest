@@ -14,7 +14,7 @@
 //! 무엇이 있나. **판단이 아니라 사실이고, 그것이 거짓 결박을 구조적으로 막는 유일한
 //! 수단이다** — 표본 검토는 표본 밖을 못 본다.
 //!
-//! **그 부재를 `cargo xtask check` 가 센다**(검사 14). 문장으로 두면 잊힌다.
+//! **그 부재를 `cargo xtask check` 가 잰다**(검사 14). 문장으로 두면 잊힌다.
 //!
 //! # 같은 강도의 후보가 여럿이면 **더 약한 신호로 내려가지 않는다**
 //!
@@ -39,7 +39,7 @@ use crate::repo::RepoPath;
 ///
 /// 읽기가 실패하면 후보가 **비고**, 조각은 `미결박` 이 된다 — 즉 *"덜 건다"* 이지
 /// *"틀린 것을 건다"* 가 아니다. 그리고 그 축소는 조용하지 않다: 미결박은
-/// `narrative.unbound` 가 **사람의 작업 목록으로** 낸다.
+/// `narrative.unbound` 가 **사람의 작업 목록으로** 제출한다.
 pub trait Coordinates {
     /// 이름 하나 → 후보. **여럿인 것이 정상이다.**
     fn by_name(&self, name: &str) -> Vec<NamedCoord>;
@@ -64,7 +64,7 @@ pub struct NamedCoord {
     pub path: RepoPath,
 }
 
-/// 문서 조각 하나가 든 **신호의 날것** — `pal-extract` 가 낸다.
+/// 문서 조각 하나가 든 **신호의 날것** — `pal-extract` 가 산출한다.
 ///
 /// **여기 있는 것은 전부 텍스트에서 뽑은 것이고 아직 좌표가 아니다.** 좌표로 바꾸는
 /// 것이 [`resolve`] 이고, 그 사이에 **판단이 들어가지 않는다.**
@@ -152,7 +152,7 @@ pub enum ResolutionSignal {
 ///
 /// [ADR-0015] 는 셋을 요구한다 — **① 확인된 명제를 문장으로 ② 그것과 주장 사이의 거리를
 /// ③ 그 거리를 합격선의 층화에.** 셋을 산문으로 두면 신호가 늘 때 조용히 빠지고,
-/// 빠지면 *"기계가 확인했다"* 가 다시 무엇을 확인했는지 안 적은 채로 선다.
+/// 빠지면 *"기계가 확인했다"* 가 다시 무엇을 확인했는지 안 적은 채로 남는다.
 ///
 /// **그래서 ①은 [`ResolutionSignal::confirmed_proposition`] 이 지고, ②는 이 열거가 지고,
 /// ③은 [`ConfirmingSignal`] 이 **타입으로** 진다** — 거리가 있는 신호는 확정을 낼 수
@@ -381,7 +381,7 @@ fn candidates(s: ResolutionSignal, f: &Fragment, c: &impl Coordinates) -> Vec<Sy
             .map(|n| n.id)
             .collect(),
         ResolutionSignal::Span => {
-            // ⚠ **해소되는 것을 전부 낸다.** 유일한 것만 내면 같은 이름이 둘인 스팬이
+            // ⚠ **해소되는 것을 전부 출력한다.** 유일한 것만 내면 같은 이름이 둘인 스팬이
             // 신호를 아예 못 내고, 그 조각이 **미결박으로 접힌다** — 「여럿이라 못
             // 좁혔다」와 「신호가 없다」가 같은 답이 되는 것이고 `[f10.pass]` ⑤의
             // 반대 방향이 금지한 형태다. 유일함은 [`resolve`] 가 후보 하나를 볼 때 한다.
@@ -541,7 +541,7 @@ impl std::error::Error for PromotionRefusal {}
 ///
 /// **[graph-node] `NarrativeRefusal`** — `schema/graph.toml`
 ///
-/// # 왜 이것이 의도 저장소에 사는가 — **재생 불가하기 때문이다**
+/// # 왜 이것이 의도 저장소에 있는가 — **재생 불가하기 때문이다**
 ///
 /// [`Proposal`] 은 다시 계산되지만 *"사람이 이것을 거부했다"* 는 **계산에서 안 나온다.**
 /// 그리고 문서 §3.3 이 그 값을 못 박았다:
@@ -690,7 +690,7 @@ mod tests {
         assert_eq!(by, ResolutionSignal::Span);
         assert_eq!(candidates.len(), 2);
 
-        // 그런데 **경로 신호는 여럿을 낸다** — 그때는 「후보 있음」이지 미결박이 아니다.
+        // 그런데 **경로 신호는 여럿을 산출한다** — 그때는 「후보 있음」이지 미결박이 아니다.
         let g = 조각(
             "docs/x.md",
             RawSignals {
@@ -717,7 +717,7 @@ mod tests {
             .더("src/order/a.ts", &[], "cancel")
             .더("src/other/b.ts", &[], "cancel");
         let f = 조각(
-            // 스팬이 둘을 낸다. 더 약한 신호(스팬 안의 경로 겹침)로 좁히지 **않는다.**
+            // 스팬이 둘을 산출한다. 더 약한 신호(스팬 안의 경로 겹침)로 좁히지 **않는다.**
             "docs/order/x.md",
             RawSignals {
                 fenced_paths: vec![RepoPath::new("src/order/a.ts"), RepoPath::new("src/other/b.ts")],
@@ -770,12 +770,12 @@ mod tests {
                 ..RawSignals::default()
             },
         );
-        assert!(!f.signals.co_changed.is_empty(), "날것이 안 실렸다 — 이 시험이 아무것도 안 센다");
+        assert!(!f.signals.co_changed.is_empty(), "날것이 안 실렸다 — 이 시험이 아무것도 안 잰다");
         assert_eq!(resolve(&f, &t), Classification::Unbound);
     }
 
     #[test]
-    fn 디렉터리_근접성은_더_이상_후보를_안_낸다() {
+    fn 디렉터리_근접성은_더_이상_후보를_안_산출한다() {
         // `docs/order/x.md` ↔ `src/order/` 는 앞선 판에서 후보를 냈다 — 중앙 **2,345** 개.
         // *"디렉터리 이름이 겹친다"* 와 *"이 글은 그 코드에 관한 것이다"* 사이의 거리다.
         let t = 표::default()
@@ -820,7 +820,7 @@ mod tests {
     }
 
     #[test]
-    fn 대장에_없는_경로는_아무것도_안_낸다() {
+    fn 대장에_없는_경로는_아무것도_안_산출한다() {
         // *"경로가 대장에 존재하는가"* 가 이 신호의 정의다(§3.2). 없으면 신호가 없다.
         let t = 표::default().더("src/order/a.ts", &[], "cancel");
         let f = 조각(
@@ -867,7 +867,7 @@ mod tests {
         assert!(거리0 >= 1 && 거리있음 >= 1, "두 갈래가 다 서지 않는다 — 이 구별이 꺼졌다");
 
         // 요구 ① — **확인된 명제가 신호마다 적혀 있고 서로 다르다.**
-        // 뭉개지면 *"무엇을 확인했나"* 가 다시 안 적힌 채로 선다.
+        // 뭉개지면 *"무엇을 확인했나"* 가 다시 안 적힌 채로 남는다.
         let 명제: std::collections::BTreeSet<&str> =
             ResolutionSignal::ALL.iter().map(|s| s.confirmed_proposition()).collect();
         assert_eq!(명제.len(), ResolutionSignal::ALL.len(), "확인된 명제가 겹친다");

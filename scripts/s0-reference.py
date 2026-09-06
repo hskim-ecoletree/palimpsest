@@ -53,7 +53,7 @@ def isolated(grammar: Path) -> dict:
 
 
 def parse_failures(grammar: Path, files: list[Path]) -> set[Path]:
-    """`tree-sitter parse --quiet` 는 **실패한 파일만** 한 줄씩 낸다."""
+    """`tree-sitter parse --quiet` 는 **실패한 파일만** 한 줄씩 산출한다."""
     listing = grammar / ".s0-paths.txt"
     listing.write_text("\n".join(str(f) for f in files), encoding="utf-8")
     try:

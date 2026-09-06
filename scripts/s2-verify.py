@@ -29,7 +29,7 @@
     관측 없이 단언된다"*). 조용히가 아니다 — ADR-0010 의 무대 테이블이 관측이다
 
 **그리고 반대 방향을 넣는다** — 검사를 리터럴에서 요구로 옮기면 **아무것도 안 세는
-검사**가 되기 쉽다. `--self-test` 가 방향마다 응답 묶음을 망가뜨려 **잡히는지** 센다.
+검사**가 되기 쉽다. `--self-test` 가 방향마다 응답 묶음을 망가뜨려 **잡히는지** 잰다.
 """
 
 from __future__ import annotations
@@ -122,7 +122,7 @@ def audit(env: dict) -> tuple[list[str], list[str]]:
             failures.append(f"② {slot} 이 Present 가 아니다 (채워진 자리가 되돌아갔다): {v!r}")
 
     proj = env.get("projection") or {}
-    # **F01 이 채운 자리** — 이제 값이어야 한다. 그 값이 참인지는 `f01-verify` 가 센다.
+    # **F01 이 채운 자리** — 이제 값이어야 한다. 그 값이 참인지는 `f01-verify` 가 잰다.
     mw = proj.get("matches_worktree")
     if not (isinstance(mw, dict) and "present" in mw):
         failures.append(f"② matches_worktree 가 값이 아니다 (F01 이 채운 자리): {mw!r}")
@@ -151,7 +151,7 @@ def audit(env: dict) -> tuple[list[str], list[str]]:
 # 음성 대조 — **방향마다 망가뜨려서 잡는다**
 #
 # 검사를 리터럴에서 요구로 옮기면 **아무것도 안 세는 검사**가 되기 쉽다. 여덟을 각각
-# 깨뜨려 `audit` 이 잡는지 세고, **성한 응답 묶음은 안 잡는지도** 함께 센다.
+# 깨뜨려 `audit` 이 잡는지 세고, **성한 응답 묶음은 안 잡는지도** 함께 잰다.
 # ─────────────────────────────────────────────────────────────────────────────
 
 def 망가뜨리기() -> list[tuple[str, callable]]:
@@ -291,7 +291,7 @@ def main() -> int:
         shutil.rmtree(tmp, ignore_errors=True)
 
     if notes:
-        print("\n발견 (합격선이 아니다 · 통과로도 안 센다):")
+        print("\n발견 (합격선이 아니다 · 통과로도 안 잰다):")
         for n in notes:
             print(f"  · {n}")
 

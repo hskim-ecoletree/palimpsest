@@ -14,7 +14,7 @@
 > 그리고 초록은 「어긋남 0」이 아니라 「검사 모집단 안에서 어긋남 0」이다.**
 
 흩어진 이슈 넷이 각자 말하던 것이 **한 문장**이다 —
-[#92](https://github.com/hskim-ecoletree/palimpsest/issues/92)(합계 검산이 행 수만 센다) ·
+[#92](https://github.com/hskim-ecoletree/palimpsest/issues/92)(합계 검산이 행 수만 헤아린다) ·
 [#90](https://github.com/hskim-ecoletree/palimpsest/issues/90)(표 헤더 한 글자로 조용히 빠진다) ·
 [#93](https://github.com/hskim-ecoletree/palimpsest/issues/93)(「없음」 행이 레코드가 된다) ·
 [#97](https://github.com/hskim-ecoletree/palimpsest/issues/97)(음성 대조를 등록만 하고 안 걸었다).
@@ -131,7 +131,7 @@ cargo xtask check
    모집단·유효성·해악도 칸에 **굵게·백틱 금지** · 셀 안 `\|` 금지 ·
    **마크다운 링크 문법 금지**(백틱 안이라도 죽은 링크 검사가 읽는다) ·
    `#` 칸에 숫자만.
-3. ★ **사전부검자는 `^### ` 항 + 기각 절**, **리뷰어는 `| # |` 표**다. 갈리면 검산이 0 을 낸다.
+3. ★ **사전부검자는 `^### ` 항 + 기각 절**, **리뷰어는 `| # |` 표**다. 갈리면 검산이 0 을 돌려준다.
 4. ★ **`.palimpsest/rounds/**` 아래에 `.json`·`.jsonl` 을 두지 마라.**
    `.json` 하나가 sunset 트리거를 참으로 만들어 **문서 두 뭉치 삭제를 요구**한다(실측).
 5. ★ **커밋이 부분 실패를 삼킨다.** 여러 정정을 한 스크립트로 넣을 때

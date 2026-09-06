@@ -149,7 +149,7 @@ pub fn run(rev: &str, repo_path: &Path, budget: usize) -> Result<DefectReport> {
 
     let defect = Defect {
         // **파생 노드의 id 규칙을 따른다** — 같은 수정 커밋을 도구가 다시 읽어도
-        // 출처·생산자가 다르므로 다른 노드로 선다(F22-2).
+        // 출처·생산자가 다르므로 다른 노드가 된다(F22-2).
         id: DerivedId::compute(
             "Defect",
             &manifest_ids.iter().copied().map(NodeRef::Symbol).collect::<Vec<_>>(),

@@ -148,7 +148,7 @@ fn 이관한_것이_어디로_갔는지_함께_실린다() {
         let folded = v["fold"]["folded"].as_array().expect("fold.folded 가 배열이 아니다");
         if name == 대장_자신 {
             // **자기 답이 대장이므로 이관한 것이 없다.**
-            assert!(folded.is_empty(), "`{name}` 이 대장을 접었다 — 자기 답을 접은 것이다");
+            assert!(folded.is_empty(), "`{name}` 이 대장을 이관했다 — 자기 답을 이관한 것이다");
             안_이관한_회차 += 1;
             continue;
         }
@@ -185,7 +185,7 @@ fn 능력_목록은_접히지_않는다() {
             // **이관 상한을 아무리 낮춰도 안 줄어든다.**
             assert!(built.len() >= 최소_능력, "`{name}` {extra:?} 에서 능력이 {}개다", built.len());
             assert!(!not_built.is_empty(), "`{name}` {extra:?} 에서 미구축이 비었다");
-            // 이관한 자리에 능력이 오면 실패 — 타입이 막지만 산출에서 다시 센다.
+            // 이관한 자리에 능력이 오면 실패 — 타입이 막지만 산출에서 다시 헤아린다.
             for f in v["fold"]["folded"].as_array().expect("folded") {
                 assert_ne!(f["what"].as_str(), Some("capabilities"), "능력이 접혔다");
             }

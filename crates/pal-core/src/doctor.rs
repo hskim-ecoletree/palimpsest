@@ -127,7 +127,7 @@ impl InvariantId {
     #[must_use]
     pub const fn breaks(self) -> &'static str {
         match self {
-            Self::EdgeEndsExist => "질의가 조용히 빈 결과를 낸다",
+            Self::EdgeEndsExist => "질의가 조용히 빈 결과를 산출한다",
             Self::RegisteredAndRequired => "\"필수이거나 없거나\"가 저장 층에서 무효",
             Self::ProducerFitsProvenance => "출처 파티션이 거짓이 된다",
             Self::InferredCarriesEvidence => "P3 이 문장으로 되돌아간다",
@@ -463,7 +463,7 @@ impl<'a> Context<'a> {
         (checked, skipped)
     }
 
-    /// 보지 않은 범위를 잔여로 낸다. **"이상 없음"이 아니다.**
+    /// 보지 않은 범위를 잔여로 산출한다. **"이상 없음"이 아니다.**
     fn skipped_residual(&self, id: InvariantId, mut skipped: Vec<Coord>) -> Option<Residual> {
         if skipped.is_empty() {
             return None;
@@ -975,7 +975,7 @@ mod tests {
     //
     // 그래서 **넷이 성립할 수 있는 스키마를 만들고 그 위에서 하나씩 깬다.** 이것이
     // 실물이 아니라는 사실은 `[f22.4].does_not_prove` 가 미리 적었고, 무엇이 실물이고
-    // 무엇이 픽스처인지는 `doctor` 자신이 산출로 센다(`InvariantOutcome::NotBuilt`).
+    // 무엇이 픽스처인지는 `doctor` 자신이 산출로 잰다(`InvariantOutcome::NotBuilt`).
     const 스키마_원문: &str = r#"
 schema_version = 1
 

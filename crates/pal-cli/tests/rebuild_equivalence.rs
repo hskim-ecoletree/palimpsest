@@ -44,7 +44,7 @@ fn 적중_빗나감(json: &str) -> (u64, u64) {
 }
 
 #[test]
-fn 이층을_지워도_일층과_의도로_같은_것이_선다() {
+fn 이층을_지워도_일층과_의도로_같은_것이_남는다() {
     let repo = 저장소("rebuild");
     let pal_dir = repo.join(".palimpsest");
     let index = pal_dir.join("index.redb");

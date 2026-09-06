@@ -39,7 +39,7 @@ fn 버전에_커밋이_실려_있다() {
 
     assert!(
         printed.contains(&sha),
-        "`pal --version` 에 커밋이 없다 — 두 빌드가 같은 값을 낸다\n  냈다: {}\n  HEAD: {sha}",
+        "`pal --version` 에 커밋이 없다 — 두 빌드가 같은 값을 산출한다\n  냈다: {}\n  HEAD: {sha}",
         printed.trim()
     );
 }

@@ -122,7 +122,7 @@ def 방(tag: str) -> Path:
 def 도달_CTE(conn, start: str, depth: int, reversed_edges: bool = False) -> set[str]:
     """재귀 CTE 로 `start` 에서 `depth` 홉 안에 닿는 것 — **출발점을 포함한다.**
 
-    우리 `traverse` 가 출발점을 답에 담으므로 여기서도 담아야 같은 것을 센다.
+    우리 `traverse` 가 출발점을 답에 담으므로 여기서도 담아야 같은 것을 헤아린다.
     """
     src, dst = ("dst", "src") if reversed_edges else ("src", "dst")
     rows = conn.execute(
@@ -258,7 +258,7 @@ def 대조_CTE(repo: Path, at: str, tag: str) -> None:
         ok(f"③ {tag} — 출발점 {len(출발점)}개 · 엣지 {len(edges)} · 자체 인덱스 = CTE")
     # ★ **답이 같은데 우리 것만 생략을 싣는다.** stack §2.3 의 결정적 이유가 여기서
     # 관측된다 — `LIMIT` 은 *"한도에 걸린 지점의 사유별 분해"* 를 표현하지 못한다.
-    적음(f"        └ 그중 {생략_실린_수}개는 **우리 답에만 생략이 실렸다** (CTE 는 못 낸다)")
+    적음(f"        └ 그중 {생략_실린_수}개는 **우리 답에만 생략이 실렸다** (CTE 는 못 만든다)")
     기록.append(f"{tag}: 답 일치 {len(출발점) - len(갈림)}/{len(출발점)} · 생략이 실린 답 {생략_실린_수}")
 
     # ── ★ 반대 방향 ─────────────────────────────────────────────────────────
@@ -310,7 +310,7 @@ def 대조_벤치(repo: Path, at: str, tag: str) -> None:
 
     ledger_args = ["ledger", str(repo), "--at", at, "--cache-dir", str(cache), "--json"]
     콜드 = 벽시계(ledger_args)
-    js = pal(ledger_args)  # 이 회차는 전량 적중이다 — 대상 수만 센다
+    js = pal(ledger_args)  # 이 회차는 전량 적중이다 — 대상 수만 헤아린다
     증분 = 벽시계(ledger_args)
     대상 = 추출_대상(js)
     if 대상 == 0:

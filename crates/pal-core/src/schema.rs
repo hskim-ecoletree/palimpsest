@@ -108,7 +108,7 @@ pub struct EdgeDecl {
     /// ④ 발생 `Snapshot` 을 싣는 속성 이름.
     pub snapshot: String,
     // ─────────────────────────────────────────────────────────────────────────
-    /// 이 엣지가 **어디에 사는가** — 별도 자리인가, 노드의 필드에 실려 있는가.
+    /// 이 엣지가 **어디에 있는가** — 별도 자리인가, 노드의 필드에 실려 있는가.
     ///
     /// **`Option<Carrier>` 가 아니다.** `None` 은 *"실린 자리가 없다"* 만 말하고
     /// **그것이 「별도 자리다」인지 「아직 안 정했다」인지**를 말하지 않는다 —
@@ -117,13 +117,13 @@ pub struct EdgeDecl {
     pub attrs: Vec<AttrDecl>,
 }
 
-/// 엣지가 **어디에 사는가.**
+/// 엣지가 **어디에 있는가.**
 ///
 /// [ADR-0005](../../../docs/adr/0005-absence-carries-its-kind.md) — 부재는 종류를
 /// 싣는다. *"실린 자리가 없다"* 는 곧 **「별도 자리다」** 라는 사실이지 빈칸이 아니다.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Carried {
-    /// 엣지가 자기 자리로 선다. **기본값이다.**
+    /// 엣지가 자기 자리로 성립한다. **기본값이다.**
     #[default]
     Standalone,
     /// 노드의 필드에 실려 있다.
@@ -571,7 +571,7 @@ impl GraphSchema {
 
     /// 이 라벨이 Rust 타입에서 지는 이름 전부 — `key` + `attrs`.
     ///
-    /// **양방향 대조의 한쪽이다.** 다른 쪽은 소스의 `pub` 필드이고 그것은 `xtask` 가 센다.
+    /// **양방향 대조의 한쪽이다.** 다른 쪽은 소스의 `pub` 필드이고 그것은 `xtask` 가 잰다.
     #[must_use]
     pub fn field_names(&self, label: &str) -> Vec<String> {
         let Some(n) = self.nodes.get(label) else { return Vec::new() };

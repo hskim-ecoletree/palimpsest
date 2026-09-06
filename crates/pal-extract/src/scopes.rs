@@ -12,7 +12,7 @@
 //!
 //! # 참조로 세는 것과 세지 않는 것
 //!
-//! | 노드 | 센다 | 왜 |
+//! | 노드 | 잰다 | 왜 |
 //! |---|---|---|
 //! | `identifier` | ✅ 값 자리 | |
 //! | `shorthand_property_identifier` | ✅ 값 자리 | `{ a }` 의 `a` 는 값 참조다 |
@@ -232,7 +232,7 @@ impl Builder<'_, '_> {
     /// 스코프를 여는 노드 자신이 만드는 이름들 — 바깥에 놓을 것과 안에 놓을 것.
     fn declare_own(&mut self, node: Node<'_>, outer: ScopeIx, inner: ScopeIx) {
         let k = node.kind();
-        // 함수·클래스의 **이름은 바깥**에 산다. 파라미터·타입 파라미터는 **안**이다.
+        // 함수·클래스의 **이름은 바깥**에 있다. 파라미터·타입 파라미터는 **안**이다.
         if k == "function_declaration"
             || k == "generator_function_declaration"
             || k == "function_signature"
@@ -240,7 +240,7 @@ impl Builder<'_, '_> {
             let home = self.hoist_home(outer);
             self.bind_named(home, node, Namespace::Value, true);
         } else if k == "class_declaration" || k == "abstract_class_declaration" {
-            // 클래스는 **두 이름 공간에 다 있다** — `new C()` 와 `x: C` 가 둘 다 선다.
+            // 클래스는 **두 이름 공간에 다 있다** — `new C()` 와 `x: C` 가 둘 다 성립한다.
             self.bind_named(outer, node, Namespace::Value, false);
             self.bind_named(outer, node, Namespace::Type, false);
         } else if k == "interface_declaration" {

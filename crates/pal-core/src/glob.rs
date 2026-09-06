@@ -11,7 +11,7 @@
 //!
 //! 문자 클래스(`[abc]`)는 **거부한다**([`GlobError::Unsupported`]). 조용히 리터럴로
 //! 취급하면 제외 규칙이 아무것도 안 걸러도 오류가 없고, 그러면 대장이
-//! *"제외 0 건"* 을 정직한 답인 것처럼 낸다.
+//! *"제외 0 건"* 을 정직한 답인 것처럼 산출한다.
 
 use std::fmt;
 
@@ -50,7 +50,7 @@ impl fmt::Display for GlobError {
 ///
 /// 파생 필드(`segments`·`name_only`·`dir_only`)를 그대로 실으면 되읽을 때
 /// [`Glob::new`] 를 **안 지나간다** — 그러면 이 모듈이 *"검사하거나 거부하거나 둘 중
-/// 하나만 한다"* 라고 세운 규율이 역직렬화 경로에서 조용히 꺼진다.
+/// 하나만 한다"* 라고 세운 규율이 역직렬화 경로에서 조용히 멎는다.
 /// [`crate::ConfirmingSignal`] 이 같은 형태로 서 있다.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(into = "String", try_from = "String")]

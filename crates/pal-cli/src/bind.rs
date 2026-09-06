@@ -70,7 +70,7 @@ pub fn run(a: Args) -> Result<()> {
 
     let found = projection.resolve_name(name).context("2층을 읽지 못했다")?;
     let symbol = match found.len() {
-        0 => bail!("`{name}` 을 이 스냅샷에서 찾지 못했다 — `pal touch {name}` 이 근거를 낸다"),
+        0 => bail!("`{name}` 을 이 스냅샷에서 찾지 못했다 — `pal touch {name}` 이 근거를 산출한다"),
         1 => found.into_iter().next().expect("길이가 1 이다"),
         n => {
             // **하나를 골라주지 않는다.** 고르는 것은 사람의 일이고, 잘못 고른 결박은
@@ -146,7 +146,7 @@ pub fn run(a: Args) -> Result<()> {
     println!("  좌표    {}#{}", report.ledger.snapshot, symbol.id.short());
     println!("  본문    {}  ← 이 값이 바뀌면 낡음이 표시됩니다", symbol.body.short());
     println!("  개체    {}", binding.subject.to_display());
-    // **반경과 감시 집합 크기를 함께 낸다.** *"이 결정은 `symbol` 반경에서 live"* 는
+    // **반경과 감시 집합 크기를 함께 싣는다.** *"이 결정은 `symbol` 반경에서 live"* 는
     // *"이 결정은 유효하다"* 와 다른 문장이고, 그 차이가 산출에 남아야 한다(옛 F09 §3).
     println!("  반경    {} · 감시 {} 개", binding.radius.name(), binding.watch.len());
     println!("  결박    [{}]", binding.id.as_str());

@@ -312,7 +312,7 @@ pub fn print_screen(c: &Computed) {
     println!();
 }
 
-/// 답의 모양 한 줄 — `pal query plan.deviation` 이 이것만 낸다.
+/// 답의 모양 한 줄 — `pal query plan.deviation` 이 이것만 출력한다.
 #[must_use]
 pub fn 한_줄_deviation(d: &Deviation) -> String {
     format!(

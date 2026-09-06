@@ -72,8 +72,8 @@ impl CapabilityId {
 /// [`Uncapturable`] 로 일관되게 세웠고, 여기는 그 셋과 또 다른 없음이다 —
 /// **사람이 아무 말도 안 했다.**
 ///
-/// `.gitattributes` 의 `text` 가 그 자리다: *"꺼져 있다"* 와 *"미지정이라 `core.autocrlf`
-/// 가 정한다"* 는 다른 사실이고, `Option<bool>` 은 그 셋을 둘로 접는다.
+/// `.gitattributes` 의 `text` 가 그 자리다: *"안 걸렸다"* 와 *"미지정이라 `core.autocrlf`
+/// 가 정한다"* 는 다른 사실이고, `Option<bool>` 은 그 셋을 둘로 뭉갠다.
 ///
 /// **`Option` 으로 바꿔 쓸 수 있는 것이 요점이 아니다** — 요점은 `Unspecified` 라는
 /// **이름이 산출과 코드에 남는 것**이다. `cargo xtask check` 의 「선택 필드 금지」가

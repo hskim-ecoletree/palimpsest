@@ -5,7 +5,7 @@
 //! # 이 크레이트가 존재하는 이유
 //!
 //! [`pal_store::Projection`] 은 *"이 좌표의 심볼"* 에 답한다. 그것은 조회이고 질의가
-//! 아니다. **질의는 자기가 무엇을 못 봤는지와 무엇을 잘랐는지를 함께 낸다** —
+//! 아니다. **질의는 자기가 무엇을 못 봤는지와 무엇을 잘랐는지를 함께 싣는다** —
 //! 그 조립이 여기 있다.
 //!
 //! # 여기 없는 것
@@ -16,7 +16,7 @@
 //!
 //! # 후보 엣지가 이 빌드에 없다 — **그러므로 K·B 는 모집단이 0 이다**
 //!
-//! 파일 안 해소는 스코프 체인이 유일하게 풀 때만 엣지를 낸다
+//! 파일 안 해소는 스코프 체인이 유일하게 풀 때만 엣지를 산출한다
 //! ([`pal_core::ResolutionGrade::Scoped`]). 후보 집합이 없으므로
 //! [`pal_core::ElisionReason::CandidateOverflow`] 와
 //! [`pal_core::ElisionReason::PathProductExceeded`] 는 **이 빌드에서 일어날 수 없다.**
@@ -62,7 +62,7 @@ pub enum QueryError {
 
 /// 이 빌드가 답하는 질의 하나 — **이름과 인자.**
 ///
-/// 열린 문자열이 아니다. 오타가 새 질의가 되면 F17 이 로그를 셀 때 그것을 질의로 센다.
+/// 열린 문자열이 아니다. 오타가 새 질의가 되면 F17 이 로그를 셀 때 그것을 질의로 잰다.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NamedQuery {
     /// 이 스냅샷의 관측 범위 대장.
@@ -683,7 +683,7 @@ pub fn freshness(
 ///
 /// # 판정 불가가 이 함수의 절반이다 (옛 F09 §2.1 · [R16])
 ///
-/// 조회가 [`Now`] 를 낸다. `Option<BodyDigest>` 였으면 *"사라졌다"* 와 *"비교할 수
+/// 조회가 [`Now`] 를 산출한다. `Option<BodyDigest>` 였으면 *"사라졌다"* 와 *"비교할 수
 /// 없다"* 가 같은 값이 되고, **그 구별이 이 기능의 전부다.**
 ///
 /// | 사유 | 여기서 어떻게 아나 |
@@ -736,7 +736,7 @@ fn binding_reports(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> Vec<BindingR
         accessed.push(b.target);
         accessed.extend(b.watch.iter().map(|w| w.symbol));
 
-        // **등급 분포는 상태와 무관하게 센다** — 판정 불가여도 *"어떤 좌표 위에 서
+        // **등급 분포는 상태와 무관하게 잰다** — 판정 불가여도 *"어떤 좌표 위에 서
         // 있는가"* 는 알 수 있고, 그것이 이 값이 지도인 이유다.
         let mut grades: std::collections::BTreeMap<&'static str, usize> =
             std::collections::BTreeMap::new();
@@ -945,7 +945,7 @@ fn 조립(
 /// 좌표 하나를 만진다 — **표면이 부르는 자리.**
 ///
 /// [`execute`] 를 그대로 지나므로 **응답 묶음도 질의 로그도 같은 경로에서 난다.**
-/// 답의 모양만 벗겨 낸다 — `pal touch --json` 의 형태가 S2 이래 그대로여야 하고,
+/// 답의 모양만 벗겨 산출한다 — `pal touch --json` 의 형태가 S2 이래 그대로여야 하고,
 /// 그것을 위해 계산을 두 벌 두면 그 순간 둘이 갈린다.
 ///
 /// # Errors
@@ -961,12 +961,12 @@ pub fn touch(
             pal_core::TouchAnswer::Ambiguous { name, candidates }
         }
         QueryResult::Unknown { name, near } => pal_core::TouchAnswer::Unknown { name, near },
-        // `binding.touch` 는 위 셋만 낸다. 다른 것이 오면 `run` 이 바뀐 것이다.
+        // `binding.touch` 는 위 셋만 산출한다. 다른 것이 오면 `run` 이 바뀐 것이다.
         _ => unreachable!("binding.touch 가 세 갈래 밖의 것을 냈다"),
     }))
 }
 
-/// 이 답에서 낡음이 켜진 결박의 수 — **화면과 종료 코드가 함께 쓴다.**
+/// 이 답에서 낡음이 붙은 결박의 수 — **화면과 종료 코드가 함께 쓴다.**
 #[must_use]
 pub fn stale_count(r: &QueryResult) -> usize {
     match r {
@@ -980,8 +980,8 @@ pub fn stale_count(r: &QueryResult) -> usize {
 
 /// 이 조각이 든 신호가 몇 개인가 — **0 이면 문서가 코드를 아예 안 가리킨다.**
 ///
-/// 붙어 있는 좌표 · 프론트매터 · 펜스 안의 경로 · 인라인 스팬만 센다.
-/// **동반 변경은 안 센다** — 그것은 조각이 든 신호가 아니라 **저장소의 사정**이고,
+/// 붙어 있는 좌표 · 프론트매터 · 펜스 안의 경로 · 인라인 스팬만 잰다.
+/// **동반 변경은 안 잰다** — 그것은 조각이 든 신호가 아니라 **저장소의 사정**이고,
 /// 세면 모든 조각이 최소 하나를 갖게 되어 이 값이 아무것도 안 가른다.
 fn 신호_수(s: &pal_core::RawSignals) -> usize {
     s.attached.len() + s.grounds.len() + s.fenced_paths.len() + s.spans.len()
@@ -989,7 +989,7 @@ fn 신호_수(s: &pal_core::RawSignals) -> usize {
 
 /// 신호마다 후보 집합이 얼마나 넓은가 — **좁혔는가를 재는 자리.**
 ///
-/// **후보가 셋 이하인 것을 따로 센다.** 그것이 *"사람이 실제로 고를 수 있는 것"* 이고,
+/// **후보가 셋 이하인 것을 따로 헤아린다.** 그것이 *"사람이 실제로 고를 수 있는 것"* 이고,
 /// 나머지는 **제안이 아니라 목록**이다.
 fn 후보_퍼짐(proposals: &[pal_core::Proposal]) -> Vec<CandidateSpread> {
     let mut 모음: std::collections::BTreeMap<&'static str, Vec<usize>> =

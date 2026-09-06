@@ -31,7 +31,7 @@ fn 목록(json: bool) -> String {
 }
 
 #[test]
-fn 카탈로그의_이름이_표면에_그대로_선다() {
+fn 카탈로그의_이름이_표면에_그대로_성립한다() {
     let c = pal_core::QueryCatalog::parse(카탈로그).expect("카탈로그가 읽힌다");
     assert!(c.queries.len() >= 최소_질의, "카탈로그가 {}개다 — 하한 미만", c.queries.len());
 
@@ -49,7 +49,7 @@ fn 카탈로그의_이름이_표면에_그대로_선다() {
 
     assert_eq!(산출, 카탈로그의_이름, "표면이 내는 목록과 카탈로그가 어긋난다");
 
-    // 인자·반환·도입도 함께 선다 — 이름만 맞고 나머지가 갈리면 계약이 아니다.
+    // 인자·반환·도입도 함께 성립한다 — 이름만 맞고 나머지가 갈리면 계약이 아니다.
     for q in v["built"].as_array().expect("배열") {
         let name = q["name"].as_str().expect("이름");
         let decl = &c.queries[name];
@@ -70,7 +70,7 @@ fn 답하는_것과_못_만든_것이_함께_서고_모양이_다르다() {
     let built = v["built"].as_array().expect("built");
     let not_built = v["not_built"].as_array().expect("not_built");
 
-    // **하한 둘.** 한쪽이 0 이면 *"함께 낸다"* 가 검사되지 않는다.
+    // **하한 둘.** 한쪽이 0 이면 *"함께 싣는다"* 가 검사되지 않는다.
     assert!(built.len() >= 최소_질의, "답하는 것이 {}개다", built.len());
     assert!(!not_built.is_empty(), "못 만든 것이 0 개다 — 이 빌드는 전부를 만들지 않았다");
 
@@ -91,7 +91,7 @@ fn 답하는_것과_못_만든_것이_함께_서고_모양이_다르다() {
 }
 
 #[test]
-fn 목록은_저장소_없이_선다() {
+fn 목록은_저장소_없이_성립한다() {
     // *"호스트 없이도 코어가 답한다"* 의 가장 얕은 층이다. `--list` 가 저장소를 읽으면
     // 이 경로가 git 에 의존하게 되고, 그 순간 목록조차 환경에 종속된다.
     let 빈방 = std::env::temp_dir().join(format!("pal-f06-list-{}", std::process::id()));

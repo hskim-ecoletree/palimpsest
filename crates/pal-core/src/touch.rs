@@ -28,7 +28,7 @@ use crate::ledger::IdentityGrade;
 use crate::repo::RepoPath;
 use crate::symbol::{Span, SymbolKind};
 
-/// 2층에 사는 심볼 하나.
+/// 2층에 있는 심볼 하나.
 ///
 /// **[graph-node] `Symbol`** — `schema/graph.toml`
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize)]
@@ -196,7 +196,7 @@ pub struct NearName {
 /// ① stale · orphaned · 판정 불가   ← 낡은 것이 안 보이면 이 기능의 존재 이유가 사라진다
 /// ② superseded (계보)
 /// ③ 결박 시점이 최근인 것
-/// ④ 결박 id                        ← 같은 저장소가 같은 순서를 낸다
+/// ④ 결박 id                        ← 같은 저장소가 같은 순서를 산출한다
 /// ```
 ///
 /// **②가 「pending」이다.** [옛 F11 §3.3] 은 `stale > pending > live` 라고 적었는데 이
@@ -208,7 +208,7 @@ pub fn 정렬_열쇠(item: &BoundItem) -> (u8, u8, i64, String) {
     let 신선도 = match &status.code {
         // **`stale` 과 `orphaned` 가 같은 칸이다** — 둘 다 *"코드가 움직였다"* 이고,
         // 사람이 봐야 하는 것에는 차이가 없다. **다르다는 사실은 지워지지 않는다** —
-        // 화면이 둘을 다른 문장으로 낸다(옛 F09 §5).
+        // 화면이 둘을 다른 문장으로 산출한다(옛 F09 §5).
         crate::binding::CodeFreshness::Stale { .. }
         | crate::binding::CodeFreshness::Orphaned { .. } => 0,
         crate::binding::CodeFreshness::Undeterminable { .. } => 1,
@@ -251,7 +251,7 @@ pub struct SymbolFacts {
 ///
 /// **변형이 없는 것이 스키마가 요구하는 상태다.** 자리만 만든 노드의 타입이 거주
 /// 가능하면 누군가 빈 값을 채워 넣을 수 있고, 그 순간 *"안 만들었음"* 과 *"없음"* 이
-/// 같은 출력이 된다. `xtask` 의 스키마 정합 검사가 이 거주 불가능성을 센다.
+/// 같은 출력이 된다. `xtask` 의 스키마 정합 검사가 이 거주 불가능성을 잰다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum UnresolvedRef {}
 
@@ -308,7 +308,7 @@ pub enum TouchAnswer {
     /// 유일하게 찾았다.
     ///
     /// **`Box` 인 것은 크기 때문이다.** 이 변형만 448바이트라 열거형 전체가 그만큼
-    /// 커지고, 못 찾은 경우까지 그 비용을 낸다. 직렬화 형태는 바뀌지 않는다.
+    /// 커지고, 못 찾은 경우까지 그 비용을 산출한다. 직렬화 형태는 바뀌지 않는다.
     Found(Box<TouchResult>),
     /// 후보가 여럿이다. **하나를 고르지 않는다** — 고르는 것은 에이전트의 일이다(P6).
     Ambiguous { name: String, candidates: Vec<SymbolNode> },

@@ -23,7 +23,7 @@ use crate::repo::{ObjectName, RepoPath, Snapshot, TreeRef};
 /// *"이 파일이 무슨 언어인가"* 를 묻는 열린 이름이다. 대장은 후자가 필요하다 —
 /// 추출기가 없는 언어도 **인식됐다는 사실**이 산출되어야 하기 때문이다.
 ///
-/// **어느 확장자가 어느 이름인지는 여기 없다.** 그 표는 이 크레이트 밖에 산다
+/// **어느 확장자가 어느 이름인지는 여기 없다.** 그 표는 이 크레이트 밖에 있다
 /// (`pal-extract::recognize`). `pal-core` 가 언어 목록을 내부화하면 언어를 늘리는 일이
 /// 도메인 타입을 고치는 일이 된다.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -310,10 +310,10 @@ pub struct LanguageCapability {
 /// 옛 F01 §4 는 *"마지막 재추출 `Snapshot` · 추출기 버전 · **이후 커밋 수**"* 를 적으면서
 /// 같은 문단에서 *"이 검사는 **상수 시간**(HEAD 비교)이므로 무한 후퇴하지 않는다"* 고
 /// 못 박았다. **커밋 수를 세는 것은 상수 시간이 아니다** — 이력 깊이에 비례하고, 그러면
-/// 예산이 필요하고, 예산은 §12.4 의 표에 값이 있어야 켜진다(D16).
+/// 예산이 필요하고, 예산은 §12.4 의 표에 값이 있어야 걸린다(D16).
 ///
 /// 그래서 상수 시간에 답할 수 있는 것만 싣는다: **추출기 버전과 지금 HEAD.**
-/// 세어야 할 커밋 수가 필요해지면 예산과 함께 F05 가 낸다.
+/// 세어야 할 커밋 수가 필요해지면 예산과 함께 F05 가 산출한다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DetectorFreshness {
     /// 이 대장을 만든 문법의 고정 커밋.
@@ -329,7 +329,7 @@ pub struct DetectorFreshness {
 /// 관측 범위 대장.
 ///
 /// **저장 위치**: 최종적으로 2층 인덱스지만 2층은 F05 이고 이 기능이 그보다 앞선다.
-/// S1 은 계산해서 바로 낸다 — 이관은 재계산이므로 마이그레이션이 아니다.
+/// S1 은 계산해서 바로 산출한다 — 이관은 재계산이므로 마이그레이션이 아니다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Ledger {
     pub snapshot: Snapshot,
@@ -400,7 +400,7 @@ impl Ledger {
             .collect()
     }
 
-    /// 제외된 파일을 규칙별로 센다. **규칙 ID 없이 제외는 없다.**
+    /// 제외된 파일을 규칙별로 잰다. **규칙 ID 없이 제외는 없다.**
     #[must_use]
     pub fn exclusions_by_rule(&self) -> BTreeMap<&str, usize> {
         let mut out: BTreeMap<&str, usize> = BTreeMap::new();

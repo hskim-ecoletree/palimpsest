@@ -29,7 +29,7 @@ pub struct FileAttributes {
     /// `text` · `-text` · `binary`. [`Declared::Unspecified`] 면 **아무도 말하지
     /// 않은 것**이고 그때는 `core.autocrlf` 가 정한다 — 그 설정을 보는 것은 `pal-git` 이다.
     ///
-    /// **`Option<bool>` 이 아니다** — 그러면 *"꺼져 있다"* 와 *"미지정"* 이 둘로 접히고,
+    /// **`Option<bool>` 이 아니다** — 그러면 *"안 걸렸다"* 와 *"미지정"* 이 둘로 접히고,
     /// 그것이 stack §5.4 가 금한 자리다(`cargo xtask check` 가 잡는다).
     pub text: Declared<bool>,
     /// `linguist-language=<이름>`. 언어 인식 ③ 단계가 이것을 읽는다.
@@ -65,7 +65,7 @@ pub struct Attributes {
     /// **적용 순서대로** 정렬돼 있다 — 얕은 디렉터리 먼저, 같은 파일 안에서는 줄 순서.
     /// 뒤에 오는 것이 이긴다.
     rules: Vec<Rule>,
-    /// 세우지 못한 패턴 — **버리지 않고 센다.**
+    /// 세우지 못한 패턴 — **버리지 않고 잰다.**
     skipped: Vec<String>,
 }
 
@@ -147,7 +147,7 @@ impl Attributes {
 /// 한 줄의 속성들 — **우리가 쓰는 둘만 읽고 나머지는 넘긴다.**
 ///
 /// `diff` · `merge` · `filter` 같은 것들은 이 도구가 하는 일과 무관하다. 넘기는 것과
-/// 못 읽는 것은 다르고, 못 읽는 것은 위의 `skipped` 가 센다.
+/// 못 읽는 것은 다르고, 못 읽는 것은 위의 `skipped` 가 헤아린다.
 fn parse_attrs<'a>(parts: impl Iterator<Item = &'a str>) -> FileAttributes {
     let mut out = FileAttributes::default();
     for token in parts {
@@ -222,7 +222,7 @@ mod tests {
     }
 
     #[test]
-    fn 못_세운_패턴은_버리지_않고_센다() {
+    fn 못_세운_패턴은_버리지_않고_잰다() {
         let attrs = Attributes::parse(&[(String::new(), "a[bc].kt text\n*.kt text\n".to_owned())]);
         assert_eq!(attrs.skipped().len(), 1);
         assert_eq!(attrs.len(), 1);

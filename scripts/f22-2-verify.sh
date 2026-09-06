@@ -57,7 +57,7 @@ s=s.replace('''        match producer {
 ''','        let _ = producer;\n')
 open('crates/pal-core/src/derived.rs','w',encoding='utf-8').write(s)
 PY
-expect_break "생산자를 성분에서 뺌 (연구 G §2 의 재현)" "derived::tests::같은_대상의_판정_셋이_세_노드로_선다"
+expect_break "생산자를 성분에서 뺌 (연구 G §2 의 재현)" "derived::tests::같은_대상의_판정_셋이_세_노드로_성립한다"
 
 # M2 — 출처를 성분에서 뺀다
 python3 - <<'PY'
@@ -110,7 +110,7 @@ if grep -A6 'pub fn compute(' "$SRC" | grep -qiE '\bbody\b'; then
   fail=$((fail+1))
 else
   echo "  ✓ compute 의 인자에 본문이 없다 — 넣을 자리가 없는 것이 강제의 형태다"
-  echo '    (같은 인자로 두 번 부르면 같은 id 라는 사실은 본문만_다른_둘은_한_노드다 가 센다)'
+  echo '    (같은 인자로 두 번 부르면 같은 id 라는 사실은 본문만_다른_둘은_한_노드다 가 잰다)'
   pass=$((pass+1))
 fi
 

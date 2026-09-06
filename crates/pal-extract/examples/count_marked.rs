@@ -1,4 +1,4 @@
-//! ditto·boxwood 표식 주석을 센다 — **회귀 관측용, 아무것도 안 쓴다.**
+//! ditto·boxwood 표식 주석을 잰다 — **회귀 관측용, 아무것도 안 쓴다.**
 //! 사용: cargo run -q -p pal-extract --example count_marked -- <루트> <확장자…>
 //!
 //! ⚠ **접기를 끈 수는 이 도구로 못 잰다** — `이어지는_doc` 에 스위치가 없어 소스를

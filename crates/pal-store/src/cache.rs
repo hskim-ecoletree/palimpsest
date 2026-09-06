@@ -23,7 +23,7 @@
 //! # 이 크레이트는 의도 저장소에 닿지 않는다
 //!
 //! 지우는 API 가 여기 살기 때문이다(R-21). 아직 그런 API 는 없지만 — `prune` 은
-//! F04 다 — 경계는 내용보다 먼저 선다.
+//! F04 다 — 경계는 내용보다 먼저 성립한다.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -460,7 +460,7 @@ impl ExtractCache for BlobCache {
     ///
     /// 숫자만 내고 안 지우는 구현이 [`EvictReport`] 하나만 보면 통과한다
     /// (`corpus/criteria.toml` `[f04.pass]` ④). 그래서 지운 뒤의 **남은 수**를 함께
-    /// 낸다 — 부르는 쪽이 실제 파일 수와 댈 수 있다.
+    /// 산출한다 — 부르는 쪽이 실제 파일 수와 댈 수 있다.
     fn evict_to(&self, budget_bytes: u64) -> Result<EvictReport, CacheError> {
         let (mut entries, _) = self.entries()?;
         let scanned = entries.len();
@@ -636,7 +636,7 @@ impl CacheStats {
         self.misses += 1;
     }
 
-    /// 깨진 것을 센다. **미스도 함께 센다** — 값을 못 얻었으므로 재계산이 일어나고,
+    /// 깨진 것을 헤아린다. **미스도 함께 헤아린다** — 값을 못 얻었으므로 재계산이 일어나고,
     /// 그러면 `hits + misses` 가 본 파일 수와 같다는 성질이 유지된다.
     pub const fn corrupt(&mut self) {
         self.corrupt += 1;
@@ -670,7 +670,7 @@ mod tests {
 
     const V: ExtractorVersion = ExtractorVersion { grammar: "g", extractor: "e" };
 
-    /// 시험용 능력 축 — 실물은 `pal_extract::capability_axis()` 가 낸다.
+    /// 시험용 능력 축 — 실물은 `pal_extract::capability_axis()` 가 산출한다.
     const 능력: &str = "Kotlin|exports=not-built:F02/kotlin-exports";
 
     fn 키(blob: ObjectName, v: ExtractorVersion) -> CacheKey {
@@ -844,7 +844,7 @@ mod tests {
     }
 
     #[test]
-    fn 통계는_전부를_센다() {
+    fn 통계는_전부를_잰다() {
         let mut s = CacheStats::default();
         s.hit();
         s.hit();

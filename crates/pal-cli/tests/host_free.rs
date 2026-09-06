@@ -301,7 +301,7 @@ fn 비대화_경로가_전_질의에_닿는다() {
 /// # 등록한 것과 실물이 다르다 — 적어 둔다
 ///
 /// `[f06.3.pass]` ③ 이 ★ 로 요구한 것은 *"쓰기로 붙은 프로세스가 살아 있는 동안 읽기
-/// 프로세스가 답을 낸다"* 였다. **`redb` 4.1 에서 그것은 성립하지 않는다.**
+/// 프로세스가 답한다"* 였다. **`redb` 4.1 에서 그것은 성립하지 않는다.**
 /// `Builder::open_read_only` 의 문서가 명시한다:
 ///
 /// > If the file has been opened for writing (i.e. as a `Database`)
@@ -506,7 +506,7 @@ fn 내보내기의_라벨이_스키마에서_오고_못_낸_것을_적는다() {
     assert_eq!(낸_심볼, 노드, "내보낸 심볼 수가 `graph.dump` 와 다르다");
     assert_eq!(낸_엣지, 엣지, "내보낸 엣지 수가 `graph.dump` 와 다르다");
 
-    // **문법을 우리가 검증하지 못한다** — Cypher 파서가 없다. 최소한 균형은 센다.
+    // **문법을 우리가 검증하지 못한다** — Cypher 파서가 없다. 최소한 균형은 잰다.
     // 그 사실은 게이트에 **대조 불가**로 적는다.
     assert_eq!(text.matches('{').count(), text.matches('}').count(), "중괄호가 안 맞는다");
     assert_eq!(text.matches('(').count(), text.matches(')').count(), "괄호가 안 맞는다");
