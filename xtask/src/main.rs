@@ -645,6 +645,7 @@ fn check(root: &Path) -> Result<()> {
         ("선언 목록이 닫혀 있나", check_declared_lists(root)),
         ("완수 조건 설계 평가", check_condition_audit(root)),
         ("어색한 표현 부재", check_awkward_phrases(root)),
+        ("완성 장면 형식", check_completion_scenes(root)),
     ];
     let total = checks.len();
 
@@ -4467,6 +4468,113 @@ fn check_condition_audit(root: &Path) -> Result<String> {
         );
     }
     Ok(format!("하한 {하한} · 대상 회차 {대상}개 · 평가 반환문 {산출}개"))
+}
+
+// ── 검사 27 — 완성 장면 형식 (`A1`·`A1-a` · 2026-09-06) ─────────────────────
+
+/// 완성 장면 문서의 좌표. **하나뿐이라 상수로 지목한다** — 파일이 없으면 실패다.
+const 완성_장면_문서: &str = "docs/plan/01-completion-scenes.md";
+
+/// 장면 하나가 갖춰야 하는 소제목 셋. 잠긴 의도 `A1` 이 이름을 지목했다.
+const 장면_소제목: &[&str] = &["### 누가", "### 무엇을 해서", "### 무엇을 받는가"];
+
+/// 장면 수의 하한. `A1-a` 가 등록했다 — 하한이 없으면 0 건을 훑고 통과한다.
+const 장면_하한: usize = 3;
+
+/// 장면 절과 그 위반을 헤아린다. **순수 함수라 시험이 직접 댄다.**
+///
+/// # 무엇이 장면인가
+///
+/// `## <숫자>. …` 인 절만 장면이다. 머리말(`## 이 문서와 … 의 관계`)과 꼬리
+/// (`## 이 문서가 답하지 않는 것`)는 장면이 아니고, 그 둘을 장면으로 헤아리면
+/// 위반이 원리상 안 나오는 항등식이 된다.
+///
+/// # 소제목이 없는 절을 모집단에서 빼지 않는다
+///
+/// 잠긴 의도의 앞 문면(*"셋 중 하나라도 빠진 장면은 장면이 아니다"*)이 그 병이었다 —
+/// 셋이 없는 것이 정의상 모집단 밖으로 가므로 남은 것은 언제나 셋을 갖춘다. 그래서
+/// 여기서는 **번호가 붙은 절 전부**를 장면으로 잡고, 셋 중 빠진 것을 위반으로 산출한다.
+fn 장면_형식(text: &str) -> (usize, Vec<String>) {
+    let mut 장면 = 0usize;
+    let mut 위반 = Vec::new();
+    let mut 제목: Option<String> = None;
+    let mut 몸통 = String::new();
+    let 마감 = |제목: &Option<String>, 몸통: &str, 장면: &mut usize, 위반: &mut Vec<String>| {
+        let Some(t) = 제목 else { return };
+        *장면 += 1;
+        let 빠진: Vec<&str> = 장면_소제목
+            .iter()
+            .copied()
+            .filter(|h| !몸통.lines().any(|l| l.trim_end() == *h))
+            .collect();
+        if !빠진.is_empty() {
+            위반.push(format!("{t} — 빠진 소제목: {}", 빠진.join(" · ")));
+        }
+    };
+    for line in text.lines() {
+        if let Some(rest) = line.strip_prefix("## ") {
+            마감(&제목, &몸통, &mut 장면, &mut 위반);
+            몸통.clear();
+            제목 = rest
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_ascii_digit())
+                .then(|| rest.trim().to_string());
+            continue;
+        }
+        if 제목.is_some() {
+            몸통.push_str(line);
+            몸통.push('\n');
+        }
+    }
+    마감(&제목, &몸통, &mut 장면, &mut 위반);
+    (장면, 위반)
+}
+
+fn check_completion_scenes(root: &Path) -> Result<String> {
+    let p = root.join(완성_장면_문서);
+    let text = std::fs::read_to_string(&p)
+        .with_context(|| format!("완성 장면 문서를 못 읽었다: {완성_장면_문서}"))?;
+    let (장면, 위반) = 장면_형식(&text);
+    if 장면 == 0 {
+        bail!("{완성_장면_문서} 에 `## <숫자>.` 절이 하나도 없다 — 모집단이 비면 실패다");
+    }
+    if !위반.is_empty() {
+        bail!("소제목 셋이 안 갖춰진 장면 {}개:\n    {}", 위반.len(), 위반.join("\n    "));
+    }
+    if 장면 < 장면_하한 {
+        bail!("장면이 {장면}개다 — 하한 {장면_하한}(`A1-a`)에 못 닿는다");
+    }
+    Ok(format!("장면 {장면}개 · 소제목 셋 전부 갖춤"))
+}
+
+#[cfg(test)]
+mod 완성_장면_시험 {
+    use super::*;
+
+    const 온전한: &str = "# 제목\n\n## 머리말\n본문\n\n## 1. 첫 장면\n### 누가\nㄱ\n### 무엇을 해서\nㄴ\n### 무엇을 받는가\nㄷ\n\n## 2. 둘째\n### 누가\nㄱ\n### 무엇을 해서\nㄴ\n### 무엇을 받는가\nㄷ\n";
+
+    #[test]
+    fn 번호_없는_절은_장면이_아니다() {
+        let (장면, 위반) = 장면_형식(온전한);
+        assert_eq!(장면, 2, "머리말이 장면으로 헤아려졌다");
+        assert!(위반.is_empty(), "{위반:?}");
+    }
+
+    #[test]
+    fn 소제목이_빠진_절이_모집단에_남는다() {
+        let 결함 = 온전한.replace("### 무엇을 받는가\nㄷ\n\n## 2.", "## 2.");
+        let (_, 위반) = 장면_형식(&결함);
+        assert_eq!(위반.len(), 1, "빠진 소제목이 위반으로 안 산출됐다: {위반:?}");
+        assert!(위반[0].contains("무엇을 받는가"));
+    }
+
+    #[test]
+    fn 장면이_없으면_모집단이_비고_그것이_실패다() {
+        let (장면, 위반) = 장면_형식("# 제목\n\n## 머리말\n본문\n");
+        assert_eq!(장면, 0);
+        assert!(위반.is_empty());
+    }
 }
 
 // ── 검사 26 — 어색한 표현 부재 (`G2-a` · #114) ──────────────────────────────
