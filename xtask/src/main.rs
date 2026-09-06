@@ -4659,20 +4659,28 @@ const 동결_경로: &[&str] = &["docs/adr", "docs/gates", "docs/instructions", 
 ///
 /// **하한은 `docs/gates/README.md` 의 선언이 지고**(「어색한 표현 교정 적용」), 게이트는
 /// 이름 규칙이 아니라 **본문이 그 회차를 대는지**로 찾는다. 회차 이름 상수는 여전히 없다.
-fn 이_회차_종결문서(root: &Path) -> Vec<PathBuf> {
+fn 이_회차_종결문서(root: &Path) -> Result<Vec<PathBuf>> {
     let 뿌리 = root.join(회차_뿌리);
-    // 하한은 선언이 진다. 못 읽으면 대상이 비고, 그러면 검사가 「모집단이 비면 실패」로 잡는다.
-    let Ok((_, 하한)) = 선언_목록(root, "어색한 표현 교정 적용", true) else {
-        return Vec::new();
-    };
-    let mut 회차들: Vec<String> = match std::fs::read_dir(&뿌리) {
-        Ok(it) => it
-            .filter_map(|e| e.ok())
-            .filter(|e| e.path().is_dir())
-            .filter_map(|e| e.file_name().into_string().ok())
-            .collect(),
-        Err(_) => return Vec::new(),
-    };
+    // ★★ **fail-open 을 막는다.** (정정 2026-09-07 · 독립 리뷰 R2 · 금지역)
+    //   앞 판은 하한을 못 읽으면 **빈 벡터**를 돌려주고 주석에 *"그러면 검사가
+    //   「모집단이 비면 실패」로 잡는다"* 라고 적었다. **부르는 쪽에 그런 자가 없다** —
+    //   빈 벡터는 조용히 넘어가고 종결 문서 넷이 모집단에서 빠진다. 실측: 선언의
+    //   하한 한 줄만 지우면 심어 둔 위반 둘이 남아 있는데도 초록이 났다.
+    //   **그래서 여기서 실패로 돌린다.**
+    let (_, 하한) = 선언_목록(root, "어색한 표현 교정 적용", true)
+        .context("「어색한 표현 교정 적용」 선언을 못 읽었다 — 그 선언이 대상 하한을 진다")?;
+    if 하한.is_empty() {
+        bail!(
+            "「어색한 표현 교정 적용」 선언에 **하한**이 없다 — 하한이 비면 종결 문서가 \
+             하나도 대상에 안 들고 이 검사가 조용히 초록이 된다"
+        );
+    }
+    let mut 회차들: Vec<String> = std::fs::read_dir(&뿌리)
+        .with_context(|| format!("회차 뿌리를 못 읽었다: {}", 뿌리.display()))?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir())
+        .filter_map(|e| e.file_name().into_string().ok())
+        .collect();
     회차들.sort();
     // 회차 이름이 `YYYY-MM-DD-…` 이므로 문자열 비교로 하한을 판별한다.
     let 대상: Vec<String> = 회차들
@@ -4680,8 +4688,12 @@ fn 이_회차_종결문서(root: &Path) -> Vec<PathBuf> {
         .filter(|회차| 회차.as_str() >= 하한.as_str())
         .filter(|회차| 뿌리.join(회차).join("report.md").is_file())
         .collect();
+    // **모집단이 비면 실패다.** 하한 이후에 끝난 회차가 하나도 없으면 이 자가 아무것도 안 잰다.
     if 대상.is_empty() {
-        return Vec::new();
+        bail!(
+            "하한 `{하한}` 이후에 끝난 회차가 하나도 없다 — 이 자가 아무것도 안 잰다. \
+             선언의 하한이 장래로 밀렸는지 보라"
+        );
     }
     let mut out: Vec<PathBuf> = 대상
         .iter()
@@ -4700,7 +4712,7 @@ fn 이_회차_종결문서(root: &Path) -> Vec<PathBuf> {
             }
         }
     }
-    out
+    Ok(out)
 }
 
 /// **검출 수단 자신은 대상 밖이다.** 이 파일의 패턴 표와 시험 픽스처가 바로 그 낱말들을
@@ -4777,7 +4789,9 @@ fn check_awkward_phrases(root: &Path) -> Result<String> {
     for 뿌리 in 교정_뿌리 {
         모으기(root, &root.join(뿌리), &mut 파일들)?;
     }
-    for p in 이_회차_종결문서(root) {
+    let 종결 = 이_회차_종결문서(root)?;
+    let 종결_수 = 종결.len();
+    for p in 종결 {
         if p.is_file() {
             파일들.push(p);
         }
@@ -4811,7 +4825,7 @@ fn check_awkward_phrases(root: &Path) -> Result<String> {
         );
     }
     Ok(format!(
-        "패턴 {}개 · 파일 {잰_파일}개 · 줄 {잰_줄}개 · 남은 것 0곳",
+        "패턴 {}개 · 파일 {잰_파일}개(종결 문서 {종결_수}개) · 줄 {잰_줄}개 · 남은 것 0곳",
         어색한_표현.len()
     ))
 }
@@ -5038,11 +5052,15 @@ mod 어색한_표현_시험 {
 fn check_declared_lists(root: &Path) -> Result<String> {
     let mut problems = Vec::new();
     let mut 셈 = Vec::new();
+    // ⚠ **「어색한 표현 교정 적용」이 여기 있어야 한다** (2026-09-07 · 독립 리뷰 R2)
+    //   그 선언은 「어색한 표현 부재」의 **대상 하한**을 진다. 이 목록에 없으면 선언이
+    //   사라지거나 제목이 바뀌어도 아무도 안 잡고, 그때 그 검사의 모집단이 조용히 준다.
     for 제목 in [
         "형식 이전",
         "A 축 감사 대기",
         "종료 보고 검산 줄 유예",
         "종료 보고 없음 유예",
+        "어색한 표현 교정 적용",
     ] {
         let 빈항목_허용 = 제목 != "형식 이전";
         let (항목, 하한) = 선언_목록(root, 제목, 빈항목_허용)?;
