@@ -18,10 +18,10 @@
 //! **이 명령이 그 소비자다.** 그래서 라벨은 Rust 타입 이름으로 스키마를 **찾아서**
 //! 온다 — `"Symbol"` 이라는 문자열이 이 파일에 없다.
 //!
-//! # 못 낸 것을 잰다
+//! # 못 산출한 것을 잰다
 //!
 //! 스키마의 노드 여덟 · 엣지 여덟 중 2층에 실제로 사는 것은 일부다. 나머지를 조용히
-//! 빼면 소비자는 **이 그래프가 전부인 줄 안다.** 그래서 못 낸 라벨을 사유와 함께
+//! 빼면 소비자는 **이 그래프가 전부인 줄 안다.** 그래서 못 산출한 라벨을 사유와 함께
 //! 적는다 — `not_built`(그 기능이 아직 안 만들었다)와 `not_stored`(계산은 되지만
 //! 2층에 안 산다)를 **가른다**([ADR-0002]).
 //!
@@ -62,7 +62,7 @@ pub struct Args {
     pub cache_dir: Option<PathBuf>,
     pub index: Option<PathBuf>,
     pub format: Format,
-    /// 낼 파일. 없으면 표준출력으로 가고, 그때 `--json` 은 쓸 수 없다.
+    /// 산출할 파일. 없으면 표준출력으로 가고, 그때 `--json` 은 쓸 수 없다.
     pub out: Option<PathBuf>,
     pub json: bool,
 }
@@ -71,9 +71,9 @@ pub struct Args {
 #[derive(Debug, Clone, Serialize)]
 pub struct ExportReport {
     pub format: &'static str,
-    /// 라벨별 건수. **낸 것.**
+    /// 라벨별 건수. **산출한 것.**
     pub exported: Vec<Counted>,
-    /// 못 낸 라벨 — 사유와 함께. **0 건이 아니라 「없음」이다.**
+    /// 못 산출한 라벨 — 사유와 함께. **0 건이 아니라 「없음」이다.**
     pub missing: Vec<Missing>,
     pub bytes: usize,
 }
@@ -349,13 +349,13 @@ fn lines(e: &Envelope<ExportReport>) -> Vec<String> {
         String::new(),
         format!("■ pal export --format {}", e.answer.format),
         String::new(),
-        format!("  냈다      {} 바이트", e.answer.bytes),
+        format!("  산출      {} 바이트", e.answer.bytes),
     ];
     for c in &e.answer.exported {
         o.push(format!("            {:<14} {}건", c.label, c.count));
     }
     o.push(String::new());
-    o.push(format!("  못 낸 라벨 {}개 — **0 건이 아닙니다**", e.answer.missing.len()));
+    o.push(format!("  못 산출한 라벨 {}개 — 0 건이 아닙니다", e.answer.missing.len()));
     for m in &e.answer.missing {
         let 사유 = match &m.why {
             MissingReason::NotBuilt { by } => format!("아직 안 만들었습니다 — {by} 가 만듭니다"),

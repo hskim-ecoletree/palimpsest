@@ -78,7 +78,7 @@ GitHub 이슈를 만든다.
 |---|---|
 | 각 기능을 **어떻게** 만드는가 | ⏳ **비었다** — 옛 `docs/plan/features/` 는 2026-08-18 에 지웠다([처분표](../plan/disposal-map.md)). 새 지형은 다음 회차가 쓴다 |
 | **무엇을 어느 순서로**, 지금 **어디까지 왔는가** | GitHub 이슈 (상태의 단일 진실) |
-| 왜 그렇게 정했는가 | `docs/adr/` — **결정은 ADR 에만 산다** |
+| 왜 그렇게 정했는가 | `docs/adr/` — **결정은 ADR 에만 있다** |
 | 무엇을 보고 정했는가 | `docs/evidence-map.md` · `docs/research/` |
 | 수치 합격선 | `corpus/criteria.toml` |
 | 게이트 판정 기록 (통과·반증·대조 불가) | `docs/gates/<기능>.md` — **커밋으로 남긴다**([계획 §7.1](../plan/README.md)) |

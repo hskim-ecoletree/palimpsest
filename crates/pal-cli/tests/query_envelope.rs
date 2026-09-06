@@ -180,7 +180,7 @@ fn 범위는_질의마다_다른_값이다() {
 
     let 미해소 = |v: &serde_json::Value| v["coverage"]["unresolved"].as_u64().expect("unresolved");
     assert!(미해소(&a) > 0, "TypeScript 쪽 미해소가 0 이다 — 이 시험은 아무것도 안 잰다");
-    assert_ne!(미해소(&a), 미해소(&b), "서로 다른 두 질의가 같은 범위를 냈다");
+    assert_ne!(미해소(&a), 미해소(&b), "서로 다른 두 질의가 같은 범위를 산출했다");
 
     // 최저 등급도 질의마다 다르다 — TypeScript 는 L2, Kotlin 은 L1.
     assert_ne!(a["coverage"]["lowest_grade"], b["coverage"]["lowest_grade"]);

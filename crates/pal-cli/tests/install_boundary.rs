@@ -105,7 +105,7 @@ fn 매니페스트가_적은_밖의_파일을_안_지운다() {
         assert!(희생양.exists(), "{tag}: 대상 밖의 파일이 사라졌다 — {}", 희생양.display());
         assert!(
             !out.status.success(),
-            "{tag}: 밖을 가리키는 항목을 보고도 성공을 냈다\nstdout: {}",
+            "{tag}: 밖을 가리키는 항목을 보고도 성공을 돌려줬다\nstdout: {}",
             String::from_utf8_lossy(&out.stdout)
         );
         let stderr = String::from_utf8_lossy(&out.stderr);
@@ -133,7 +133,7 @@ fn 매니페스트가_적은_밖의_블록을_안_고친다() {
     let out = 돌린다(&방.안, &["uninstall"]);
     assert!(희생양.exists(), "대상 밖의 파일이 사라졌다");
     assert_eq!(std::fs::read(&희생양).expect("읽기"), 원본, "대상 밖의 파일이 고쳐졌다");
-    assert!(!out.status.success(), "밖을 가리키는 블록을 보고도 성공을 냈다");
+    assert!(!out.status.success(), "밖을 가리키는 블록을 보고도 성공을 돌려줬다");
 }
 
 /// **`created_dirs` 는 디렉터리를 지운다** — 같은 경계가 필요하다.
@@ -151,7 +151,7 @@ fn 매니페스트가_적은_밖의_디렉터리를_안_지운다() {
 
     let out = 돌린다(&방.안, &["uninstall"]);
     assert!(빈_디렉터리.is_dir(), "대상 밖의 디렉터리가 사라졌다");
-    assert!(!out.status.success(), "밖을 가리키는 디렉터리를 보고도 성공을 냈다");
+    assert!(!out.status.success(), "밖을 가리키는 디렉터리를 보고도 성공을 돌려줬다");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -231,7 +231,7 @@ fn 밖을_가리키는_심링크에는_안_쓴다() {
         assert_eq!(훑기(&방.밖), 밖_전, "{tag}: 대상 밖이 바뀌었다");
         assert!(
             !out.status.success(),
-            "{tag}: 밖을 가리키는 심링크에 쓰고도 성공을 냈다\nstdout: {}",
+            "{tag}: 밖을 가리키는 심링크에 쓰고도 성공을 돌려줬다\nstdout: {}",
             String::from_utf8_lossy(&out.stdout)
         );
         let stderr = String::from_utf8_lossy(&out.stderr);
@@ -346,10 +346,10 @@ fn 밖을_가리키는_junction_에는_안_쓴다() {
 
     // ① 밖이 한 바이트도 안 바뀌었다 — ⑦ 이 여기서 성립한다.
     assert_eq!(훑기(&방.밖), 밖_전, "대상 밖이 바뀌었다");
-    // ② 그리고 **성공을 안 냈다.** 조용히 아무것도 안 하는 것과 다르다.
+    // ② 그리고 **성공을 안 산출했다.** 조용히 아무것도 안 하는 것과 다르다.
     assert!(
         !out.status.success(),
-        "밖을 가리키는 junction 에 쓰고도 성공을 냈다\nstdout: {}",
+        "밖을 가리키는 junction 에 쓰고도 성공을 돌려줬다\nstdout: {}",
         String::from_utf8_lossy(&out.stdout)
     );
     // ③ 까닭을 적었다.

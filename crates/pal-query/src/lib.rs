@@ -1,6 +1,6 @@
 //! 질의 실행기 — **모든 답이 응답 묶음을 지고 나간다** (옛 F05 §5).
 //!
-//! > 실행기 진입점이 `Envelope` 만 반환한다 → 벌거벗은 답을 낼 방법이 없다.
+//! > 실행기 진입점이 `Envelope` 만 반환한다 → 벌거벗은 답을 산출할 방법이 없다.
 //!
 //! # 이 크레이트가 존재하는 이유
 //!
@@ -52,7 +52,7 @@ pub enum QueryError {
     BoundIndex(String),
     /// 부르는 쪽이 이 질의의 입력을 **안 지고 왔다.**
     ///
-    /// **빈 답으로 접지 않는다** — 접으면 *"계획대로 0"* 과 *"안 물었다"* 가 같은 답이
+    /// **빈 답으로 뭉개지 않는다** — 뭉개면 *"계획대로 0"* 과 *"안 물었다"* 가 같은 답이
     /// 되고, 그것이 이 제품이 고발하는 형태다([ADR-0005]).
     ///
     /// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
@@ -161,7 +161,7 @@ pub struct UnboundItem {
     pub signals_seen: usize,
 }
 
-/// 신호 하나가 낸 후보 집합들의 크기 — **좁혔는가를 이 값이 말한다.**
+/// 신호 하나가 산출한 후보 집합들의 크기 — **좁혔는가를 이 값이 말한다.**
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CandidateSpread {
     /// 무엇이 걸었나.
@@ -384,8 +384,8 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
     let coverage = coverage_of(ctx, &accessed)?;
     let fold = fold_of(&answer, &ctx.ledger);
 
-    // **로그는 답보다 먼저 남는다** — 답을 못 낸 질의도 일어난 사건이다.
-    // 그런데 생략과 걸린 시간은 답을 낸 뒤에야 안다. 그래서 여기다.
+    // **로그는 답보다 먼저 남는다** — 답을 못 산출한 질의도 일어난 사건이다.
+    // 그런데 생략과 걸린 시간은 답을 산출한 뒤에야 안다. 그래서 여기다.
     //
     // ⚠ **읽기 전용으로 붙었으면 못 남긴다.** 조용히 건너뛰지 않는다 — F17 이 그
     // 공백을 「조회 안 됨」으로 세면 미조회를 **과대 계상**하고, 그것이 이 제품이
@@ -429,7 +429,7 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
 /// 즉 부피는 이미 옮겨져 있고, 옮겼다는 사실만 산출에 없었다. 그것이 이 함수가
 /// 닫는 구멍이다.
 ///
-/// **`ledger.snapshot` 만 안 접힌다** — 그 질의의 답이 대장 자신이기 때문이다.
+/// **`ledger.snapshot` 만 안 뭉개진다** — 그 질의의 답이 대장 자신이기 때문이다.
 /// 그 하나와 나머지 다섯이 다른 것이 이 값이 무언가를 재고 있다는 증거다.
 fn fold_of(answer: &QueryResult, ledger: &LedgerRef) -> Fold {
     let mut fold = Fold::none();
@@ -441,7 +441,7 @@ fn fold_of(answer: &QueryResult, ledger: &LedgerRef) -> Fold {
 
 /// 좌표를 못 찾은 조각들 — **사람의 작업 목록** (옛 F10 §2).
 ///
-/// [`run`] 에서 떼어 냈다. 거기 두면 함수가 100 줄을 넘고, **길어진 `match` 는 새 질의를
+/// [`run`] 에서 떼어 산출했다. 거기 두면 함수가 100 줄을 넘고, **길어진 `match` 는 새 질의를
 /// 더할 때마다 남의 팔을 읽게 만든다.**
 fn 미결박(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> QueryResult {
         let mut unbound = Vec::new();
@@ -605,7 +605,7 @@ fn under(parent: &SymbolNode, s: &SymbolNode) -> bool {
     s.container.starts_with(&want)
 }
 
-/// 이 답이 **무엇을 못 봤는가** — 만진 좌표가 사는 파일들에서 온다.
+/// 이 답이 **무엇을 못 봤는가** — 만진 좌표가 있는 파일에서 온다.
 ///
 /// # 질의마다 다른 값이어야 한다 (`[f05.3.pass]` ⑤)
 ///
@@ -690,10 +690,10 @@ pub fn freshness(
 /// |---|---|
 /// | `ProjectionStale` | 2층이 이 스냅샷 것이 아니다 — **감시 집합을 보기도 전이다** |
 /// | `IdentityGrade` | 감시 원소의 등급이 `Unavailable`(L0) — 요약 자체가 없다 |
-/// | `PartialParse` | 그 원소가 사는 파일이 대장에서 `Partial` 이다 |
+/// | `PartialParse` | 그 원소가 있는 파일이 대장에서 `Partial` 이다 |
 /// | `WatchMemberGone` | 조회가 비었는데 **대상은 살아 있다** — `evaluate` 가 가른다 |
 ///
-/// # `ordinal` 은 여기 없다 — **접지 않고 대신 싣는다**
+/// # `ordinal` 은 여기 없다 — **뭉개지 않고 대신 싣는다**
 ///
 /// `ordinal` 좌표는 **비교가 가능하지만 약하다.** 판정 불가로 접으면 Kotlin 코퍼스가
 /// 통째로 판정 불가가 되고 그것이 *"지배하면 정직하지만 쓸모없다"* 다.
@@ -704,7 +704,7 @@ pub fn freshness(
 /// 결박 하나의 두 축 — **`binding.status` 와 `binding.touch` 가 같은 함수를 지난다.**
 ///
 /// 두 벌로 두면 한쪽만 고쳐지고, 그러면 같은 결박이 표면에 따라 다른 상태로 나간다.
-/// 옛 F09 §2.1 이 요구한 것은 *"못 보는 것을 `Fresh` 로 접지 않는다"* 이고 그 규율은
+/// 옛 F09 §2.1 이 요구한 것은 *"못 보는 것을 `Fresh` 로 뭉개지 않는다"* 이고 그 규율은
 /// **표면마다가 아니라 한 곳에** 있어야 한다.
 fn 결박_상태(ctx: &QueryCtx, b: &Binding) -> BindingStatus {
     let p = ctx.projection;
@@ -962,7 +962,7 @@ pub fn touch(
         }
         QueryResult::Unknown { name, near } => pal_core::TouchAnswer::Unknown { name, near },
         // `binding.touch` 는 위 셋만 산출한다. 다른 것이 오면 `run` 이 바뀐 것이다.
-        _ => unreachable!("binding.touch 가 세 갈래 밖의 것을 냈다"),
+        _ => unreachable!("binding.touch 가 세 갈래 밖의 것을 산출했다"),
     }))
 }
 

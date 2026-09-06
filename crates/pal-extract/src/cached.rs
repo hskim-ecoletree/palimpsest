@@ -176,7 +176,7 @@ mod tests {
         let kotlin = CachedGraph::of(그래프(Language::Kotlin, b"class A\n"));
         // Kotlin 그래프의 자리들을 TypeScript 껍데기에 씌우려 하면 넷 다 어긋난다.
         let Capable::Present(ts) = shell_of(Language::TypeScript) else { panic!() };
-        let err = kotlin.scopes.restore(&ts.scopes, "scopes").expect_err("어긋남을 안 냈다");
+        let err = kotlin.scopes.restore(&ts.scopes, "scopes").expect_err("어긋남을 안 산출했다");
         assert_eq!(err.slot, "scopes");
         assert!(!err.cached_built, "캐시가 안 만든 자리를 만들었다고 적었다");
     }

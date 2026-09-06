@@ -37,11 +37,11 @@ cargo test
 2. **[`.claude/skills/round/SKILL.md`](.claude/skills/round/SKILL.md)** §5
    「완수 조건 검증은 정반합으로 한다」와 「철회」 — 이번에 새로 선 절 둘.
 
-**접힌 회차**: [`.palimpsest/rounds/2026-08-23-check-verifies-work/folded.md`](.palimpsest/rounds/2026-08-23-check-verifies-work/folded.md)
+**철회한 회차**: [`.palimpsest/rounds/2026-08-23-check-verifies-work/folded.md`](.palimpsest/rounds/2026-08-23-check-verifies-work/folded.md)
 — 사유가 거기 있다. **완수 조건 60 은 「통과」가 아니라 「안 쟀다」다.**
 
 ⛔ **[`HANDOFF-check-verifies-work.md`](HANDOFF-check-verifies-work.md) 는 무효다.**
-접힌 회차의 교대 문서다. 그 안의 *"그대로 붙인다"* 펜스를 쓰면 접은 회차가 되살아난다.
+철회한 회차의 교대 문서다. 그 안의 *"그대로 붙인다"* 펜스를 쓰면 철회한 회차가 되살아난다.
 
 ---
 
@@ -106,7 +106,7 @@ cargo test
 
 ## 하지 말 것
 
-- **접힌 회차를 되살리지 마라.** 되살리려면 그것이 새 회차이고, `## 목적 기여` 를 적어야 한다.
+- **철회한 회차를 되살리지 마라.** 되살리려면 그것이 새 회차이고, `## 목적 기여` 를 적어야 한다.
 - **`intent.md` 의 `## 원문` 을 고치지 마라.**
 - **수를 문서에 적지 마라.** 세는 자리는 명령이다.
 - **소유자 원문을 요약으로 갈아치우지 마라** — 지시 문서 §1 이 그 자리다.

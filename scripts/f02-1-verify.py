@@ -51,7 +51,7 @@ DITTO_SHA = "aded7ce7f88feb3c03238c5f9760f3a2ade4a6c1"
 # ── 음성 대조 — **고정 SHA 의 실재 경로와 실재 식별자에만 묶는다** ──────────────
 #
 # 자라는 값(파일 수·심볼 수)에 묶으면 코퍼스가 자랄 때 조용히 멎는다(`7fe6b62`).
-# 치환 대상이 소스에 없으면 `✓` 를 내는 대신 **멈춘다**.
+# 치환 대상이 소스에 없으면 `✓` 를 산출하는 대신 **멈춘다**.
 #
 # (이름, 파일, 찾을 것, 바꿀 것, 꼬리에 붙일 것)
 MUST_CHANGE = [
@@ -221,7 +221,7 @@ def main() -> int:
     hands = hand_list(SAMPLE)
     print(f"  표본 {len(hands)} 파일 · 손으로 센 선언 {sum(len(v) for v in hands.values())}")
 
-    missing: list[str] = []   # 손 목록에 있는데 추출이 못 낸 것
+    missing: list[str] = []   # 손 목록에 있는데 추출이 못 산출한 것
     spurious: list[str] = []  # 추출이 냈는데 손 목록에 없는 것
     extracted: dict[str, list[tuple[str, str, str]]] = {}
     for path in sorted(hands):
@@ -282,7 +282,7 @@ def main() -> int:
     same = outs[0] == outs[1]
     print(f"  두 산출이 바이트 단위로 {'같다' if same else '**다르다**'}  ({probe})")
     if not same:
-        failures.append("② 같은 blob 이 경로에 따라 다른 FileGraph 를 냈다 — 파일 밖을 보고 있다")
+        failures.append("② 같은 blob 이 경로에 따라 다른 FileGraph 를 산출했다 — 파일 밖을 보고 있다")
 
     graph = json.loads(outs[0])
     leaked = sorted(k for k in ("repo", "tree", "coord", "extractor", "path") if k in graph)
@@ -332,7 +332,7 @@ def main() -> int:
     line = [x for x in r.stdout.splitlines() if "불일치" in x]
     print(f"  S0 전수 대조   {line[-1].strip() if line else '**돌지 않았다**'}")
     if r.returncode != 0:
-        failures.append("④ S0 전수 대조가 불일치를 냈다 — Kotlin 산출이 움직였다")
+        failures.append("④ S0 전수 대조가 불일치를 산출했다 — Kotlin 산출이 움직였다")
 
     kt = next(a.s0_corpus.expanduser().rglob("*.kt"), None)
     if kt is None:

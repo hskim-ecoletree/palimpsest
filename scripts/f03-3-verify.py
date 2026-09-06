@@ -20,7 +20,7 @@
 
 사용:
     ./scripts/f03-3-verify.py
-    ./scripts/f03-3-verify.py --bless      # 움직인 것을 목록으로 낸 뒤 축복한다
+    ./scripts/f03-3-verify.py --bless      # 움직인 것을 목록으로 산출한 뒤 축복한다
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BIN = ROOT / "target/release/pal"
 
-# **골든 둘.** 두 언어가 서로 다른 것을 내므로 한 파일로 접지 않는다.
+# **골든 둘.** 두 언어가 서로 다른 것을 내므로 한 파일로 뭉개지 않는다.
 GOLDEN = [
     ("ditto", Path.home() / "dev/projects/ditto", "aded7ce7f88f",
      ROOT / "corpus/golden/ditto.symbols.tsv"),
@@ -52,7 +52,7 @@ def run(args: list[str], **kw) -> subprocess.CompletedProcess:
 
 
 def snapshot(repo: Path, at: str, cache: Path) -> list[str]:
-    """골든 한 벌 — **대장이 낸 순서 그대로.**
+    """골든 한 벌 — **대장이 산출한 순서 그대로.**
 
     다시 정렬하지 않는다. 대장의 순서가 결정적이라는 사실이 이 파일에서도 보여야 한다.
     """
@@ -107,7 +107,7 @@ def diff(old: list[str], new: list[str]) -> dict[str, list[str]]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--bless", action="store_true",
-                    help="움직인 것을 목록으로 낸 뒤 골든을 다시 축복한다")
+                    help="움직인 것을 목록으로 산출한 뒤 골든을 다시 축복한다")
     a = ap.parse_args()
 
     if not BIN.exists():
@@ -168,7 +168,7 @@ def main() -> int:
                     continue
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("\n".join(now) + "\n")
-                print(f"  냈다  ③ {path.name}  {len(now) - 1} 줄")
+                print(f"  산출  ③ {path.name}  {len(now) - 1} 줄")
                 continue
 
             old = path.read_text().splitlines()
@@ -178,7 +178,7 @@ def main() -> int:
 
             d = diff(old, now)
             total = sum(len(v) for v in d.values())
-            print(f"  {'냈다' if a.bless else 'FAIL'}  ③ {name}  움직인 것 {total}")
+            print(f"  {'산출했다' if a.bless else 'FAIL'}  ③ {name}  움직인 것 {total}")
             for 종류, items in d.items():
                 if not items:
                     continue

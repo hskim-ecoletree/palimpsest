@@ -529,7 +529,7 @@ pub enum CodeFreshness {
     /// **`target` 이 사라졌을 때만이다.** 감시 집합의 다른 원소가 사라진 것은
     /// [`UndeterminableReason::WatchMemberGone`] 이고 다른 사건이다.
     Orphaned { missing: Vec<SymbolId> },
-    /// **판정할 수 없다.** `Fresh` 로 접지 않는다 — 그것이 [R16] 의 자리다.
+    /// **판정할 수 없다.** `Fresh` 로 뭉개지 않는다 — 그것이 [R16] 의 자리다.
     ///
     /// `at` 은 그 사유를 진 감시 원소들이다([`Stale::triggered_by`] 와 같은 형태) —
     /// *"어디를 못 보는가"* 가 실려야 사람이 무엇을 고칠지 안다.
@@ -594,7 +594,7 @@ impl BindingStatus {
     ///
     /// ```text
     /// ① target 이 사라졌나        → Orphaned      (결정적이다. 더 볼 것이 없다)
-    /// ② 못 보는 원소가 있나        → Undeterminable (**Fresh 로 접지 않는다** · R16)
+    /// ② 못 보는 원소가 있나        → Undeterminable (**Fresh 로 뭉개지 않는다** · R16)
     /// ③ 변한 원소가 있나          → Stale
     /// ④ 아니면                   → Fresh
     /// ```
@@ -1014,7 +1014,7 @@ mod tests {
         // **대체된 뒤에도 코드 신선도가 계속 계산된다** — 축이 둘인 이유가 그것이다.
         assert_eq!(superseded_live.code, CodeFreshness::Fresh);
         assert!(matches!(superseded_stale.code, CodeFreshness::Stale { .. }),
-                "대체되자 코드 신선도가 굳었다 — 한 열거로 접힌 것과 같다");
+                "대체되자 코드 신선도가 굳었다 — 한 열거로 뭉개진 것과 같다");
         assert!(matches!(superseded_live.lineage, Lineage::Superseded { .. }));
 
         // 판정 입력 자격은 `Fresh ∧ Current` 뿐이다.
@@ -1038,7 +1038,7 @@ mod tests {
             }
         } else {
             // ⚠ **여기가 `Span` 이었고 타입이 그것을 막았다** (2026-08-15 · `[f10.5]`).
-            //   거리 있는 신호는 확정을 낼 수 없으므로 `ConfirmingSignal` 이 안 만들어진다 —
+            //   거리 있는 신호는 확정을 산출할 수 없으므로 `ConfirmingSignal` 이 안 만들어진다 —
             //   **시험 픽스처조차 못 만든다**는 것이 이 타입이 실제로 문을 지킨다는 증거다.
             Classification::Bound {
                 target,
@@ -1233,7 +1233,7 @@ pub struct DetectorReport {
 /// `ordinal` 좌표 위의 결박은 **비교가 가능하지만 약하다**(좌표가 선언 순서에 의존하고,
 /// 지역 이름을 안 지워 리네임에 요약이 움직인다). 그것을 [`UndeterminableReason`] 로
 /// 접으면 이 코퍼스가 통째로 판정 불가가 된다(`[f09].ordinal_is_not_undeterminable`).
-/// **접지 않는 대신 숨기지도 않는다** — 등급 분포가 산출에 실린다.
+/// **뭉개지 않는 대신 숨기지도 않는다** — 등급 분포가 산출에 실린다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct BindingReport {
     pub binding: BindingId,

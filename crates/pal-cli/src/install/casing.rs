@@ -77,7 +77,7 @@ pub fn 대소문자만_다른_이름(path: &Path) -> Option<String> {
     None
 }
 
-/// 부딪히면 사람에게 낼 **한 문장** — 없으면 `None`.
+/// 부딪히면 사람에게 산출할 **한 문장** — 없으면 `None`.
 #[must_use]
 pub fn 부딪힘(path: &Path) -> Option<String> {
     let 있는 = 대소문자만_다른_이름(path)?;

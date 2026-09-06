@@ -47,7 +47,7 @@ fn 카탈로그의_이름이_표면에_그대로_성립한다() {
     let mut 카탈로그의_이름: Vec<String> = c.names().into_iter().map(str::to_owned).collect();
     카탈로그의_이름.sort();
 
-    assert_eq!(산출, 카탈로그의_이름, "표면이 내는 목록과 카탈로그가 어긋난다");
+    assert_eq!(산출, 카탈로그의_이름, "표면이 산출하는 목록과 카탈로그가 어긋난다");
 
     // 인자·반환·도입도 함께 성립한다 — 이름만 맞고 나머지가 갈리면 계약이 아니다.
     for q in v["built"].as_array().expect("배열") {
@@ -119,7 +119,7 @@ fn 모르는_이름은_응답묶음_없이_1_이고_못_찾은_이름은_응답�
         .output()
         .expect("pal");
     assert_eq!(모름.status.code(), Some(1), "모르는 질의가 0 으로 끝났다");
-    assert!(모름.stdout.is_empty(), "모르는 질의가 표준출력에 무언가를 냈다");
+    assert!(모름.stdout.is_empty(), "모르는 질의가 표준출력에 무언가를 산출했다");
     assert!(!모름.stderr.is_empty(), "모르는 질의가 아무 말도 안 했다");
 
     let 못찾음 = Command::new(PAL)

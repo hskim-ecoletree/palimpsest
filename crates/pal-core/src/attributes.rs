@@ -8,7 +8,7 @@
 //!
 //! # 이것이 실물 결함에서 나왔다
 //!
-//! F01 의 워킹트리 요약이 `gradlew.bat` 하나에서 git 과 다른 blob 이름을 냈다.
+//! F01 의 워킹트리 요약이 `gradlew.bat` 하나에서 git 과 다른 blob 이름을 산출했다.
 //! 저장소의 blob 은 LF(2843바이트)이고 워킹트리 파일은 CRLF(2937바이트)다 —
 //! `*.bat text eol=crlf` 가 체크아웃에서 CRLF 를 넣었기 때문이다. **git 은 반대 방향
 //! (clean)에서 그것을 되돌리고, 그것을 안 하면 깨끗한 워킹트리가 dirty 로 보인다.**
@@ -29,7 +29,7 @@ pub struct FileAttributes {
     /// `text` · `-text` · `binary`. [`Declared::Unspecified`] 면 **아무도 말하지
     /// 않은 것**이고 그때는 `core.autocrlf` 가 정한다 — 그 설정을 보는 것은 `pal-git` 이다.
     ///
-    /// **`Option<bool>` 이 아니다** — 그러면 *"안 걸렸다"* 와 *"미지정"* 이 둘로 접히고,
+    /// **`Option<bool>` 이 아니다** — 그러면 *"안 걸렸다"* 와 *"미지정"* 이 둘로 뭉개지고,
     /// 그것이 stack §5.4 가 금한 자리다(`cargo xtask check` 가 잡는다).
     pub text: Declared<bool>,
     /// `linguist-language=<이름>`. 언어 인식 ③ 단계가 이것을 읽는다.

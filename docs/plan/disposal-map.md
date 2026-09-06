@@ -198,7 +198,7 @@
 | 3 | `§3-2` | "**필수이거나 없거나. 선택 필드를 두지 않는다.**" 예외는 "기계가 채우며 채우지 못하면 그 쓰기 자체가 실패하는 필드" 하나 | docs/DESIGN.md:520 · 525 | **코드** — `xtask/src/main.rs:546`("선택 필드 금지 (1단계)") · 본체 `:613` |
 | 3 | `§3-3` | 규칙 파생 사실 — `asserted_via=rule` (팩 규칙 하나의 승인이 파생 라벨 전부를 세운다) | docs/DESIGN.md:532 | **코드** — `crates/pal-core/src/graph.rs:230`(`AssertedVia`) |
 | 3 | `§3-4` | "모든 `observed` 사실은 자기가 가리키는 좌표 집합에 결박된다. 그 좌표 중 하나라도 `body_digest`가 변하면 `stale-observation`이다" | docs/DESIGN.md:550 · 554 | **B** — F16. `judgment.rs:73`(`ObservationStale`) 은 사유 어휘일 뿐 무효화 계약 자체는 안 섰다 (`observed` 모집단 0) |
-| 3 | **D27** | "**규칙: 한 노드·엣지의 모든 속성은 같은 출처를 갖는다. 섞으려면 노드를 쪼개고 엣지로 잇는다.**" | docs/DESIGN.md:191 · 562 · 572 | **ADR-0001** — 규칙은 두 층에 각각 한 번만 산다 (로딩=`GraphSchema::parse` 선언 · `doctor`=대조; `doctor.rs:65` ③) |
+| 3 | **D27** | "**규칙: 한 노드·엣지의 모든 속성은 같은 출처에서 온다. 섞으려면 노드를 쪼개고 엣지로 잇는다.**" | docs/DESIGN.md:191 · 562 · 572 | **ADR-0001** — 규칙은 두 층에 각각 한 번만 있다 (로딩=`GraphSchema::parse` 선언 · `doctor`=대조; `doctor.rs:65` ③) |
 
 ### `## 4. D4 — 관측 범위 대장` (docs/DESIGN.md:597)
 
@@ -227,7 +227,7 @@
 | 6 결박과 낡음 | **D7** | "결박은 5상태 + 정규화 + 선언된 반경" | docs/DESIGN.md:171 · 714 | **코드** — `crates/pal-core/src/binding.rs:511`(`CodeFreshness`) · `:440`(`UndeterminableReason`) · `:574`(`BindingStatus`) · `radius.rs:47`(`Radius`) |
 | 6 | **D29** | "**그래프 무결성 계약** — 불변식 목록 + 상시 검사(`doctor`) + 낡음 전파 규칙 + 질의의 스냅샷 격리"; "**모든 파생 노드는 자기 입력 좌표 집합에 결박된다. 입력 중 하나가 `stale`이면 파생물은 `stale-derived`다.**" (§6.4 · §12.7 공동 소유) | docs/DESIGN.md:193 · 769 · 773 | **코드** — `crates/pal-core/src/doctor.rs:59`(`InvariantId` 여덟) · `:218`(`Diagnosis`) · `cascade.rs:56`(`NodeFreshness`) · `:83`(`Cascade`) |
 | 6 | **D32** | "**어떤 산출물도 자기 신선도의 기준점을 정할 수 없다.**" + "**`stale`은 재생성을 트리거하지 않는다. 순수 비교이며 그 결과는 값이다.**" | docs/DESIGN.md:196 · 789 · 793 · 806 | **코드** — `xtask/src/main.rs:549`+`1781`("앵커는 신고받지 않는다") · `xtask/src/main.rs:550`+`1829`("낡음이 생성기를 안 부른다") |
-| 6 | `§6-1` | 5상태 + "`undeterminable`이 필요한 이유 (R16)" | docs/DESIGN.md:716 · 742 | **ADR-0013** — 약한 값은 「모른다」로 접지 않고 산출에 싣는다 |
+| 6 | `§6-1` | 5상태 + "`undeterminable`이 필요한 이유 (R16)" | docs/DESIGN.md:716 · 742 | **ADR-0013** — 약한 값을 「모른다」로 뭉개지 않고 산출에 싣는다 |
 | 6 | `§6-2` | 결박 반경 | docs/DESIGN.md:750 | **코드** — `crates/pal-core/src/radius.rs:47`(`Radius::{Symbol, Callers, Closure, Files}`) |
 | 6 | `§6-3` | "낡음 감지기가 낡는 경우" | docs/DESIGN.md:765 | **코드** — `crates/pal-core/src/ledger.rs:314`(`DetectorFreshness`) · `binding.rs:1060`(`DetectorReport`) |
 | 6 | `§6-4` | "**`경유` 가 좌표가 아니라 노드 이름이다** (2026-08-12)" — 구현은 `(라벨, 식별자)` 를 싣는다 | docs/DESIGN.md:781 | **코드** — `crates/pal-core/src/binding.rs:194`(`PromotedBy::Proposal { item: EntityId, by: ResolutionSignal }`) |
@@ -313,7 +313,7 @@
 
 | 절 | 결정 | 한 줄 | 원문 좌표 | 처분 |
 |---|---|---|---|---|
-| 13 반증 조건 | `§13-1` | "**로드맵은 이 문서가 소유하지 않는다.** … 이 절은 **각 결정이 어디서 죽는가**만 적는다" | docs/DESIGN.md:1880 | **규약** — AGENTS.md:80 *"결정은 설계 문서에, 근거는 근거 대장에, 실행은 이슈에. 같은 것을 두 곳에 적으면 그것이 곧 drift 다"* · AGENTS.md:17 *"상태는 이슈에만 산다"* |
+| 13 반증 조건 | `§13-1` | "**로드맵은 이 문서의 것이 아니다.** … 이 절은 **각 결정이 어디서 죽는가**만 적는다" | docs/DESIGN.md:1880 | **규약** — AGENTS.md:80 *"결정은 설계 문서에, 근거는 근거 대장에, 실행은 이슈에. 같은 것을 두 곳에 적으면 그것이 곧 drift 다"* · AGENTS.md:17 *"상태는 이슈에만 있다"* |
 | 13 | `§13-2` | 반증 조건 표 22 행 (D1~D32) — 아래 별도 인용 | docs/DESIGN.md:1884~1905 | **B** — 각 기능의 게이트 문서(`docs/gates/`)가 진다. 새 지형에서 기능별로 다시 등록된다 |
 | 13 | `§13-3` | "**판정 기록을 남기지 않고 다음으로 가는 것이 이 설계의 가장 조용한 실패 경로다.** 통과·반증·**대조 불가** 셋 중 하나를 커밋으로 남긴다" | docs/DESIGN.md:1909 | **규약** — SKILL.md:189 *"## 판정       통과 · 반증 · 대조 불가. 원문 수치와 함께."* · SKILL.md:155 *"등록된 완수 조건을 재고 **통과 · 반증 · 대조 불가** 중 하나로 판정한다"* |
 | 13 | `§13-4` | "D13의 반증이 이 표에서 가장 무겁다" — 직접/대리/반증 셋 | docs/DESIGN.md:1911 | **B** — F11 (효능 측정; ADR-0019 가 표본 규칙만 담았다) |

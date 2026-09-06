@@ -194,7 +194,7 @@ fn crlf_파일에_넣은_블록도_crlf_다() {
 /// 블록(`CLAUDE.md`·`.gitignore`)에는 이 규율이 이미 서 있었는데 `settings.json` 만
 /// 문 밖에 있었다 — `serde_json::to_string_pretty` 는 언제나 LF 를 산출한다. 그래서
 /// `core.autocrlf=true` 워킹트리에서는 **되쓸 때마다 파일의 모든 줄이 바뀌고**, git 이
-/// *"LF will be replaced by CRLF"* 를 매번 냈다.
+/// *"LF will be replaced by CRLF"* 를 매번 산출했다.
 ///
 /// **플랫폼 때문에 결과가 갈리는 자리다** — 유닉스 워킹트리에서는 아무 일도 안 난다.
 ///

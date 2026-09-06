@@ -364,7 +364,7 @@ def 반대_방향(repo: Path, box: Path, 판정: list[dict]) -> None:
         skip("④ 무관 좌표", "결박이 0 건이다 — **모집단 0 이라 대조 불가**")
         return
     nodes = pal(["query", "graph.dump", "--json"], repo, box, at=DITTO_PIN)["answer"]["nodes"]
-    # 결박 대상이 사는 파일과 **감시 원소가 사는 파일**을 뺀다 — 남은 것이 무관 좌표다.
+    # 결박 대상이 있는 파일과 **감시 원소가 있는 파일**을 뺀다 — 남은 것이 무관 좌표다.
     대상_id = {b["target"] for b in env["answer"]["bindings"]}
     감시_파일 = {n["path"] for n in nodes if n["id"] in 대상_id}
     이름_수: dict[str, int] = {}

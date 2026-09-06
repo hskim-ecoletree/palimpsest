@@ -21,7 +21,7 @@
 //! 내려가면 그것이 곧 §4 가 적은 거짓 결박의 원인(*"약한 신호로 확정"*)이다.
 //! 동점은 [`Classification::Candidates`] 로 **그대로 나가고 승인을 요구한다** —
 //! `pal bind` 가 후보 여럿에서 멈추는 것, `rebind::propose` 가 억지로 안 채우는 것,
-//! [`crate::TouchAnswer`] 가 `Ambiguous` 를 답으로 내는 것과 **같은 판단이다.**
+//! [`crate::TouchAnswer`] 가 `Ambiguous` 를 답으로 산출하는 것과 **같은 판단이다.**
 //!
 //! [R-09]: ../../../docs/plan/00-risks.md#r-09
 
@@ -132,13 +132,13 @@ pub enum ResolutionSignal {
     ///
     /// # ⚠ 이름이 `UniqueSpan` 이 아니다 — 그것이 결함이었다 (2026-08-15 · `[f10.pass]` ⑤)
     ///
-    /// 처음에는 **유일하게 해소될 때만** 이 신호를 냈다. 그러면 같은 이름이 둘인 스팬은
+    /// 처음에는 **유일하게 해소될 때만** 이 신호를 산출했다. 그러면 같은 이름이 둘인 스팬은
     /// 신호를 **아예 안 내고**, 그 조각이 더 약한 신호로 떨어져 결국 **미결박**이 된다.
     ///
     /// **그것이 `[f10.pass]` ⑤의 반대 방향이 금지한 바로 그 형태다** — *"동점을
     /// 미결박으로 접으면 그것도 반증이다. 「여럿이라 못 좁혔다」와 「신호가 없다」는
     /// 다른 답이고, 뭉개면 작업 목록에 이미 후보가 있는 것이 섞인다."*
-    /// 등록한 합격선이 구현을 잡았고, **`scripts/f10-verify.py` ⑤가 그것을 냈다.**
+    /// 등록한 합격선이 구현을 잡았고, **`scripts/f10-verify.py` ⑤가 그것을 산출했다.**
     ///
     /// 문서 §3.2 의 마지막 줄이 그 답을 이미 적어 두었다: *"같은 강도의 후보가 여럿이면
     /// **확정하지 않는다.** 후보 목록을 제안하고 승인을 요구한다."* — 즉 **유일함은
@@ -155,7 +155,7 @@ pub enum ResolutionSignal {
 /// 빠지면 *"기계가 확인했다"* 가 다시 무엇을 확인했는지 안 적은 채로 남는다.
 ///
 /// **그래서 ①은 [`ResolutionSignal::confirmed_proposition`] 이 지고, ②는 이 열거가 지고,
-/// ③은 [`ConfirmingSignal`] 이 **타입으로** 진다** — 거리가 있는 신호는 확정을 낼 수
+/// ③은 [`ConfirmingSignal`] 이 **타입으로** 진다** — 거리가 있는 신호는 확정을 산출할 수
 /// 없다는 것이 컴파일 시점에 박힌다.
 ///
 /// [ADR-0015]: https://github.com/hskim-ecoletree/palimpsest/blob/main/docs/adr/0015-a-machine-confirmed-signal-must-say-what-it-confirmed.md
@@ -226,7 +226,7 @@ impl ResolutionSignal {
 
     /// 이 신호로 **좌표를 확정해도 되는가** — [ADR-0015] 요구 ③의 입구.
     ///
-    /// 거리가 있는 신호는 후보를 낼 뿐이고 **확정은 사람이 한다.**
+    /// 거리가 있는 신호는 후보를 산출할 뿐이고 **확정은 사람이 한다.**
     #[must_use]
     pub const fn can_confirm_subject(self) -> bool {
         matches!(self.claim_distance(), ClaimDistance::Zero)
@@ -325,7 +325,7 @@ impl Classification {
 ///
 /// # 무엇이 「결박됨」을 가르는가 — **카디널리티가 아니라 거리다**
 ///
-/// **거리가 0 인 신호가 후보 하나를 낼 때만** [`Classification::Bound`] 다
+/// **거리가 0 인 신호가 후보 하나를 산출할 때만** [`Classification::Bound`] 다
 /// (`[f10.5].signal_ruling` · [ADR-0015]). 거리가 있는 신호는 후보가 하나여도
 /// [`Classification::Candidates`] 로 나가고 **확정은 사람이 한다.**
 ///
@@ -366,7 +366,7 @@ pub fn resolve(f: &Fragment, c: &impl Coordinates) -> Classification {
     Classification::Unbound
 }
 
-/// 신호 하나가 내는 후보들. **없으면 빈 목록** — 억지로 채우지 않는다.
+/// 신호 하나가 산출하는 후보들. **없으면 빈 목록** — 억지로 채우지 않는다.
 fn candidates(s: ResolutionSignal, f: &Fragment, c: &impl Coordinates) -> Vec<SymbolId> {
     match s {
         ResolutionSignal::Attached => f.signals.attached.clone(),
@@ -382,7 +382,7 @@ fn candidates(s: ResolutionSignal, f: &Fragment, c: &impl Coordinates) -> Vec<Sy
             .collect(),
         ResolutionSignal::Span => {
             // ⚠ **해소되는 것을 전부 출력한다.** 유일한 것만 내면 같은 이름이 둘인 스팬이
-            // 신호를 아예 못 내고, 그 조각이 **미결박으로 접힌다** — 「여럿이라 못
+            // 신호를 아예 못 내고, 그 조각이 **미결박으로 뭉개진다** — 「여럿이라 못
             // 좁혔다」와 「신호가 없다」가 같은 답이 되는 것이고 `[f10.pass]` ⑤의
             // 반대 방향이 금지한 형태다. 유일함은 [`resolve`] 가 후보 하나를 볼 때 한다.
             f.signals.spans.iter().flat_map(|s| by_span(s, c)).collect()
@@ -645,10 +645,10 @@ mod tests {
             RawSignals { spans: vec!["OrderService.cancel".to_owned()], ..RawSignals::default() },
         );
         let Classification::Candidates { by, candidates } = resolve(&f, &t) else {
-            panic!("유일한 스팬이 확정됐다 — 거리 있는 신호가 확정을 냈다");
+            panic!("유일한 스팬이 확정됐다 — 거리 있는 신호가 확정을 산출했다");
         };
         assert_eq!(by, ResolutionSignal::Span);
-        // ⚠ **미결박으로 접히지도 않는다** — 후보는 있다. 그것이 사람의 작업 목록이다.
+        // ⚠ **미결박으로 뭉개지지도 않는다** — 후보는 있다. 그것이 사람의 작업 목록이다.
         assert_eq!(candidates, vec![t.좌표("src/order/cancel.ts", "cancel")]);
     }
 
@@ -776,7 +776,7 @@ mod tests {
 
     #[test]
     fn 디렉터리_근접성은_더_이상_후보를_안_산출한다() {
-        // `docs/order/x.md` ↔ `src/order/` 는 앞선 판에서 후보를 냈다 — 중앙 **2,345** 개.
+        // `docs/order/x.md` ↔ `src/order/` 는 앞선 판에서 후보를 산출했다 — 중앙 **2,345** 개.
         // *"디렉터리 이름이 겹친다"* 와 *"이 글은 그 코드에 관한 것이다"* 사이의 거리다.
         let t = 표::default()
             .더("src/order/a.ts", &[], "cancel")

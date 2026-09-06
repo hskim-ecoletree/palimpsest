@@ -72,14 +72,14 @@ pub(crate) struct Scoped {
     /// function f() { const beta  = 1; return { beta  }; }
     /// ```
     ///
-    /// 둘이 **같은 요약**을 갖는다 — 만들어 내는 객체의 키가 다른데도.
+    /// 둘이 **같은 요약**을 갖는다 — 만들어 산출하는 객체의 키가 다른데도.
     /// [R-22] 가 경고한 *"서로 다른 코드가 같은 digest"* 의 정확한 형태다.
     pub protected: HashSet<usize>,
 }
 
 /// 파일 하나의 스코프를 세우고 모든 이름 참조를 해소한다.
 ///
-/// `symbol_at` 은 **선언 노드의 시작 바이트 → 심볼 자리**다. 선언 순회가 심볼을 낸 그
+/// `symbol_at` 은 **선언 노드의 시작 바이트 → 심볼 자리**다. 선언 순회가 심볼을 산출한 그
 /// 노드로 만들어야 하고, 그래야 *"이 바인딩이 심볼이기도 한가"* 가 두 순회에서 같은 답이
 /// 된다.
 pub(crate) fn build(root: Node<'_>, source: &[u8], symbol_at: &HashMap<usize, LocalIx>) -> Scoped {

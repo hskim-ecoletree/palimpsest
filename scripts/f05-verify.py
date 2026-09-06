@@ -236,7 +236,7 @@ def 대조_CTE(repo: Path, at: str, tag: str) -> None:
         잘린것 = {t["reason"] for t in 우리["elision"]["truncated"]}
         # **깊이 생략은 비교를 깨지 않는다** — CTE 에도 같은 깊이 상한을 걸었다.
         # 오히려 이것이 stack §2.3 의 논증이 실물에서 보이는 자리다: 두 답이 같은데
-        # **우리 답만 「무엇을 왜 안 봤는지」를 싣는다.** CTE 는 그 사실을 낼 수 없다.
+        # **우리 답만 「무엇을 왜 안 봤는지」를 싣는다.** CTE 는 그 사실을 산출할 수 없다.
         if 잘린것 - {"depth_exceeded"}:
             # 노드 상한 등은 CTE 에 없다 — 그때는 비교가 성립하지 않는다.
             갈림.append(f"{n['name']}: CTE 에 없는 생략이 일어났다 {sorted(잘린것)}")

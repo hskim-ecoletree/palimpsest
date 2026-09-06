@@ -126,7 +126,7 @@ fn 표식(tag: &str) -> PathBuf {
     p
 }
 
-/// 매니페스트와 `settings.json` 의 훅 명령을 **관측 가능한 부작용을 내는 문자열**로
+/// 매니페스트와 `settings.json` 의 훅 명령을 **관측 가능한 부작용을 산출하는 문자열**로
 /// 바꾼다. 둘을 같이 바꿔야 「등록돼 있다」 검사를 지나 탐침까지 간다.
 fn 훅을_심는다(root: &Path, 명령: &str) {
     let mp = 매니페스트_자리(root);
@@ -304,7 +304,7 @@ fn 제거가_하드링크를_통해_밖을_안_고친다() {
 /// # 앞 판은 여기서 갈렸고, 갈린 쪽이 **말할 것이 더 많은 쪽**이었다
 ///
 /// 유닉스는 링크 수를 셀 수 있으니 걸린 자리마다 말했고, Windows 는 못 세니
-/// `하드링크_알림` 이 언제나 `None` 이라 **아무 말도 안 냈다.** 그런데 Windows 는
+/// `하드링크_알림` 이 언제나 `None` 이라 **아무 말도 안 산출했다.** 그런데 Windows 는
 /// **늘 끊는다** — 즉 정보가 더 필요한 쪽이 조용했다. 그래서 그 자리에는 외침
 /// (`끊었다는_말이_이_플랫폼에서는_안_나온다`)이 걸려 있었다.
 ///
@@ -355,7 +355,7 @@ fn 매니페스트가_적은_안의_남의_파일을_안_지운다() {
         );
         assert!(
             !out.status.success(),
-            "{노린_것}: 우리가 놓을 수 없는 자리를 보고도 성공을 냈다\nstdout: {}",
+            "{노린_것}: 우리가 놓을 수 없는 자리를 보고도 성공을 돌려줬다\nstdout: {}",
             String::from_utf8_lossy(&out.stdout)
         );
     }
@@ -379,7 +379,7 @@ fn 매니페스트가_적은_안의_남의_블록을_안_건드린다() {
     let out = 돌린다(&방.안, &["uninstall"]);
     assert!(방.안.join("README.md").exists(), "남의 파일이 사라졌다");
     assert_eq!(std::fs::read(방.안.join("README.md")).expect("읽기"), 원본, "남의 파일이 바뀌었다");
-    assert!(!out.status.success(), "남의 블록을 보고도 성공을 냈다");
+    assert!(!out.status.success(), "남의 블록을 보고도 성공을 돌려줬다");
 }
 
 /// **디렉터리에도 같은 문이 성립한다.**
@@ -395,7 +395,7 @@ fn 매니페스트가_적은_안의_남의_디렉터리를_안_지운다() {
     쓴다(&mp, &m);
     let out = 돌린다(&방.안, &["uninstall"]);
     assert!(남의_방.is_dir(), "남의 디렉터리가 사라졌다");
-    assert!(!out.status.success(), "남의 디렉터리를 보고도 성공을 냈다");
+    assert!(!out.status.success(), "남의 디렉터리를 보고도 성공을 돌려줬다");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -447,7 +447,7 @@ fn 파이프가_있으면_매달리지_않고_실패한다() {
         let out = 시간_안에(&방.안, &["install"], 15_000);
         assert!(
             !out.status.success(),
-            "{tag}: FIFO 를 보고도 성공을 냈다\nstdout: {}",
+            "{tag}: FIFO 를 보고도 성공을 돌려줬다\nstdout: {}",
             String::from_utf8_lossy(&out.stdout)
         );
         // `doctor` 도 같은 자리를 읽는다 — 여기서도 안 매달린다.
@@ -468,7 +468,7 @@ fn 잠금이_파이프면_세_경로가_전부_안_매달린다() {
         let out = 시간_안에(&방.안, args, 15_000);
         assert!(
             !out.status.success(),
-            "pal {args:?}: 잠금이 FIFO 인데 성공을 냈다\nstdout: {}",
+            "pal {args:?}: 잠금이 FIFO 인데 성공을 돌려줬다\nstdout: {}",
             String::from_utf8_lossy(&out.stdout)
         );
     }
@@ -535,7 +535,7 @@ fn 일반_파일이_아닌_자리에서_매달리지_않고_실패한다() {
         let out = 시간_안에(&방.안, &["install"], 15_000);
         assert!(
             !out.status.success(),
-            "{tag}: 일반 파일이 아닌 자리를 보고도 성공을 냈다\nstdout: {}",
+            "{tag}: 일반 파일이 아닌 자리를 보고도 성공을 돌려줬다\nstdout: {}",
             String::from_utf8_lossy(&out.stdout)
         );
         // `doctor` 도 같은 자리를 읽는다 — 여기서도 안 매달린다.
@@ -664,7 +664,7 @@ fn 상한_안의_큰_매니페스트도_빠르게_걷힌다() {
 /// ★ **`install` 만 이전 매니페스트에 경계 검사를 안 걸었다.**
 ///
 /// 관측(고치기 전): `settings.path = ".git/config"` 를 심으면 `install` 이 그 값을
-/// **새 매니페스트로 그대로 실어 나르면서 rc=0** 「설치」 화면을 냈다. 그 뒤
+/// **새 매니페스트로 그대로 실어 나르면서 rc=0** 「설치」 화면을 산출했다. 그 뒤
 /// `update`·`uninstall` 은 영원히 rc=1 이고 **되돌릴 수 있는 `pal` 명령이 하나도
 /// 없다.** 데이터 손상은 없다 — **거짓 성공 + 되돌림 봉쇄**가 문제다.
 #[test]
@@ -693,7 +693,7 @@ fn 설치도_오염된_매니페스트를_거부한다() {
         let out = 돌린다(&방.안, &["install"]);
         assert!(
             !out.status.success(),
-            "{tag}: 오염된 매니페스트를 보고도 rc=0 「설치」 화면을 냈다\nstdout: {}",
+            "{tag}: 오염된 매니페스트를 보고도 rc=0 「설치」 화면을 산출했다\nstdout: {}",
             String::from_utf8_lossy(&out.stdout)
         );
         assert_eq!(

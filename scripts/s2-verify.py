@@ -111,7 +111,7 @@ def audit(env: dict) -> tuple[list[str], list[str]]:
     for slot in NOT_BUILT_SLOTS:
         v = answer.get(slot)
         if v in ([], {}, None):
-            failures.append(f"② {slot}={v!r} — 빈 자리를 빈 값으로 냈다")
+            failures.append(f"② {slot}={v!r} — 빈 자리를 빈 값으로 산출했다")
         elif not (isinstance(v, dict) and "not_built" in v):
             failures.append(f"② {slot} 이 not_built 가 아니다: {v!r}")
         elif not v["not_built"].get("capability", {}).get("feature"):

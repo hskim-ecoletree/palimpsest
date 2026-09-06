@@ -504,7 +504,7 @@ def 판정_불가(tmp: Path) -> None:
     else:
         ok("⑥ 비율 상한", 값)
 
-    # ★ **`ordinal` 이 판정 불가로 접히지 않았다는 증거다.**
+    # ★ **`ordinal` 이 판정 불가로 안 뭉개졌다는 증거다.**
     if 등급.get("ordinal", 0) > 0 and 비율 > 90:
         fail("⑥ ordinal", f"ordinal 이 {등급['ordinal']}개인데 판정 불가가 {비율}% 다 — 접혔다")
     elif 등급.get("ordinal", 0) > 0:
@@ -655,7 +655,7 @@ def 실_이력(tmp: Path, corpus: Path, pin: str, ext: str, tag: str, radius: st
 
     # `[f09.4].sample_selection` 규칙 2 — **이 구간에서 실제로 변경된 파일**의 심볼에
     # 건다. 안 그러면 표본이 전부 「아무 일도 안 일어남」이 되고, 그것을 이 스크립트가
-    # 한 번 실제로 냈다(39 커밋 · 붙은 것 0 · 대조 불가).
+    # 한 번 실제로 산출했다(39 커밋 · 붙은 것 0 · 대조 불가).
     변경된 = {
         x for x in run(
             ["git", "-C", str(repo), "diff", "--name-only", f"{시작}..{pin}"]
@@ -816,7 +816,7 @@ def main() -> int:
     else:
         fail("⑥ ★ 비율 하한",
              f"코퍼스에서 난 사유가 {sorted(관측된_사유)} 뿐이다 (하한 {UNDETERMINABLE_MIN_REASONS}) — "
-             f"**`Undeterminable` 이 아무 데서도 안 켜지면 접은 것과 같다**")
+             f"**`Undeterminable` 이 아무 데서도 안 켜지면 뭉갠 것과 같다**")
 
     print()
     for 표시, 이름, 값 in 결과:

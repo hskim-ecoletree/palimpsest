@@ -22,7 +22,7 @@ CLI 가 컴파일 결과를 `~/.cache/tree-sitter/lib/<문법이름>.dylib` 에 
 이름이 전부 `kotlin` 이기 때문이다. **F02-2 의 링커 사고와 같은 병의 두 번째 형태이고,
 「별도 바이너리」라는 그때의 처방이 여기서는 듣지 않는다.**
 
-드러난 방식도 그때와 같다 — `ng` 가 자기 값을 못 냈다(선언 총수 0). 그래서 팔마다
+드러난 방식도 그때와 같다 — `ng` 가 자기 값을 못 산출했다(선언 총수 0). 그래서 팔마다
 **`HOME` 과 `XDG_CACHE_HOME` 을 따로 준다.** 캐시가 갈리는 것을 산출로도 확인한다.
 
 # 대조가 꺼지는 형태 — `[g50].self_judged` 4 가 박아 둔 셋
@@ -334,7 +334,7 @@ def main() -> int:
     for f in files:
         indep[f.relative_to(a.corpus).as_posix()] = ns["count_file"](f)
     if sum(indep.values()) < MIN_INDEPENDENT_DECLS:
-        print(f"  FAIL  독립 계수기가 {sum(indep.values())} 를 냈다 — {MIN_INDEPENDENT_DECLS} 미만이면 계수기가 고장 난 것이다")
+        print(f"  FAIL  독립 계수기가 {sum(indep.values())} 를 산출했다 — {MIN_INDEPENDENT_DECLS} 미만이면 계수기가 고장 난 것이다")
         return 1
 
     report: dict = {"independent_total": sum(indep.values()), "arms": {}}

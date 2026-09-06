@@ -107,7 +107,7 @@ fn 잰다(name: &str, mut f: impl FnMut() -> usize) -> Duration {
         times.push(t.elapsed());
     }
     // **하한이다** — 아무것도 안 하면 시간이 예쁘다.
-    assert!(확인 > 0, "{name}: 잰 연산이 아무것도 안 냈다");
+    assert!(확인 > 0, "{name}: 잰 연산이 아무것도 안 산출했다");
     let min = *times.iter().min().expect("회차");
     let max = *times.iter().max().expect("회차");
     let 분산 = if min.as_nanos() == 0 { 0.0 } else { max.as_secs_f64() / min.as_secs_f64() };

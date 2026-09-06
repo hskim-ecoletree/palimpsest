@@ -14,7 +14,7 @@
 ./scripts/frontier.sh
 ```
 
-**상태는 이슈에만 산다.** 어디까지 왔는지는 문서를 읽지 말고 이것을 실행해서 안다.
+**상태는 이슈에만 있다.** 어디까지 왔는지는 문서를 읽지 말고 이것을 실행해서 안다.
 
 ## 일을 시작할 때
 
@@ -28,7 +28,7 @@
 「나중에」가 금지되는 것은 *"하겠다고 해 놓고 안 하는 것"* 이지 *"안 하기로 정하는 것"* 이
 아니다. **접는 사유는 둘이다** — ① [00-goals.md](docs/plan/00-goals.md) 의 **목표 밖**이거나
 ② **목표 안이지만 지금 우선순위가 아니다**(위 「빠르게 완성한다 →」 순서가 판정한다).
-②로 접을 때는 **「그러면 무엇이 더 먼저인가」를 지목한다.** 그리고 **사유를 적는다** —
+②로 뒤로 미룰 때는 **「그러면 무엇이 더 먼저인가」를 지목한다.** 그리고 **사유를 적는다** —
 안 적으면 그것은 철회가 아니라 조용한 축소다. `/round` §5 「철회」.
 
 ## 어디서부터 읽는가
@@ -40,7 +40,7 @@
 | 완성되면 실제로 어떻게 쓰이나 | ⏳ **비었다** — 옛 완성 장면은 MCP 를 전제해 [ADR-0025](docs/adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md) 와 충돌했고 2026-08-18 에 지웠다([처리 방침 표](docs/plan/disposal-map.md)). 하네스의 완성 장면은 **다음 회차가 쓴다** |
 | 무슨 언어·라이브러리·구조로 만드나 | [docs/plan/00-stack.md](docs/plan/00-stack.md) |
 | 무엇이 우리를 막을 것인가 | [docs/plan/00-risks.md](docs/plan/00-risks.md) |
-| 설계 결정과 그 근거 | [docs/adr/](docs/adr/) — **결정은 ADR 에만 산다**. 옛 `DESIGN.md` 의 결정 99 개가 어디로 갔는지는 [처리 방침 표](docs/plan/disposal-map.md) |
+| 설계 결정과 그 근거 | [docs/adr/](docs/adr/) — **결정은 ADR 에만 있다**. 옛 `DESIGN.md` 의 결정 99 개가 어디로 갔는지는 [처리 방침 표](docs/plan/disposal-map.md) |
 | 왜 만드나 · 능력 계약 `C1~C6` · 설계 원리 `P1~P14` | [docs/plan/00-goals.md](docs/plan/00-goals.md) — 백서에서 옮겨 왔다 |
 | 소유자가 실제로 무엇을 요구했나 | [docs/instructions/](docs/instructions/) — 원문이 산다 |
 

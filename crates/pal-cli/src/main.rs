@@ -43,7 +43,7 @@ mod version;
     //
     //   ⚠ **코어는 여전히 호스트 없이 성립한다** — 내려간 것은 하네스 층이다. 그래서
     //   「종속되지 않는다」를 「없이도 성립한다」로 바꾼다. 재는 것은 `host_free.rs` 다.
-    about = "코드 좌표에 결박된 사실과 의도를 내는 상태 관리자 — 호스트 없이도 동작한다"
+    about = "코드 좌표에 결박된 사실과 의도를 산출하는 상태 관리자 — 호스트 없이도 동작한다"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -328,7 +328,7 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
-    /// 2층을 우리 밖 도구가 읽는 형식으로 출력한다 — **못 낸 라벨을 함께 적는다**
+    /// 2층을 우리 밖 도구가 읽는 형식으로 출력한다 — **못 산출한 라벨을 함께 적는다**
     Export {
         /// 저장소 경로. 기본값은 현재 디렉터리
         #[arg(long, default_value = ".")]
@@ -343,7 +343,7 @@ enum Command {
         /// 형식. **이 빌드가 아는 것은 하나다** — 나머지는 크레이트를 요구한다
         #[arg(long, value_enum, default_value_t = export::Format::Cypher)]
         format: export::Format,
-        /// 낼 파일. 없으면 표준출력으로 가고 근거는 표준오류로 간다
+        /// 산출할 파일. 없으면 표준출력으로 가고 근거는 표준오류로 간다
         #[arg(long)]
         out: Option<PathBuf>,
         /// 근거를 JSON 응답 묶음으로 산출한다. **`--out` 이 있어야 한다**
@@ -387,7 +387,7 @@ enum IntentCommand {
         /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
         #[arg(long)]
         intent: Option<PathBuf>,
-        /// 낼 파일. 없으면 표준출력
+        /// 산출할 파일. 없으면 표준출력
         #[arg(long)]
         out: Option<PathBuf>,
     },

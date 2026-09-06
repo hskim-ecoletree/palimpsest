@@ -454,9 +454,9 @@ def rename_locals(src: str, path: Path) -> str:
     if not targets:
         return src
     # **축약 속성 자리에 쓰이는 이름은 안 바꾼다** — `{ alpha }` 의 `alpha` 는
-    # 지역 참조이면서 **동시에 밖에서 보이는 키**다(옛 F03 §4.2). 바꾸면 만들어 내는
+    # 지역 참조이면서 **동시에 밖에서 보이는 키**다(옛 F03 §4.2). 바꾸면 만들어 산출하는
     # 객체의 키가 달라지므로 요약이 움직이는 것이 **정답**이고, 같이 세면 이 지표가
-    # 정규화가 아니라 변형기를 잡는다. 첫 실행이 그렇게 55% 를 냈다.
+    # 정규화가 아니라 변형기를 잡는다. 첫 실행이 그렇게 55% 를 산출했다.
     #
     # 어휘로 가른다: 앞의 뜻 있는 바이트가 `{` 나 `,` 이고 뒤가 `}` 나 `,` 인 자리.
     # **완전하지 않고, 완전하지 않다는 사실이 여기 적혀 있다** — 넓게 잡아 빼는 쪽이라
@@ -734,7 +734,7 @@ def history(tmp: Path, want: int) -> None:
             was = digests(repo, parent, tmp / f"h{i}a")
             now = digests(repo, sha, tmp / f"h{i}b")
         except SystemExit:
-            rows.append((sha[:8], repo.name, "—", "—", subject[:52], "대장을 못 냈다"))
+            rows.append((sha[:8], repo.name, "—", "—", subject[:52], "대장을 못 산출했다"))
             continue
         stale = [k for k in (set(was) & set(now)) if was[k] != now[k]]
         gone = len(set(was) - set(now))

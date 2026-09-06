@@ -12,7 +12,7 @@ use std::sync::LazyLock;
 /// 이 빌드의 커밋. 릴리스 tarball 처럼 git 이 없는 곳에서 빌드하면 `None`.
 const COMMIT: Option<&str> = option_env!("PAL_COMMIT");
 
-/// `pal --version` 이 내는 문자열.
+/// `pal --version` 이 산출하는 문자열.
 ///
 /// **`&'static str` 이다** — clap 의 `version` 이 그것을 요구하고, 그것 하나 때문에
 /// clap 의 feature 를 늘리지 않는다(stack §3.4: 의존을 늘리기 전에 줄인다).

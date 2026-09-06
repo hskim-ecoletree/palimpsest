@@ -44,7 +44,7 @@ palimpsest는 지금 다음 경로다.
 2. [#85]·[#95]·[#96]·[#97]의 직접 관련 부분을 **실행 가능한 완수 원장** 한 회차로 묶는다.
 3. `pal` 안에 `round status/approve/verify` 상태 관리 경로를 만들고, `Stop` 훅이
    `round status`의 같은 축약값만 읽게 한다.
-4. Depth Tree·모델 가격 라우팅·병렬 lease는 이 경로가 실사용 한 건에서 효과를 낸 뒤 판단한다.
+4. Depth Tree·모델 가격 라우팅·병렬 lease는 이 경로가 실사용 한 건에서 효과를 산출한 뒤 판단한다.
 
 [#85]: https://github.com/hskim-ecoletree/palimpsest/issues/85
 [#88]: https://github.com/hskim-ecoletree/palimpsest/issues/88
@@ -122,7 +122,7 @@ palimpsest는 지금 다음 경로다.
 - 완료 선언은 매 라운드 나왔다.
 - 절반 넘는 완료 선언이 실제 산출과 갈렸다.
 - 한 세션은 `1.000 → 0.357`로 무너진 뒤에도 계속 완료를 선언했다.
-- 진행 장치는 스펙을 몰랐기 때문에 「미완성 표면 없음」을 냈다.
+- 진행 장치는 스펙을 몰랐기 때문에 「미완성 표면 없음」을 산출했다.
 - 실제 누락은 독립 오라클과 사람이 잡았다.
 
 이 결과는 **완료 자기신고를 판정 입력으로 쓰면 안 된다**는 존재 주장을 충분히 지지한다.
@@ -148,7 +148,7 @@ palimpsest는 지금 다음 경로다.
 ### 4.1 조건을 실행하는 일반 경로
 
 첫 회차 게이트의 착수 관측은 `완수 조건의 CHECK: 0`이었다. 현재 `xtask`는 조건 ID와
-기록 형식, 전사 정합을 강하게 검사하지만, 각 조건이 말하는 결과를 내는 명령을 일반적으로
+기록 형식, 전사 정합을 강하게 검사하지만, 각 조건이 말하는 결과를 산출하는 명령을 일반적으로
 실행하지 않는다.
 
 따라서 다음 둘은 다르다.
@@ -479,7 +479,7 @@ pal round status --json의 aggregate state를 읽어 block/pass를 반환한다.
 
 **1차 구현**
 
-- `record.py conditions`가 내는 조건 ID 집합을 Rust status가 소비한다.
+- `record.py conditions`가 산출하는 조건 ID 집합을 Rust status가 소비한다.
 - 새 verification 원장은 조건 문장을 복제하지 않고 ID만 가리킨다.
 - `xtask`는 `pal round status --json`을 호출해 새 원장의 구조를 다시 구현하지 않는다.
 
@@ -739,7 +739,7 @@ Python과 Rust가 같은 조건 문법을 두 벌로 해석하게 되는 순간,
 | 이슈 | 처분 제안 | 이유 |
 |---|---|---|
 | #85 Stop 정책 | **흡수** | 단계 4가 직접 답한다 |
-| #88 다섯 문장 기입 | **기존 형태는 접고 새 실행 원장 이슈로 대체** | 비교 모집단이 v2.0 `SKILL.md`뿐이고 최신 핵심은 실행 코드다 |
+| #88 다섯 문장 기입 | **기존 형태는 철회하고 새 실행 원장 이슈로 대체** | 비교 모집단이 v2.0 `SKILL.md`뿐이고 최신 핵심은 실행 코드다 |
 | #95 CI 재귀 | **흡수** | CI를 committed condition이 아닌 terminal observation으로 옮긴다 |
 | #96 진행 원장 | **흡수** | verification event ledger가 진행 원장이다 |
 | #97 음성 대조 미실행 | **흡수** | 음성 대조 evidence 없이는 met가 될 수 없게 한다 |

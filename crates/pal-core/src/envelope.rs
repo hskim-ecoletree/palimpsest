@@ -38,7 +38,7 @@ pub struct ProjectionFreshness {
     /// 같은지 **모른다** — 알려면 워킹트리 머클이 필요하고 그것은 옛 F01 §3.2 다.
     /// `false` 로 적으면 *"다르다"* 는 거짓말이 되고 `true` 로 적으면 더 나쁘다.
     pub matches_worktree: Capable<bool>,
-    /// 2층이 이 답을 내는 동안 재구축 중이었는가.
+    /// 2층이 이 답을 산출하는 동안 재구축 중이었는가.
     ///
     /// **`RebuildState` 가 아니라 [`Capable`] 인 이유가 위와 같다.** 옛 DESIGN §12.7 격리
     /// 3번은 재구축을 값으로 표시하라고 적었지만, 그것을 **관측할 경로가 이 빌드에 없다**
@@ -290,14 +290,14 @@ pub struct Folded {
 /// 이 답에서 이관된 것 전부. **없어도 명시해야 한다.**
 ///
 /// [`Elision`] 과 같은 규율이다 — [`Fold::none`] 을 **명시적으로** 불러야 하고
-/// 기본값이 없다. 기본값이 있으면 접은 것을 적는 것을 잊는 경로가 생긴다.
+/// 기본값이 없다. 기본값이 있으면 뭉갠 것을 적는 것을 잊는 경로가 생긴다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Fold {
     pub folded: Vec<Folded>,
 }
 
 impl Fold {
-    /// **접은 것이 없다고 명시한다.** 이 함수를 부르는 것 자체가 기록이다.
+    /// **뭉갠 것이 없다고 명시한다.** 이 함수를 부르는 것 자체가 기록이다.
     #[must_use]
     pub const fn none() -> Self {
         Self { folded: Vec::new() }
@@ -390,7 +390,7 @@ pub enum LogStatus {
     /// # 걸린 시간이 여기 있고 **직렬화에는 없다** (옛 F11 §6)
     ///
     /// [옛 F11 §6] 의 물음이 *"대화 흐름을 끊지 않는가"* 이고, 재려면 표면이 자기 시간을
-    /// 낼 수 있어야 한다. [`crate::QueryLogEntry::duration_micros`] 가 그 값을 들고 있지만
+    /// 산출할 수 있어야 한다. [`crate::QueryLogEntry::duration_micros`] 가 그 값을 들고 있지만
     /// 2층 안에 있고 표면이 못 읽었다. 그래서 여기 싣는다.
     ///
     /// ⚠ **그런데 `skip` 이다. 시간은 답의 성질이 아니기 때문이다.**

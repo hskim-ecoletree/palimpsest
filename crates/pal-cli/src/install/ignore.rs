@@ -88,7 +88,7 @@ pub enum Verdict {
     Uncovered,
     /// 사용자가 `!` 로 되살렸다 — **더하면 그 결정을 조용히 뒤집는다. 거부한다.**
     Revived { pattern: String },
-    /// git 이 이 자리에 대해 **답을 안 냈다**(rc=128) — **`.gitignore` 를 만들지 않는다.**
+    /// git 이 이 자리에 대해 **답을 안 산출했다**(rc=128) — **`.gitignore` 를 만들지 않는다.**
     ///
     /// `까닭` 은 그 rc 를 **두 갈래로 가른 것**이다. 둘은 사용자가 할 일이 다르다:
     ///
@@ -97,7 +97,7 @@ pub enum Verdict {
     /// | `.git` 이 **없다** | 정말로 worktree 가 아니다 | 없다. `.gitignore` 는 뜻이 없는 자리다 |
     /// | `.git` 이 **있는데** rc=128 | **git 이 이 경로를 못 다룬다** | 프로젝트를 git 이 다룰 수 있는 자리로 옮긴다 |
     ///
-    /// ★ 둘째 줄은 이 회차의 실측이 낸 것이다(2026-08-17 · Windows):
+    /// ★ 둘째 줄은 이 회차의 실측이 산출한 것이다(2026-08-17 · Windows):
     ///
     /// ```text
     /// 365자 경로     git -C … : fatal: … Filename too long
@@ -134,7 +134,7 @@ pub fn 점검(root: &Root) -> Result<()> {
 ///
 /// **뿌리 `.gitignore` 하나만 보던 자리다.** `check-ignore` 는 중첩 `.gitignore` 와
 /// `.git/info/exclude` 도 읽고, 그중 하나가 FIFO 면 거기서 잠긴다 — 실측으로 둘 다
-/// 매달렸다. 이제 [`소스들`] 이 내는 자리 **전부**가 이 문을 지난다.
+/// 매달렸다. 이제 [`소스들`] 이 산출하는 자리 **전부**가 이 문을 지난다.
 ///
 /// ⚠ **그래도 목록은 완전하지 않다.** 전역 `core.excludesFile` 과 `.git/config` 은
 /// 대상 밖에 살 수 있어 우리 경계 안에서 열 수 없다. 그 자리는 [`child::기본_상한`] 이
@@ -169,7 +169,7 @@ pub fn verdict(root: &Root, path: &str) -> Result<Verdict> {
     }
 }
 
-/// git 이 rc=128 을 낸 자리에서 **왜 그런지** — `.git` 의 유무 하나로 가른다.
+/// git 이 rc=128 을 산출한 자리에서 **왜 그런지** — `.git` 의 유무 하나로 가른다.
 ///
 /// ⚠ **`.git` 을 「저장소인가」의 근거로 쓰지 않는다.** 여기서 그것이 뜻하는 것은
 /// 딱 하나다: *"사용자는 여기가 저장소라고 생각하고 있다."* 그 믿음과 git 의 답이
@@ -179,7 +179,7 @@ pub fn verdict(root: &Root, path: &str) -> Result<Verdict> {
 /// 있으므로 [`Path::exists`] 로 본다.
 fn 왜_답이_없나(root: &Root) -> &'static str {
     if root.path().join(".git").exists() {
-        "`.git` 은 있는데 git 이 이 자리에 대해 답을 안 냈다 — **git 이 이 경로를 못 \
+        "`.git` 은 있는데 git 이 이 자리에 대해 답을 안 산출했다 — **git 이 이 경로를 못 \
          다룬다.** 실측된 형태 둘: 경로가 `MAX_PATH`(260)를 넘거나(Windows: \
          `Filename too long`), 경로가 유효한 UTF-8 이 아니거나(git 이 UTF-8 로 바꿔 \
          찾다가 못 찾는다). 프로젝트를 git 이 다룰 수 있는 자리로 옮기십시오"

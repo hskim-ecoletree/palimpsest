@@ -269,7 +269,7 @@ pub struct Defect {
     ///
     /// **[graph-edge] `INTRODUCED_BY`** — `schema/graph.toml`
     pub introduced_by: Introduction,
-    /// 무엇이 고쳤나 — 이 결함을 만들어 낸 그 커밋.
+    /// 무엇이 고쳤나 — 이 결함을 만들어 산출한 그 커밋.
     ///
     /// **[graph-edge] `RESOLVED_BY`** — `schema/graph.toml`
     pub resolved_by: ChangeId,

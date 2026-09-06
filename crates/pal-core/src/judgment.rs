@@ -92,7 +92,7 @@ impl ResidualReason {
         Self::OutsideSample,
     ];
 
-    /// 와이어 표기 — **serde 가 내는 `kebab-case` 와 같다.**
+    /// 와이어 표기 — **serde 가 산출하는 `kebab-case` 와 같다.**
     ///
     /// ⚠ **한때 이것이 `label()` 이었고 한국어를 돌려줬다.** 그 값이 `Violation::subject`
     /// 를 지나 `pal doctor` 화면과 `--json` 으로 나갔고, 같은 변형이 화면에서는

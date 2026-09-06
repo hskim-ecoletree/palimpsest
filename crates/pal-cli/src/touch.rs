@@ -196,7 +196,7 @@ pub fn run(a: Args) -> Result<()> {
     // 없는 문장이 되거나(질의만), `touch` 가 아닌 것을 재게 된다(프로세스만).
     if timing {
         let 질의 = envelope.log.duration_micros().map_or_else(
-            // **안 잰 것을 0 으로 접지 않는다** — 읽기 전용은 로그를 못 남기고,
+            // **안 잰 것을 0 으로 뭉개지 않는다** — 읽기 전용은 로그를 못 남기고,
             // 그러면 시간도 안 남는다.
             || "none".to_owned(),
             |v| v.to_string(),

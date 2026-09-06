@@ -34,7 +34,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "릴리스로 낼 태그 이름 (비우면 아티팩트만 만들고 릴리스는 내놓지 않는다)"
+        description: "릴리스로 붙일 태그 이름 (비우면 아티팩트만 만들고 릴리스는 내놓지 않는다)"
         required: false
         type: string
 

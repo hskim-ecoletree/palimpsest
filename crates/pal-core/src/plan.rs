@@ -11,7 +11,7 @@
 //! [ADR-0015] 가 F10 의 반증에서 나왔다 — *"**기계가 확인한 것은 이름의 유일성이지
 //! 주제의 일치가 아니다.**"* 실측이 `span` 신호로 걸린 결박의 **48.9%** 가 엉뚱한
 //! 좌표임을 보였고, 그래서 [`crate::ConfirmingSignal`] 이 **거리 0 인 신호만** 확정을
-//! 낼 수 있게 타입으로 막았다.
+//! 산출할 수 있게 타입으로 막았다.
 //!
 //! **F12 의 좌표 후보는 셋 다 거리가 있다** — 계획 문장에 이름이 나온다는 것과 그
 //! 항목이 그 좌표를 건드릴 것이라는 것은 다른 문장이다. 그러므로 여기서 `asserted`
@@ -140,7 +140,7 @@ fn digest16(domain: &[u8], parts: &[&[u8]]) -> String {
 /// # 왜 이 값이 필요한가
 ///
 /// [ADR-0015] 가 요구한 것은 *"확인된 명제를 문장으로"* 다. F12 의 후보는 셋 다
-/// **거리가 있으므로** 확정을 못 내는데, 그렇다고 무엇이 냈는지를 지우면 게이트가
+/// **거리가 있으므로** 확정을 못 산출하는데, 그렇다고 무엇이 냈는지를 지우면 게이트가
 /// 신호별로 갈라 셀 수 없다 — `[f10.pass]` ①의 층화와 같은 자리다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -815,7 +815,7 @@ impl Deviation {
     /// # 왜 [`Option`] 이 아니라 [`DeviationRate`] 인가
     ///
     /// 실제 변경이 0 이면 비율이 **정의되지 않는다.** `None` 으로 내면 소비자가
-    /// 그것을 0 으로 접고, 그러면 *"하나도 안 벗어났다"* 와 *"잴 것이 없었다"* 가
+    /// 그것을 0 으로 뭉개고, 그러면 *"하나도 안 벗어났다"* 와 *"잴 것이 없었다"* 가
     /// 같은 화면이 된다([ADR-0005]).
     #[must_use]
     pub fn rate(&self) -> DeviationRate {
@@ -881,7 +881,7 @@ pub enum DeviationRate {
     Undefined,
 }
 
-/// 좌표 해소율 — **분자와 분모를 함께 싣는다**(값 하나만 내는 보고는 `[outcome]` 위반).
+/// 좌표 해소율 — **분자와 분모를 함께 싣는다**(값 하나만 산출하는 보고는 `[outcome]` 위반).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Resolution {
     pub resolved: usize,

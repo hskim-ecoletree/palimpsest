@@ -68,6 +68,6 @@ fn 별칭_사슬이_한_바퀴_돌아도_멈춘다() {
     store.record_alias(&RepoAlias::new(RepoId::new("a"), RepoId::new("b"), "")).expect("a→b");
     store.record_alias(&RepoAlias::new(RepoId::new("b"), RepoId::new("a"), "")).expect("b→a");
     let got = store.resolve_repo(&RepoId::new("a")).expect("해소");
-    assert!(got == RepoId::new("a") || got == RepoId::new("b"), "돌지 않고 하나를 냈다");
+    assert!(got == RepoId::new("a") || got == RepoId::new("b"), "돌지 않고 하나를 산출했다");
     let _ = std::fs::remove_dir_all(&root);
 }

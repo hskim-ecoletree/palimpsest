@@ -331,7 +331,7 @@ mod tests {
             export_digest: Capable::Present(ExportDigest::from_bytes([3; 32])),
             refs: Capable::Present(RefCounts::default()),
         });
-        let err = row.restore(&안만듦(), &안만듦()).expect_err("어긋남을 안 냈다");
+        let err = row.restore(&안만듦(), &안만듦()).expect_err("어긋남을 안 산출했다");
         assert_eq!(err.slot, "export_digest");
         assert!(err.cached_built, "저장이 안 만든 자리를 만들었다고 적었다");
     }

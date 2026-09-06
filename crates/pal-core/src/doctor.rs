@@ -179,7 +179,7 @@ pub struct Outcome {
 /// 불변식 하나의 처지.
 ///
 /// **`NotBuilt` 는 "위반 0" 이 아니다.** 모집단이 존재할 수 없다는 뜻이고,
-/// 그 둘을 같은 출력으로 내는 것이 [목표 §3.1](../../../docs/plan/00-goals.md) 의
+/// 그 둘을 같은 출력으로 산출하는 것이 [목표 §3.1](../../../docs/plan/00-goals.md) 의
 /// 정면 위반이다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]

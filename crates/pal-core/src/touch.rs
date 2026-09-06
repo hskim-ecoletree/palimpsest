@@ -40,7 +40,7 @@ pub struct SymbolNode {
     /// # 왜 유도하지 않고 싣는가
     ///
     /// 체인은 [`crate::FileGraph::contains`] 에서 나오는데 **2 층에는 파일 그래프가
-    /// 없다.** 여기 없으면 `pal touch` 가 `OrderService.cancel` 을 낼 수 없고,
+    /// 없다.** 여기 없으면 `pal touch` 가 `OrderService.cancel` 을 산출할 수 없고,
     /// 그것이 옛 F03 §1 이 이 기능의 목적으로 적은 좌표 그 자체다.
     ///
     /// 최상위 선언에서 **빈 목록인 것이 정확한 값이다** — 담는 것이 없다.
@@ -150,7 +150,7 @@ impl NearKind {
     pub const fn name(self) -> &'static str {
         match self {
             // **기계 토큰이다** — 이 저장소에서 `name()` 은 와이어 표기이고
-            // serde 가 내는 값(`rename_all = "snake_case"`)과 같아야 한다.
+            // serde 가 산출하는 값(`rename_all = "snake_case"`)과 같아야 한다.
             // 사람이 읽는 병기는 `pal-cli` 의 `label` 이 진다.
             Self::Spelling => "spelling",
             Self::Substring => "substring",
@@ -222,7 +222,7 @@ pub fn 정렬_열쇠(item: &BoundItem) -> (u8, u8, i64, String) {
         crate::binding::BoundTime::Committed { epoch_secs } => -*epoch_secs,
         // 워킹트리는 **커밋보다 최근이다** — 아직 커밋되지 않았다.
         crate::binding::BoundTime::Worktree => i64::MIN,
-        // 모르는 것은 뒤로. **0(1970년)으로 접지 않는다.**
+        // 모르는 것은 뒤로. **0(1970년)으로 뭉개지 않는다.**
         crate::binding::BoundTime::Unrecorded => i64::MAX,
     };
     (신선도, 계보, 시각, binding.as_str().to_owned())

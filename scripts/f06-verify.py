@@ -304,7 +304,7 @@ def 코퍼스(r: 결과) -> None:
             r.fail("③ 내보내기", f"실패했다: {p.stderr[-400:]}")
             return
         보고 = json.loads(p.stdout)["answer"]
-        낸 = {c["label"]: c["count"] for c in 보고["exported"]}
+        산출한 = {c["label"]: c["count"] for c in 보고["exported"]}
         if 낸.get("Symbol") != 노드 or 낸.get("REFERENCES") != 엣지:
             r.fail(
                 "③ 내보내기 건수",
@@ -316,7 +316,7 @@ def 코퍼스(r: 결과) -> None:
             r.ok(
                 "③ 내보내기",
                 f"{이름} Symbol {낸['Symbol']} · REFERENCES {낸['REFERENCES']} · "
-                f"못 낸 라벨 {len(보고['missing'])}개 (사유 {len(사유)}갈래)",
+                f"못 산출한 라벨 {len(보고['missing'])}개 (사유 {len(사유)}갈래)",
             )
 
         # **Cypher 문법을 우리가 검증하지 못한다** — 파서가 없다. 대조 불가로 적는다.

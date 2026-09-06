@@ -386,7 +386,7 @@ impl GitAccess for GixRepo {
         let mut out = Vec::with_capacity(recorder.records.len());
         for entry in recorder.records {
             // **디렉터리와 서브모듈은 파일이 아니다.** 대장이 세는 것은 blob 이고,
-            // 그것이 `git ls-tree -r` 가 내는 것과 같아야 한다(criteria [s1.oracle]).
+            // 그것이 `git ls-tree -r` 가 산출하는 것과 같아야 한다(criteria [s1.oracle]).
             if !entry.mode.is_blob_or_symlink() {
                 continue;
             }

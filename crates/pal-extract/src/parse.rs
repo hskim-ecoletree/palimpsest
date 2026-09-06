@@ -750,7 +750,7 @@ mod marked_comment_tests {
         // ★ **이것이 `[f10.6]` 이 고친 명제 그대로다**(#62 · [ADR-0016]).
         //
         // 옛 시험은 `src[at..].starts_with("export function cancel")` 을 단언했다 —
-        // **그것이 옛 명제였고 옛 고장이었다.** 주석이 낸 바이트가 `export` 키워드
+        // **그것이 옛 명제였고 옛 고장이었다.** 주석이 산출한 바이트가 `export` 키워드
         // 자리를 가리키는데 2층 심볼은 `function` 에서 서므로, `narrative` 의 정확
         // 일치 조회가 **한 바이트 차이로** 못 찾았다(못 붙은 307 중 211 · #62).
         //
@@ -860,9 +860,9 @@ mod marked_comment_tests {
         // 별개 `line_comment` 로 산출한다 — 안 접으면 ADR 하나가 조각 셋이 되고
         // 같은 뜻의 결박이 세 번 성립한다.
         let c = rs("/// @decision: 첫 줄\n/// 이어지는 줄\n/// 셋째 줄\nfn f() {}");
-        assert_eq!(c.len(), 1, "접히지 않았다");
+        assert_eq!(c.len(), 1, "안 뭉개졌다");
         assert!(c[0].text.contains("셋째 줄"), "마지막 줄이 조각에 안 들어왔다");
-        assert!(c[0].attaches_to_byte.is_some(), "접은 뒤 좌표를 잃었다");
+        assert!(c[0].attaches_to_byte.is_some(), "뭉갠 뒤 좌표를 잃었다");
     }
 
     #[test]
@@ -876,7 +876,7 @@ mod marked_comment_tests {
     fn 접기가_다른_두_언어에_안_닿는다() {
         // ★ **등록된 금지역 「기존 두 언어 회귀」의 단위 시험이다.**
         // `doc_comment` 자식은 tree-sitter-rust 고유 마디라 TS·Kotlin 의 연속
-        // 주석은 접히면 안 된다 — 접히면 ditto 표식이 330 에서 준다.
+        // 주석은 뭉개지면 안 된다 — 뭉개지면 ditto 표식이 330 에서 준다.
         let c = ts("// @decision: 첫 줄\n// @decision: 둘째 줄\nexport class C {}");
         assert_eq!(c.len(), 2, "TypeScript 주석이 접혔다");
     }

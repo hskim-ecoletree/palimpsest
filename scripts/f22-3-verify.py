@@ -280,7 +280,7 @@ def main() -> int:
     if twice[0] == twice[1]:
         print("  ✓ 같은 커밋을 두 번 → 산출 동일 (`Change`·`Actor` 가 `extracted` 인 근거)")
     else:
-        print("  ✗ 같은 커밋이 다른 답을 냈다 — 출처 배정이 `extracted` 일 수 없다")
+        print("  ✗ 같은 커밋이 다른 답을 산출했다 — 출처 배정이 `extracted` 일 수 없다")
         fail += 1
 
     # ④ 예산이 걸린 것과 정말 없는 것이 갈리는가
