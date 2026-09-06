@@ -61,7 +61,7 @@ impl 방 {
         std::fs::create_dir_all(&tmp).expect("tmp");
         std::fs::write(tmp.join("남의것"), "건드리면 안 된다\n").expect("tmp 파일");
 
-        // 형제 경로 — 부모 아래에 우리 것이 아닌 것이 산다.
+        // 형제 경로 — 부모 아래에 우리 것이 아닌 것이 있다.
         std::fs::create_dir_all(parent.join("형제")).expect("형제");
         std::fs::write(parent.join("형제/파일"), "형제의 것\n").expect("형제 파일");
 

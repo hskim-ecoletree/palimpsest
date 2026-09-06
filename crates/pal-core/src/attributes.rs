@@ -53,7 +53,7 @@ impl FileAttributes {
 /// 규칙 하나 — 어느 디렉터리의 `.gitattributes` 몇째 줄인가까지 안다.
 #[derive(Debug, Clone)]
 struct Rule {
-    /// 이 규칙이 사는 디렉터리. 루트면 빈 문자열.
+    /// 이 규칙이 놓인 디렉터리. 루트면 빈 문자열.
     dir: String,
     glob: Glob,
     attrs: FileAttributes,

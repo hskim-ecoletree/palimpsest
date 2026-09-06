@@ -1,5 +1,5 @@
 
-  SymbolKind  ·  palimpsest@dbf4158+worktree#93aebfd04620
+  SymbolKind  ·  palimpsest@213d3ee+worktree#93aebfd04620
   enum · crates/pal-core/src/symbol.rs:34 · identity ordinal · body b69aec5792f8
 
 ■ 이 좌표에 걸린 것 (1)
@@ -27,15 +27,15 @@
   (이 빌드에는 judgment 능력이 없습니다 — F15 미구축)
 
 ■ 이 답의 근거
-  Snapshot  palimpsest@dbf4158+worktree
-  대장      parsed 134 · partial 0 · unsupported 630 · unrecognized 292 / 1057 파일
+  Snapshot  palimpsest@213d3ee+worktree
+  대장      parsed 135 · partial 0 · unsupported 638 · unrecognized 293 / 1067 파일
             결박 불가 언어 7개 — 그 파일들에는 좌표가 없습니다
-  2층       심볼 3073 색인됨
+  2층       심볼 3087 색인됨
   워킹트리  일치
   재구축    아님
   생략      없음 (명시)
-  이관      1057건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
-            ledger 1057건 → `ledger.snapshot` 로 조회할 수 있습니다
+  이관      1067건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1067건 → `ledger.snapshot` 로 조회할 수 있습니다
   질의 로그  남았습니다
   크기      약 867 토큰 **이상** (잰 것: 3471 바이트 · 가정: 4 바이트/토큰)
   능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F07 · F08 · F13 · F15

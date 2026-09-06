@@ -42,7 +42,7 @@
 | 무엇이 우리를 막을 것인가 | [docs/plan/00-risks.md](docs/plan/00-risks.md) |
 | 설계 결정과 그 근거 | [docs/adr/](docs/adr/) — **결정은 ADR 에만 있다**. 옛 `DESIGN.md` 의 결정 99 개가 어디로 갔는지는 [처리 방침 표](docs/plan/disposal-map.md) |
 | 왜 만드나 · 능력 계약 `C1~C6` · 설계 원리 `P1~P14` | [docs/plan/00-goals.md](docs/plan/00-goals.md) — 백서에서 옮겨 왔다 |
-| 소유자가 실제로 무엇을 요구했나 | [docs/instructions/](docs/instructions/) — 원문이 산다 |
+| 소유자가 실제로 무엇을 요구했나 | [docs/instructions/](docs/instructions/) — 원문이 있다 |
 
 ---
 

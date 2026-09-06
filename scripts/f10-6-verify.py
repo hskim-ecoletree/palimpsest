@@ -332,7 +332,7 @@ def 코틀린(tmp: Path) -> None:
     else:
         ok("⑥ Kotlin 픽스처",
            f"인접 **결박 1** ≥ {KOTLIN_FIXTURE_BOUND_MIN} · 빈 줄 **미결박 1** ≥ "
-           f"{KOTLIN_FIXTURE_UNBOUND_MIN} — **래퍼 없는 언어에서도 두 방향이 산다**")
+           f"{KOTLIN_FIXTURE_UNBOUND_MIN} — **래퍼 없는 언어에서도 두 방향이 성립한다**")
 
     skip("⑥ Kotlin 실 코퍼스",
          f"portal-backend 의 `.kt` 중 `ADR-` 를 가진 파일이 **{실물}** 개다 — "

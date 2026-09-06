@@ -209,7 +209,7 @@ pub const DIRS: &[&str] = &[
     ".claude/agents",
     ".claude/commands",
     ".claude/commands/pal",
-    // 회차 규약이 사는 자리. `.claude/skills` 에는 남의 스킬이 함께 살고,
+    // 회차 규약이 놓이는 자리. `.claude/skills` 에는 남의 스킬이 함께 살고,
     // `pal-round` 는 우리 것이라 이름을 갈랐다.
     ".claude/skills",
     ".claude/skills/pal-round",
