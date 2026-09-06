@@ -142,7 +142,7 @@
 테스트도 CI 도 아닌 것이 이 회차의 산출을 돌린 출력이다 — `./scripts/frontier.sh`.
 
 ```
-== 착수 시점 (7c41b81) ==
+== 착수 시점 (7c41b81) ==   ⚠ 아래 세 줄은 옮겨 적은 것이라 ⏳ 가 빠졌다(관측 파일이 그 사실을 적는다)
   열린 이슈 31건 · 착수 가능 31건 · 교착 0건
   착수는 gh issue edit <번호> --add-assignee @me   (지형은 비었다 — docs/plan/disposal-map.md)
   → 31 건이 전부 평평했다. 무엇이 먼저인지 저장소가 답하지 않았다.
@@ -165,12 +165,17 @@
 
 ```
 $ pal touch check_completion_scenes
+
+  check_completion_scenes  ·  palimpsest@07efe73+worktree#a23a6a391485
+  fun · xtask/src/main.rs:4534 · identity ordinal · body 1793021a1546
+
 ■ 이 좌표에 걸린 것 (1)
-  [e64fd4f5378c5f20]  최신 상태(fresh)  · 반경 symbol · 감시 1
-  회차 2026-09-06-terrain-and-completion-scene 의 결정 — 완성 장면은 「누가·무엇을 해서·
-  무엇을 받는가」 소제목 셋을 가진 번호 붙은 절로 정의하고, 그 형식과 장면 수 하한 셋을
-  기계가 잰다(완수 조건 A1·A1-a)
+  [e64fd4f5378c5f20] 최신 상태(fresh)  ·  symbol 반경 · 감시 1
+      회차 2026-09-06-terrain-and-completion-scene 의 결정 — 완성 장면은 「누가·무엇을 해서·무엇을 받는가」 소제목 셋을 가진 번호 붙은 절로 정의하고, 그 형식과 장면 수 하한 셋을 기계가 잰다(완수 조건 A1·A1-a). 손으로 훑고 통과라고 적는 것을 금한다. 음성 대조는 observations/negative-control-scenes.txt 에 있다.
+■ 이 좌표를 지켜보는 것 (0)
 ```
+
+⚠ 위는 실행 출력을 그대로 붙인 것이다 ⟨독립 리뷰 R4 가 앞 판의 어순 변형을 잡았다⟩.
 
 ⚠ **그 출력이 지금 가리키는 첫 항목은 §2 의 1 번과 다른 축이다** — 효과는 산출됐고, 그 효과가
 가리키는 것이 틀렸다는 것을 정반합 판 3 이 잡았다. **효과가 없는 것과 효과가 틀린 것은 다르다.**
