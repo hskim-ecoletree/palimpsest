@@ -101,7 +101,7 @@
 $ pal touch order-svc:OrderService.cancel
 
 ■ 이 좌표에 걸린 것 (3)
-  ADR-0042  취소는 멱등해야 한다              live      symbol 반경
+  ADR-0042  취소는 멱등해야 한다              최신 상태(fresh)  symbol 반경
   ADR-0031  정산 경계 밖으로 나가지 않는다     stale     ← 감시 집합 중 SettlementGate.check 가 12커밋 전 변경
   PLAN §4-2 재고 복원은 이번 범위 아님         pending   ← 예상 좌표에 아직 코드가 없음
 
@@ -122,7 +122,7 @@ $ pal touch order-svc:OrderService.cancel
 
 읽는 법:
 
-- **`live`** — 이 결정이 걸린 코드는 결박한 이후로 안 변했다.
+- **`최신 상태(fresh)`** — 이 결정이 걸린 코드는 결박한 이후로 안 변했다.
 - **`stale`** — 변했다. 그러니 이 결정이 아직 유효한지 **사람이 확인해야 한다.**
 - **`pending`** — 문서가 가리키는 코드가 **아직 존재하지 않는다.** 계획이 구현을 앞선 자리다
   (§6.3의 「계획 결박」).
@@ -131,10 +131,11 @@ $ pal touch order-svc:OrderService.cancel
 
 마지막 두 줄이 이 프로젝트의 성격을 가장 잘 보여 준다. **모르는 것을 안다고 말하지 않는다.**
 
-> ⚠ 화면의 `live`·`stale` 같은 영어 표기는 **바뀔 예정이다.** 상태 이름은 코드에서는 영어로
-> 두되 사용자 화면에서는 사용자 언어를 함께 표기하기로 정했고(§8 머리말), 특히 `live`는
-> 한국어권에서 "방송 중"으로 읽히는 문제가 있다. 개명 범위는 [#108](https://github.com/hskim-ecoletree/palimpsest/issues/108) 과
-> [#110](https://github.com/hskim-ecoletree/palimpsest/issues/110) 이 다룬다.
+> 화면의 상태 이름은 **원 표기와 사용자 언어를 함께 적는다** — `최신 상태(fresh)` · `낡음(stale)`.
+> 코드와 `--json` 은 영어 토큰만 쓴다([ADR-0033](adr/0033-a-word-that-reads-wrong-is-not-fixed-by-a-gloss.md) §3).
+> 옛 이름 `Live` 는 한국어권에서 "방송 중"으로 읽혀 `Fresh` 로 개명했다(같은 ADR §1) —
+> `live` 토큰은 이제 읽기 경로에서 거부된다. ⚠ 다만 `pal doctor` 의 불변식 문장과
+> `NodeFreshness` 는 다른 축이라 그대로 `live` 를 쓴다.
 
 ---
 
@@ -341,7 +342,7 @@ Rust를 고른 첫 번째 이유이기도 하다.
 `Unrecognized`와 `Unsupported`를 하나로 뭉개면 원장이 거짓말을 하게 된다. 전자는 **설정
 문제**이고 후자는 **로드맵 문제**인데, 뭉개면 사용자가 고칠 자리를 엉뚱한 데서 찾는다.
 
-#### 언어마다 읽어 낼 수 있는 깊이가 다르다
+#### 언어마다 읽어 산출할 수 있는 깊이가 다르다
 
 같은 "파싱 성공"이라도 언어별로 뽑아낼 수 있는 정보의 깊이가 다르다. 그래서 **능력 등급**을
 따로 기록한다.
@@ -408,11 +409,11 @@ pal ledger
 "나를 부르는 것, 그리고 그것을 부르는 것"까지를 뜻한다.
 
 **그래서 위 질문의 답은 이렇다.** 반경을 `symbol`로 선언했다면 기계는 `checkout`의 변경을
-**알지 못하고**, 그 결박은 `live`로 남는다. 반경을 `callers`로 선언했다면 `checkout`이
+**알지 못하고**, 그 결박은 `fresh`로 남는다. 반경을 `callers`로 선언했다면 `checkout`이
 감시 집합에 들어가므로 그것이 변한 순간 결박이 `stale`이 된다. **기계가 알 수 있는 범위는
 사용자가 선언한 만큼이고, 그 선언이 판정 결과에 함께 출력된다.**
 
-> "이 결정은 `symbol` 반경에서 `live` 다"
+> "이 결정은 `symbol` 반경에서 `fresh` 다"
 
 이 문장은 "이 결정은 유효하다"와 **다른 문장**이다. 앞의 문장은 무엇을 안 봤는지까지
 말하고 있다. 그 차이가 화면에 남는 것이 이 설계의 요구다. 선언은 문제를 해결하지 않지만
@@ -424,12 +425,12 @@ pal ledger
 
 | 값 | 뜻 |
 |---|---|
-| `Live` | 좌표가 있고 감시 집합 전체가 그대로다 |
+| `Fresh` | 좌표가 있고 감시 집합 전체가 그대로다 |
 | `Stale { triggered_by }` | 감시 집합의 무언가가 변했다. **무엇이 이를 유발했는지 함께 싣는다** |
 | `Orphaned { missing }` | 좌표가 사라졌다. `Stale`과 **다른 사건이다** — 구현이 제거된 것은 사람의 판단을 요구한다 |
-| `Undeterminable { reason, at }` | **판정할 수 없다.** `Live`로 처리하지 않는다 |
+| `Undeterminable { reason, at }` | **판정할 수 없다.** `Fresh`로 처리하지 않는다 |
 
-넷째가 이 열거의 요점이다. 판정 불가를 `Live`로 처리하면 **"못 봤다"가 "괜찮다"로 둔갑한다.**
+넷째가 이 열거의 요점이다. 판정 불가를 `Fresh`로 처리하면 **"못 봤다"가 "괜찮다"로 둔갑한다.**
 사유는 넷이다 — 정체성 등급 부족 · 부분 파싱 · 감시 대상이 사라짐 · 투영이 낡음.
 
 **그러나 결박의 상태는 이 넷이 전부가 아니다.** 같은 파일의 `BindingStatus`는 축을 **둘**
@@ -483,7 +484,7 @@ pal bind OrderService.cancel --note "취소는 멱등해야 한다" --radius cal
 pal touch OrderService.cancel   (나중에)
   → 의도 저장소에서 이 좌표에 걸린 결박을 꺼낸다
   → 결박마다 감시 집합의 현재 digest 와 저장된 digest 를 대조한다
-  → 다르면 Stale, 좌표가 없으면 Orphaned, 판정 못 하면 Undeterminable, 아니면 Live
+  → 다르면 Stale, 좌표가 없으면 Orphaned, 판정 못 하면 Undeterminable, 아니면 Fresh
 ```
 
 ---
@@ -855,7 +856,7 @@ impl Inferred {
      1층 캐시 → 스티칭 → 2층 투영
        → 2층에서 심볼·참조를 읽는다
        → 의도 저장소에서 걸린 결박과 지켜보는 결박을 읽는다
-       → 결박마다 신선도 판정 (Live/Stale/Orphaned/Undeterminable)
+       → 결박마다 신선도 판정 (Fresh/Stale/Orphaned/Undeterminable)
        → 못 만든 능력은 Capable::NotBuilt 로 자리를 채운다
        → 전부 Envelope 에 담아 반환한다
 
@@ -912,7 +913,7 @@ impl Inferred {
 | **출처** (provenance) | 그 값을 무엇으로 믿을 수 있나 — 4값 | 추측이 조용히 사실이 되는 것을 막는다 |
 | **잔여** (residual) | 판정하지 못한 것 + 사유 + 무엇이 있으면 판정 가능한지 | "이상 없음"이라고 말하지 않기 위한 자리 |
 | **능력 부재** (`Capable::NotBuilt`) | 이 빌드가 그것을 답하지 않는다 | "없음"과 "안 만듦"이 같은 화면이 되는 것을 막는다 |
-| **생략** (elision) | 예산 한도에 걸려 잘라 낸 것 + 얼마나 · 왜 | 조용한 생략을 금지하는 것이 이 제품의 정체성이다 |
+| **생략** (elision) | 예산 한도에 걸려 잘라 산출한 것 + 얼마나 · 왜 | 조용한 생략을 금지하는 것이 이 제품의 정체성이다 |
 | **회차** (round) | 일을 여는 단위. 의도를 잠그고 끝날 때까지 반복한다 | 「나중에」를 0으로 만드는 장치 |
 
 ### 8.2 좌표와 정체성
@@ -942,10 +943,10 @@ impl Inferred {
 |---|---|
 | **반경** (radius) | 무엇까지 지켜보나. `symbol` · `callers` · `closure:k` · `files:...` |
 | **감시 집합** (watch) | 반경을 펼친 결과 + 그 시점의 digest. **결박 자신의 내용이다** |
-| **`live`** | 감시 집합이 그대로다 |
+| **`fresh`** | 감시 집합이 그대로다 |
 | **`stale`** | 감시 집합의 무언가가 변했다. **무엇이 그것을 유발했는지 함께 실린다** |
 | **`orphaned`** | 좌표가 사라졌다. `stale`과 다른 사건이다 |
-| **`undeterminable`** | 판정할 수 없다. **`live`로 처리하지 않는다** |
+| **`undeterminable`** | 판정할 수 없다. **`fresh`로 처리하지 않는다** |
 | **계보** (`Lineage`) | 이 결박이 다른 것으로 대체됐는가. `Current` · `Superseded`. 코드 신선도와 **다른 축이다** |
 | **계획 결박 상태** (`PlanBindingState`) | `Bound` · `Pending`(가리키는 코드가 아직 없다) · `Unresolved`(후보가 여럿) |
 | **승격** (`promoted_by`) | 결박이 만들어진 경로 — 직접 등록(`hand`) 또는 제안 승인(`proposal`) |
