@@ -146,7 +146,7 @@ pub fn run(a: Args) -> Result<()> {
     println!("  좌표    {}#{}", report.ledger.snapshot, symbol.id.short());
     println!("  본문    {}  ← 이 값이 바뀌면 낡음이 표시됩니다", symbol.body.short());
     println!("  개체    {}", binding.subject.to_display());
-    // **반경과 감시 집합 크기를 함께 싣는다.** *"이 결정은 `symbol` 반경에서 live"* 는
+    // **반경과 감시 집합 크기를 함께 싣는다.** *"이 결정은 `symbol` 반경에서 fresh"* 는
     // *"이 결정은 유효하다"* 와 다른 문장이고, 그 차이가 산출에 남아야 한다(옛 F09 §3).
     println!("  반경    {} · 감시 {} 개", binding.radius.name(), binding.watch.len());
     println!("  결박    [{}]", binding.id.as_str());

@@ -115,7 +115,7 @@ pub enum BoundItem {
         status: crate::binding::BindingStatus,
         /// 무엇까지 지켜보나 — **선언이지 계산이 아니다**(옛 F09 §3).
         ///
-        /// *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은 유효하다"* 와 **다른
+        /// *"이 결정은 `symbol` 반경에서 fresh"* 는 *"이 결정은 유효하다"* 와 **다른
         /// 문장**이고, 그 차이가 산출에 남는 것이 F09 의 요구다.
         radius: String,
         /// 감시 집합의 크기. 반경 이름만으로는 `files:3` 이 몇 개를 지켜보는지 모른다.

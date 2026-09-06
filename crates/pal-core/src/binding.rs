@@ -151,7 +151,7 @@ pub struct Binding {
     pub bound_at_time: BoundTime,
     /// **무엇까지** 지켜보나 — 선언이지 계산이 아니다([`Radius`] · 옛 F09 §3).
     ///
-    /// 이 값이 **판정 결과에 함께 출력된다.** *"이 결정은 `symbol` 반경에서 live"* 는
+    /// 이 값이 **판정 결과에 함께 출력된다.** *"이 결정은 `symbol` 반경에서 fresh"* 는
     /// *"이 결정은 유효하다"* 와 다른 문장이고, 그 차이가 산출에 남는 것이 요구다.
     pub radius: Radius,
     /// 무엇을 지켜보나 — [`Radius`] 가 편 결과.
@@ -1225,7 +1225,7 @@ pub struct DetectorReport {
 /// > `stale` 출력에 **`triggered_by` 와 반경을 항상 붙여** 행동 가능하게 만든다.
 ///
 /// 그래서 [`Self::radius`] 와 [`Self::watch`] 가 상태와 **같은 줄**에 있다.
-/// *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은 유효하다"* 와 다른 문장이고,
+/// *"이 결정은 `symbol` 반경에서 fresh"* 는 *"이 결정은 유효하다"* 와 다른 문장이고,
 /// 그 차이가 산출에 남는 것이 §3 의 요구다.
 ///
 /// # [`Self::watch_grades`] 가 여기 있는 이유

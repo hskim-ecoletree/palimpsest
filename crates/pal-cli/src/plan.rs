@@ -308,7 +308,9 @@ pub fn print_screen(c: &Computed) {
         "  신호별       {}",
         d.by_source().iter().map(|(k, v)| format!("{k} {v}")).collect::<Vec<_>>().join(" · ")
     );
-    println!("  pending→live {}", d.promoted_from_pending);
+    // ⚠ 「live」 는 옛 F12 의 낱말이고 이 열거에는 그 변형이 없다 — 실제 변형은
+    // `PlanBindingState::Bound` 다. 화면이 없는 이름을 부르고 있었다(#110).
+    println!("  좌표가 생긴 것(pending→bound) {}", d.promoted_from_pending);
     println!();
 }
 

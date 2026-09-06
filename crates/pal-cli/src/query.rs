@@ -372,7 +372,7 @@ fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::Det
             pal_core::Lineage::Superseded { by } => format!(" · 대체됨 → {}", by.to_display()),
         };
         println!("  [{}] {mark}{계보}", b.binding.as_str());
-        // **반경이 상태와 같은 줄에 있다** — *"이 결정은 `symbol` 반경에서 live"* 는
+        // **반경이 상태와 같은 줄에 있다** — *"이 결정은 `symbol` 반경에서 fresh"* 는
         // *"이 결정은 유효하다"* 와 다른 문장이다(옛 F09 §3).
         let 등급 = b
             .watch_grades
@@ -390,8 +390,8 @@ fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::Det
     println!("  **반경 밖의 변경은 여기 안 뜹니다** — 거짓 음성은 원리적으로 안 닫힙니다.");
     println!("  선언된 반경이 위에 적혀 있고, 그것이 이 도구가 할 수 있는 전부입니다.");
     println!();
-    // **낡음을 재는 자의 낡음**(옛 F09 §5). 안 적으면 낡은 감지기가 낸 `live` 가
-    // 지금의 `live` 로 읽힌다.
+    // **낡음을 재는 자의 낡음**(옛 F09 §5). 안 적으면 낡은 감지기가 낸 `fresh` 가
+    // 지금의 `fresh` 로 읽힌다.
     println!("  감지기  문법 {} · 추출기 {}", detector.grammar, detector.extractor);
     if !detector.matches_head {
         println!("  ⚠ **대장이 지금 HEAD 를 안 봤습니다** — 위 판정은 「그때 기준」입니다.");
