@@ -3,6 +3,10 @@
 > `pal-independent-reviewer` 가 낸 것을 그대로 보존한다. 요약하지 않는다.
 > 받은 것: 잠긴 의도와 산출물. 안 받은 것: 대화 기록 · 앞 라운드의 결과 · 설명.
 > 실행 2026-09-07 · HEAD `62e0c98`
+>
+> ⚠ 메인이 고친 글자 — 인용한 `grep` 출력 안의 마크다운 링크 둘을 링크가 아닌
+> 표기로 바꿨다(`「보임 → 대상」`). 이 자리에서는 그 상대 경로가 안 풀려 죽은 링크
+> 검사가 빨개진다(결함 #87). 그 밖의 문면은 안 고쳤다.
 
 ---
 
@@ -75,8 +79,8 @@
 
 | # | 발견 | 모집단 | 유효 | 해악도 | 조건 | 좌표(파일:줄) | 근거(명령·출력) |
 |---|---|---|---|---|---|---|---|
-| 1 | `docs/plan/README.md` §1 이 **같은 절 안에서 자기를 부정한다** — `:35` 가 *"새 지형은 순서표가 졌다(2026-09-06)"* 인데 아홉 줄 뒤 `:44` 가 *"새 지형이 아직 안 섰으므로 나머지 아홉은 전부 「고칠 것」이다"* 로 남았다. 이 회차가 이 파일을 고치면서 앞 문단만 고쳤다 — R4 의 `AGENTS.md` 「둘/넷」과 같은 형태다 | 저장소 | 참 | 거짓신호 | 없음 | `docs/plan/README.md:35` · `docs/plan/README.md:44` | `grep -n "새 지형" docs/plan/README.md` → `35:**새 지형은 [순서표](02-order.md)가 졌다**(2026-09-06)` · `44:새 지형이 아직 안 섰으므로 나머지 아홉은 전부 …` · `55:새 우선순위는 새 지형이 정한다` |
-| 2 | `AGENTS.md:98` 이 가리키는 살아 있는 진입점 문서 `docs/agents/issue-tracker.md` 가 **두 자리에서 「새 지형은 다음 회차가 쓴다」로 남았다.** 같은 문장을 진 `disposal-map.md`·`plan/README.md` 는 R1·R2 가 고쳤고 이 셋째 자리만 안 고쳤다. 그 표의 「무엇을 어느 순서로 → GitHub 이슈」 행은 `AGENTS.md:39`(무엇을 어느 순서로 → `02-order.md`)와 정면으로 갈린다 | 저장소 | 참 | 거짓신호 | 없음 | `docs/agents/issue-tracker.md:79` · `docs/agents/issue-tracker.md:98` | `grep -n "새 지형은 다음 회차가 쓴다" docs/agents/issue-tracker.md` → `79:…`·`98:…`; `grep -n "docs/agents/issue-tracker" AGENTS.md` → `98:… [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md)` |
+| 1 | `docs/plan/README.md` §1 이 **같은 절 안에서 자기를 부정한다** — `:35` 가 *"새 지형은 순서표가 졌다(2026-09-06)"* 인데 아홉 줄 뒤 `:44` 가 *"새 지형이 아직 안 섰으므로 나머지 아홉은 전부 「고칠 것」이다"* 로 남았다. 이 회차가 이 파일을 고치면서 앞 문단만 고쳤다 — R4 의 `AGENTS.md` 「둘/넷」과 같은 형태다 | 저장소 | 참 | 거짓신호 | 없음 | `docs/plan/README.md:35` · `docs/plan/README.md:44` | `grep -n "새 지형" docs/plan/README.md` → `35:**새 지형은 「순서표 → 02-order.md」가 졌다**(2026-09-06)` · `44:새 지형이 아직 안 섰으므로 나머지 아홉은 전부 …` · `55:새 우선순위는 새 지형이 정한다` |
+| 2 | `AGENTS.md:98` 이 가리키는 살아 있는 진입점 문서 `docs/agents/issue-tracker.md` 가 **두 자리에서 「새 지형은 다음 회차가 쓴다」로 남았다.** 같은 문장을 진 `disposal-map.md`·`plan/README.md` 는 R1·R2 가 고쳤고 이 셋째 자리만 안 고쳤다. 그 표의 「무엇을 어느 순서로 → GitHub 이슈」 행은 `AGENTS.md:39`(무엇을 어느 순서로 → `02-order.md`)와 정면으로 갈린다 | 저장소 | 참 | 거짓신호 | 없음 | `docs/agents/issue-tracker.md:79` · `docs/agents/issue-tracker.md:98` | `grep -n "새 지형은 다음 회차가 쓴다" docs/agents/issue-tracker.md` → `79:…`·`98:…`; `grep -n "docs/agents/issue-tracker" AGENTS.md` → `98:… 「docs/agents/issue-tracker.md → docs/agents/issue-tracker.md」` |
 
 ## 자기 산출에 대한 발견
 
