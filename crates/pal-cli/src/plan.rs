@@ -326,12 +326,25 @@ pub fn 한_줄_deviation(d: &Deviation) -> String {
     )
 }
 
+/// 사람 화면의 한 줄. **원 표기와 사용자 언어를 함께 적는다**([ADR-0033] §3).
+///
+/// ⚠ 앞 판은 `Pending` 을 `{why:?}` 로 찍어 **Rust `Debug`**(`PathAbsent`)가 그대로
+/// 나갔고, `Unresolved` 는 와이어 토큰만 나갔다 — 둘 다 `C1` 의 목록 밖이었다
+/// (독립 리뷰 R5 · 발견 4).
 fn 상태_한_줄(s: &PlanBindingState) -> String {
     match s {
-        PlanBindingState::Bound { targets } => format!("bound {}", targets.len()),
-        PlanBindingState::Pending { why } => format!("pending ({why:?})"),
+        PlanBindingState::Bound { targets } => {
+            format!("걸림(bound) {}", targets.len())
+        }
+        PlanBindingState::Pending { why } => {
+            format!("대기(pending) — {}", crate::label::대기_사유(*why).병기())
+        }
         PlanBindingState::Unresolved { why, candidates } => {
-            format!("unresolved ({} · 후보 {})", why.name(), candidates.len())
+            format!(
+                "미해소(unresolved) — {} · 후보 {}",
+                crate::label::미해소_사유(*why).병기(),
+                candidates.len()
+            )
         }
     }
 }

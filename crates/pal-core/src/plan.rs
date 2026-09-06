@@ -338,7 +338,7 @@ impl Plan {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 해소 — **`pending` 이 여기 산다**
+// 해소 — **`pending` 이 여기 있다**
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// 왜 아직 못 걸었나.
@@ -349,6 +349,23 @@ pub enum PendingReason {
     DeclaredNew,
     /// 경로 패턴이 기준선에서 파일을 하나도 안 맞춘다 — **자리가 아직 없다.**
     PathAbsent,
+}
+
+impl PendingReason {
+    /// 와이어 토큰 — **serde 와 같은 문자열이다.**
+    ///
+    /// 앞 판은 이 열거에 표시 함수가 없어서 `pal plan` 이 `{why:?}` 로 **Rust `Debug`**
+    /// 를 사람 화면에 그대로 찍었다(`pending (PathAbsent)`). 병기는 `pal-cli` 의
+    /// `label` 이 지고, 그 되짚기가 [`Self::ALL`] 을 지난다(독립 리뷰 R5 · 발견 4).
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::DeclaredNew => "declared-new",
+            Self::PathAbsent => "path-absent",
+        }
+    }
+
+    pub const ALL: [Self; 2] = [Self::DeclaredNew, Self::PathAbsent];
 }
 
 /// 왜 좌표로 안 좁혀졌나 — **`unmeasurable` 의 사유가 이것이다.**

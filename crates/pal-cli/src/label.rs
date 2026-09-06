@@ -114,6 +114,33 @@ pub fn 정체성_등급_병기(토큰: &str) -> String {
         .map_or_else(|| 토큰.to_owned(), |g| 정체성_등급(g).병기())
 }
 
+/// 계획 결박이 왜 아직 대기인가 — 둘.
+#[must_use]
+pub const fn 대기_사유(r: pal_core::PendingReason) -> Label {
+    match r {
+        pal_core::PendingReason::DeclaredNew => {
+            Label { 원_표기: "declared-new", 사용자_언어: "계획이 신규로 적었다" }
+        }
+        pal_core::PendingReason::PathAbsent => {
+            Label { 원_표기: "path-absent", 사용자_언어: "자리가 아직 없다" }
+        }
+    }
+}
+
+/// 계획 좌표가 왜 안 좁혀졌나 — 셋.
+#[must_use]
+pub const fn 미해소_사유(r: pal_core::UnresolvedWhy) -> Label {
+    match r {
+        pal_core::UnresolvedWhy::NotAtBaseline => {
+            Label { 원_표기: "not-at-baseline", 사용자_언어: "기준선에 없다" }
+        }
+        pal_core::UnresolvedWhy::Many => Label { 원_표기: "many", 사용자_언어: "여럿이다" },
+        pal_core::UnresolvedWhy::PatternTooBroad => {
+            Label { 원_표기: "pattern-too-broad", 사용자_언어: "패턴이 너무 넓다" }
+        }
+    }
+}
+
 /// 언어 추출 등급 다섯.
 ///
 /// 원 표기 `L0`~`L4` 는 영어가 아니라 **코드**라, [ADR-0033] §3 의 「같은 언어권이면
