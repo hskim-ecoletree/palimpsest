@@ -109,17 +109,20 @@
 |---|---|---|
 | `pal touch` · `pal query` · `pal symbols` · `pal export` · `pal doctor` · `pal ledger` | `C1`·`C2`·`C6` | 전부 그래프를 읽어 답한다 |
 | `pal bind` · `pal narrative` · `pal plan` · `pal defect` · `pal deviation` | `C1`·`C2`·`C6` | 좌표에 걸고 좌표로 조회한다 |
-| 스킬(`/round`) | **없음** | `pal` 을 40 번 부르는데 **전부 `pal round …`** — 회차 상태이지 그래프가 아니다 |
-| 에이전트 정의 13 개 | **없음** | `pal` 이 나오는 자리가 대부분 파일 이름이고, 능력을 소비하는 호출이 없다 |
-| 훅 | **없음** | 회차 상태 정책만 판정하고 그래프를 안 읽는다 |
+| 스킬(`/round`) | **없음** | `pal` 을 부르는 자리가 **여섯**이고 전부 `pal round …`(회차 상태)다. 그 밖에 `pal install` 이 두 번 나오는데 **호출이 아니라 산문 인용**이다(`SKILL.md:266`·`:881`) |
+| 에이전트 정의 13 개 | **없음** | `.claude/agents/*.md` 에서 `` `pal ` `` 로 시작하는 호출이 **0 건** |
+| 훅 | **없음** | `crates/pal-cli/src/hook.rs` 와 `hook/{catalog,policy}.rs` 셋에 `projection`·`symbol`·`graph`·`query` 가 **0 건**이고 `serde_json`·`std::io` 만 쓴다 |
 | `pal install`·`update`·`uninstall`·`hook`·`round`·`intent`·`cache` | **없음** | 설치와 회차 상태를 진다 |
 
 ### 예외의 크기와 그 뜻 — **축이 거짓인가**
 
-| 분모 | 「없음」 | 비율 |
-|---|---|---|
-| 하네스 표면 넷(스킬 · 에이전트 정의 · 훅 · `pal` CLI) | 셋 | **3/4** |
-| `pal` 상위 명령 18 | 일곱 | 7/18 |
+| 분모 | 「없음」 | 비율 | 분모를 어떻게 셌나 |
+|---|---|---|---|
+| 하네스 표면 넷(스킬 · 에이전트 정의 · 훅 · `pal` CLI) | 셋 | **3/4** | [ADR-0025 §3](../adr/0025-the-harness-that-reads-the-graph-is-the-same-product.md) 이 넷을 못 박았다 |
+| `pal` 상위 명령 18 | 일곱 | 7/18 | `pal --help` 가 **19** 를 내고 그중 `help` 는 명령이 아니다 |
+
+⚠ **`docs/gates/inventory-disposal.md:17` 은 같은 것을 17 로 헤아린다.** 그것은 2026-08-18 의
+수이고 그 뒤로 명령이 하나 늘었다 — 두 수가 갈린 것이 아니라 시점이 다르다.
 
 ★★ **축은 거짓이 아니다. 그러나 소유자가 고른 문장보다 좁다.**
 
