@@ -314,6 +314,28 @@ $ gh issue list --repo <그 저장소> --state all
 그 자리를 다음에 여는 사람이 이 절을 읽는다. 그리고 **어디에 추적 이슈를 세울지는
 소유자에게 올렸다**(`intent.md ## 개정` R5 의 승격).
 
+### `E4` — 설치와 되돌리기를 실제로 돌렸다
+
+```
+$ pal install                       # 빈 저장소에서
+  놓았다  .claude/agents/pal-debate-designer.md
+  놓았다  .claude/agents/pal-decision-proposer.md
+  놓았다  .claude/agents/pal-debate-referee.md
+  놓았다  .claude/agents/pal-debate-reporter.md
+  놓았다  .claude/agents/pal-condition-auditor.md
+  …
+  매니페스트  .claude/pal/manifest.json  ·  pal 0.0.0+47dbdd0ca195
+
+$ pal uninstall
+  지웠다  .claude/agents/  ·  .claude/commands/  ·  .claude/skills/  ·  .claude/
+$ ls -A
+.git  a.md                          ← 우리가 놓은 것이 하나도 안 남았다
+```
+
+**놓기와 되돌리기가 짝이다.** `PAYLOAD` 에만 더하고 `OWNED_FILES` 를 빠뜨리면 설치는
+되는데 `uninstall` 이 거부한다 — 그것을 잡는 자는 `xtask` 가 아니라 유닛 시험
+`놓는_것은_전부_되돌릴_수_있다` 다(`E6`).
+
 ### `G2` — 검출 수단이 실제로 발화하고 침묵한다
 
 ```
