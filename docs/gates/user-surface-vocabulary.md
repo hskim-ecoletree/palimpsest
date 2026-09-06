@@ -41,7 +41,7 @@
 | `C1-c` | `ResolutionGrade::name()` 에 병기를 얹어 왕복 시험 둘이 죽는 것을 봤다 | [`c1c-red.txt`](../../.palimpsest/rounds/2026-09-06-user-surface-vocabulary/observations/c1c-red.txt) |
 | `C2-a` | **처치 없이 첫 실행에서 발화했다** — `C2-b` 가 이름 댄 둘을 이미 고친 뒤였는데 셋째(`NearKind::name()`)가 남아 있었다 | [`c2a-red.txt`](../../.palimpsest/rounds/2026-09-06-user-surface-vocabulary/observations/c2a-red.txt) |
 | `D3-a` | `git clone` 사본에 `--root` 를 주고 한 `folded.md` 의 제목을 **양쪽 표기가 아닌 것**으로 바꿔 빨개지는 것을 봤다. 새 표기만 든 사본이 통과하는 것도 함께 봤다 | [`d3a-negative-control.txt`](../../.palimpsest/rounds/2026-09-06-user-surface-vocabulary/observations/d3a-negative-control.txt) |
-| `G2`·`G2-a` | 교정 전 HEAD 사본에서 **931곳**을 관측했다. 거기에 일곱 패턴을 한 줄씩 심어 939 가 되는 것도 봤다 | [`g2a-red.txt`](../../.palimpsest/rounds/2026-09-06-user-surface-vocabulary/observations/g2a-red.txt) |
+| `G2`·`G2-a` | 교정 전 HEAD 사본에서 **931곳**을 관측했다. 거기에 일곱 패턴을 한 줄씩 심어 939 가 되는 것도 봤다. ⚠ **그 뒤에 활용형이 넓어졌다** — 같은 사본을 넓힌 수단으로 다시 재면 1350 이다(`## 효과` 의 `G2`) | [`g2a-red.txt`](../../.palimpsest/rounds/2026-09-06-user-surface-vocabulary/observations/g2a-red.txt) |
 
 ### 음성 대조 — **판정기를 순수 함수로 떼고 시험으로 세웠다**
 
