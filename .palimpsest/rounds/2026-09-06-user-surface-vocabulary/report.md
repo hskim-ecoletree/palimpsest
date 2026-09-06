@@ -63,7 +63,32 @@
 push 는 마지막에 한 번만 한다(`cancel-in-progress: true`). 그 런의 결과는 **여기에
 관측으로 적는다** — 게이트 `## 판정` 은 그것을 「통과」로 미리 적지 않는다.
 
-PUSH_OBSERVATION
+```
+$ git push origin docs/overview-user-feedback
+   b165445..a61716c  docs/overview-user-feedback -> docs/overview-user-feedback
+
+$ gh run view 34006795577
+CI | pull_request | a61716c | completed success | 02:33:36Z → 02:39:11Z
+  놓는다 · ubuntu-latest    success      받는다 · ubuntu-latest → windows-latest  success
+  놓는다 · windows-latest   success      받는다 · windows-latest → ubuntu-latest  success
+  ubuntu-latest             success      macos-latest                            success
+  windows-latest            success
+```
+
+전문은 [`observations/h2-ci.txt`](observations/h2-ci.txt) 다.
+
+**푸시는 한 번이었다.** 55 커밋이 `b165445..a61716c` 로 한 번에 올라갔고, 착수 전에
+붙어 있던 유일한 런(`b165445` · 2026-09-05) 뒤로 이 브랜치의 두 번째 런이다.
+`cancel-in-progress: true` 라 두 번 밀면 앞 런이 죽는데, **그 일은 안 일어났다.**
+
+⚠ **그래도 `H2` 는 「미측정」으로 남는다.** 조건 문면이 *"회차의 **마지막 커밋** SHA 에
+`conclusion=success` 런이 붙는다"* 인데, **이 관측을 적는 커밋이 `a61716c` 뒤에 온다.**
+런이 붙은 것은 그 앞 커밋이다.
+
+`a61716c` 가 이 회차의 **산출 전부**를 담고 있고 이 커밋은 그 관측을 받아 적을 뿐이지만,
+「담고 있다」와 「그 SHA 에 런이 붙었다」는 다른 문장이다. 닫으려면 한 번 더 밀어야 하고
+그것은 소유자가 *"push 는 마지막에 한 번만"* 으로 잠근 것이라 **이 회차가 안 한다.**
+게이트 `## 판정` 도 `intent.md` 의 상자도 그래서 `H2` 를 「미측정」으로 둔다.
 
 ### 효과
 
