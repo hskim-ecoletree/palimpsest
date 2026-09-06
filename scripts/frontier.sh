@@ -28,7 +28,20 @@ deps=$(echo "$open" | cut -f1 | xargs -P 8 -I{} sh -c \
 
 join_dep() { echo "$deps" | awk -F'\t' -v n="$1" '$1==n {print $2}'; }
 
-ready=(); blocked=(); claimed=()
+# 순서표가 첫 항목으로 지목한 이슈. **번호를 여기 안 적는다** — 문서가 진다.
+#
+# 이 스크립트는 지금까지 열린 이슈를 전부 「착수 가능」으로 산출했다. 무엇이 먼저인지는
+# 저장소가 답하지 않았고, 그것이 회차 2026-09-06-terrain-and-completion-scene 을 연
+# 근거다. 이제 docs/plan/02-order.md 가 능력 실측에서 순서를 도출했고, 그 문서의
+# §4 가 첫 항목을 이슈 번호로 지목한다. 여기서는 그 번호를 읽기만 한다.
+ORDER_DOC="$(dirname "$0")/../docs/plan/02-order.md"
+first=""
+if [ -f "$ORDER_DOC" ]; then
+  first=$(grep -oE '순서표의 1 번은 이슈 \[#[0-9]+\]' "$ORDER_DOC" \
+          | grep -oE '#[0-9]+' | tr -d '#' | head -1) || true
+fi
+
+ready=(); blocked=(); claimed=(); head_line=""
 while IFS=$'\t' read -r num labels nassignee title; do
   [ -z "${num:-}" ] && continue
   b=$(join_dep "$num")
@@ -38,12 +51,17 @@ while IFS=$'\t' read -r num labels nassignee title; do
     blocked+=("  #$num  $title  ← 차단자 $b")
   elif [ "$nassignee" != "0" ]; then
     claimed+=("  #$num  $title  ← 이미 잡힘")
+  elif [ -n "$first" ] && [ "$num" = "$first" ]; then
+    head_line="  #$num  $title$mark  ← 순서표의 1 번"
   else
     ready+=("  #$num  $title$mark")
   fi
 done <<< "$open"
 
 echo "── 지금 착수 가능 ──────────────────────────────"
+if [ -n "$head_line" ]; then
+  printf '%s\n' "$head_line"
+fi
 printf '%s\n' "${ready[@]:-  (없다)}"
 
 if [ -n "${claimed[*]:-}" ]; then
@@ -59,5 +77,10 @@ if [ "$ALL" = "--all" ] && [ -n "${blocked[*]:-}" ]; then
 fi
 
 echo
-echo "열린 이슈 $(echo "$open" | wc -l | tr -d ' ')건 · 착수 가능 ${#ready[@]}건 · 교착 ${#blocked[@]}건"
+n_ready=${#ready[@]}
+[ -n "$head_line" ] && n_ready=$((n_ready + 1))
+echo "열린 이슈 $(echo "$open" | wc -l | tr -d ' ')건 · 착수 가능 ${n_ready}건 · 교착 ${#blocked[@]}건"
+if [ -z "$first" ]; then
+  echo "⚠ 순서표가 첫 항목을 안 댄다 — docs/plan/02-order.md §4 를 본다"
+fi
 echo "착수는 gh issue edit <번호> --add-assignee @me   (순서는 docs/plan/02-order.md · 완성 장면은 docs/plan/01-completion-scenes.md)"
