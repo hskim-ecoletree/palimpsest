@@ -82,5 +82,10 @@ n_ready=${#ready[@]}
 echo "열린 이슈 $(echo "$open" | wc -l | tr -d ' ')건 · 착수 가능 ${n_ready}건 · 교착 ${#blocked[@]}건"
 if [ -z "$first" ]; then
   echo "⚠ 순서표가 첫 항목을 안 댄다 — docs/plan/02-order.md §4 를 본다"
+elif [ -z "$head_line" ]; then
+  # ★ **번호를 대는데 그 이슈가 목록에 없으면 그것도 신호다** (독립 리뷰 R3).
+  #   앞 판은 이 자리에서 아무 말도 안 했다 — 첫 항목이 닫히거나 담당자가 붙는 순간
+  #   프론티어가 착수 전 상태(전부 평평)로 **조용히** 돌아갔다.
+  echo "⚠ 순서표의 첫 항목 #${first} 이 착수 가능 목록에 없다 — 닫혔거나 이미 잡혔다. docs/plan/02-order.md §4 를 다시 본다"
 fi
 echo "착수는 gh issue edit <번호> --add-assignee @me   (순서는 docs/plan/02-order.md · 완성 장면은 docs/plan/01-completion-scenes.md)"

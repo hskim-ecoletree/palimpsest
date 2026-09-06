@@ -1,0 +1,25 @@
+Kotlin 실측 — 「원리상 못 잰다」가 반증됐다 (독립 리뷰 R3 · 금지역)
+잰 날 2026-09-07 · HEAD d090e44
+
+== 앞 판이 적은 것 ==
+  02-order.md §1 「못 잰 것」 · report.md 「원리상 못 잰 것」
+  → "이 저장소에 .kt 파일이 0 개다. 코드 선언으로만 읽었고 돌려서 확인 못 했다"
+
+== 저장소 안의 .kt ==
+  find . -name '*.kt' -not -path './target/*' | wc -l → 0
+  → 앞 절반(파일이 0 개)은 참이다.
+
+== 뒤 절반은 거짓이다 — 돌려서 확인된다 ==
+  $ pal symbols <스크래치>/Sample.kt --graph
+    language = Kotlin · grade = l1
+    symbols  = [('Greeter', 'class'), ('main', 'function')]
+    contains = 0 · 참조 엣지는 안 만든다(L1)
+
+  그리고 이 회차가 E2 로 돌린 cargo test --workspace 가 Kotlin 을 이미 돌린다:
+    crates/pal-cli/tests/stitching.rs:108  kotlin_의_참조는_0_이_아니라_안_만듦이다
+    crates/pal-extract/src/cached.rs:158   kotlin_그래프가_왕복한다
+
+== 그래서 무엇이 참인가 ==
+  Kotlin 은 L1 로 선다 — 심볼과 등급이 나오고 참조는 원리상 안 만든다.
+  이 저장소 안에 .kt 가 없다는 것은 「이 저장소를 코퍼스로 삼아 못 잰다」이지
+  「그 능력을 원리상 못 잰다」가 아니다. 잔여가 경계의 외양을 입고 있었다.
