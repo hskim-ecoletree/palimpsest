@@ -77,21 +77,41 @@ pub enum ResidualReason {
 }
 
 impl ResidualReason {
-    /// 사람이 읽는 이름. **옛 DESIGN §8 의 낱말을 그대로 쓴다.**
+    /// 열하나가 전부 여기 있다. **하나라도 빠지면 되읽기가 조용히 실패한다.**
+    pub const ALL: [Self; 11] = [
+        Self::ViaUnresolvedRef,
+        Self::NoLabel,
+        Self::LanguageGradeBelow,
+        Self::ViaOutOfScopeRepo,
+        Self::DynamicDispatch,
+        Self::CandidateSetTooLarge,
+        Self::ObservationStale,
+        Self::VerificationCoverageBelow,
+        Self::SearchBudgetExceeded,
+        Self::CascadeBudgetExceeded,
+        Self::OutsideSample,
+    ];
+
+    /// 와이어 표기 — **serde 가 내는 `kebab-case` 와 같다.**
+    ///
+    /// ⚠ **한때 이것이 `label()` 이었고 한국어를 돌려줬다.** 그 값이 `Violation::subject`
+    /// 를 지나 `pal doctor` 화면과 `--json` 으로 나갔고, 같은 변형이 화면에서는
+    /// *"candidate 집합 과다"* · 와이어에서는 `candidate-set-too-large` 로 **두 낱말**이었다.
+    /// 독립 리뷰 R2 가 그것을 잡았다. **사람이 읽는 병기는 `pal-cli` 의 `label` 이 진다.**
     #[must_use]
-    pub const fn label(self) -> &'static str {
+    pub const fn name(self) -> &'static str {
         match self {
-            Self::ViaUnresolvedRef => "미해소 참조 경유",
-            Self::NoLabel => "라벨 없음",
-            Self::LanguageGradeBelow => "언어 등급 미달",
-            Self::ViaOutOfScopeRepo => "범위 밖 저장소 경유",
-            Self::DynamicDispatch => "동적 디스패치",
-            Self::CandidateSetTooLarge => "candidate 집합 과다",
-            Self::ObservationStale => "관측 낡음",
-            Self::VerificationCoverageBelow => "검증 커버리지 미달",
-            Self::SearchBudgetExceeded => "탐색 예산 초과",
-            Self::CascadeBudgetExceeded => "낡음 전파 예산 초과",
-            Self::OutsideSample => "표본 밖",
+            Self::ViaUnresolvedRef => "via-unresolved-ref",
+            Self::NoLabel => "no-label",
+            Self::LanguageGradeBelow => "language-grade-below",
+            Self::ViaOutOfScopeRepo => "via-out-of-scope-repo",
+            Self::DynamicDispatch => "dynamic-dispatch",
+            Self::CandidateSetTooLarge => "candidate-set-too-large",
+            Self::ObservationStale => "observation-stale",
+            Self::VerificationCoverageBelow => "verification-coverage-below",
+            Self::SearchBudgetExceeded => "search-budget-exceeded",
+            Self::CascadeBudgetExceeded => "cascade-budget-exceeded",
+            Self::OutsideSample => "outside-sample",
         }
     }
 }
@@ -207,7 +227,11 @@ mod tests {
     #[test]
     fn 사유_어휘가_사람이_읽는_이름을_진다() {
         // §8 의 낱말 그대로여야 사유별 정렬이 문서와 같은 어휘로 읽힌다.
-        assert_eq!(ResidualReason::CandidateSetTooLarge.label(), "candidate 집합 과다");
-        assert_eq!(ResidualReason::OutsideSample.label(), "표본 밖");
+        // **와이어 표기가 serde 와 같아야 한다** — 갈리면 화면과 `--json` 이 다른 낱말이 된다.
+        for r in [ResidualReason::CandidateSetTooLarge, ResidualReason::OutsideSample] {
+            let v = serde_json::to_value(r).expect("직렬화");
+            assert_eq!(r.name(), v.as_str().expect("문자열"));
+        }
+        assert_eq!(ResidualReason::CandidateSetTooLarge.name(), "candidate-set-too-large");
     }
 }

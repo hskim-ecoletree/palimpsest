@@ -396,7 +396,9 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
         println!("  없습니다. **`clean` 이 아닙니다** — 위 표의 모집단과 표본을 함께 읽으십시오.");
     } else {
         for v in &d.violations {
-            println!("  [{}] {}", v.invariant.number(), v.subject);
+            // `subject` 는 와이어 표기다(`Residual{via-unresolved-ref}` 꼴). 사람이
+            // 읽는 자리이므로 병기를 얹는다 — 독립 리뷰 R2 가 그것이 빠진 것을 잡았다.
+            println!("  [{}] {}", v.invariant.number(), 잔여_병기(&v.subject));
             println!("      {}", v.detail);
             if let Anchor::At(c) = &v.anchor {
                 println!("      {c}");
@@ -449,4 +451,19 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
         e.capabilities.not_built.iter().map(|c| c.feature).collect::<Vec<_>>().join(" · ")
     );
     println!();
+}
+
+/// `Residual{via-unresolved-ref}` 꼴의 `subject` 에 병기를 얹는다.
+///
+/// 위반 주체는 와이어 표기로 만들어진다(`pal-core` 의 `ResidualReason::name`). 사람이
+/// 읽는 화면이므로 여기서 사용자 언어를 붙인다 — 독립 리뷰 R2 가 그것이 빠진 것을 잡았다.
+/// 잔여가 아닌 주체는 그대로 돌려준다.
+fn 잔여_병기(subject: &str) -> String {
+    let Some(안) = subject.strip_prefix("Residual{").and_then(|s| s.strip_suffix('}')) else {
+        return subject.to_owned();
+    };
+    let Some(r) = pal_core::ResidualReason::ALL.into_iter().find(|r| r.name() == 안) else {
+        return subject.to_owned();
+    };
+    format!("Residual{{{}}}", crate::label::잔여_사유(r).병기())
 }

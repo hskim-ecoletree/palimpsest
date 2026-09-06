@@ -837,7 +837,7 @@ fn check_vocabulary(root: &Path) -> Result<String> {
 ///
 /// # 무엇이 대상이고 무엇이 아닌가 — 문면 그대로 걸면 사용자 데이터를 금지한다
 ///
-/// 대상은 **enum·토큰 필드의 값**이다: `fn name(` 이 돌려주는 문자열 리터럴과
+/// 대상은 **enum·토큰 필드의 값**이다: `fn name(`·`fn label(` 이 돌려주는 문자열 리터럴과
 /// `#[serde(rename = …)]` · `#[serde(tag = …)]` · `#[serde(rename_all = …)]`.
 /// **자유 본문 필드는 대상 밖이다** — 실측: `.palimpsest/intent/bindings.jsonl` 에서
 /// 한국어가 든 필드는 사용자가 손으로 쓴 `.note` 뿐이고, 「JSON 에 한국어 금지」를
@@ -898,7 +898,11 @@ fn 한국어가_든_기계_토큰(text: &str) -> (Vec<(usize, String)>, usize) {
         };
         let serde_속성 = code.contains("#[serde(")
             && (code.contains("rename") || code.contains("tag ") || code.contains("tag="));
-        if !안에 && code.contains("fn name(") {
+        // ★ **`fn label(` 도 본다.** 한때 `ResidualReason::label()` 이 한국어 열하나를
+        //   돌려줬고 그 값이 `Violation::subject` 를 지나 화면과 `--json` 으로 나갔다 —
+        //   같은 변형이 두 낱말이었다(독립 리뷰 R2). 이름이 `name` 이든 `label` 이든
+        //   **`&'static str` 을 돌려주는 표시 함수**는 같은 자를 받는다.
+        if !안에 && (code.contains("fn name(") || code.contains("fn label(")) {
             안에 = true;
             깊이 = 0;
         }

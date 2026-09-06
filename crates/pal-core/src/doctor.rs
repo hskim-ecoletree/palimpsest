@@ -2,7 +2,7 @@
 //!
 //! # 재구축 등가성 검사가 말하지 않는 것
 //!
-//! 계획의 상시 검사 열하나와 오라클 넷은 전부 *빌드·재구축·회귀*에 대한 것이다.
+//! 계획의 상시 검사 열하나와 판정 명령 넷은 전부 *빌드·재구축·회귀*에 대한 것이다.
 //! 재구축 등가성은 *"두 번 만들면 같은가"* 를 말할 뿐 **"지금 이 그래프가 정합한가"** 를
 //! 말하지 않는다 — 손상 · 부분 갱신 · 스키마 진화 · 중단된 트랜잭션은 그 검사를
 //! **통과한다.**
@@ -845,7 +845,7 @@ impl<'a> Context<'a> {
                 found += 1;
                 violations.push(Violation {
                     invariant: InvariantId::ResidualAnchored,
-                    subject: format!("Residual{{{}}}", r.reason.label()),
+                    subject: format!("Residual{{{}}}", r.reason.name()),
                     anchor: Anchor::At(r.bound_to()[0].clone()),
                     detail: format!(
                         "결박 좌표가 이 그래프에 없다 — {} · 잔여가 유령이 된다",

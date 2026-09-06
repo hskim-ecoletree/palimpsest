@@ -17,7 +17,9 @@
 //!
 //! # 무엇이 막히고 무엇이 안 막히나 — **둘을 갈라 적는다**
 //!
-//! **②는 구조가 막는다.** `pal-core` 는 이 모듈을 볼 수 없으므로 여기 있는 문자열이
+//! **②는 구조가 막는다** — 다만 넷 중 `schema::Cardinality` 는 `parse` 가 `pub` 이 아니라
+//! 그 모듈 밖에서 못 부른다. 그래서 그 하나는 `schema.rs` 자기 시험 모듈이 잰다.
+//! `pal-core` 는 이 모듈을 볼 수 없으므로 여기 있는 문자열이
 //! `parse` 의 열쇠가 되는 경로에 닿을 길이 없다. `pal-query` 의 `watch_grades` 도 같다 —
 //! 그 크레이트도 `pal-cli` 를 못 본다.
 //!
@@ -152,9 +154,8 @@ pub const fn 판정_불가_사유(r: UndeterminableReason) -> Label {
 
 /// 판정하지 못한 사유 열하나 — `pal doctor` 가 찍는다.
 ///
-/// `ResidualReason::label()` 은 한국어만 돌려준다. serde 는 `kebab-case` 로 영어를 내므로
-/// 화면과 `--json` 이 다른 낱말이었다 — [ADR-0033] §3 이 그 둘을 눈으로 대조하게 하려면
-/// 화면이 원 표기를 함께 보여야 한다.
+/// `ResidualReason::name()` 은 와이어 표기만 돌려준다. serde 도 `kebab-case` 라
+/// 화면이 원 표기를 함께 보여야 사람이 그 둘을 눈으로 대조한다([ADR-0033] §3).
 #[must_use]
 pub const fn 잔여_사유(r: ResidualReason) -> Label {
     match r {
@@ -222,13 +223,13 @@ mod tests {
         for r in UndeterminableReason::ALL {
             assert_eq!(판정_불가_사유(r).원_표기, r.name());
         }
-        // `ResidualReason` 은 `name()` 이 없다 — serde 의 `kebab-case` 가 정본이다.
         for r in [
             ResidualReason::ViaUnresolvedRef,
             ResidualReason::NoLabel,
             ResidualReason::OutsideSample,
             ResidualReason::CandidateSetTooLarge,
         ] {
+            assert_eq!(잔여_사유(r).원_표기, r.name());
             let v = serde_json::to_value(r).expect("직렬화");
             assert_eq!(잔여_사유(r).원_표기, v.as_str().expect("문자열"));
         }
