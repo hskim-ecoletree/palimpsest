@@ -45,7 +45,7 @@ use pal_core::{Bucket, CodeFreshness, ExtractGrade, IdentityGrade, NearKind, Res
 pub struct Label {
     /// 정본. `pal-core` 의 토큰과 **글자까지 같다.**
     pub 원_표기: &'static str,
-    /// 사용자 언어. **여기서만 산다** — 직렬화 경로에 닿지 않는다.
+    /// 사용자 언어. **여기에만 있다** — 직렬화 경로에 닿지 않는다.
     pub 사용자_언어: &'static str,
 }
 
@@ -59,7 +59,7 @@ impl Label {
 
 /// 코드 신선도 넷. **[ADR-0033] §4 의 표가 정본이다.**
 ///
-/// 원 표기는 `CodeFreshness` 의 serde 태그(`freshness`)가 내는 값과 같다 —
+/// 원 표기는 `CodeFreshness` 의 serde 태그(`freshness`)가 산출하는 값과 같다 —
 /// 아래 `토큰이_serde_와_같다` 가 그 같음을 잰다.
 #[must_use]
 pub const fn 신선도(c: &CodeFreshness) -> Label {
@@ -73,7 +73,7 @@ pub const fn 신선도(c: &CodeFreshness) -> Label {
     }
 }
 
-/// `pal ledger` 가 내는 7개의 파일 상태.
+/// `pal ledger` 가 산출하는 7개의 파일 상태.
 #[must_use]
 pub const fn 파일_상태(b: Bucket) -> Label {
     match b {
@@ -101,6 +101,19 @@ pub const fn 정체성_등급(g: IdentityGrade) -> Label {
     }
 }
 
+/// 토큰으로 온 정체성 등급을 병기한다 — **되짚기가 실패하면 원문을 그대로 돌려준다.**
+///
+/// `pal-query` 의 `watch_grades` 는 키가 [`IdentityGrade::name`] 의 토큰이라 화면에
+/// 그대로 찍히면 `ordinal` 이 병기 없이 나간다(독립 리뷰 R4 · 발견 3). 되짚기는
+/// [`IdentityGrade::ALL`] 을 지나므로 열거가 늘면 여기도 함께 는다.
+#[must_use]
+pub fn 정체성_등급_병기(토큰: &str) -> String {
+    pal_core::IdentityGrade::ALL
+        .into_iter()
+        .find(|g| g.name() == 토큰)
+        .map_or_else(|| 토큰.to_owned(), |g| 정체성_등급(g).병기())
+}
+
 /// 언어 추출 등급 다섯.
 ///
 /// 원 표기 `L0`~`L4` 는 영어가 아니라 **코드**라, [ADR-0033] §3 의 「같은 언어권이면
@@ -119,7 +132,7 @@ pub const fn 추출_등급(g: ExtractGrade) -> Label {
 /// 「이것을 뜻했습니까」의 가까움 갈래 둘.
 ///
 /// `NearKind::name()` 은 착수 시점에 「표기」·「부분」을 돌려주고 있었다 — `C2-a` 의
-/// 검사가 찾은 셋째 위반이다(`C2-b` 는 둘만 셌다). 그 값은 serde 가 내는
+/// 검사가 찾은 셋째 위반이다(`C2-b` 는 둘만 셌다). 그 값은 serde 가 산출하는
 /// `spelling`·`substring` 과 갈려 있었고, 그래서 같은 값이 화면과 `--json` 에서 다른
 /// 낱말로 나갔다.
 #[must_use]
@@ -235,7 +248,7 @@ mod tests {
         }
     }
 
-    /// 신선도만 `name()` 이 없으므로 **serde 가 내는 태그와 직접 대조한다.**
+    /// 신선도만 `name()` 이 없으므로 **serde 가 산출하는 태그와 직접 대조한다.**
     #[test]
     fn 신선도_토큰이_serde_와_같다() {
         let 값 = [

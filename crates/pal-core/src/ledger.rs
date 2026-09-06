@@ -106,6 +106,13 @@ impl IdentityGrade {
             Self::Exact => "exact",
         }
     }
+
+    /// 세 변형 전부. **토큰 → 변형** 되짚기를 여는 자리다.
+    ///
+    /// `BindingReport::watch_grades` 의 키는 [`Self::name`] 이 산출한 토큰인데, 사람 화면은
+    /// 그 토큰을 병기해야 한다(`C1`). 되짚기가 없으면 `pal-cli` 가 문자열을 손으로
+    /// 짝지어야 하고 **그 짝이 여기와 갈리는 순간 아무도 안 잰다.**
+    pub const ALL: [Self; 3] = [Self::Unavailable, Self::Ordinal, Self::Exact];
 }
 
 /// 제외 규칙의 식별자. **필수다.**

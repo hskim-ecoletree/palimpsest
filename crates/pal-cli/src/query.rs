@@ -210,7 +210,7 @@ fn 이탈(
 
 /// `--list` — **답하는 것과 아직 못 만든 것을 함께 싣는다.**
 ///
-/// # 왜 둘을 함께 내는가
+/// # 왜 둘을 함께 산출하는가
 ///
 /// 카탈로그가 **여섯만** 담는다(`[f06].catalog_scope_decision`). 문서 §3 의 표는 26 인데
 /// 이 빌드가 답하는 것은 여섯이고, 목록이 여섯만 보이면 소비자가 *"이것이 이 제품의
@@ -377,7 +377,7 @@ fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::Det
         let 등급 = b
             .watch_grades
             .iter()
-            .map(|(g, n)| format!("{g} {n}"))
+            .map(|(g, n)| format!("{} {n}", crate::label::정체성_등급_병기(g)))
             .collect::<Vec<_>>()
             .join(" · ");
         println!("      반경 {} · 감시 {} 개 · 등급 {{{등급}}}", b.radius, b.watch);
@@ -390,7 +390,7 @@ fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::Det
     println!("  **반경 밖의 변경은 여기 안 뜹니다** — 거짓 음성은 원리적으로 안 닫힙니다.");
     println!("  선언된 반경이 위에 적혀 있고, 그것이 이 도구가 할 수 있는 전부입니다.");
     println!();
-    // **낡음을 재는 자의 낡음**(옛 F09 §5). 안 적으면 낡은 감지기가 낸 `fresh` 가
+    // **낡음을 재는 자의 낡음**(옛 F09 §5). 안 적으면 낡은 감지기가 산출한 `fresh` 가
     // 지금의 `fresh` 로 읽힌다.
     println!("  감지기  문법 {} · 추출기 {}", detector.grammar, detector.extractor);
     if !detector.matches_head {

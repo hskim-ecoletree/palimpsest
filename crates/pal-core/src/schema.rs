@@ -591,6 +591,45 @@ impl GraphSchema {
 }
 
 #[cfg(test)]
+mod 왕복_파서를_진_표시_함수 {
+    use super::Cardinality;
+
+    /// `name()` 이 동시에 `parse` 의 열쇠인 넷째 자리. **다른 셋은 `graph.rs` 가 잰다.**
+    ///
+    /// # 왜 여기 있나
+    ///
+    /// `Cardinality::parse` 는 `pub` 이 아니라 이 모듈 밖에서 못 부른다. 그래서
+    /// `graph.rs` 의 같은 이름 모듈이 이 자리를 못 덮었고, `C1-b` 가 이름 댄 넷 중
+    /// 셋만 재고 있었다(독립 리뷰 R3 · 발견 15).
+    ///
+    /// # 무엇을 막나
+    ///
+    /// `name()` 에 병기를 얹으면 `parse` 가 [`None`] 을 돌려주는데 그 반환형이
+    /// [`Option`] 이라 **아무 검사도 안 잡는다** — 스키마 로딩이 조용히 죽는다.
+    #[test]
+    fn 네_변형이_자기_토큰으로_되돌아온다() {
+        for c in [
+            Cardinality::OneToOne,
+            Cardinality::ManyToOne,
+            Cardinality::OneToMany,
+            Cardinality::ManyToMany,
+        ] {
+            assert_eq!(Cardinality::parse(c.name()), Some(c), "{} 이 안 돌아왔다", c.name());
+        }
+    }
+
+    /// 음성 대조 — **병기가 얹히면 이 시험이 빨개진다는 것을 여기서 보인다.**
+    ///
+    /// 「없는 토큰은 `None`」만 재면 병기를 얹어도 초록이다. 재는 것은
+    /// **표시 문자열이 파서의 열쇠와 같은가** 이므로, 병기 꼴을 직접 넣어 댄다.
+    #[test]
+    fn 병기가_얹힌_꼴은_파서를_못_지난다() {
+        assert_eq!(Cardinality::parse("일대일(one-to-one)"), None);
+        assert_eq!(Cardinality::parse("one-to-one "), None);
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
