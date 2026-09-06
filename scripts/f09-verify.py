@@ -506,7 +506,7 @@ def 판정_불가(tmp: Path) -> None:
 
     # ★ **`ordinal` 이 판정 불가로 안 뭉개졌다는 증거다.**
     if 등급.get("ordinal", 0) > 0 and 비율 > 90:
-        fail("⑥ ordinal", f"ordinal 이 {등급['ordinal']}개인데 판정 불가가 {비율}% 다 — 접혔다")
+        fail("⑥ ordinal", f"ordinal 이 {등급['ordinal']}개인데 판정 불가가 {비율}% 다 — 뭉개졌다")
     elif 등급.get("ordinal", 0) > 0:
         ok("⑥ ★ ordinal 을 안 뭉갰다",
            f"ordinal 감시 원소 {등급['ordinal']}개인데 판정 불가 {비율}% — 비교가 돌았다")

@@ -2,7 +2,7 @@
 
 > 브랜치 `round/agent-laziness` · PR [#91](https://github.com/hskim-ecoletree/palimpsest/pull/91) OPEN
 >
-> ★★ **진행 중인 회차가 없다.** 마지막 회차는 **접혔다**.
+> ★★ **진행 중인 회차가 없다.** 마지막 회차는 **철회됐다**.
 > 이 문서는 **결론을 안 준다** — 어디를 읽고 무엇을 돌릴지만 준다.
 
 ---

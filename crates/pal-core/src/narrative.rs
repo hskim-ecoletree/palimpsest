@@ -685,7 +685,7 @@ mod tests {
         // 「여럿이라 못 좁혔다」와 「신호가 없다」는 다른 답이고, 뭉개면 작업 목록에
         // **이미 후보가 있는 것**이 섞인다(`[f10.pass]` ⑤의 반대 방향).
         let Classification::Candidates { by, candidates } = resolve(&f, &t) else {
-            panic!("스팬 동점이 「후보 있음」이 아니다 — 미결박으로 접혔다");
+            panic!("스팬 동점이 「후보 있음」이 아니다 — 미결박으로 뭉개졌다");
         };
         assert_eq!(by, ResolutionSignal::Span);
         assert_eq!(candidates.len(), 2);
@@ -727,7 +727,7 @@ mod tests {
         );
         // 더 강한 `fenced-path` 가 둘을 냈고 **거기서 멈춘다** — 스팬으로 안 내려간다.
         let Classification::Candidates { by, candidates } = resolve(&f, &t) else {
-            panic!("동점이 확정되거나 미결박으로 접혔다");
+            panic!("동점이 확정되거나 미결박으로 뭉개졌다");
         };
         assert_eq!(by, ResolutionSignal::FencedPath);
         assert_eq!(candidates.len(), 2);

@@ -531,7 +531,7 @@ fn 모은다(
     out: &mut Vec<MarkedComment>,
 ) {
     let mut cursor = node.walk();
-    // **앞 그룹에 삼켜진 주석은 다시 안 본다.** 접기가 없던 판은 자식마다 독립이었다.
+    // **앞 그룹에 삼켜진 주석은 다시 안 본다.** 합치기가 없던 판은 자식마다 독립이었다.
     let mut 소비된_끝 = 0usize;
     for child in node.named_children(&mut cursor) {
         if child.kind().contains("comment") {
@@ -617,7 +617,7 @@ fn 다음_선언(comment: Node<'_>, source: &[u8], wrappers: &[&str]) -> Option<
 ///
 /// tree-sitter-rust 는 `///` 를 `(line_comment (outer_doc_comment_marker) (doc_comment))`
 /// 로 산출한다. Kotlin·TypeScript 의 주석은 평평한 `comment` 라 이 자식이 없다 —
-/// 그래서 **아래 접기가 두 언어에 구조적으로 안 닿는다.**
+/// 그래서 **아래 합치기가 두 언어에 구조적으로 안 닿는다.**
 fn doc_주석인가(node: Node<'_>) -> bool {
     node.child_by_field_name("doc").is_some()
 }
@@ -631,14 +631,14 @@ fn doc_주석인가(node: Node<'_>) -> bool {
 /// 주석이 **조각 3 개**가 되고, 같은 심볼에 같은 뜻의 결박이 3 건 생긴다 —
 /// 수가 부풀고 그 수가 종료 조건의 근거가 된다(#66 사전부검 R1).
 ///
-/// ⚠ **`doc_comment` 자식이 있는 것끼리만 합친다.** 공용 수집기에 무조건 접기를
+/// ⚠ **`doc_comment` 자식이 있는 것끼리만 합친다.** 공용 수집기에 무조건 합치기를
 /// 넣으면 TypeScript 의 `//` 연속이 함께 접혀 **단위시험이 빨개지고 ditto 표식이
 /// 330 → 327 로 준다**(사전부검 R2 실측) — 등록된 금지역 「두 언어 회귀」다.
 ///
 /// ⚠ **빈 줄 판정에 [`사이에_빈_줄`] 을 쓰면 안 된다.** tree-sitter 의
 /// `line_comment` 는 **끝의 줄바꿈을 마디 안에 담는다** — 그러면 `end_byte` 와
 /// 다음 마디의 `start_byte` 사이에 `\n` 이 **하나만** 남아 빈 줄이 안 잡힌다.
-/// (실측: `/// A` · 빈 줄 · `/// B` 가 한 조각으로 접혔다.)
+/// (실측: `/// A` · 빈 줄 · `/// B` 가 한 조각으로 합쳐졌다.)
 /// **줄 번호로 본다** — `line_comment` 는 한 줄짜리라 시작 행이 정확한 자다.
 fn 이어지는_doc<'t>(first: Node<'t>, _source: &[u8]) -> Node<'t> {
     let mut last = first;
@@ -866,19 +866,19 @@ mod marked_comment_tests {
     }
 
     #[test]
-    fn 빈_줄이_doc_접기를_끊는다() {
-        // 접기가 빈 줄을 넘으면 서로 다른 선언의 주석이 한 조각이 된다.
+    fn 빈_줄이_doc_합치기를_끊는다() {
+        // 합치기가 빈 줄을 넘으면 서로 다른 선언의 주석이 한 조각이 된다.
         let c = rs("/// @decision: 앞\n\n/// @decision: 뒤\nfn f() {}");
-        assert_eq!(c.len(), 2, "빈 줄을 넘어 접혔다");
+        assert_eq!(c.len(), 2, "빈 줄을 넘어 합쳐졌다");
     }
 
     #[test]
-    fn 접기가_다른_두_언어에_안_닿는다() {
+    fn 합치기가_다른_두_언어에_안_닿는다() {
         // ★ **등록된 금지역 「기존 두 언어 회귀」의 단위 시험이다.**
         // `doc_comment` 자식은 tree-sitter-rust 고유 마디라 TS·Kotlin 의 연속
         // 주석은 뭉개지면 안 된다 — 뭉개지면 ditto 표식이 330 에서 준다.
         let c = ts("// @decision: 첫 줄\n// @decision: 둘째 줄\nexport class C {}");
-        assert_eq!(c.len(), 2, "TypeScript 주석이 접혔다");
+        assert_eq!(c.len(), 2, "TypeScript 주석이 합쳐졌다");
     }
 
     #[test]

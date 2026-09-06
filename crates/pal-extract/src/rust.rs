@@ -446,7 +446,7 @@ mod tests {
             .find(|c| 이름(c.child) == "nested")
             .map(|c| c.parent.0)
             .expect("nested 가 안 붙었다");
-        assert_ne!(top_부모, nested_부모, "동명 타입 둘이 한 컨테이너로 접혔다");
+        assert_ne!(top_부모, nested_부모, "동명 타입 둘이 한 컨테이너로 뭉개졌다");
     }
 
     #[test]

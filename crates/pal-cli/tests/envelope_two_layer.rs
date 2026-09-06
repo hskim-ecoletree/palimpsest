@@ -65,7 +65,7 @@ fn 계획_문서(repo: &Path) -> PathBuf {
     repo.with_extension("plan.md")
 }
 
-/// **하한** — 능력 목록이 이보다 짧으면 「안 접혔다」가 공짜로 통과한다.
+/// **하한** — 능력 목록이 이보다 짧으면 「안 이관됐다」가 공짜로 통과한다.
 const 최소_능력: usize = 6;
 
 /// 심볼이 많은 저장소 — **토큰 단조를 재려면 답의 크기가 크게 갈려야 한다.**
@@ -187,7 +187,7 @@ fn 능력_목록은_안_뭉개진다() {
             assert!(!not_built.is_empty(), "`{name}` {extra:?} 에서 미구축이 비었다");
             // 이관한 자리에 능력이 오면 실패 — 타입이 막지만 산출에서 다시 헤아린다.
             for f in v["fold"]["folded"].as_array().expect("folded") {
-                assert_ne!(f["what"].as_str(), Some("capabilities"), "능력이 접혔다");
+                assert_ne!(f["what"].as_str(), Some("capabilities"), "능력이 이관됐다");
             }
         }
     }

@@ -280,7 +280,7 @@ impl FoldedPart {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Folded {
     pub what: FoldedPart,
-    /// **몇 건이 옮겨졌는가.** *"접혔다"* 가 아니라 *"몇 건이 접혔다"* 여야 크기를 안다.
+    /// **몇 건이 옮겨졌는가.** *"이관됐다"* 가 아니라 *"몇 건이 이관됐다"* 여야 크기를 안다.
     pub count: usize,
     /// 어느 질의가 그것을 펴는가. **문자열이 아니라 이름이다** — 오타가 새 질의가 되면
     /// 소비자가 못 펴고, 그것은 [`QueryName`] 이 열린 문자열이 아닌 이유와 같다.
