@@ -116,7 +116,11 @@
 
 ## 범위 밖
 
-- **`docs/adr/**` · `docs/gates/**` · `docs/instructions/**` · `docs/research/**` · `corpus/**`** — 그 시점의 기록이거나 합격선 정본이다.
+- **`docs/adr/**` · `docs/gates/**` · `docs/instructions/**` · `corpus/**`** — 그 시점의 기록이거나 합격선 정본이다.
+  ⚠ **`docs/research/**` 는 여기 없다.** `G1` 의 정반합 판정이 그것을 **대상에 넣었다** —
+  `docs/plan/disposal-map.md`·`docs/agents/domain.md`·`crates/pal-core/src/derived.rs` 가
+  그것을 **살아 있는 참조**로 인용하기 때문이다. 이 절이 한때 그것을 동결로 적었고,
+  그래서 20곳이 「0곳」으로 집계됐다(독립 리뷰 R1 · 발견 5 · 금지역).
 - **`.palimpsest/rounds/**` 의 지난 회차 기록** — 인용과 잡아 둔 출력이다. §3 의 별칭이 그것을 안 건드리고도 검사가 서게 한다.
 - **개발자만 읽는 「오라클」** — `scripts/*.py` 와 시험 주석의 「바깥 오라클」은 검증 분야의 표준 용어이고 사용자 표면이 아니다. §2 가 가른 것은 **사용자 화면에 나가는 자리**다.
 - **`Fold`·`Elision`·`Envelope` 타입 이름** — 영어가 정본이므로 안 바꾼다.

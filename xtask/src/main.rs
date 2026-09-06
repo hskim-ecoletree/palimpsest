@@ -854,6 +854,11 @@ fn check_machine_tokens(root: &Path) -> Result<String> {
     let mut hits = Vec::new();
     let mut 잰_리터럴 = 0usize;
     let mut 잰_파일 = 0usize;
+    // ★ **모집단이 세 크레이트다.** 도메인 타입과 그 직렬화가 거기 있다.
+    //   ⚠ **밖에도 기계 토큰이 있다** — `crates/pal-intent/src/round_condition.rs` 의
+    //   `#[serde(rename = "통과"/"반증"/…)]`. 그것은 **게이트 파서의 계약**이라 한국어가
+    //   정본이다(`record.py` 의 `판정값` 과 바이트로 같아야 한다). 여기 넣으면 그 계약을
+    //   금지하는 검사가 된다. 한정 근거가 어디에도 없던 것을 독립 리뷰 R1 이 잡았다.
     for dir in ["crates/pal-core/src", "crates/pal-query/src", "crates/pal-store/src"] {
         for file in rust_sources(&root.join(dir))? {
             let text = std::fs::read_to_string(&file)?;
@@ -4506,6 +4511,26 @@ const 교정_뿌리: &[&str] = &[
     ".claude", "crates", "xtask", "docs", "schema", "surface", "scripts", ".github",
 ];
 
+/// 동결 — 그때의 기록이거나 합격선 정본이다. **저장소 뿌리에서 잰 상대 경로**다.
+///
+/// ⚠ **디렉터리 이름으로 가르지 않는다.** `adr` 라는 이름의 디렉터리가 `crates/` 어디에
+/// 생겨도 조용히 대상 밖이 되는 것을 막는다(독립 리뷰 R1 · 발견 15).
+///
+/// ⚠⚠ **`docs/research` 는 여기 없다.** `G1` 의 정반합 판정이 그것을 **대상에 넣었다** —
+/// *"`docs/research/**` 를 동결로 빼지 않는다 — `disposal-map.md`·`domain.md`·`derived.rs`
+/// 가 그것을 **살아 있는 참조**로 인용한다"*(`g1-synthesis.md`). 한때 이 목록에 있었고,
+/// 그래서 **20곳이 「0곳」으로 집계됐다**(독립 리뷰 R1 · 발견 1 · 금지역).
+const 동결_경로: &[&str] = &["docs/adr", "docs/gates", "docs/instructions", "corpus", "target"];
+
+/// 이 회차의 **종결 문서**는 대상이다 — 「이 회차의 종결 문서부터는 교정 표기로 쓴다」.
+///
+/// 위 뿌리에는 `.palimpsest` 가 없고 `docs/gates` 는 동결이라, 그 규칙을 재는 자리가
+/// 원리상 없었다(독립 리뷰 R1 · 발견 4).
+const 이_회차_종결문서: &[&str] = &[
+    ".palimpsest/rounds/2026-09-06-user-surface-vocabulary/report.md",
+    "docs/gates/user-surface-vocabulary.md",
+];
+
 /// **검출 수단 자신은 대상 밖이다.** 이 파일의 패턴 표와 시험 픽스처가 바로 그 낱말들을
 /// 지고 있어서, 안 가르면 검사가 자기를 잡고 원리상 초록에 못 닿는다.
 ///
@@ -4519,7 +4544,13 @@ fn check_awkward_phrases(root: &Path) -> Result<String> {
     let mut 잰_줄 = 0usize;
     let mut 파일들: Vec<PathBuf> = Vec::new();
     for 뿌리 in 교정_뿌리 {
-        모으기(&root.join(뿌리), &mut 파일들)?;
+        모으기(root, &root.join(뿌리), &mut 파일들)?;
+    }
+    for 종결 in 이_회차_종결문서 {
+        let p = root.join(종결);
+        if p.is_file() {
+            파일들.push(p);
+        }
     }
     // 루트 `*.md` 도 대상이다.
     for e in std::fs::read_dir(root)? {
@@ -4531,12 +4562,16 @@ fn check_awkward_phrases(root: &Path) -> Result<String> {
     for f in 파일들 {
         let Ok(text) = std::fs::read_to_string(&f) else { continue };
         잰_파일 += 1;
+        // ★★ **표지는 이 파일에서만 듣는다.** 전역으로 들으면 대상 안 어느 파일이든
+        //   표지 한 줄로 통째로 검출에서 빠진다 — 독립 리뷰 R1(발견 9 · 금지역)이
+        //   격리 사본의 `AGENTS.md` 로 그것을 실측했다.
+        let 표지를_듣는다 = 상대_경로(root, &f) == "xtask/src/main.rs";
         let mut 제외_안 = false;
         for (n, line) in text.lines().enumerate() {
-            if line.contains(자기_제외.0) {
+            if 표지를_듣는다 && line.contains(자기_제외.0) {
                 제외_안 = true;
             }
-            if line.contains(자기_제외.1) {
+            if 표지를_듣는다 && line.contains(자기_제외.1) {
                 제외_안 = false;
                 continue;
             }
@@ -4597,19 +4632,18 @@ const fn 한글인가(c: char) -> bool {
     matches!(c, '\u{AC00}'..='\u{D7A3}')
 }
 
-fn 모으기(dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+fn 모으기(root: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
     if !dir.is_dir() {
         return Ok(());
     }
     for e in std::fs::read_dir(dir)? {
         let p = e?.path();
         if p.is_dir() {
-            let name = p.file_name().and_then(|x| x.to_str()).unwrap_or("");
-            // 동결 — 그때의 기록이거나 합격선 정본이다.
-            if matches!(name, "adr" | "gates" | "instructions" | "research" | "target") {
+            let 상대 = 상대_경로(root, &p);
+            if 동결_경로.iter().any(|f| 상대 == *f) {
                 continue;
             }
-            모으기(&p, out)?;
+            모으기(root, &p, out)?;
         } else if p.extension().and_then(|x| x.to_str()).is_some_and(|e| {
             matches!(e, "md" | "rs" | "py" | "sh" | "toml" | "yml")
         }) {
