@@ -59,5 +59,5 @@ if [ "$ALL" = "--all" ] && [ -n "${blocked[*]:-}" ]; then
 fi
 
 echo
-echo "열린 이슈 $(echo "$open" | wc -l | tr -d ' ')건 · 착수 가능 ${#ready[@]}건 · 막힘 ${#blocked[@]}건"
+echo "열린 이슈 $(echo "$open" | wc -l | tr -d ' ')건 · 착수 가능 ${#ready[@]}건 · 교착 ${#blocked[@]}건"
 echo "착수는 gh issue edit <번호> --add-assignee @me   (지형은 ⏳ 비었다 — docs/plan/disposal-map.md)"
