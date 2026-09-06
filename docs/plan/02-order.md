@@ -77,7 +77,7 @@
 | Kotlin 을 **이 저장소를 코퍼스로 삼아** 재는 것 | **이 저장소에 `.kt` 파일이 0 개다.** ⚠ 「원리상 못 잰다」는 **거짓이었다**(독립 리뷰 R3 · 금지역) — 저장소 밖 파일 하나로 돌리면 `language=Kotlin · grade=l1 · 심볼 둘`이 나오고, 이 회차가 `E2` 로 돌린 시험에 Kotlin 이 둘 있다. 실측은 [`observations/kotlin-measured.txt`](../../.palimpsest/rounds/2026-09-06-terrain-and-completion-scene/observations/kotlin-measured.txt) |
 | `C3`·`C4`·`C5` 의 「부분적으로 있다」 | **원리상 못 잰다** — 노드 타입·질의·명령 어디에도 짝이 없어서 낮은 값이 아니라 **부재**다 |
 | 규모 선형성 | 시간이 모자랐다. 같은 저장소를 복제해 재는 절차를 안 돌렸다. ⚠ **이것은 경계가 아니라 잔여다** — 돌릴 수 있었다. 이슈 [#128] 로 세웠다(독립 리뷰 R4) |
-| `narrative.unbound` | 실행이 실패한다 — *"읽기로 연 의도 저장소에 쓰려 했다"*. 이미 결함으로 등록된 자리라 더 안 팠다 |
+| `narrative.unbound` | 실행이 실패한다 — *"읽기로 연 의도 저장소에 쓰려 했다"*. ⚠ 앞 판은 *"이미 결함으로 등록된 자리"* 라 적었는데 **그 등록이 없었다**(독립 리뷰 R5 · 금지역). 이슈 [#129] 로 세웠다 — 경계가 아니라 잔여다 |
 
 ---
 
@@ -379,3 +379,4 @@
 
 [#125]: https://github.com/hskim-ecoletree/palimpsest/issues/125
 [#128]: https://github.com/hskim-ecoletree/palimpsest/issues/128
+[#129]: https://github.com/hskim-ecoletree/palimpsest/issues/129
