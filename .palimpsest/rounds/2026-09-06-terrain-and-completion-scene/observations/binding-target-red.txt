@@ -1,0 +1,27 @@
+착수 시점 관측 — 결박이 문서 좌표에 서는가
+커밋 7c41b81 · 2026-09-06
+
+$ cargo run -q -p pal-cli -- bind "AGENTS.md" --note "…" --radius symbol
+Error: `AGENTS.md` 을 이 스냅샷에서 찾지 못했다 — `pal touch AGENTS.md` 이 근거를 산출한다
+
+$ cargo run -q -p pal-cli -- bind --help | head -5
+조각 하나를 좌표에 손으로 건다 — **사람이 넣는 자리**
+Usage: pal bind [OPTIONS] --note <NOTE> <NAME>
+Arguments:
+  <NAME>  심볼 이름
+
+무엇을 관측했나
+---------------
+NEXT-B-plan-for-harness.md 가 초석 후보로 적은 것 — "이 회차의 결정을 결박할
+노드 타입이 없다" — 은 지금 문면 그대로는 참이 아니다. 코어가 다섯을 이미
+등록한다(crates/pal-core/src/entity.rs:261-265): decision · plan · label ·
+residual · scope-reduction. 그리고 schema/graph.toml:78 의 node.Binding 이
+subject 를 entity_id 로 진다.
+
+공백은 주체가 아니라 **대상**에 있다. pal bind 는 NAME 을 심볼 이름으로만
+받고, 반경 files:<경로,…> 는 지켜볼 범위이지 결박이 서는 자리가 아니다.
+그래서 결정을 문서·절차 좌표에 걸 수 없다.
+
+이 관측이 정정하는 것
+---------------------
+"노드 타입이 없다" → "결박의 대상이 심볼로 한정돼 있다"
