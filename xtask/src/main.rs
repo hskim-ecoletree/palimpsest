@@ -4646,15 +4646,25 @@ const 동결_경로: &[&str] = &["docs/adr", "docs/gates", "docs/instructions", 
 /// 열릴 때마다 그 두 줄을 손으로 바꿔야 하고, **안 바꾸면 새 회차의 종결 문서가 어느
 /// 검사에도 안 든다** — 앞 회차가 세운 장치가 다음 회차를 여는 순간 죽은 가지가 된다.
 ///
-/// ★ **「원장 둘 대조」가 이미 쓰는 선택자를 그대로 쓴다** — 끝난 회차(종료 보고가 있는
-/// 회차) 중 가장 최근 것을 고르고, 게이트는 **본문에 그 회차 슬러그가 든 것**을 찾는다.
+/// ★★ **하나를 고르지 않는다 — 하한 이후에 끝난 회차를 전부 잰다.** (정정 2026-09-07 ·
+/// 독립 리뷰 R1 · 금지역)
 ///
-/// ⚠ **진행 중 회차를 고르는 데 사전순을 쓰면 안 된다**(`check_ledger_pair` 의 C7 이
-/// 그것을 반증했다 — 같은 날짜에 여는 다음 회차의 슬러그가 앞서면 새 회차가 거짓 실패한다).
-/// **여기는 그 위험이 없다** — 종료 보고가 **있는** 것만 고르므로 아직 안 끝난 회차는
-/// 애초에 후보가 아니다.
+/// 앞 판은 *"끝난 회차 중 가장 최근 것"* 을 **사전순 최대**로 골랐고, 그 자리에
+/// *"여기는 그 위험이 없다 — 종료 보고가 있는 것만 고르므로"* 라고 적었다. **그 선언이
+/// 거짓이었다.** 같은 날짜의 형제 회차가 사전순으로 뒤에 서면 **먼저 끝난 회차가 영영 안
+/// 뽑힌다** — `2026-09-06-terrain-and-completion-scene` 의 종결 문서가
+/// `…-user-surface-vocabulary` 에 가려 한 번도 안 재어졌다. 장래 회차의 슬러그는 전부
+/// 사전순으로 뒤에 서므로 **회복되지도 않는다.** 그것이 이 회차가 세운 장치 안에서 다시
+/// 난 「측정이 죽은 가지」다.
+///
+/// **하한은 `docs/gates/README.md` 의 선언이 지고**(「어색한 표현 교정 적용」), 게이트는
+/// 이름 규칙이 아니라 **본문이 그 회차를 대는지**로 찾는다. 회차 이름 상수는 여전히 없다.
 fn 이_회차_종결문서(root: &Path) -> Vec<PathBuf> {
     let 뿌리 = root.join(회차_뿌리);
+    // 하한은 선언이 진다. 못 읽으면 대상이 비고, 그러면 검사가 「모집단이 비면 실패」로 잡는다.
+    let Ok((_, 하한)) = 선언_목록(root, "어색한 표현 교정 적용", true) else {
+        return Vec::new();
+    };
     let mut 회차들: Vec<String> = match std::fs::read_dir(&뿌리) {
         Ok(it) => it
             .filter_map(|e| e.ok())
@@ -4664,14 +4674,19 @@ fn 이_회차_종결문서(root: &Path) -> Vec<PathBuf> {
         Err(_) => return Vec::new(),
     };
     회차들.sort();
-    let Some(최근) = 회차들
-        .iter()
-        .rev()
-        .find(|회차| 뿌리.join(회차).join("report.md").is_file())
-    else {
+    // 회차 이름이 `YYYY-MM-DD-…` 이므로 문자열 비교로 하한을 판별한다.
+    let 대상: Vec<String> = 회차들
+        .into_iter()
+        .filter(|회차| 회차.as_str() >= 하한.as_str())
+        .filter(|회차| 뿌리.join(회차).join("report.md").is_file())
+        .collect();
+    if 대상.is_empty() {
         return Vec::new();
-    };
-    let mut out = vec![뿌리.join(최근).join("report.md")];
+    }
+    let mut out: Vec<PathBuf> = 대상
+        .iter()
+        .map(|회차| 뿌리.join(회차).join("report.md"))
+        .collect();
     // 게이트는 이름 규칙이 아니라 **본문이 그 회차를 대는지**로 찾는다.
     if let Ok(it) = std::fs::read_dir(root.join(게이트_뿌리)) {
         for e in it.filter_map(|e| e.ok()) {
@@ -4679,7 +4694,8 @@ fn 이_회차_종결문서(root: &Path) -> Vec<PathBuf> {
             if p.extension().and_then(|x| x.to_str()) != Some("md") {
                 continue;
             }
-            if std::fs::read_to_string(&p).is_ok_and(|t| t.contains(최근.as_str())) {
+            let Ok(본문) = std::fs::read_to_string(&p) else { continue };
+            if 대상.iter().any(|회차| 본문.contains(회차.as_str())) {
                 out.push(p);
             }
         }
