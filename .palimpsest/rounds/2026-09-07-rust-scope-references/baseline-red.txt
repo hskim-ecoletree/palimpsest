@@ -1,0 +1,42 @@
+=== 착수 시점 관측 · a7740537a9275a6b7017e5699d61665ce015e8f1 · 2026-09-07T13:32:13Z ===
+--- pal export --format cypher | REFERENCES ---
+CREATE (:Symbol {id: "14592af40ee1ca792caf83a4e04cb06d08d3b9267d2c8e4ae529940b8e0c0177", name: "깨진_것은_미스가_아니라_사건이고_바이트가_남는다", kind: "fun", path: "crates/pal-store/src/cache.rs", line_start: 691, identity: "ordinal"});
+CREATE (:Symbol {id: "16f063fd912c5719d6b2c20ef26f605ba8a245649382397310c227c75dba8761", name: "디렉터리_패턴은_그_아래를_건다", kind: "fun", path: "crates/pal-core/src/glob.rs", line_start: 243, identity: "ordinal"});
+CREATE (:Symbol {id: "22d715a81aad95ec94b3e10cad58d72ef3da93c943e6ad4b3d2c9d08531b2c6c", name: "우리만_있던_사건_자리는_통째로_사라진다", kind: "fun", path: "crates/pal-cli/src/install/hooks.rs", line_start: 1001, identity: "ordinal"});
+CREATE (:Symbol {id: "2901e09ec6013ef4b39728566ba2e864211656a550051fdeda6d95ab55fc78d5", name: "우리_사건이_아니면_보지도_않는다", kind: "fun", path: "crates/pal-cli/src/hook/policy.rs", line_start: 121, identity: "ordinal"});
+CREATE (:Symbol {id: "333e6c6387b71b348a52ed391e014353c19687f70507bffc51cc6d134a9f1706", name: "감시_원소가_사라진_것과_대상이_사라진_것은_다른_사건이다", kind: "fun", path: "crates/pal-core/src/binding.rs", line_start: 943, identity: "ordinal"});
+CREATE (:Symbol {id: "3c9fb3b316a6fb62f2d794f75c2bd0f89907aca511d9626afaeb7203e03faa19", name: "손으로_건_것은_승격이_아니다", kind: "fun", path: "crates/pal-core/src/binding.rs", line_start: 1104, identity: "ordinal"});
+CREATE (:Symbol {id: "444b145ef8c91f3a865c6f12aad2f5d57bc20278113a3a7ee7d20459b054c059", name: "갱신이_옛_형태를_빼고_새_형태를_건다", kind: "fun", path: "crates/pal-cli/src/install/hooks.rs", line_start: 890, identity: "ordinal"});
+CREATE (:Symbol {id: "642ef6fa7bccb286f6875f28515039b24a1064e1763a34a51d339ac38505c21c", name: "읽기만_하는_명령이_의도_저장소를_안_건드린다", kind: "fun", path: "crates/pal-cli/tests/intent_jsonl.rs", line_start: 121, identity: "ordinal"});
+CREATE (:Symbol {id: "647ad52054708d6f444930516a2d04275d445d1d4f4a5874f27b14b3aa8d8aab", name: "세_경로_어디서도_대상_바깥을_안_건드린다", kind: "fun", path: "crates/pal-cli/tests/install_stays_inside.rs", line_start: 171, identity: "ordinal"});
+CREATE (:Symbol {id: "6de582be33432551c7c1d53c7f9e1efddcaba08c04446878ec653dbbc3f2abd9", name: "하위_gitattributes_는_자기_아래에만_건다", kind: "fun", path: "crates/pal-core/src/attributes.rs", line_start: 213, identity: "ordinal"});
+CREATE (:Symbol {id: "75fc72a4efcf4179887aeb4ff7620487e2b16d7ae5650c87bf60d0de08843bad", name: "멈출_때_대기열에_남은_것이_건수에_들어간다", kind: "fun", path: "crates/pal-core/src/traverse.rs", line_start: 254, identity: "ordinal"});
+CREATE (:Symbol {id: "7a6f409e40595ad244a933ab8a8b13d68232c096f397b76f9f28e22f97cac725", name: "진단도_대상_바깥을_안_건드린다", kind: "fun", path: "crates/pal-cli/tests/install_stays_inside.rs", line_start: 204, identity: "ordinal"});
+CREATE (:Symbol {id: "b00b12c453a5f185fa289c1163100f6569a41cc048726de284e3b9b9b7f51099", name: "축출은_격리_방과_임시_파일을_건드리지_않는다", kind: "fun", path: "crates/pal-store/src/cache.rs", line_start: 766, identity: "ordinal"});
+CREATE (:Symbol {id: "b32ae200eb835b90c7f32ed4c0c80debddb0a73bca7dc0ce7cb54e6cf57b2f52", name: "이관과_생략이_같은_사건을_두_번_세지_않는다", kind: "fun", path: "crates/pal-cli/tests/envelope_two_layer.rs", line_start: 234, identity: "ordinal"});
+CREATE (:Symbol {id: "b4bc2419d659fa91fab8cd2d35a64ce1662ed57d0610e5a8bc6af9d2212d71fd", name: "속성을_건너뛰고_선언에_붙는다", kind: "fun", path: "crates/pal-extract/src/parse.rs", line_start: 846, identity: "ordinal"});
+CREATE (:Symbol {id: "b8457e98e915938a1030b309a58adc56492b060bce50284b36146bf0e9988e60", name: "실행된_현재_negative_control없이는_주조건도_met이_아니다", kind: "fun", path: "crates/pal-cli/tests/round_approve_verify.rs", line_start: 751, identity: "ordinal"});
+CREATE (:Symbol {id: "b97c40a33e10d47ca7289163c41eadc99c2ecde596012b6cba7ebf9d85c9ec60", name: "자른_것에는_사유와_건수가_붙는다", kind: "fun", path: "crates/pal-core/src/envelope.rs", line_start: 623, identity: "ordinal"});
+CREATE (:Symbol {id: "c5a84c6a838eb89594eabae84f744d0384023dea6904733249f66b469f643ab6", name: "건다", kind: "fun", path: "crates/pal-cli/src/install/hooks.rs", line_start: 722, identity: "ordinal"});
+CREATE (:Symbol {id: "cc9cc7da75f48b4f3c06f4c73f64beb137bc2d83a0202c11f8263772378d12d3", name: "예산이_넉넉하면_한_건도_안_지운다", kind: "fun", path: "crates/pal-store/src/cache.rs", line_start: 735, identity: "ordinal"});
+CREATE (:Symbol {id: "d2795716cd1ce9ca45b704e7b61a6886d3554267345fbe9aac6e731eb75b5a53", name: "관측_0_건에서_여섯이_전부_답한다", kind: "fun", path: "crates/pal-cli/tests/host_free.rs", line_start: 186, identity: "ordinal"});
+CREATE (:Symbol {id: "d44934f8716e207a1df5b111f8b95281d56c4544704c7372c48771e4a997bbae", name: "건너뛴다", kind: "const", path: "crates/pal-extract/src/parse.rs", line_start: 590, identity: "ordinal"});
+CREATE (:Symbol {id: "da46add9c6a359b38315342c6c30957df5e0b138975417b766d860848e2e208d", name: "주석_수집이_요약을_안_건드린다", kind: "fun", path: "crates/pal-extract/src/parse.rs", line_start: 910, identity: "ordinal"});
+CREATE (:Symbol {id: "e67ec350212b7e8f08e6fc0cfb8f40fbf36587af934855d87407c51591fc8a9a", name: "절대_안_건드리나", kind: "fun", path: "crates/pal-cli/src/install/layout.rs", line_start: 314, identity: "ordinal"});
+CREATE (:Symbol {id: "ef519d3a04dc6bf160884c945a80b0c734a6d11885505493d51cf1ac8dcceeb1", name: "뺀_신호의_날것은_아무것도_안_건다", kind: "fun", path: "crates/pal-core/src/narrative.rs", line_start: 761, identity: "ordinal"});
+CREATE (:Symbol {id: "f49d2e98fa330799982c7cbf2878880c367ee12ad07831aa9c69f92ebabf87a5", name: "깨진_소스도_건진다", kind: "fun", path: "crates/pal-extract/src/typescript.rs", line_start: 1098, identity: "ordinal"});
+CREATE (:Symbol {id: "fd96f227167e9390fe16c789b361bfdd0949d21c09a94c4160a624cd11973fc4", name: "매니페스트가_적은_안의_남의_블록을_안_건드린다", kind: "fun", path: "crates/pal-cli/tests/install_hostile.rs", line_start: 366, identity: "ordinal"});
+MATCH (a:Symbol {id: "6c805b04496f87c7de1de269ccbe24270ab391f9b32f4504becc0dcf3dbd5644"}), (b:Symbol {id: "8c54eae804845aab0c6c4612eb8cb2ceb4ff9060040970ada85b572936ea7d5f"}) CREATE (a)-[:REFERENCES]->(b);
+MATCH (a:Symbol {id: "8c54eae804845aab0c6c4612eb8cb2ceb4ff9060040970ada85b572936ea7d5f"}), (b:Symbol {id: "8c54eae804845aab0c6c4612eb8cb2ceb4ff9060040970ada85b572936ea7d5f"}) CREATE (a)-[:REFERENCES]->(b);
+MATCH (a:Symbol {id: "d6923e19f53aa0adc2055f3b2d36eea5f9af206bd255097532ba233b1e8154cd"}), (b:Symbol {id: "7583337cae3a75dbef0300028d6bd62a8c14eb6b35802784ceefa0e7f39e184a"}) CREATE (a)-[:REFERENCES]->(b);
+            File           135건
+            Symbol         3110건
+            REFERENCES     3건
+--- Rust 파일 수 ---
+     134
+--- pal touch 호출자 칸 (Rust 심볼) ---
+■ 이 심볼이 하는 것
+  호출자 0 · 피호출자 0
+  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
+■ 내가 모르는 것
+  (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
