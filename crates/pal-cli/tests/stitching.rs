@@ -79,7 +79,16 @@ fn 파일_내_엣지가_스코프_해소와_일치한다() {
     assert!(c.top_level > 0, "최상위 참조를 하나도 안 셌다");
     assert!(c.unresolved > 0, "파일 밖 참조를 하나도 안 셌다");
     assert!(c.before_declaration > 0, "TDZ 를 하나도 안 셌다");
-    assert_eq!(c.total(), c.declarations + c.edges + c.locals + c.top_level + c.unresolved + c.before_declaration);
+    assert_eq!(
+        c.total(),
+        c.declarations
+            + c.edges
+            + c.locals
+            + c.top_level
+            + c.unresolved
+            + c.before_declaration
+            + c.ambiguous
+    );
 
     // ── 두 방향의 행 수가 같다 ─────────────────────────────────────────────
     let 정 = p.edge_count().expect("정방향");

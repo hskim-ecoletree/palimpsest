@@ -127,7 +127,7 @@ pub use rebind::{
 pub use repo::{Digest, ObjectName, RepoAlias, RepoId, RepoPath, Snapshot, TreeRef};
 pub use scope::{
     BoundSymbol, LocalRef, Namespace, RefResolution, Scope, ScopeBinding, ScopeChain, ScopeIx,
-    ScopeKind, ScopeParent,
+    ResolveRule, ScopeKind, ScopeParent,
 };
 pub use slot::{ShellMismatch, Slot};
 pub use symbol::{Span, Symbol, SymbolKind};

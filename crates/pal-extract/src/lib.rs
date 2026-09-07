@@ -15,8 +15,10 @@ mod parse;
 mod plan;
 mod recognize;
 mod rust;
+mod rust_scopes;
 mod scopes;
 mod shell;
+mod ts_scopes;
 mod typescript;
 
 use pal_core::{Capable, ExtractorVersion, Language, Symbol};
@@ -31,6 +33,15 @@ pub use parse::{ExtractError, MarkedComment, marked_comments};
 pub use plan::ingest_plan;
 pub use recognize::{Recognition, recognize};
 pub use rust::RustExtractor;
+// **변형 대조 전용 표면** — `--example scope_variants` 하나가 부른다.
+//
+// ★ 이것이 이 회차가 세운 **장치**다(규약 §11 ③ (나) · 소유자가 대가를 보고 골랐다).
+// 추출기 자신은 `RustScopeRules::기준` 만 쓰고, 다른 조합은 「그 규칙을 끄면 산출이
+// 달라지는가」를 재는 자리에서만 만들어진다. 이 표면이 없으면 완수 증인이 없다.
+#[doc(hidden)]
+pub use rust::extract_with as rust_extract_with;
+#[doc(hidden)]
+pub use rust_scopes::RustScopeRules;
 pub use shell::{FIRST_CLASS, GraphShell, capability_axis, shell_of};
 pub use typescript::TypeScriptExtractor;
 
@@ -107,8 +118,29 @@ pub const GRAMMAR_REV: &str = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e";
 /// 옛 F03 §3.1 이 *"승급은 관측되는 사건이다 — 조용히 바꾸면 전 결박이 이유 없이 `stale`
 /// 이 된다"* 라고 적은 그 자리다.
 ///
+/// # `f03-2` → `f02-rust-scope` (2026-09-08 · #130)
+///
+/// 다섯째다. **모양이 둘 바뀌었다.**
+///
+/// - Rust 추출기가 `scopes`·`imports`·`exports` 를 `Capable::Present` 로 산출한다 —
+///   `FileGraph` 의 세 자리가 `not_built` 에서 값으로 바뀐다
+/// - `ScopeKind` 에 `Impl` 이, `RefResolution` 에 `Ambiguous` 가 붙었다
+///
+/// 안 올리면 **옛 항목을 새 스키마로 읽으려다 실패한다** — 첫 승급 때 실제로 관측된
+/// 형태다. 능력 축(`shell.rs`)이 캐시 키에 있어 Rust 항목은 어차피 미스가 되지만,
+/// **`ScopeKind`·`RefResolution` 의 모양 변화는 TypeScript 항목에도 걸린다.**
+/// 그래서 언어별이 아니라 이 축 하나를 올린다.
+///
+/// ⚠ **`body_digest` 는 안 움직인다.** Rust 심볼의 `identity` 는 여전히 `Ordinal` 이라
+/// 정규화가 지역 이름을 안 지운다 — 결박 25 건이 `fresh` 그대로여야 한다(`C2`).
+/// 움직이면 이 회차의 전제가 무너진 것이다.
+///
+/// ⚠ **2층 행의 모양도 함께 바뀌었다** — `RefCounts` 에 `ambiguous` 가 붙었다.
+/// 그 행은 postcard 로 자리 기반 직렬화라 **옛 2층 행은 다시 세워야 한다**(`pal index`).
+/// 이 축은 1층 캐시 키에만 들어가므로 2층은 재적재가 답이고, 그 사실을 여기 적는다.
+///
 /// [`FileOutcome`]: crate::FileOutcome
-pub const EXTRACTOR_REV: &str = "f03-2";
+pub const EXTRACTOR_REV: &str = "f02-rust-scope";
 
 #[must_use]
 pub const fn version() -> ExtractorVersion {

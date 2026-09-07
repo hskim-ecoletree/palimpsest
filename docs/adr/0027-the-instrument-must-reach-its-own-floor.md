@@ -1,6 +1,7 @@
 # ADR-0027 — **자를 자기 바닥에 닿게 한다.** Rust 가 다섯째 1급이다
 
-**상태**: 채택 (2026-08-20) · [#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) 종료 시점에 발행 ·
+**상태**: 채택 (2026-08-20) · **§② 개정 (2026-09-08 · 아래 「개정」 절)** ·
+[#66](https://github.com/hskim-ecoletree/palimpsest/issues/66) 종료 시점에 발행 ·
 근거 [소유자 지시 2026-08-20](../instructions/2026-08-20-owner-direction.md) ·
 [소유자 지시 2026-08-12 §1](../instructions/2026-08-12-owner-direction.md) 을 갱신 ·
 [ADR-0017](0017-an-instrument-that-cannot-reach-the-floor-is-not-an-empty-population.md) ·
@@ -134,5 +135,45 @@ Rust 만 다르게 하려면 **문법이 이미 가른 것**을 쓰면 된다:
 | L2(스코프 해소)까지 | 금지역 둘을 이 회차가 지고 가야 하고, `ScopeKind`·`Namespace` 는 1층 캐시에 실려 되돌리기가 비싸다 |
 | `impl` 을 심볼로 내서 컨테이너를 붙임 | 손 표본 규칙 ①을 뒤집는 일이고, 그 표본은 코드보다 **먼저** 커밋됐다 — 뒤집는 것이 곧 「표본을 결과에 맞추는 것」이다 |
 
+---
+
+## 개정 — 2026-09-08 · §② 의 「금지역 둘」이 되살아났다 ([#130])
+
+> 회차 `2026-09-07-rust-scope-references` 가 Rust 스코프 체인을 세웠다.
+> **§② 의 본문은 안 고친다** — 그때의 판단이 사실이고, 사후에 지우면 무엇이 왜
+> 뒤집혔는지가 사라진다. 이 절이 그 위에 얹힌다.
+
+### 무엇이 바뀌었나
+
+§② 는 *"`impl`·`mod` 안의 표식을 잡는 데 필요한 것은 순회이지 스코프 체인이 아니다"*
+라고 적었고 **그 문장은 지금도 참이다.** 바뀐 것은 **왜 스코프 체인이 필요한가**다 —
+표식이 아니라 **역방향 참조 색인**([00-goals](../plan/00-goals.md) §0.1 (d) 나비효과
+방지)이 그것을 요구했다. 그 요구는 이 ADR 이 쓰일 때 프론티어에 없었다.
+
+**등급 글자는 안 바뀌었다** — `grade_of(Rust)` 는 여전히 `L1` 이고 시험이 잠근다.
+그래서 §② 의 *"대가는 적는다"* 문단(Rust 심볼의 `identity` 가 전부 `Ordinal`)도 그대로다.
+
+### 금지역 둘을 어떻게 다루나
+
+| §② 가 등록한 금지역 | 지금 |
+|---|---|
+| Rust 의 shadowing 이 `ScopeChain::resolve` 의 **「가장 앞선 것」 팔을 상시 경로로** 만드는 것 | **그 팔을 안 쓴다.** `ResolveRule::Shadowing` 이 **보이는 것 중 가장 뒤**를 고른다. 「가장 앞선 것」은 `ResolveRule::Tdz`(TypeScript) 전용으로 남았고 두 규칙은 시험으로 갈린다 |
+| `Namespace` 가 둘뿐이라 Rust 의 **매크로 이름 공간**을 못 담는 것 | **남아 있다.** 다만 이 저장소에서 모집단이 **0** 이다 — `macro_rules!` 이름과 동명인 `fn`/`mod`/`struct`/`const` 가 하나도 없다(사전부검 R2 전수 대조). **0 은 「없다」가 아니라 「이 코퍼스에서 안 걸린다」다.** 승격은 [#133] 이 진다 |
+
+### 새로 지는 것
+
+`ScopeKind` 에 `Impl` 이, `RefResolution` 에 `Ambiguous` 가 붙었다. §② 의 대안 표가
+*"`ScopeKind`·`Namespace` 는 1층 캐시에 실려 되돌리기가 비싸다"* 로 적은 대가가
+**실제로 발생했고 소유자가 그것을 보고 골랐다**(승격 2026-09-07). 치른 방식은
+`EXTRACTOR_REV` 승급 하나이고, 1층 캐시가 한 번 전량 미스가 됐다.
+
+`Ambiguous` 는 §② 가 예상하지 않은 자리다 — `cfg` 쌍둥이(`#[cfg(unix)]`/`#[cfg(windows)]`
+가 같은 이름을 두 번 선언한다)에서 **하나를 고르면 그것이 조용한 오답**이라 해소하지
+않는다. `stitch_of` 가 EXPORTS 에서 이미 하던 것과 같은 판단이다.
+
+판정: [docs/gates/rust-scope-references.md](../gates/rust-scope-references.md)
+
+[#130]: https://github.com/hskim-ecoletree/palimpsest/issues/130
+[#133]: https://github.com/hskim-ecoletree/palimpsest/issues/133
 [ADR-0004]: 0004-cache-key-covers-every-input-that-decides-the-output.md
 [ADR-0024]: 0024-an-adapter-that-can-diverge-is-a-second-core.md

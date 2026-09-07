@@ -43,7 +43,23 @@ pub enum ScopeKind {
     /// 함수 본문 — **파라미터가 여기 산다.** `var` 와 함수 선언이 여기까지 끌어올려진다.
     Function,
     /// 클래스 본문 — 타입 파라미터와 멤버. 멤버 해소(L2c)는 **F07 이고 P1 에서도 안 한다**.
+    ///
+    /// ⚠ **TypeScript 의 `class` 다.** Rust 의 `impl` 을 여기 얹지 않는다 — 그러면 1층
+    /// 캐시에 실리는 이 값의 뜻이 언어마다 갈린다(사전부검 R2). Rust 는 [`ScopeKind::Impl`].
     Class,
+    /// `impl` 블록 하나 — **Rust 전용.**
+    ///
+    /// # 왜 [`ScopeKind::Class`] 를 재사용하지 않는가
+    ///
+    /// `impl A { fn new(){} }` 와 `impl B { fn new(){} }` 의 두 `new` 는 **서로 다른
+    /// 스코프에 서야 한다.** 안 그러면 [`ScopeChain::resolve`] 가 둘째 `new` 의 선언
+    /// 이름을 첫째로 해소하고, 그것이 그대로 가짜 REFERENCES 엣지가 된다(실측: 이
+    /// 저장소 `.rs` 134 파일에서 동명 재선언 **72 건** · 파일 22).
+    ///
+    /// 이름을 갈라 두는 까닭은 **뜻이 다르기 때문**이다. `Class` 는 *"타입 파라미터와
+    /// 멤버를 담는 자리"* 이고 `Impl` 은 *"한 타입에 붙인 구현 하나"* 다. 한 파일에
+    /// 여럿 서고, 서로를 못 본다.
+    Impl,
     /// 중괄호 하나. `let`·`const`·`class` 가 여기 갇히고 `var` 는 안 갇힌다.
     ///
     /// **이름이 `Block` 이 아니다** — `block` 이 `pal-core` 의 금지어다(모듈 주석).
@@ -131,8 +147,9 @@ pub struct LocalRef {
 
 /// 이름 하나가 어디로 해소됐나.
 ///
-/// **셋을 가르는 것이 이 타입의 전부다.** 뭉개면 *"파일 밖의 이름"*(정상)과
-/// *"선언 전 참조"*(TDZ)가 같은 출력이 되고, 그러면 해소율이 무엇을 세는지 알 수 없다.
+/// **넷을 가르는 것이 이 타입의 전부다.** 뭉개면 *"파일 밖의 이름"*(정상)과
+/// *"선언 전 참조"*(TDZ)와 *"후보가 둘이라 안 고른다"*(모호)가 같은 출력이 되고,
+/// 그러면 해소율이 무엇을 세는지 알 수 없다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum RefResolution {
@@ -147,12 +164,57 @@ pub enum RefResolution {
     ///
     /// **해소하지 않는 것이 옳다.** 해소해 버리면 스코프 체인이 아니라 이름 표다.
     BeforeDeclaration,
+    /// 같은 스코프에 그 이름의 선언이 **둘 이상**이고 자리로 못 가른다.
+    ///
+    /// # 하나를 고르면 그것이 조용한 오답이다
+    ///
+    /// Rust 의 `cfg` 쌍둥이가 실물이다 — `#[cfg(unix)] fn spawn_child` 와
+    /// `#[cfg(windows)] fn spawn_child` 가 같은 파일 같은 스코프에 함께 놓인다. 추출기는
+    /// `cfg` 를 해석하지 않으므로(그것이 결정이다) **어느 쪽인지 모른다.**
+    ///
+    /// 같은 저장소가 EXPORTS 에서 이미 그렇게 한다 — `stitch_of` 가
+    /// *"둘 이상이면 담지 않는다 — 하나를 고르면 그것이 조용한 오답이다"*.
+    /// 여기서 고르면 Windows 에서 도는 코드가 unix 선언을 가리키는 엣지가 나온다.
+    ///
+    /// **[`Self::OutsideFile`] 과 뭉개지 않는다** — 저쪽은 *"이 파일에 없다"* 이고
+    /// 이쪽은 *"이 파일에 너무 많다"* 다. 뭉개면 F07 이 풀 수 있는 것과 원리상 못 푸는
+    /// 것이 한 숫자가 된다.
+    Ambiguous,
+}
+
+/// 이름 하나를 어느 규칙으로 찾는가 — **언어마다 다르다.**
+///
+/// # 왜 규칙이 값인가
+///
+/// 뼈대는 하나이고([`ScopeChain`]) 그 위의 규칙이 언어마다 갈린다. 규칙을 코드에 박으면
+/// 뒤에 온 언어가 앞 언어의 규칙을 조용히 물려받는다 — 실측: Rust 가 TypeScript 의 TDZ
+/// 방어를 그대로 받으면 비함수 스코프의 전방 참조 **52 건**이 「선언 전 참조」로 뒤집힌다.
+/// Rust 아이템에는 TDZ 가 없다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ResolveRule {
+    /// **TypeScript.** 같은 스코프의 동명 선언 중 가장 앞선 것 · TDZ 가 있고 바깥으로
+    /// 안 나간다 · 함수 경계를 지나면 자리를 비교하지 않는다.
+    Tdz,
+    /// **Rust.** 섀도잉이 관용이라 **보이는 것 중 가장 뒤**를 쓴다 · TDZ 가 없어 아직
+    /// 안 선 이름은 바깥에서 찾는다 · 자리로 못 가르는 동명 아이템이 둘이면
+    /// [`RefResolution::Ambiguous`].
+    Shadowing,
 }
 
 /// 파일 하나의 스코프 체인.
 ///
-/// **`scopes[0]` 이 모듈 스코프다.** 비어 있는 체인은 만들지 않는다 — 파일이 있으면
-/// 모듈 스코프는 있다.
+/// **`scopes[0]` 이 파일의 모듈 스코프다.** 비어 있는 체인은 만들지 않는다 — 파일이
+/// 있으면 모듈 스코프는 있다.
+///
+/// ⚠ **`Module` 인 스코프가 하나라는 뜻은 아니다.** Rust 의 중첩 `mod` 가 각각
+/// [`ScopeKind::Module`] 을 연다(2026-09-08 · #130). `scopes[0]` 이 **뿌리**라는 것만
+/// 불변이고, 그것은 [`ScopeParent::Root`] 가 진다.
+///
+/// # 언어마다 다른 것은 규칙이지 이 타입이 아니다
+///
+/// 이 타입은 *"어느 스코프에 어떤 이름이 선언돼 있나"* 만 담는다. **찾는 규칙**은
+/// [`ResolveRule`] 이 값으로 지고 [`Self::resolve_with`] 가 그것을 받는다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScopeChain {
     pub scopes: Vec<Scope>,
@@ -219,8 +281,94 @@ impl ScopeChain {
     /// 스코프까지 올라가는 길에 **함수 스코프를 하나라도 지났으면** 자리를 비교하지 않는다.
     ///
     /// 같은 스코프에 같은 이름이 여럿이면(오버로드 · 재선언) **가장 앞선 것**을 쓴다.
+    ///
+    /// ⚠ **이것은 [`ResolveRule::Tdz`] 한 규칙이다.** 다른 규칙이 필요한 언어는
+    /// [`Self::resolve_with`] 를 부른다 — 여기 팔을 더하면 TypeScript 해소가 함께
+    /// 움직이고, 그것은 골든 두 파일이 잡는 자리다.
     #[must_use]
     pub fn resolve(&self, from: ScopeIx, name: &str, namespace: Namespace, at: usize) -> RefResolution {
+        self.resolve_with(from, name, namespace, at, ResolveRule::Tdz)
+    }
+
+    /// 규칙을 골라 해소한다.
+    ///
+    /// **뼈대는 하나이고 규칙만 갈린다** — [`ResolveRule`] 이 그 갈림을 값으로 진다.
+    #[must_use]
+    pub fn resolve_with(
+        &self,
+        from: ScopeIx,
+        name: &str,
+        namespace: Namespace,
+        at: usize,
+        rule: ResolveRule,
+    ) -> RefResolution {
+        match rule {
+            ResolveRule::Tdz => self.resolve_tdz(from, name, namespace, at),
+            ResolveRule::Shadowing => self.resolve_shadowing(from, name, namespace, at),
+        }
+    }
+
+    /// [`ResolveRule::Shadowing`] — Rust.
+    ///
+    /// # 세 규칙이 TypeScript 와 반대로 돈다
+    ///
+    /// - **가장 뒤** — `let x = 1; use(x); let x = 2; use(x);` 에서 둘째 `use` 는 둘째
+    ///   `x` 를 본다. 「가장 앞선 것」으로 재면 이 저장소에서 선언 판정 **214 건**이
+    ///   참조로 오분류된다
+    /// - **TDZ 가 없다** — 아직 안 선 지역 이름은 오류가 아니라 **바깥의 그 이름**이다.
+    ///   `const X: u32 = 1; fn f(){ let y = X; let X = 2; }` 의 `X` 는 상수를 가리킨다
+    /// - **아이템은 자리가 없다** — `hoisted` 인 선언은 스코프 전체에서 보이므로 순서로
+    ///   못 가른다. 둘이면 [`RefResolution::Ambiguous`]
+    ///
+    /// 아이템과 지역이 함께 있으면 **지역이 이긴다** — 그 자리부터는 지역이 아이템을
+    /// 가린다. 그래서 아이템의 자리를 0 으로 두고 지역은 `declared_at + 1` 로 잰다.
+    fn resolve_shadowing(
+        &self,
+        from: ScopeIx,
+        name: &str,
+        namespace: Namespace,
+        at: usize,
+    ) -> RefResolution {
+        let mut cursor = from;
+        loop {
+            let Some(scope) = self.scopes.get(cursor.0 as usize) else {
+                return RefResolution::OutsideFile;
+            };
+            let mut best: Option<(usize, u32, bool)> = None;
+            let mut 아이템_수 = 0usize;
+            for (i, b) in scope.bindings.iter().enumerate() {
+                if b.name != name || b.namespace != namespace {
+                    continue;
+                }
+                let key = if b.hoisted {
+                    아이템_수 += 1;
+                    0
+                } else if b.declared_at <= at {
+                    b.declared_at + 1
+                } else {
+                    // 아직 안 섰다 — **오류가 아니다.** 바깥에서 찾는다.
+                    continue;
+                };
+                let ix = u32::try_from(i).unwrap_or(u32::MAX);
+                if best.is_none_or(|(k, ..)| key >= k) {
+                    best = Some((key, ix, b.hoisted));
+                }
+            }
+            if let Some((_, binding, hoisted)) = best {
+                if hoisted && 아이템_수 > 1 {
+                    return RefResolution::Ambiguous;
+                }
+                return RefResolution::Bound { scope: cursor, binding };
+            }
+            match scope.parent {
+                ScopeParent::Root => return RefResolution::OutsideFile,
+                ScopeParent::Enclosing(next) => cursor = next,
+            }
+        }
+    }
+
+    /// [`ResolveRule::Tdz`] — TypeScript. 위 [`Self::resolve`] 의 문서가 이 규칙이다.
+    fn resolve_tdz(&self, from: ScopeIx, name: &str, namespace: Namespace, at: usize) -> RefResolution {
         let mut cursor = from;
         let mut crossed_function = false;
         loop {
@@ -401,6 +549,80 @@ mod tests {
             resolved: RefResolution::OutsideFile,
         });
         assert_eq!(c.resolution_percent(), (1, 1));
+    }
+
+    #[test]
+    fn 섀도잉_규칙은_보이는_것_중_가장_뒤를_쓴다() {
+        // Rust: `let x = 1; use(x); let x = 2; use(x);` — 둘째 `use` 는 둘째 `x` 다.
+        let mut c = ScopeChain::new();
+        c.declare(모듈, 이름("x", 0, false));
+        c.declare(모듈, 이름("x", 50, false));
+        assert_eq!(
+            c.resolve_with(모듈, "x", Namespace::Value, 20, ResolveRule::Shadowing),
+            RefResolution::Bound { scope: 모듈, binding: 0 },
+            "첫째 `x` 만 보이는 자리에서 둘째를 골랐다"
+        );
+        assert_eq!(
+            c.resolve_with(모듈, "x", Namespace::Value, 80, ResolveRule::Shadowing),
+            RefResolution::Bound { scope: 모듈, binding: 1 },
+            "섀도잉이 안 걸렸다 — 가려진 첫째를 봤다"
+        );
+        // **같은 자리를 TDZ 규칙으로 재면 첫째가 나온다** — 규칙이 실제로 갈린다.
+        assert_eq!(
+            c.resolve(모듈, "x", Namespace::Value, 80),
+            RefResolution::Bound { scope: 모듈, binding: 0 }
+        );
+    }
+
+    #[test]
+    fn 섀도잉_규칙에는_tdz_가_없다() {
+        // `const X = 1; fn f(){ let y = X; let X = 2; }` — 앞의 `X` 는 상수다.
+        let mut c = ScopeChain::new();
+        c.declare(모듈, 이름("X", 0, true));
+        let 안 = c.open(ScopeKind::Function, 모듈, BoundSymbol::NotASymbol);
+        c.declare(안, 이름("X", 100, false));
+        assert_eq!(
+            c.resolve_with(안, "X", Namespace::Value, 50, ResolveRule::Shadowing),
+            RefResolution::Bound { scope: 모듈, binding: 0 },
+            "아직 안 선 지역 이름이 바깥을 가렸다 — Rust 아이템에 TDZ 는 없다"
+        );
+        // TDZ 규칙은 같은 자리를 「선언 전 참조」로 판정한다.
+        assert_eq!(c.resolve(안, "X", Namespace::Value, 50), RefResolution::BeforeDeclaration);
+    }
+
+    #[test]
+    fn 동명_아이템이_둘이면_해소하지_않는다() {
+        // `#[cfg(unix)] fn spawn_child` · `#[cfg(windows)] fn spawn_child`.
+        // **하나를 고르면 그것이 조용한 오답이다** — `stitch_of` 가 EXPORTS 에서 하는 것과 같다.
+        let mut c = ScopeChain::new();
+        c.declare(모듈, 이름("spawn_child", 10, true));
+        c.declare(모듈, 이름("spawn_child", 90, true));
+        assert_eq!(
+            c.resolve_with(모듈, "spawn_child", Namespace::Value, 200, ResolveRule::Shadowing),
+            RefResolution::Ambiguous
+        );
+        // **지역이 가리면 모호하지 않다** — 그 자리부터는 후보가 하나다.
+        c.declare(모듈, 이름("spawn_child", 150, false));
+        assert_eq!(
+            c.resolve_with(모듈, "spawn_child", Namespace::Value, 200, ResolveRule::Shadowing),
+            RefResolution::Bound { scope: 모듈, binding: 2 }
+        );
+    }
+
+    #[test]
+    fn 서로_다른_impl_스코프의_동명_메서드는_서로를_안_본다() {
+        // `impl A { fn new(){} } impl B { fn new(){} }` — 둘째 `new` 의 **선언 이름**이
+        // 첫째로 해소되면 그것이 그대로 가짜 엣지가 된다(실측 72 건).
+        let mut c = ScopeChain::new();
+        let a = c.open(ScopeKind::Impl, 모듈, BoundSymbol::NotASymbol);
+        c.declare(a, 이름("new", 10, true));
+        let b = c.open(ScopeKind::Impl, 모듈, BoundSymbol::NotASymbol);
+        c.declare(b, 이름("new", 40, true));
+        assert_eq!(
+            c.resolve_with(b, "new", Namespace::Value, 40, ResolveRule::Shadowing),
+            RefResolution::Bound { scope: b, binding: 0 },
+            "둘째 impl 의 `new` 가 첫째 impl 로 샜다"
+        );
     }
 
     #[test]

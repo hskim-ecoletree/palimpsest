@@ -37,6 +37,7 @@ use crate::touch::SymbolNode;
 /// | `Bound` + 담는 심볼이 없다 (최상위) | [`top_level`] — **엣지가 아니다** |
 /// | `OutsideFile` | [`unresolved`] — import · 전역. **실패가 아니다** |
 /// | `BeforeDeclaration` | [`before_declaration`] — TDZ |
+/// | `Ambiguous` | [`ambiguous`] — 후보가 둘 이상이라 **안 골랐다** |
 ///
 /// # ⚠ 갈래가 다섯이 아니라 **여섯**이다 — 실물이 그렇게 말했다
 ///
@@ -52,7 +53,7 @@ use crate::touch::SymbolNode;
 /// **뭉개면 미해소 수가 무엇을 세는지 알 수 없다.** 특히 TDZ 를 미해소에 넣으면
 /// *"파일 밖에 있다"*(정상)와 *"언어의 오류"*가 한 숫자가 된다.
 ///
-/// 다섯의 합이 `refs` 의 길이와 같아야 한다 — [`Self::total`] 이 그것이다.
+/// 갈래의 합이 `refs` 의 길이와 같아야 한다 — [`Self::total`] 이 그것이다.
 ///
 /// [`declarations`]: RefCounts::declarations
 /// [`edges`]: RefCounts::edges
@@ -60,6 +61,7 @@ use crate::touch::SymbolNode;
 /// [`top_level`]: RefCounts::top_level
 /// [`unresolved`]: RefCounts::unresolved
 /// [`before_declaration`]: RefCounts::before_declaration
+/// [`ambiguous`]: RefCounts::ambiguous
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct RefCounts {
     /// **선언 자리 그 자체.** 참조가 아니다 — 거르지 않으면 모든 선언이 자기 엣지를 낳는다.
@@ -74,10 +76,15 @@ pub struct RefCounts {
     pub unresolved: usize,
     /// 선언 전 참조(TDZ) — 엣지도 미해소도 아니다.
     pub before_declaration: usize,
+    /// 같은 스코프에 후보가 둘 이상이라 **안 고른 참조** — `cfg` 쌍둥이가 그 자리다.
+    ///
+    /// **미해소와 갈라 둔다.** 미해소는 F07 이 풀 수 있고 이것은 원리상 못 푼다 —
+    /// 추출기가 `cfg` 를 해석하지 않기로 했기 때문이다.
+    pub ambiguous: usize,
 }
 
 impl RefCounts {
-    /// 여섯의 합. **`refs` 의 길이와 같아야 한다** — 다르면 갈래 하나가 샜다.
+    /// 일곱의 합. **`refs` 의 길이와 같아야 한다** — 다르면 갈래 하나가 샜다.
     #[must_use]
     pub const fn total(&self) -> usize {
         self.declarations
@@ -86,6 +93,7 @@ impl RefCounts {
             + self.top_level
             + self.unresolved
             + self.before_declaration
+            + self.ambiguous
     }
 }
 
@@ -227,6 +235,7 @@ pub fn file_edges(
         match r.resolved {
             RefResolution::OutsideFile => counts.unresolved += 1,
             RefResolution::BeforeDeclaration => counts.before_declaration += 1,
+            RefResolution::Ambiguous => counts.ambiguous += 1,
             RefResolution::Bound { scope, binding } => {
                 let bound = scopes
                     .scopes
@@ -505,7 +514,7 @@ mod tests {
     }
 
     #[test]
-    fn 여섯_갈래의_합이_전체다() {
+    fn 일곱_갈래의_합이_전체다() {
         // 갈래 하나가 새면 이 합이 안 맞는다 — `[f05.2.pass]` ① 이 이것을 쓴다.
         let c = RefCounts {
             declarations: 6,
@@ -514,8 +523,25 @@ mod tests {
             top_level: 3,
             unresolved: 4,
             before_declaration: 5,
+            ambiguous: 7,
         };
-        assert_eq!(c.total(), 21);
+        assert_eq!(c.total(), 28);
+    }
+
+    #[test]
+    fn 모호한_참조는_엣지가_아니다() {
+        // `cfg` 쌍둥이 — 둘째 선언 자리가 첫째를 가리키는 엣지가 되던 자리다(실측 13 건).
+        let symbols = vec![
+            심볼("f", SymbolKind::Function, 0, 50),
+            심볼("t", SymbolKind::Function, 60, 90),
+        ];
+        let nodes = 좌표들(&symbols);
+        let mut chain = ScopeChain::new();
+        chain.refs.push(참조("t", 70, RefResolution::Ambiguous));
+        let (edges, c) = file_edges(&symbols, &nodes, &chain, &스냅샷());
+        assert!(edges.is_empty(), "모호한 참조가 엣지가 됐다");
+        assert_eq!(c.ambiguous, 1);
+        assert_eq!(c.total(), chain.refs.len());
     }
 
     #[test]

@@ -25,6 +25,7 @@ use tree_sitter::Node;
 use crate::extractor::LanguageExtractor;
 use crate::parse::{ExtractError, normalize, normalize_erasing, parse_with, recovery_sites};
 use crate::scopes::{self, Scoped};
+use crate::ts_scopes::TypeScriptRules;
 
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
 pub(crate) static TYPESCRIPT: TypeScriptExtractor = TypeScriptExtractor;
@@ -98,7 +99,7 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
         .enumerate()
         .map(|(i, p)| (p.node.start_byte(), LocalIx(u32::try_from(i).unwrap_or(u32::MAX))))
         .collect();
-    let scoped = scopes::build(tree.root_node(), source, &symbol_at);
+    let scoped = scopes::build(tree.root_node(), source, &symbol_at, &TypeScriptRules);
 
     Ok(walk.finish(recovery_sites(tree.root_node()), scoped))
 }
@@ -785,7 +786,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
             .enumerate()
             .map(|(i, s)| (s.span.byte_start, LocalIx(u32::try_from(i).unwrap_or(u32::MAX))))
             .collect();
-        let scoped = scopes::build(tree.root_node(), src.as_bytes(), &symbol_at);
+        let scoped = scopes::build(tree.root_node(), src.as_bytes(), &symbol_at, &TypeScriptRules);
         let first = walk_symbols.first().expect("심볼이 없다");
         let node = node_at(tree.root_node(), first.span.byte_start, first.span.byte_end)
             .expect("선언 노드를 못 찾았다");

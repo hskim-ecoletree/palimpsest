@@ -1,18 +1,38 @@
-//! Rust 선언 추출 — **중첩 순회 · 스코프 없음**.
+//! Rust 선언 추출 — **중첩 순회 + 스코프 체인. 등급은 `L1` 이다.**
 //!
 //! 결정: [ADR-0027](../../../docs/adr/0027-the-instrument-must-reach-its-own-floor.md) ·
-//! #66 · 소유자 지시 2026-08-20 §2.
+//! #66 · #130 · 소유자 지시 2026-08-20 §2 · 2026-09-07.
 //!
-//! # 왜 순회이면서 L1 인가
+//! # 두 결정이 여기서 갈린다
 //!
-//! Kotlin 은 쿼리(최상위만), TypeScript 는 순회 + 스코프(L2)다. Rust 는 **그 사이**다.
+//! Kotlin 은 쿼리(최상위만), TypeScript 는 순회 + 스코프다. Rust 는 **둘을 따로 골랐다.**
 //!
-//! 처음 계획은 「TypeScript 급」이었는데 사전부검이 그것을 **두 결정이 뭉개진 것**으로
-//! 갈랐다. `impl`·`mod` 안의 표식을 잡는 데 필요한 것은 **중첩 순회**이지 스코프
-//! 체인이 아니다 — 스코프가 남는 이유는 `body_digest` 가 지역 이름을 지우는 것이고,
-//! 그것은 *낡음의 정밀도* 문제이지 *결박의 존재* 문제가 아니다.
+//! | 축 | 값 | 언제 정해졌나 |
+//! |---|---|---|
+//! | 심볼을 어떻게 찾나 | **중첩 순회** — `impl`·`mod` 안까지 | #66 (2026-08-20) |
+//! | 이름을 해소하나 | **한다** — [`crate::scopes`] 뼈대 + [`crate::rust_scopes`] 표 | #130 (2026-09-08) |
+//! | 언어 등급 | **`L1`** — `body_digest` 는 지역 이름을 안 지운다 | #130. 승격은 [#133] |
 //!
-//! **L1 을 고른 대가는 [`crate::grade_of`] 에 적혀 있다.**
+//! 셋째 줄이 둘째 줄과 어긋나 보인다. 어긋나지 않는다 — **등급 글자가 지는 것은
+//! *요약이 리네임에 흔들리는가*이고, 참조 엣지가 지는 것은 *이름이 어느 선언을
+//! 가리키는가*다.** 까닭은 [`crate::grade_of`] 옆에 적혀 있다.
+//!
+//! # 못 세는 몫 — **분모와 함께 적는다** (2026-09-08 실측 · `git ls-files '*.rs'` 134 파일)
+//!
+//! | 무엇 | 못 세는 수 / 후보 | 왜 원리상 못 보나 |
+//! |---|--:|---|
+//! | 포맷 문자열 캡처 (`println!("{x}")` 의 `x`) | **987 / 987** | 문자열 리터럴 안이라 문법 트리에 이름이 없다 |
+//! | 멤버 호출 (`x.foo()` 의 `foo`) | **13,951 / 13,951** | `field_identifier` 는 스코프 참조가 아니다. 멤버 해소는 L2c 이고 F07 에서도 안 한다 |
+//! | 경로 호출 (`S::new()` 의 `new`) | **4,217 / 4,217** | 경로 꼬리는 머리를 풀어야 알고 그것이 F07(L2b)이다 |
+//!
+//! 비교: 같은 저장소에서 **실제로 서는 참조가 6,584 · 엣지 4,179** 다. 세 몫을 안 적으면
+//! *"파일 안에서 아무도 안 부른다"* 는 0 이 **아무도 안 부른다**로 읽힌다.
+//!
+//! ⚠ **넷째 몫이 있다** — 같은 스코프에 동명 아이템이 둘이면 해소하지 않는다
+//! ([`pal_core::RefResolution::Ambiguous`] · 실측 참조 58 건). 해소하면 엣지 31 건이
+//! 늘지만 **어느 것이 참인지 이 층에서 못 가른다.**
+//!
+//! [#133]: https://github.com/hskim-ecoletree/palimpsest/issues/133
 //!
 //! # 세는 단위는 이 파일이 정하지 않는다
 //!
@@ -20,14 +40,18 @@
 //! 먼저 커밋됐다**(`git log` 가 증거다). 여기 있는 것은 그 규칙의 구현이다 —
 //! 반대 방향이 아니다. 어긋나면 게이트에 목록으로 적고 손 목록을 고치지 않는다.
 
+use std::collections::HashMap;
+
 use pal_core::{
-    BodyDigest, Capable, CapabilityId, Containment, ExtractGrade, FileGraph, Language, LanguageId,
-    LocalIx, RecoverySite, Span, Symbol, SymbolKind,
+    BodyDigest, Capable, Containment, ExportSet, ExtractGrade, FileGraph, ImportSet, Language,
+    LanguageId, LocalIx, Span, Symbol, SymbolKind,
 };
 use tree_sitter::Node;
 
 use crate::extractor::LanguageExtractor;
 use crate::parse::{ExtractError, normalize, parse_with, recovery_sites};
+use crate::rust_scopes::RustScopeRules;
+use crate::scopes;
 
 /// 레지스트리가 잡는 자리. **무상태다** — #49 가 이것을 `par_iter` 안에서 부른다.
 pub(crate) static RUST: RustExtractor = RustExtractor;
@@ -281,12 +305,34 @@ fn 원문(node: Node<'_>, source: &[u8]) -> String {
 /// # Errors
 /// 문법을 붙이지 못하거나 파싱이 중단되면 [`ExtractError`].
 pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
+    extract_with(source, RustScopeRules::기준)
+}
+
+/// 표를 골라 뽑는다 — **변형 대조 전용 입구**(`V1`~`V10`).
+///
+/// 추출기는 [`RustScopeRules::기준`] 만 쓴다. 다른 조합으로 부르는 자리는
+/// `--example scope_variants` 하나이고, 그것이 이 회차의 완수 증인이다.
+///
+/// # Errors
+/// 문법을 붙이지 못하거나 파싱이 중단되면 [`ExtractError`].
+pub fn extract_with(source: &[u8], rules: RustScopeRules) -> Result<FileGraph, ExtractError> {
     let language = tree_sitter::Language::new(tree_sitter_rust::LANGUAGE);
     let tree = parse_with(&language, source)?;
 
     let mut walk = 순회::new();
     walk.walk(tree.root_node(), source, None);
     walk.impl_을_해소한다();
+
+    // **선언 순회가 끝난 뒤에 스코프를 세운다.** 순서가 규율이다 — 스코프가 심볼 목록을
+    // 건드리면 손 표본으로 잰 리콜이 움직인다. 여기서 늘어나는 것은 `ScopeChain` 뿐이고
+    // `Symbol` 은 한 자리도 안 바뀐다(`identity` 는 여전히 `grade_of(Rust).identity()` 다).
+    let symbol_at: HashMap<usize, LocalIx> = walk
+        .symbols
+        .iter()
+        .enumerate()
+        .map(|(i, c)| (c.node.start_byte(), LocalIx(u32::try_from(i).unwrap_or(u32::MAX))))
+        .collect();
+    let scoped = scopes::build(tree.root_node(), source, &symbol_at, &rules);
 
     let symbols: Vec<Symbol> = walk
         .symbols
@@ -295,8 +341,9 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
             name: c.name.clone(),
             kind: c.kind,
             body: BodyDigest::of_normalized(&normalize(c.node, source)),
-            // **L1 이라 심볼 단위로도 `ordinal` 이다.** 스코프가 없으므로 어느 이름이
-            // 지역인지 모르고, 모르면 지우지 않는다 — R-22 의 요구다.
+            // **L1 이라 심볼 단위로도 `ordinal` 이다.** 스코프 체인이 서도 그대로다 —
+            // `body_digest` 가 지역 이름을 지우기 시작하면 결박 25 건이 통째로 `stale`
+            // 이 되고, 이 회차는 그것을 안 하기로 했다(`C1`·`C2`).
             identity: crate::grade_of(Language::Rust).identity(),
             // ⚠ **속성은 span 에 안 든다.** `#[must_use] fn f` 의 시작은 `fn` 이다.
             // 넓히면 `pal narrative` 의 자리 맵(정확 일치)이 주석 인접 판정과
@@ -313,22 +360,159 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
         })
         .collect();
 
-    let sites: Vec<RecoverySite> = recovery_sites(tree.root_node());
-    let mut graph = FileGraph::flat(
-        LanguageId::new(Language::Rust.name()),
-        crate::grade_of(Language::Rust),
+    let (mut exports, mut imports) = 표면(tree.root_node(), source);
+    // **집합이므로 정렬·중복 제거한다.** 소스 순서에 의존하면 `use` 를 재배열하는 것만으로
+    // `export_digest` 가 움직이고, 그것이 의존 파일 전체를 이유 없이 무효화한다(R-05).
+    exports.names.sort_unstable();
+    exports.names.dedup();
+    exports.star_from.sort_unstable();
+    exports.star_from.dedup();
+    imports.modules.sort_unstable();
+    imports.modules.dedup();
+
+    // **정렬·중복 제거가 끝난 뒤에 잰다.**
+    let export_digest = Capable::Present(exports.digest());
+    Ok(FileGraph {
+        language: LanguageId::new(Language::Rust.name()),
+        grade: crate::grade_of(Language::Rust),
         symbols,
-        sites,
-        // **빈 집합이 아니라 안 만들었다고 적는다.** 이 추출기는 `pub` 를 안 읽는다.
-        // 빈 `ExportSet` 은 *"아무것도 안 내보낸다"* 는 뜻이고 그것은 거짓이다.
-        Capable::not_built(CapabilityId::new("F02", "rust-exports")),
-        Capable::not_built(CapabilityId::new("F02", "rust-imports")),
-        // **스코프를 안 만든다** — L1 을 고른 것이 이 자리다.
-        Capable::not_built(CapabilityId::new("F02", "rust-scopes")),
-    );
-    // `flat` 은 포함 관계를 비우므로 여기서 채운다. **이 추출기는 중첩을 본다.**
-    graph.contains = walk.contains;
-    Ok(graph)
+        contains: walk.contains,
+        exports: Capable::Present(exports),
+        imports: Capable::Present(imports),
+        export_digest,
+        scopes: Capable::Present(scoped.chain),
+        recovery_sites: recovery_sites(tree.root_node()),
+    })
+}
+
+/// 이 파일이 밖에 노출하는 것과 참조하는 모듈.
+///
+/// # `pub` 의 뜻을 **하나로** 정한다 — 최상위이고 `pub` 인 것만 (`A13`)
+///
+/// 셋 중 하나를 골라야 했다.
+///
+/// | 후보 | 왜 안 골랐나 |
+/// |---|---|
+/// | 중첩 `pub` 도 담는다 | `stitch_of` 가 **최상위만** EXPORTS 로 옮긴다 — `n.container.is_empty()`(`ledger.rs:377`). 담으면 `export_digest` 와 EXPORTS 가 **서로 다른 모집단**을 재고, 그 어긋남은 화면 어디에도 안 나온다 |
+/// | `pub(crate)` 도 담는다 | `ExportSet` 의 뜻이 *"밖에 노출하는 것"* 인데 `pub(crate)` 는 크레이트 밖에 안 나간다. 담으면 실제 노출과 크레이트 안 가시성이 한 집합이 된다 |
+///
+/// 그래서 **최상위 + `visibility_modifier` 가 정확히 `pub`** 이다.
+/// `pub(crate)`·`pub(super)`·`pub(in …)` 과 중첩 `pub` 은 **안 담는다.**
+fn 표면(root: Node<'_>, source: &[u8]) -> (ExportSet, ImportSet) {
+    let mut exports = ExportSet::default();
+    let mut imports = ImportSet::default();
+
+    // **`use` 는 파일 어디에나 있다**(함수 안 · `mod` 안). 전부 훑는다.
+    let mut stack = vec![root];
+    while let Some(n) = stack.pop() {
+        if n.kind() == "use_declaration" {
+            if let Some(m) = 모듈_경로(n, source) {
+                imports.modules.push(m);
+            }
+            if 최상위인가(n) && 공개인가(n, source) {
+                재수출을_담는다(n, source, &mut exports);
+            }
+        }
+        let mut c = n.walk();
+        let kids: Vec<Node<'_>> = n.named_children(&mut c).collect();
+        drop(c);
+        stack.extend(kids);
+    }
+
+    let mut c = root.walk();
+    let kids: Vec<Node<'_>> = root.named_children(&mut c).collect();
+    drop(c);
+    for item in kids {
+        if item.kind() == "use_declaration" || !공개인가(item, source) {
+            continue;
+        }
+        if let Some(name) = item.child_by_field_name("name") {
+            exports.names.push(원문(name, source));
+        }
+    }
+    (exports, imports)
+}
+
+/// `source_file` 의 직계 자식인가.
+fn 최상위인가(node: Node<'_>) -> bool {
+    node.parent().is_some_and(|p| p.kind() == "source_file")
+}
+
+/// `visibility_modifier` 가 **정확히 `pub`** 인가.
+fn 공개인가(node: Node<'_>, source: &[u8]) -> bool {
+    let mut c = node.walk();
+    let kids: Vec<Node<'_>> = node.named_children(&mut c).collect();
+    drop(c);
+    kids.iter().any(|k| k.kind() == "visibility_modifier" && 원문(*k, source) == "pub")
+}
+
+/// `pub use` — 이름 재수출과 `*` 재수출을 가른다.
+///
+/// `pub use a::*;` 이 무슨 이름을 내보내는지는 **그 모듈을 읽어야 알고 그것은 F07** 이다.
+/// 그래서 이름이 아니라 대상 모듈로 남는다 — 모르는 것을 안다고 하지 않는다.
+fn 재수출을_담는다(node: Node<'_>, source: &[u8], exports: &mut ExportSet) {
+    let Some(arg) = node.child_by_field_name("argument") else { return };
+    let mut stack = vec![arg];
+    while let Some(n) = stack.pop() {
+        match n.kind() {
+            "use_wildcard" => {
+                if let Some(m) = 경로_머리(n, source) {
+                    exports.star_from.push(m);
+                }
+            }
+            "use_as_clause" => {
+                if let Some(a) = n.child_by_field_name("alias") {
+                    exports.names.push(원문(a, source));
+                }
+            }
+            "scoped_identifier" => {
+                if let Some(x) = n.child_by_field_name("name") {
+                    exports.names.push(원문(x, source));
+                }
+            }
+            "identifier" | "type_identifier" => exports.names.push(원문(n, source)),
+            _ => {
+                let mut c = n.walk();
+                let kids: Vec<Node<'_>> = n.named_children(&mut c).collect();
+                drop(c);
+                // `use_list` 안의 `path` 는 모듈이라 이름이 아니다.
+                stack.extend(kids.into_iter().filter(|k| {
+                    n.child_by_field_name("path").map(|p| p.id()) != Some(k.id())
+                }));
+            }
+        }
+    }
+}
+
+/// `use` 한 줄이 가리키는 **모듈**.
+///
+/// 마지막 세그먼트는 항목 이름이고 그 앞이 모듈이다 — `use a::b::C;` 는 `a::b`.
+/// 목록과 `*` 는 앞이 통째로 모듈이다 — `use a::b::{c, d};` 도 `a::b`.
+/// `use a;` 처럼 세그먼트가 하나면 그 자체가 모듈이다.
+fn 모듈_경로(node: Node<'_>, source: &[u8]) -> Option<String> {
+    let arg = node.child_by_field_name("argument")?;
+    match arg.kind() {
+        "scoped_identifier" => Some(원문(arg.child_by_field_name("path")?, source)),
+        "scoped_use_list" => Some(원문(arg.child_by_field_name("path")?, source)),
+        "use_wildcard" => 경로_머리(arg, source),
+        "use_as_clause" => {
+            let path = arg.child_by_field_name("path")?;
+            match path.kind() {
+                "scoped_identifier" => Some(원문(path.child_by_field_name("path")?, source)),
+                _ => Some(원문(path, source)),
+            }
+        }
+        "identifier" => Some(원문(arg, source)),
+        _ => None,
+    }
+}
+
+/// `a::b::*` 의 `a::b`.
+fn 경로_머리(wildcard: Node<'_>, source: &[u8]) -> Option<String> {
+    let mut c = wildcard.walk();
+    let kids: Vec<Node<'_>> = wildcard.named_children(&mut c).collect();
+    drop(c);
+    kids.first().map(|k| 원문(*k, source))
 }
 
 #[cfg(test)]
@@ -474,6 +658,282 @@ mod tests {
         let g = extract_detailed(b"fn Foo() {}\nstruct Foo;\nimpl Foo { fn m() {} }").unwrap();
         let 부모 = g.contains.first().map(|c| g.symbols[c.parent.0 as usize].kind);
         assert_eq!(부모, Some(SymbolKind::Struct), "함수에 붙었다");
+    }
+
+    // ── 스코프와 참조 엣지 (`A1`~`A17`) ────────────────────────────────
+    //
+    // **`file_edges` 를 직접 부른다.** 「스코프 사슬이 이렇게 생겼다」로 재면 해소가
+    // 틀린 채로도 초록이 된다 — 사전부검이 A2 를 두고 그것을 지적했다.
+
+    fn 사슬(src: &str) -> pal_core::ScopeChain {
+        let g = extract_detailed(src.as_bytes()).unwrap();
+        match g.scopes {
+            Capable::Present(c) => c,
+            Capable::NotBuilt { .. } => panic!("스코프를 안 만들었다"),
+        }
+    }
+
+    /// `(출발 이름 → 도착 이름)` 쌍 — **엣지 집합 그 자체다.**
+    fn 엣지(src: &str) -> Vec<(String, String)> {
+        let g = extract_detailed(src.as_bytes()).unwrap();
+        let Capable::Present(chain) = &g.scopes else { panic!("스코프를 안 만들었다") };
+        let path = pal_core::RepoPath::new("a.rs");
+        let nodes: Vec<pal_core::SymbolNode> = g
+            .symbols
+            .iter()
+            .enumerate()
+            .map(|(i, s)| pal_core::SymbolNode {
+                id: pal_core::SymbolId::compute(
+                    &pal_core::RepoId::new("r"),
+                    &path,
+                    &[],
+                    &format!("#{i}"),
+                    &pal_core::Discriminator::new(s.kind, 0),
+                ),
+                path: path.clone(),
+                container: Vec::new(),
+                name: s.name.clone(),
+                kind: s.kind,
+                body: s.body,
+                span: s.span,
+                identity: s.identity,
+            })
+            .collect();
+        let 스냅샷 = pal_core::Snapshot::single(
+            pal_core::RepoId::new("r"),
+            pal_core::TreeRef::Committed(pal_core::ObjectName::from_bytes([0u8; 20])),
+        );
+        let (edges, _) = pal_core::file_edges(&g.symbols, &nodes, chain, &스냅샷);
+        let 이름 = |id: pal_core::SymbolId| {
+            nodes.iter().position(|n| n.id == id).map(|i| g.symbols[i].name.clone()).unwrap()
+        };
+        let mut out: Vec<(String, String)> = edges.iter().map(|e| (이름(e.from), 이름(e.to))).collect();
+        out.sort();
+        out
+    }
+
+    /// 이 이름이 `refs` 에 참조로 들어 있나.
+    fn 참조에_있나(src: &str, name: &str) -> bool {
+        사슬(src).refs.iter().any(|r| r.name == name)
+    }
+
+    #[test]
+    fn a1_스코프_사슬이_성립한다() {
+        let c = 사슬("mod m { fn f() { let x = 1; } }");
+        assert!(c.scopes.len() >= 3, "스코프가 셋 미만이다: {}", c.scopes.len());
+        assert!(!c.refs.is_empty(), "참조가 하나도 안 잡혔다");
+    }
+
+    #[test]
+    fn a2_impl_이_스코프를_연다() {
+        // **엣지 0 이 조건이다** — 사슬 모양만 보면 `hoist_home` 오배치에서도 초록이 된다.
+        let src = "struct A; struct B; impl A { fn new(){} } impl B { fn new(){} }";
+        assert_eq!(엣지(src), Vec::<(String, String)>::new(), "동명 메서드가 서로를 가리켰다");
+        let c = 사슬(src);
+        let 스코프: Vec<pal_core::ScopeIx> = c
+            .scopes
+            .iter()
+            .enumerate()
+            .filter(|(_, s)| s.bindings.iter().any(|b| b.name == "new"))
+            .map(|(i, _)| pal_core::ScopeIx(u32::try_from(i).unwrap()))
+            .collect();
+        assert_eq!(스코프.len(), 2, "두 `new` 가 한 스코프에 섰다");
+        assert_ne!(스코프[0], 스코프[1]);
+    }
+
+    #[test]
+    fn a3_평범한_호출이_엣지가_된다() {
+        assert_eq!(엣지("fn a(){} fn b(){ a(); }"), [("b".to_owned(), "a".to_owned())]);
+    }
+
+    #[test]
+    fn a4_매크로_안_호출이_엣지가_된다() {
+        assert_eq!(
+            엣지("fn a()->u32{0} fn b(){ assert_eq!(a(), 0); }"),
+            [("b".to_owned(), "a".to_owned())]
+        );
+    }
+
+    #[test]
+    fn a5_매크로_안_멤버_이름은_참조가_아니다() {
+        // `token_tree` 안에서는 `field_identifier` 가 안 생긴다 — 앞 형제가 유일한 열쇠다.
+        assert!(!참조에_있나("fn f(){ assert!(x.foo()); }", "foo"));
+    }
+
+    #[test]
+    fn a6_매크로_안_경로_꼬리는_참조가_아니다() {
+        assert!(!참조에_있나("fn f(){ matches!(k, S::Var); }", "Var"));
+        // **머리는 참조다** — 안 그러면 배제가 너무 넓다.
+        assert!(참조에_있나("fn f(){ matches!(k, S::Var); }", "S"));
+    }
+
+    #[test]
+    fn a7_매크로_밖_경로_꼬리도_참조가_아니다() {
+        // ⚠ **선언 자리의 이름도 참조로 실린다**(`file_edges` 가 그것을 거른다).
+        //   그래서 「이름이 있나」가 아니라 **몇 자리가 실렸나**로 잰다 — 꼬리를 세면 둘이다.
+        let src = "struct A; impl A { fn new()->Self{ Self::new() } }";
+        let 자리: Vec<usize> = 사슬(src).refs.iter().filter(|r| r.name == "new").map(|r| r.at).collect();
+        assert_eq!(자리.len(), 1, "`Self::new()` 의 꼬리를 참조로 셌다: {자리:?}");
+        assert_eq!(자리[0], src.find("fn new").unwrap() + 3, "실린 자리가 선언이 아니다");
+    }
+
+    #[test]
+    fn a8_use_절_안의_이름은_참조가_아니다() {
+        let src = "mod t { use super::*; fn f(){} }";
+        assert!(!참조에_있나(src, "super"));
+        // `use x::f;` 옆에 `fn f` 가 있어도 그 `f` 는 참조가 아니다.
+        assert!(!참조에_있나("use x::f; fn g(){}", "f"));
+    }
+
+    #[test]
+    fn a9_필드_식별자는_참조가_아니다() {
+        assert!(!참조에_있나("fn f(x: S){ x.foo(); }", "foo"));
+    }
+
+    #[test]
+    fn a10_타입_이름이_값_자리에서도_해소된다() {
+        // 실측 358 건 — 안 넣으면 그만큼 리콜이 빈다.
+        assert_eq!(엣지("struct S; fn f(){ let _ = S; }"), [("f".to_owned(), "S".to_owned())]);
+    }
+
+    #[test]
+    fn a11_use_네_갈래가_각각_무엇을_담나() {
+        let 뽑는다 = |src: &str| {
+            let g = extract_detailed(src.as_bytes()).unwrap();
+            let Capable::Present(i) = g.imports else { panic!("imports 가 안 만들어졌다") };
+            i.modules
+        };
+        assert_eq!(뽑는다("use a::b;"), ["a"], "마지막 세그먼트는 항목 이름이다");
+        assert_eq!(뽑는다("use a::{b,c};"), ["a"]);
+        assert_eq!(뽑는다("use a as e;"), ["a"], "별칭은 모듈을 안 바꾼다");
+        assert_eq!(뽑는다("use a::*;"), ["a"]);
+        assert_eq!(뽑는다("use a::b::C;"), ["a::b"]);
+
+        // 스코프에 들어가는 **이름**은 모듈과 다른 축이다.
+        let 이름 = |src: &str| {
+            let mut v: Vec<String> = 사슬(src).scopes[0]
+                .bindings
+                .iter()
+                .filter(|b| b.namespace == pal_core::Namespace::Value)
+                .map(|b| b.name.clone())
+                .collect();
+            v.sort();
+            v.dedup();
+            v
+        };
+        assert_eq!(이름("use a::b;"), ["b"]);
+        assert_eq!(이름("use a::{b,c};"), ["b", "c"]);
+        assert_eq!(이름("use a as e;"), ["e"]);
+        assert_eq!(이름("use a::*;"), Vec::<String>::new(), "별표가 이름을 지어냈다");
+    }
+
+    #[test]
+    fn a12_exports_는_정렬_중복제거_뒤에_요약된다() {
+        // 소스 순서 위에서 재면 `pub` 을 재배열하는 것만으로 의존 파일이 무효화된다(R-05).
+        let 앞 = extract_detailed(b"pub fn a(){} pub fn b(){}").unwrap();
+        let 뒤 = extract_detailed(b"pub fn b(){} pub fn a(){}").unwrap();
+        let (Capable::Present(x), Capable::Present(y)) = (&앞.exports, &뒤.exports) else {
+            panic!("exports 가 안 만들어졌다")
+        };
+        assert_eq!(x.names, ["a", "b"]);
+        assert_eq!(x, y);
+        assert_eq!(앞.export_digest, 뒤.export_digest, "소스 순서가 요약을 움직였다");
+        assert!(!x.names.is_empty(), "빈 집합은 「안 만듦」이지 「없다」가 아니다");
+    }
+
+    #[test]
+    fn a13_pub_의_뜻은_최상위_pub_하나다() {
+        // ★ 근거: `stitch_of` 가 **최상위만** EXPORTS 로 옮긴다 —
+        //   `n.container.is_empty()` (`crates/pal-cli/src/ledger.rs:377`).
+        //   중첩 `pub` 을 담으면 `export_digest` 와 EXPORTS 가 서로 다른 모집단을 잰다.
+        let 이름 = |src: &str| {
+            let g = extract_detailed(src.as_bytes()).unwrap();
+            let Capable::Present(e) = g.exports else { panic!("exports 가 안 만들어졌다") };
+            e.names
+        };
+        assert_eq!(이름("pub fn a(){}"), ["a"]);
+        assert_eq!(이름("pub(crate) fn a(){}"), Vec::<String>::new(), "pub(crate) 를 담았다");
+        assert_eq!(이름("pub(super) fn a(){}"), Vec::<String>::new());
+        assert_eq!(이름("mod m { pub fn a(){} }"), Vec::<String>::new(), "중첩 pub 을 담았다");
+        assert_eq!(이름("pub use x::y;"), ["y"], "재수출이 빠졌다");
+        let g = extract_detailed(b"pub use x::*;").unwrap();
+        let Capable::Present(e) = g.exports else { panic!("exports 가 안 만들어졌다") };
+        assert_eq!(e.star_from, ["x"], "별 재수출은 이름이 아니라 대상 모듈이다");
+        assert!(e.names.is_empty());
+    }
+
+    #[test]
+    fn a14_지역_이름이_묶인다() {
+        // 다섯 자리 — 파라미터 · `let` · `match` 팔 패턴 · `for x in` · `if let Some(x)`.
+        // **밖으로 새면** 동명 최상위 심볼로 해소돼 가짜 엣지가 된다(실측 52~58).
+        for (src, 이름) in [
+            ("fn p(){} fn f(p: u8){ let _ = p; }", "p"),
+            ("fn q(){} fn f(){ let q = 1; let _ = q; }", "q"),
+            ("fn r(){} fn f(k: u8){ match k { Some(r) => { let _ = r; }, _ => {} } }", "r"),
+            ("fn s(){} fn f(){ for s in 0..3 { let _ = s; } }", "s"),
+            ("fn t(){} fn f(){ if let Some(t) = o() { let _ = t; } }", "t"),
+        ] {
+            assert_eq!(엣지(src), Vec::<(String, String)>::new(), "`{이름}` 이 스코프 밖으로 샜다");
+        }
+    }
+
+    #[test]
+    fn a15_속성_안의_이름은_참조가_아니다() {
+        // 실측: `#[cfg(test)]` 의 `test` 가 `xtask/src/main.rs` 의 `fn test` 로 59 건 해소됐다.
+        assert_eq!(엣지("#[cfg(test)] fn a(){} fn test(){}"), Vec::<(String, String)>::new());
+        assert!(!참조에_있나("#[derive(Debug)] struct S;", "Debug"));
+    }
+
+    #[test]
+    fn a16_impl_메서드_이름이_모듈_스코프로_안_올라간다() {
+        // ⚠ 아이템 호이스팅을 `hoist_home` 으로 표현하면 `impl` 스코프를 건너뛰어
+        //   A2 가 **무효**가 된다. 그래서 「메서드가 모듈 스코프에 없다」를 직접 잰다.
+        let c = 사슬("struct A; impl A { fn m(){} }");
+        assert!(
+            !c.scopes[0].bindings.iter().any(|b| b.name == "m"),
+            "impl 메서드가 모듈 스코프로 올라갔다"
+        );
+        assert!(
+            c.scopes.iter().skip(1).any(|s| s.kind == pal_core::ScopeKind::Impl
+                && s.bindings.iter().any(|b| b.name == "m")),
+            "impl 스코프에 메서드가 안 들어갔다"
+        );
+    }
+
+    #[test]
+    fn a17_cfg_쌍둥이는_엣지를_안_만든다() {
+        // `stitch_of` 가 EXPORTS 에서 하는 것과 같다 —
+        // *"둘 이상이면 담지 않는다 — 하나를 고르면 그것이 조용한 오답이다"*.
+        let src = "#[cfg(unix)] fn s(){} #[cfg(windows)] fn s(){} fn c(){ s(); }";
+        assert_eq!(엣지(src), Vec::<(String, String)>::new(), "쌍둥이 중 하나를 골랐다");
+        let c = 사슬(src);
+        assert!(
+            c.refs.iter().any(|r| r.resolved == pal_core::RefResolution::Ambiguous),
+            "모호로 안 적고 조용히 넘어갔다"
+        );
+    }
+
+    #[test]
+    fn c1_rust_는_l1_로_잠겨_있다() {
+        // ★ **이 회차가 등급을 안 올린다.** 올리면 `body_digest` 가 움직여 결박 25 건이
+        //   통째로 `stale` 이 된다. `L2` 로 바꾼 사본에서 이 시험이 빨개진다.
+        assert_eq!(crate::grade_of(Language::Rust), ExtractGrade::L1);
+        let g = extract_detailed(b"fn f(){}").unwrap();
+        assert_eq!(g.grade, ExtractGrade::L1);
+        assert_eq!(g.symbols[0].identity, pal_core::IdentityGrade::Ordinal);
+    }
+
+    #[test]
+    fn b3_세_자리가_전부_present_이고_비지_않았다() {
+        let g = extract_detailed(b"use a::b; pub fn f(){ let x = 1; }").unwrap();
+        let (Capable::Present(sc), Capable::Present(im), Capable::Present(ex)) =
+            (&g.scopes, &g.imports, &g.exports)
+        else {
+            panic!("세 자리 중 하나가 아직 `not_built` 다")
+        };
+        assert!(sc.scopes.len() > 1 && !sc.refs.is_empty());
+        assert_eq!(im.modules, ["a"]);
+        assert_eq!(ex.names, ["f"]);
     }
 
     #[test]
