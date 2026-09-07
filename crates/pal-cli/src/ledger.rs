@@ -374,6 +374,12 @@ fn stitch_of(
             .names
             .iter()
             .filter_map(|name| {
+                // ★ **이 한 줄이 `ExportSet` 의 모집단을 정한다** (2026-09-08 · #130).
+                //   `n.container.is_empty()` 라 **최상위만** EXPORTS 로 옮겨진다. 그래서
+                //   Rust 추출기도 `pub` 을 **최상위 + 정확히 `pub`** 으로 좁혔다
+                //   (`rust.rs` 의 `표면` · 조건 `A13`). 중첩 `pub` 을 담으면
+                //   `export_digest` 는 움직이는데 EXPORTS 는 안 서서 **두 값이 서로 다른
+                //   모집단을 재고, 그 어긋남이 화면 어디에도 안 나온다.**
                 let mut hit = nodes.iter().filter(|n| n.container.is_empty() && &n.name == name);
                 let first = hit.next()?;
                 // **둘 이상이면 담지 않는다.** 하나를 고르면 그것이 조용한 오답이다.

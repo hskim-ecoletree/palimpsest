@@ -1,0 +1,26 @@
+코퍼스 — `.rs` 138 파일 · 뿌리 .
+
+기준 — 엣지 4209 · 기여 파일 132
+V11 갈래 분포 — 타입 참조 1197 · 호출·매크로 3796 · 그 밖 1598 (참조 6591)
+기준 참조 갈래 — 선언 13461 · 엣지 6591 · 지역 25811 · 최상위 251 · 미해소 12001 · 선언전 0 · 모호 58
+
+조건    무엇을 껐나                                  엣지      가짜      누락  엣지축        판정
+V1    파라미터 선언을 끈다                           4260      51       0  다르다        다르다 ✓
+V2    패턴 선언을 끈다                             4340     131       0  다르다        다르다 ✓
+V3    impl 이 스코프를 안 연다                      4185       7      31  다르다        다르다 ✓
+V4    아이템 선언을 hoist_home 으로 놓는다             4199       7      17  다르다        다르다 ✓
+V5    속성 배제를 끈다                             4222      13       0  다르다        다르다 ✓
+V6    매크로 앞형제 거르기를 끈다                       4242      33       0  다르다        다르다 ✓
+V7    경로 꼬리 배제를 끈다                          4296      87       0  다르다        다르다 ✓
+V8    field_identifier 배제를 끈다               4426     217       0  다르다        다르다 ✓
+V9    use 절 배제를 끈다                          4209       0       0  같다         다르다 ✓
+V10   cfg 쌍둥이를 해소한다                         4240      31       0  다르다        다르다 ✓
+  ⚠ V9 은 **엣지 축이 아니라 참조 갈래 축**에서만 갈린다 — 선언 14910 · 엣지 6591 · 지역 25815 · 최상위 323 · 미해소 12392 · 선언전 0 · 모호 68
+
+V4 대 V3 — 다르다 ✓
+
+E3 동명 아이템 재선언 자리 — 기준 21(파일 10) · impl 을 안 열면 83(파일 30)
+   남은 자리 표본 — crates/pal-cli/src/install/blocks.rs:상태(값)×2 · crates/pal-cli/src/round/approval.rs:default_shell(값)×2 · crates/pal-cli/src/round/approval.rs:private_directory(값)×2 · crates/pal-cli/src/round/approval.rs:private_file(값)×2 · crates/pal-cli/src/round/verify.rs:OracleChild(값)×2 · crates/pal-cli/src/round/verify.rs:OracleChild(타입)×2 · crates/pal-cli/src/round/verify.rs:spawn_child(값)×2 · crates/pal-cli/src/round/verify.rs:take_stderr(값)×2 · crates/pal-cli/src/round/verify.rs:take_stdout(값)×2 · crates/pal-cli/src/round/verify.rs:terminate_tree(값)×2 · crates/pal-cli/tests/hook.rs:복사한_것에_실행_권한(값)×2 · crates/pal-cli/tests/install_boundary.rs:방(값)×2
+   이 자리는 엣지가 아니라 `Ambiguous` 다 — 해소하면 V10 만큼 엣지가 는다
+
+✓ 변형 열하나가 전부 기준과 갈렸다

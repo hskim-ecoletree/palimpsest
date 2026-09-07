@@ -1,0 +1,72 @@
+# 효과 — 테스트가 아닌 것이 이 회차의 산출을 돌린 출력
+#
+# 물음: 「`RefResolution` 에 팔을 하나 더하면 무엇이 깨지나」 — 이 회차가 실제로 물은 것이다.
+# 돌린 것: ./target/release/pal touch <심볼>   (2026-09-08 · 산출 커밋 11b6162 뒤)
+
+$ ./target/release/pal touch RefResolution
+
+  RefResolution  ·  palimpsest@11b6162+worktree#82d70e05b8b8
+  enum · crates/pal-core/src/scope.rs:155 · identity ordinal · body d09bea84379b
+
+■ 이 좌표에 걸린 것 (0)
+  아직 없습니다.
+■ 이 좌표를 지켜보는 것 (0)
+  아직 없습니다.
+■ 이 심볼이 하는 것
+  호출자 17 · 피호출자 1
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조·구조체 리터럴·경로 머리도 셉니다
+  ※ **`x.foo()` 와 `S::foo()` 는 아직 안 셉니다** — 멤버·경로 해소가 F07 미구축입니다. 그래서 0 은 「안 부른다」가 아니라 「이 층이 못 본다」일 수 있습니다
+  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
+■ 내가 모르는 것
+  (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
+
+$ ./target/release/pal touch ScopeChain
+
+  ScopeChain  ·  palimpsest@11b6162+worktree#34f4b73fa3a6
+  struct · crates/pal-core/src/scope.rs:219 · identity ordinal · body e7a09647d3db
+
+■ 이 좌표에 걸린 것 (0)
+  아직 없습니다.
+■ 이 좌표를 지켜보는 것 (0)
+  아직 없습니다.
+■ 이 심볼이 하는 것
+  호출자 12 · 피호출자 2
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조·구조체 리터럴·경로 머리도 셉니다
+  ※ **`x.foo()` 와 `S::foo()` 는 아직 안 셉니다** — 멤버·경로 해소가 F07 미구축입니다. 그래서 0 은 「안 부른다」가 아니라 「이 층이 못 본다」일 수 있습니다
+  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
+■ 내가 모르는 것
+  (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
+
+$ ./target/release/pal touch resolve_shadowing
+
+  resolve_shadowing  ·  palimpsest@11b6162+worktree#80cd88b02cc2
+  fun · crates/pal-core/src/scope.rs:325 · identity ordinal · body 4c5f7035c0a7
+
+■ 이 좌표에 걸린 것 (0)
+  아직 없습니다.
+■ 이 좌표를 지켜보는 것 (0)
+  아직 없습니다.
+■ 이 심볼이 하는 것
+  호출자 0 · 피호출자 4
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조·구조체 리터럴·경로 머리도 셉니다
+  ※ **`x.foo()` 와 `S::foo()` 는 아직 안 셉니다** — 멤버·경로 해소가 F07 미구축입니다. 그래서 0 은 「안 부른다」가 아니라 「이 층이 못 본다」일 수 있습니다
+  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
+■ 내가 모르는 것
+  (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
+
+$ ./target/release/pal touch file_edges
+
+  file_edges  ·  palimpsest@11b6162+worktree#e09b7d058d5c
+  fun · crates/pal-core/src/projection.rs:222 · identity ordinal · body 008db0013f91
+
+■ 이 좌표에 걸린 것 (0)
+  아직 없습니다.
+■ 이 좌표를 지켜보는 것 (0)
+  아직 없습니다.
+■ 이 심볼이 하는 것
+  호출자 6 · 피호출자 3
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조·구조체 리터럴·경로 머리도 셉니다
+  ※ **`x.foo()` 와 `S::foo()` 는 아직 안 셉니다** — 멤버·경로 해소가 F07 미구축입니다. 그래서 0 은 「안 부른다」가 아니라 「이 층이 못 본다」일 수 있습니다
+  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
+■ 내가 모르는 것
+  (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)

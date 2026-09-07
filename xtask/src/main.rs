@@ -644,6 +644,11 @@ fn check(root: &Path) -> Result<()> {
         ("발견이 닫혔나", check_finding_closure(root)),
         ("선언 목록이 닫혀 있나", check_declared_lists(root)),
         ("완수 조건 설계 평가", check_condition_audit(root)),
+        // ⚠ **이 목록은 문서·구조 검사다. 시험을 안 돌린다.**
+        //   회차의 완수 조건이 *"`cargo xtask check` 가 통과한다"* 만 걸면 A 계열 단위
+        //   시험이 하나도 안 돌고 초록이 된다 — 조건 설계 평가 R1 이 그것을 잡았고
+        //   회차 `2026-09-07-rust-scope-references` 의 `C3` 이 `cargo xtask test` 를
+        //   함께 걸어 닫았다. **둘은 다른 검사다.**
         ("어색한 표현 부재", check_awkward_phrases(root)),
         ("완성 장면 형식", check_completion_scenes(root)),
     ];
