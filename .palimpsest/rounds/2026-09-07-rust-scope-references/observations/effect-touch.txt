@@ -1,11 +1,11 @@
 # 효과 — 테스트가 아닌 것이 이 회차의 산출을 돌린 출력
 #
 # 물음: 「`RefResolution` 에 팔을 하나 더하면 무엇이 깨지나」 — 이 회차가 실제로 물은 것이다.
-# 돌린 것: ./target/release/pal touch <심볼>   (2026-09-08 · 산출 커밋 11b6162 뒤)
+# 돌린 것: ./target/release/pal touch <심볼>   (2026-09-08)
 
 $ ./target/release/pal touch RefResolution
 
-  RefResolution  ·  palimpsest@11b6162+worktree#82d70e05b8b8
+  RefResolution  ·  palimpsest@a74621a+worktree#82d70e05b8b8
   enum · crates/pal-core/src/scope.rs:155 · identity ordinal · body d09bea84379b
 
 ■ 이 좌표에 걸린 것 (0)
@@ -22,7 +22,7 @@ $ ./target/release/pal touch RefResolution
 
 $ ./target/release/pal touch ScopeChain
 
-  ScopeChain  ·  palimpsest@11b6162+worktree#34f4b73fa3a6
+  ScopeChain  ·  palimpsest@a74621a+worktree#34f4b73fa3a6
   struct · crates/pal-core/src/scope.rs:219 · identity ordinal · body e7a09647d3db
 
 ■ 이 좌표에 걸린 것 (0)
@@ -39,7 +39,7 @@ $ ./target/release/pal touch ScopeChain
 
 $ ./target/release/pal touch resolve_shadowing
 
-  resolve_shadowing  ·  palimpsest@11b6162+worktree#80cd88b02cc2
+  resolve_shadowing  ·  palimpsest@a74621a+worktree#80cd88b02cc2
   fun · crates/pal-core/src/scope.rs:325 · identity ordinal · body 4c5f7035c0a7
 
 ■ 이 좌표에 걸린 것 (0)
@@ -56,7 +56,7 @@ $ ./target/release/pal touch resolve_shadowing
 
 $ ./target/release/pal touch file_edges
 
-  file_edges  ·  palimpsest@11b6162+worktree#e09b7d058d5c
+  file_edges  ·  palimpsest@a74621a+worktree#e09b7d058d5c
   fun · crates/pal-core/src/projection.rs:222 · identity ordinal · body 008db0013f91
 
 ■ 이 좌표에 걸린 것 (0)
