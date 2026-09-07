@@ -5,8 +5,8 @@
 
 ## 지금 단계
 
-**완수 조건 설계 평가 라운드 2** (승인 앞). 사전부검 1 라운드와 조건 설계 평가 1 라운드가
-끝났고 소유자 승격 셋이 답을 받았다.
+**소유자 승인 앞.** 사전부검 2 라운드와 완수 조건 설계 평가 2 라운드를 **상한까지 다 썼고**,
+소유자 승격 넷이 답을 받았다. 조건이 열여덟 → 서른하나 → **쉰둘**이 됐다.
 
 ## 계획 — 무엇을 어느 순서로 만지나
 
@@ -15,7 +15,7 @@
 | # | 무엇 | 어디 |
 |---|---|---|
 | 1 | `scopes.rs` 의 **뼈대를 언어 중립으로 뺀다** — 2 패스(선언·참조) · `scope_at` 을 `Node::id` 로 잡기 · `hoist_home` · `symbol_at` 을 시작 바이트로 잇기. TypeScript 가 실물에서 사서 넣은 방어 넷이 그 뼈대에 남는다 | `crates/pal-extract/src/scopes.rs` |
-| 2 | **노드 종류 표만 언어별로 가른다** — 스코프를 여는 것 · 참조로 세는 것 · 안 세는 것 · 호이스팅 규칙 · 이름 공간 | 같은 파일 또는 언어별 표 모듈 |
+| 2 | **노드 종류 표만 언어별로 가른다** — 스코프를 여는 것 · **무엇이 이름을 선언하는가** · 참조로 세는 것 · 안 세는 것 · 호이스팅 규칙 · 이름 공간. ⚠ 둘째 열이 앞 판에 없었고 그것이 가짜 엣지 52~58 의 자리다 | 같은 파일 또는 언어별 표 모듈 |
 | 3 | Rust 표를 채운다 — 아래 「갈리는 자리」 | 새 표 |
 | 4 | `use` 를 `ImportSet` 으로, `pub` 를 `ExportSet` 으로 산출한다. **정렬·중복 제거한 뒤** `digest` 를 부른다 | `crates/pal-extract/src/rust.rs` |
 | 5 | `extract_detailed` 의 `Capable::not_built` 셋을 `Capable::Present` 로 바꾼다 | `rust.rs:322-327` |
@@ -23,6 +23,23 @@
 | 7 | `crates/pal-cli/tests/` 에 **`.rs` 픽스처**를 세운다 — 지금 픽스처가 전부 `.ts`·`.kt` 라 이 경로가 CI 를 안 지난다 | `stitching.rs` 또는 새 시험 |
 | 8 | `pal doctor` 의 `REFERENCES` 부재 선언이 아직 참인지 판정한다 — 그 사유가 *"작아서 안 걸린 것"* 이었다 | `crates/pal-cli/src/doctor.rs:290-301` |
 | 9 | 낡는 문면을 갱신한다 | `rust.rs:1,298,326` · `classify.rs:226` · `schema/graph.toml:207-210` · `docs/plan/02-order.md:49` · `docs/plan/03-shortest-path.md:79-81` |
+
+### 사전부검 라운드 2 가 프로토타입으로 잡은 것 — **계획이 이것을 지고 간다**
+
+격리 사본에 `scopes.rs` 의 뼈대를 이식해 이 저장소 134 파일에 변형 13 개로 돌린 실측이다.
+
+| 무엇 | 실측 | 어디를 고치나 |
+|---|--:|---|
+| `hoist_home` 이 「`impl` 이 스코프를 연다」를 상쇄한다 | 가짜 78 · 누락 17 | 아이템 호이스팅을 `hoist_home` 이 아닌 다른 장치로 표현한다 |
+| 선언 축이 표에 없어 지역 이름이 안 묶인다 | 가짜 52~58 | 표에 **여섯째 열(무엇이 이름을 선언하는가)**을 더한다 |
+| `#[…]` 속성 안 이름이 참조가 된다 | 참조 4,258 · 엣지 60 | `attribute_item` 조상 배제 |
+| `cfg` 쌍둥이를 조용히 하나로 고른다 | 모호 39 · 선언자리 13 | 둘 이상이면 해소하지 않는다 |
+| `for x in` · `if let Some(x)` 가 스코프를 안 연다 | 지역 판정 346 건 이동 | 여는 목록에 `for_expression`·`let_condition` 을 더한다 |
+| 엣지의 62% 가 호출이 아니다 | 타입 1,182 · 호출 2,305 · 그 밖 2,529 | `pal touch` 라벨에 사실을 적는다 |
+| `grade = "scoped"` 가 *"L2 이상에서만"* 인데 L1 이 낸다 | 3,752 | 스키마와 `ResolutionGrade` 문서 |
+
+★ **기준선 일치 신호**: 그 프로토타입이 심볼 3,103 개를 냈고 실제 관측치는 3,110 이다.
+이 회차의 구현이 그 근처를 안 내면 이식이 어딘가 다른 것이다.
 
 **위층은 안 만진다** — `pal_core::file_edges`(`crates/pal-core/src/projection.rs:214`)가
 `ScopeChain` 하나를 받으면 엣지를 만들고, 화면 표시(`crates/pal-cli/src/touch.rs:398`)도
@@ -34,9 +51,12 @@
 
 | 무엇 | TypeScript | Rust |
 |---|---|---|
-| 스코프를 여는 것 | 함수류 8 · 클래스류 4 · 중괄호 5 | `mod_item` · `function_item` · `block` · `closure_expression` · `match_arm` · **`impl_item`** |
+| 스코프를 여는 것 | 함수류 8 · 클래스류 4 · 중괄호 5 | `mod_item` · `function_item` · `block` · `closure_expression` · `match_arm` · **`impl_item`** · **`for_expression`** · **`let_condition`** |
+| **무엇이 이름을 선언하나** | `formal_parameters` · `lexical_declaration` · `variable_declaration` · `import_statement` (뼈대에 박혀 있다) | **하나도 안 겹친다** — `parameters`/`parameter` · `closure_parameters` · `let_declaration` · `match_arm` 의 `tuple_struct_pattern` · `for_expression` · `let_condition` |
+| 속성 | 없다 | **`attribute_item` 아래는 전부 배제한다** — `#[cfg(test)]` 도 `token_tree` 라 앞형제 규칙이 안 걸린다 |
+| 같은 이름이 둘일 때 | 드물다 | **`cfg` 쌍둥이가 실재한다** — 해소하지 않는다 |
 | `impl` | 없다 | **스코프를 연다** ⟨승격 · 소유자 답 2026-09-07⟩ |
-| 호이스팅 | `function` 은 되고 `let`/`const` 는 TDZ | 아이템은 순서 무관, `let` 은 순서 있다 |
+| 호이스팅 | `function` 은 되고 `let`/`const` 는 TDZ | 아이템은 순서 무관, `let` 은 순서 있다. ⚠ **`hoist_home` 으로 표현하면 안 된다** — 그 함수가 `impl` 스코프를 건너뛴다. 그리고 **TDZ 는 Rust 에 없다** |
 | 섀도잉 | 드물다 | **관용이다**(`let x = 1; let x = f(x);`) |
 | 선언 이름의 노드 | `identifier` 계열 | **종류마다 다르다** — `struct_item`·`trait_item` 은 `type_identifier`, `mod_item`·`function_item` 은 `identifier` |
 | 이름 공간 | 클래스는 값·타입 **둘 다** | 타입도 값 자리에서 `identifier` 로 쓰인다(358 건) — **둘 다에 넣는다** |
@@ -65,9 +85,8 @@
 
 ## 남은 것
 
-1. 완수 조건 설계 평가 라운드 2 — 개정한 조건을 다시 건다
-2. 소유자 승인
-3. 실행 → 검증 → 효과 → 종료
+1. 소유자 승인
+2. 실행 → 검증 → 효과 → 종료
 
 ## 실패한 접근
 
@@ -78,5 +97,10 @@
   581 건만으로도 통과한다.
 - **Rust 스코프 빌더를 새 파일로 쓰는 것** — `scopes.rs` 가 이미 같은 기계이고, 그 파일이
   실물에서 사서 넣은 방어 넷이 새 판에 없다.
+- **아이템 호이스팅을 `hoist_home` 으로 표현하는 것** — 그 함수가 `impl` 스코프를 건너뛰어
+  「`impl` 이 스코프를 연다」를 정확히 상쇄한다. 두 변형의 엣지 집합이 비트 단위로 같았다.
+- **「기여 파일 수」를 완수 증인으로 삼는 것** — 변형 13 개가 전부 126 을 낸다.
+- **TypeScript 의 TDZ 방어를 그대로 받는 것** — Rust 아이템에는 TDZ 가 없어서
+  비함수 스코프의 전방 참조 52 건이 「선언 전 참조」로 뒤집힌다.
 
 [#130]: https://github.com/hskim-ecoletree/palimpsest/issues/130
