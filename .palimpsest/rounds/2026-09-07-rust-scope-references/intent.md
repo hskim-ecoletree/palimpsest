@@ -232,6 +232,42 @@
 | `A13` 에 `stitch_of` 인용을 걸었다 | 중첩 `pub` 372 개가 `export_digest` 에는 들고 `EXPORTS` 에는 안 든다 | 조건 설계 평가 R2 |
 | `C4` 에 `--bless` 금지와 `git diff` 대조를 걸었다 | 골든 러너에 골든을 다시 쓰고 rc=0 을 내는 스위치가 있다 | 조건 설계 평가 R2 |
 
+## 착수 전에 연 이슈
+
+| 이슈 | 무엇 | 왜 여기서 나왔나 |
+|---|---|---|
+| [#132](https://github.com/hskim-ecoletree/palimpsest/issues/132) | 회차 레코드 장치가 자기 요구를 동시에 만족할 수 없다 | 원장을 세우다 관측했다.  산출을 그대로 쓰면 enum 이 깨지고 enum 을 맞추면 「손으로 옮기지 않는다」가 깨진다. **이 회차가 만든 장치가 아니라 저장소의 기존 장치**라 §11 ③ 의 별도 목록이 아니라 본 모집단에서 분할한다 |
+
+⚠ **그래서 지금   ok    의존 방향  — 크레이트 8개, 규칙 4
+  ok    코어 어휘 금지  — 금지어 16개 · 허용 예외 0개
+  ok    기계 토큰에 한국어 금지  — 파일 39개 · 기계 토큰 225개 · 한국어 0건
+  ok    의도 저장소 폐기 경로 부재  — pal-store 소스에 의도 경로 언급 0건
+  ok    unsafe 금지  — 크레이트 루트 7개
+  ok    의존 정책  — advisories ok, bans ok, licenses ok, sources ok
+  ok    gix 격리  — gix 직접 의존은 pal-git 하나
+  ok    스키마 정합  — 노드 라벨 10개 · 엣지 타입 8개 · 양방향 0건
+  ok    카탈로그 정합  — 질의 10개 · 양방향 0건 · 표면 1곳의 소스 41개에 박힌 이름 0건
+  ok    선택 필드 금지 (1단계)  — `pub struct` 104개 · 선택 필드 0
+  ok    예산 상수 단일 위치  — 예산 상수 28개 · 다른 파일 97개에 0건
+  ok    벗어나는 경로 부재  — 응답 묶음 4개 · 예산 4개 낱말에 0건
+  ok    앵커는 신고받지 않는다  — `WatchEntry` 생성 자리 3개 · 등록된 자리 3개
+  ok    낡음이 생성기를 안 부른다  — 낡음을 다루는 파일 2개 · 생성 낱말 6개에 0건
+  ok    인입이 자연어 유사도를 안 쓴다  — 인입 파일 2개 · 유사도 낱말 10개에 0건
+  ok    승격이 원본을 안 고친다  — 승격을 다루는 파일 2개 · 제자리 수정 5개 형태에 0건
+  ok    설치 경로가 홈을 안 부른다  — 설치 소스 17개 · 홈 낱말 7개에 0건
+  FAIL  죽은 링크 부재
+  ok    sunset 선언  — 선언 2건 · 트리거 `.palimpsest/rounds/*/*.json` 는 아직 0건 — 그날이 오면 여기가 빨개진다
+  ok    사라진 문서를 현재형으로 안 부른다  — 파일 238개 · 사라진 문서 인용 489곳 · 전부 「옛」 표기
+  FAIL  회차 레코드
+  ok    원장 둘 대조  — 회차 20 · 검사 안 2026-08-19-finding-records (46개) · 2026-08-20-rust-extractor (44개) · 2026-08-22-agent-laziness (69개) · 2026-08-23-agent-laziness-behavior (39개) · 2026-08-30-agent-laziness-executable-plan (6개) · 2026-08-30-round-verification-status (10개) · 2026-08-31-legacy-round-debt (13개) · 2026-08-31-round-approve-verify (15개) · 2026-08-31-round-stop-progress-guard (18개) · 2026-09-02-agent-laziness-merge-blockers (13개) · 2026-09-03-gate-parser-schema (9개) · 2026-09-05-openmetadata-decision (17개) · 2026-09-06-terrain-and-completion-scene (32개) · 2026-09-06-user-surface-vocabulary (54개) (조건 385 · 그중 미측정 4) · 형식 이전 2026-08-18-completion-condition (docs/gates/round-completion-condition.md) · 2026-08-18-inventory-disposal (docs/gates/inventory-disposal.md) · 게이트 없음 2026-08-18-round-protocol · 2026-09-07-rust-scope-references · **철회 2026-08-23-check-verifies-work · 2026-09-01-agent-laziness-merge-evaluation** · 종료 보고 16개 검사 (검산 줄 유예 발화 0 · 보고 없음 유예 발화 0) · 최근 끝난 회차 `2026-09-06-user-surface-vocabulary` 가 검사에 들었다
+  FAIL  발견이 닫혔나
+  ok    선언 목록이 닫혀 있나  — 형식 이전 2개 (하한 2026-08-19) · A 축 감사 대기 0개 (하한 2026-08-24) · 종료 보고 검산 줄 유예 0개 (하한 2026-08-24) · 종료 보고 없음 유예 0개 (하한 2026-08-19) · 어색한 표현 교정 적용 0개 (하한 2026-09-06)
+  ok    완수 조건 설계 평가  — 하한 2026-09-06 · 대상 회차 3개 · 평가 반환문 3개
+  ok    어색한 표현 부재  — 패턴 8개 · 파일 248개(종결 문서 4개) · 줄 86728개 · 남은 것 0곳
+  ok    완성 장면 형식  — 장면 5개 · 소제목 셋 전부 갖춤 의 「회차 레코드」가 빨갛다.**  은 종료 시점 조건이고
+착수 전이라 아직 안 잰다 — 다만 그 빨강의 원인이 이 회차의 산출이 아니라 장치라는 사실을
+여기 적어 둔다.
+
 ## 승격
 
 착수 전 사전부검이 소유자 답 둘을 반증해 다시 물었다. **셋 다 물음 하나에 칸 하나로 올렸다.**
