@@ -3,7 +3,7 @@
 //! # 왜 문이 둘인가
 //!
 //! *"우리가 읽는 자리는 일반 파일이거나 없거나 둘 중 하나다"*([`super::guard`])는
-//! **우리 대신 읽는 프로세스에도** 선다. 그런데 그 규율을 세우려면 **그 프로세스가
+//! **우리 대신 읽는 프로세스에도** 걸린다. 그런데 그 규율을 세우려면 **그 프로세스가
 //! 무엇을 읽는지 목록을 알아야** 하고, 목록은 언제나 불완전하다 — `git` 이 읽는
 //! 자리만 해도 뿌리 `.gitignore` · 중첩 `.gitignore` · `.git/info/exclude` ·
 //! 전역 `core.excludesFile` · `.git/config` 다섯이고, 마지막 둘은 대상 **밖**에
@@ -23,7 +23,7 @@
 //!
 //! [`std::process::Child::try_wait`] 로 폴링하면서 파이프를 안 비우면, 자식이 파이프
 //! 버퍼를 채운 채 **쓰기에서 막히고** 우리는 그것을 「안 끝났다」로 읽는다 — 상한이
-//! **거짓 시간 초과**를 낸다. 그래서 stdout·stderr 를 각각 실 하나가 끝까지 읽는다.
+//! **거짓 시간 초과**를 산출한다. 그래서 stdout·stderr 를 각각 실 하나가 끝까지 읽는다.
 
 use std::io::Read;
 use std::process::{Child, ExitStatus};
@@ -38,7 +38,7 @@ pub const 기본_상한: Duration = Duration::from_secs(30);
 /// 폴링 간격. 1ms 면 빠른 `git` 한 번에 붙는 지연이 무시할 만하다.
 const 간격: Duration = Duration::from_millis(1);
 
-/// 자식이 낸 것 — [`std::process::Output`] 과 같은 모양이되 **우리가 상한을 걸고**
+/// 자식이 산출한 것 — [`std::process::Output`] 과 같은 모양이되 **우리가 상한을 걸고**
 /// 모은 것이다.
 #[derive(Debug)]
 pub struct 대답 {
@@ -128,7 +128,7 @@ mod tests {
 
     /// **평범한 자식은 그대로 지나간다** — 상한이 정상 동작을 자르지 않는다.
     #[test]
-    fn 끝나는_자식은_출력을_그대로_낸다() {
+    fn 끝나는_자식은_출력을_그대로_산출한다() {
         let child = Command::new("git")
             .args(["--version"])
             .stdin(Stdio::null())

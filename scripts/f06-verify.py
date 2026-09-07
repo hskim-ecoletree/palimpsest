@@ -19,7 +19,7 @@
 그래서 오라클을 **대조의 양방향성**으로 잡는다.
 
 F22-1 은 음성 대조 **9/9** 로 각 방향을 **망가뜨려서** 세웠다. 여기서 그 자격을
-낮추지 않는다 — 검사가 통과한다는 사실은 검사가 무언가를 센다는 증거가 아니다.
+낮추지 않는다 — 검사가 통과한다는 사실은 검사가 무언가를 잰다는 증거가 아니다.
 
 ### 변형마다 셋을 확인한다
 
@@ -97,7 +97,7 @@ class 결과:
 
 
 def xtask() -> tuple[bool, str]:
-    """`cargo xtask check` 를 돌린다. 통과 여부와 카탈로그 줄을 낸다."""
+    """`cargo xtask check` 를 돌린다. 통과 여부와 카탈로그 줄을 산출한다."""
     p = subprocess.run(
         ["cargo", "run", "-q", "-p", "xtask", "--", "check"],
         cwd=ROOT,
@@ -304,7 +304,7 @@ def 코퍼스(r: 결과) -> None:
             r.fail("③ 내보내기", f"실패했다: {p.stderr[-400:]}")
             return
         보고 = json.loads(p.stdout)["answer"]
-        낸 = {c["label"]: c["count"] for c in 보고["exported"]}
+        산출한 = {c["label"]: c["count"] for c in 보고["exported"]}
         if 낸.get("Symbol") != 노드 or 낸.get("REFERENCES") != 엣지:
             r.fail(
                 "③ 내보내기 건수",
@@ -316,7 +316,7 @@ def 코퍼스(r: 결과) -> None:
             r.ok(
                 "③ 내보내기",
                 f"{이름} Symbol {낸['Symbol']} · REFERENCES {낸['REFERENCES']} · "
-                f"못 낸 라벨 {len(보고['missing'])}개 (사유 {len(사유)}갈래)",
+                f"못 산출한 라벨 {len(보고['missing'])}개 (사유 {len(사유)}갈래)",
             )
 
         # **Cypher 문법을 우리가 검증하지 못한다** — 파서가 없다. 대조 불가로 적는다.

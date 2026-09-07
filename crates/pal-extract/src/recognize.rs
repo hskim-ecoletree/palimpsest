@@ -213,7 +213,7 @@ mod tests {
 
     #[test]
     fn 셔뱅이_확장자_없는_스크립트를_잡는다() {
-        // **실물에서 이 단계가 켜는 것은 `gradlew` 하나다**(코퍼스 실측).
+        // **실물에서 이 단계가 거는 것은 `gradlew` 하나다**(코퍼스 실측).
         let r = recognize("", "gradlew", None, b"#!/bin/sh\n\n# gradle wrapper\n");
         assert_eq!(r.language().unwrap().as_str(), "Shell");
         // `env` 를 거치는 형태도 본다.

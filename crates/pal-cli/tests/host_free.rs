@@ -10,7 +10,7 @@
 //! **그렇다고 이 시험이 고아가 되지는 않는다.** ADR-0025 가 내린 것은 **하네스 층**의
 //! 호스트 중립이고, 같은 문서가 *"다른 호스트 사용자는 코어(`pal` CLI)만 쓴다"* 를
 //! 남겼다. 이 파일이 재는 것은 정확히 **그 코어**다 — 어떤 호스트도 없는 환경에서
-//! 전 질의가 답(공백 포함)을 내는가. 그 계약은 살아 있고, 근거는 이제 ADR-0025 다.
+//! 전 질의가 답(공백 포함)을 산출하는가. 그 계약은 살아 있고, 근거는 이제 ADR-0025 다.
 //!
 //! ⚠ **왜 이걸 적어 두나**: 근거 문서가 사라진 채 초록으로 도는 검사는
 //! *"왜 있는지 아무도 모르는 불변식"* 이 되고, 그것이 이 저장소가 없애려는 거짓
@@ -19,7 +19,7 @@
 //! # 「답이 비었다」가 실패가 아닌 경우를 **먼저** 세운다
 //!
 //! 대조가 꺼지는 **열셋째** 형태가 이 자리다 — 옳은 산출을 어긋남으로 읽는 것.
-//! 관측 0 건에서 `symbol.resolve X` 가 `Unknown` 을 내는 것은 **옳다.** 그것을
+//! 관측 0 건에서 `symbol.resolve X` 가 `Unknown` 을 산출하는 것은 **옳다.** 그것을
 //! *"답이 없다"* 로 세면 옳은 산출이 반증으로 적힌다. 그래서 아래는 *"답이 있다"* 가
 //! 아니라 ***"답의 갈래가 무엇인가"***를 잰다.
 
@@ -192,7 +192,7 @@ fn 관측_0_건에서_여섯이_전부_답한다() {
     // 있거나 파일이 하나라도 있으면 이 시험이 무엇을 재는지 알 수 없다.
     let (코드, 대장, _) = 파이프로(&repo, &["query", 대장_질의, "--json"]);
     assert_eq!(코드, Some(0));
-    let v: serde_json::Value = serde_json::from_str(&대장).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&대장).expect("응답 묶음 JSON");
     assert_eq!(v["answer"]["ledger"]["files_total"].as_u64(), Some(0), "저장소가 안 비었다");
 
     let 계획 = 계획_문서(&repo);
@@ -210,9 +210,9 @@ fn 관측_0_건에서_여섯이_전부_답한다() {
         }
         args.push("--json");
         let (코드, 산출, 오류) = 파이프로(&repo, &args);
-        // ★ **여섯 다 종료 0 이고 봉투를 진다.** 하나라도 실패하면 호스트 독립성이 깨진다.
+        // ★ **여섯 다 종료 0 이고 응답 묶음을 진다.** 하나라도 실패하면 호스트 독립성이 깨진다.
         assert_eq!(코드, Some(0), "`{name}` 이 빈 저장소에서 실패했다: {오류}");
-        let v: serde_json::Value = serde_json::from_str(&산출).expect("봉투 JSON");
+        let v: serde_json::Value = serde_json::from_str(&산출).expect("응답 묶음 JSON");
         // **소비자가 질의 없이 능력을 안다** — 빈 답이 「없음」인지 「안 만듦」인지 가른다.
         assert!(!v["capabilities"]["not_built"].as_array().expect("not_built").is_empty());
         갈래.push((name.clone(), v["answer"]["outcome"].as_str().expect("outcome").to_owned()));
@@ -276,17 +276,17 @@ fn 비대화_경로가_전_질의에_닿는다() {
         assert!(!산출.contains('■'), "`{name}` 의 `--json` 에 사람용 머리글이 샜다");
     }
 
-    // 봉투가 안 나가는 쪽 — **오류는 표준오류로 간다.**
+    // 응답 묶음이 안 나가는 쪽 — **오류는 표준오류로 간다.**
     let (코드, 산출, 오류) = 파이프로(&repo, &["query", "이런질의는없다"]);
     종료_갈래.insert(코드.expect("종료 코드"));
     assert_eq!(코드, Some(1));
-    assert!(산출.is_empty(), "봉투가 안 나갔는데 표준출력에 무언가 있다");
+    assert!(산출.is_empty(), "응답 묶음이 안 나갔는데 표준출력에 무언가 있다");
     assert!(!오류.is_empty(), "아무 말도 안 했다");
 
-    // ★ **「못 찾았다」는 실패가 아니다** — 봉투가 나갔으므로 0 이다.
+    // ★ **「못 찾았다」는 실패가 아니다** — 응답 묶음이 나갔으므로 0 이다.
     let (코드, 산출, _) = 파이프로(&repo, &["query", "symbol.resolve", "없는이름", "--json"]);
     assert_eq!(코드, Some(0), "「못 찾았다」가 실패로 끝났다");
-    let v: serde_json::Value = serde_json::from_str(&산출).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&산출).expect("응답 묶음 JSON");
     assert_eq!(v["answer"]["outcome"].as_str(), Some("unknown"));
 
     // **하한** — 갈래가 하나뿐이면 종료 코드 계약이 안 재어진다.
@@ -301,7 +301,7 @@ fn 비대화_경로가_전_질의에_닿는다() {
 /// # 등록한 것과 실물이 다르다 — 적어 둔다
 ///
 /// `[f06.3.pass]` ③ 이 ★ 로 요구한 것은 *"쓰기로 붙은 프로세스가 살아 있는 동안 읽기
-/// 프로세스가 답을 낸다"* 였다. **`redb` 4.1 에서 그것은 성립하지 않는다.**
+/// 프로세스가 답한다"* 였다. **`redb` 4.1 에서 그것은 성립하지 않는다.**
 /// `Builder::open_read_only` 의 문서가 명시한다:
 ///
 /// > If the file has been opened for writing (i.e. as a `Database`)
@@ -340,7 +340,7 @@ fn 읽기_전용_여럿이_동시에_붙고_쓰기는_배타다() {
     let (읽기_코드, 산출, 읽기_오류) =
         파이프로(&repo, &["query", 대장_질의, "--read-only", "--json"]);
     assert_eq!(읽기_코드, Some(0), "읽기 둘이 붙어 있는데 셋째가 실패했다: {읽기_오류}");
-    let v: serde_json::Value = serde_json::from_str(&산출).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&산출).expect("응답 묶음 JSON");
     // ★ **못 남긴 사실이 답에 실린다.** 조용히 빠지면 F17 이 미조회를 과대 계상한다.
     assert_eq!(v["log"]["status"].as_str(), Some("not_recorded"));
     assert_eq!(v["log"]["why"].as_str(), Some("read_only_attach"));
@@ -409,7 +409,7 @@ fn 로그_줄이_실제로_늘고_읽기_전용에서는_안_는다() {
     // 쓰기로 붙은 질의 하나 → **한 줄 는다.**
     let (코드, 산출, _) = 파이프로(&repo, &["query", "symbol.resolve", "도움", "--json"]);
     assert_eq!(코드, Some(0));
-    let v: serde_json::Value = serde_json::from_str(&산출).expect("봉투");
+    let v: serde_json::Value = serde_json::from_str(&산출).expect("응답 묶음");
     assert_eq!(v["log"]["status"].as_str(), Some("recorded"));
     let 쓴_뒤 = 세기(&열쇠);
     assert_eq!(쓴_뒤, 처음 + 1, "`recorded` 라고 적었는데 로그가 안 늘었다");
@@ -418,7 +418,7 @@ fn 로그_줄이_실제로_늘고_읽기_전용에서는_안_는다() {
     let (코드, 산출, 오류) =
         파이프로(&repo, &["query", "symbol.resolve", "도움", "--read-only", "--json"]);
     assert_eq!(코드, Some(0), "{오류}");
-    let v: serde_json::Value = serde_json::from_str(&산출).expect("봉투");
+    let v: serde_json::Value = serde_json::from_str(&산출).expect("응답 묶음");
     assert_eq!(v["log"]["status"].as_str(), Some("not_recorded"));
     assert_eq!(세기(&열쇠), 쓴_뒤, "`not_recorded` 라고 적었는데 로그가 늘었다");
 
@@ -442,7 +442,7 @@ fn 읽기_전용은_없는_2층에_조용히_안_붙는다() {
 }
 
 #[test]
-fn 내보내기의_라벨이_스키마에서_오고_못_낸_것을_적는다() {
+fn 내보내기의_라벨이_스키마에서_오고_못_산출한_것을_적는다() {
     // `[f06.3.pass]` ④ — 옛 F05 §2 의 다섯째 근거가 검사되는 자리.
     let repo = 있는_저장소("export");
     let (코드, _, _) = 파이프로(&repo, &["query", 대장_질의, "--json"]);
@@ -454,7 +454,7 @@ fn 내보내기의_라벨이_스키마에서_오고_못_낸_것을_적는다() {
         &["export", "--format", "cypher", "--out", cypher_path.to_str().expect("경로"), "--json"],
     );
     assert_eq!(코드, Some(0), "{오류}");
-    let v: serde_json::Value = serde_json::from_str(&산출).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&산출).expect("응답 묶음 JSON");
     let text = std::fs::read_to_string(&cypher_path).expect("Cypher");
 
     // **하한** — 노드가 0 개면 아래가 전부 공짜로 통과한다.
@@ -478,19 +478,19 @@ fn 내보내기의_라벨이_스키마에서_오고_못_낸_것을_적는다() {
         assert!(text.contains(label), "Cypher 에 `{label}` 이 없다");
     }
 
-    // ★ **못 낸 것을 0 건이 아니라 사유와 함께 적는다**(ADR-0002).
-    let 못_낸 = v["answer"]["missing"].as_array().expect("missing");
-    assert!(!못_낸.is_empty(), "스키마의 라벨 열여섯 중 못 낸 것이 0 개일 수 없다");
+    // ★ **못 산출한 것을 0 건이 아니라 사유와 함께 적는다**(ADR-0002).
+    let 못_산출한 = v["answer"]["missing"].as_array().expect("missing");
+    assert!(!못_산출한.is_empty(), "스키마의 라벨 열여섯 중 못 산출한 것이 0 개일 수 없다");
     let 사유들: std::collections::BTreeSet<&str> =
-        못_낸.iter().map(|m| m["why"].as_str().expect("사유")).collect();
+        못_산출한.iter().map(|m| m["why"].as_str().expect("사유")).collect();
     assert!(사유들.contains("not_built"), "`not_built` 사유가 하나도 없다");
     assert!(사유들.contains("not_stored"), "`not_stored` 사유가 하나도 없다");
     // 갈래가 하나면 *"안 만들었다"* 와 *"여기 안 산다"* 가 뭉개진 것이다.
-    assert_eq!(사유들.len(), 2, "못 낸 사유의 갈래가 둘이 아니다");
+    assert_eq!(사유들.len(), 2, "못 산출한 사유의 갈래가 둘이 아니다");
 
     // **개수가 `graph.dump` 와 같다.**
     let (_, dump, _) = 파이프로(&repo, &["query", "graph.dump", "--json"]);
-    let d: serde_json::Value = serde_json::from_str(&dump).expect("봉투");
+    let d: serde_json::Value = serde_json::from_str(&dump).expect("응답 묶음");
     let 노드 = d["answer"]["nodes"].as_array().expect("nodes").len() as u64;
     let 엣지 = d["answer"]["edges"].as_array().expect("edges").len() as u64;
     let 낸_심볼 = 낸_것
@@ -506,7 +506,7 @@ fn 내보내기의_라벨이_스키마에서_오고_못_낸_것을_적는다() {
     assert_eq!(낸_심볼, 노드, "내보낸 심볼 수가 `graph.dump` 와 다르다");
     assert_eq!(낸_엣지, 엣지, "내보낸 엣지 수가 `graph.dump` 와 다르다");
 
-    // **문법을 우리가 검증하지 못한다** — Cypher 파서가 없다. 최소한 균형은 센다.
+    // **문법을 우리가 검증하지 못한다** — Cypher 파서가 없다. 최소한 균형은 잰다.
     // 그 사실은 게이트에 **대조 불가**로 적는다.
     assert_eq!(text.matches('{').count(), text.matches('}').count(), "중괄호가 안 맞는다");
     assert_eq!(text.matches('(').count(), text.matches(')').count(), "괄호가 안 맞는다");
@@ -528,7 +528,7 @@ fn 산출과_근거가_다른_줄기로_간다() {
     assert_eq!(코드, Some(0));
     assert!(산출.starts_with("// pal export"), "표준출력이 Cypher 가 아니다");
     assert!(!산출.contains("■"), "근거가 산출에 섞였다");
-    assert!(오류.contains("못 낸 라벨"), "근거가 표준오류로 안 갔다");
+    assert!(오류.contains("못 산출한 라벨"), "근거가 표준오류로 안 갔다");
 
     // **둘 다 표준출력으로 갈 수는 없다.**
     let (코드, _, 오류) = 파이프로(&repo, &["export", "--format", "cypher", "--json"]);

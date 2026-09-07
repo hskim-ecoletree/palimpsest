@@ -16,7 +16,7 @@
 **대조가 꺼지는 형태 둘을 막는다** (`[f03].self_judged` 3):
 
   · **자라는 값에 묶지 않는다** — 변형 대상이 소스에 없으면 **멈춘다.**
-    파일 수·심볼 수에 묶으면 코퍼스가 자랄 때 조용히 꺼진다
+    파일 수·심볼 수에 묶으면 코퍼스가 자랄 때 조용히 멎는다
   · **공유 상태를 안 쓴다** — 회차마다 캐시 디렉터리를 새로 만든다.
     F02-4 에서 변이 셋이 캐시를 돌려 써 병렬 구간이 아예 안 돌았다
 
@@ -91,7 +91,7 @@ def check_1(ditto: Path, tmp: Path) -> tuple[bool, str]:
     if not with_chain:
         return False, "체인이 비지 않은 심볼이 0 이다 — 성분이 여전히 빈 배열이다"
 
-    # `FileGraph.contains` 와 대 본다. **대장이 제외한 파일은 빼고 센다** — 그 차이가
+    # `FileGraph.contains` 와 대 본다. **대장이 제외한 파일은 빼고 잰다** — 그 차이가
     # 곧 "대장이 안 본 파일" 이고, 그것을 안 빼면 이 항등식이 거짓말을 한다.
     tree = tmp / "ditto-tree"
     tree.mkdir()
@@ -188,7 +188,7 @@ def check_2(ditto: Path, tmp: Path) -> tuple[bool, str]:
         raise SystemExit("변형이 소스를 안 바꿨다 — 대조가 꺼졌다")
 
     # **경로가 같아야 한다.** `symbol_id` 의 성분에 경로가 있으므로 파일 이름을 달리
-    # 두면 두 산출이 무조건 달라지고, 그러면 이 대조는 무엇을 재든 「움직였다」를 낸다.
+    # 두면 두 산출이 무조건 달라지고, 그러면 이 대조는 무엇을 재든 「움직였다」를 산출한다.
     # 첫 실행이 그렇게 어긋났다 — **검사 자신이 반대 방향을 안 지킨 자리다.**
     before_f = symbols_of_file(tmp, "a.ts", src)
     after_f = symbols_of_file(tmp, "a.ts", swapped)
@@ -234,7 +234,7 @@ _MADE = [0]
 
 
 def symbols_of_file(tmp: Path, rel: str, source: bytes) -> list[dict]:
-    """소스 하나를 **새 git 저장소**에 넣고 좌표를 낸다.
+    """소스 하나를 **새 git 저장소**에 넣고 좌표를 산출한다.
 
     저장소를 매번 새로 만든다 — 회차끼리 상태를 물려주면 그것이 F02-4 에서 대조를
     끈 형태다.
@@ -243,7 +243,7 @@ def symbols_of_file(tmp: Path, rel: str, source: bytes) -> list[dict]:
 
     매니페스트가 없으면 `RepoId` 가 디렉터리 이름에서 온다(`ledger::repo_name`).
     임시 디렉터리 이름을 그대로 쓰면 **회차마다 `repo_id` 가 달라 좌표가 전부
-    달라지고**, 그러면 이 대조는 무엇을 재든 언제나 「움직였다」를 낸다.
+    달라지고**, 그러면 이 대조는 무엇을 재든 언제나 「움직였다」를 산출한다.
     첫 실행에서 실제로 그렇게 어긋났다.
     """
     _MADE[0] += 1
@@ -296,7 +296,7 @@ def check_4() -> tuple[bool, str]:
     missing = [name for name, t in RULE_TESTS.items() if t not in listed]
     if missing:
         return False, f"규칙 {missing} 의 시험이 없다"
-    return True, f"다섯 규칙의 시험이 각각 선다 — {' · '.join(RULE_TESTS)}"
+    return True, f"다섯 규칙의 시험이 각각 성립한다 — {' · '.join(RULE_TESTS)}"
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -343,7 +343,7 @@ def check_5(repos: list[tuple[Path, str]], tmp: Path, limit: int) -> tuple[bool,
             overload_sites += len(groups)
             if prev is not None:
                 total_commits += 1
-                # 같은 자리에서 **순서만** 바뀐 것을 센다 — 자리가 늘거나 줄면
+                # 같은 자리에서 **순서만** 바뀐 것을 잰다 — 자리가 늘거나 줄면
                 # 그것은 재정렬이 아니라 선언의 추가·삭제다.
                 for k, now in groups.items():
                     was = prev.get(k)

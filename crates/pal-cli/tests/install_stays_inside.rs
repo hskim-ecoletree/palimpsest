@@ -47,7 +47,7 @@ impl 방 {
         let parent = base.join("parent");
         let target = parent.join("proj");
 
-        // ★ **홈을 미리 채운다.** 비어 있으면 「차이 0」이 공짜로 선다.
+        // ★ **홈을 미리 채운다.** 비어 있으면 「차이 0」이 공짜로 통과한다.
         for (dir, name) in [
             (".claude", "settings.json"),
             (".config", "some.conf"),
@@ -61,7 +61,7 @@ impl 방 {
         std::fs::create_dir_all(&tmp).expect("tmp");
         std::fs::write(tmp.join("남의것"), "건드리면 안 된다\n").expect("tmp 파일");
 
-        // 형제 경로 — 부모 아래에 우리 것이 아닌 것이 산다.
+        // 형제 경로 — 부모 아래에 우리 것이 아닌 것이 있다.
         std::fs::create_dir_all(parent.join("형제")).expect("형제");
         std::fs::write(parent.join("형제/파일"), "형제의 것\n").expect("형제 파일");
 
@@ -199,7 +199,7 @@ fn 낡게_만든다(target: &Path) {
     std::fs::write(&path, serde_json::to_string_pretty(&m).expect("직렬화")).expect("쓰기");
 }
 
-/// **`pal doctor --install` 도 같은 자리에 선다** — 진단이 홈을 읽으면 ⑦ 이 무너진다.
+/// **`pal doctor --install` 도 같은 자리에 성립한다** — 진단이 홈을 읽으면 ⑦ 이 무너진다.
 #[test]
 fn 진단도_대상_바깥을_안_건드린다() {
     let 방 = 방::세운다("진단");

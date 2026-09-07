@@ -25,7 +25,7 @@
 //!
 //! # 여기에 판단이 없다
 //!
-//! 이 모듈이 내는 것은 **신호의 날것**이다([`RawSignals`]). *"이 경로가 대장에 있는가"*
+//! 이 모듈이 산출하는 것은 **신호의 날것**이다([`RawSignals`]). *"이 경로가 대장에 있는가"*
 //! 도 *"이 이름이 유일한가"* 도 여기서 안 묻는다 — 묻는 것은
 //! [`pal_core::resolve`] 이고, 그래야 **조각화가 2층을 안 탄다.**
 
@@ -144,7 +144,7 @@ fn 닫는다(path: &RepoPath, 열린: Vec<열린조각>, grounds: &[String]) -> 
     let mut 쓴것: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
     let mut out = Vec::new();
     for (i, f) in 열린.into_iter().enumerate() {
-        // **빈 조각은 안 낸다.** 본문이 없는 결박은 *"무엇이 낡았는가"* 에 답할 수 없다.
+        // **빈 조각은 안 만든다.** 본문이 없는 결박은 *"무엇이 낡았는가"* 에 답할 수 없다.
         if f.body.trim().is_empty() {
             continue;
         }
@@ -230,7 +230,7 @@ fn 경로처럼(text: &str) -> Vec<RepoPath> {
 /// # 왜 `pub(crate)` 인가
 ///
 /// [`crate::plan`](crate::ingest_plan) 이 **같은 판정을 본문 전체에 쓴다**(F12).
-/// 거기서 다시 쓰면 같은 규칙이 두 곳에 살고, 한쪽만 고쳐지는 날 두 인입기가
+/// 거기서 다시 쓰면 같은 규칙이 두 곳에 있고, 한쪽만 고쳐지는 날 두 인입기가
 /// 서로 다른 경로를 본다 — 계획 §7 의 넷째가 금한 형태다.
 pub(crate) fn 줄번호를_뗀다(t: &str) -> &str {
     let mut cut = t;
@@ -337,7 +337,7 @@ mod tests {
     }
 
     #[test]
-    fn 프론트매터가_본문에_안_섞이고_좌표를_낸다() {
+    fn 프론트매터가_본문에_안_섞이고_좌표를_산출한다() {
         let f = 조각들("---\ngrounds: [\"src/a.ts#A.b\", \"src/c.ts\"]\n---\n\n# 하나\n본문\n");
         assert_eq!(f.len(), 1);
         assert_eq!(f[0].signals.grounds, vec!["src/a.ts#A.b".to_owned(), "src/c.ts".to_owned()]);

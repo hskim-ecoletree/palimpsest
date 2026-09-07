@@ -68,7 +68,7 @@ pub struct Check {
     pub outcome: Outcome,
 }
 
-/// 센다.
+/// 잰다.
 #[must_use]
 pub fn checks(target: &Path) -> Vec<Check> {
     let root = 설치_루트(target);
@@ -217,14 +217,14 @@ fn 매니페스트(root: Option<&Path>) -> Outcome {
     Outcome::Failed(format!("{}{사각지대}", says.join(" / ")))
 }
 
-/// ★ **대조 밖에 무엇이 사는지 말한다** — `.claude/agents/` 는 **사각지대다.**
+/// ★ **대조 밖에 무엇이 있는지 말한다** — `.claude/agents/` 는 **사각지대다.**
 ///
-/// 그 디렉터리는 **남의 에이전트가 함께 사는 곳**이라 매니페스트가 그쪽만 「파일
+/// 그 디렉터리는 **남의 에이전트가 함께 쓰는 자리**라 매니페스트가 그쪽만 「파일
 /// 하나짜리 뿌리」로 잡는다([`manifest`] 머리말). 통째로 훑으면 남의 것을 우리 것으로
 /// 세게 되므로 **그 설계는 그대로 둔다.**
 ///
 /// 바꾸는 것은 **말하는가**뿐이다. 사각지대가 조용하면 사각지대인 줄 모르고, 그러면
-/// 남이 그 자리에 무엇을 놓아도 진단은 초록만 낸다. 그 파일들은 하네스가 에이전트
+/// 남이 그 자리에 무엇을 놓아도 진단은 초록만 산출한다. 그 파일들은 하네스가 에이전트
 /// 정의로 읽는 것들이다.
 ///
 /// 판정은 **안 바꾼다** — 이 문장은 초록에도 빨강에도 똑같이 덧붙는다.
@@ -270,7 +270,7 @@ fn 루트(target: &Path, root: Option<&Path>) -> Outcome {
         Some(r) if r == target => Outcome::Ok("여기가 설치 루트다".to_owned()),
         Some(r) => Outcome::Failed(format!(
             "여기는 설치 루트가 아니다 — 설치는 {} 에 있다. 거기서 돌리십시오",
-            // ★ 화면에 나가는 경로다 — `\\?\` 를 안 낸다([`super::winpath`]).
+            // ★ 화면에 나가는 경로다 — `\\?\` 를 내놓지 않는다([`super::winpath`]).
             winpath::사람이_읽는(r)
         )),
     }
@@ -278,7 +278,7 @@ fn 루트(target: &Path, root: Option<&Path>) -> Outcome {
 
 /// `PATH` 에서 찾는 명령 이름 — **확장자를 여기 안 적는다.**
 ///
-/// 확장자를 붙이는 규칙은 플랫폼이 정하고 그 결정은 [`exe`] 한 자리에 산다.
+/// 확장자를 붙이는 규칙은 플랫폼이 정하고 그 결정은 [`exe`] 한 자리에 있다.
 const 명령_이름: &str = "pal";
 
 fn 실행_파일() -> Outcome {
@@ -417,7 +417,7 @@ fn 훅(root: Option<&Path>) -> Outcome {
             return Outcome::Failed(format!("{} 에 걸린 것이 우리 것이 아니다 — {e:#}", h.event));
         }
         if let Err(e) = hooks::probe(&h.event) {
-            return Outcome::Failed(format!("{} 의 훅 규약이 안 선다 — {e:#}", h.event));
+            return Outcome::Failed(format!("{} 의 훅 규약이 성립하지 않는다 — {e:#}", h.event));
         }
     }
     Outcome::Ok(format!(

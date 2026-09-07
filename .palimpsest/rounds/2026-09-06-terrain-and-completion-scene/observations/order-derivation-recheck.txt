@@ -1,0 +1,228 @@
+판 3 재측정 M1~M5 — 정(正)이 돌렸다. 그대로 보존한다.
+설계문이 「정이 판 앞에 돌리고 정과 반이 같은 파일을 받는다」로 정한 산출이다.
+실행 2026-09-07 · HEAD 513b28e
+
+## 재측정 M1~M5
+
+> 명령과 출력을 그대로 싣는다. 산출물은 전부 스크래치패드. **저장소 무수정**(`git status --porcelain` 이 빈 출력).
+> `HEAD=513b28e` · `dirty=0`
+
+### 빌드 — **0 회 썼다** (상한 1)
+
+```
+$ find crates -newer target/debug/pal -name '*.rs'
+(빈 출력)
+```
+
+`./target/debug/pal` 이 모든 크레이트 소스보다 새것이므로 `cargo build` 를 안 돌렸다. 19b5877 이후 `crates/` 아래는 한 줄도 안 바뀌었다 — 바뀐 것은 `xtask/src/main.rs`(844427e · 30d0152)와 문서뿐이다.
+
+### M1 — §1 의 `C1`·`C2` 행이 지금도 그 값을 내는가
+
+**먼저 플래그를 확인했다. 상상하지 않았다.**
+
+```
+$ ./target/debug/pal export --help
+Usage: pal export [OPTIONS]
+      --repo <REPO>            저장소 경로. 기본값은 현재 디렉터리 [default: .]
+      --at <AT>                어느 커밋인가. 기본값은 워킹트리
+      --cache-dir <CACHE_DIR>
+      --index <INDEX>
+      --format <FORMAT>        [default: cypher]
+      --out <OUT>
+      --json
+```
+
+**(1) 워킹트리(`513b28e+worktree`)**
+
+```
+$ ./target/debug/pal query ledger.snapshot --repo . --cache-dir $SP/cache --index $SP/index.redb --intent $SP/intent.redb
+■ ledger.snapshot
+  파일 1086 · parsed 135 · partial 0
+■ 이 답의 근거
+  Snapshot  palimpsest@513b28e+worktree
+  2층       심볼 3110 색인됨
+  범위      미해소 0 · 범위 밖 951 파일 · 최저 등급 L0 · identity ordinal
+
+$ ./target/debug/pal export --repo . --format cypher --cache-dir $SP/cache --index $SP/index.redb --out $SP/export.cypher
+$ grep -c '^CREATE (:File'   $SP/export.cypher   →  135
+$ grep -c '^CREATE (:Symbol' $SP/export.cypher   →  3110
+$ grep -c 'REFERENCES'       $SP/export.cypher   →  3
+```
+
+**(2) 측정 커밋(`19b5877`) — 새 인덱스를 따로 세워서**
+
+```
+$ rm -rf $SP/c2 $SP/i2.redb $SP/int2.redb && mkdir -p $SP/c2
+$ ./target/debug/pal query ledger.snapshot --repo . --at 19b5877 --cache-dir $SP/c2 --index $SP/i2.redb --intent $SP/int2.redb
+  파일 1077 · parsed 135 · partial 0
+  Snapshot  palimpsest@19b5877
+  2층       심볼 3100 색인됨
+  범위      미해소 0 · 범위 밖 942 파일 · 최저 등급 L0 · identity ordinal
+
+$ ./target/debug/pal export --repo . --at 19b5877 --format cypher --cache-dir $SP/c2 --index $SP/i2.redb --out $SP/exp-at.cypher
+$ grep -c '^CREATE (:File'   $SP/exp-at.cypher   →  135
+$ grep -c '^CREATE (:Symbol' $SP/exp-at.cypher   →  3100
+$ grep -c 'REFERENCES'       $SP/exp-at.cypher   →  3
+```
+
+★ **§1 은 틀리지 않았다.** 측정 커밋에서 재면 `File 135 · Symbol 3100 · REFERENCES 3` 이 그대로 나온다(`docs/plan/02-order.md:34` 의 `C1` 근거 칸과 글자까지 같다). 워킹트리의 **3110 은 `19b5877` 이후의 변화**다 — 두 커밋이 `xtask/src/main.rs` 를 늘렸다. **「§1 이 틀렸다」가 아니라 「측정 커밋 이후의 변화」다.**
+
+**참조 엣지 셋과 그 끝점 파일**
+
+```
+$ grep -n 'REFERENCES' $SP/export.cypher
+3250:MATCH (a:Symbol {id:"6c805b04…"}), (b:Symbol {id:"8c54eae8…"}) CREATE (a)-[:REFERENCES]->(b);
+3251:MATCH (a:Symbol {id:"8c54eae8…"}), (b:Symbol {id:"8c54eae8…"}) CREATE (a)-[:REFERENCES]->(b);
+3252:MATCH (a:Symbol {id:"d6923e19…"}), (b:Symbol {id:"7583337c…"}) CREATE (a)-[:REFERENCES]->(b);
+
+끝점 넷 전부:
+  scanLocalJars      fun       corpus/tasks/f03-normalize-seeds.ts:64
+  walk               fun       corpus/tasks/f03-normalize-seeds.ts:66
+  evaluateBackstop   fun       corpus/tasks/f03-normalize-seeds.ts:39
+  BackstopDecision   interface corpus/tasks/f03-normalize-seeds.ts:33
+```
+
+**끝점이 전부 `corpus/tasks/f03-normalize-seeds.ts` 하나다** — §1 의 `C2` 행이 적은 것과 같다. Rust 134 파일 기여 0 도 그대로다.
+
+```
+$ ./target/debug/pal query symbol.callers extractor_for --repo . --cache-dir $SP/cache --index $SP/index.redb --intent $SP/intent.redb
+■ symbol.callers  extractor_for
+  (없음)
+```
+
+⚠ **M1 이 부수로 낸 것 둘 — 이 판의 의제가 아니므로 적기만 한다.**
+
+1. `pal export --at <커밋>` 은 2층을 그 커밋으로 다시 안 세운다. 붙어 있는 인덱스를 읽고 머리에만 요청한 스냅샷 이름을 찍는다 — 워킹트리 인덱스에 `--at 19b5877` 을 대면 `Snapshot palimpsest@19b5877 · 심볼 3110` 이라는 **틀린 짝**이 나온다. 그래서 위 (2)를 새 인덱스로 다시 세웠다.
+2. `symbol.callers` 의 근거가 `최저 등급 L1` 을 찍는데 같은 인덱스의 `ledger.snapshot` 은 `L0` 을 찍는다 — §1 `:48-49` 가 이미 「갈린 자리」로 적어 둔 것과 같은 갈래다.
+
+⚠ **`C1` 행의 둘째 근거는 좌표대로 재현이 안 된다.** `docs/plan/02-order.md:34` 는 `pal symbols --graph` → `contains 8` 이라고 적는데, 이 빌드의 `pal symbols` 는 **`<PATH>` 를 필수 위치 인자로 요구하고 `--cache-dir`·`--index` 를 안 받는다**:
+
+```
+$ ./target/debug/pal symbols . --graph
+Error: 읽지 못했다: . / Caused by: Is a directory (os error 21)
+$ ./target/debug/pal symbols . --graph --cache-dir …
+error: unexpected argument '--cache-dir' found
+Usage: pal symbols --graph <PATH>
+```
+
+`contains` 는 **파일 하나마다 나오는 수**다(`corpus/tasks/f03-normalize-seeds.ts` 에서 `contains: len=2`). §1 의 근거 칸이 **어느 PATH 인지를 안 적어서 `8` 을 못 되짚는다.**
+
+### M2 — §5.2 의 `fabricate` 인용이 그 줄에 실제로 있는가
+
+```
+$ wc -l ~/dev/projects/fabricate/GOAL.md ~/dev/projects/fabricate/IMPLEMENTATION-ORCHESTRATION.md
+     261 GOAL.md
+     691 IMPLEMENTATION-ORCHESTRATION.md
+```
+
+| §5.2 가 댄 좌표 | 그 줄에 있나 | 확인한 것 |
+|---|---|---|
+| `GOAL.md:226` (`:189-191`) | **있다** | *"파일 구조·내부 스키마·함수 분리·알고리즘·작업 순서는 **구현 중 발견한 사실을 보고 정하는 것이 옳다.** 이 문서가 그것까지 정하면 에이전트가 실제 문제보다 규칙 만족에 집중한다."* — §5.2 가 굵게 옮긴 자리만 다르고 문면은 같다 |
+| `GOAL.md:129-136` (`:210`) | **있다** | 표 + *"에이전트는 `기계 통과`까지 혼자 간다. **`기계 통과`를 완료라고 보고하지 않는다** — 남은 상태의 이름을 함께 말한다"* |
+| `GOAL.md:164` (`:211`) | **있다** | *"**뿌리(CLI 진입점 · 훅 진입점)에서 도달할 수 없는 모듈은 완료로 세지 않는다.** …"* |
+| `GOAL.md:232-244` (`:212`) | **있다** | §8 제목 + *"…완료 판정에서 제외되며, 이 목록에 없는 것을 나중에 잔여라고 주장할 수 없다."* |
+| `GOAL.md:12-18` (`:216`) | **있다** | §0 재진입 규약 · *"이전 조각의 산출물을 시드로 주지 않는다"* |
+| `GOAL.md:77-80` (`:216`) | **있다** | 위임·자기 채점 불가 네 줄 |
+| `GOAL.md:55-71` (`:225`) | **있다** | 훅 사건 셋 절 전체 |
+| `GOAL.md:184` (`:227`) | **있다** | *"**오케스트레이션 루프 · autopilot · 노드 그래프.** …"* — §5 비-목표 절(`:178` 시작) 안이다 |
+| `I-O.md:34-42` (`:217`) | **있다** | §2.2 한 오케스트레이션에서 닫는다 |
+| `I-O.md:62-69` (`:217`) | **있다** | §2.5 장기 실행 상태는 컨텍스트 밖에 |
+| `I-O.md:53-60` (`:227`) | **있다** | §2.4 컨트롤타워 위임 |
+| `I-O.md:386-581` (`:226`) | **있다** | §6 이 `386` 에서 시작하고 다음 `## ` 헤딩이 `585` 다. `581` 이 본문 마지막 줄 |
+| `I-O.md:330-331` (`:239-241`) | **있다** | *"지식 저장 대상은 …`~/dev/projects/palimpsest`이며, 구체적인 연동 계약은 별도로 정한다."* |
+| `I-O.md:665-666` (`:241`) | **있다** | *"8. **Palimpsest 연동 계약** …"* — §9 「아직 결정하지 않은 설계 질문」(`639`) 안이다 |
+| `I-O.md` 머리(`:232-233`) | **있다** | `1-6` 행: *"상태: 사용자 발화 정리본 · 미비준 초안 · … 주의: 이 문서는 현재 비준된 `GOAL.md`를 변경하거나 대체하지 않는다."* |
+
+```
+$ cd ~/dev/projects/fabricate && grep -rl "IMPLEMENTATION-ORCHESTRATION" . --include='*.md'
+(빈 출력)
+```
+
+**`:234` 의 *"그 저장소의 진척 기록에 한 번도 등장하지 않는다"* 도 참이다.**
+
+★ **M2 는 전부 통과다. 인용은 하나도 안 지어냈고 줄 번호도 다 맞는다.**
+
+### M3 — §1.2 의 13 행 중 §5.1 이 안 실은 여덟
+
+```
+$ sed -n '/### 1.2/,/^---/p' docs/plan/disposal-map.md | grep -o '^| \*\*F[0-9a-z]*\*\*' | tr -d '|* ' | sort
+F07 F08 F13 F14 F15 F16 F16b F17 F18 F19 F20 F21 F23        (13)
+
+$ sed -n '/### 5.1/,/### 5.2/p' docs/plan/02-order.md | grep -o '^| `F[0-9a-z]*`' | tr -d '|` ' | sort
+F07 F08 F13 F14 F15                                          (5)
+
+$ comm -23 <(위) <(아래)
+F16 F16b F17 F18 F19 F20 F21 F23                             (8)
+$ comm -13 <(위) <(아래)
+(빈 출력 — §5.1 에만 있는 것은 없다)
+```
+
+**안 실린 여덟의 「어느 능력인가」 칸** (`docs/plan/disposal-map.md` §1.2 표에서 그대로):
+
+| F | 능력 칸 | 능력 계약(`C1~C6`·`U`) 안인가 |
+|---|---|---|
+| `F16` | 신설 축 O | 밖 |
+| `F16b` | O 의 조달 경로 | 밖 |
+| `F17` | `P8`(생성형 큐레이션) · `P10` | 밖 |
+| `F18` | 프로젝트 어휘 | 밖 |
+| `F19` | `P9`(점진적 회상) | 밖 |
+| `F20` | — | 밖 |
+| `F21` | O 의 포트 | 밖 |
+| **`F23`** | **`C6` 의 공유** (`docs/plan/disposal-map.md:80`) | **안** |
+
+**목록만 낸다. 판정은 아래 NC-4 와 근거 절에서 한다.**
+
+곁들여 잰 것 — 처분표 §1.1 의 F 행은 `F01 F02 F03 F04 F05 F06 F06b F09 F10 F11 F12 F22` 열둘이다.
+
+### M4 — §5.1 의 항목 번호가 §2 의 번호와 맞는가
+
+```
+$ sed -n '74,81p' docs/plan/02-order.md | awk -F'|' '{printf "#=%s 능력=%s\n", $2, $4}'
+#= **1**  능력= `C2`
+#= **2**  능력= `C2`
+#= **3**  능력= `C6`
+#= **4**  능력= `C3`
+#= **5**  능력= `C4`
+#= **6**  능력= `C5`
+```
+
+| §5.1 (`:165-169`) | 대는 능력 | 대는 §2 번호 | §2 그 번호의 능력 | 맞나 |
+|---|---|---|---|---|
+| `F07` | `C2` | **2** | `C2` | 맞다 |
+| `F08` | `C2` 의 공백 표시 | **2** 와 같이 간다 | `C2` | 맞다 |
+| `F14` | `C3`·`C4` | **4**·**5** | `C3`·`C4` | 맞다 |
+| `F15` | `C5` | **6** | `C5` | 맞다 |
+| `F13` | 신설 축 | 어느 항목에도 안 매달린다 | — | 맞다 |
+
+★ **번호는 하나도 안 어긋난다.** 그러나 같은 표가 **§2 의 1 번과 3 번을 아무도 안 가리킨다** — §2 의 첫 항목(`C2`, Rust·Kotlin 추출기)과 셋째 항목(`C6`, 결박 반경·낡음 전파)에 대응하는 옛 기능 행이 §5.1 에 없다.
+
+### M5 — §2 의 「§1 의 어느 행」 참조가 §1 에 실재하는가
+
+```
+$ sed -n '34,40p' docs/plan/02-order.md | grep -o -E '^\| \*\*(C[0-9]|U)\*\*' | tr -d '|* '
+C1 C2 C3 C4 C5 C6 U        (§1 에 실재하는 행 일곱)
+
+$ for r in C1 C2 C3 C4 C5 C6 U; do echo "$r: $(sed -n '76,81p' docs/plan/02-order.md | grep -c "§1 의 \`$r\` 행") 회"; done
+C1: 0 회
+C2: 1 회
+C3: 1 회
+C4: 1 회
+C5: 1 회
+C6: 1 회
+U:  0 회
+```
+
+| §2 항목 | 대는 행 | §1 에 있나 |
+|---|---|---|
+| 1 (`:76`) | `§1 의 C2 행` | 있다 |
+| 2 (`:77`) | `같은 행`(= `C2`) | 있다 |
+| 3 (`:78`) | `§1 의 C6 행` | 있다 |
+| 4 (`:79`) | `§1 의 C3 행` | 있다 |
+| 5 (`:80`) | `§1 의 C4 행` | 있다 |
+| 6 (`:81`) | `§1 의 C5 행` | 있다 |
+
+★ **유령 참조는 없다.** 그러나 `C1` 행과 `U` 행은 §2 표에서 **0 회** 대어진다. `U` 는 표 밖의 절(`:96-100`)이 쓰고, **`C1` 행은 §2 어디에서도 안 쓰인다.**
+
+**M1~M5 가 답한 것은 이 판의 의제가 아니다.** 아래 근거 절은 M 이 낸 목록을 **판정에 쓰는** 것이지 M 을 다시 논하지 않는다.
+
+---

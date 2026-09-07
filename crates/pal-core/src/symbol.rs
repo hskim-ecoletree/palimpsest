@@ -9,13 +9,13 @@ use serde::{Deserialize, Serialize};
 ///
 /// # 일곱이 더 늘었다 — Rust (ADR-0027 · #66 · 2026-08-20)
 ///
-/// **접지 않고 늘린 것이 결정이다** — ADR-0027 §③.
+/// **뭉개지 않고 늘린 것이 결정이다** — ADR-0027 §③.
 ///
 /// **종류는 `SymbolId::compute` 의 성분이라 정직한 이름이 곧 정직한 좌표다** —
 /// `pal symbols` 가 `struct` 를 `class` 라 부르면 그 거짓이 좌표에 실린다.
 ///
 /// ⚠ **처음에 적은 근거(「접으면 충돌이 두 배로 는다」)는 반증됐다.** 그 수는
-/// 추출기가 서기 전에 격리 스파이크로 잰 것이고 재현되지 않았다 — 접어도 안 늘었다.
+/// 추출기가 서기 전에 격리 스파이크로 잰 것이고 재현되지 않았다 — 뭉개도 안 늘었다.
 /// **세는 자리는 `--example coord_collisions` 다**(독립 리뷰 R3·R4).
 ///
 /// **앞의 아홉은 이름도 값도 안 건드렸다.** `SymbolId::compute` 는
@@ -46,7 +46,7 @@ pub enum SymbolKind {
     Variable,
     /// 클래스 본문의 `method_definition`. 포함 관계(C1)로 클래스에 매인다.
     Method,
-    /// Rust `struct_item`. **`Class` 로 접지 않는다**(ADR-0027 §③) —
+    /// Rust `struct_item`. **`Class` 로 뭉개지 않는다**(ADR-0027 §③) —
     /// 근거는 충돌 감소가 아니라 **이름의 정직성**이다.
     /// 세는 자리는 `--example coord_collisions`.
     Struct,
@@ -104,7 +104,7 @@ pub struct Span {
 /// 추출된 심볼 하나.
 ///
 /// `Coord` 는 여기 없다 — 좌표는 저장소·트리·추출기 버전을 알아야 하고 그것들은 파일
-/// 하나 바깥의 사실이다. 추출기는 **파일 안에서 아는 것만** 낸다.
+/// 하나 바깥의 사실이다. 추출기는 **파일 안에서 아는 것만** 산출한다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Symbol {
     pub name: String,

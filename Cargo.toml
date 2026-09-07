@@ -21,7 +21,7 @@ rust-version = "1.85"
 license = "MIT OR Apache-2.0"
 publish = false
 
-# 검사를 단계적으로 켠다 — stack §4.3. 단계 1 은 전부 S 규모다.
+# 검사를 단계적으로 건다 — stack §4.3. 단계 1 은 전부 S 규모다.
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 

@@ -1,11 +1,11 @@
-//! 질의 실행기 — **모든 답이 봉투를 지고 나간다** (옛 F05 §5).
+//! 질의 실행기 — **모든 답이 응답 묶음을 지고 나간다** (옛 F05 §5).
 //!
-//! > 실행기 진입점이 `Envelope` 만 반환한다 → 벌거벗은 답을 낼 방법이 없다.
+//! > 실행기 진입점이 `Envelope` 만 반환한다 → 벌거벗은 답을 산출할 방법이 없다.
 //!
 //! # 이 크레이트가 존재하는 이유
 //!
 //! [`pal_store::Projection`] 은 *"이 좌표의 심볼"* 에 답한다. 그것은 조회이고 질의가
-//! 아니다. **질의는 자기가 무엇을 못 봤는지와 무엇을 잘랐는지를 함께 낸다** —
+//! 아니다. **질의는 자기가 무엇을 못 봤는지와 무엇을 잘랐는지를 함께 싣는다** —
 //! 그 조립이 여기 있다.
 //!
 //! # 여기 없는 것
@@ -16,13 +16,13 @@
 //!
 //! # 후보 엣지가 이 빌드에 없다 — **그러므로 K·B 는 모집단이 0 이다**
 //!
-//! 파일 안 해소는 스코프 체인이 유일하게 풀 때만 엣지를 낸다
+//! 파일 안 해소는 스코프 체인이 유일하게 풀 때만 엣지를 산출한다
 //! ([`pal_core::ResolutionGrade::Scoped`]). 후보 집합이 없으므로
 //! [`pal_core::ElisionReason::CandidateOverflow`] 와
 //! [`pal_core::ElisionReason::PathProductExceeded`] 는 **이 빌드에서 일어날 수 없다.**
 //! 규칙은 서 있고 시험되지만(`pal_core::traverse` 의 단위 시험) **실물 모집단이 0** 이고,
 //! [ADR-0002](../../../docs/adr/0002-empty-population-is-not-zero-violations.md) 그대로
-//! 그것을 *"절단 없음"* 으로 세지 않는다. 후보 엣지를 만드는 것은 F07 이다.
+//! 그것을 *"생략 없음"* 으로 세지 않는다. 후보 엣지를 만드는 것은 F07 이다.
 
 #![forbid(unsafe_code)]
 
@@ -52,7 +52,7 @@ pub enum QueryError {
     BoundIndex(String),
     /// 부르는 쪽이 이 질의의 입력을 **안 지고 왔다.**
     ///
-    /// **빈 답으로 접지 않는다** — 접으면 *"계획대로 0"* 과 *"안 물었다"* 가 같은 답이
+    /// **빈 답으로 뭉개지 않는다** — 뭉개면 *"계획대로 0"* 과 *"안 물었다"* 가 같은 답이
     /// 되고, 그것이 이 제품이 고발하는 형태다([ADR-0005]).
     ///
     /// [ADR-0005]: ../../../docs/adr/0005-absence-carries-its-kind.md
@@ -62,7 +62,7 @@ pub enum QueryError {
 
 /// 이 빌드가 답하는 질의 하나 — **이름과 인자.**
 ///
-/// 열린 문자열이 아니다. 오타가 새 질의가 되면 F17 이 로그를 셀 때 그것을 질의로 센다.
+/// 열린 문자열이 아니다. 오타가 새 질의가 되면 F17 이 로그를 셀 때 그것을 질의로 잰다.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NamedQuery {
     /// 이 스냅샷의 관측 범위 대장.
@@ -73,9 +73,9 @@ pub enum NamedQuery {
     SymbolContains { name: String },
     /// 이 심볼을 가리키는 것들 — 1홉 역방향.
     SymbolCallers { name: String },
-    /// 이 심볼에서 닿는 것들 — **예산 절단이 있는 BFS.**
+    /// 이 심볼에서 닿는 것들 — **예산 생략이 있는 BFS.**
     SymbolReaches { name: String },
-    /// 노드와 엣지 전부 — 바깥 오라클이 읽는 창.
+    /// 노드와 엣지 전부 — 바깥 대조 도구가 읽는 창.
     GraphDump,
     /// 결박마다 상태 + **반경** + 무엇이 켰는가.
     BindingStatus,
@@ -161,7 +161,7 @@ pub struct UnboundItem {
     pub signals_seen: usize,
 }
 
-/// 신호 하나가 낸 후보 집합들의 크기 — **좁혔는가를 이 값이 말한다.**
+/// 신호 하나가 산출한 후보 집합들의 크기 — **좁혔는가를 이 값이 말한다.**
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CandidateSpread {
     /// 무엇이 걸었나.
@@ -196,7 +196,7 @@ pub enum QueryResult {
     /// 결박마다 한 줄. **빈 목록이 정직한 답이다** — 능력이 있고 값이 없는 것이다.
     ///
     /// `detector` 는 **낡음을 재는 자의 낡음**이다(옛 F09 §5). 안 실으면 낡은 감지기가 낸
-    /// `Live` 가 지금의 `Live` 로 읽힌다 — 그것이 *"감지기가 낡는다"* 의 실패 형태다.
+    /// `Fresh` 가 지금의 `Fresh` 로 읽힌다 — 그것이 *"감지기가 낡는다"* 의 실패 형태다.
     Bindings { bindings: Vec<BindingReport>, detector: DetectorReport },
     /// 좌표를 못 찾은 문서 조각들 — **이것이 사람의 작업 목록이다** (옛 F10 §2).
     ///
@@ -238,7 +238,7 @@ pub enum QueryResult {
     Deviation { deviation: Box<Deviation> },
     /// 이름이 여럿으로 해소됐다. **하나를 고르지 않는다.**
     Ambiguous { name: String, candidates: Vec<SymbolNode> },
-    /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 봉투가 진다.
+    /// 이 스냅샷에서 못 찾았다. **없다는 뜻이 아니다** — 근거는 응답 묶음이 진다.
     ///
     /// # `near` — **이것을 뜻했습니까** (옛 F11 §4)
     ///
@@ -291,7 +291,7 @@ pub enum DeviationInput {
 
 /// 질의 하나가 서는 바닥.
 ///
-/// **봉투의 성분을 부르는 쪽이 지고 온다.** 대장을 만드는 것은 표면이고(`pal-cli`),
+/// **응답 묶음의 성분을 부르는 쪽이 지고 온다.** 대장을 만드는 것은 표면이고(`pal-cli`),
 /// 이 크레이트가 그것을 다시 계산하면 같은 사실이 두 곳에서 계산된다.
 pub struct QueryCtx<'a> {
     pub projection: &'a Projection,
@@ -321,7 +321,7 @@ pub struct QueryCtx<'a> {
     /// `cargo xtask check` 는 `pal-store → pal-intent` 만 막는다. 여기는 읽기 경로라
     /// 그 규칙에 안 걸린다 — **그래도 안 붙인다.**
     ///
-    /// 이 구조체의 머리가 이미 그 근거를 적었다: *"봉투의 성분을 부르는 쪽이 지고 온다.
+    /// 이 구조체의 머리가 이미 그 근거를 적었다: *"응답 묶음의 성분을 부르는 쪽이 지고 온다.
     /// 대장을 만드는 것은 표면이고, 이 크레이트가 그것을 다시 계산하면 같은 사실이 두
     /// 곳에서 계산된다."* **결박도 같은 자격이다** — 표면이 이미 의도 저장소를 연다
     /// (`pal touch`). 여기서 또 열면 **한 명령이 같은 파일을 두 번 연다.**
@@ -371,7 +371,7 @@ pub struct QueryCtx<'a> {
     pub partial_files: BTreeSet<RepoPath>,
 }
 
-/// 질의 하나를 돌린다. **반환 타입이 봉투뿐이다.**
+/// 질의 하나를 돌린다. **반환 타입이 응답 묶음뿐이다.**
 ///
 /// # Errors
 /// 2층을 읽지 못하면.
@@ -384,8 +384,8 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
     let coverage = coverage_of(ctx, &accessed)?;
     let fold = fold_of(&answer, &ctx.ledger);
 
-    // **로그는 답보다 먼저 남는다** — 답을 못 낸 질의도 일어난 사건이다.
-    // 그런데 절단과 걸린 시간은 답을 낸 뒤에야 안다. 그래서 여기다.
+    // **로그는 답보다 먼저 남는다** — 답을 못 산출한 질의도 일어난 사건이다.
+    // 그런데 생략과 걸린 시간은 답을 산출한 뒤에야 안다. 그래서 여기다.
     //
     // ⚠ **읽기 전용으로 붙었으면 못 남긴다.** 조용히 건너뛰지 않는다 — F17 이 그
     // 공백을 「조회 안 됨」으로 세면 미조회를 **과대 계상**하고, 그것이 이 제품이
@@ -393,7 +393,7 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
     let log = if ctx.projection.is_read_only() {
         LogStatus::NotRecorded { why: NotRecorded::ReadOnlyAttach }
     } else {
-        // **한 번만 잰다.** 로그의 값과 봉투의 값이 같은 `Instant` 에서 나와야
+        // **한 번만 잰다.** 로그의 값과 응답 묶음의 값이 같은 `Instant` 에서 나와야
         // *"산출의 숫자와 로그의 숫자가 다르다"* 가 일어나지 않는다.
         let duration_micros =
             u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX);
@@ -423,13 +423,13 @@ pub fn execute(q: &NamedQuery, ctx: &QueryCtx) -> Result<Envelope<QueryResult>, 
 
 /// 이 답에서 **부피가 다른 질의로 옮겨진** 자리 (옛 F06 §4.3 · `[f06.2.pass]` ①).
 ///
-/// # 접기는 이미 일어나고 있었다 — 없던 것은 그 사실의 기록이다
+/// # 이관은 이미 일어나고 있었다 — 없던 것은 그 사실의 기록이다
 ///
-/// 모든 봉투가 [`LedgerRef`] 를 싣는데 그것은 대장 전체가 아니라 **요약 여섯 값**이다.
+/// 모든 응답 묶음이 [`LedgerRef`] 를 싣는데 그것은 대장 전체가 아니라 **요약 여섯 값**이다.
 /// 즉 부피는 이미 옮겨져 있고, 옮겼다는 사실만 산출에 없었다. 그것이 이 함수가
 /// 닫는 구멍이다.
 ///
-/// **`ledger.snapshot` 만 안 접힌다** — 그 질의의 답이 대장 자신이기 때문이다.
+/// **`ledger.snapshot` 만 안 뭉개진다** — 그 질의의 답이 대장 자신이기 때문이다.
 /// 그 하나와 나머지 다섯이 다른 것이 이 값이 무언가를 재고 있다는 증거다.
 fn fold_of(answer: &QueryResult, ledger: &LedgerRef) -> Fold {
     let mut fold = Fold::none();
@@ -441,7 +441,7 @@ fn fold_of(answer: &QueryResult, ledger: &LedgerRef) -> Fold {
 
 /// 좌표를 못 찾은 조각들 — **사람의 작업 목록** (옛 F10 §2).
 ///
-/// [`run`] 에서 떼어 냈다. 거기 두면 함수가 100 줄을 넘고, **길어진 `match` 는 새 질의를
+/// [`run`] 에서 떼어 산출했다. 거기 두면 함수가 100 줄을 넘고, **길어진 `match` 는 새 질의를
 /// 더할 때마다 남의 팔을 읽게 만든다.**
 fn 미결박(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> QueryResult {
         let mut unbound = Vec::new();
@@ -605,7 +605,7 @@ fn under(parent: &SymbolNode, s: &SymbolNode) -> bool {
     s.container.starts_with(&want)
 }
 
-/// 이 답이 **무엇을 못 봤는가** — 만진 좌표가 사는 파일들에서 온다.
+/// 이 답이 **무엇을 못 봤는가** — 만진 좌표가 있는 파일에서 온다.
 ///
 /// # 질의마다 다른 값이어야 한다 (`[f05.3.pass]` ⑤)
 ///
@@ -683,17 +683,17 @@ pub fn freshness(
 ///
 /// # 판정 불가가 이 함수의 절반이다 (옛 F09 §2.1 · [R16])
 ///
-/// 조회가 [`Now`] 를 낸다. `Option<BodyDigest>` 였으면 *"사라졌다"* 와 *"비교할 수
+/// 조회가 [`Now`] 를 산출한다. `Option<BodyDigest>` 였으면 *"사라졌다"* 와 *"비교할 수
 /// 없다"* 가 같은 값이 되고, **그 구별이 이 기능의 전부다.**
 ///
 /// | 사유 | 여기서 어떻게 아나 |
 /// |---|---|
 /// | `ProjectionStale` | 2층이 이 스냅샷 것이 아니다 — **감시 집합을 보기도 전이다** |
 /// | `IdentityGrade` | 감시 원소의 등급이 `Unavailable`(L0) — 요약 자체가 없다 |
-/// | `PartialParse` | 그 원소가 사는 파일이 대장에서 `Partial` 이다 |
+/// | `PartialParse` | 그 원소가 있는 파일이 대장에서 `Partial` 이다 |
 /// | `WatchMemberGone` | 조회가 비었는데 **대상은 살아 있다** — `evaluate` 가 가른다 |
 ///
-/// # `ordinal` 은 여기 없다 — **접지 않고 대신 싣는다**
+/// # `ordinal` 은 여기 없다 — **뭉개지 않고 대신 싣는다**
 ///
 /// `ordinal` 좌표는 **비교가 가능하지만 약하다.** 판정 불가로 접으면 Kotlin 코퍼스가
 /// 통째로 판정 불가가 되고 그것이 *"지배하면 정직하지만 쓸모없다"* 다.
@@ -704,7 +704,7 @@ pub fn freshness(
 /// 결박 하나의 두 축 — **`binding.status` 와 `binding.touch` 가 같은 함수를 지난다.**
 ///
 /// 두 벌로 두면 한쪽만 고쳐지고, 그러면 같은 결박이 표면에 따라 다른 상태로 나간다.
-/// 옛 F09 §2.1 이 요구한 것은 *"못 보는 것을 `Live` 로 접지 않는다"* 이고 그 규율은
+/// 옛 F09 §2.1 이 요구한 것은 *"못 보는 것을 `Fresh` 로 뭉개지 않는다"* 이고 그 규율은
 /// **표면마다가 아니라 한 곳에** 있어야 한다.
 fn 결박_상태(ctx: &QueryCtx, b: &Binding) -> BindingStatus {
     let p = ctx.projection;
@@ -736,7 +736,7 @@ fn binding_reports(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> Vec<BindingR
         accessed.push(b.target);
         accessed.extend(b.watch.iter().map(|w| w.symbol));
 
-        // **등급 분포는 상태와 무관하게 센다** — 판정 불가여도 *"어떤 좌표 위에 서
+        // **등급 분포는 상태와 무관하게 잰다** — 판정 불가여도 *"어떤 좌표 위에 서
         // 있는가"* 는 알 수 있고, 그것이 이 값이 지도인 이유다.
         let mut grades: std::collections::BTreeMap<&'static str, usize> =
             std::collections::BTreeMap::new();
@@ -867,7 +867,7 @@ fn bound_item(
 /// > **낡은 것이 안 보이면 이 기능의 존재 이유가 사라진다.**
 ///
 /// 그래서 자르는 것은 **낡지 않은 것의 꼬리**뿐이고, 자른 수가
-/// [`ElisionReason::BindingMaxExceeded`] 로 실린다. **조용한 절단이 없다.**
+/// [`ElisionReason::BindingMaxExceeded`] 로 실린다. **조용한 생략이 없다.**
 fn 회상(items: &mut Vec<BoundItem>, max: usize, elision: &mut Elision) {
     items.sort_by_key(pal_core::정렬_열쇠);
     if items.len() <= max {
@@ -944,8 +944,8 @@ fn 조립(
 
 /// 좌표 하나를 만진다 — **표면이 부르는 자리.**
 ///
-/// [`execute`] 를 그대로 지나므로 **봉투도 질의 로그도 같은 경로에서 난다.**
-/// 답의 모양만 벗겨 낸다 — `pal touch --json` 의 형태가 S2 이래 그대로여야 하고,
+/// [`execute`] 를 그대로 지나므로 **응답 묶음도 질의 로그도 같은 경로에서 난다.**
+/// 답의 모양만 벗겨 산출한다 — `pal touch --json` 의 형태가 S2 이래 그대로여야 하고,
 /// 그것을 위해 계산을 두 벌 두면 그 순간 둘이 갈린다.
 ///
 /// # Errors
@@ -961,12 +961,12 @@ pub fn touch(
             pal_core::TouchAnswer::Ambiguous { name, candidates }
         }
         QueryResult::Unknown { name, near } => pal_core::TouchAnswer::Unknown { name, near },
-        // `binding.touch` 는 위 셋만 낸다. 다른 것이 오면 `run` 이 바뀐 것이다.
-        _ => unreachable!("binding.touch 가 세 갈래 밖의 것을 냈다"),
+        // `binding.touch` 는 위 셋만 산출한다. 다른 것이 오면 `run` 이 바뀐 것이다.
+        _ => unreachable!("binding.touch 가 세 갈래 밖의 것을 산출했다"),
     }))
 }
 
-/// 이 답에서 낡음이 켜진 결박의 수 — **화면과 종료 코드가 함께 쓴다.**
+/// 이 답에서 낡음이 붙은 결박의 수 — **화면과 종료 코드가 함께 쓴다.**
 #[must_use]
 pub fn stale_count(r: &QueryResult) -> usize {
     match r {
@@ -980,8 +980,8 @@ pub fn stale_count(r: &QueryResult) -> usize {
 
 /// 이 조각이 든 신호가 몇 개인가 — **0 이면 문서가 코드를 아예 안 가리킨다.**
 ///
-/// 붙어 있는 좌표 · 프론트매터 · 펜스 안의 경로 · 인라인 스팬만 센다.
-/// **동반 변경은 안 센다** — 그것은 조각이 든 신호가 아니라 **저장소의 사정**이고,
+/// 붙어 있는 좌표 · 프론트매터 · 펜스 안의 경로 · 인라인 스팬만 잰다.
+/// **동반 변경은 안 잰다** — 그것은 조각이 든 신호가 아니라 **저장소의 사정**이고,
 /// 세면 모든 조각이 최소 하나를 갖게 되어 이 값이 아무것도 안 가른다.
 fn 신호_수(s: &pal_core::RawSignals) -> usize {
     s.attached.len() + s.grounds.len() + s.fenced_paths.len() + s.spans.len()
@@ -989,7 +989,7 @@ fn 신호_수(s: &pal_core::RawSignals) -> usize {
 
 /// 신호마다 후보 집합이 얼마나 넓은가 — **좁혔는가를 재는 자리.**
 ///
-/// **후보가 셋 이하인 것을 따로 센다.** 그것이 *"사람이 실제로 고를 수 있는 것"* 이고,
+/// **후보가 셋 이하인 것을 따로 헤아린다.** 그것이 *"사람이 실제로 고를 수 있는 것"* 이고,
 /// 나머지는 **제안이 아니라 목록**이다.
 fn 후보_퍼짐(proposals: &[pal_core::Proposal]) -> Vec<CandidateSpread> {
     let mut 모음: std::collections::BTreeMap<&'static str, Vec<usize>> =

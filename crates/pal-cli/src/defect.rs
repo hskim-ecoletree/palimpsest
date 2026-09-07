@@ -149,7 +149,7 @@ pub fn run(rev: &str, repo_path: &Path, budget: usize) -> Result<DefectReport> {
 
     let defect = Defect {
         // **파생 노드의 id 규칙을 따른다** — 같은 수정 커밋을 도구가 다시 읽어도
-        // 출처·생산자가 다르므로 다른 노드로 선다(F22-2).
+        // 출처·생산자가 다르므로 다른 노드가 된다(F22-2).
         id: DerivedId::compute(
             "Defect",
             &manifest_ids.iter().copied().map(NodeRef::Symbol).collect::<Vec<_>>(),
@@ -244,7 +244,7 @@ fn introduction(
     Ok(Introduction::Found {
         change: ChangeId::new(top.to_hex()),
         confidence: Confidence::new(agreeing, cast),
-        // **최빈이 아닌 후보를 버리지 않는다** — 조용한 절단 금지(stack §5.4).
+        // **최빈이 아닌 후보를 버리지 않는다** — 조용한 생략 금지(stack §5.4).
         others: votes
             .keys()
             .filter(|id| **id != top)

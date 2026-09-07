@@ -6,7 +6,7 @@
 이 스크립트가 재는 것:
 
     ①  병렬 결정성 — **회차 다섯**이 바이트 단위로 같은가. 그리고 **직렬과도** 같은가
-    ②  차등 재추출 — 캐시 **미스 경로**와 **적중 경로**가 같은 답을 내는가
+    ②  차등 재추출 — 캐시 **미스 경로**와 **적중 경로**가 같은 답을 산출하는가
     ③  음성 대조 — 셋은 반드시 깨고 **하나는 반드시 안 깬다**(스레드 수)
     ④  선형성 — 규모 넷에서 제곱이 아닌가. **절대 시간은 합격선이 아니다**
     ⑤  트리 즉시 폐기 — 최대 상주 메모리가 **파일 수에 비례하지 않는가**
@@ -23,7 +23,7 @@
 ## ③ 은 소스를 변이시키고 다시 빌드한다
 
 *"결정적이다"* 가 참인지 보려면 실제로 비결정적으로 만들어 봐야 한다. 산출 JSON 을
-손보는 것으로는 **비교 함수가 diff 를 낸다**는 것만 보이지 *비결정성이 산출에 실린다*는
+손보는 것으로는 **비교 함수가 diff 를 산출한다**는 것만 보이지 *비결정성이 산출에 실린다*는
 것을 보이지 않는다 — `f01-verify` ⑦ 과 같은 판단이다.
 
 **끝나면 소스를 되돌리고 다시 빌드한다.** 도중에 죽으면 변이가 남으므로 `git status` 로
@@ -59,18 +59,18 @@ LEDGER_RS = ROOT / "crates/pal-cli/src/ledger.rs"
 
 # ── ③ 음성 대조 — **셋은 반드시 깬다** ────────────────────────────────────────
 #
-# 각각 다른 고장이다. 치환 대상이 소스에 없으면 `✓` 를 내는 대신 **멈춘다** — 리팩터가
+# 각각 다른 고장이다. 치환 대상이 소스에 없으면 `✓` 를 산출하는 대신 **멈춘다** — 리팩터가
 # 이 자리를 지워도 대조가 조용히 계속되면 그 대조는 장식이다.
 MUST_BREAK = [
     (
-        "산출을 해시맵 순회 순서로 낸다",
+        "산출을 해시맵 순회 순서로 산출한다",
         "        for ((path, _), outcome) in chunk.iter().zip(outcomes) {",
         "        let mut 뒤섞음: std::collections::HashMap<usize, _> =\n"
         "            chunk.iter().zip(outcomes).enumerate().collect();\n"
         "        for (_, ((path, _), outcome)) in 뒤섞음.drain() {",
     ),
     (
-        "심볼 순서를 스레드 완료 순으로 낸다",
+        "심볼 순서를 스레드 완료 순으로 산출한다",
         "        let fresh: Vec<Result<FileOutcome>> = pending\n"
         "            .par_iter()\n"
         "            .map(|(i, source, declared)| {\n"
@@ -89,7 +89,7 @@ MUST_BREAK = [
         "        let fresh: Vec<Result<FileOutcome>> = 통.into_inner().expect(\"독점\");",
     ),
     (
-        "캐시 적중 경로에서 다른 값을 낸다",
+        "캐시 적중 경로에서 다른 값을 산출한다",
         "                outcomes.push(Some(hit));",
         "                outcomes.push(Some(FileOutcome {\n"
         "                    state: pal_core::FileState::Unrecognized,\n"
@@ -226,7 +226,7 @@ def main() -> int:  # noqa: PLR0915 — 다섯 검사가 한 흐름으로 읽혀
         if stats["hits"] == 0:
             failures.append("② 캐시가 한 번도 적중하지 않았다 — 적중 경로를 재지 못했다")
         if not agree:
-            failures.append("② 캐시 적중 경로와 미스 경로가 다른 답을 냈다 — ADR-0004 의 키가 부족하다")
+            failures.append("② 캐시 적중 경로와 미스 경로가 다른 답을 산출했다 — ADR-0004 의 키가 부족하다")
 
         # ── ③ 음성 대조 ────────────────────────────────────────────────────
         print()
@@ -242,7 +242,7 @@ def main() -> int:  # noqa: PLR0915 — 다섯 검사가 한 흐름으로 읽혀
                     if find not in saved:
                         raise SystemExit(
                             f"변이 대상을 찾지 못했다 — 「{label}」\n  찾은 것: {find[:70]!r}…\n"
-                            "  **리팩터가 이 자리를 옮겼다.** 고치지 않으면 이 대조가 조용히 꺼진다."
+                            "  **리팩터가 이 자리를 옮겼다.** 고치지 않으면 이 대조가 조용히 멎는다."
                         )
                     LEDGER_RS.write_text(saved.replace(find, repl, 1), encoding="utf-8")
                     if not build():
@@ -253,7 +253,7 @@ def main() -> int:  # noqa: PLR0915 — 다섯 검사가 한 흐름으로 읽혀
                     # 한 캐시를 돌려 쓰면 둘째 변이부터는 전량 적중이라 **병렬 구간이
                     # 아예 안 돈다** — 그러면 병렬을 깨뜨리는 변이가 조용히 통과한다.
                     # 실제로 처음에 그렇게 짰고 「스레드 완료 순」 변이가 통과했다.
-                    # 자라는 값이 아니라 **공유 상태**에 묶여 꺼진 형태다.
+                    # 자라는 값이 아니라 **공유 상태**에 묶여 멎은 형태다.
                     a_out = ledger_text(pal, repo, tmp / f"m{idx}a")
                     b_out = ledger_text(pal, repo, tmp / f"m{idx}b")
                     # 셋째는 **일부러 같은 캐시**를 다시 쓴다 — 적중 경로를 밟는다.

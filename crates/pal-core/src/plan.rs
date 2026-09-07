@@ -11,7 +11,7 @@
 //! [ADR-0015] 가 F10 의 반증에서 나왔다 — *"**기계가 확인한 것은 이름의 유일성이지
 //! 주제의 일치가 아니다.**"* 실측이 `span` 신호로 걸린 결박의 **48.9%** 가 엉뚱한
 //! 좌표임을 보였고, 그래서 [`crate::ConfirmingSignal`] 이 **거리 0 인 신호만** 확정을
-//! 낼 수 있게 타입으로 막았다.
+//! 산출할 수 있게 타입으로 막았다.
 //!
 //! **F12 의 좌표 후보는 셋 다 거리가 있다** — 계획 문장에 이름이 나온다는 것과 그
 //! 항목이 그 좌표를 건드릴 것이라는 것은 다른 문장이다. 그러므로 여기서 `asserted`
@@ -140,7 +140,7 @@ fn digest16(domain: &[u8], parts: &[&[u8]]) -> String {
 /// # 왜 이 값이 필요한가
 ///
 /// [ADR-0015] 가 요구한 것은 *"확인된 명제를 문장으로"* 다. F12 의 후보는 셋 다
-/// **거리가 있으므로** 확정을 못 내는데, 그렇다고 무엇이 냈는지를 지우면 게이트가
+/// **거리가 있으므로** 확정을 못 산출하는데, 그렇다고 무엇이 냈는지를 지우면 게이트가
 /// 신호별로 갈라 셀 수 없다 — `[f10.pass]` ①의 층화와 같은 자리다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -148,7 +148,7 @@ pub enum PatternSource {
     /// 계획이 좌표를 **명시**했다 — `좌표:` 줄. 사람이 적은 것이라 가장 강하다.
     ///
     /// [옛 F12 §4] 가 이슈의 대응 ③ 으로 적은 *"계획 작성 시 좌표를 요구하는 템플릿"* 이
-    /// 이 신호를 낸다. ⚠ **실 코퍼스에서 0 일 수 있고, 0 이면 그 사실을 적는다** —
+    /// 이 신호를 산출한다. ⚠ **실 코퍼스에서 0 일 수 있고, 0 이면 그 사실을 적는다** —
     /// ditto 의 계획 항목은 이 표기를 안 쓴다.
     Declared,
     /// 인라인 코드 스팬 — `` `OrderService.cancel` ``.
@@ -338,7 +338,7 @@ impl Plan {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 해소 — **`pending` 이 여기 산다**
+// 해소 — **`pending` 이 여기 있다**
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// 왜 아직 못 걸었나.
@@ -349,6 +349,23 @@ pub enum PendingReason {
     DeclaredNew,
     /// 경로 패턴이 기준선에서 파일을 하나도 안 맞춘다 — **자리가 아직 없다.**
     PathAbsent,
+}
+
+impl PendingReason {
+    /// 와이어 토큰 — **serde 와 같은 문자열이다.**
+    ///
+    /// 앞 판은 이 열거에 표시 함수가 없어서 `pal plan` 이 `{why:?}` 로 **Rust `Debug`**
+    /// 를 사람 화면에 그대로 찍었다(`pending (PathAbsent)`). 병기는 `pal-cli` 의
+    /// `label` 이 지고, 그 되짚기가 [`Self::ALL`] 을 지난다(독립 리뷰 R5 · 발견 4).
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::DeclaredNew => "declared-new",
+            Self::PathAbsent => "path-absent",
+        }
+    }
+
+    pub const ALL: [Self; 2] = [Self::DeclaredNew, Self::PathAbsent];
 }
 
 /// 왜 좌표로 안 좁혀졌나 — **`unmeasurable` 의 사유가 이것이다.**
@@ -385,7 +402,7 @@ impl UnresolvedWhy {
 /// 패턴 하나의 상태.
 ///
 /// ⚠ **[`crate::CodeFreshness`] 를 안 쓴다.** 모집단이 다르다 — 저기는 **결박** 위에
-/// 서고 여기는 **계획 항목** 위에 선다. 합치면 `[f22.4]` 불변식 8 의 모집단이 바뀐다
+/// 서고 여기는 **계획 항목** 위에 성립한다. 합치면 `[f22.4]` 불변식 8 의 모집단이 바뀐다
 /// (`[f09].freshness_boundary` ⓑ 와 같은 근거).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", tag = "state")]
@@ -757,7 +774,7 @@ pub fn symbol_delta(base: &[SymbolNode], head: &[SymbolNode]) -> SymbolDelta {
             d.removed.push(*id);
         }
     }
-    // **정렬한다** — 산출이 회차마다 달라지면 골든도 대조도 안 선다.
+    // **정렬한다** — 산출이 회차마다 달라지면 골든도 대조도 성립하지 않는다.
     d.changed.sort();
     d.added.sort();
     d.removed.sort();
@@ -773,7 +790,7 @@ pub fn symbol_delta(base: &[SymbolNode], head: &[SymbolNode]) -> SymbolDelta {
 pub struct Planned {
     pub item: PlanItemId,
     pub coord: SymbolId,
-    /// 어느 신호가 이 좌표를 냈나 — 게이트가 **층화해서** 센다.
+    /// 어느 신호가 이 좌표를 냈나 — 게이트가 **층화해서** 잰다.
     pub by: PatternSource,
 }
 
@@ -815,7 +832,7 @@ impl Deviation {
     /// # 왜 [`Option`] 이 아니라 [`DeviationRate`] 인가
     ///
     /// 실제 변경이 0 이면 비율이 **정의되지 않는다.** `None` 으로 내면 소비자가
-    /// 그것을 0 으로 접고, 그러면 *"하나도 안 벗어났다"* 와 *"잴 것이 없었다"* 가
+    /// 그것을 0 으로 뭉개고, 그러면 *"하나도 안 벗어났다"* 와 *"잴 것이 없었다"* 가
     /// 같은 화면이 된다([ADR-0005]).
     #[must_use]
     pub fn rate(&self) -> DeviationRate {
@@ -881,7 +898,7 @@ pub enum DeviationRate {
     Undefined,
 }
 
-/// 좌표 해소율 — **분자와 분모를 함께 낸다**(값 하나만 내는 보고는 `[outcome]` 위반).
+/// 좌표 해소율 — **분자와 분모를 함께 싣는다**(값 하나만 산출하는 보고는 `[outcome]` 위반).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Resolution {
     pub resolved: usize,
@@ -1023,7 +1040,7 @@ mod tests {
 
     #[test]
     fn 포매팅만_바뀌면_변경_심볼이_0_이고_본문이_바뀌면_1_이다() {
-        // ★ [옛 F12 §5] 가 파일 단위 diff 를 기각한 이유가 이것이다 — **양쪽을 함께 센다.**
+        // ★ [옛 F12 §5] 가 파일 단위 diff 를 기각한 이유가 이것이다 — **양쪽을 함께 헤아린다.**
         let base = vec![심볼("a", "src/a.ts", 1), 심볼("b", "src/a.ts", 2)];
         let 같음 = vec![심볼("a", "src/a.ts", 1), 심볼("b", "src/a.ts", 2)];
         assert!(symbol_delta(&base, &같음).is_empty(), "포매팅에 반응했다");
@@ -1148,7 +1165,7 @@ mod tests {
     }
 
     #[test]
-    fn 넷이_각각_선다() {
+    fn 넷이_각각_성립한다() {
         // ★ `[f12.pass]` ① — 셋 중 하나라도 0 이면 그 분류는 이름만 있는 자리다.
         // 그리고 ② — `unmeasurable` 이 나머지에 안 섞인다.
         let base = vec![

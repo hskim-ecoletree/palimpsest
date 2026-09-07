@@ -55,7 +55,7 @@ pub struct Args<'a> {
 
 /// 이 명령의 갈래 셋.
 pub enum What<'a> {
-    /// 문서를 읽고 3분류를 낸다. **아무것도 승인하지 않는다.**
+    /// 문서를 읽고 3분류를 산출한다. **아무것도 승인하지 않는다.**
     Ingest,
     /// 제안 하나를 승인해 `asserted` 결박을 낳는다.
     Approve { item: &'a str, pick: Option<&'a str>, all_of: Option<&'a str> },
@@ -71,7 +71,7 @@ pub struct Ingested {
     /// 새로 만들어진 개체. ★ **두 번째 인입에서 0 이어야 한다**(`[f10.1.pass]` ①).
     pub minted: usize,
     /// 이력을 얼마나 훑었나. **훑은 창 밖의 문서는 동반 변경 신호가 없다** —
-    /// 조용한 절단 금지.
+    /// 조용한 생략 금지.
     pub history_window: usize,
     /// 그 창 안에서 마지막 변경을 못 찾은 문서 수.
     pub outside_window: usize,
@@ -417,8 +417,8 @@ fn 일괄_승인(
             //   `ConfirmingSignal` 을 지므로 **거리 있는 신호가 여기 올 수 없다.**
             //
             //   ★ **그런데 지우지 않는다.** 나중에 거리 있는 신호가 확정을 내게 되면
-            //   **이 사유가 다시 켜져야** 하고, 지우면 그때 아무것도 안 막는다.
-            //   모집단이 0 이 된 사실은 게이트가 적는다 — *"안 켜진다"* 와 *"없다"* 를
+            //   **이 사유가 다시 걸려야** 하고, 지우면 그때 아무것도 안 막는다.
+            //   모집단이 0 이 된 사실은 게이트가 적는다 — *"안 걸린다"* 와 *"없다"* 를
             //   가르는 것이 [ADR-0002] 다.
             Classification::Bound { by, .. } if !by.signal().can_confirm_subject() => {
                 거부들.push(format!(
@@ -578,7 +578,7 @@ fn 화면(got: &Ingested, json: bool) -> Result<()> {
         println!("  {s:<22} {n}");
     }
     println!();
-    // **조용한 절단 금지** — 훑은 창 밖의 문서는 동반 변경 신호가 아예 없다.
+    // **조용한 생략 금지** — 훑은 창 밖의 문서는 동반 변경 신호가 아예 없다.
     println!("■ 이 인입이 못 본 것");
     println!("  이력 창 {} 커밋 · 창 밖에서 마지막으로 바뀐 문서 {}", got.history_window, got.outside_window);
     println!("  **그 문서들에는 「같은 커밋」 신호가 없습니다** — 없는 것이지 0 이 아닙니다.");

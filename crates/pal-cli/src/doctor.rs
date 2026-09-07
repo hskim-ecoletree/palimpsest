@@ -12,7 +12,7 @@
 //! `pal defect` 가 **계산만 하고 저장하지 않고**, `inferred` 노드도 후보 집합도 저장된
 //! 잔여도 없다. 그것을 *"위반 0"* 으로 내면 이 도구가 자기가 고발한 문제를 저지른다 —
 //! 그래서 [`ViewCoverage`] 가 라벨마다 **어느 기능이 그것을 만드는지**를 싣고,
-//! `doctor` 는 그 자리를 `not_built` 로 낸다.
+//! `doctor` 는 그 자리를 `not_built` 로 산출한다.
 //!
 //! # 심볼의 낡음 등급을 `live` 로 적는 근거
 //!
@@ -62,8 +62,8 @@ fn capabilities() -> CapabilitySet {
     )
 }
 
-/// 이 답에서 접힌 것 — **대장 하나.**
-fn 접힌_대장(report: &ledger::LedgerReport) -> Fold {
+/// 이 답에서 이관한 것 — **대장 하나.**
+fn 이관한_대장(report: &ledger::LedgerReport) -> Fold {
     let mut fold = Fold::none();
     fold.push(FoldedPart::Ledger, report.ledger.total(), QueryName::LedgerSnapshot);
     fold
@@ -85,9 +85,9 @@ pub struct Args<'a> {
     pub json: bool,
 }
 
-/// 봉투 옆에 설치 검사를 **나란히** 싣는다.
+/// 응답 묶음 옆에 설치 검사를 **나란히** 싣는다.
 ///
-/// 봉투 안에 넣지 않는 이유: [`Diagnosis`] 는 `schema/graph.toml` 이 정한 불변식의
+/// 응답 묶음 안에 넣지 않는 이유: [`Diagnosis`] 는 `schema/graph.toml` 이 정한 불변식의
 /// 자리이고 설치는 그 스키마의 라벨이 아니다. 안에 넣으면 `[f22.4]` 의 모집단이
 /// 움직인다 — **재는 것이 달라지지 않게 옆에 둔다.**
 #[derive(serde::Serialize)]
@@ -116,7 +116,7 @@ pub fn run(args: Args) -> Result<()> {
     let install =
         crate::install::checks(&repo_path.canonicalize().unwrap_or_else(|_| repo_path.to_owned()));
 
-    // **설치 검사는 그래프 없이도 선다.** 하위 디렉터리에서 부르는 것이 검사 3 의
+    // **설치 검사는 그래프 없이도 성립한다.** 하위 디렉터리에서 부르는 것이 검사 3 의
     // 고장 fixture 인데, 그 자리에서 그래프를 세우려 들면 재려는 것과 무관한 실패가 난다.
     if install_only {
         if json {
@@ -169,10 +169,10 @@ pub fn run(args: Args) -> Result<()> {
         },
         capabilities(),
         LedgerRef::of(&report.ledger),
-        // 검사가 절단하는 것은 없다 — 표본은 **잔여**로 나가고 그것이 절단과 다른 것이다.
+        // 검사가 생략하는 것은 없다 — 표본은 **잔여**로 나가고 그것이 생략과 다른 것이다.
         Elision::none(),
-        // **대장이 접혀 있다** — 절단이 아니라 부피를 옮긴 것이다(옛 F06 §4.3).
-        접힌_대장(&report),
+        // **대장을 이관했다** — 생략이 아니라 부피를 옮긴 것이다(옛 F06 §4.3).
+        이관한_대장(&report),
         // ⚠ **이 표면은 질의 로그를 안 쓴다.** `pal touch` 와 같은 자리다.
         LogStatus::NotRecorded { why: NotRecorded::SurfaceDoesNotLog },
     );
@@ -213,7 +213,7 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
             )
             .with_attr("path", Producer::Extractor)
             // **`symbol_id` 의 성분이므로 스키마가 필수로 적는다**(F03-1). 빠뜨리면
-            // `pal doctor` 의 불변식 2 가 심볼 전부를 위반으로 센다 — 코퍼스에서
+            // `pal doctor` 의 불변식 2 가 심볼 전부를 위반으로 헤아린다 — 코퍼스에서
             // 1,296 건이 그렇게 나왔다.
             .with_attr("container", Producer::Extractor)
             .with_attr("name", Producer::Extractor)
@@ -234,7 +234,7 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
                 Anchor::At(coord(b.target)),
             )
             // **F09 가 셋을 더했다.** 스키마가 `required` 로 적었으므로 여기서 안 실으면
-            // 불변식 ②가 결박 전부를 위반으로 센다 — 그것이 F22-1 의 계약이고,
+            // 불변식 ②가 결박 전부를 위반으로 헤아린다 — 그것이 F22-1 의 계약이고,
             // *"스키마를 코드에 맞추지 않고 코드를 스키마에 맞춘다"* 의 실제 하중이다.
             .with_attr("subject", Producer::Human)
             .with_attr("note", Producer::Human)
@@ -264,7 +264,7 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
         .with_binding_index(Vec::new(), BTreeSet::new())
 }
 
-/// 이 뷰가 담을 수 있는 것 — **선언이 빠지면 `doctor` 가 구멍으로 센다.**
+/// 이 뷰가 담을 수 있는 것 — **선언이 빠지면 `doctor` 가 구멍으로 헤아린다.**
 fn coverage() -> pal_core::ViewCoverage {
     pal_core::ViewCoverage::new()
         // 값이 서는 둘.
@@ -396,7 +396,9 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
         println!("  없습니다. **`clean` 이 아닙니다** — 위 표의 모집단과 표본을 함께 읽으십시오.");
     } else {
         for v in &d.violations {
-            println!("  [{}] {}", v.invariant.number(), v.subject);
+            // `subject` 는 와이어 표기다(`Residual{via-unresolved-ref}` 꼴). 사람이
+            // 읽는 자리이므로 병기를 얹는다 — 독립 리뷰 R2 가 그것이 빠진 것을 잡았다.
+            println!("  [{}] {}", v.invariant.number(), 잔여_병기(&v.subject));
             println!("      {}", v.detail);
             if let Anchor::At(c) = &v.anchor {
                 println!("      {c}");
@@ -407,7 +409,7 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
     println!();
     println!("■ 잔여 ({}) — **검사하지 못한 것은 \"이상 없음\"이 아닙니다**", d.residuals.len());
     for r in &d.residuals {
-        println!("  {} · 좌표 {}건", r.reason.label(), r.bound_to().len());
+        println!("  {} · 좌표 {}건", crate::label::잔여_사유(r.reason).병기(), r.bound_to().len());
         println!("      {}", r.predicate);
         println!("      해소: {}", r.resolved_when);
     }
@@ -441,7 +443,7 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
         e.ledger.files_total
     );
     println!("  2층       심볼 {} 색인됨", e.projection.symbols_indexed);
-    println!("  절단      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
+    println!("  생략      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
     crate::evidence::print(e);
     println!(
         "  능력      {} · 미구축 {}",
@@ -449,4 +451,19 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
         e.capabilities.not_built.iter().map(|c| c.feature).collect::<Vec<_>>().join(" · ")
     );
     println!();
+}
+
+/// `Residual{via-unresolved-ref}` 꼴의 `subject` 에 병기를 얹는다.
+///
+/// 위반 주체는 와이어 표기로 만들어진다(`pal-core` 의 `ResidualReason::name`). 사람이
+/// 읽는 화면이므로 여기서 사용자 언어를 붙인다 — 독립 리뷰 R2 가 그것이 빠진 것을 잡았다.
+/// 잔여가 아닌 주체는 그대로 돌려준다.
+fn 잔여_병기(subject: &str) -> String {
+    let Some(안) = subject.strip_prefix("Residual{").and_then(|s| s.strip_suffix('}')) else {
+        return subject.to_owned();
+    };
+    let Some(r) = pal_core::ResidualReason::ALL.into_iter().find(|r| r.name() == 안) else {
+        return subject.to_owned();
+    };
+    format!("Residual{{{}}}", crate::label::잔여_사유(r).병기())
 }

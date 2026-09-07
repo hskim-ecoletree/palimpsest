@@ -1,10 +1,10 @@
-//! 좌표 충돌을 센다 — **R-16 이 「코퍼스로 세라」고 남긴 그 측정**.
+//! 좌표 충돌을 잰다 — **R-16 이 「코퍼스로 세라」고 남긴 그 측정**.
 //!
 //! `(컨테이너 체인, 이름, 종류)` 가 겹치는 심볼은 `ordinal` 을 받고, 그러면
 //! **선언 순서를 바꾸는 것만으로 좌표가 서로를 가리킨다.** 본문이 다르므로
 //! `Orphaned` 가 아니라 평범한 `Stale` 로 위장한다.
 //!
-//! ⚠ **이 도구가 저장소에 사는 것이 요점이다.** 앞서 같은 수를 격리 스파이크로
+//! ⚠ **이 도구가 저장소에 있는 것이 요점이다.** 앞서 같은 수를 격리 스파이크로
 //! 재고 안 남겼더니 판정·이슈에 실린 값이 **어떤 모델로도 재현되지 않았다**
 //! (독립 리뷰 R3). **세는 자리는 하나다.**
 //!
@@ -95,19 +95,19 @@ fn main() {
         let mut memo = HashMap::new();
         // ① 지금의 `SymbolKind` — 이 회차가 일곱을 더한 상태
         let mut 셈: HashMap<(String, String, &'static str), usize> = HashMap::new();
-        // ② 접은 모델 — struct/enum/trait/union 을 전부 `class` 로
+        // ② 뭉갠 모델 — struct/enum/trait/union 을 전부 `class` 로
         let mut 접음: HashMap<(String, String, &'static str), usize> = HashMap::new();
         for (i, s) in g.symbols.iter().enumerate() {
             let c = 체인(&g, i, &mut memo);
             *셈.entry((c.clone(), s.name.clone(), s.kind.name())).or_default() += 1;
-            let 접은종류 = match s.kind {
+            let 뭉갠종류 = match s.kind {
                 pal_core::SymbolKind::Struct
                 | pal_core::SymbolKind::Enum
                 | pal_core::SymbolKind::Trait
                 | pal_core::SymbolKind::Union => "class",
                 k => k.name(),
             };
-            *접음.entry((c, s.name.clone(), 접은종류)).or_default() += 1;
+            *접음.entry((c, s.name.clone(), 뭉갠종류)).or_default() += 1;
         }
         for (m, (열쇠, 심볼)) in
             [(&셈, (&mut 충돌_열쇠, &mut 충돌_심볼)), (&접음, (&mut 접음_열쇠, &mut 접음_충돌))]
@@ -125,7 +125,7 @@ fn main() {
         비율(충돌_심볼)
     );
     println!(
-        "접은 모델    충돌 열쇠 {접음_열쇠} · 충돌에 낀 심볼 {접음_충돌} ({:.1}%)",
+        "뭉갠 모델    충돌 열쇠 {접음_열쇠} · 충돌에 낀 심볼 {접음_충돌} ({:.1}%)",
         비율(접음_충돌)
     );
 }

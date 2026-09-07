@@ -1,4 +1,4 @@
-//! 좌표와 정체성 — **결박은 좌표 위에 서고, 좌표는 정체성 위에 선다.**
+//! 좌표와 정체성 — **결박은 좌표 위에 서고, 좌표는 정체성 위에 세워진다.**
 //!
 //! # 값이 둘인 것이 이 모듈의 전부다 ([옛 F03 §2](../../../docs/plan/disposal-map.md))
 //!
@@ -184,7 +184,7 @@ impl BodyDigest {
 /// # let subject = EntityId::mint(EntityKind::new("decision"), EntityOrigin::Hand);
 /// let target = match SymbolIdentity::Exact(id) {
 ///     SymbolIdentity::Exact(id) | SymbolIdentity::Ordinal(id) => id,
-///     // **이 팔에서 낼 수 있는 값이 없다.** 그래서 여기서 결박이 끝난다.
+///     // **이 팔에서 산출할 수 있는 값이 없다.** 그래서 여기서 결박이 끝난다.
 ///     SymbolIdentity::Unavailable => return,
 /// };
 /// let _ = Binding::new(NewBinding {

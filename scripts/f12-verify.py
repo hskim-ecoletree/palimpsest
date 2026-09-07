@@ -23,7 +23,7 @@
 여기서 work item 이나 좌표를 고르지 않는다 — 고르면 이 대조는 이탈률이 아니라
 **우리의 선별 솜씨**를 잰다.
 
-⚠ **종료 코드는 「어긋남」만 센다. 「대조 불가」는 안 센다** — 판정은 이 스크립트가
+⚠ **종료 코드는 「어긋남」만 헤아린다. 「대조 불가」는 안 헤아린다** — 판정은 이 스크립트가
 아니라 `docs/gates/F12.md` 가 한다(F11 이 실물 사례다).
 
 사용:
@@ -301,7 +301,7 @@ def 소급(tmp: Path, limit: int | None) -> dict | None:
                         f"`as_planned` 의 신호별 {신호} — ★ **하한 없음**")
 
     # ★ **지표 자신의 값** — `[outcome]` M2. 합격선이 아니라 산출이고,
-    #   `[outcome].step_4_report` 가 *"값 · n · 제외 건수 · caveat 을 함께 낸다"* 를 요구한다.
+    #   `[outcome].step_4_report` 가 *"값 · n · 제외 건수 · caveat 을 함께 싣는다"* 를 요구한다.
     율 = sorted(r["value"] for r in (d["deviation"] and 이탈률(d) for d in A) if r)
     정의안됨 = len(A) - len(율)
     if 율:
@@ -493,7 +493,7 @@ def 상한과_카탈로그(tmp: Path) -> None:
     손잡이 = re.compile(r"^\s+--([a-z0-9-]+)", re.M)
     이름들 = set(손잡이.findall(도움.stdout))
     if "repo" not in 이름들:
-        # **음성 대조** — 있는 손잡이를 못 찾으면 이 검사는 아무것도 안 센다.
+        # **음성 대조** — 있는 손잡이를 못 찾으면 이 검사는 아무것도 안 잰다.
         fail("⑬ 경계", f"손잡이를 하나도 못 읽었다({sorted(이름들)}) — 검사가 고장 났다")
     elif "base" in 이름들:
         fail("⑬ 경계", "`pal deviation` 에 `--base` 가 있다 — **F23 을 당겨왔다**")

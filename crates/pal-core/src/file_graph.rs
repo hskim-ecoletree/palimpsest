@@ -203,7 +203,7 @@ pub struct FileGraph {
     pub scopes: Capable<ScopeChain>,
     /// tree-sitter 가 오류 회복한 **자리들**. 비면 `parsed`, 아니면 `partial`.
     ///
-    /// **소스 순서다.** 정렬하지 않는다 — 순회가 소스 순서로 내는 것이 곧 사용자가 파일을
+    /// **소스 순서다.** 정렬하지 않는다 — 순회가 소스 순서로 산출하는 것이 곧 사용자가 파일을
     /// 읽는 순서이고, 그것을 바꾸면 *"첫 번째 공백"* 이 뜻을 잃는다.
     pub recovery_sites: Vec<RecoverySite>,
 }
@@ -277,7 +277,7 @@ impl FileGraph {
     /// `child` 를 직접 담는 심볼.
     ///
     /// 포함 관계는 **한 부모만** 갖는다. 여럿이면 그것은 추출기의 결함이고, 여기서는
-    /// 처음 것을 낸다 — 세는 쪽(`contains`)이 그 불변식을 지킬 책임을 진다.
+    /// 처음 것을 산출한다 — 세는 쪽(`contains`)이 그 불변식을 지킬 책임을 진다.
     #[must_use]
     pub fn parent_of(&self, child: LocalIx) -> Option<LocalIx> {
         self.contains.iter().find(|c| c.child == child).map(|c| c.parent)

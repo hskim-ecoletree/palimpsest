@@ -153,7 +153,7 @@ impl Serialize for Ulid {
 impl<'de> Deserialize<'de> for Ulid {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let raw = String::deserialize(d)?;
-        // **조용히 0 으로 접지 않는다** — 서로 다른 문자열이 같은 이름이 된다.
+        // **조용히 0 으로 뭉개지 않는다** — 서로 다른 문자열이 같은 이름이 된다.
         Self::parse(&raw).ok_or_else(|| {
             serde::de::Error::custom(format!("ULID 가 아니다: `{raw}` (26자 Crockford base32)"))
         })
@@ -206,7 +206,7 @@ impl Ulid {
         (self.0 >> 80) as u64
     }
 
-    /// 26자에서 읽는다. **길이나 글자가 다르면 `None`** — 조용히 0 으로 접지 않는다.
+    /// 26자에서 읽는다. **길이나 글자가 다르면 `None`** — 조용히 0 으로 뭉개지 않는다.
     #[must_use]
     pub fn parse(raw: &str) -> Option<Self> {
         if raw.len() != 26 {
@@ -321,7 +321,7 @@ mod tests {
 
     #[test]
     fn 모르는_글자는_조용히_0_이_되지_않는다() {
-        // **★ 반대 방향.** 접어서 읽으면 서로 다른 문자열이 같은 이름이 된다.
+        // **★ 반대 방향.** 뭉개서 읽으면 서로 다른 문자열이 같은 이름이 된다.
         assert_eq!(Ulid::parse(""), None);
         assert_eq!(Ulid::parse("짧다"), None);
         assert_eq!(Ulid::parse(&"I".repeat(26)), None, "Crockford 에 없는 글자다");
@@ -380,7 +380,7 @@ mod tests {
     }
 
     #[test]
-    fn 개체의_이름은_종류와_id_를_함께_낸다() {
+    fn 개체의_이름은_종류와_id_를_함께_산출한다() {
         let e = EntityId::mint(EntityKind::new("decision"), EntityOrigin::Hand);
         let s = e.to_display();
         assert!(s.starts_with("decision/"), "{s}");

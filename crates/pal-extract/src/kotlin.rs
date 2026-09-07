@@ -22,7 +22,7 @@ pub(crate) static KOTLIN: KotlinExtractor = KotlinExtractor;
 /// 주석의 다음 형제가 **곧 그 마디**다. 가시성(`internal`)과 `annotation` 은
 /// `modifiers` 로 **그 마디 안**에 들어가고, 그래서 벗길 것이 없다.
 ///
-/// ★ **빈 것이 「안 봤다」가 아니라 「보고 비었다」임을 시험이 센다** —
+/// ★ **빈 것이 「안 봤다」가 아니라 「보고 비었다」임을 시험이 잰다** —
 /// `코틀린도_심볼이_서는_자리에_붙는다`. ⚠ **실 코퍼스로는 못 잰다**: portal-backend 의
 /// `.kt` 에 `ADR-` 표식 주석이 **0 건**이고, 그것은 0% 가 아니라 **대조 불가**다
 /// ([ADR-0002] · `[f10.6].language_ruling`).
@@ -32,7 +32,7 @@ const 래퍼: [&str; 0] = [];
 ///
 /// **이 조각은 이것을 다시 짓지 않는다.** `queries/kotlin/top-level.scm` 을 CLI
 /// 레퍼런스와 공유해야 `corpus/tasks/s0-reference-vector.tsv`(1,126 줄) 대조가
-/// 성립하고, F01 의 골든 997 항목이 그 위에 선다. `FileGraph` 로 올리는 것은 그 둘을
+/// 성립하고, F01 의 골든 997 항목이 그 위에 세워진다. `FileGraph` 로 올리는 것은 그 둘을
 /// 동시에 흔드는 일이라 **빚으로 적고 넘긴다**(`[f02.1.pass]` ④).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct KotlinExtractor;
@@ -78,7 +78,7 @@ const KIND_BY_PATTERN: [SymbolKind; 5] = [
 ///
 /// **S0 이 대조한 것이 이 함수의 `symbols` 다.** 그 값이 그대로 유지되어야
 /// `corpus/tasks/s0-reference-vector.tsv`(1,126 줄)와의 대조가 계속 성립하고,
-/// F01 의 골든 997 항목이 그 위에 선다.
+/// F01 의 골든 997 항목이 그 위에 세워진다.
 ///
 /// 옛 `kotlin::extract(source) -> Vec<Symbol>` 는 없앴다. 트레잇이 그 자리를 가졌고
 /// (`LanguageExtractor::extract`), **부르는 경로만 바뀌었지 세는 방식은 같다** —

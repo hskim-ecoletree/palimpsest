@@ -1,0 +1,29 @@
+D3-a 관측 — 뿌리의 교대 문서 모집단과 그 처분
+잰 날 2026-09-07 · 착수 커밋 7c41b81 · 지금 HEAD 844427e
+
+== 모집단 ==
+  git ls-tree --name-only 7c41b81 | grep '^NEXT'
+    NEXT-B-plan-for-harness.md
+    NEXT-E-check-verifies-form-not-work.md
+    NEXT-E-prompt.md
+  → 착수 시점 뿌리의 교대 문서는 셋이다. 하위 디렉터리에는 없다.
+
+== 처분 ==
+  지운 것 하나 — NEXT-B-plan-for-harness.md
+    사유: 이 회차가 그 문서의 자리를 대신한다. 그것이 미룬 「하네스의 완성 장면」이
+    docs/plan/01-completion-scenes.md 로, 「무엇을 어느 순서로」가 docs/plan/02-order.md
+    로 섰다. 지운 커밋 3b5762a.
+    ⚠ 이 회차의 발견 레코드는 그 파일을 `경로` 로 적지 않는다 — 잠긴 의도 ## 범위 밖.
+
+  남긴 것 둘 — NEXT-E-check-verifies-form-not-work.md · NEXT-E-prompt.md
+    사유: 철회한 회차(2026-08-23-check-verifies-work)의 재료이고 잠긴 의도가
+    ## 범위 밖 으로 잠갔다. 그 회차의 발견 원장이 좌표로 붙들고 있다.
+
+== 붙드는 행을 실제로 헤아렸다 ==
+  .palimpsest/rounds/2026-08-23-check-verifies-work/findings.jsonl
+    NEXT-E-prompt.md 를 `경로` 로 적은 행 3
+    NEXT-E-check-verifies-form-not-work.md 를 적은 행 0
+
+  ⚠ 잠긴 의도 ## 범위 밖 은 *"그 회차의 발견 기록 세 행이 좌표로 붙들고 있다"* 를
+  둘 모두에 걸었는데, 실측은 세 행이 전부 NEXT-E-prompt.md 하나를 가리킨다.
+  둘 다 범위 밖이라 처분은 안 바뀐다. 근거의 범위만 좁다.

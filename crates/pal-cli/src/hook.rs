@@ -6,7 +6,7 @@
 //! 여기서 굳히지 않는다.** 이 회차의 정책은 최소이고 나중에 갈아끼워진다 — 그래서
 //! 갈아끼우는 자리를 파일로 갈라 뒀다. 여기 남는 것은 **바이트와 종료 코드의 규약**뿐이다.
 //!
-//! # 실측된 규약 — 이 파일이 그 위에 선다
+//! # 실측된 규약 — 이 파일이 그 위에 세워진다
 //!
 //! - 훅 커맨드는 **exec form** 으로 실행된다 — 항목에 `args` 가 있으면 `command` 가
 //!   실행 파일로 **셸 없이** 뜨고 `args` 가 그대로 argv 가 된다
@@ -66,7 +66,7 @@ pub fn run(event: &str) {
         policy::Decision::Pass(why) => 적는다(event, &format!("통과 — {why}")),
         policy::Decision::Block(reason) => {
             적는다(event, &format!("차단 — {reason}"));
-            // **표준출력 JSON 이 이긴다.** 한 줄로 낸다 — 실측이 그 형태로 먹었다.
+            // **표준출력 JSON 이 이긴다.** 한 줄로 출력한다 — 실측이 그 형태로 먹었다.
             println!("{}", json!({ "decision": "block", "reason": reason }));
         }
     }

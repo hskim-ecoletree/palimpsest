@@ -26,7 +26,7 @@ use crate::shell::{GraphShell, shell_of};
 /// 캐시의 자리와 이 빌드의 능력이 어긋났다.
 ///
 /// **능력 축이 키에 있으므로 일어날 수 없다.** 일어나면 키가 새는 것이고, 그 사실이
-/// 조용한 오답이 되지 않게 오류로 낸다.
+/// 조용한 오답이 되지 않게 오류로 처리한다.
 #[derive(Debug, thiserror::Error)]
 pub enum RestoreError {
     #[error("캐시가 모르는 언어를 담았다: {0}")]
@@ -176,7 +176,7 @@ mod tests {
         let kotlin = CachedGraph::of(그래프(Language::Kotlin, b"class A\n"));
         // Kotlin 그래프의 자리들을 TypeScript 껍데기에 씌우려 하면 넷 다 어긋난다.
         let Capable::Present(ts) = shell_of(Language::TypeScript) else { panic!() };
-        let err = kotlin.scopes.restore(&ts.scopes, "scopes").expect_err("어긋남을 안 냈다");
+        let err = kotlin.scopes.restore(&ts.scopes, "scopes").expect_err("어긋남을 안 산출했다");
         assert_eq!(err.slot, "scopes");
         assert!(!err.cached_built, "캐시가 안 만든 자리를 만들었다고 적었다");
     }

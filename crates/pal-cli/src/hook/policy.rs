@@ -33,7 +33,7 @@ use super::catalog::{self, Policy};
 
 /// 훅 하나의 판정.
 pub enum Decision {
-    /// 통과 — **아무것도 안 낸다.** 까닭은 진단으로만 나간다.
+    /// 통과 — **아무것도 출력하지 않는다.** 까닭은 진단으로만 나간다.
     Pass(String),
     /// 차단 — 까닭이 모델에 닿는다.
     Block(String),
@@ -50,7 +50,7 @@ pub fn decide(event: &str, payload: &Value) -> Decision {
     let Some(spec) = catalog::find(event) else {
         return Decision::Pass("우리가 판정하는 사건이 아니다".to_owned());
     };
-    // ★ **반복 회차에서는 절대 차단하지 않는다.** 다른 어떤 규칙보다 먼저 선다.
+    // ★ **반복 회차에서는 절대 차단하지 않는다.** 다른 어떤 규칙보다 먼저 온다.
     if payload.get("stop_hook_active").and_then(Value::as_bool) == Some(true) {
         return Decision::Pass(
             "반복 회차다 — 하네스가 이것을 못 멈추므로 훅이 스스로 멈춘다".to_owned(),

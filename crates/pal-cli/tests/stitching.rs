@@ -69,7 +69,7 @@ fn 파일_내_엣지가_스코프_해소와_일치한다() {
     let 답 = pal(&repo, &["touch", "helper", "--json"]);
     let p = 투영(&repo);
 
-    // ── ① 여섯 갈래가 전부 선다 ────────────────────────────────────────────
+    // ── ① 여섯 갈래가 전부 성립한다 ────────────────────────────────────────────
     let Slot::Built(c) = 참조_수(&p, "a.ts") else {
         panic!("TypeScript 파일의 참조 수가 「안 만듦」이다 — 스코프 체인이 안 실렸다");
     };
@@ -96,7 +96,7 @@ fn 파일_내_엣지가_스코프_해소와_일치한다() {
     assert!(!부르는.contains(&helper.id), "선언 자리가 자기 엣지로 남았다");
 
     // ── 그리고 그것이 답에 실린다 ──────────────────────────────────────────
-    let v: serde_json::Value = serde_json::from_str(&답).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&답).expect("응답 묶음 JSON");
     let facts = &v["answer"]["facts"]["present"];
     assert_eq!(facts["callers"].as_u64().expect("callers"), 부르는.len() as u64);
     assert!(v["coverage"]["unresolved"].as_u64().expect("unresolved") > 0, "미해소가 0 이다");
@@ -131,7 +131,7 @@ fn 파일_노드와_내보내기가_실제로_찬다() {
     let p = 투영(&repo);
 
     let v: serde_json::Value = serde_json::from_str(&대장).expect("대장 JSON");
-    let 센다 = |b: &str| {
+    let 헤아린다 = |b: &str| {
         v["ledger"]["entries"]
             .as_array()
             .expect("entries")
@@ -139,7 +139,7 @@ fn 파일_노드와_내보내기가_실제로_찬다() {
             .filter(|e| e["state"].as_object().is_some_and(|o| o.contains_key(b)))
             .count()
     };
-    let 그래프_있는 = 센다("parsed") + 센다("partial");
+    let 그래프_있는 = 헤아린다("parsed") + 헤아린다("partial");
     assert!(그래프_있는 >= 2, "그래프가 있는 파일이 {그래프_있는} 개뿐이다");
     assert_eq!(
         p.file_count().expect("파일 수"),
@@ -147,7 +147,7 @@ fn 파일_노드와_내보내기가_실제로_찬다() {
         "대장의 parsed+partial 과 2층의 파일 노드 수가 다르다"
     );
 
-    // TypeScript 의 `export` 가 `EXPORTS` 에 선다. **하한이다** — 0 이면 안 세운 것이다.
+    // TypeScript 의 `export` 가 `EXPORTS` 에 성립한다. **하한이다** — 0 이면 안 세운 것이다.
     assert!(p.export_count().expect("내보내기 수") > 0, "`EXPORTS` 가 비었다");
     let helper = p.resolve_name("helper").expect("이름").into_iter().next().expect("helper");
     assert_eq!(
@@ -155,19 +155,19 @@ fn 파일_노드와_내보내기가_실제로_찬다() {
         Some(helper.id),
         "`helper` 가 `EXPORTS` 에서 안 나온다"
     );
-    // Kotlin 은 `exports: NotBuilt` 이므로 안 선다 — **0 건이 아니라 능력의 부재다.**
+    // Kotlin 은 `exports: NotBuilt` 이므로 성립하지 않는다 — **0 건이 아니라 능력의 부재다.**
     assert_eq!(p.export(&RepoPath::new("gamma.kt"), "Gamma").expect("내보내기"), None);
 
     let _ = std::fs::remove_dir_all(&repo);
 }
 
 #[test]
-fn 봉투가_재구축_상태와_스냅샷을_값으로_싣는다() {
+fn 응답묶음이_재구축_상태와_스냅샷을_값으로_싣는다() {
     // 이 둘은 지금까지 **관측이 아니라 기본값**이었다 —
     // `rebuild` 는 `NotBuilt{F05}` 였고 `built_for_this_snapshot` 은 `true` 로 박혀 있었다.
     let repo = 저장소("envelope");
     let 답 = pal(&repo, &["touch", "helper", "--json"]);
-    let v: serde_json::Value = serde_json::from_str(&답).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&답).expect("응답 묶음 JSON");
 
     assert_eq!(
         v["projection"]["rebuild"]["present"], "settled",

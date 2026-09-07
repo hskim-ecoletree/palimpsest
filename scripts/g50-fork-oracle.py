@@ -22,14 +22,14 @@ CLI 가 컴파일 결과를 `~/.cache/tree-sitter/lib/<문법이름>.dylib` 에 
 이름이 전부 `kotlin` 이기 때문이다. **F02-2 의 링커 사고와 같은 병의 두 번째 형태이고,
 「별도 바이너리」라는 그때의 처방이 여기서는 듣지 않는다.**
 
-드러난 방식도 그때와 같다 — `ng` 가 자기 값을 못 냈다(선언 총수 0). 그래서 팔마다
+드러난 방식도 그때와 같다 — `ng` 가 자기 값을 못 산출했다(선언 총수 0). 그래서 팔마다
 **`HOME` 과 `XDG_CACHE_HOME` 을 따로 준다.** 캐시가 갈리는 것을 산출로도 확인한다.
 
 # 대조가 꺼지는 형태 — `[g50].self_judged` 4 가 박아 둔 셋
 
-    · 세 팔의 산출이 **전부 같으면 실패**  (장치가 꺼진 것이다)
+    · 세 팔의 산출이 **전부 같으면 실패**  (장치가 멎은 것이다)
     · 하한 — 파일 1,122 · 팔 3 · 독립 계수기 선언 2,000
-    · 팔마다 **선언 총수가 0 보다 큰지 먼저** 확인 (빈 산출은 어긋남을 못 낸다)
+    · 팔마다 **선언 총수가 0 보다 큰지 먼저** 확인 (빈 산출은 어긋남을 못 만든다)
 
 사용:
     ./scripts/g50-fork-oracle.py --arms <클론들의_부모> --corpus /tmp/s0-corpus
@@ -281,11 +281,11 @@ def main() -> int:
 
     m = {n: measure(dirs[n], files, a.corpus, *q[n]) for n in names}
 
-    # 침묵으로 드러나는 실패 — 빈 산출은 어긋남을 못 낸다
+    # 침묵으로 드러나는 실패 — 빈 산출은 어긋남을 못 만든다
     for n in names:
         tot = sum(m[n]["count"].values())
         if tot == 0:
-            print(f"  FAIL  팔 {n} 의 선언 총수가 0 이다 — 산출이 비면 어긋남을 못 낸다")
+            print(f"  FAIL  팔 {n} 의 선언 총수가 0 이다 — 산출이 비면 어긋남을 못 만든다")
             return 1
         # ★ 이름을 안 보는 쿼리와 매치 수가 같아야 한다 — 이름 마디가 매치를 늘리거나
         #    줄이면 늘어난 선언에 우리 손이 섞인다([g50.pass] ③).
@@ -301,12 +301,12 @@ def main() -> int:
     print("  ok    세 팔 다 선언 총수 > 0 · 트리 수 == 파일 수")
     print("  ok    ★ 세 팔 다 **이름 있는 쿼리와 구조만 보는 쿼리의 매치 수가 같다**")
 
-    # 세 팔의 산출이 전부 같으면 장치가 꺼진 것이다
+    # 세 팔의 산출이 전부 같으면 장치가 멎은 것이다
     sig = {n: (sorted(m[n]["fail"]), m[n]["count"], m[n]["tree"]) for n in names}
     if sig[names[0]] == sig[names[1]] == sig[names[2]]:
         print("  FAIL  세 팔의 산출이 **글자까지 같다** — 측정 장치가 꺼졌다 (F02-2 의 링커 사고)")
         return 1
-    print("  ok    ★ 세 팔의 산출이 같지 않다 — 장치가 켜져 있다")
+    print("  ok    ★ 세 팔의 산출이 같지 않다 — 장치가 걸려 있다")
     print()
 
     # ── 음성 대조 — 현행 핀이 자기 값을 재현하는가 ★ ─────────────────────────
@@ -334,7 +334,7 @@ def main() -> int:
     for f in files:
         indep[f.relative_to(a.corpus).as_posix()] = ns["count_file"](f)
     if sum(indep.values()) < MIN_INDEPENDENT_DECLS:
-        print(f"  FAIL  독립 계수기가 {sum(indep.values())} 를 냈다 — {MIN_INDEPENDENT_DECLS} 미만이면 계수기가 고장 난 것이다")
+        print(f"  FAIL  독립 계수기가 {sum(indep.values())} 를 산출했다 — {MIN_INDEPENDENT_DECLS} 미만이면 계수기가 고장 난 것이다")
         return 1
 
     report: dict = {"independent_total": sum(indep.values()), "arms": {}}

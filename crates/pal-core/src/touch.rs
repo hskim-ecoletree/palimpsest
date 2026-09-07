@@ -28,7 +28,7 @@ use crate::ledger::IdentityGrade;
 use crate::repo::RepoPath;
 use crate::symbol::{Span, SymbolKind};
 
-/// 2층에 사는 심볼 하나.
+/// 2층에 있는 심볼 하나.
 ///
 /// **[graph-node] `Symbol`** — `schema/graph.toml`
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize)]
@@ -40,7 +40,7 @@ pub struct SymbolNode {
     /// # 왜 유도하지 않고 싣는가
     ///
     /// 체인은 [`crate::FileGraph::contains`] 에서 나오는데 **2 층에는 파일 그래프가
-    /// 없다.** 여기 없으면 `pal touch` 가 `OrderService.cancel` 을 낼 수 없고,
+    /// 없다.** 여기 없으면 `pal touch` 가 `OrderService.cancel` 을 산출할 수 없고,
     /// 그것이 옛 F03 §1 이 이 기능의 목적으로 적은 좌표 그 자체다.
     ///
     /// 최상위 선언에서 **빈 목록인 것이 정확한 값이다** — 담는 것이 없다.
@@ -115,7 +115,7 @@ pub enum BoundItem {
         status: crate::binding::BindingStatus,
         /// 무엇까지 지켜보나 — **선언이지 계산이 아니다**(옛 F09 §3).
         ///
-        /// *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은 유효하다"* 와 **다른
+        /// *"이 결정은 `symbol` 반경에서 fresh"* 는 *"이 결정은 유효하다"* 와 **다른
         /// 문장**이고, 그 차이가 산출에 남는 것이 F09 의 요구다.
         radius: String,
         /// 감시 집합의 크기. 반경 이름만으로는 `files:3` 이 몇 개를 지켜보는지 모른다.
@@ -149,8 +149,11 @@ impl NearKind {
     #[must_use]
     pub const fn name(self) -> &'static str {
         match self {
-            Self::Spelling => "표기",
-            Self::Substring => "부분",
+            // **기계 토큰이다** — 이 저장소에서 `name()` 은 와이어 표기이고
+            // serde 가 산출하는 값(`rename_all = "snake_case"`)과 같아야 한다.
+            // 사람이 읽는 병기는 `pal-cli` 의 `label` 이 진다.
+            Self::Spelling => "spelling",
+            Self::Substring => "substring",
         }
     }
 }
@@ -193,7 +196,7 @@ pub struct NearName {
 /// ① stale · orphaned · 판정 불가   ← 낡은 것이 안 보이면 이 기능의 존재 이유가 사라진다
 /// ② superseded (계보)
 /// ③ 결박 시점이 최근인 것
-/// ④ 결박 id                        ← 같은 저장소가 같은 순서를 낸다
+/// ④ 결박 id                        ← 같은 저장소가 같은 순서를 산출한다
 /// ```
 ///
 /// **②가 「pending」이다.** [옛 F11 §3.3] 은 `stale > pending > live` 라고 적었는데 이
@@ -205,11 +208,11 @@ pub fn 정렬_열쇠(item: &BoundItem) -> (u8, u8, i64, String) {
     let 신선도 = match &status.code {
         // **`stale` 과 `orphaned` 가 같은 칸이다** — 둘 다 *"코드가 움직였다"* 이고,
         // 사람이 봐야 하는 것에는 차이가 없다. **다르다는 사실은 지워지지 않는다** —
-        // 화면이 둘을 다른 문장으로 낸다(옛 F09 §5).
+        // 화면이 둘을 다른 문장으로 산출한다(옛 F09 §5).
         crate::binding::CodeFreshness::Stale { .. }
         | crate::binding::CodeFreshness::Orphaned { .. } => 0,
         crate::binding::CodeFreshness::Undeterminable { .. } => 1,
-        crate::binding::CodeFreshness::Live => 3,
+        crate::binding::CodeFreshness::Fresh => 3,
     };
     let 계보 = match &status.lineage {
         crate::binding::Lineage::Superseded { .. } => 0,
@@ -219,7 +222,7 @@ pub fn 정렬_열쇠(item: &BoundItem) -> (u8, u8, i64, String) {
         crate::binding::BoundTime::Committed { epoch_secs } => -*epoch_secs,
         // 워킹트리는 **커밋보다 최근이다** — 아직 커밋되지 않았다.
         crate::binding::BoundTime::Worktree => i64::MIN,
-        // 모르는 것은 뒤로. **0(1970년)으로 접지 않는다.**
+        // 모르는 것은 뒤로. **0(1970년)으로 뭉개지 않는다.**
         crate::binding::BoundTime::Unrecorded => i64::MAX,
     };
     (신선도, 계보, 시각, binding.as_str().to_owned())
@@ -232,7 +235,7 @@ pub fn 정렬_열쇠(item: &BoundItem) -> (u8, u8, i64, String) {
 #[must_use]
 pub fn 낡았나(item: &BoundItem) -> bool {
     let BoundItem::Note { status, .. } = item;
-    !matches!(status.code, crate::binding::CodeFreshness::Live)
+    !matches!(status.code, crate::binding::CodeFreshness::Fresh)
 }
 
 /// 이 심볼이 하는 것 — **F07(참조 해소)이 채운다.**
@@ -248,7 +251,7 @@ pub struct SymbolFacts {
 ///
 /// **변형이 없는 것이 스키마가 요구하는 상태다.** 자리만 만든 노드의 타입이 거주
 /// 가능하면 누군가 빈 값을 채워 넣을 수 있고, 그 순간 *"안 만들었음"* 과 *"없음"* 이
-/// 같은 출력이 된다. `xtask` 의 스키마 정합 검사가 이 거주 불가능성을 센다.
+/// 같은 출력이 된다. `xtask` 의 스키마 정합 검사가 이 거주 불가능성을 잰다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum UnresolvedRef {}
 
@@ -296,8 +299,8 @@ pub struct TouchResult {
 
 /// `touch` 질의의 답 — **못 찾은 것도 답이다.**
 ///
-/// 이름이 2층에 없을 때 오류를 내지 않는다. *"모른다"* 는 정상적인 답이고 봉투가 그
-/// 답의 근거(무엇을 보았고 무엇을 안 보았는가)를 함께 싣는다. 오류로 처리하면 봉투가
+/// 이름이 2층에 없을 때 오류를 내지 않는다. *"모른다"* 는 정상적인 답이고 응답 묶음이 그
+/// 답의 근거(무엇을 보았고 무엇을 안 보았는가)를 함께 싣는다. 오류로 처리하면 응답 묶음이
 /// 나가지 못하고, 그러면 사용자는 **왜** 못 찾았는지 알 수 없다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case", tag = "outcome")]
@@ -305,7 +308,7 @@ pub enum TouchAnswer {
     /// 유일하게 찾았다.
     ///
     /// **`Box` 인 것은 크기 때문이다.** 이 변형만 448바이트라 열거형 전체가 그만큼
-    /// 커지고, 못 찾은 경우까지 그 비용을 낸다. 직렬화 형태는 바뀌지 않는다.
+    /// 커지고, 못 찾은 경우까지 그 비용을 산출한다. 직렬화 형태는 바뀌지 않는다.
     Found(Box<TouchResult>),
     /// 후보가 여럿이다. **하나를 고르지 않는다** — 고르는 것은 에이전트의 일이다(P6).
     Ambiguous { name: String, candidates: Vec<SymbolNode> },

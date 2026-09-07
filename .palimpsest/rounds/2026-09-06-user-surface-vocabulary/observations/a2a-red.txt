@@ -1,0 +1,18 @@
+# A2-a RED 관측 — 2026-09-06
+# 처치: `CodeFreshness::Fresh` 에 `#[serde(rename = "current")]` 를 붙여 두 축을 일부러 겹치게 했다.
+# 관측 후 즉시 되돌렸다.
+
+$ cargo test -p pal-core 두_축의_와이어
+running 2 tests
+test binding::두_축의_와이어::겹치면_발화한다 ... ok
+test binding::두_축의_와이어::두_축의_토큰_집합은_서로소다 ... FAILED
+
+---- binding::두_축의_와이어::두_축의_토큰_집합은_서로소다 stdout ----
+thread panicked at crates/pal-core/src/binding.rs:799:9:
+두 축이 같은 와이어 토큰을 쓴다: ["current"] — `{"code":{"freshness":..},"lineage":..}` 를 읽는 쪽이 축을 못 가른다
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 223 filtered out
+
+# 되돌린 뒤
+$ cargo test -p pal-core 두_축의_와이어
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 223 filtered out

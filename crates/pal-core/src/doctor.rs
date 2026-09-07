@@ -2,7 +2,7 @@
 //!
 //! # 재구축 등가성 검사가 말하지 않는 것
 //!
-//! 계획의 상시 검사 열하나와 오라클 넷은 전부 *빌드·재구축·회귀*에 대한 것이다.
+//! 계획의 상시 검사 열하나와 판정 명령 넷은 전부 *빌드·재구축·회귀*에 대한 것이다.
 //! 재구축 등가성은 *"두 번 만들면 같은가"* 를 말할 뿐 **"지금 이 그래프가 정합한가"** 를
 //! 말하지 않는다 — 손상 · 부분 갱신 · 스키마 진화 · 중단된 트랜잭션은 그 검사를
 //! **통과한다.**
@@ -127,11 +127,11 @@ impl InvariantId {
     #[must_use]
     pub const fn breaks(self) -> &'static str {
         match self {
-            Self::EdgeEndsExist => "질의가 조용히 빈 결과를 낸다",
+            Self::EdgeEndsExist => "질의가 조용히 빈 결과를 산출한다",
             Self::RegisteredAndRequired => "\"필수이거나 없거나\"가 저장 층에서 무효",
             Self::ProducerFitsProvenance => "출처 파티션이 거짓이 된다",
             Self::InferredCarriesEvidence => "P3 이 문장으로 되돌아간다",
-            Self::CandidateSetWithinLimit => "절단이 조용해진다",
+            Self::CandidateSetWithinLimit => "생략이 조용해진다",
             Self::ResidualAnchored => "잔여가 유령이 된다",
             Self::BindingIndexResolves => "승인 노동의 유실이 조용히 일어난다",
             Self::FreshnessConsistent => "KG 의 일부만 신선하다",
@@ -179,7 +179,7 @@ pub struct Outcome {
 /// 불변식 하나의 처지.
 ///
 /// **`NotBuilt` 는 "위반 0" 이 아니다.** 모집단이 존재할 수 없다는 뜻이고,
-/// 그 둘을 같은 출력으로 내는 것이 [목표 §3.1](../../../docs/plan/00-goals.md) 의
+/// 그 둘을 같은 출력으로 산출하는 것이 [목표 §3.1](../../../docs/plan/00-goals.md) 의
 /// 정면 위반이다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -463,7 +463,7 @@ impl<'a> Context<'a> {
         (checked, skipped)
     }
 
-    /// 보지 않은 범위를 잔여로 낸다. **"이상 없음"이 아니다.**
+    /// 보지 않은 범위를 잔여로 산출한다. **"이상 없음"이 아니다.**
     fn skipped_residual(&self, id: InvariantId, mut skipped: Vec<Coord>) -> Option<Residual> {
         if skipped.is_empty() {
             return None;
@@ -795,7 +795,7 @@ impl<'a> Context<'a> {
             }
             if *total > kept.len() && demoted_to.is_none() {
                 problems.push(format!(
-                    "후보 {total}개 중 {}개만 남았는데 초과분의 UnresolvedRef 가 없다 — 절단이 조용해진다",
+                    "후보 {total}개 중 {}개만 남았는데 초과분의 UnresolvedRef 가 없다 — 생략이 조용해진다",
                     kept.len()
                 ));
             }
@@ -845,7 +845,7 @@ impl<'a> Context<'a> {
                 found += 1;
                 violations.push(Violation {
                     invariant: InvariantId::ResidualAnchored,
-                    subject: format!("Residual{{{}}}", r.reason.label()),
+                    subject: format!("Residual{{{}}}", r.reason.name()),
                     anchor: Anchor::At(r.bound_to()[0].clone()),
                     detail: format!(
                         "결박 좌표가 이 그래프에 없다 — {} · 잔여가 유령이 된다",
@@ -975,7 +975,7 @@ mod tests {
     //
     // 그래서 **넷이 성립할 수 있는 스키마를 만들고 그 위에서 하나씩 깬다.** 이것이
     // 실물이 아니라는 사실은 `[f22.4].does_not_prove` 가 미리 적었고, 무엇이 실물이고
-    // 무엇이 픽스처인지는 `doctor` 자신이 산출로 센다(`InvariantOutcome::NotBuilt`).
+    // 무엇이 픽스처인지는 `doctor` 자신이 산출로 잰다(`InvariantOutcome::NotBuilt`).
     const 스키마_원문: &str = r#"
 schema_version = 1
 
@@ -1276,7 +1276,7 @@ snapshot    = "at"
 
     #[test]
     fn 불변식_5_잘린_후보에는_미해소_참조가_붙는다() {
-        // **절단이 조용해지는 자리다.** 후보 40 개 중 하나만 남기고 강등 기록을 지운다.
+        // **생략이 조용해지는 자리다.** 후보 40 개 중 하나만 남기고 강등 기록을 지운다.
         let mut edges = 성한().edges().to_vec();
         edges[1].to = EdgeTarget::Candidates {
             kept: vec![심볼_키("g")],

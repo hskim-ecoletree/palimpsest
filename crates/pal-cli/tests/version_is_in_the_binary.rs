@@ -31,7 +31,7 @@ fn 버전에_커밋이_실려_있다() {
         return;
     }
     let sha = String::from_utf8(out.stdout).expect("UTF-8").trim().to_owned();
-    assert!(!sha.is_empty(), "`git rev-parse` 가 빈 값을 냈다");
+    assert!(!sha.is_empty(), "`git rev-parse` 가 빈 값을 산출했다");
 
     let v = Command::new(PAL).arg("--version").output().expect("pal --version");
     assert!(v.status.success(), "pal --version 이 실패했다");
@@ -39,7 +39,7 @@ fn 버전에_커밋이_실려_있다() {
 
     assert!(
         printed.contains(&sha),
-        "`pal --version` 에 커밋이 없다 — 두 빌드가 같은 값을 낸다\n  냈다: {}\n  HEAD: {sha}",
+        "`pal --version` 에 커밋이 없다 — 두 빌드가 같은 값을 산출한다\n  산출했다: {}\n  HEAD: {sha}",
         printed.trim()
     );
 }

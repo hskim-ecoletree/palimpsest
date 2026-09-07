@@ -108,7 +108,7 @@ pub struct EdgeDecl {
     /// ④ 발생 `Snapshot` 을 싣는 속성 이름.
     pub snapshot: String,
     // ─────────────────────────────────────────────────────────────────────────
-    /// 이 엣지가 **어디에 사는가** — 별도 자리인가, 노드의 필드에 실려 있는가.
+    /// 이 엣지가 **어디에 있는가** — 별도 자리인가, 노드의 필드에 실려 있는가.
     ///
     /// **`Option<Carrier>` 가 아니다.** `None` 은 *"실린 자리가 없다"* 만 말하고
     /// **그것이 「별도 자리다」인지 「아직 안 정했다」인지**를 말하지 않는다 —
@@ -117,13 +117,13 @@ pub struct EdgeDecl {
     pub attrs: Vec<AttrDecl>,
 }
 
-/// 엣지가 **어디에 사는가.**
+/// 엣지가 **어디에 있는가.**
 ///
 /// [ADR-0005](../../../docs/adr/0005-absence-carries-its-kind.md) — 부재는 종류를
 /// 싣는다. *"실린 자리가 없다"* 는 곧 **「별도 자리다」** 라는 사실이지 빈칸이 아니다.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Carried {
-    /// 엣지가 자기 자리로 선다. **기본값이다.**
+    /// 엣지가 자기 자리로 성립한다. **기본값이다.**
     #[default]
     Standalone,
     /// 노드의 필드에 실려 있다.
@@ -571,7 +571,7 @@ impl GraphSchema {
 
     /// 이 라벨이 Rust 타입에서 지는 이름 전부 — `key` + `attrs`.
     ///
-    /// **양방향 대조의 한쪽이다.** 다른 쪽은 소스의 `pub` 필드이고 그것은 `xtask` 가 센다.
+    /// **양방향 대조의 한쪽이다.** 다른 쪽은 소스의 `pub` 필드이고 그것은 `xtask` 가 잰다.
     #[must_use]
     pub fn field_names(&self, label: &str) -> Vec<String> {
         let Some(n) = self.nodes.get(label) else { return Vec::new() };
@@ -587,6 +587,45 @@ impl GraphSchema {
         }
         out.sort();
         out
+    }
+}
+
+#[cfg(test)]
+mod 왕복_파서를_진_표시_함수 {
+    use super::Cardinality;
+
+    /// `name()` 이 동시에 `parse` 의 열쇠인 넷째 자리. **다른 셋은 `graph.rs` 가 잰다.**
+    ///
+    /// # 왜 여기 있나
+    ///
+    /// `Cardinality::parse` 는 `pub` 이 아니라 이 모듈 밖에서 못 부른다. 그래서
+    /// `graph.rs` 의 같은 이름 모듈이 이 자리를 못 덮었고, `C1-b` 가 이름 댄 넷 중
+    /// 셋만 재고 있었다(독립 리뷰 R3 · 발견 15).
+    ///
+    /// # 무엇을 막나
+    ///
+    /// `name()` 에 병기를 얹으면 `parse` 가 [`None`] 을 돌려주는데 그 반환형이
+    /// [`Option`] 이라 **아무 검사도 안 잡는다** — 스키마 로딩이 조용히 죽는다.
+    #[test]
+    fn 네_변형이_자기_토큰으로_되돌아온다() {
+        for c in [
+            Cardinality::OneToOne,
+            Cardinality::ManyToOne,
+            Cardinality::OneToMany,
+            Cardinality::ManyToMany,
+        ] {
+            assert_eq!(Cardinality::parse(c.name()), Some(c), "{} 이 안 돌아왔다", c.name());
+        }
+    }
+
+    /// 음성 대조 — **병기가 얹히면 이 시험이 빨개진다는 것을 여기서 보인다.**
+    ///
+    /// 「없는 토큰은 `None`」만 재면 병기를 얹어도 초록이다. 재는 것은
+    /// **표시 문자열이 파서의 열쇠와 같은가** 이므로, 병기 꼴을 직접 넣어 댄다.
+    #[test]
+    fn 병기가_얹힌_꼴은_파서를_못_지난다() {
+        assert_eq!(Cardinality::parse("일대일(one-to-one)"), None);
+        assert_eq!(Cardinality::parse("one-to-one "), None);
     }
 }
 
@@ -786,5 +825,29 @@ key        = ["id"]
         // 오타가 조용히 무시되면 스키마는 자기가 뭘 선언했는지 모른다.
         let s = 성한.replace("rust_type  = \"SymbolNode\"", "rust_typ   = \"SymbolNode\"");
         assert!(matches!(GraphSchema::parse(&s), Err(SchemaError::Syntax(_))));
+    }
+
+    /// **왕복 파서를 진 표시 함수** — `C1-c` 의 넷째 자리.
+    ///
+    /// [`Cardinality::parse`] 가 `name()` 의 문자열을 그대로 열쇠로 쓴다. 병기를 얹으면
+    /// 스키마 파일의 `cardinality = "one-to-many"` 가 안 읽히고, 그때 나는 것은
+    /// **조용한 [`None`]** 이다.
+    #[test]
+    fn 다중도가_왕복한다() {
+        for c in [
+            Cardinality::OneToOne,
+            Cardinality::ManyToOne,
+            Cardinality::OneToMany,
+            Cardinality::ManyToMany,
+        ] {
+            let 이름 = c.name();
+            assert!(
+                !이름.chars().any(|ch| ch >= '\u{AC00}' && ch <= '\u{D7A3}'),
+                "`{이름}` 에 한국어가 얹혔다 — 스키마 파일이 안 읽힌다"
+            );
+            assert_eq!(Cardinality::parse(이름), Some(c), "`{이름}` 이 되읽히지 않는다");
+        }
+        // 음성 대조 — 얹으면 실제로 죽는다.
+        assert_eq!(Cardinality::parse("일대다(one-to-many)"), None);
     }
 }

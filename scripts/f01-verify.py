@@ -8,7 +8,7 @@
   ③ **음성 대조** — 넷은 반드시 요약을 바꾸고 하나는 반드시 안 바꾼다
   ④ 매니페스트 — 규칙 ID 없는 제외 0 · 합 불변 · 안 걸린 파일은 안 움직인다
   ⑤ 감지기 자신의 낡음
-  ⑥ 언어 인식 — 실물에서 각 단계가 무엇을 켜는지
+  ⑥ 언어 인식 — 실물에서 각 단계가 무엇을 거는지
   ⑦ 골든 대장 스냅샷
   ⑧ 선형성 — 절대 시간이 아니라 **제곱이 아님**
 
@@ -19,8 +19,8 @@
 
 # 변이 대상은 자라는 값이 아니라 고정 경로에 묶는다
 
-파일 수·상태별 개수 같은 것에 묶으면 코퍼스가 바뀔 때 조용히 꺼진다(`7fe6b62`).
-**대상 경로가 코퍼스에 없으면 `✓` 를 내는 대신 멈춘다**(f22-4 의 규칙).
+파일 수·상태별 개수 같은 것에 묶으면 코퍼스가 바뀔 때 조용히 멎는다(`7fe6b62`).
+**대상 경로가 코퍼스에 없으면 `✓` 를 산출하는 대신 멈춘다**(f22-4 의 규칙).
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ MUTATE_DELETE = ".gitignore"
 ADD_PATH = "palimpsest-probe.txt"                   # 없던 경로 — 추가 변이
 # eol 이 걸린 파일. **깨끗한 워킹트리에서 이것이 dirty 로 뜨면 clean 필터가 없는 것이다.**
 EOL_FILE = "gradlew.bat"
-# 셔뱅으로만 알 수 있는 파일 — 인식 ② 단계가 켜는 것.
+# 셔뱅으로만 알 수 있는 파일 — 인식 ② 단계가 잡아내는 것.
 SHEBANG_FILE = "gradlew"
 
 GOLDEN = "corpus/golden/portal-backend.ledger.json"
@@ -142,13 +142,13 @@ def main() -> int:
             failures.append(f"① 경로 집합이 다르다: git에만 {sorted(theirs - ours)[:5]} · "
                             f"대장에만 {sorted(ours - theirs)[:5]}")
 
-        # `matches_worktree` 가 값이어야 한다 — 이 기능이 켜는 것의 증거.
+        # `matches_worktree` 가 값이어야 한다 — 이 기능이 거는 것의 증거.
         env = json.loads(run([str(pal), "doctor", "--repo", str(repo),
                               "--cache-dir", str(cache), "--index", str(tmp / "i.redb"),
                               "--intent", str(tmp / "t.redb"), "--json"]))
         mw = env["projection"]["matches_worktree"]
         rb = env["projection"]["rebuild"]
-        print(f"  봉투     matches_worktree={mw} · rebuild={'not_built' if 'not_built' in rb else rb}")
+        print(f"  응답 묶음     matches_worktree={mw} · rebuild={'not_built' if 'not_built' in rb else rb}")
         if "present" not in mw:
             failures.append(f"① `matches_worktree` 가 아직 값이 아니다: {mw}")
         elif mw["present"] is not True:
@@ -290,7 +290,7 @@ def main() -> int:
             failures.append("⑤ HEAD 를 옮겼는데 감지기가 그대로다 — 낡음이 안 보인다")
 
         print()
-        print("── ⑥ 언어 인식 — 실물에서 무엇을 켜는가 ────────────────────────")
+        print("── ⑥ 언어 인식 — 실물에서 무엇을 잡아내는가 ────────────────────────")
         led = ledger(pal, repo, cache, a.at)
         by_path = {e["path"]: e["state"] for e in led["ledger"]["entries"]}
         shebang = by_path.get(SHEBANG_FILE)
@@ -329,11 +329,11 @@ def main() -> int:
                 failures.append(f"⑦ 골든과 다르다 ({len(diffs)} 곳). "
                                 f"의도한 변화면 `--bless` 로 승인하라")
 
-        # **음성 대조 — 등급이 조용히 떨어져도 골든이 `✓` 를 내는가.**
+        # **음성 대조 — 등급이 조용히 떨어져도 골든이 `✓` 를 산출하는가.**
         #
         # 골든은 *"추출 등급 하락 같은 조용한 회귀를 잡는 유일한 장치"* 다(옛 F01 §7).
         # 그 말이 참인지 보려면 실제로 등급을 떨어뜨려 봐야 한다 — 골든 JSON 을 손보는
-        # 것으로는 안 된다. 그것은 대조 함수가 diff 를 낸다는 것만 보이지 **등급 하락이
+        # 것으로는 안 된다. 그것은 대조 함수가 diff 를 산출한다는 것만 보이지 **등급 하락이
         # 산출에 실린다**는 것을 보이지 않는다. 그래서 소스를 변이시키고 다시 빌드한다.
         if golden_file.exists() and not a.bless and not a.skip_rebuild:
             src = root / "crates/pal-extract/src/classify.rs"
@@ -395,12 +395,12 @@ def main() -> int:
 
 
 def mutate(path: Path, old: str, new: str) -> None:
-    """치환한다. **없으면 오류다** — 변이가 낡으면 조용히 넘어가는 대신 소리를 낸다."""
+    """치환한다. **없으면 오류다** — 변이가 낡으면 조용히 넘어가는 대신 소리 내어 알린다."""
     text = path.read_text(encoding="utf-8")
     if old not in text:
         raise SystemExit(
             f"변이 대상을 찾지 못했다: {path.name}\n  찾은 것: {old!r}\n"
-            "  **소스가 바뀌어 변이가 낡았다.** 변이를 고치지 않으면 이 자리가 조용히 꺼진다."
+            "  **소스가 바뀌어 변이가 낡았다.** 변이를 고치지 않으면 이 자리가 조용히 멎는다."
         )
     path.write_text(text.replace(old, new, 1), encoding="utf-8")
 

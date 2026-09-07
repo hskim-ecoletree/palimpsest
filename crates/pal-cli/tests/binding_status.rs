@@ -2,13 +2,13 @@
 //!
 //! # 「낡음을 감지한다」는 말하기 가장 쉽다
 //!
-//! **아무것도 안 켜는 감지기도, 전부 켜는 감지기도 그 문장을 만족한다.** 그래서 이
+//! **아무것도 안 잡는 감지기도, 전부 잡는 감지기도 그 문장을 만족한다.** 그래서 이
 //! 파일은 방향 넷을 **한 저장소에서 연달아** 만든다 — 따로 만들면 한쪽만 도는 것을
 //! 못 잡는다.
 //!
 //! ```text
-//! ① 포매팅만 바꾸면 stale 0     ← 안 켜져야 할 때 안 켜진다 (진행 불가 조건)
-//! ② 의미를 바꾸면 반드시 stale   ← ①의 짝. 없으면 ①이 「아무것도 안 켜는 감지기」로 통과한다
+//! ① 포매팅만 바꾸면 stale 0     ← 안 붙어야 할 때 안 붙는다 (진행 불가 조건)
+//! ② 의미를 바꾸면 반드시 stale   ← ①의 짝. 없으면 ①이 「아무것도 안 잡는 감지기」로 통과한다
 //! ③ 판정 불가가 live 로 안 샌다  ← R16 의 자리
 //! ④ Orphaned ≠ Stale           ← 지우면 Orphaned · 고치면 Stale
 //! ```
@@ -22,7 +22,7 @@
 //! # 하한 — **시험되지 않은 대조는 `–` 가 아니라 실패다** (`2e2eb3f`)
 //!
 //! 결박이 0 건이면 아래 전부가 공짜로 통과한다. 그리고 **포매팅 변형이 소스를 안
-//! 바꿨으면 ①의 「stale 0」은 공짜다** — 그래서 **바이트가 실제로 달라졌는지**를 센다
+//! 바꿨으면 ①의 「stale 0」은 공짜다** — 그래서 **바이트가 실제로 달라졌는지**를 잰다
 //! (대조가 꺼지는 첫째 형태).
 
 mod common;
@@ -77,7 +77,7 @@ fn 상태(repo: &Path, args: &[&str]) -> (String, u64, String) {
     let mut all = vec!["query", "binding.status"];
     all.extend_from_slice(args);
     all.push("--json");
-    let v: serde_json::Value = serde_json::from_str(&pal(repo, &all)).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(&pal(repo, &all)).expect("응답 묶음 JSON");
     let b = &v["answer"]["bindings"];
     let list = b.as_array().expect("bindings 가 배열이 아니다");
     assert_eq!(list.len(), 1, "결박이 1 건이 아니다 — 이 시험이 아무것도 안 잰다");
@@ -107,7 +107,7 @@ fn 방향_넷이_서로를_막는다() {
     pal(&repo, &["bind", "도움", "--note", "이 함수의 계약", "--radius", "callers"]);
 
     let (code, watch, radius) = 상태(&repo, &[]);
-    assert_eq!(code, "live", "막 걸었는데 live 가 아니다");
+    assert_eq!(code, "fresh", "막 걸었는데 fresh 가 아니다");
     assert_eq!(radius, "callers");
     // **반경이 실제로 자랐다** — 1 이면 `callers` 가 `symbol` 과 같은 것을 잰 것이고,
     // 그러면 반경이 아무것도 안 가른다. `pal bind` 가 엣지를 지우면 여기서 잡힌다.
@@ -116,14 +116,14 @@ fn 방향_넷이_서로를_막는다() {
     // ── ① 포매팅만 바꾸면 stale 0 ────────────────────────────────────────────
     쓰기(&repo, 소스_포매팅만());
     let (code, _, _) = 상태(&repo, &[]);
-    assert_eq!(code, "live", "★ 포매팅만 바꿨는데 낡음이 켜졌다 — R-07 이 치명이라 부른 실패다");
+    assert_eq!(code, "fresh", "★ 포매팅만 바꿨는데 낡음이 켜졌다 — R-07 이 치명이라 부른 실패다");
 
     // ── ② 의미를 바꾸면 반드시 stale ─────────────────────────────────────────
     //
-    // **①의 짝이다.** 없으면 ①이 「아무것도 안 켜는 감지기」로 만점을 받는다.
+    // **①의 짝이다.** 없으면 ①이 「아무것도 안 잡는 감지기」로 만점을 받는다.
     쓰기(&repo, 소스_의미변경());
     let (code, _, _) = 상태(&repo, &[]);
-    assert_eq!(code, "stale", "★ 의미를 바꿨는데 낡음이 안 켜졌다 — 감지기가 아무것도 안 켠다");
+    assert_eq!(code, "stale", "★ 의미를 바꿨는데 낡음이 안 붙었다 — 감지기가 아무것도 안 잡는다");
 
     // ── ④ Orphaned ≠ Stale ──────────────────────────────────────────────────
     //
@@ -137,8 +137,8 @@ fn 방향_넷이_서로를_막는다() {
 }
 
 #[test]
-fn 판정_불가가_live_로_새지_않는다() {
-    // ── ③ **R16 의 자리다.** 선행 구현이 `stale=False` 로 접었던 그것.
+fn 판정_불가가_fresh_로_새지_않는다() {
+    // ── ③ **R16 의 자리다.** 선행 구현이 `stale=False` 로 뭉갰던 그것.
     //
     // 2층이 **다른 스냅샷**에 서 있는 채로 읽기 전용으로 물으면 판정할 수 없다 —
     // 여기서 요약을 대면 **옛 세대의 값과 지금의 결박**을 대는 것이 된다.
@@ -172,14 +172,14 @@ fn 판정_불가가_live_로_새지_않는다() {
 
     // 2층은 c1 에 서 있다.
     let (code, _, _) = 상태(&repo, &["--at", &c1]);
-    assert_eq!(code, "live");
+    assert_eq!(code, "fresh");
 
     // **c2 를 읽기 전용으로 묻는다** — 2층은 여전히 c1 것이다.
     let v: serde_json::Value = serde_json::from_str(&pal(
         &repo,
         &["query", "binding.status", "--at", &c2, "--read-only", "--json"],
     ))
-    .expect("봉투 JSON");
+    .expect("응답 묶음 JSON");
     assert_eq!(
         v["projection"]["built_for_this_snapshot"].as_bool(),
         Some(false),
@@ -218,15 +218,15 @@ fn 반경이_넓어지면_감시_집합이_커진다() {
 }
 
 #[test]
-fn 결박이_없어도_봉투를_지고_빈_목록으로_답한다() {
+fn 결박이_없어도_응답묶음을_지고_빈_목록으로_답한다() {
     // **결박 0 건과 「안 만듦」은 다르다.** 이 빌드에는 결박 능력이 있고 아무도 안
     // 걸었을 뿐이다 — `not_built` 로 내면 거짓말이고, 그것이 이 도구가 고발하는 형태다.
     let repo = 저장소("empty");
     let v: serde_json::Value =
-        serde_json::from_str(&pal(&repo, &["query", "binding.status", "--json"])).expect("봉투");
+        serde_json::from_str(&pal(&repo, &["query", "binding.status", "--json"])).expect("응답 묶음");
     assert_eq!(v["answer"]["outcome"].as_str(), Some("bindings"));
     assert!(v["answer"]["bindings"].as_array().expect("배열").is_empty());
-    // 봉투는 그대로 진다.
+    // 응답 묶음은 그대로 진다.
     for 필드 in ["snapshot", "projection", "coverage", "capabilities", "ledger", "elision"] {
         assert!(v.get(필드).is_some(), "결박이 0 건인데 `{필드}` 가 빠졌다");
     }

@@ -15,7 +15,7 @@
 
 불변식은 *"이름만 바꾼 두 소스"* 를 요구한다. 합성 픽스처로 만들면 tree-sitter 가 실물에서
 만나는 경우의 수를 만나지 않는다(규율 4). 그래서 **고정 SHA 의 실재 파일에서 실재
-식별자를 바꾼다** — 대상이 소스에 없으면 `✓` 를 내는 대신 멈춘다.
+식별자를 바꾼다** — 대상이 소스에 없으면 `✓` 를 산출하는 대신 멈춘다.
 
 ## ⚠ A 만 재면 *"항상 지운다"* 가 만점을 받는다
 
@@ -158,7 +158,7 @@ def apply_edits(source: bytes, edits: list[tuple[str, str]], label: str) -> byte
         if find not in text:
             raise SystemExit(
                 f"변이 대상을 찾지 못했다 — 「{label}」\n  찾은 것: {find!r}\n"
-                "  **코퍼스 핀이 움직였거나 변이가 낡았다.** 고치지 않으면 이 자리가 조용히 꺼진다."
+                "  **코퍼스 핀이 움직였거나 변이가 낡았다.** 고치지 않으면 이 자리가 조용히 멎는다."
             )
         text = text.replace(find, repl)
     return text.encode("utf-8")
@@ -242,7 +242,7 @@ def main() -> int:  # noqa: PLR0915 — 다섯 검사가 한 흐름으로 읽혀
                 tdz += 1
             else:
                 outside += 1
-        # **진짜 섀도잉만 센다** — 형제 스코프의 같은 이름은 섀도잉이 아니다.
+        # **진짜 섀도잉만 잰다** — 형제 스코프의 같은 이름은 섀도잉이 아니다.
         for (_, _), places in seen.items():
             if len(places) < 2:
                 continue
@@ -295,7 +295,7 @@ def main() -> int:  # noqa: PLR0915 — 다섯 검사가 한 흐름으로 읽혀
     # **C 의 구조적 절반** — 요약이 아니라 해소 자체를 본다.
     #
     # 위의 C 는 *"뭉갰으면 요약이 움직인다"* 를 되묻는 형태이고, 여기서는 안쪽과 바깥쪽이
-    # 실제로 **다른 선언**을 가리키는지를 곧바로 확인한다. 둘 다 있어야 C 가 선다.
+    # 실제로 **다른 선언**을 가리키는지를 곧바로 확인한다. 둘 다 있어야 C 가 성립한다.
     sh = chain_of(graph_of(pal, b"function f() { const x = 1; use(x); "
                                 b"{ const x = 2; use(x); } return x; }"))
     x_refs = [bound(r) for r in sh["refs"] if r["name"] == "x"]

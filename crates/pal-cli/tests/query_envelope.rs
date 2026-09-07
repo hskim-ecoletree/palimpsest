@@ -1,4 +1,4 @@
-//! **질의 실행기** — 봉투를 벗을 수 없고, 로그가 쌓이고, 범위가 질의마다 다르다.
+//! **질의 실행기** — 응답 묶음을 벗을 수 없고, 로그가 쌓이고, 범위가 질의마다 다르다.
 //!
 //! 합격선 정본은 `corpus/criteria.toml` `[f05.3.pass]` ①②⑤ 와
 //! `[f05].pass.everything_that_answers_carries_an_envelope`.
@@ -6,7 +6,7 @@
 //! # 필드 이름 여섯을 **코드에 상수로 박는다**
 //!
 //! 골든을 산출에서 떠서 만들면 무엇이 빠져도 통과한다 — 빠진 채로 떠지기 때문이다.
-//! 그래서 봉투의 여섯을 여기 적어 두고 골든과 **따로** 센다. 골든이 바뀌어도 이 여섯은
+//! 그래서 응답 묶음의 여섯을 여기 적어 두고 골든과 **따로** 잰다. 골든이 바뀌어도 이 여섯은
 //! 코드에 남는다.
 
 mod common;
@@ -14,8 +14,8 @@ mod common;
 use common::{git, pal};
 use std::path::PathBuf;
 
-/// 옛 F05 §5.1 이 적은 봉투의 성분. **하나라도 빠지면 실패다.**
-const 봉투의_여섯: [&str; 6] =
+/// 옛 F05 §5.1 이 적은 응답 묶음의 성분. **하나라도 빠지면 실패다.**
+const 응답묶음의_여섯: [&str; 6] =
     ["snapshot", "projection", "coverage", "capabilities", "ledger", "elision"];
 
 /// 이 빌드가 답하는 질의와 그 인자.
@@ -39,7 +39,7 @@ const 질의들: [(&str, Option<&str>); 10] = [
     ("symbol.callers", Some("도움")),
     ("symbol.reaches", Some("부름")),
     ("graph.dump", None),
-    // F09 — 인자를 안 받는다. **결박이 0 건이어도 봉투를 진다.**
+    // F09 — 인자를 안 받는다. **결박이 0 건이어도 응답 묶음을 진다.**
     ("binding.status", None),
     // F10 — 인자를 안 받는다. **작업 목록은 전부를 내야 목록이다.**
     ("narrative.unbound", None),
@@ -74,7 +74,7 @@ fn 저장소(tag: &str) -> PathBuf {
     root
 }
 
-/// 그 저장소의 계획 문서 — **저장소 밖에 산다.**
+/// 그 저장소의 계획 문서 — **저장소 밖에 있다.**
 fn 계획_문서(repo: &std::path::Path) -> PathBuf {
     repo.with_extension("plan.md")
 }
@@ -87,11 +87,11 @@ fn 질의(repo: &std::path::Path, name: &str, arg: Option<&str>) -> serde_json::
         args.push(if a == 계획_자리 { &계획 } else { a });
     }
     args.push("--json");
-    serde_json::from_str(&pal(repo, &args)).expect("봉투 JSON")
+    serde_json::from_str(&pal(repo, &args)).expect("응답 묶음 JSON")
 }
 
 #[test]
-fn 모든_질의가_봉투를_지고_나온다() {
+fn 모든_질의가_응답묶음을_지고_나온다() {
     let repo = 저장소("envelope");
     // **하한이다** — 질의 목록이 비면 아래가 공짜로 통과한다.
     //
@@ -106,22 +106,22 @@ fn 모든_질의가_봉투를_지고_나온다() {
 
     for (name, arg) in 질의들 {
         let v = 질의(&repo, name, arg);
-        for 필드 in 봉투의_여섯 {
+        for 필드 in 응답묶음의_여섯 {
             assert!(v.get(필드).is_some(), "`{name}` 의 답에 `{필드}` 가 없다");
         }
         assert!(v.get("answer").is_some(), "`{name}` 의 답에 `answer` 가 없다");
-        // **절단이 없어도 실린다.** `Elision::none()` 이 타입 수준의 장치이고
+        // **생략이 없어도 실린다.** `Elision::none()` 이 타입 수준의 장치이고
         // 이 줄이 그것의 산출 수준 검사다.
-        assert!(v["elision"]["truncated"].is_array(), "`{name}` 의 절단이 배열이 아니다");
+        assert!(v["elision"]["truncated"].is_array(), "`{name}` 의 생략이 배열이 아니다");
         assert!(v["elision"]["limits_hit"].is_array());
     }
 
-    // `pal touch` 도 같은 봉투를 진다 — F05 가 지는 표면이 둘이다.
+    // `pal touch` 도 같은 응답 묶음을 진다 — F05 가 지는 표면이 둘이다.
     let t = 질의(&repo, "symbol.resolve", Some("도움"));
     let _ = t;
     let v: serde_json::Value =
         serde_json::from_str(&pal(&repo, &["touch", "도움", "--json"])).expect("touch JSON");
-    for 필드 in 봉투의_여섯 {
+    for 필드 in 응답묶음의_여섯 {
         assert!(v.get(필드).is_some(), "`pal touch` 의 답에 `{필드}` 가 없다");
     }
 
@@ -180,7 +180,7 @@ fn 범위는_질의마다_다른_값이다() {
 
     let 미해소 = |v: &serde_json::Value| v["coverage"]["unresolved"].as_u64().expect("unresolved");
     assert!(미해소(&a) > 0, "TypeScript 쪽 미해소가 0 이다 — 이 시험은 아무것도 안 잰다");
-    assert_ne!(미해소(&a), 미해소(&b), "서로 다른 두 질의가 같은 범위를 냈다");
+    assert_ne!(미해소(&a), 미해소(&b), "서로 다른 두 질의가 같은 범위를 산출했다");
 
     // 최저 등급도 질의마다 다르다 — TypeScript 는 L2, Kotlin 은 L1.
     assert_ne!(a["coverage"]["lowest_grade"], b["coverage"]["lowest_grade"]);
@@ -190,22 +190,22 @@ fn 범위는_질의마다_다른_값이다() {
 }
 
 #[test]
-fn 예산을_낮추면_절단이_정확한_사유와_상한으로_실린다() {
+fn 예산을_낮추면_생략이_정확한_사유와_상한으로_실린다() {
     // `[f05.1.pass]` ②③ 을 **표면에서** 다시 잰다 — 단위 시험은 순수 계산만 봤다.
     let repo = 저장소("elision");
 
-    // ★ 넉넉하면 절단 0. **늘 자르는 구현이 아래를 통과한다.**
+    // ★ 넉넉하면 생략 0. **늘 자르는 구현이 아래를 통과한다.**
     let 넉넉 = 질의(&repo, "symbol.reaches", Some("부름"));
     assert!(넉넉["elision"]["truncated"].as_array().expect("truncated").is_empty(), "넉넉한데 잘랐다");
     let 닿은 = 넉넉["answer"]["symbols"].as_array().expect("symbols").len();
-    assert!(닿은 >= 2, "닿은 것이 {닿은} 개다 — 절단을 유발할 그래프가 없다");
+    assert!(닿은 >= 2, "닿은 것이 {닿은} 개다 — 생략을 유발할 그래프가 없다");
 
     // 노드 상한을 1 로 낮추면 **그 상한만** 걸린다.
     let 좁게 = serde_json::from_str::<serde_json::Value>(&pal(
         &repo,
         &["query", "symbol.reaches", "부름", "--node-max", "1", "--json"],
     ))
-    .expect("봉투 JSON");
+    .expect("응답 묶음 JSON");
     let t = 좁게["elision"]["truncated"].as_array().expect("truncated");
     assert_eq!(t.len(), 1, "사유가 하나가 아니다: {t:?}");
     assert_eq!(t[0]["reason"], "node_max_exceeded");

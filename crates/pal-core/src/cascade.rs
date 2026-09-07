@@ -25,7 +25,7 @@
 //! # 예산에 걸리면 멈추는 것이 아니다 (§6.4-2)
 //!
 //! 파생 사슬은 길어질 수 있으므로 이어달리기에도 예산이 붙는다. **걸리면 잔여다** —
-//! [`crate::ResidualReason::CascadeBudgetExceeded`]. 조용한 절단 금지가 여기에도 걸린다.
+//! [`crate::ResidualReason::CascadeBudgetExceeded`]. 조용한 생략 금지가 여기에도 걸린다.
 //!
 //! **끄는 손잡이를 두지 않는다.** 예산은 값이고 손잡이는 [옛 DESIGN §10](../../../docs/plan/disposal-map.md)
 //! 이 세는 협상 대상이다. 끌 수 있으면 그것이 게이트 오염의 가장 값싼 경로가 된다.
@@ -87,7 +87,7 @@ pub struct Cascade {
     pub residuals: Vec<Residual>,
     /// 예산에 걸렸는데 **결박할 좌표를 찾지 못한** 자리.
     ///
-    /// 잔여로 낼 수 없으므로(결박 없는 잔여는 유령이다) 이름 그대로 남긴다.
+    /// 잔여로 산출할 수 없으므로(결박 없는 잔여는 유령이다) 이름 그대로 남긴다.
     /// 비어 있지 않으면 그것 자체가 산출에 실린다 — **조용히 사라지지 않는다.**
     pub unanchored_cutoff: Vec<NodeKey>,
 }
@@ -304,14 +304,14 @@ mod tests {
     }
 
     #[test]
-    fn 예산에_걸리면_멈추지_않고_잔여를_낸다() {
+    fn 예산에_걸리면_멈추지_않고_잔여를_산출한다() {
         // 사슬이 예산보다 한 마디 길다. **그 한 마디가 조용히 사라지지 않는다.**
         let c = cascade(&사슬(PROVISIONAL_CASCADE_DEPTH + 1), PROVISIONAL_CASCADE_DEPTH);
         assert_eq!(c.residuals.len(), 1, "예산 초과가 잔여로 나오지 않았다");
         assert_eq!(c.residuals[0].reason, ResidualReason::CascadeBudgetExceeded);
         assert!(!c.residuals[0].bound_to().is_empty());
         assert!(c.unanchored_cutoff.is_empty());
-        // 예산 안쪽은 그대로 등급이 선다.
+        // 예산 안쪽은 그대로 등급이 성립한다.
         let 마지막 = NodeKey::new("Synthesis", format!("d{PROVISIONAL_CASCADE_DEPTH}"));
         assert!(!c.grades.contains_key(&마지막), "예산 밖인데 등급이 적혔다");
     }

@@ -384,7 +384,7 @@ mod tests {
     }
 
     #[test]
-    fn 해소율의_분모는_파일_밖을_빼고_센다() {
+    fn 해소율의_분모는_파일_밖을_빼고_잰다() {
         // 넣으면 import 를 많이 쓰는 파일이 해소를 못 한 것처럼 보인다.
         let mut c = ScopeChain::new();
         c.declare(모듈, 이름("x", 0, false));

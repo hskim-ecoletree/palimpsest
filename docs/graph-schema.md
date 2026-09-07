@@ -1,5 +1,5 @@
-<!-- 이 파일은 `cargo xtask schema-doc` 이 낸다. 손으로 고치지 않는다. -->
-<!-- 정본은 schema/graph.toml 이고 CI 가 둘의 일치를 센다. -->
+<!-- 이 파일은 `cargo xtask schema-doc` 이 산출한다. 손으로 고치지 않는다. -->
+<!-- 정본은 schema/graph.toml 이고 CI 가 둘의 일치를 잰다. -->
 
 # 그래프 스키마 v1
 
@@ -9,15 +9,15 @@
 
 | 라벨 | 출처 | Rust 타입 | 키 | 상태 |
 |---|---|---|---|---|
-| `Actor` | `extracted` | `Actor` | `id` | 값이 선다 |
-| `Binding` | `asserted` | `Binding` | `id` | 값이 선다 |
-| `Change` | `extracted` | `Change` | `id` | 값이 선다 |
-| `Defect` | `extracted` | `Defect` | `id` | 값이 선다 |
-| `File` | `extracted` | `FileNode` | `path` | 값이 선다 |
+| `Actor` | `extracted` | `Actor` | `id` | 값이 정해진다 |
+| `Binding` | `asserted` | `Binding` | `id` | 값이 정해진다 |
+| `Change` | `extracted` | `Change` | `id` | 값이 정해진다 |
+| `Defect` | `extracted` | `Defect` | `id` | 값이 정해진다 |
+| `File` | `extracted` | `FileNode` | `path` | 값이 정해진다 |
 | `Journey` | `asserted` | `Journey` | `name` | **자리만** — F19 가 만든다 |
-| `NarrativeItem` | `inferred` | `Proposal` | `item` | 값이 선다 |
-| `NarrativeRefusal` | `asserted` | `Refusal` | `item`, `target` | 값이 선다 |
-| `Symbol` | `extracted` | `SymbolNode` | `id` | 값이 선다 |
+| `NarrativeItem` | `inferred` | `Proposal` | `item` | 값이 정해진다 |
+| `NarrativeRefusal` | `asserted` | `Refusal` | `item`, `target` | 값이 정해진다 |
+| `Symbol` | `extracted` | `SymbolNode` | `id` | 값이 정해진다 |
 | `UnresolvedRef` | `extracted` | `UnresolvedRef` | `site`, `name` | **자리만** — F08 가 만든다 |
 
 ### 속성

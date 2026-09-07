@@ -16,7 +16,7 @@
 
 ### 1.1 유지되는 결론
 
-비교 보고서의 중심 판정은 현재 자료와 맞는다. `/round`의 의도 잠금·접힘·정반합·독립 검토는
+비교 보고서의 중심 판정은 현재 자료와 맞는다. `/round`의 의도 잠금·철회·정반합·독립 검토는
 유지하고, 그 아래에 결정론적 조건의 실행·증거·재검증·Stop 차단 경로를 더한다.
 
 외부 기준점도 그대로다. upstream `main`은 2026-08-30 조회에서 비교 문서가 고정한
@@ -26,7 +26,7 @@
 - exact oracle 승인이 없으면 명령을 실행하지 않는다.
 - `--reverify`는 이미 통과한 gate도 다시 실행한다.
 - Stop은 검사를 실행하지 않고 저장된 상태만 축약한다.
-- Stop의 무진척 guard는 메타데이터 수정이 아니라 semantic state 변화만 진척으로 센다.
+- Stop의 무진척 guard는 메타데이터 수정이 아니라 semantic state 변화만 진척으로 잰다.
 
 근거는 upstream [README](https://github.com/Leonxlnx/unlazy/blob/473d4b80421c36d733042434cd4b938f81a19ef1/README.md),
 [gate checker](https://github.com/Leonxlnx/unlazy/blob/473d4b80421c36d733042434cd4b938f81a19ef1/scripts/gate-check.mjs),
@@ -85,11 +85,11 @@ Claude Code의 현재 공식 훅 계약도 `Stop`에 `stop_hook_active`와 `last
    `CARGO_BIN_EXE_pal`, 설치본에서는 PATH의 `pal`)을 호출하는 호환 래퍼가 되고, 같은
    fixture에서 Rust 출력과 같음을 보이는 전환 시험.
 6. 저장소본·설치본 `/round`가 새 Rust 명령을 가리키게 하는 최소 문면 변경.
-7. 회차 종료 때 이 상태 기계의 결정과 퇴로를 담은 ADR 한 편.
+7. 회차 종료 때 이 상태 기계의 결정과 차선책을 담은 ADR 한 편.
 
 ### 2.2 이번 회차의 소비 장면
 
-다음 명령 하나가 실제 진행 중 fixture를 보고 조건별 상태와 전체 상태를 같은 값으로 낸다.
+다음 명령 하나가 실제 진행 중 fixture를 보고 조건별 상태와 전체 상태를 같은 값으로 산출한다.
 
 ```bash
 cargo run -q -p pal-cli -- round status \
@@ -127,11 +127,11 @@ cargo run -q -p pal-cli -- round status \
 - schema 중복과 oracle보다 앞선 evidence 같은 불가능한 전이는 오류다.
 - 조건 문장을 verification 원장에 복제하지 않는다.
 - `status`는 명령을 실행하거나 파일을 수정하지 않는다.
-- current round 자동 해소는 후보 0개를 정상 통과, 2개 이상을 오류로 낸다.
+- current round 자동 해소는 후보 0개를 정상 통과, 2개 이상을 오류로 처리한다.
 - 과거 report 없는 회차는 verification 원장이 없으므로 active 후보가 아니다.
 - Rust 파서가 전환 전에 보존한 Python golden의 코드펜스·들여쓰기·중복 ID·태그 순서 결과와 같다.
 - JSON과 사람 출력이 같은 reducer 결과에서 렌더링된다.
-- ubuntu·macOS·Windows가 같은 fixture에 같은 상태 enum을 낸다.
+- ubuntu·macOS·Windows가 같은 fixture에 같은 상태 enum을 산출한다.
 
 ## 3. 잠글 결정
 
@@ -209,7 +209,7 @@ finding·정반합 통합, Stop 무진척 상한은 실행기와 Stop 회차의 
 | 자동 후보 0개 | — | outcome `no_active_round` | 0 |
 | 자동 후보 2개 이상 | — | `invalid` + `resolve_error` | 2 |
 
-현재 저장소의 terminal marker는 `report.md`와 `folded.md` 둘뿐이다. 막힘은 `/round`의
+현재 저장소의 terminal marker는 `report.md`와 `folded.md` 둘뿐이다. 교착은 `/round`의
 상태이지만 별도 기계 marker가 아직 없으므로 첫 status가 추측하지 않는다. 두 marker가 모두
 있으면 오류, 하나가 있으면 active 후보에서 제외, 둘 다 없으면 verification 원장 존재 여부로
 후보를 가른다.
@@ -220,7 +220,7 @@ finding·정반합 통합, Stop 무진척 상한은 실행기와 Stop 회차의 
 ### 3.2 CLI 경계
 
 `pal round conditions --file <path> --json`은 현재 `record.py conditions`의 JSON 키를
-그대로 낸다: 최상위 `파일`, `조건`, `열림`, `닫힘`, `형식오류`; 각 조건의 `id`, `상자`,
+그대로 출력한다: 최상위 `파일`, `조건`, `열림`, `닫힘`, `형식오류`; 각 조건의 `id`, `상자`,
 `판정`, `전사`, `줄`, `원문`, `형식오류`. 조건 형식 오류는 이 JSON을 출력하고 exit 1,
 정상은 exit 0, 사용법·I/O·schema 오류는 exit 2다. 이것이 Python 래퍼 제거 전 parity 계약이다.
 
@@ -349,7 +349,7 @@ negative control을 심어 실제 `decision:block`을 보고, semantic state 변
 
 #84·#89·#93은 이 경로보다 먼저가 아니다. 이유는 status→verify→Stop 수직 경로의 선행
 의존이 아니고, 사용자의 거짓 완료를 직접 막지 않기 때문이다. 새 실행 원장이 실제 효과를
-낸 뒤에도 필요하면 그때 프론티어에서 다시 판정한다.
+산출한 뒤에도 필요하면 그때 프론티어에서 다시 판정한다.
 
 ## 7. 다음 세션 착수 절차
 
@@ -384,7 +384,7 @@ negative control을 심어 실제 `decision:block`을 보고, semantic state 변
 8. §5.2를 실행하고, 실제 진행 중 fixture에서 사람/JSON 출력을 둘 다 본다.
 9. 독립 리뷰가 닫히면 ADR을 발행하고 #88을 닫는다. #92도 코드와 이슈의 drift를 해소한다.
 10. 다음 프론티어는 approve+verify다. 그 회차를 실제로 즉시 열 수 있을 때만 #85·#97의
-   blocking 관계를 따라 진행한다. 열지 않기로 판정하면 목표/우선순위 사유로 접는다.
+   blocking 관계를 따라 진행한다. 열지 않기로 판정하면 목표·우선순위 사유로 철회한다.
 
 projected snapshot digest spike는 첫 회차의 선행 조사가 아니다. approve+verify 회차를 열 때
 `pal-git::WorktreeState.tree_digest`의 기존 API 확장으로 verification 원장 하나를 제외할 수
@@ -406,7 +406,7 @@ projected snapshot digest spike는 첫 회차의 선행 조사가 아니다. app
 8. blocked/folded와 무진척 guard release는 complete로 승격되지 않는다.
 9. 체크박스만 켠 거짓 완료와 stale evidence를 실제 Stop이 각각 차단한다.
 10. 세 OS CI와 마지막 SHA의 외부 CI 관측이 성공한다.
-11. #85·#88·#95·#96·#97이 구현·흡수·명시적 접힘 중 하나로 실제 처분된다.
+11. #85·#88·#95·#96·#97이 구현·흡수·명시적 철회 중 하나로 실제 처분된다.
 
 ### 8.1 병합 차단 회차의 처분
 
@@ -418,7 +418,7 @@ projected snapshot digest spike는 첫 회차의 선행 조사가 아니다. app
   checkpoint 전에 거부하는 것으로 구현한다.
 - 11의 #95는 마지막 SHA CI를 추적 완료값으로 삼지 않는 외부 종료 순서로 구현한다. #96은
   목표 안이지만 지금의 소비 가능한 Stop 완료 경계보다 뒤이므로, #95와 이 병합 차단을 먼저
-  지목하고 사유를 남긴 명시적 접힘으로 처분한다. 나머지 #85·#88·#97의 기존 구현 처분은
+  지목하고 사유를 남긴 명시적 철회로 처리한다. 나머지 #85·#88·#97의 기존 구현 처분은
   되돌리지 않는다.
 
 이 처분의 실행 증거는 새 회차의 게이트와 이슈에만 두며, 이 계획에 성공 SHA나 이슈 상태를

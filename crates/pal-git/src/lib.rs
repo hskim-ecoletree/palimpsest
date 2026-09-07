@@ -66,7 +66,7 @@ pub trait GitAccess {
 
     /// 트리 하나의 추적 파일 전부. **정렬은 보장하지 않는다** — 세는 쪽이 정렬한다.
     ///
-    /// [`TreeRef::Worktree`] 를 주면 **워킹트리를 센다.** 커밋 트리를 세고 마는 구현은
+    /// [`TreeRef::Worktree`] 를 주면 **워킹트리를 잰다.** 커밋 트리를 세고 마는 구현은
     /// 워킹트리 좌표를 조용히 커밋 좌표로 바꿔치기하는 것이다.
     ///
     /// # Errors
@@ -124,7 +124,7 @@ pub trait GitAccess {
     /// first-parent 조상들 — 자신을 포함하고 `limit` 에서 멈춘다.
     ///
     /// **first-parent 인 것이 결정론의 조건이다.** 병합 커밋에서 갈래를 다 따라가면
-    /// 순서가 구현에 의존하고, 같은 입력이 같은 답을 낸다는 배정 규칙 1 이 깨진다.
+    /// 순서가 구현에 의존하고, 같은 입력이 같은 답을 돌려준다는 배정 규칙 1 이 깨진다.
     ///
     /// # Errors
     /// 커밋을 읽지 못하면.
@@ -140,7 +140,7 @@ pub trait GitAccess {
     ///
     /// [`GitAccess::first_parent_walk`] 와 **같은 근거다**: 병합 커밋에서 갈래를 다
     /// 따라가면 *"이 커밋이 무엇을 바꿨나"* 가 하나로 안 정해지고, 그러면 같은 입력이
-    /// 같은 답을 낸다는 배정 규칙 1 이 깨진다. 문서 조각의 후보가 회차마다 흔들리면
+    /// 같은 답을 돌려준다는 배정 규칙 1 이 깨진다. 문서 조각의 후보가 회차마다 흔들리면
     /// **거부 기록이 아무것도 안 가린다**(`[f10].queue_placement`).
     ///
     /// **부모가 없으면(최초 커밋) 그 트리 전부다** — 전부가 그 커밋에서 생겼다.
@@ -212,7 +212,7 @@ impl WorktreeState {
 
 /// 정렬된 `(경로, blob 이름)` 목록의 요약.
 ///
-/// # 길이 접두사가 없으면 서로 다른 목록이 같은 요약을 낸다
+/// # 길이 접두사가 없으면 서로 다른 목록이 같은 요약을 산출한다
 ///
 /// `("ab", X), ("c", Y)` 와 `("a", X), ("bc", Y)` 는 바이트를 이어 붙이면 같아진다.
 /// 그러면 이름 변경이 요약에 안 잡히고, 그것이 criteria `[f01.pass]` ③ 의 넷째 변이가
@@ -249,7 +249,7 @@ pub struct CommitMeta {
     /// # 이 값은 앵커가 아니다 (옛 F09 §6)
     ///
     /// 선행 구현은 커밋 시각을 낡음의 앵커로 썼고, 그러면 **포매팅 커밋에도 `stale` 이
-    /// 켜진다** — [R-07] 이 치명이라 부른 실패다. `body_digest` 가 더 강하다.
+    /// 붙는다** — [R-07] 이 치명이라 부른 실패다. `body_digest` 가 더 강하다.
     /// **다만 시각은 표시용으로 함께 싣는다** — *"3주 전 코드 기준"* 이 *"12커밋 전"*
     /// 보다 읽힌다. 그것이 [`pal_core::BoundTime`] 이다.
     ///
@@ -363,7 +363,7 @@ impl GitAccess for GixRepo {
     }
 
     fn list_tree(&self, at: &TreeRef) -> Result<Vec<(RepoPath, ObjectName)>, GitError> {
-        // **워킹트리를 물으면 워킹트리를 센다.** `base()` 로 넘겨 버리면 커밋 좌표가
+        // **워킹트리를 물으면 워킹트리를 잰다.** `base()` 로 넘겨 버리면 커밋 좌표가
         // 워킹트리 좌표인 척하게 된다 — R-06 이 겨냥한 그 자리를 스스로 지우는 셈이다.
         if !at.is_committed() {
             return self.worktree_list();
@@ -386,7 +386,7 @@ impl GitAccess for GixRepo {
         let mut out = Vec::with_capacity(recorder.records.len());
         for entry in recorder.records {
             // **디렉터리와 서브모듈은 파일이 아니다.** 대장이 세는 것은 blob 이고,
-            // 그것이 `git ls-tree -r` 가 내는 것과 같아야 한다(criteria [s1.oracle]).
+            // 그것이 `git ls-tree -r` 가 산출하는 것과 같아야 한다(criteria [s1.oracle]).
             if !entry.mode.is_blob_or_symlink() {
                 continue;
             }
@@ -515,7 +515,7 @@ impl GitAccess for GixRepo {
     }
 }
 
-/// 트리 하나의 `경로 → blob 이름`. **blob 만 센다** — 디렉터리와 서브모듈은 파일이 아니다.
+/// 트리 하나의 `경로 → blob 이름`. **blob 만 잰다** — 디렉터리와 서브모듈은 파일이 아니다.
 fn 경로집합(
     tree: &gix::Tree<'_>,
 ) -> Result<std::collections::BTreeMap<RepoPath, ObjectName>, GitError> {
@@ -539,7 +539,7 @@ fn 경로집합(
 /// `mtime` 과 크기가 둘 다 같으면 내용이 같다고 본다. 같은 나노초 안에 크기를 유지한 채
 /// 내용이 바뀌면 놓친다(git 이 *racy* 라 부르는 자리). **그 한계를 숨기지 않는다** —
 /// 대신 criteria `[f01.pass]` ③ 의 첫째 변이가 *"내용 1바이트를 바꾸면 요약이 바뀌는가"*
-/// 를 실제로 센다.
+/// 를 실제로 잰다.
 ///
 /// **`.palimpsest/worktree.state` 캐시는 만들지 않는다.** 옛 F01 §3.2 는 *"인덱스 mtime 으로
 /// 무효화"* 를 적었는데 **그것이 틀렸다** — 파일을 고치고 `git add` 하지 않으면 인덱스
@@ -634,7 +634,7 @@ impl GixRepo {
             .ok_or_else(|| GitError::NoWorktree("bare 저장소에는 워킹트리가 없다".to_owned()))
     }
 
-    /// 인덱스를 훑어 `(경로, blob 이름)` 목록을 만든다 — **정렬해서 낸다.**
+    /// 인덱스를 훑어 `(경로, blob 이름)` 목록을 만든다 — **정렬해서 산출한다.**
     ///
     /// 돌려주는 셋째·넷째는 회계다: 인덱스 stat 을 믿은 수와 다시 해시한 수.
     fn scan_worktree(&self) -> Result<WorktreeScan, GitError> {
@@ -712,7 +712,7 @@ impl GixRepo {
     /// `.gitattributes` 에 `text` 가 걸린 파일은 체크아웃에서 CRLF 가 들어가고
     /// (`eol=crlf`), 저장소의 blob 은 LF 다. 그 파일을 **읽은 그대로** 해시하면
     /// git 의 blob 이름과 다른 값이 나오고, 그러면 아무것도 안 고친 워킹트리가
-    /// *"파일 1개가 다르다"* 를 낸다. 실제로 `gradlew.bat` 에서 그렇게 나왔다.
+    /// *"파일 1개가 다르다"* 를 산출한다. 실제로 `gradlew.bat` 에서 그렇게 나왔다.
     ///
     /// **`core.autocrlf` 도 본다.** 속성이 미지정인 파일은 그 설정이 정한다 —
     /// `true` 나 `input` 이면 텍스트로 보고 되돌린다.

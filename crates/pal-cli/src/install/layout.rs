@@ -87,6 +87,33 @@ pub const PAYLOAD: &[Resource] = &[
         path: ".claude/agents/pal-decision-synthesizer.md",
         body: include_str!("../../../../.claude/agents/pal-decision-synthesizer.md"),
     },
+    // 정반합 나머지 넷 — #112 가 세웠다. **여섯이 한 벌이다.**
+    // ★ **여섯을 함께 놓는다.** 하나라도 빠지면 그 자리를 메인이 겸하게 되고,
+    // 그러면 소유자 지시(*"메인에이전트의 역할은 스킬을 발동시키고 결과 보고를 받는것
+    // 외에는 일절 관여하지 않도록"*)가 문서에만 남는다.
+    Resource {
+        path: ".claude/agents/pal-debate-designer.md",
+        body: include_str!("../../../../.claude/agents/pal-debate-designer.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-decision-proposer.md",
+        body: include_str!("../../../../.claude/agents/pal-decision-proposer.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-debate-referee.md",
+        body: include_str!("../../../../.claude/agents/pal-debate-referee.md"),
+    },
+    Resource {
+        path: ".claude/agents/pal-debate-reporter.md",
+        body: include_str!("../../../../.claude/agents/pal-debate-reporter.md"),
+    },
+    // 완수 조건 설계 평가 — #113 이 세웠다. 규약 §3.5 가 이것을 부른다.
+    // ★ **스킬과 함께 놓는다.** 규약이 부르는데 물건이 없으면 그 단계가 태어나면서
+    // 죽은 가지가 된다 — 계기판·레코드와 같은 자다.
+    Resource {
+        path: ".claude/agents/pal-condition-auditor.md",
+        body: include_str!("../../../../.claude/agents/pal-condition-auditor.md"),
+    },
     // 계기판 — 규약 §5 「검증 → 수정 착수」 자리가 이것을 부른다.
     // ★ **스킬과 함께 놓아야 한다.** 규약만 놓고 이것을 안 놓으면 설치본의 그 자리가
     // **태어나면서 죽은 가지**가 된다(실측 2026-08-19 · 독립 리뷰 2 라운드가 잡았다).
@@ -123,7 +150,7 @@ pub const PAYLOAD: &[Resource] = &[
 pub const MANIFEST: &str = ".claude/pal/manifest.json";
 
 /// **`PATH` 에서 우리를 부르는 이름.** 확장자는 안 적는다 — 붙이는 규칙은 플랫폼이
-/// 정하고 그 결정은 [`super::exe`] 한 자리에 산다.
+/// 정하고 그 결정은 [`super::exe`] 한 자리에 있다.
 ///
 /// 이 이름을 지나는 자리 둘: `doctor` 검사 4 의 `PATH` 탐색과, **훅에 등록하는
 /// 문자열**([`super::hooks::entry`]). 둘이 같은 이름을 써야 *"검사 4 가 초록이면 훅이
@@ -164,6 +191,11 @@ pub const OWNED_FILES: &[&str] = &[
     ".claude/agents/pal-independent-reviewer.md",
     ".claude/agents/pal-decision-opponent.md",
     ".claude/agents/pal-decision-synthesizer.md",
+    ".claude/agents/pal-debate-designer.md",
+    ".claude/agents/pal-decision-proposer.md",
+    ".claude/agents/pal-debate-referee.md",
+    ".claude/agents/pal-debate-reporter.md",
+    ".claude/agents/pal-condition-auditor.md",
     ".claude/skills/pal-round/SKILL.md",
     ".claude/skills/pal-round/bin/dashboard.py",
     ".claude/skills/pal-round/bin/record.py",
@@ -177,14 +209,14 @@ pub const DIRS: &[&str] = &[
     ".claude/agents",
     ".claude/commands",
     ".claude/commands/pal",
-    // 회차 규약이 사는 자리. `.claude/skills` 에는 남의 스킬이 함께 살고,
+    // 회차 규약이 놓이는 자리. `.claude/skills` 에는 남의 스킬이 함께 살고,
     // `pal-round` 는 우리 것이라 이름을 갈랐다.
     ".claude/skills",
     ".claude/skills/pal-round",
     ".claude/skills/pal-round/bin",
 ];
 
-/// **매니페스트가 사는 집** — 나머지보다 먼저 세운다.
+/// **매니페스트가 있는 집** — 나머지보다 먼저 세운다.
 ///
 /// 기록이 살 자리가 없으면 기록을 못 쓰고, 그 사이에 죽으면 **기록 없는 잔해**가
 /// 남는다. 그 창을 이 둘로 줄인다(`[f24]` ② · 부분 설치).
@@ -228,7 +260,7 @@ pub const AGENT_VALUE: &str = "pal-orchestrator";
 // ★ **우리가 놓을 수 있는 자리** — 되돌리기의 상한
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// 매니페스트는 **대상 프로젝트 안에 사는 파일**이고 `.gitignore` 에 없어서 커밋되고
+// 매니페스트는 **대상 프로젝트 안에 있는 파일**이고 `.gitignore` 에 없어서 커밋되고
 // clone 과 함께 이동한다. 그 안의 경로는 **입력이지 사실이 아니다** — 악성 PR 하나가
 // `files: [".git/config"]` 을 적어 두면 `pal uninstall` 한 번이 저장소를 부순다
 // (실측: `.git/config` 와 `README.md` 를 각각 지웠고 **rc=0** 이었다).
@@ -238,7 +270,7 @@ pub const AGENT_VALUE: &str = "pal-orchestrator";
 //
 // ⚠ **경로 구분자 가정**: [`crate::install::inside::Rel`] 은 언제나 `/` 로 갈린다 —
 // 여기 상수도 그렇고, 실물을 훑어 만드는 자리도 `\` 를 `/` 로 바꾼다
-// ([`crate::install::manifest::walk`]). Windows 에서도 이 규칙 하나만 선다.
+// ([`crate::install::manifest::walk`]). Windows 에서도 이 규칙 하나만 성립한다.
 
 /// 첫 조각이 이것이면 **무슨 종류로 적혔든** 안 건드린다.
 ///
@@ -252,7 +284,7 @@ fn 첫_조각(rel: &str) -> &str {
 }
 
 /// **우리가 놓을 수 있는 파일**인가 — 통째로 소유하는 디렉터리 아래이거나,
-/// 남의 것이 함께 사는 곳의 **그 파일 하나**.
+/// 남의 것이 함께 쓰는 자리의 **그 파일 하나**.
 #[must_use]
 pub fn 놓을_수_있는_파일인가(rel: &str) -> bool {
     OWNED_FILES.contains(&rel)

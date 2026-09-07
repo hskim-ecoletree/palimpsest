@@ -9,7 +9,7 @@
     ⑥ `Undeterminable` 비율 **≤15%** + 사유 **최소 둘**이 실제로 산출
     ⑦ 반경별 감시 집합 크기 · 비용
 
-**「낡음을 감지한다」는 말하기 가장 쉽다.** 아무것도 안 켜는 감지기도, 전부 켜는
+**「낡음을 감지한다」는 말하기 가장 쉽다.** 아무것도 안 잡는 감지기도, 전부 잡는
 감지기도 그 문장을 만족한다 — 그래서 ①과 ②가 서로를 막고, ⑥의 상한과 하한이 서로를
 막는다.
 
@@ -74,7 +74,7 @@ HISTORY_WINDOW = 120
 
 결과: list[tuple[str, str, str]] = []  # (표시, 이름, 값)
 
-# **실물에서 실제로 산출된 `Undeterminable` 사유들** — ⑥의 하한이 이것을 센다.
+# **실물에서 실제로 산출된 `Undeterminable` 사유들** — ⑥의 하한이 이것을 잰다.
 #
 # 상한만 걸면 *"안 켜면 통과"* 이고 하한만 걸면 *"많이 켜면 통과"* 다. **둘이 있어야
 # 이 값이 무언가를 잰다**(`[f09.pass].undeterminable_ratio_grounds`).
@@ -113,7 +113,7 @@ def 사본(tmp: Path, tag: str, src: Path, pin: str) -> tuple[Path, Path]:
     """**이름을 고정한다** — 매니페스트가 없으면 `repo_id` 가 디렉터리 이름에서 온다.
 
     회차마다 이름이 달라지면 좌표가 전부 달라지고, 그러면 이 대조는 무엇을 재든
-    「움직였다」를 낸다(F03-1 게이트 §4 에서 실제로 걸린 자리다).
+    「움직였다」를 산출한다(F03-1 게이트 §4 에서 실제로 걸린 자리다).
 
     그리고 **방마다 캐시·2층·의도가 따로다** — F02-4 에서 공유 캐시가 대조를 껐다.
     """
@@ -212,7 +212,7 @@ def 겹치지_않는(nodes: list[dict]) -> list[dict]:
     본문을 `span` 으로 바꿀 때 **뒤에서부터** 바꿔야 오프셋이 안 밀린다. 그런데
     **중첩된 심볼**(클래스 안의 메서드)은 안쪽의 `byte_start` 가 바깥보다 **크다** —
     내림차순으로 돌면 안쪽을 먼저 바꾸고, 그 순간 **바깥의 `byte_end` 가 무효**가 된다.
-    그러면 바깥 심볼의 삽입이 엉뚱한 곳에 가고 그 결박은 안 켜진다.
+    그러면 바깥 심볼의 삽입이 엉뚱한 곳에 가고 그 결박에는 낡음이 안 붙는다.
 
     검출률 70% 가 그렇게 나왔다 — **감지기가 아니라 변형기가 틀린 것**이었다.
     """
@@ -229,7 +229,7 @@ def 겹치지_않는(nodes: list[dict]) -> list[dict]:
 def 결박_걸기(repo: Path, box: Path, 이름들: list[str], n: int,
              radius: str = "symbol", at: str | None = None,
              intent: Path | None = None) -> int:
-    """넉넉한 후보에서 **n 개가 걸릴 때까지** 건다. 걸린 수를 낸다.
+    """넉넉한 후보에서 **n 개가 걸릴 때까지** 건다. 걸린 수를 산출한다.
 
     **실패를 조용히 넘기지 않는다** — 몇 개가 왜 안 걸렸는지 세고, 하한을 못 채우면
     부르는 쪽이 멈춘다.
@@ -272,11 +272,11 @@ def 심볼_고르기(repo: Path, box: Path, n: int, 파일_안에서: set[str] |
     nodes = env["answer"]["nodes"]
     if 파일_안에서 is not None:
         # `[f09.4].sample_selection` 규칙 2 — **결박된 심볼이 실린 파일을 건드린
-        # 커밋만 센다. 안 그러면 표본이 전부 「아무 일도 안 일어남」이 된다.**
+        # 커밋만 잰다. 안 그러면 표본이 전부 「아무 일도 안 일어남」이 된다.**
         #
         # 그 규칙이 뜻하는 것은 **결박을 그런 파일의 심볼에 걸어야 한다**는 것이다.
         # 처음에는 이 절을 빼고 코퍼스 전체에서 균등하게 뽑았고, 39 커밋을 지나도
-        # **아무것도 안 켜져서 대조 불가**가 났다 — 등록이 미리 적어 둔 그 형태다.
+        # **아무것도 안 붙어서 대조 불가**가 났다 — 등록이 미리 적어 둔 그 형태다.
         nodes = [x for x in nodes if x["path"] in 파일_안에서]
         if not nodes:
             raise SystemExit("변경된 파일 안에 심볼이 하나도 없다")
@@ -321,8 +321,8 @@ def 합성_변형(tmp: Path, skip_prettier: bool) -> None:
             fail(f"① {이름}", f"결박이 {len(걸린)}건뿐이다 (하한 {MIN_BINDINGS})")
             continue
         전_상태 = [b["status"]["code"]["freshness"] for b in 걸린]
-        if any(f != "live" for f in 전_상태):
-            fail(f"① {이름}", f"변형 **전**에 이미 live 가 아닌 것이 있다: {set(전_상태)}")
+        if any(f != "fresh" for f in 전_상태):
+            fail(f"① {이름}", f"변형 **전**에 이미 fresh 가 아닌 것이 있다: {set(전_상태)}")
             continue
 
         전 = 소스_바이트(repo, ".ts")
@@ -354,7 +354,7 @@ def 합성_변형(tmp: Path, skip_prettier: bool) -> None:
 
 
 def 의미_변형(tmp: Path) -> None:
-    """★ **①의 짝.** 없으면 ①이 「아무것도 안 켜는 감지기」로 만점을 받는다.
+    """★ **①의 짝.** 없으면 ①이 「아무것도 안 잡는 감지기」로 만점을 받는다.
 
     # ⚠ 이 함수를 한 번 잘못 썼고, 그것이 대조가 꺼지는 형태였다
 
@@ -364,7 +364,7 @@ def 의미_변형(tmp: Path) -> None:
     과 같은 형태).
 
     그래서 **`span` 으로 그 심볼의 본문 안을 바꾼다.** 그리고 그 변형이 실제로 먹었는지를
-    **결박마다** 센다 — 파일 수로 세면 같은 함정에 다시 빠진다.
+    **결박마다** 잰다 — 파일 수로 세면 같은 함정에 다시 빠진다.
 
     # 바이트 자리다 — 문자 자리가 아니다
 
@@ -390,7 +390,7 @@ def 의미_변형(tmp: Path) -> None:
     for n in 대상_노드:
         파일별.setdefault(n["path"], []).append(n)
 
-    # **이 변형이 몇 개의 결박된 본문을 실제로 건드렸는가** — 대상 수를 여기서 센다.
+    # **이 변형이 몇 개의 결박된 본문을 실제로 건드렸는가** — 대상 수를 여기서 잰다.
     건드린 = 0
     건드린_id: set[str] = set()
     못한_종류: dict[str, int] = {}
@@ -438,14 +438,14 @@ def 의미_변형(tmp: Path) -> None:
     #
     # ★ **그리고 이것이 이 회차의 가장 좋은 관측이다** — `PartialParse` 가 실물에서
     # 실제로 켜졌다. 픽스처가 아니라 **코퍼스 위에서** 난 사유이고, `[f09.pass]` 의
-    # *"사유 최소 둘이 실제로 산출"* 이 그것으로 선다.
+    # *"사유 최소 둘이 실제로 산출"* 이 그것으로 성립한다.
     #
-    # **분모는 살아남은 것들이다** — `stale` + `live`. 그 수에 하한을 박는다:
+    # **분모는 살아남은 것들이다** — `stale` + `fresh`. 그 수에 하한을 박는다:
     # 살아남은 것이 적으면 비율이 표본 하나에 흔들린다.
     stale = 갈래.get("stale", 0)
-    live = 갈래.get("live", 0)
+    fresh = 갈래.get("fresh", 0)
     깨진것 = 갈래.get("orphaned", 0) + 갈래.get("undeterminable", 0)
-    살아남은 = stale + live
+    살아남은 = stale + fresh
     # ★ 실물에서 난 사유를 모은다 — ⑥의 하한(사유 최소 둘)이 이것을 쓴다.
     for b in 뒤:
         c = b["status"]["code"]
@@ -464,8 +464,8 @@ def 의미_변형(tmp: Path) -> None:
           f"stale {stale}/{살아남은} = **{비율}%** (하한 {SEMANTIC_DETECTION_MIN_PCT}%) "
           f"· 변형이 훼손한 파일의 결박 {깨진것}건은 분모 밖")
     if 비율 < SEMANTIC_DETECTION_MIN_PCT:
-        안_켜진 = [b["binding"][:8] for b in 뒤 if b["status"]["code"]["freshness"] == "live"]
-        fail("② 의미 변경", f"{값} — **본문을 바꿨는데 live 인 결박**: {안_켜진[:10]}")
+        안_붙은 = [b["binding"][:8] for b in 뒤 if b["status"]["code"]["freshness"] == "fresh"]
+        fail("② 의미 변경", f"{값} — **본문을 바꿨는데 fresh 인 결박**: {안_붙은[:10]}")
     else:
         ok("② 의미 변경", 값)
     shutil.rmtree(box, ignore_errors=True)
@@ -504,11 +504,11 @@ def 판정_불가(tmp: Path) -> None:
     else:
         ok("⑥ 비율 상한", 값)
 
-    # ★ **`ordinal` 이 판정 불가로 접히지 않았다는 증거다.**
+    # ★ **`ordinal` 이 판정 불가로 안 뭉개졌다는 증거다.**
     if 등급.get("ordinal", 0) > 0 and 비율 > 90:
-        fail("⑥ ordinal", f"ordinal 이 {등급['ordinal']}개인데 판정 불가가 {비율}% 다 — 접혔다")
+        fail("⑥ ordinal", f"ordinal 이 {등급['ordinal']}개인데 판정 불가가 {비율}% 다 — 뭉개졌다")
     elif 등급.get("ordinal", 0) > 0:
-        ok("⑥ ★ ordinal 을 안 접었다",
+        ok("⑥ ★ ordinal 을 안 뭉갰다",
            f"ordinal 감시 원소 {등급['ordinal']}개인데 판정 불가 {비율}% — 비교가 돌았다")
     else:
         skip("⑥ ★ ordinal", "이 코퍼스에 ordinal 감시 원소가 없다 — **대조 불가**")
@@ -528,17 +528,17 @@ def 판정_불가(tmp: Path) -> None:
         e2 = json.loads(p.stdout)
         이_스냅샷 = e2["projection"]["built_for_this_snapshot"]
         상태 = [b["status"]["code"] for b in e2["answer"]["bindings"]]
-        샌_것 = [c for c in 상태 if c["freshness"] == "live"]
+        샌_것 = [c for c in 상태 if c["freshness"] == "fresh"]
         사유 = sorted({c.get("reason") for c in 상태 if c["freshness"] == "undeterminable"})
         관측된_사유.update(x for x in 사유 if x)
         값 = (f"2층이 이 스냅샷 것인가 {이_스냅샷} · 판정 불가 {len(상태) - len(샌_것)}/{len(상태)} · "
-              f"사유 {사유} · **`live` 로 샌 것 {len(샌_것)}** (상한 {UNDETERMINABLE_LEAK_MAX})")
+              f"사유 {사유} · **`fresh` 로 샌 것 {len(샌_것)}** (상한 {UNDETERMINABLE_LEAK_MAX})")
         if 이_스냅샷:
             skip("③ 판정 불가", f"2층이 이 스냅샷 것이라 이 대조가 안 켜졌다 — **대조 불가**: {값}")
         elif len(샌_것) > UNDETERMINABLE_LEAK_MAX:
-            fail("③ 판정 불가가 `live` 로 샜다", 값)
+            fail("③ 판정 불가가 `fresh` 로 샜다", 값)
         else:
-            ok("③ 판정 불가가 `live` 로 안 샌다", 값)
+            ok("③ 판정 불가가 `fresh` 로 안 샌다", 값)
 
     shutil.rmtree(box, ignore_errors=True)
 
@@ -633,7 +633,7 @@ def 실_이력(tmp: Path, corpus: Path, pin: str, ext: str, tag: str, radius: st
 
     `[f09.pass]` 가 정의를 못 박았다 — *"결박이 `stale` 인데 그 커밋의 변경이 결박된
     메모의 **유효성을 건드리지 않는** 경우. 판정은 사람(에이전트)이 하고 **판정의 근거를
-    결박마다 한 줄로 남긴다.**"* 그러므로 이 함수는 **표본과 그 갈래를 낸다.**
+    결박마다 한 줄로 남긴다.**"* 그러므로 이 함수는 **표본과 그 갈래를 산출한다.**
     """
     print(f"⑤ 실 이력 · {tag} · 반경 {radius} — 거짓 양성률 상한 {상한}%")
 
@@ -655,7 +655,7 @@ def 실_이력(tmp: Path, corpus: Path, pin: str, ext: str, tag: str, radius: st
 
     # `[f09.4].sample_selection` 규칙 2 — **이 구간에서 실제로 변경된 파일**의 심볼에
     # 건다. 안 그러면 표본이 전부 「아무 일도 안 일어남」이 되고, 그것을 이 스크립트가
-    # 한 번 실제로 냈다(39 커밋 · 켜진 것 0 · 대조 불가).
+    # 한 번 실제로 산출했다(39 커밋 · 붙은 것 0 · 대조 불가).
     변경된 = {
         x for x in run(
             ["git", "-C", str(repo), "diff", "--name-only", f"{시작}..{pin}"]
@@ -683,22 +683,22 @@ def 실_이력(tmp: Path, corpus: Path, pin: str, ext: str, tag: str, radius: st
         fail(f"⑤ {tag}/{radius}", f"결박이 {len(기준)}건뿐이다 (하한 {MIN_BINDINGS})")
         shutil.rmtree(box, ignore_errors=True)
         return
-    안_live = [b["status"]["code"]["freshness"] for b in 기준 if b["status"]["code"]["freshness"] != "live"]
-    if 안_live:
-        fail(f"⑤ {tag}/{radius}", f"결박 직후에 live 가 아닌 것이 {len(안_live)}건 있다: {set(안_live)}")
+    안_fresh = [b["status"]["code"]["freshness"] for b in 기준 if b["status"]["code"]["freshness"] != "fresh"]
+    if 안_fresh:
+        fail(f"⑤ {tag}/{radius}", f"결박 직후에 fresh 가 아닌 것이 {len(안_fresh)}건 있다: {set(안_fresh)}")
         shutil.rmtree(box, ignore_errors=True)
         return
 
     # **앞으로 오면서** 켜지는 것을 모은다 — 옛것부터 최신까지.
     #
-    # ⚠ **여기 기록되는 커밋은 「처음 켜진 것을 **관측한** 커밋」이다.**
+    # ⚠ **여기 기록되는 커밋은 「처음 걸린 것을 **관측한** 커밋」이다.**
     # 훑는 목록이 `--no-merges` 로 걸러졌으므로(등록 규칙 3) **머지로 들어온 변경은
     # 건너뛴 커밋에 있다** — 그래서 이 커밋의 diff 만 보면 원인이 안 보일 수 있다.
-    # 그러므로 판정 재료를 **구간**(직전 관측 커밋 → 이 커밋)으로 낸다.
+    # 그러므로 판정 재료를 **구간**(직전 관측 커밋 → 이 커밋)으로 산출한다.
     # 좌표 → 이름. **무엇이 켰는지**를 사람이 읽을 수 있어야 판정이 된다.
     _노드 = pal(["query", "graph.dump", "--json"], repo, box)["answer"]["nodes"]
     좌표_이름 = {n["id"]: n["name"] for n in _노드}
-    # **경로도 낸다.** Kotlin 은 파일명 ≠ 심볼명이 흔해서 이름만으로는 판정 재료를
+    # **경로도 산출한다.** Kotlin 은 파일명 ≠ 심볼명이 흔해서 이름만으로는 판정 재료를
     # 못 찾는다 — 실제로 일곱 중 넷을 못 찾았다. 좌표가 이미 알고 있는 값이다.
     좌표_경로 = {n["id"]: n["path"] for n in _노드}
     표본: list[tuple] = []  # (커밋, 결박, 갈래, 메모, 커밋 제목, 켠 것)
@@ -709,15 +709,15 @@ def 실_이력(tmp: Path, corpus: Path, pin: str, ext: str, tag: str, radius: st
             f = b["status"]["code"]["freshness"]
             if f == "undeterminable":
                 관측된_사유.add(b["status"]["code"]["reason"])
-            # **결박마다 처음 켜진 자리 하나만 센다** — 한 번 켜지면 그 뒤로 계속
-            # 켜져 있으므로, 안 그러면 표본이 「커밋 수 × 결박 수」로 부풀고 같은 사건이
+            # **결박마다 낡음이 처음 붙은 자리 하나만 잰다** — 한 번 붙으면 그 뒤로 계속
+            # 붙어 있으므로, 안 그러면 표본이 「커밋 수 × 결박 수」로 부풀고 같은 사건이
             # 여러 번 세어진다.
             if f in ("stale", "orphaned") and b["binding"] not in 이미:
                 이미.add(b["binding"])
                 # **판정 재료를 함께 싣는다** — 거짓 양성의 판정은 사람이 하고
                 # 근거를 결박마다 한 줄로 남겨야 한다(`[f09.pass]` 의 정의).
                 제목 = run(["git", "-C", str(repo), "log", "-1", "--format=%s", c]).stdout.strip()
-                켠_것 = [좌표_이름.get(x, x[:8])
+                붙인_것 = [좌표_이름.get(x, x[:8])
                         for x in b["status"]["code"].get("triggered_by", [])]
                 표본.append((f"{직전[:8]}..{c[:8]}", b["binding"][:8], f,
                             좌표_경로.get(b["target"], "?"), 제목[:44], 켠_것[:2]))
@@ -727,19 +727,19 @@ def 실_이력(tmp: Path, corpus: Path, pin: str, ext: str, tag: str, radius: st
 
     if not 표본:
         skip(f"⑤ {tag}/{radius}",
-             f"커밋 {len(커밋들) - 1}개를 지나며 켜진 것이 하나도 없다 "
+             f"커밋 {len(커밋들) - 1}개를 지나며 낡음이 붙은 것이 하나도 없다 "
              f"(바뀐 파일 {len(변경된)}개의 심볼에 걸었는데도) — **대조 불가**")
         shutil.rmtree(box, ignore_errors=True)
         return
 
     표본 = 표본[:SAMPLES_PER_CORPUS]
-    켜진 = sum(1 for x in 표본 if x[2] == "stale")
+    붙은 = sum(1 for x in 표본 if x[2] == "stale")
     사라짐 = sum(1 for x in 표본 if x[2] == "orphaned")
-    # ⚠ **거짓 양성의 판정은 사람(에이전트)이 한다.** 이 스크립트는 표본을 낸다 —
+    # ⚠ **거짓 양성의 판정은 사람(에이전트)이 한다.** 이 스크립트는 표본을 산출한다 —
     # 판정과 근거는 게이트에 **결박마다 한 줄로** 적힌다(`[f09.pass]` 의 정의).
     ok(f"⑤ {tag}/{radius} 표본",
        f"커밋 {len(커밋들) - 1}개 훑음 · 바뀐 파일의 심볼에 결박 · 표본 {len(표본)} · "
-       f"stale {켜진} · orphaned {사라짐} "
+       f"stale {붙은} · orphaned {사라짐} "
        f"— **거짓 양성 판정은 게이트에 목록으로** (상한 {상한}%)")
     for c, b, f, path, 제목, 켠 in 표본:
         print(f"      {c}  {b}  {f:<9} {'·'.join(켠) or '—':<26} {path[-52:]:<52} | {제목}")
@@ -808,15 +808,15 @@ def main() -> int:
 
     # ⑥의 하한 — **사유 넷 중 최소 둘이 실제로 산출돼야 한다.**
     #
-    # 0% 는 통과가 **아니다.** *"판정 불가가 없다"* 가 아니라 **아무 데서도 안 켜진다**는
-    # 뜻이고, 그것은 선행 구현이 `stale=False` 로 접었던 자리로 돌아간 것이다([R16]).
+    # 0% 는 통과가 **아니다.** *"판정 불가가 없다"* 가 아니라 **아무 데서도 안 붙는다**는
+    # 뜻이고, 그것은 선행 구현이 `stale=False` 로 뭉갰던 자리로 돌아간 것이다([R16]).
     if len(관측된_사유) >= UNDETERMINABLE_MIN_REASONS:
         ok("⑥ ★ 비율 하한 (사유가 실제로 산출된다)",
            f"코퍼스에서 난 사유 {sorted(관측된_사유)} — {len(관측된_사유)}개 (하한 {UNDETERMINABLE_MIN_REASONS})")
     else:
         fail("⑥ ★ 비율 하한",
              f"코퍼스에서 난 사유가 {sorted(관측된_사유)} 뿐이다 (하한 {UNDETERMINABLE_MIN_REASONS}) — "
-             f"**`Undeterminable` 이 아무 데서도 안 켜지면 접은 것과 같다**")
+             f"**`Undeterminable` 이 아무 데서도 안 켜지면 뭉갠 것과 같다**")
 
     print()
     for 표시, 이름, 값 in 결과:

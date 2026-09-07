@@ -1,0 +1,25 @@
+# C2-a RED 관측 — 2026-09-06
+# 「기계 토큰에 한국어 금지」 검사가 처음 돌 때 실제로 발화했다. 처치가 필요 없었다 —
+# `C2-b` 가 이름 댄 둘을 이미 고친 뒤였는데도 **셋째 위반**이 남아 있었다.
+
+## ① 첫 실행 — 손대지 않은 상태에서 발화
+$ cargo xtask check
+  FAIL  기계 토큰에 한국어 금지
+기계 토큰에 한국어 금지: 기계 토큰에 한국어가 있다 — 이 값은 `--json` · Cypher · 파서 열쇠로 나간다:
+    crates/pal-core/src/touch.rs:152 `표기`
+    crates/pal-core/src/touch.rs:153 `부분`
+Error: 1개 검사가 실패했다
+
+  → `NearKind::name()` 이 「표기」·「부분」을 돌려주고 있었다. 그 값은 serde 가 내는
+    `spelling`·`substring` 과 갈려 있어 같은 값이 화면과 `--json` 에서 다른 낱말이었다.
+
+## ② `C2-b` 가 이름 댄 둘을 되돌려 다시 관측 (관측 후 즉시 복원)
+$ cargo xtask check
+  FAIL  기계 토큰에 한국어 금지
+    crates/pal-core/src/ledger.rs:104 `없음`
+    crates/pal-core/src/ledger.rs:144 `NUL 바이트`
+
+## ③ 셋 다 고친 뒤
+$ cargo xtask check
+  ok    기계 토큰에 한국어 금지  — 파일 39개 · 기계 토큰 212개 · 한국어 0건
+검사 24/24 통과

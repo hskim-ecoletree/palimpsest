@@ -5,14 +5,14 @@
 //! 커밋을 함께 싣는다.**
 //!
 //! 커밋은 `build.rs` 가 `PAL_COMMIT` 으로 넣는다. 그것이 없는 빌드(git 없는 tarball)
-//! 에서도 서야 하고, 그때는 패키지 버전 하나로 선다 — **없는 것을 지어내지 않는다.**
+//! 에서도 서야 하고, 그때는 패키지 버전 하나로 정해진다 — **없는 것을 지어내지 않는다.**
 
 use std::sync::LazyLock;
 
 /// 이 빌드의 커밋. 릴리스 tarball 처럼 git 이 없는 곳에서 빌드하면 `None`.
 const COMMIT: Option<&str> = option_env!("PAL_COMMIT");
 
-/// `pal --version` 이 내는 문자열.
+/// `pal --version` 이 산출하는 문자열.
 ///
 /// **`&'static str` 이다** — clap 의 `version` 이 그것을 요구하고, 그것 하나 때문에
 /// clap 의 feature 를 늘리지 않는다(stack §3.4: 의존을 늘리기 전에 줄인다).

@@ -56,7 +56,7 @@ pub struct WatchEntry {
 /// # 앵커로 쓰지 않는 것이 이 타입의 전부다 (옛 F09 §6)
 ///
 /// 선행 구현은 `code_bound_at`(커밋 시각)을 앵커로 썼고, 그러면 **포매팅 커밋에도
-/// `stale` 이 켜진다** — [R-07](../../../docs/plan/00-risks.md#r-07)이 치명이라 부른
+/// `stale` 이 붙는다** — [R-07](../../../docs/plan/00-risks.md#r-07)이 치명이라 부른
 /// 실패를 그대로 맞는다. `body_digest` 가 더 강하다.
 ///
 /// > **다만 시각은 표시용으로 함께 싣는다** — *"3주 전 코드 기준"* 이 *"12커밋 전"* 보다
@@ -151,13 +151,13 @@ pub struct Binding {
     pub bound_at_time: BoundTime,
     /// **무엇까지** 지켜보나 — 선언이지 계산이 아니다([`Radius`] · 옛 F09 §3).
     ///
-    /// 이 값이 **판정 결과에 함께 출력된다.** *"이 결정은 `symbol` 반경에서 live"* 는
+    /// 이 값이 **판정 결과에 함께 출력된다.** *"이 결정은 `symbol` 반경에서 fresh"* 는
     /// *"이 결정은 유효하다"* 와 다른 문장이고, 그 차이가 산출에 남는 것이 요구다.
     pub radius: Radius,
     /// 무엇을 지켜보나 — [`Radius`] 가 편 결과.
     ///
     /// **결박 시점에 기계가 대상 좌표에서 읽은 값이다.** 생산자의 신고를 여기 넣는
-    /// 경로가 없고([`Binding`] 머리 · 옛 F09 §4.1 D32), `cargo xtask check` 가 그 부재를 센다.
+    /// 경로가 없고([`Binding`] 머리 · 옛 F09 §4.1 D32), `cargo xtask check` 가 그 부재를 잰다.
     pub watch: Vec<WatchEntry>,
     /// **어떻게 섰나** — 손으로 걸었나, 제안을 승인해서 섰나 ([`PromotedBy`] · 옛 F10 §3.3).
     pub promoted_by: PromotedBy,
@@ -310,7 +310,7 @@ impl Binding {
     ///
     /// 그리고 [`crate::Provenance`] 에 setter 가 없는 것이 그 짝이다(`graph.rs`) —
     /// *"고쳐 쓰는 경로가 없는 것 자체가 세탁 방지의 구현 형태"*.
-    /// `cargo xtask check` 의 검사 15 가 그 부재를 센다.
+    /// `cargo xtask check` 의 검사 15 가 그 부재를 잰다.
     ///
     /// # 왜 `pick` 을 받는가 — **고르는 것은 사람의 일이다**
     ///
@@ -407,7 +407,7 @@ impl Binding {
 
 /// **판정할 수 없는 이유** — 옛 F09 §2.1 · [R16].
 ///
-/// 선행 구현은 앵커를 계산할 수 없을 때 **낡지 않은 것으로 접었다**(`stale=False`).
+/// 선행 구현은 앵커를 계산할 수 없을 때 **낡지 않은 것으로 뭉갰다**(`stale=False`).
 /// 방향은 같다 — 모르는 것을 낡았다고 하지 않는다. 그러나 **`false` 와 「판정 불가」를
 /// 구별하지 않은 결과는 *"이 결정은 유효합니다"* 와 *"유효한지 알 수 없습니다"* 가
 /// 같은 화면이 되는 것**이고, 그것이 [목표 §3.1] 의 정면 위반이다.
@@ -429,7 +429,7 @@ impl Binding {
 /// | 지역 이름을 **안 지운다**(ADR-0006) | **약하다.** 거짓 양성의 원천이고 `[f09.4]` 가 잰다 |
 /// | 요약 값이 **있다** | **비교가 가능하다.** 판정 불가가 아니다 |
 ///
-/// 그래서 [`Self::IdentityGrade`] 는 **비교할 값이 아예 없을 때**만 켠다 —
+/// 그래서 [`Self::IdentityGrade`] 는 **비교할 값이 아예 없을 때**만 건다 —
 /// 등급이 [`crate::IdentityGrade::Unavailable`](L0)일 때다.
 /// 근거 전문은 `corpus/criteria.toml` `[f09].ordinal_is_not_undeterminable`.
 ///
@@ -469,7 +469,7 @@ impl UndeterminableReason {
         }
     }
 
-    /// 사유 넷 — **`[f09.2.pass]` 가 넷을 각각 만들어 `Live` 가 안 나오는지 센다.**
+    /// 사유 넷 — **`[f09.2.pass]` 가 넷을 각각 만들어 `Fresh` 가 안 나오는지 잰다.**
     pub const ALL: [Self; 4] =
         [Self::IdentityGrade, Self::PartialParse, Self::WatchMemberGone, Self::ProjectionStale];
 }
@@ -479,7 +479,7 @@ impl UndeterminableReason {
 /// # 왜 `Option<BodyDigest>` 가 아닌가
 ///
 /// `None` 이 *"사라졌다"* 인지 *"비교할 수 없다"* 인지 구별되지 않는다. 그 구별이
-/// 이 기능의 전부이고([R16]), 뭉개면 판정 불가가 조용히 `Orphaned` 나 `Live` 로 샌다.
+/// 이 기능의 전부이고([R16]), 뭉개면 판정 불가가 조용히 `Orphaned` 나 `Fresh` 로 샌다.
 ///
 /// [R16]: ../../../docs/evidence-map.md
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -510,7 +510,15 @@ pub enum Now {
 #[serde(rename_all = "snake_case", tag = "freshness")]
 pub enum CodeFreshness {
     /// 좌표가 있고 감시 집합 전체의 요약이 그대로다.
-    Live,
+    ///
+    /// # 왜 `Live` 가 아닌가 — 잘못 읽히는 낱말은 병기로 안 고쳐진다
+    ///
+    /// 소유자 실측(2026-09-06): *"'live' 는 최신, 신선한, 유효한이라는 뉘앙스가 약하기도
+    /// 하고 한국어권 사용자들에게는 **on-air 같은 느낌**으로 받아들여짐."*
+    /// 뜻이 약한 것은 사용자 언어를 병기해 메울 수 있지만, **다른 뜻으로 읽히는 것**은
+    /// 병기해도 그 다른 뜻이 먼저 붙는다. 그래서 넷 중 이것만 바꿨다(ADR · 회차
+    /// `2026-09-06-user-surface-vocabulary`).
+    Fresh,
     /// 감시 집합의 무언가가 변했다. **무엇이 켰는지 함께 싣는다** —
     /// *"본체가 변해서"* 와 *"호출자가 변해서"* 를 사람이 다르게 처리하기 때문이다.
     Stale { triggered_by: Vec<SymbolId> },
@@ -521,7 +529,7 @@ pub enum CodeFreshness {
     /// **`target` 이 사라졌을 때만이다.** 감시 집합의 다른 원소가 사라진 것은
     /// [`UndeterminableReason::WatchMemberGone`] 이고 다른 사건이다.
     Orphaned { missing: Vec<SymbolId> },
-    /// **판정할 수 없다.** `Live` 로 접지 않는다 — 그것이 [R16] 의 자리다.
+    /// **판정할 수 없다.** `Fresh` 로 뭉개지 않는다 — 그것이 [R16] 의 자리다.
     ///
     /// `at` 은 그 사유를 진 감시 원소들이다([`Stale::triggered_by`] 와 같은 형태) —
     /// *"어디를 못 보는가"* 가 실려야 사람이 무엇을 고칠지 안다.
@@ -586,21 +594,21 @@ impl BindingStatus {
     ///
     /// ```text
     /// ① target 이 사라졌나        → Orphaned      (결정적이다. 더 볼 것이 없다)
-    /// ② 못 보는 원소가 있나        → Undeterminable (**Live 로 접지 않는다** · R16)
+    /// ② 못 보는 원소가 있나        → Undeterminable (**Fresh 로 뭉개지 않는다** · R16)
     /// ③ 변한 원소가 있나          → Stale
-    /// ④ 아니면                   → Live
+    /// ④ 아니면                   → Fresh
     /// ```
     ///
     /// **②가 ③보다 먼저인 것이 요구다.** 뒤로 보내면 *"하나는 못 보지만 나머지가
-    /// 안 변했으니 Live"* 가 되고, 그것이 선행 구현이 `stale=False` 로 접었던 자리다.
+    /// 안 변했으니 Fresh"* 가 되고, 그것이 선행 구현이 `stale=False` 로 뭉갰던 자리다.
     ///
     /// **①이 ②보다 먼저인 것도 요구다.** 좌표가 사라졌으면 *"판정할 수 없다"* 가 아니라
     /// *"결정을 다시 해야 한다"* 이고, 둘은 사람이 다르게 처리한다.
     ///
     /// # 이 계산은 [`Binding::bound_at_time`] 을 **안 읽는다**
     ///
-    /// 커밋 시각을 앵커로 쓰면 포매팅 커밋에도 `stale` 이 켜진다(옛 F09 §6 · R-07).
-    /// 계산 경로와 표시 경로가 갈려 있어야 하고, `cargo xtask check` 가 그 갈림을 센다.
+    /// 커밋 시각을 앵커로 쓰면 포매팅 커밋에도 `stale` 이 붙는다(옛 F09 §6 · R-07).
+    /// 계산 경로와 표시 경로가 갈려 있어야 하고, `cargo xtask check` 가 그 갈림을 잰다.
     #[must_use]
     pub fn evaluate(binding: &Binding, lineage: Lineage, now: impl Fn(SymbolId) -> Now) -> Self {
         let mut changed = Vec::new();
@@ -625,7 +633,7 @@ impl BindingStatus {
         // 대상이 아닌 원소가 사라진 것은 **다른 사건**이다 — 지켜보던 것 하나를 못 본다.
         못_봄.extend(gone.into_iter().map(|s| (UndeterminableReason::WatchMemberGone, s)));
 
-        // ② **못 보는 것이 있으면 `Live` 가 될 수 없다** — R16 의 자리.
+        // ② **못 보는 것이 있으면 `Fresh` 가 될 수 없다** — R16 의 자리.
         if let Some(reason) = UndeterminableReason::ALL
             .into_iter()
             .find(|r| 못_봄.iter().any(|(had, _)| had == r))
@@ -636,7 +644,7 @@ impl BindingStatus {
 
         // ③④
         let code = if changed.is_empty() {
-            CodeFreshness::Live
+            CodeFreshness::Fresh
         } else {
             CodeFreshness::Stale { triggered_by: changed }
         };
@@ -665,12 +673,153 @@ impl BindingStatus {
     /// 이 상태가 **판정 입력 자격**을 갖는가 — [`crate::NodeFreshness::admissible`] 과
     /// 같은 자리이고 같은 규율이다.
     ///
-    /// `Live ∧ Current` 만 갖는다. **`Undeterminable` 은 판정 입력에서
+    /// `Fresh ∧ Current` 만 갖는다. **`Undeterminable` 은 판정 입력에서
     /// `Residual{사유=결박 판정 불가}` 가 된다**(옛 F09 §2.1) — 안 그러면 *"화면에는 뜨는데
-    /// 판정은 그것을 유효로 센다"* 가 된다.
+    /// 판정은 그것을 유효로 잰다"* 가 된다.
     #[must_use]
     pub const fn admissible(&self) -> bool {
-        matches!(self.code, CodeFreshness::Live) && matches!(self.lineage, Lineage::Current)
+        matches!(self.code, CodeFreshness::Fresh) && matches!(self.lineage, Lineage::Current)
+    }
+}
+
+#[cfg(test)]
+mod 저장된_옛_표기 {
+    use super::CodeFreshness;
+
+    /// **양성 대조 — 읽기 경로가 옛 토큰을 실제로 거부하는가.**
+    ///
+    /// `B2` 는 *"저장된 데이터를 어떻게 처리하나"* 를 묻고 `B2-a` 는 그 답이 「처리할
+    /// 데이터가 없다」일 때 **침묵이 정보가 되게** 하라고 요구한다. 심을 자리가 없으면
+    /// 음성 대조가 항상 초록이고, 그 초록은 *"저장된 것이 없다"* 를 뜻하지 않는다 —
+    /// *"검사가 아무것도 안 본다"* 를 뜻한다.
+    ///
+    /// 그래서 **먼저 이것을 관측한다**: 옛 토큰 `"live"` 를 읽기 경로에 직접 먹여
+    /// `serde` 가 거부하는 것을 본다. 이 시험이 초록이어야 «저장소 전수에서 `"live"` 가
+    /// 0 건» 이라는 관측이 「없다」의 증거가 된다.
+    #[test]
+    fn 옛_토큰은_읽기에서_거부된다() {
+        let 옛: Result<CodeFreshness, _> =
+            serde_json::from_str(r#"{"freshness":"live"}"#);
+        assert!(
+            옛.is_err(),
+            "옛 토큰 `live` 가 읽혔다 — 별칭이 남아 있으면 개명이 안 끝난 것이다"
+        );
+    }
+
+    /// 그리고 새 토큰은 읽힌다 — 위 시험이 «무엇이든 거부한다» 로 통과하는 것을 막는다.
+    #[test]
+    fn 새_토큰은_읽힌다() {
+        let 새: CodeFreshness =
+            serde_json::from_str(r#"{"freshness":"fresh"}"#).expect("새 토큰이 안 읽힌다");
+        assert_eq!(새, CodeFreshness::Fresh);
+    }
+}
+
+/// **와이어 대조 — 두 축의 직렬화 토큰이 서로소인가** (`A2-a`).
+///
+/// `A2` 의 원 문면은 *"두 축이 같은 낱말을 쓰는지 아닌지가 **근거에 적힌다**"* 였다.
+/// 산문은 그 충돌을 못 잡는다. 실제 충돌은 `--json` 위에 있다 —
+/// [`BindingStatus`] 는 한 구조체이고 `{"code":{"freshness":"…"},"lineage":"…"}` 를
+/// 내므로, 두 축이 같은 문자열을 쓰면 기계 소비자가 축을 못 가른다.
+/// 축이 둘인 것이 [`BindingStatus`] 의 설계 근거다.
+///
+/// # 이 시험은 태어나면서 초록이다 — 그래서 음성 대조를 함께 세운다
+///
+/// `A1` 이 `Current` 를 피했으므로 지금 두 집합은 자명하게 서로소다. 그대로 두면
+/// 검사 하나가 「측정이 죽은 가지」로 남고, 뒤에 [`Lineage`] 를 손대는 회차가
+/// *"검사가 있으니 안전하다"* 고 잘못 믿는다. 그러므로 판정을 **순수 함수**로 떼어
+/// 일부러 겹치게 만든 값을 먹이고 **발화를 관측한다.**
+#[cfg(test)]
+mod 두_축의_와이어 {
+    use super::{CodeFreshness, Lineage, SymbolId, UndeterminableReason};
+
+    /// 겹치는 토큰을 돌려준다. **순수 함수다** — 그래야 음성 대조가 성립한다.
+    fn 겹치는_토큰(a: &[String], b: &[String]) -> Vec<String> {
+        let mut 겹침: Vec<String> =
+            a.iter().filter(|t| b.contains(t)).cloned().collect();
+        겹침.sort();
+        겹침.dedup();
+        겹침
+    }
+
+    /// 직렬화된 값에서 **축을 가르는 토큰**을 뽑는다.
+    ///
+    /// `CodeFreshness` 는 내부 태그(`tag = "freshness"`)라 객체의 그 필드가 토큰이고,
+    /// `Lineage` 는 외부 태그라 문자열 자체이거나 객체의 유일한 키가 토큰이다.
+    /// **하드코딩하지 않는다** — 누가 `rename` 을 붙이면 이 시험이 그것을 따라간다.
+    fn 토큰(v: &serde_json::Value, 태그: Option<&str>) -> String {
+        match (v, 태그) {
+            (serde_json::Value::String(s), _) => s.clone(),
+            (serde_json::Value::Object(m), Some(k)) => {
+                m[k].as_str().expect("내부 태그가 문자열이 아니다").to_owned()
+            }
+            (serde_json::Value::Object(m), None) => {
+                let mut keys: Vec<_> = m.keys().cloned().collect();
+                assert_eq!(keys.len(), 1, "외부 태그 객체의 키가 하나가 아니다");
+                keys.pop().expect("키 하나")
+            }
+            _ => panic!("토큰을 못 뽑는 형태다: {v}"),
+        }
+    }
+
+    fn 신선도_토큰들() -> Vec<String> {
+        let 심볼: Vec<SymbolId> = Vec::new();
+        [
+            CodeFreshness::Fresh,
+            CodeFreshness::Stale { triggered_by: 심볼.clone() },
+            CodeFreshness::Orphaned { missing: 심볼.clone() },
+            CodeFreshness::Undeterminable {
+                reason: UndeterminableReason::IdentityGrade,
+                at: 심볼,
+            },
+        ]
+        .iter()
+        .map(|v| 토큰(&serde_json::to_value(v).expect("직렬화"), Some("freshness")))
+        .collect()
+    }
+
+    fn 계보_토큰들() -> Vec<String> {
+        let 대체자 =
+            crate::EntityId::mint(crate::EntityKind::new("decision"), crate::EntityOrigin::Hand);
+        [Lineage::Current, Lineage::Superseded { by: 대체자 }]
+            .iter()
+            .map(|v| 토큰(&serde_json::to_value(v).expect("직렬화"), None))
+            .collect()
+    }
+
+    /// **본 시험** — 지금 두 축은 같은 낱말을 안 쓴다.
+    #[test]
+    fn 두_축의_토큰_집합은_서로소다() {
+        let 신선도 = 신선도_토큰들();
+        let 계보 = 계보_토큰들();
+        assert_eq!(신선도.len(), 4, "신선도 변형이 넷이 아니다");
+        assert_eq!(계보.len(), 2, "계보 변형이 둘이 아니다");
+        let 겹침 = 겹치는_토큰(&신선도, &계보);
+        assert!(
+            겹침.is_empty(),
+            "두 축이 같은 와이어 토큰을 쓴다: {겹침:?} — \
+             `{{\"code\":{{\"freshness\":..}},\"lineage\":..}}` 를 읽는 쪽이 축을 못 가른다"
+        );
+    }
+
+    /// **음성 대조** — 일부러 겹치게 만든 값을 먹이면 발화한다.
+    ///
+    /// 이것이 없으면 위 시험은 *"넷과 둘을 셌다"* 만 보증하고 **겹침을 재지 않는다.**
+    #[test]
+    fn 겹치면_발화한다() {
+        let 신선도 = 신선도_토큰들();
+        // 실제로 기각된 후보다 — `Live → Current` 로 갔다면 이 값이 나왔다.
+        let 겹치는_계보 = vec!["current".to_owned(), "superseded".to_owned()];
+        let 겹치도록_바꾼_신선도: Vec<String> = 신선도
+            .iter()
+            .map(|t| if t == "fresh" { "current".to_owned() } else { t.clone() })
+            .collect();
+        let 겹침 = 겹치는_토큰(&겹치도록_바꾼_신선도, &겹치는_계보);
+        assert_eq!(
+            겹침,
+            vec!["current".to_owned()],
+            "일부러 겹치게 만들었는데 판정이 침묵했다 — 이 검사는 아무것도 안 잰다"
+        );
     }
 }
 
@@ -721,7 +870,7 @@ mod tests {
     fn 안_변하면_살아_있다() {
         let s = 심볼("f");
         let d = BodyDigest::of_normalized(b"x");
-        assert_eq!(상태(&결박(s, d), |_| Now::Digest(d)), CodeFreshness::Live);
+        assert_eq!(상태(&결박(s, d), |_| Now::Digest(d)), CodeFreshness::Fresh);
     }
 
     #[test]
@@ -746,9 +895,9 @@ mod tests {
     }
 
     #[test]
-    fn 판정_불가는_live_로_새지_않는다() {
-        // **★ 반대 방향 ③ — R16 의 자리다.** 선행 구현이 `stale=False` 로 접었던 그것이고,
-        // **사유 넷을 각각** 센다 — 하나만 시험하면 나머지 셋이 접혀도 통과한다.
+    fn 판정_불가는_fresh_로_새지_않는다() {
+        // **★ 반대 방향 ③ — R16 의 자리다.** 선행 구현이 `stale=False` 로 뭉갰던 그것이고,
+        // **사유 넷을 각각** 잰다 — 하나만 시험하면 나머지 셋이 접혀도 통과한다.
         let s = 심볼("f");
         let d = BodyDigest::of_normalized(b"x");
         for r in UndeterminableReason::ALL {
@@ -769,14 +918,14 @@ mod tests {
                 CodeFreshness::Undeterminable { reason: r, at: vec![s] },
                 "{} 가 판정 불가로 안 나온다", r.name()
             );
-            assert_ne!(code, CodeFreshness::Live, "{} 가 Live 로 샜다", r.name());
+            assert_ne!(code, CodeFreshness::Fresh, "{} 가 Fresh 로 샜다", r.name());
         }
     }
 
     #[test]
-    fn 못_보는_것이_있으면_나머지가_그대로여도_live_가_아니다() {
+    fn 못_보는_것이_있으면_나머지가_그대로여도_fresh_가_아니다() {
         // **②가 ③보다 먼저인 것이 요구다.** 뒤로 보내면 *"하나는 못 보지만 나머지가
-        // 안 변했으니 Live"* 가 되고, 그것이 접는 자리다.
+        // 안 변했으니 Fresh"* 가 되고, 그것이 뭉개는 자리다.
         let a = 심볼("a");
         let b = 심볼("b");
         let d = BodyDigest::of_normalized(b"x");
@@ -860,15 +1009,15 @@ mod tests {
         let superseded_live = 조합(sup.clone(), false);
         let superseded_stale = 조합(sup, true);
 
-        assert_eq!(current_live.code, CodeFreshness::Live);
+        assert_eq!(current_live.code, CodeFreshness::Fresh);
         assert!(matches!(current_stale.code, CodeFreshness::Stale { .. }));
         // **대체된 뒤에도 코드 신선도가 계속 계산된다** — 축이 둘인 이유가 그것이다.
-        assert_eq!(superseded_live.code, CodeFreshness::Live);
+        assert_eq!(superseded_live.code, CodeFreshness::Fresh);
         assert!(matches!(superseded_stale.code, CodeFreshness::Stale { .. }),
-                "대체되자 코드 신선도가 굳었다 — 한 열거로 접힌 것과 같다");
+                "대체되자 코드 신선도가 굳었다 — 한 열거로 뭉개진 것과 같다");
         assert!(matches!(superseded_live.lineage, Lineage::Superseded { .. }));
 
-        // 판정 입력 자격은 `Live ∧ Current` 뿐이다.
+        // 판정 입력 자격은 `Fresh ∧ Current` 뿐이다.
         assert!(current_live.admissible());
         assert!(!current_stale.admissible());
         assert!(!superseded_live.admissible(), "대체된 결정이 유효로 보증됐다 — 낡음보다 나쁜 거짓 신호다");
@@ -889,7 +1038,7 @@ mod tests {
             }
         } else {
             // ⚠ **여기가 `Span` 이었고 타입이 그것을 막았다** (2026-08-15 · `[f10.5]`).
-            //   거리 있는 신호는 확정을 낼 수 없으므로 `ConfirmingSignal` 이 안 만들어진다 —
+            //   거리 있는 신호는 확정을 산출할 수 없으므로 `ConfirmingSignal` 이 안 만들어진다 —
             //   **시험 픽스처조차 못 만든다**는 것이 이 타입이 실제로 문을 지킨다는 증거다.
             Classification::Bound {
                 target,
@@ -1028,7 +1177,7 @@ mod tests {
 
     #[test]
     fn 시각은_판정에_안_들어간다() {
-        // **★ 반대 방향** — 시각만 바뀌고 요약이 그대로면 `Live` 여야 한다.
+        // **★ 반대 방향** — 시각만 바뀌고 요약이 그대로면 `Fresh` 여야 한다.
         // 켜지면 R-07 이 치명이라 부른 실패(포매팅 커밋에 stale)를 그대로 맞는다.
         let s = 심볼("f");
         let d = BodyDigest::of_normalized(b"x");
@@ -1037,13 +1186,13 @@ mod tests {
         let mut 이른 = 결박(s, d);
         이른.bound_at_time = BoundTime::Worktree;
         assert_eq!(상태(&늦은, |_| Now::Digest(d)), 상태(&이른, |_| Now::Digest(d)));
-        assert_eq!(상태(&늦은, |_| Now::Digest(d)), CodeFreshness::Live);
+        assert_eq!(상태(&늦은, |_| Now::Digest(d)), CodeFreshness::Fresh);
     }
 }
 
 /// **낡음을 재는 자의 낡음** — 옛 F09 §5 의 다섯째 행 · 옛 DESIGN §6.3.
 ///
-/// > 마지막 재추출이 3주 전이면 *"live"* 는 *"3주 전 기준으로 유효했다"* 다.
+/// > 마지막 재추출이 3주 전이면 *"fresh"* 는 *"3주 전 기준으로 유효했다"* 다.
 /// > **상수 시간 검사이므로 무한 후퇴하지 않는다.**
 ///
 /// # 왜 판정마다가 아니라 답마다인가
@@ -1054,7 +1203,7 @@ mod tests {
 /// # `matches_head` 가 이 타입의 전부다
 ///
 /// 대장이 계산될 때의 HEAD 와 이 답이 선 트리를 댄다. 다르면 **대장이 그 사이의
-/// 커밋들을 보지 않았다**는 뜻이고, 그러면 `Live` 는 *"그때 기준으로"* 가 된다.
+/// 커밋들을 보지 않았다**는 뜻이고, 그러면 `Fresh` 는 *"그때 기준으로"* 가 된다.
 /// **켜지지 않으면 이 값은 아무것도 안 말한다** — 그래서 산출에 늘 실린다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DetectorReport {
@@ -1065,18 +1214,18 @@ pub struct DetectorReport {
     /// 대장이 선 HEAD 와 이 답이 선 트리가 같은가.
     ///
     /// **거짓이면 판정 전부가 「그때 기준」이다.** 조용히 넘기면 낡은 감지기가 낸
-    /// `Live` 가 지금의 `Live` 로 읽힌다.
+    /// `Fresh` 가 지금의 `Fresh` 로 읽힌다.
     pub matches_head: bool,
 }
 
-/// 결박 하나의 **산출 한 줄** — `binding.status` 가 이것을 낸다 (옛 F09 §8).
+/// 결박 하나의 **산출 한 줄** — `binding.status` 가 이것을 산출한다 (옛 F09 §8).
 ///
 /// # 무엇이 실려야 하는가 — 문서 §5 의 마지막 행이 요구한 것
 ///
 /// > `stale` 출력에 **`triggered_by` 와 반경을 항상 붙여** 행동 가능하게 만든다.
 ///
 /// 그래서 [`Self::radius`] 와 [`Self::watch`] 가 상태와 **같은 줄**에 있다.
-/// *"이 결정은 `symbol` 반경에서 live"* 는 *"이 결정은 유효하다"* 와 다른 문장이고,
+/// *"이 결정은 `symbol` 반경에서 fresh"* 는 *"이 결정은 유효하다"* 와 다른 문장이고,
 /// 그 차이가 산출에 남는 것이 §3 의 요구다.
 ///
 /// # [`Self::watch_grades`] 가 여기 있는 이유
@@ -1084,7 +1233,7 @@ pub struct DetectorReport {
 /// `ordinal` 좌표 위의 결박은 **비교가 가능하지만 약하다**(좌표가 선언 순서에 의존하고,
 /// 지역 이름을 안 지워 리네임에 요약이 움직인다). 그것을 [`UndeterminableReason`] 로
 /// 접으면 이 코퍼스가 통째로 판정 불가가 된다(`[f09].ordinal_is_not_undeterminable`).
-/// **접지 않는 대신 숨기지도 않는다** — 등급 분포가 산출에 실린다.
+/// **뭉개지 않는 대신 숨기지도 않는다** — 등급 분포가 산출에 실린다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct BindingReport {
     pub binding: BindingId,

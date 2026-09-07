@@ -1,4 +1,4 @@
-//! 봉투의 성분 셋을 사람이 읽는 화면에 적는다 — **접힘 · 로그 · 크기** (옛 F06 §4.3).
+//! 응답 묶음(envelope)의 성분 셋을 사람이 읽는 화면에 적는다 — **이관 · 로그 · 크기** (옛 F06 §4.3).
 //!
 //! # 왜 한 곳인가
 //!
@@ -6,35 +6,39 @@
 //! 아무도 모르고, **빠진 것은 소비자가 셀 수 없다.** F05 가 `print_elision` 을 세우면서
 //! 적은 규율이 그대로다 — *"산출에만 있고 화면에 없으면 사람은 그 공백을 못 본다."*
 //!
-//! # 접힘과 절단을 **다른 줄**에 적는다
+//! # 이관(fold)과 생략(elision)을 **다른 줄**에 적는다
 //!
 //! 한 줄에 뭉개면 *"부피를 옮겼다"* 와 *"못 봤다"* 가 같은 문장이 된다.
 //! `[f06].fold_is_not_elision` 이 타입에서 가른 것을 화면에서도 가른다.
+//!
+//! ⚠ **「생략」을 `fold` 에 주지 않는다.** 소유자가 그 낱말을 `elision` 에 배정했고
+//! (1차 원문 31행), `fold` 는 값이 **있는** 자리다 — 「이관」이 그 자리의 이름이다
+//! (ADR-0034 `D3`).
 
 use pal_core::{Envelope, LogStatus, NotRecorded};
 
-/// 접힌 것 · 로그 상태 · 대략적 크기를 적는다.
+/// 이관된 것 · 로그 상태 · 대략적 크기를 적는다.
 pub fn print<T>(e: &Envelope<T>) {
     for l in lines(e) {
         println!("{l}");
     }
 }
 
-/// 같은 셋을 **줄로** 낸다 — 산출이 표준출력을 쓰고 있으면 부르는 쪽이 표준오류로 보낸다.
+/// 같은 셋을 **줄로** 산출한다 — 산출이 표준출력을 쓰고 있으면 부르는 쪽이 표준오류로 보낸다.
 pub fn lines<T>(e: &Envelope<T>) -> Vec<String> {
     let mut o = Vec::new();
     if e.fold.is_none() {
-        o.push("  접힘      없음 (명시)".to_owned());
+        o.push("  이관      없음 (명시)".to_owned());
     } else {
-        o.push(format!("  접힘      {}건이 다른 질의로 옮겨졌습니다 — **잘린 것이 아닙니다**", e.fold.moved()));
+        o.push(format!("  이관      {}건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다", e.fold.moved()));
         for f in &e.fold.folded {
-            o.push(format!("            {} {}건 → `{}` 가 폅니다", f.what.name(), f.count, f.unfolded_by.name()));
+            o.push(format!("            {} {}건 → `{}` 로 조회할 수 있습니다", f.what.name(), f.count, f.unfolded_by.name()));
         }
     }
 
     match e.log {
         // ⚠ **시간을 여기 안 적는다.** 화면도 산출이고, 회차마다 달라지는 값이 섞이면
-        // 화면을 대는 검사가 시간에 대해 참이 아니게 된다. `--timing` 이 표준오류로 낸다.
+        // 화면을 대는 검사가 시간에 대해 참이 아니게 된다. `--timing` 이 표준오류로 출력한다.
         LogStatus::Recorded { .. } => o.push("  질의 로그  남았습니다".to_owned()),
         LogStatus::NotRecorded { why } => {
             let 사유 = match why {

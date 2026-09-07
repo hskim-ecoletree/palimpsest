@@ -250,7 +250,7 @@ enum Semantic {
 }
 
 impl Semantic {
-    /// 못 걸면 `None` — **부르는 쪽이 그것을 실패로 센다.**
+    /// 못 걸면 `None` — **부르는 쪽이 그것을 실패로 잰다.**
     fn apply(&self, src: &str) -> Option<String> {
         let changed = match self {
             Self::Literal => replace_first(src, "0", "7")?,
@@ -354,7 +354,7 @@ fn 모든_변형이_적어도_한_씨앗을_바꾼다() {
     ];
     for f in &fmts {
         let hit = seeds.iter().any(|s| f.apply(s) != *s);
-        assert!(hit, "포매팅 변형 {f:?} 가 어느 씨앗도 안 바꾼다 — 대조가 꺼져 있다");
+        assert!(hit, "포매팅 변형 {f:?} 가 어느 씨앗도 안 바꾼다 — 대조가 멎어 있다");
     }
     let sems = [
         Semantic::Literal,
@@ -365,6 +365,6 @@ fn 모든_변형이_적어도_한_씨앗을_바꾼다() {
     ];
     for e in &sems {
         let hit = seeds.iter().any(|s| e.apply(s).is_some());
-        assert!(hit, "의미 변형 {e:?} 가 어느 씨앗도 안 바꾼다 — 대조가 꺼져 있다");
+        assert!(hit, "의미 변형 {e:?} 가 어느 씨앗도 안 바꾼다 — 대조가 멎어 있다");
     }
 }

@@ -12,7 +12,7 @@
     ⑤ 객체 리터럴 키 보호 ★
     ⑥ 두 언어에서 정규화가 갈리지 않는다
 
-**② 실 이력 표본은 이 스크립트가 아니라 `--history` 로 낸다** — 합격선이 아니라
+**② 실 이력 표본은 이 스크립트가 아니라 `--history` 로 산출한다** — 합격선이 아니라
 기록이기 때문이다. 선정의 조작적 정의는 `[f03.2.selection]` 에 **측정보다 먼저**
 등록됐고 이 스크립트는 그것을 그대로 실행한다.
 
@@ -67,7 +67,7 @@ def digests(repo: Path, at: str | None, cache: Path) -> dict[tuple, str]:
     """`(경로, 체인, 이름, 종류)` → `body_digest`. **캐시를 새로 만든다.**
 
     `at` 이 `None` 이면 **워킹트리**다 — 변형은 커밋하지 않고 사본 위에 얹으므로
-    그것을 보아야 한다. 기준 산출도 같은 축에서 낸다: 축이 갈리면 무엇이 움직였는지
+    그것을 보아야 한다. 기준 산출도 같은 축에서 산출한다: 축이 갈리면 무엇이 움직였는지
     대신 어느 축에서 봤는지를 재게 된다.
     """
     args = [str(BIN), "ledger", str(repo), "--cache-dir", str(cache), "--symbols"]
@@ -84,7 +84,7 @@ def digests(repo: Path, at: str | None, cache: Path) -> dict[tuple, str]:
         d = json.loads(line)
         # **열쇠에 자리(byte)를 넣지 않는다.** 포매팅이 자리를 통째로 밀어내므로,
         # 넣으면 변형 뒤의 심볼이 **하나도 짝을 못 찾고** 대조가 텅 빈다 —
-        # 그러면 이 검사는 「움직이지 않았다」가 아니라 **「아무것도 안 봤다」** 를 낸다.
+        # 그러면 이 검사는 「움직이지 않았다」가 아니라 **「아무것도 안 봤다」** 를 산출한다.
         # 첫 실행이 그렇게 걸렸다(4,578 중 136 만 짝지어졌다).
         base = (d["path"], tuple(d["container"]), d["name"], d["kind"])
         out[(*base, seen[base])] = d["body"]
@@ -107,7 +107,7 @@ def graph_of(path: Path) -> dict | None:
 # 변형 — **우리가 통제한다. 그래서 ①의 기대값이 100% 다**
 #
 # 각 변형은 **작업 사본을 새로 만든다.** 앞 변형의 결과 위에 쌓으면 무엇이 무엇을
-# 깼는지 알 수 없고, 그것이 F02-4 에서 대조가 꺼진 형태다.
+# 깼는지 알 수 없고, 그것이 F02-4 에서 대조가 멎은 형태다.
 # ═════════════════════════════════════════════════════════════════════════════
 
 
@@ -115,7 +115,7 @@ def fresh_worktree(tmp: Path, tag: str) -> Path:
     """**이름을 고정한다** — 매니페스트가 없으면 `repo_id` 가 디렉터리 이름에서 온다.
 
     회차마다 이름이 달라지면 좌표가 전부 달라지고, 그러면 이 대조는 무엇을 재든
-    「움직였다」를 낸다(F03-1 게이트 §4 에서 실제로 걸린 자리다).
+    「움직였다」를 산출한다(F03-1 게이트 §4 에서 실제로 걸린 자리다).
     """
     base = tmp / tag
     base.mkdir(parents=True)
@@ -241,7 +241,7 @@ def code_mask(raw: bytes) -> list[bool]:
 
 
 def outside_literal_lines(raw: bytes) -> list[bool]:
-    """줄마다 — 그 줄의 시작이 **리터럴 밖**인가. 주석은 밖으로 센다."""
+    """줄마다 — 그 줄의 시작이 **리터럴 밖**인가. 주석은 밖으로 잰다."""
     inside = [False] * (len(raw) + 1)
     for kind, a, z in scan(raw):
         if kind in ("sq", "dq", "tpl", "re"):
@@ -350,7 +350,7 @@ def flip_quotes(src: str) -> str:
     """홑따옴표 ↔ 겹따옴표 — **문자열 리터럴만, 주석과 템플릿은 안 건드린다.**
 
     첫 실행은 주석 안의 아포스트로피(`don't`)를 문자열 시작으로 보고 그 뒤를 통째로
-    삼켰다. 파일이 깨져 심볼 134 개가 사라졌고, **사라진 심볼은 어긋남을 못 낸다.**
+    삼켰다. 파일이 깨져 심볼 134 개가 사라졌고, **사라진 심볼은 어긋남을 못 만든다.**
     """
     raw = src.encode()
     out = bytearray()
@@ -411,7 +411,7 @@ def rename_locals(src: str, path: Path) -> str:
     # 안전하게 바꾸는 방법은 스코프 체인이 준다
 
     `pal symbols --graph` 가 `scopes[].bindings[]`(`symbol == "not_a_symbol"` 인 것)과
-    `refs[]`(`resolved.bound` 의 `scope`·`binding`)를 낸다. 선언 자리와 그것으로
+    `refs[]`(`resolved.bound` 의 `scope`·`binding`)를 산출한다. 선언 자리와 그것으로
     해소된 참조 자리를 **바이트로** 알므로 포획 없이 바꿀 수 있다.
 
     **`ordinal` 심볼에는 걸지 않는다** — 그 심볼에서는 지우지 않는 것이 옳으므로
@@ -454,9 +454,9 @@ def rename_locals(src: str, path: Path) -> str:
     if not targets:
         return src
     # **축약 속성 자리에 쓰이는 이름은 안 바꾼다** — `{ alpha }` 의 `alpha` 는
-    # 지역 참조이면서 **동시에 밖에서 보이는 키**다(옛 F03 §4.2). 바꾸면 만들어 내는
+    # 지역 참조이면서 **동시에 밖에서 보이는 키**다(옛 F03 §4.2). 바꾸면 만들어 산출하는
     # 객체의 키가 달라지므로 요약이 움직이는 것이 **정답**이고, 같이 세면 이 지표가
-    # 정규화가 아니라 변형기를 잡는다. 첫 실행이 그렇게 55% 를 냈다.
+    # 정규화가 아니라 변형기를 잡는다. 첫 실행이 그렇게 55% 를 산출했다.
     #
     # 어휘로 가른다: 앞의 뜻 있는 바이트가 `{` 나 `,` 이고 뒤가 `}` 나 `,` 인 자리.
     # **완전하지 않고, 완전하지 않다는 사실이 여기 적혀 있다** — 넓게 잡아 빼는 쪽이라
@@ -509,7 +509,7 @@ def rename_locals(src: str, path: Path) -> str:
 
     # **자리마다 하나만 고친다.** 선언 자리는 참조로도 한 번 더 나온다 —
     # 그대로 두면 같은 범위를 두 번 갈아 `palL0palL0` 이 되고 파일이 깨진다.
-    # 깨진 파일은 심볼을 잃고, **잃은 심볼은 어긋남을 못 낸다.**
+    # 깨진 파일은 심볼을 잃고, **잃은 심볼은 어긋남을 못 만든다.**
     unique: dict[int, tuple[int, int, str]] = {}
     for e in edits:
         unique[e[0]] = e
@@ -531,7 +531,7 @@ MUTATIONS = {
 
 
 def apply_mutation(name: str, repo: Path) -> int:
-    """작업 사본 전체에 변형을 건다. **바뀐 파일 수**를 낸다 — 0 이면 대조가 꺼진 것이다."""
+    """작업 사본 전체에 변형을 건다. **바뀐 파일 수**를 산출한다 — 0 이면 대조가 멎은 것이다."""
     if name == "prettier":
         p = run(
             ["npx", "--yes", "prettier@3", "--write", "--log-level", "warn", "**/*.ts"],
@@ -580,7 +580,7 @@ def check_formatting(tmp: Path, only: list[str] | None) -> tuple[bool, str, list
             ok = False
             continue
         if touched == 0:
-            lines.append(f"    {name:<10} **어느 파일도 안 바꿨다 — 대조가 꺼져 있다**")
+            lines.append(f"    {name:<10} **어느 파일도 안 바꿨다 — 대조가 멎어 있다**")
             ok = False
             continue
         after = digests(repo, None, tmp / f"cache-{abs(hash(name))}")
@@ -674,7 +674,7 @@ def check_semantic(tmp: Path) -> tuple[bool, str]:
         path.write_bytes(raw[:i] + b"77771" + raw[i + 1 :])
         changed.append(str(path.relative_to(repo)))
     if not changed:
-        return False, "의미 변형이 어느 파일도 안 바꿨다 — **대조가 꺼져 있다**"
+        return False, "의미 변형이 어느 파일도 안 바꿨다 — **대조가 멎어 있다**"
 
     after = digests(repo, None, tmp / "cache-sem")
     by_file = collections.defaultdict(list)
@@ -721,7 +721,7 @@ def history(tmp: Path, want: int) -> None:
 
     print(f"   모집단에서 걸린 것 {len(picked)} · 중복 제거 후 **{len(unique)}**")
     if len(unique) < want:
-        print(f"   ⚠ 목표 {want} 를 못 채웠다 — **채운 수로 낸다. 모집단을 넓히지 않는다**")
+        print(f"   ⚠ 목표 {want} 를 못 채웠다 — **채운 수로 적는다. 모집단을 넓히지 않는다**")
     print()
 
     total_stale = 0
@@ -734,7 +734,7 @@ def history(tmp: Path, want: int) -> None:
             was = digests(repo, parent, tmp / f"h{i}a")
             now = digests(repo, sha, tmp / f"h{i}b")
         except SystemExit:
-            rows.append((sha[:8], repo.name, "—", "—", subject[:52], "대장을 못 냈다"))
+            rows.append((sha[:8], repo.name, "—", "—", subject[:52], "대장을 못 산출했다"))
             continue
         stale = [k for k in (set(was) & set(now)) if was[k] != now[k]]
         gone = len(set(was) - set(now))
@@ -749,7 +749,7 @@ def history(tmp: Path, want: int) -> None:
     for sha, name, stale, gone, subject, extra in rows:
         print(f"   {sha:<10}{name:<24}{stale:>6}{gone:>7}  {subject}  ({extra})")
     print()
-    print(f"   **켜진 `stale` 합계 {total_stale}.** 각각이 진짜 거짓 양성인지는 손 검토이고,")
+    print(f"   **붙은 `stale` 합계 {total_stale}.** 각각이 진짜 거짓 양성인지는 손 검토이고,")
     print("   그 판정은 게이트 `docs/gates/F03-2-normalize.md` §5 에 있다.")
 
 

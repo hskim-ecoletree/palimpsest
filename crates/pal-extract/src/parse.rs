@@ -1,7 +1,7 @@
 //! 언어와 무관한 파싱 뒷일 — 오류 타입 · 정규형 · 회복 지점 세기.
 //!
 //! **셋 다 언어에 의존하지 않는다.** 리프 토큰을 모으고, 주석을 버리고, 선택적
-//! 세미콜론을 버리고, `ERROR`·`MISSING` 노드를 센다. 언어마다 따로 쓰면 **두 언어의
+//! 세미콜론을 버리고, `ERROR`·`MISSING` 노드를 잰다. 언어마다 따로 쓰면 **두 언어의
 //! `body_digest` 가 서로 다른 규칙 위에 서게 되고**, 그러면 같은 리팩터가 한 언어에서만
 //! 결박을 `stale` 로 만든다.
 
@@ -90,7 +90,7 @@ thread_local! {
     ///
     /// 파서는 파싱이 끝나면 상태를 남기지 않는다 — `parse(source, None)` 은 이전 트리를
     /// 쓰지 않는다(증분 파싱은 둘째 인자를 준다). 그래서 **같은 소스는 파서를 재사용해도
-    /// 같은 트리를 낸다**. `[f02.4.pass]` ① 이 그것을 회차 다섯으로 되묻는다.
+    /// 같은 트리를 산출한다**. `[f02.4.pass]` ① 이 그것을 회차 다섯으로 되묻는다.
     static PARSER: RefCell<(Parser, Option<tree_sitter::Language>)> =
         RefCell::new((Parser::new(), None));
 }
@@ -139,7 +139,7 @@ pub fn normalize(node: Node<'_>, source: &[u8]) -> Vec<u8> {
 /// 코드가 같은 요약을 갖는다 — [R-22] 가 경고한 정확히 그 형태다. 그래서 이 함수는
 /// 호출자가 **스코프 해소로** 정한 자리 번호만 받는다.
 ///
-/// `erase(byte)` 는 그 자리의 토큰이 지워야 할 지역이면 자리 번호를 낸다.
+/// `erase(byte)` 는 그 자리의 토큰이 지워야 할 지역이면 자리 번호를 산출한다.
 ///
 /// # 자리 번호가 이름을 대신한다 — 그리고 **번호끼리는 구별된다**
 ///
@@ -172,7 +172,7 @@ fn normalize_into(
         return;
     }
     // **따옴표 종류는 스타일이다** (옛 F03 §3.1). `prettier` 가 가장 자주 바꾸는 것이고,
-    // 안 지우면 포매터 한 번에 문자열을 가진 모든 심볼이 `stale` 로 켜진다.
+    // 안 지우면 포매터 한 번에 문자열을 가진 모든 심볼이 `stale` 로 바뀐다.
     if kind == "string" || is_plain_template(node) {
         normalize_string(out, node, source);
         return;
@@ -262,7 +262,7 @@ fn is_leading_separator(kids: &[Node<'_>], i: usize) -> bool {
 /// # 린터가 둘을 서로 바꾼다
 ///
 /// `` `x` `` 와 `'x'` 는 값이 같고, biome·eslint 의 `prefer-template` / 그 반대 규칙이
-/// 코드베이스마다 한쪽으로 몰아 넣는다. 갈라 두면 그 정리 커밋 하나에 결박이 켜진다.
+/// 코드베이스마다 한쪽으로 몰아 넣는다. 갈라 두면 그 정리 커밋 하나에 결박에 낡음이 붙는다.
 ///
 /// **ditto 의 `0d0f4aab`(*"biome lint:fix template literals"*)이 실제로 그렇게 켰다** —
 /// ①(합성 포매팅)이 아니라 **②(실 이력)의 손 검토가 잡은 자리다.**
@@ -290,7 +290,7 @@ fn normalize_string(out: &mut Vec<u8>, node: Node<'_>, source: &[u8]) {
 
 /// `\n` · `\x41` · `\u{1F600}` … 를 그 값으로.
 ///
-/// **모르는 이스케이프는 다음 글자를 그대로 낸다** — JavaScript 의 규칙이고
+/// **모르는 이스케이프는 다음 글자를 그대로 출력한다** — JavaScript 의 규칙이고
 /// (`\q` 는 `q` 다), 지어내지 않는 쪽이기도 하다.
 fn decode_escape(out: &mut Vec<u8>, raw: &[u8]) {
     let Some(&b'\\') = raw.first() else {
@@ -508,7 +508,7 @@ pub struct MarkedComment {
 ///
 /// ⚠ **벗길 목록(`wrappers`)은 추출기가 넘긴다.** 여기 박으면 *"모든 언어가
 /// TypeScript 처럼 생겼다"* 는 주장이 된다 — Kotlin 은 **빈 목록**이고, 그것이
-/// *"안 봤다"* 가 아니라 *"보고 비었다"* 임을 시험이 센다.
+/// *"안 봤다"* 가 아니라 *"보고 비었다"* 임을 시험이 잰다.
 #[must_use]
 pub fn marked_comments(
     root: Node<'_>,
@@ -531,14 +531,14 @@ fn 모은다(
     out: &mut Vec<MarkedComment>,
 ) {
     let mut cursor = node.walk();
-    // **앞 그룹에 삼켜진 주석은 다시 안 본다.** 접기가 없던 판은 자식마다 독립이었다.
+    // **앞 그룹에 삼켜진 주석은 다시 안 본다.** 합치기가 없던 판은 자식마다 독립이었다.
     let mut 소비된_끝 = 0usize;
     for child in node.named_children(&mut cursor) {
         if child.kind().contains("comment") {
             if child.start_byte() < 소비된_끝 {
                 continue;
             }
-            // ★ **doc 주석만 접는다** — 그 밖은 앞 판 그대로 한 마디가 한 조각이다.
+            // ★ **doc 주석만 합친다** — 그 밖은 앞 판 그대로 한 마디가 한 조각이다.
             let 끝 = if doc_주석인가(child) { 이어지는_doc(child, source) } else { child };
             소비된_끝 = 끝.end_byte();
             let Ok(text) = std::str::from_utf8(&source[child.start_byte()..끝.end_byte()]) else {
@@ -616,8 +616,8 @@ fn 다음_선언(comment: Node<'_>, source: &[u8], wrappers: &[&str]) -> Option<
 /// 이 주석이 **doc 주석**인가 — 문법이 직접 가른 것.
 ///
 /// tree-sitter-rust 는 `///` 를 `(line_comment (outer_doc_comment_marker) (doc_comment))`
-/// 로 낸다. Kotlin·TypeScript 의 주석은 평평한 `comment` 라 이 자식이 없다 —
-/// 그래서 **아래 접기가 두 언어에 구조적으로 안 닿는다.**
+/// 로 산출한다. Kotlin·TypeScript 의 주석은 평평한 `comment` 라 이 자식이 없다 —
+/// 그래서 **아래 합치기가 두 언어에 구조적으로 안 닿는다.**
 fn doc_주석인가(node: Node<'_>) -> bool {
     node.child_by_field_name("doc").is_some()
 }
@@ -626,19 +626,19 @@ fn doc_주석인가(node: Node<'_>) -> bool {
 ///
 /// # 왜 접는가
 ///
-/// tree-sitter-rust 는 연속한 `///` 세 줄을 `line_comment` **세 개**로 낸다.
+/// tree-sitter-rust 는 연속한 `///` 세 줄을 `line_comment` **세 개**로 산출한다.
 /// TypeScript 의 `/** … */` 는 하나다. 안 접으면 ADR 하나를 세 줄에 걸쳐 인용한
 /// 주석이 **조각 3 개**가 되고, 같은 심볼에 같은 뜻의 결박이 3 건 생긴다 —
 /// 수가 부풀고 그 수가 종료 조건의 근거가 된다(#66 사전부검 R1).
 ///
-/// ⚠ **`doc_comment` 자식이 있는 것끼리만 접는다.** 공용 수집기에 무조건 접기를
+/// ⚠ **`doc_comment` 자식이 있는 것끼리만 합친다.** 공용 수집기에 무조건 합치기를
 /// 넣으면 TypeScript 의 `//` 연속이 함께 접혀 **단위시험이 빨개지고 ditto 표식이
 /// 330 → 327 로 준다**(사전부검 R2 실측) — 등록된 금지역 「두 언어 회귀」다.
 ///
 /// ⚠ **빈 줄 판정에 [`사이에_빈_줄`] 을 쓰면 안 된다.** tree-sitter 의
 /// `line_comment` 는 **끝의 줄바꿈을 마디 안에 담는다** — 그러면 `end_byte` 와
 /// 다음 마디의 `start_byte` 사이에 `\n` 이 **하나만** 남아 빈 줄이 안 잡힌다.
-/// (실측: `/// A` · 빈 줄 · `/// B` 가 한 조각으로 접혔다.)
+/// (실측: `/// A` · 빈 줄 · `/// B` 가 한 조각으로 합쳐졌다.)
 /// **줄 번호로 본다** — `line_comment` 는 한 줄짜리라 시작 행이 정확한 자다.
 fn 이어지는_doc<'t>(first: Node<'t>, _source: &[u8]) -> Node<'t> {
     let mut last = first;
@@ -673,7 +673,7 @@ fn 사이에_빈_줄(source: &[u8], from: usize, to: usize) -> bool {
             }
             // 공백은 줄을 안 끊는다.
             b' ' | b'\t' | b'\r' | b'\x0c' => {}
-            // 글자가 있으면 그 줄은 비어 있지 않다 — 다시 센다.
+            // 글자가 있으면 그 줄은 비어 있지 않다 — 다시 헤아린다.
             _ => 줄바꿈 = 0,
         }
     }
@@ -691,7 +691,7 @@ fn 사이에_빈_줄(source: &[u8], from: usize, to: usize) -> bool {
 fn 벗긴다<'a>(node: Node<'a>, wrappers: &[&str]) -> Node<'a> {
     let mut 지금 = node;
     // **깊이를 막는다** — `export declare const` 처럼 겹칠 수 있고, 문법이 자기를
-    // 감싸면 무한이 된다. 넷이면 실물에 충분하고 넘으면 안 벗긴 채로 낸다.
+    // 감싸면 무한이 된다. 넷이면 실물에 충분하고 넘으면 안 벗긴 채로 산출한다.
     for _ in 0..4 {
         if !wrappers.contains(&지금.kind()) {
             return 지금;
@@ -750,7 +750,7 @@ mod marked_comment_tests {
         // ★ **이것이 `[f10.6]` 이 고친 명제 그대로다**(#62 · [ADR-0016]).
         //
         // 옛 시험은 `src[at..].starts_with("export function cancel")` 을 단언했다 —
-        // **그것이 옛 명제였고 옛 고장이었다.** 주석이 낸 바이트가 `export` 키워드
+        // **그것이 옛 명제였고 옛 고장이었다.** 주석이 산출한 바이트가 `export` 키워드
         // 자리를 가리키는데 2층 심볼은 `function` 에서 서므로, `narrative` 의 정확
         // 일치 조회가 **한 바이트 차이로** 못 찾았다(못 붙은 307 중 211 · #62).
         //
@@ -815,7 +815,7 @@ mod marked_comment_tests {
 
     #[test]
     fn 코틀린도_심볼이_서는_자리에_붙는다() {
-        // ★ **`래퍼` 가 빈 것이 「안 봤다」가 아니라 「보고 비었다」임을 이 시험이 센다.**
+        // ★ **`래퍼` 가 빈 것이 「안 봤다」가 아니라 「보고 비었다」임을 이 시험이 잰다.**
         // ⚠ **실 코퍼스로는 못 잰다** — portal-backend 의 `.kt` 에 `ADR-` 주석이
         // **0 건**이고 그것은 0% 가 아니라 **대조 불가**다(`[f10.6].language_ruling`).
         for src in [
@@ -857,28 +857,28 @@ mod marked_comment_tests {
     #[test]
     fn doc_주석_연속은_한_조각이다() {
         // ★ **음성 대조 ③이 걸린 자리다.** tree-sitter-rust 는 `///` 를 줄마다
-        // 별개 `line_comment` 로 낸다 — 안 접으면 ADR 하나가 조각 셋이 되고
-        // 같은 뜻의 결박이 세 번 선다.
+        // 별개 `line_comment` 로 산출한다 — 안 접으면 ADR 하나가 조각 셋이 되고
+        // 같은 뜻의 결박이 세 번 성립한다.
         let c = rs("/// @decision: 첫 줄\n/// 이어지는 줄\n/// 셋째 줄\nfn f() {}");
-        assert_eq!(c.len(), 1, "접히지 않았다");
+        assert_eq!(c.len(), 1, "안 뭉개졌다");
         assert!(c[0].text.contains("셋째 줄"), "마지막 줄이 조각에 안 들어왔다");
-        assert!(c[0].attaches_to_byte.is_some(), "접은 뒤 좌표를 잃었다");
+        assert!(c[0].attaches_to_byte.is_some(), "뭉갠 뒤 좌표를 잃었다");
     }
 
     #[test]
-    fn 빈_줄이_doc_접기를_끊는다() {
-        // 접기가 빈 줄을 넘으면 서로 다른 선언의 주석이 한 조각이 된다.
+    fn 빈_줄이_doc_합치기를_끊는다() {
+        // 합치기가 빈 줄을 넘으면 서로 다른 선언의 주석이 한 조각이 된다.
         let c = rs("/// @decision: 앞\n\n/// @decision: 뒤\nfn f() {}");
-        assert_eq!(c.len(), 2, "빈 줄을 넘어 접혔다");
+        assert_eq!(c.len(), 2, "빈 줄을 넘어 합쳐졌다");
     }
 
     #[test]
-    fn 접기가_다른_두_언어에_안_닿는다() {
+    fn 합치기가_다른_두_언어에_안_닿는다() {
         // ★ **등록된 금지역 「기존 두 언어 회귀」의 단위 시험이다.**
         // `doc_comment` 자식은 tree-sitter-rust 고유 마디라 TS·Kotlin 의 연속
-        // 주석은 접히면 안 된다 — 접히면 ditto 표식이 330 에서 준다.
+        // 주석은 뭉개지면 안 된다 — 뭉개지면 ditto 표식이 330 에서 준다.
         let c = ts("// @decision: 첫 줄\n// @decision: 둘째 줄\nexport class C {}");
-        assert_eq!(c.len(), 2, "TypeScript 주석이 접혔다");
+        assert_eq!(c.len(), 2, "TypeScript 주석이 합쳐졌다");
     }
 
     #[test]

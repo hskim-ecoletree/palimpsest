@@ -23,7 +23,7 @@
 //! # 이 크레이트는 의도 저장소에 닿지 않는다
 //!
 //! 지우는 API 가 여기 살기 때문이다(R-21). 아직 그런 API 는 없지만 — `prune` 은
-//! F04 다 — 경계는 내용보다 먼저 선다.
+//! F04 다 — 경계는 내용보다 먼저 성립한다.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -165,7 +165,7 @@ pub trait ExtractCache: Send + Sync {
     /// 직렬화·쓰기·이동 중 하나가 실패하면.
     fn put<T: Serialize>(&self, key: &CacheKey, value: &T) -> Result<(), CacheError>;
 
-    /// 지금 얼마나 차 있는가 — `pal cache stats` 가 내는 값.
+    /// 지금 얼마나 차 있는가 — `pal cache stats` 가 산출하는 값.
     ///
     /// # Errors
     /// 디렉터리를 훑지 못하면.
@@ -348,13 +348,13 @@ impl ExtractCache for BlobCache {
     /// # 왜 셋인가 — 문서와 옛 코드가 반대였다 (F04 · #7)
     ///
     /// F04 문서 §4 는 *"역직렬화 실패 시 그 엔트리만 버리고 재계산 + 경고 로그"* 라
-    /// 적었고, 옛 코드는 반대로 `Err` 를 냈다 — *"깨진 캐시를 조용히 미스로 만들지
+    /// 적었고, 옛 코드는 반대로 `Err` 를 산출했다 — *"깨진 캐시를 조용히 미스로 만들지
     /// 않는다. 그러면 손상이 성능 저하로만 보이고 영원히 발견되지 않는다."*
     /// **둘 다 근거가 있다.** 문서는 *진행해야 한다*(1층은 순수 캐시다 · §3.1)를,
     /// 코드는 *조용하면 안 된다*를 지킨다.
     ///
     /// 그리고 **축출이 생기면서 문제가 한 겹 깊어졌다** — 축출 뒤에는 **없는 엔트리가
-    /// 정상**이다. 그러면 *"없다"* 와 *"깨졌다"* 를 한 값으로 접을 수 없다. 접으면
+    /// 정상**이다. 그러면 *"없다"* 와 *"깨졌다"* 를 한 값으로 뭉갤 수 없다. 뭉개면
     /// 적중률 숫자가 무엇을 세는지 알 수 없게 된다.
     ///
     /// 그래서 [ADR-0005](부재는 종류를 싣는다)를 조회에 그대로 적용했다. 진행하고
@@ -460,7 +460,7 @@ impl ExtractCache for BlobCache {
     ///
     /// 숫자만 내고 안 지우는 구현이 [`EvictReport`] 하나만 보면 통과한다
     /// (`corpus/criteria.toml` `[f04.pass]` ④). 그래서 지운 뒤의 **남은 수**를 함께
-    /// 낸다 — 부르는 쪽이 실제 파일 수와 댈 수 있다.
+    /// 산출한다 — 부르는 쪽이 실제 파일 수와 댈 수 있다.
     fn evict_to(&self, budget_bytes: u64) -> Result<EvictReport, CacheError> {
         let (mut entries, _) = self.entries()?;
         let scanned = entries.len();
@@ -636,7 +636,7 @@ impl CacheStats {
         self.misses += 1;
     }
 
-    /// 깨진 것을 센다. **미스도 함께 센다** — 값을 못 얻었으므로 재계산이 일어나고,
+    /// 깨진 것을 헤아린다. **미스도 함께 헤아린다** — 값을 못 얻었으므로 재계산이 일어나고,
     /// 그러면 `hits + misses` 가 본 파일 수와 같다는 성질이 유지된다.
     pub const fn corrupt(&mut self) {
         self.corrupt += 1;
@@ -670,7 +670,7 @@ mod tests {
 
     const V: ExtractorVersion = ExtractorVersion { grammar: "g", extractor: "e" };
 
-    /// 시험용 능력 축 — 실물은 `pal_extract::capability_axis()` 가 낸다.
+    /// 시험용 능력 축 — 실물은 `pal_extract::capability_axis()` 가 산출한다.
     const 능력: &str = "Kotlin|exports=not-built:F02/kotlin-exports";
 
     fn 키(blob: ObjectName, v: ExtractorVersion) -> CacheKey {
@@ -698,7 +698,7 @@ mod tests {
         fs::write(&자리, "zstd 가 아니다").unwrap();
 
         let Lookup::Corrupt { quarantined, .. } = c.lookup::<값>(&k).unwrap() else {
-            panic!("깨진 것을 미스나 적중으로 냈다");
+            panic!("깨진 것을 미스나 적중으로 산출했다");
         };
         assert!(quarantined.exists(), "격리한다며 지웠다");
         assert_eq!(fs::read(&quarantined).unwrap(), "zstd 가 아니다".as_bytes());
@@ -844,7 +844,7 @@ mod tests {
     }
 
     #[test]
-    fn 통계는_전부를_센다() {
+    fn 통계는_전부를_잰다() {
         let mut s = CacheStats::default();
         s.hit();
         s.hit();

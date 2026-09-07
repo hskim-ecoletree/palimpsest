@@ -1,11 +1,11 @@
-//! 2층에 사는 것 중 심볼이 아닌 것 — **파일 노드와 참조 엣지.**
+//! 2층에 있는 것 중 심볼이 아닌 것 — **파일 노드와 참조 엣지.**
 //!
 //! [`crate::SymbolNode`] 는 `touch` 가 먼저 필요로 해서 그쪽에 있다. 여기 있는 둘은
 //! **F05 의 1패스 스티칭이 처음 만드는 것**이다(옛 F05 §4).
 //!
 //! # 저장 기술이 여기 없다
 //!
-//! 이 크레이트는 `redb` 를 모른다(stack §4.1). 여기 있는 것은 *"2층에 무엇이 사는가"*
+//! 이 크레이트는 `redb` 를 모른다(stack §4.1). 여기 있는 것은 *"2층에 무엇이 있는가"*
 //! 이고 *"어떻게 담기는가"* 는 `pal-store` 다.
 //!
 //! # 왜 파일이 노드인가
@@ -89,7 +89,7 @@ impl RefCounts {
     }
 }
 
-/// 2층에 사는 파일 하나.
+/// 2층에 있는 파일 하나.
 ///
 /// **[graph-node] `File`** — `schema/graph.toml`
 ///
@@ -173,7 +173,7 @@ impl FileRow {
 ///
 /// # 왜 등급이 `scoped` 로 고정인가
 ///
-/// 이 엣지는 **스코프 해소로 후보가 유일할 때만** 선다
+/// 이 엣지는 **스코프 해소로 후보가 유일할 때만** 성립한다
 /// ([`crate::ResolutionGrade::Scoped`] 의 정의 그대로). 후보가 여럿인 경우가 이 층에
 /// 없으므로 등급을 실을 자리가 필요 없다 — `BOUND_TO` 가 `exact` 하나뿐인 것과 같은 형태다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -331,7 +331,7 @@ mod tests {
             export_digest: Capable::Present(ExportDigest::from_bytes([3; 32])),
             refs: Capable::Present(RefCounts::default()),
         });
-        let err = row.restore(&안만듦(), &안만듦()).expect_err("어긋남을 안 냈다");
+        let err = row.restore(&안만듦(), &안만듦()).expect_err("어긋남을 안 산출했다");
         assert_eq!(err.slot, "export_digest");
         assert!(err.cached_built, "저장이 안 만든 자리를 만들었다고 적었다");
     }
@@ -481,7 +481,7 @@ mod tests {
     }
 
     #[test]
-    fn 자리가_어긋나면_엣지를_하나도_안_낸다() {
+    fn 자리가_어긋나면_엣지를_하나도_안_산출한다() {
         // **틀린 엣지가 없는 엣지보다 나쁘다**(C2). 길이가 다르면 `LocalIx` 가 가리키는
         // 자리가 다른 심볼이고, 그것은 조용한 오답이다.
         let (symbols, _, chain) = 판();

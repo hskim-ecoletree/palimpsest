@@ -308,11 +308,13 @@ pub fn print_screen(c: &Computed) {
         "  신호별       {}",
         d.by_source().iter().map(|(k, v)| format!("{k} {v}")).collect::<Vec<_>>().join(" · ")
     );
-    println!("  pending→live {}", d.promoted_from_pending);
+    // ⚠ 「live」 는 옛 F12 의 낱말이고 이 열거에는 그 변형이 없다 — 실제 변형은
+    // `PlanBindingState::Bound` 다. 화면이 없는 이름을 부르고 있었다(#110).
+    println!("  좌표가 생긴 것(pending→bound) {}", d.promoted_from_pending);
     println!();
 }
 
-/// 답의 모양 한 줄 — `pal query plan.deviation` 이 이것만 낸다.
+/// 답의 모양 한 줄 — `pal query plan.deviation` 이 이것만 출력한다.
 #[must_use]
 pub fn 한_줄_deviation(d: &Deviation) -> String {
     format!(
@@ -324,12 +326,25 @@ pub fn 한_줄_deviation(d: &Deviation) -> String {
     )
 }
 
+/// 사람 화면의 한 줄. **원 표기와 사용자 언어를 함께 적는다**([ADR-0033] §3).
+///
+/// ⚠ 앞 판은 `Pending` 을 `{why:?}` 로 찍어 **Rust `Debug`**(`PathAbsent`)가 그대로
+/// 나갔고, `Unresolved` 는 와이어 토큰만 나갔다 — 둘 다 `C1` 의 목록 밖이었다
+/// (독립 리뷰 R5 · 발견 4).
 fn 상태_한_줄(s: &PlanBindingState) -> String {
     match s {
-        PlanBindingState::Bound { targets } => format!("bound {}", targets.len()),
-        PlanBindingState::Pending { why } => format!("pending ({why:?})"),
+        PlanBindingState::Bound { targets } => {
+            format!("걸림(bound) {}", targets.len())
+        }
+        PlanBindingState::Pending { why } => {
+            format!("대기(pending) — {}", crate::label::대기_사유(*why).병기())
+        }
         PlanBindingState::Unresolved { why, candidates } => {
-            format!("unresolved ({} · 후보 {})", why.name(), candidates.len())
+            format!(
+                "미해소(unresolved) — {} · 후보 {}",
+                crate::label::미해소_사유(*why).병기(),
+                candidates.len()
+            )
         }
     }
 }

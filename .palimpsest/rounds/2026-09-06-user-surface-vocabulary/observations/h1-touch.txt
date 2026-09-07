@@ -1,0 +1,42 @@
+
+  SymbolKind  ·  palimpsest@213d3ee+worktree#93aebfd04620
+  enum · crates/pal-core/src/symbol.rs:34 · identity ordinal · body b69aec5792f8
+
+■ 이 좌표에 걸린 것 (1)
+  [5e6bbbac89053565] 최신 상태(fresh)  ·  symbol 반경 · 감시 1
+      ③ `SymbolKind` 를 접지 않고 늘린다
+      종류는 `SymbolId::compute` 의 성분이므로 정직한 이름이 곧 정직한 좌표다.
+      `pal symbols` 가 `struct` 를 `class` 라 부르면 그것이 거짓이고, 그 거짓이 좌표에 실린다.
+      ⚠ 처음에 적은 근거는 틀렸다. "접으면 충돌이 6.1% → 11.2% 로 는다" 라 적었는데
+      추출기가 선 뒤 재니 접어도 안 늘었다(cargo 380 에서 215 그대로). 그 수는
+      사전부검이 격리 스파이크로 잰 것이고 저장소에 안 남았다 — 독립 리뷰 R3 이 잡았다.
+      충돌 감소는 부수 효과였고 이 코퍼스에서는 0 이다. 지금은
+      `--example coord_collisions` 가 그 축을 잰다.
+      변형을 뒤에 더하는 것은 기존 이름을 안 움직인다 — `kind.name()` 문자열을 쓰기
+      때문이고, F02-1 이 TypeScript 에서 이미 그 선례를 만들었다.
+■ 이 좌표를 지켜보는 것 (0)
+  아직 없습니다.
+■ 이 심볼이 하는 것
+  호출자 0 · 피호출자 0
+  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
+■ 내가 모르는 것
+  (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
+■ 효과
+  (이 빌드에는 effects 능력이 없습니다 — F13 미구축)
+■ 판정
+  (이 빌드에는 judgment 능력이 없습니다 — F15 미구축)
+
+■ 이 답의 근거
+  Snapshot  palimpsest@213d3ee+worktree
+  대장      parsed 135 · partial 0 · unsupported 638 · unrecognized 293 / 1067 파일
+            결박 불가 언어 7개 — 그 파일들에는 좌표가 없습니다
+  2층       심볼 3087 색인됨
+  워킹트리  일치
+  재구축    아님
+  생략      없음 (명시)
+  이관      1067건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1067건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 867 토큰 **이상** (잰 것: 3471 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F07 · F08 · F13 · F15
+

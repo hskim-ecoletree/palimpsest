@@ -1,0 +1,3 @@
+측정 커밋 19b5877 (+worktree 깨끗). 산출물은 전부 스크래치패드. 저장소 무수정.
+빌드: cargo build -q -p pal-cli  → exit 0 → ./target/debug/pal
+인덱스: pal query ledger.snapshot --repo . --cache-dir $SP/cache --index $SP/index.redb --intent $SP/intent.redb

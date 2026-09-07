@@ -47,7 +47,7 @@ def 스키마():
     out = subprocess.run(
         [sys.executable, os.path.join(여기, "record.py"), "--schema"],
         # ⚠ **`encoding` 을 못 박는다.** `text=True` 만 주면 Windows 가 로케일
-        #    인코딩(cp949·cp1252)으로 읽어 한글이 `UnicodeDecodeError` 를 낸다 —
+        #    인코딩(cp949·cp1252)으로 읽어 한글이 `UnicodeDecodeError` 를 산출한다 —
         #    macOS 에서는 **원리상 안 보이는 자리**다(ADR-0023 · CI 실측 2026-08-24).
         capture_output=True, text=True, encoding="utf-8", check=True)
     return json.loads(out.stdout)["반환형식"]
@@ -87,9 +87,9 @@ def 펜스밖(text):
 
 
 def 표들(text, 별칭):
-    """표마다 (열이름목록, 데이터행들, 원문행들) 을 낸다.
+    """표마다 (열이름목록, 데이터행들, 원문행들) 을 산출한다.
 
-    ⚠ **원문을 함께 낸다** — 좌표는 백틱 안에 살고, 정규화가 그것을 벗기면
+    ⚠ **원문을 함께 싣는다** — 좌표는 백틱 안에 있고, 정규화가 그것을 벗기면
     산문 첫 낱말을 좌표로 집게 된다(실측: 「커밋」·「네」·「잠근」).
     """
     lines = text.split("\n")
@@ -258,7 +258,7 @@ def _정체성없는비용(a, b):
 
 
 def _헝가리(cost):
-    """정사각 비용 행렬의 최소 배정 `(합, 행별 열)`을 낸다."""
+    """정사각 비용 행렬의 최소 배정 `(합, 행별 열)`을 산출한다."""
     n = len(cost)
     u, v, p, way = [0] * (n + 1), [0] * (n + 1), [0] * (n + 1), [0] * (n + 1)
     for i in range(1, n + 1):
@@ -392,7 +392,12 @@ def main(argv):
                 d[칸] = (직접 if 직접 in 값들 else
                          next((v for v in 값들 if re.search(r"(?:^|[ ·(])" + v, 직접)),
                               next((v for v in 값들 if re.search(칸 + r"\s*:\s*" + v, 합친값)), 기본)))
-    접두 = {"독립리뷰": "IR", "사전부검": "PM"}[출처]
+    # 출처마다 id 접두가 다르다. **모르는 출처는 그렇다고 말한다** — `KeyError` 로
+    # 죽으면 부르는 쪽(`xtask`)이 「추출기가 없다」와 「출처가 새로 생겼다」를 못 가른다.
+    접두표 = {"독립리뷰": "IR", "사전부검": "PM", "정반합": "DL", "조건평가": "CA"}
+    if 출처 not in 접두표:
+        raise SystemExit(f"모르는 출처다: {출처!r} — 아는 것은 {sorted(접두표)} 다")
+    접두 = 접두표[출처]
     산출 = []
     for i, d in enumerate(항, 1):
         산출.append({

@@ -33,7 +33,7 @@ pub const PAL: &str = env!("CARGO_BIN_EXE_pal");
 // 옛 회차는 `Command::new("shasum")` 으로 댔고, 그것이 **유닉스 밖에서 `NotFound`** 였다
 // (Windows 실측 2026-08-16: 이 자리 하나가 시험 넷을 통째로 죽였다). 그런데 더 중요한
 // 것은 **`shasum` 이 애초에 틀린 오라클**이라는 점이다 — 매니페스트가 적는 값은
-// [`sha256::내용`], 즉 **줄바꿈을 정규화한 뒤의** sha256 이다. `core.autocrlf` 가 켜진
+// [`sha256::내용`], 즉 **줄바꿈을 정규화한 뒤의** sha256 이다. `core.autocrlf` 가 걸린
 // 워킹트리에서 둘은 다른 값이고, `shasum` 으로 대면 CRLF 파일마다 거짓 실패가 난다.
 //
 // # 그러면 오라클은 무엇인가
@@ -63,9 +63,9 @@ pub fn 해시(path: &Path) -> String {
     sha256::내용(&std::fs::read(path).expect("읽기"))
 }
 
-/// 저장소 루트 기준 상대 경로 — **구분자를 언제나 `/` 로 낸다.**
+/// 저장소 루트 기준 상대 경로 — **구분자를 언제나 `/` 로 산출한다.**
 ///
-/// ★ 스냅샷의 **키**가 되는 값이다. `read_dir` 이 낸 경로는 Windows 에서 `\` 를 쓰는데
+/// ★ 스냅샷의 **키**가 되는 값이다. `read_dir` 이 산출한 경로는 Windows 에서 `\` 를 쓰는데
 /// 대조 상수(`.claude/settings.json` 따위)와 매니페스트의 `path` 는 전부 `/` 다 —
 /// 맞춰 두지 않으면 `remove(".claude/settings.json")` 이 아무것도 안 지우고,
 /// **그래서 왕복 동일성·기존 파일 불가침·매니페스트 대조가 이 플랫폼에서 한 번도
@@ -124,7 +124,7 @@ pub fn git(cwd: &Path, args: &[&str]) {
     assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
 }
 
-/// `pal` 을 돌리고 표준출력을 낸다. **실패하면 멈춘다** — 조용한 성공이 없어야 한다.
+/// `pal` 을 돌리고 표준출력을 산출한다. **실패하면 멈춘다** — 조용한 성공이 없어야 한다.
 pub fn pal(cwd: &Path, args: &[&str]) -> String {
     let out = Command::new(PAL).args(args).current_dir(cwd).output().expect("pal 을 못 돌렸다");
     assert!(
@@ -164,7 +164,7 @@ fn 훑기(root: &Path, dir: &Path, 빼는_이름: &str, out: &mut BTreeMap<Strin
     }
 }
 
-/// 캐시 디렉터리 안의 엔트리 파일 수 — **격리 방은 빼고 센다.**
+/// 캐시 디렉터리 안의 엔트리 파일 수 — **격리 방은 빼고 헤아린다.**
 pub fn 캐시_엔트리_수(cache: &Path) -> usize {
     let mut n = 0;
     let Ok(shards) = std::fs::read_dir(cache) else { return 0 };

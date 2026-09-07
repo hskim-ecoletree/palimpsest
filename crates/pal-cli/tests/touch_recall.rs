@@ -5,7 +5,7 @@
 //! # 왜 실물 바이너리인가
 //!
 //! 여기서 재는 것 넷 중 셋이 **표면의 사실**이다 — 상한이 실제로 걸리는가, 잘린 수가
-//! 산출에 실리는가, 낡은 것이 상한을 이기는가. API 를 부르면 *"이 함수가 이렇게 센다"*
+//! 산출에 실리는가, 낡은 것이 상한을 이기는가. API 를 부르면 *"이 함수가 이렇게 잰다"*
 //! 까지만 알고, `pal touch` 가 그 함수를 지나는지는 모른다. **F11 이 반증될 수 있는
 //! 자리가 정확히 거기다** — 계산은 옳은데 화면에 안 오는 것.
 
@@ -56,7 +56,7 @@ fn touch(root: &Path, 방: &[String], name: &str, 더: &[&str]) -> serde_json::V
     args.extend(방.iter().map(String::as_str));
     args.extend(더);
     args.push("--json");
-    serde_json::from_str(&pal(root, &args)).expect("봉투 JSON")
+    serde_json::from_str(&pal(root, &args)).expect("응답 묶음 JSON")
 }
 
 fn bind(root: &Path, 방: &[String], target: &str, note: &str, radius: &str) {
@@ -106,7 +106,7 @@ fn 다른_좌표에_걸린_규칙이_이_좌표에서_뜬다() {
     // **어디에 걸렸는지가 다음 행동을 정한다.** 좌표가 없으면 고치러 갈 데를 모른다.
     assert_eq!(w[0]["at"]["at"], "elsewhere");
     assert_eq!(w[0]["at"]["place"]["name"], "deriveVerdicts");
-    // **반경이 판정과 함께 실린다** — *"`files:1` 반경에서 live"* 는 *"유효하다"* 와 다르다.
+    // **반경이 판정과 함께 실린다** — *"`files:1` 반경에서 fresh"* 는 *"유효하다"* 와 다르다.
     assert_eq!(w[0]["radius"], "files:1");
 
     // ★ **대상 좌표에서는 「걸린 것」이고 「지켜보는 것」이 아니다** — 두 목록이 겹치면
@@ -158,7 +158,7 @@ fn 상한을_넘으면_자르고_그_수를_싣는다() {
 
     let v = touch(&root, &방, "deriveVerdicts", &[]);
     assert_eq!(걸린_것(&v).len(), 상한, "상한이 안 걸렸다: {}", 걸린_것(&v).len());
-    // **조용한 절단이 없다.**
+    // **조용한 생략이 없다.**
     assert_eq!(잘린_수(&v), 2, "잘린 수가 안 실렸다: {v}");
 
     // 손잡이를 낮추면 더 잘린다 — 상한이 실재한다는 증거다.
@@ -194,8 +194,17 @@ fn 낡은_것은_상한에_걸려도_실린다() {
     // 상한을 **1** 로 낮춰도 낡은 셋이 전부 실려야 한다.
     let v = touch(&root, &방, "mirrorVerdicts", &["--binding-max", "1"]);
     let items = 걸린_것(&v);
+    // ★ **하한** — 키가 없으면 여기서 죽는다. 앞 판은 `["state"]` 를 읽었는데 실제 태그는
+    //   `"freshness"` 라 값이 늘 `null` 이었고, `null != "fresh"` 가 항상 참이라 아래 필터가
+    //   전수 통과했다. **아무것도 안 재면서 초록이었다.**
+    for i in items {
+        assert!(
+            i["status"]["code"]["freshness"].is_string(),
+            "`status.code.freshness` 가 없다 — 이 시험이 아무것도 안 잰다: {i}"
+        );
+    }
     let 낡은: Vec<&serde_json::Value> =
-        items.iter().filter(|i| i["status"]["code"]["state"] != "live").collect();
+        items.iter().filter(|i| i["status"]["code"]["freshness"] != "fresh").collect();
     assert_eq!(낡은.len(), 3, "낡은 것이 상한에 잘렸다: {v}");
     assert_eq!(items.len(), 3, "낡지 않은 것까지 실렸다: {v}");
     // 낡은 것만 남았으므로 자를 것이 없다 — **상한이 낡음을 이기지 않는다.**
@@ -203,7 +212,12 @@ fn 낡은_것은_상한에_걸려도_실린다() {
 
     // ★ **낡은 것이 맨 앞이다** — 정렬이 사실 기반인지의 산출 수준 검사.
     let v = touch(&root, &방, "mirrorVerdicts", &[]);
-    assert_ne!(걸린_것(&v)[0]["status"]["code"]["state"], "live");
+    let 맨앞 = &걸린_것(&v)[0];
+    assert!(
+        맨앞["status"]["code"]["freshness"].is_string(),
+        "`status.code.freshness` 가 없다 — 정렬 검사가 아무것도 안 잰다: {맨앞}"
+    );
+    assert_ne!(맨앞["status"]["code"]["freshness"], "fresh");
 
     let _ = std::fs::remove_dir_all(&root);
 }
@@ -258,7 +272,7 @@ fn 두_표면이_같은_답을_내고_로그를_남긴다() {
     let mut args: Vec<&str> = vec!["query", "binding.touch", "writeHandoff"];
     args.extend(방.iter().map(String::as_str));
     args.push("--json");
-    let q: serde_json::Value = serde_json::from_str(&pal(&root, &args)).expect("봉투 JSON");
+    let q: serde_json::Value = serde_json::from_str(&pal(&root, &args)).expect("응답 묶음 JSON");
     // 같은 실행기를 지나므로 **답의 알맹이가 같다.** 겉옷만 다르다.
     assert_eq!(q["answer"]["outcome"], "touch");
     assert_eq!(q["answer"]["result"]["symbol"]["name"], "writeHandoff");

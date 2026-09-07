@@ -32,7 +32,7 @@ pub(crate) static TYPESCRIPT: TypeScriptExtractor = TypeScriptExtractor;
 /// **벗길 래퍼 넷** — `[f10.6].attachment_ruling` 처분 (다).
 ///
 /// `export` 는 **가시성**을, `const`/`let`/`var` 는 **저장 종류**를 적을 뿐
-/// **선언이 아니다.** 심볼은 안쪽 마디에서 선다 — `export_statement` 는
+/// **선언이 아니다.** 심볼은 안쪽 마디에서 잡힌다 — `export_statement` 는
 /// [`TsWalk::visit_export`] 를 거쳐 안쪽 선언에서, `lexical_declaration` 은
 /// [`TsWalk::visit_declarators`] 를 거쳐 `variable_declarator` 에서.
 /// **그 차이를 안 지우면 주석의 좌표가 한 바이트 어긋나 미결박이 된다**(#62).
@@ -46,7 +46,7 @@ const 래퍼: [&str; 4] = [
 /// TypeScript 추출기.
 ///
 /// **`.tsx` 는 이 문법이 아니다.** `tree_sitter_typescript` 는 `LANGUAGE_TYPESCRIPT` 와
-/// `LANGUAGE_TSX` 둘을 낸다. 지금 붙인 것은 앞쪽 하나이고, `.tsx` 를 같은 문법으로
+/// `LANGUAGE_TSX` 둘을 산출한다. 지금 붙인 것은 앞쪽 하나이고, `.tsx` 를 같은 문법으로
 /// 읽으면 JSX 가 통째로 `ERROR` 가 되어 **`partial` 이 문법 부재를 가린다.**
 /// 그 자리는 빚으로 남긴다 — 판정은 `docs/gates/F02-1-extractor.md`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -120,7 +120,7 @@ enum Scope {
 /// 심볼을 내지 않는다** — 그 사실은 게이트에 적힌다.
 const UNNAMEABLE: [&str; 3] = ["computed_property_name", "array_pattern", "object_pattern"];
 
-/// 순회가 낸 선언 하나 — **아직 요약이 없다.**
+/// 순회가 산출한 선언 하나 — **아직 요약이 없다.**
 ///
 /// # 왜 [`Symbol`] 을 바로 만들지 않는가
 ///
@@ -196,7 +196,7 @@ impl<'a, 't> Walk<'a, 't> {
         }
     }
 
-    /// 이름 있는 자식을 차례로 본다. 돌려주는 것은 **이 층에서 직접 낸 심볼**이다 —
+    /// 이름 있는 자식을 차례로 본다. 돌려주는 것은 **이 층에서 직접 산출한 심볼**이다 —
     /// `export` 가 무엇을 내보냈는지 알아야 하기 때문이고, 중첩된 것은 포함되지 않는다.
     fn children(
         &mut self,
@@ -478,7 +478,7 @@ fn grade_of_symbol(scoped: &Scoped, start: usize, end: usize) -> IdentityGrade {
 /// # 자리 번호는 **선언 순서**다
 ///
 /// 참조 순서로 매기면 본문에서 쓰는 순서만 바꿔도 요약이 바뀐다. 선언 순서로 매기면
-/// 이름만 바꾼 두 소스가 같은 값을 내고(불변식 A), 선언 순서를 바꾸면 다른 값을 낸다.
+/// 이름만 바꾼 두 소스가 같은 값을 내고(불변식 A), 선언 순서를 바꾸면 다른 값을 산출한다.
 fn digest_of(scoped: &Scoped, node: Node<'_>, source: &[u8], identity: IdentityGrade) -> BodyDigest {
     BodyDigest::of_normalized(&normalized_of(scoped, node, source, identity))
 }
@@ -506,12 +506,12 @@ fn normalized_of(
     // 처음에는 선언 자리가 심볼 안인 것만 모았다. 그러면 **중첩된 심볼이 바깥 함수의
     // 지역을 가리킬 때 그 이름이 안 지워진다** — `function outer(){ const out=[];
     // function walk(){ out.push(1) } }` 에서 `walk` 의 요약에 `out` 이 이름 그대로
-    // 남고, 바깥의 `out` 을 리네임하면 `walk` 가 `stale` 로 켜진다. 의미는 안 변했는데.
+    // 남고, 바깥의 `out` 을 리네임하면 `walk` 가 `stale` 로 바뀐다. 의미는 안 변했는데.
     //
     // ditto 실측에서 그 형태가 **10 건**이었고 전부 중첩 함수였다(`scanLocalJars.walk` ·
     // `walkFiles.walk` · `reduceEvents.effective` …).
     //
-    // **선언 순서로 번호를 매기되 가리키는 것만 센다.** 파일 어딘가의 무관한 지역이
+    // **선언 순서로 번호를 매기되 가리키는 것만 헤아린다.** 파일 어딘가의 무관한 지역이
     // 늘어도 번호가 밀리지 않는다 — 밀리면 이유 없는 `stale` 이 된다.
     let mut order: Vec<(u32, u32, usize)> = Vec::new(); // (scope, binding, declared_at)
     for r in &scoped.chain.refs {
@@ -540,7 +540,7 @@ fn normalized_of(
         //
         // **①(합성 포매팅)은 이것을 못 잡았다** — 리네임 변형이 `exact` 심볼 **안**의
         // 바인딩만 건드리므로 import 를 건드릴 일이 없었다. 잡은 것은 ②(실 이력)의
-        // 손 검토다. 두 측정을 가른 옛 F03 §6.2 의 판단이 여기서 값을 냈다.
+        // 손 검토다. 두 측정을 가른 옛 F03 §6.2 의 판단이 여기서 값을 산출했다.
         if scope == ScopeIx(0) {
             continue;
         }
@@ -670,7 +670,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
     #[test]
     fn 타입_파라미터_이름은_exact_에서_지워진다() {
         // 타입 파라미터도 **그 심볼 안에서 선언된 심볼 아닌 이름**이다 — 지우지 않으면
-        // `<T>` 를 `<U>` 로 바꾸는 리팩터가 결박을 `stale` 로 켠다.
+        // `<T>` 를 `<U>` 로 바꾸는 리팩터가 결박을 `stale` 로 바꾼다.
         let 요약 = |s: &str| 그래프(s).symbols[0].body;
         assert_eq!(
             요약("function pick<T>(x: T): T { return x; }"),
@@ -730,7 +730,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
         let ns = export_집합("export * as m from './m';");
         assert_eq!(ns.names, vec!["m".to_owned()]);
-        assert!(ns.star_from.is_empty(), "이름이 있는데 별로 접었다");
+        assert!(ns.star_from.is_empty(), "이름이 있는데 별로 뭉갰다");
     }
 
     #[test]
@@ -755,7 +755,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
     #[test]
     fn 주석과_포매팅은_요약을_바꾸지_않는다() {
-        // **음성 대조의 반대 방향.** 어기면 포매터 한 번에 전 심볼이 stale 로 켜진다(R-07).
+        // **음성 대조의 반대 방향.** 어기면 포매터 한 번에 전 심볼이 stale 로 바뀐다(R-07).
         let 요약 = |s: &str| 그래프(s).symbols[0].body;
         let 원본 = "export function greet(name: string): string {\n  return 'hi';\n}\n";
         assert_eq!(요약(원본), 요약("export function   greet( name : string ) : string {\n\n\treturn 'hi'\n\n}\n"));
@@ -847,7 +847,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
         assert_eq!(
             요약("const f = (a: N, b: N) => (a < b ? -1 : 1);"),
             요약("const f = (a: N, b: N) => a < b ? -1 : 1;"),
-            "그룹 괄호가 요약에 남았다 — 포매터 한 번에 결박이 켜진다"
+            "그룹 괄호가 요약에 남았다 — 포매터 한 번에 결박에 낡음이 붙는다"
         );
 
         // **★ 반대 방향.** 평평한 토큰 열에서 괄호만 지우면 서로 다른 코드가
@@ -1061,7 +1061,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
     fn 중첩된_심볼도_바깥_지역을_지운다() {
         // **처음에는 「이 심볼 안에서 선언된」 것만 지웠다.** 그러면 중첩 함수가
         // 바깥 함수의 지역을 이름 그대로 싣고, 바깥을 리네임하면 안쪽이 `stale` 로
-        // 켜진다 — 의미는 안 변했는데. ditto 에서 10 건이 그 형태였다.
+        // 낡음이 붙는다 — 의미는 안 변했는데. ditto 에서 10 건이 그 형태였다.
         let 요약 = |s: &str, i: usize| 그래프(s).symbols[i].body;
         let a = "export function outer() { const out: N[] = []; function walk() { out.push(1); } walk(); }";
         let b = "export function outer() { const kept: N[] = []; function walk() { kept.push(1); } walk(); }";
@@ -1086,7 +1086,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
     }
 
     #[test]
-    fn 스코프는_kotlin_이_아니라_typescript_에만_선다() {
+    fn 스코프는_kotlin_이_아니라_typescript_에만_성립한다() {
         // `[f02.3.does_not_prove].not_kotlin_scope` — Kotlin 은 L1 로 남는다.
         assert!(그래프("const a = 1;").scopes.is_present());
         let kt = crate::kotlin::extract_detailed(b"class A\n").unwrap();
@@ -1096,7 +1096,7 @@ describe('a', () => { test('b', () => { const x = 1; }); });
 
     #[test]
     fn 깨진_소스도_건진다() {
-        // 회복을 1급으로 다루는 것은 #47 이다. 여기서는 **버리지 않는다**는 것만 센다.
+        // 회복을 1급으로 다루는 것은 #47 이다. 여기서는 **버리지 않는다**는 것만 잰다.
         let g = 그래프("export function ok() {}\nclass Broken { fun(\n");
         assert!(!g.is_whole(), "깨졌는데 성하다고 했다");
         assert!(g.symbols.iter().any(|s| s.name == "ok"), "성한 선언까지 버렸다");

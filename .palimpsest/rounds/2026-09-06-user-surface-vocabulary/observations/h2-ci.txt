@@ -1,0 +1,55 @@
+# H2 관측 — push 뒤의 CI 런 (2026-09-06)
+
+⚠ 확장자를 .txt 로 둔다 — docs/sunset.toml 의 트리거가 ".palimpsest/rounds/*/*.json" 이라
+  .json 으로 놓으면 「pal 이 회차를 한 번 돌렸다」가 참이 되고 sunset 검사가 문서 둘을
+  지우라고 빨개진다. 이 파일은 pal 이 쓴 회차 레코드가 아니라 gh 출력을 잡아 둔 것이다.
+
+$ git push origin docs/overview-user-feedback
+   b165445..a61716c  docs/overview-user-feedback -> docs/overview-user-feedback
+
+$ gh run list --branch docs/overview-user-feedback --limit 5
+  a61716c  pull_request   completed  success  2026-09-06T02:33:36Z
+  b165445  pull_request   completed  success  2026-09-05T15:41:51Z
+
+$ gh run view 34006795577
+  workflow  CI
+  headSha   a61716cfdebfab3bdeba60e6e287518bab40746a
+  event     pull_request
+  결과      completed success
+  걸린 때   2026-09-06T02:33:36Z → 2026-09-06T02:39:11Z
+  url       https://github.com/hskim-ecoletree/palimpsest/actions/runs/34006795577
+
+  잡
+    success  놓는다 · windows-latest
+        success  줄바꿈을 실사용자 환경과 같게 맞춘다 (Windows)
+        success  pal 을 세운다
+        success  설치하고 커밋한다
+    success  windows-latest
+        success  줄바꿈을 실사용자 환경과 같게 맞춘다 (Windows)
+        success  무엇으로 빌드하는지 적어 둔다
+        success  cargo-deny
+        success  cargo xtask check
+        success  cargo xtask test
+        success  pal doctor full 구조 판정
+    success  macos-latest
+        success  무엇으로 빌드하는지 적어 둔다
+        success  cargo-deny
+        success  cargo xtask check
+        success  cargo xtask test
+        success  pal doctor full 구조 판정
+    success  놓는다 · ubuntu-latest
+        success  pal 을 세운다
+        success  설치하고 커밋한다
+    success  ubuntu-latest
+        success  무엇으로 빌드하는지 적어 둔다
+        success  cargo-deny
+        success  cargo xtask check
+        success  cargo xtask test
+        success  pal doctor full 구조 판정
+    success  받는다 · windows-latest → ubuntu-latest
+        success  pal 을 세운다
+        success  상호운용을 판정한다
+    success  받는다 · ubuntu-latest → windows-latest
+        success  줄바꿈을 실사용자 환경과 같게 맞춘다 (Windows)
+        success  pal 을 세운다
+        success  상호운용을 판정한다

@@ -49,11 +49,11 @@ fn 종료했나(회차_디렉터리: &Path) -> bool {
         .unwrap_or(false)
 }
 
-/// 회차의 **기록이 확정됐나** — 종료(`report.md`)든 접힘(`folded.md`)이든.
+/// 회차의 **기록이 확정됐나** — 종료(`report.md`)든 철회(`folded.md`)든.
 ///
 /// ★ **둘을 같이 봐야 하는 자리와 갈라 봐야 하는 자리가 있다.** (2026-08-24)
-/// 「진행 중인가」를 묻는 자리는 **둘 다** 확정으로 봐야 한다 — 접힌 회차를 「진행 중」으로
-/// 두면 다음 사람이 그것을 이어받아야 할 일로 읽고 **접은 회차를 되살린다.**
+/// 「진행 중인가」를 묻는 자리는 **둘 다** 확정으로 봐야 한다 — 철회한 회차를 「진행 중」으로
+/// 두면 다음 사람이 그것을 이어받아야 할 일로 읽고 **철회한 회차를 되살린다.**
 /// 「종료 보고를 썼나」를 묻는 자리는 `report.md` 만 본다.
 fn 기록이_확정됐나(회차_디렉터리: &std::path::Path) -> bool {
     종료했나(회차_디렉터리) || 회차_디렉터리.join("folded.md").is_file()
@@ -64,23 +64,23 @@ fn main() -> Result<()> {
     let 명령 = 명령을_고른다()?;
     match 명령.as_deref() {
         None | Some("check") => check(&root),
-        // 파생 ③ — 문서 표를 스키마에서 낸다. **손으로 쓰지 않는다.**
+        // 파생 ③ — 문서 표를 스키마에서 산출한다. **손으로 쓰지 않는다.**
         Some("schema-doc") => {
             let text = std::fs::read_to_string(root.join("schema/graph.toml"))?;
             let schema = pal_core::GraphSchema::parse(&text).map_err(|e| anyhow::anyhow!("{e}"))?;
             let out = root.join("docs/graph-schema.md");
             std::fs::write(&out, render_schema_doc(&schema))?;
-            println!("  냈다  {}", out.display());
+            println!("  산출  {}", out.display());
             Ok(())
         }
-        // 파생 — 질의 표를 카탈로그에서 낸다. **손으로 쓰지 않는다.**
+        // 파생 — 질의 표를 카탈로그에서 산출한다. **손으로 쓰지 않는다.**
         Some("query-doc") => {
             let text = std::fs::read_to_string(root.join("surface/queries.toml"))?;
             let catalog =
                 pal_core::QueryCatalog::parse(&text).map_err(|e| anyhow::anyhow!("{e}"))?;
             let out = root.join("docs/query-catalog.md");
             std::fs::write(&out, render_catalog_doc(&catalog))?;
-            println!("  냈다  {}", out.display());
+            println!("  산출  {}", out.display());
             Ok(())
         }
         // ★ 시험을 돌리고 **남는 실패가 등록된 외침과 정확히 같은지** 판정한다.
@@ -103,7 +103,7 @@ fn main() -> Result<()> {
 //
 // ⚠⚠ **그리고 모르는 인자를 거부해야 한다.** 앞 판은 `args().nth(1)` 만 봤고 그 뒤를
 //    **읽지도 거부하지도 않았다.** 그래서 `cargo xtask check --root /tmp` 가 **에러 없이
-//    21/21 통과하고 원본의 수**를 냈다(실측 · 사전부검 R3). 플래그를 준 것처럼 보이면서
+//    21/21 통과하고 원본의 수**를 산출했다(실측 · 사전부검 R3). 플래그를 준 것처럼 보이면서
 //    같은 일을 한다 — **뿌리가 없는 것보다 나쁘다.**
 //
 //    새 범주로 적는다: **「무시되는 인자」 — 「사본을 쟀다」가 문면으로만 참이 되는 자리.**
@@ -170,7 +170,7 @@ fn 명령을_고른다() -> Result<Option<String>> {
 // |---|---|
 // | 새 시험이 깨졌다 | **등록 안 된 실패** — 빨강 |
 // | 외침이 승격돼 이제 통과한다 | **등록됐는데 안 났다** — 빨강. 등록을 지우라고 말한다 |
-// | 그대로다 | 초록. 외침의 수와 까닭을 화면에 낸다 |
+// | 그대로다 | 초록. 외침의 수와 까닭을 화면에 출력한다 |
 //
 // 둘째 줄이 이 설계의 값이다 — **승격을 하고 등록을 안 지우면 걸린다.** 목록이 조용히
 // 낡는 경로를 막는다.
@@ -186,7 +186,7 @@ fn 명령을_고른다() -> Result<Option<String>> {
 // 그렇다고 종료 상태만 보면 안 된다 — **rc≠0 이 이 저장소에서는 초록의 정상 상태**다
 // (등록된 외침이 그대로 나면 `cargo test` 는 실패로 끝난다). 그래서 [`판정한다`] 가
 // 둘을 **함께** 보고, 「시험이 실패했다」와 「시험을 돌리지도 못했다」를 **다른 문구로**
-// 낸다 — 사람이 할 일이 다르기 때문이다(앞은 시험을, 뒤는 `error[E…]` 를 읽는다).
+// 산출한다 — 사람이 할 일이 다르기 때문이다(앞은 시험을, 뒤는 `error[E…]` 를 읽는다).
 //
 // # ⚠ 그리고 그 첫 수선에도 같은 과의 구멍이 남아 있었다 — **rc=0 이 면제였다**
 //
@@ -194,13 +194,13 @@ fn 명령을_고른다() -> Result<Option<String>> {
 // 호출은 보고 검사를 통째로 건너뛴다.** 그런데 시험을 하나도 안 돌리고 rc=0 으로 끝나는
 // 길이 있다 — 실측(2026-08-17): 축 하나의 인자를 `--no-run` 으로 바꾸자 통과 수가
 // **753 → 3** 으로 줄고 `test result:` 가 **41줄 → 7줄** 이 됐는데도 `cargo xtask test`
-// 는 **rc=0 · "시험 통과"** 를 냈다. 그래서 이제 **보고는 rc 와 무관하게 매 호출마다**
+// 는 **rc=0 · "시험 통과"** 를 산출했다. 그래서 이제 **보고는 rc 와 무관하게 매 호출마다**
 // 있어야 한다. 무동작과 무보고가 초록으로 읽히는 자리를 하나 더 닫는다.
 //
 // # 그리고 축이 둘이다 — **doctest 는 `--all-targets` 에 안 든다**
 //
 // `--doc` 과 `--all-targets` 는 같이 못 쓴다(`error: can't mix --doc with other target
-// selecting options`). 그래서 `cargo test` 를 **두 번** 부르고 두 화면을 합쳐 센다.
+// selecting options`). 그래서 `cargo test` 를 **두 번** 부르고 두 화면을 합쳐 잰다.
 //
 // ★ **`--all-targets` 를 빼서 한 줄로 줄이지 않는다.** 빼면 명시적 타깃 계약을 암묵
 // 기본값에 넘기는 것이고, `benches/` 가 생기는 날 조용히 커버리지가 준다.
@@ -227,7 +227,7 @@ fn 명령을_고른다() -> Result<Option<String>> {
 //
 //    ⚠ **귀결: 이름 문자열 하나로는 세 OS 를 못 덮는다.** [`등록과_댄다`] 가 `n == name`
 //    **정확 일치**로 양방향을 대므로, 슬래시로 적은 등록은 windows 에서 「등록됐는데 안
-//    났다」와 「등록되지 않은 실패」를 **한 번에** 낸다(역슬래시로 적으면 나머지 둘에서
+//    났다」와 「등록되지 않은 실패」를 **한 번에** 산출한다(역슬래시로 적으면 나머지 둘에서
 //    같은 일이 난다). 그리고 이것은 2 의 줄번호와 **곱해진다.**
 //
 //    ★ **여기에 처방을 지어 적지 않는다.** 시험 이름을 정규화하는 장치는 **없다** —
@@ -268,7 +268,7 @@ fn 명령을_고른다() -> Result<Option<String>> {
 /// **어느 플랫폼에서도 안 골라져 통째로 무동작**이고, 위 세 줄이 그대로 다시 성립했다 —
 /// 오타가 아니라 **도달 불가능한 유효값**이라 컴파일도 안 울었다. 실측: `(플랫폼::그밖, …)`
 /// 하나를 넣고 **16 통과 · rc=0**, 그리고 `cargo xtask test` 가 등록이 있는데도
-/// *"이 플랫폼에는 안 재지는 것이 없다"* 를 냈다.
+/// *"이 플랫폼에는 안 재지는 것이 없다"* 를 산출했다.
 ///
 /// **그래서 변종을 지웠다.** 대상이 아닌 호스트는 이제 [`여기`] 옆의 `compile_error!` 가
 /// 멈춘다 — 조용히 틀린 값을 고르는 것보다 서지 않는 편이 낫다.
@@ -294,7 +294,7 @@ fn 여기() -> 플랫폼 {
 compile_error!(
     "이 저장소는 windows 와 unix 만 대상으로 한다(AGENTS.md · F24-크로스플랫폼 게이트). \
      그 밖의 호스트에서는 `여기` 가 고를 값이 없고, 그러면 `외침` 의 등록이 통째로 \
-     무동작이 되면서 `cargo xtask test` 가 조용히 초록을 낸다. 서지 않는 편이 낫다."
+     무동작이 되면서 `cargo xtask test` 가 조용히 초록을 산출한다. 서지 않는 편이 낫다."
 );
 
 /// **이 플랫폼에서 안 재지는 것** — `(플랫폼, 시험 이름, 왜 못 재나)`.
@@ -311,7 +311,7 @@ compile_error!(
 /// | `쓰기_불가_디렉터리가_…` | *"진짜 쓰기 불가 디렉터리는 ACL 이고 **std 밖이다**"* — 관측은 맞았고 **결론이 틀렸다** | `icacls` fixture. junction 이 `cmd` 를 쓰는 것과 같은 자격이다 |
 /// | `파일_심링크_경계가_…` | **플랫폼의 한계가 아니라 기계의 준비 상태**였다 | 개발자 모드를 켜니 `symlink_file` 이 그 자리에서 섰다. fixture 를 `심링크()` 하나로 모았다 |
 /// | `파이프_방어가_…` | 재려는 성질은 「FIFO」가 아니라 **「일반 파일이 아닌 자리」**였다 | 디렉터리로 이식(`일반_파일이_아닌_자리에서_매달리지_않고_실패한다`). FIFO 시험은 **더 센 사실**(매달림)을 위해 남는다 |
-/// | `끊었다는_말이_…` | 결과는 이미 같았고 **말할 것이 더 많은 쪽이 침묵**했다 | 못 세는 플랫폼이 *"모르니 늘 끊는다"* 를 자리 목록과 함께 낸다 |
+/// | `끊었다는_말이_…` | 결과는 이미 같았고 **말할 것이 더 많은 쪽이 침묵**했다 | 못 세는 플랫폼이 *"모르니 늘 끊는다"* 를 자리 목록과 함께 싣는다 |
 ///
 /// 다섯 중 **넷이 「안 한 것」이었고 하나(모드 비트)만 「없는 것」**이다. 그리고 그
 /// 하나조차 이 목록에 안 남는다 — 성질을 갈라 보니 그 축의 이식 가능한 문장이
@@ -332,7 +332,7 @@ fn 등록된_외침() -> Vec<(&'static str, &'static str)> {
     외침.iter().filter(|(p, ..)| *p == 여기).map(|(_, n, w)| (*n, *w)).collect()
 }
 
-/// 자식 `cargo` 하나가 낸 것 중 **판정에 필요한 전부**.
+/// 자식 `cargo` 하나가 산출한 것 중 **판정에 필요한 전부**.
 struct 돌린_결과 {
     /// 종료 상태가 성공인가. ★ `false` 가 곧 빨강은 아니다 — [`판정한다`] 를 보라.
     섰나: bool,
@@ -398,7 +398,7 @@ fn test(root: &Path) -> Result<()> {
     // ★ **하나라도 안 서면 안 선 것이다.**
     let 모두_섰나 = 결과.iter().all(|r| r.섰나);
     // ★ **보고 유무는 「호출마다」 따로 보고, `rc` 가 그것을 면제하지 못한다.** 합친
-    // 화면으로 보면 한 축이 통과해 보고를 낸 것이 다른 축의 침묵을 덮어 준다.
+    // 화면으로 보면 한 축이 통과해 보고를 산출한 것이 다른 축의 침묵을 덮어 준다.
     //
     // ⚠ 앞 판은 여기가 `r.섰나 || 시험이_돌았나(…)` 였다 — `||` 가 **rc=0 인 호출에
     // 대해 보고 검사를 통째로 건너뛰었다.** 그래서 한 축이 시험을 하나도 안 돌리고
@@ -407,10 +407,10 @@ fn test(root: &Path) -> Result<()> {
     //
     // 실측(2026-08-17, macOS): 축 하나의 인자를 `--no-fail-fast` 에서 `--no-run` 으로
     // 바꾸자 통과 수가 **753 → 3**(doctest 셋만) · `test result:` **41줄 → 7줄** 로
-    // 줄었는데 `cargo xtask test` 는 **rc=0 · "시험 통과"** 를 냈다.
+    // 줄었는데 `cargo xtask test` 는 **rc=0 · "시험 통과"** 를 산출했다.
     let 보고가_다_있나 = 결과.iter().all(|r| 시험이_돌았나(&r.화면));
 
-    // **같은 이름이 여러 시험 바이너리에서 날 수 있다** — 집합으로 센다.
+    // **같은 이름이 여러 시험 바이너리에서 날 수 있다** — 집합으로 헤아린다.
     // doctest 도 `test <이름> ... FAILED` 한 줄 형태를 따르므로 파서는 그대로 쓴다.
     let mut 실패: Vec<String> = 결과
         .iter()
@@ -424,7 +424,7 @@ fn test(root: &Path) -> Result<()> {
     match 판정한다(모두_섰나, 보고가_다_있나, &실패, &등록) {
         판정::시험을_못_돌렸다 => bail!(
             "**시험을 돌리지도 못했다** — 어느 호출인가가 시험 바이너리의 \
-             보고(`test result:`)를 **한 줄도 안 냈다.**\n    \
+             보고(`test result:`)를 **한 줄도 안 산출했다.**\n    \
              ⚠ 이것은 「시험이 실패했다」가 **아니다.** 갈래가 둘이고 사람이 읽을 곳이 \
              다르다 — rc≠0 이면 컴파일·링크가 서지 못한 것이니 위 stderr 의 \
              `error[E…]` 를 읽고, **rc=0 이면 그 호출이 시험을 하나도 안 돌린 것**이니 \
@@ -449,7 +449,7 @@ fn test(root: &Path) -> Result<()> {
     Ok(())
 }
 
-/// 이 명령이 낼 수 있는 **셋** — 그리고 셋을 가르는 것이 이 커밋의 값이다.
+/// 이 명령이 산출할 수 있는 **셋** — 그리고 셋을 가르는 것이 이 커밋의 값이다.
 ///
 /// ⚠ **뒤의 둘을 같은 문구로 내면 안 된다.** 「시험이 실패했다」와 「시험을 돌리지도
 /// 못했다」는 사람이 할 일이 다르다 — 앞은 시험을 읽고, 뒤는 `error[E…]` 를 읽는다.
@@ -477,7 +477,7 @@ fn 시험이_돌았나(화면: &str) -> bool {
     화면.lines().any(|l| l.starts_with("test result:"))
 }
 
-/// 자식이 낸 것 전부 — **종료 상태 · 보고 유무 · 실패 이름 · 등록** — 를 한 번에 판정한다.
+/// 자식이 산출한 것 전부 — **종료 상태 · 보고 유무 · 실패 이름 · 등록** — 를 한 번에 판정한다.
 ///
 /// # 왜 집합 대조만으로는 부족한가 — **빈 집합이 초록으로 읽힌다**
 ///
@@ -605,7 +605,7 @@ fn 등록과_댄다(실패: &[String], 등록: &[(&'static str, &'static str)]) 
 /// 한 줄 형태 하나만 본다: `test <이름> ... FAILED`. 요약 블록(`failures:`)은 **안 본다** —
 /// 같은 이름이 두 번 세지고, 그러면 이 함수가 무엇을 세는지 흐려진다.
 ///
-/// **순수 함수다** — 파일도 프로세스도 안 건드린다. 그래야 아래 시험이 선다.
+/// **순수 함수다** — 파일도 프로세스도 안 건드린다. 그래야 아래 시험이 성립한다.
 fn 실패한_시험들(stdout: &str) -> Vec<&str> {
     stdout
         .lines()
@@ -621,6 +621,7 @@ fn check(root: &Path) -> Result<()> {
     let checks = [
         ("의존 방향", check_dependency_direction(root)),
         ("코어 어휘 금지", check_vocabulary(root)),
+        ("기계 토큰에 한국어 금지", check_machine_tokens(root)),
         ("의도 저장소 폐기 경로 부재", check_intent_untouched(root)),
         ("unsafe 금지", check_forbid_unsafe(root)),
         ("의존 정책", check_deny(root)),
@@ -642,6 +643,9 @@ fn check(root: &Path) -> Result<()> {
         ("원장 둘 대조", check_ledger_pair(root)),
         ("발견이 닫혔나", check_finding_closure(root)),
         ("선언 목록이 닫혀 있나", check_declared_lists(root)),
+        ("완수 조건 설계 평가", check_condition_audit(root)),
+        ("어색한 표현 부재", check_awkward_phrases(root)),
+        ("완성 장면 형식", check_completion_scenes(root)),
     ];
     let total = checks.len();
 
@@ -828,6 +832,171 @@ fn check_vocabulary(root: &Path) -> Result<String> {
     Ok(format!("금지어 {}개 · 허용 예외 {}개", banned.len(), allow.len()))
 }
 
+// ── 검사 24 — 기계 토큰에 한국어 금지 (`C2-a` · 회차 2026-09-06) ─────────────
+
+/// 이 저장소의 **기계 토큰**에 한국어가 섞이지 않았는가.
+///
+/// # 무엇이 대상이고 무엇이 아닌가 — 문면 그대로 걸면 사용자 데이터를 금지한다
+///
+/// 대상은 **enum·토큰 필드의 값**이다: `fn name(`·`fn label(` 이 돌려주는 문자열 리터럴과
+/// `#[serde(rename = …)]` · `#[serde(tag = …)]` · `#[serde(rename_all = …)]`.
+/// **자유 본문 필드는 대상 밖이다** — 실측: `.palimpsest/intent/bindings.jsonl` 에서
+/// 한국어가 든 필드는 사용자가 손으로 쓴 `.note` 뿐이고, 「JSON 에 한국어 금지」를
+/// 문면대로 걸면 그 노트를 금지하는 검사가 된다.
+///
+/// # 왜 이것이 필요한가
+///
+/// `name()` 은 화면 문자열처럼 생겼지만 실제로는 와이어 토큰이다. `pal export` 가
+/// Cypher 속성 값으로 쓰고(`identity: "…"`), `pal-query` 가 `watch_grades` 의 키로
+/// 쓰고, 넷은 자기 `parse` 의 열쇠다. 착수 시점에 **이미 위반 둘**이 있었다 —
+/// `IdentityGrade::Unavailable => "없음"` 과 `BinaryReason::NulByte => "NUL 바이트"`.
+/// 앞엣것은 `identity: "없음"` 으로 그래프 산출까지 나가고 있었다.
+fn check_machine_tokens(root: &Path) -> Result<String> {
+    let mut hits = Vec::new();
+    let mut 잰_리터럴 = 0usize;
+    let mut 잰_파일 = 0usize;
+    // ★ **모집단이 세 크레이트다.** 도메인 타입과 그 직렬화가 거기 있다.
+    //   ⚠ **밖에도 기계 토큰이 있다** — `crates/pal-intent/src/round_condition.rs` 의
+    //   `#[serde(rename = "통과"/"반증"/…)]`. 그것은 **게이트 파서의 계약**이라 한국어가
+    //   정본이다(`record.py` 의 `판정값` 과 바이트로 같아야 한다). 여기 넣으면 그 계약을
+    //   금지하는 검사가 된다. 한정 근거가 어디에도 없던 것을 독립 리뷰 R1 이 잡았다.
+    for dir in ["crates/pal-core/src", "crates/pal-query/src", "crates/pal-store/src"] {
+        for file in rust_sources(&root.join(dir))? {
+            let text = std::fs::read_to_string(&file)?;
+            잰_파일 += 1;
+            let (found, 셈) = 한국어가_든_기계_토큰(&text);
+            잰_리터럴 += 셈;
+            for (n, lit) in found {
+                hits.push(format!("{}:{n} `{lit}`", file.display()));
+            }
+        }
+    }
+    if !hits.is_empty() {
+        bail!(
+            "기계 토큰에 한국어가 있다 — 이 값은 `--json` · Cypher · 파서 열쇠로 나간다:\n    {}",
+            hits.join("\n    ")
+        );
+    }
+    Ok(format!("파일 {잰_파일}개 · 기계 토큰 {잰_리터럴}개 · 한국어 0건"))
+}
+
+/// **순수 함수다** — 그래야 음성 대조를 시험으로 세울 수 있고, 검사가 자기가 만든
+/// 조건 위에서 발화 여부를 묻는 항등식이 되지 않는다.
+///
+/// 돌려주는 것은 `(위반 목록, 잰 리터럴 수)` 다. 둘째 값이 없으면 *"한국어 0건"* 이
+/// **아무것도 안 봤다**는 뜻인지 갈리지 않는다.
+fn 한국어가_든_기계_토큰(text: &str) -> (Vec<(usize, String)>, usize) {
+    let mut hits = Vec::new();
+    let mut 셈 = 0usize;
+    // `fn name(` 본문 안인가 — 중괄호 깊이로 잰다.
+    let mut 안에 = false;
+    let mut 깊이 = 0i32;
+    for (i, line) in text.lines().enumerate() {
+        // 주석은 산문이다 — `///` 와 `//` 를 먼저 잘라낸다.
+        let code = match line.find("//") {
+            Some(p) => &line[..p],
+            None => line,
+        };
+        let serde_속성 = code.contains("#[serde(")
+            && (code.contains("rename") || code.contains("tag ") || code.contains("tag="));
+        // ★ **`fn label(` 도 본다.** 한때 `ResidualReason::label()` 이 한국어 열하나를
+        //   돌려줬고 그 값이 `Violation::subject` 를 지나 화면과 `--json` 으로 나갔다 —
+        //   같은 변형이 두 낱말이었다(독립 리뷰 R2). 이름이 `name` 이든 `label` 이든
+        //   **`&'static str` 을 돌려주는 표시 함수**는 같은 자를 받는다.
+        if !안에 && (code.contains("fn name(") || code.contains("fn label(")) {
+            안에 = true;
+            깊이 = 0;
+        }
+        if 안에 || serde_속성 {
+            for lit in 문자열_리터럴(code) {
+                셈 += 1;
+                if lit.chars().any(|c| ('\u{AC00}'..='\u{D7A3}').contains(&c)) {
+                    hits.push((i + 1, lit));
+                }
+            }
+        }
+        if 안에 {
+            깊이 += i32::try_from(code.matches('{').count()).unwrap_or(0);
+            깊이 -= i32::try_from(code.matches('}').count()).unwrap_or(0);
+            if 깊이 <= 0 && code.contains('}') {
+                안에 = false;
+            }
+        }
+    }
+    (hits, 셈)
+}
+
+/// 한 줄에서 큰따옴표 리터럴만 걷는다. 이스케이프는 안 본다 — 토큰에는 안 나온다.
+fn 문자열_리터럴(code: &str) -> Vec<String> {
+    code.split('"').skip(1).step_by(2).map(str::to_owned).collect()
+}
+
+#[cfg(test)]
+mod 기계_토큰_시험 {
+    use super::한국어가_든_기계_토큰;
+
+    /// **음성 대조** — 일부러 섞으면 발화한다.
+    ///
+    /// 이 시험이 없으면 저장소가 초록인 것이 *"한국어가 없다"* 를 뜻하는지
+    /// *"판정기가 아무것도 안 본다"* 를 뜻하는지 갈리지 않는다.
+    #[test]
+    fn 한국어를_섞으면_발화한다() {
+        let 소스 = r#"
+impl IdentityGrade {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Unavailable => "없음",
+            Self::Exact => "exact",
+        }
+    }
+}
+"#;
+        let (hits, 셈) = 한국어가_든_기계_토큰(소스);
+        assert_eq!(hits.len(), 1, "섞은 것을 못 잡았다: {hits:?}");
+        assert_eq!(hits[0].1, "없음");
+        assert_eq!(셈, 2, "리터럴을 다 세지 않았다");
+    }
+
+    /// serde 속성도 본다.
+    #[test]
+    fn serde_속성의_한국어도_잡는다() {
+        let 소스 = "#[serde(rename = \"낡음\")]\npub enum X { A }\n";
+        let (hits, _) = 한국어가_든_기계_토큰(소스);
+        assert_eq!(hits.len(), 1);
+    }
+
+    /// **주석과 `name()` 밖의 문자열은 대상이 아니다.**
+    ///
+    /// 자유 본문·화면 문자열까지 걸면 이 검사는 사용자 데이터를 금지하는 것이 된다.
+    #[test]
+    fn 주석과_바깥_문자열은_안_본다() {
+        let 소스 = r#"
+/// `Self::Unavailable => "없음"` 이었다 — 이 줄은 주석이다.
+fn 화면() -> String {
+    format!("결박 불가 언어 {}개", 3) // 화면 문자열이다
+}
+impl X {
+    pub const fn name(self) -> &'static str {
+        "exact"
+    }
+}
+fn 나중() -> &'static str { "판정 불가" }
+"#;
+        let (hits, 셈) = 한국어가_든_기계_토큰(소스);
+        assert!(hits.is_empty(), "대상 밖을 잡았다: {hits:?}");
+        assert_eq!(셈, 1, "`name()` 의 리터럴 하나만 세야 한다");
+    }
+
+    /// 그리고 **깨끗한 입력에는 침묵한다** — 「무엇이든 잡는다」로 통과하는 것을 막는다.
+    #[test]
+    fn 깨끗하면_침묵한다() {
+        let 소스 = "impl X {\n    pub const fn name(self) -> &'static str {\n        \"nul-byte\"\n    }\n}\n";
+        let (hits, 셈) = 한국어가_든_기계_토큰(소스);
+        assert!(hits.is_empty());
+        assert_eq!(셈, 1);
+    }
+}
+
 /// `vocab.toml` 의 `allow = [...]` 에서 따옴표 안의 것만 걷는다.
 /// **toml 크레이트를 들이지 않는다** — 이 한 줄을 읽자고 의존을 늘리지 않는다(stack §3.4).
 fn read_allowlist(path: &Path) -> Result<Vec<String>> {
@@ -896,7 +1065,7 @@ fn check_forbid_unsafe(root: &Path) -> Result<String> {
 ///
 /// `gix` 는 API 가 아직 진화 중이다(stack §3.1). 접촉면이 퍼지면 상류가 시그니처를 바꿀 때
 /// 고칠 자리가 한 곳이 아니게 되고, [R-15] 의 대응 *"깨지면 그 모듈만 고친다"* 가
-/// 성립하지 않는다. **이것은 산출이 아니라 구조의 합격선이고 그래서 기계가 센다.**
+/// 성립하지 않는다. **이것은 산출이 아니라 구조의 합격선이고 그래서 기계가 잰다.**
 fn check_gix_isolation(root: &Path) -> Result<String> {
     const ALLOWED: &str = "pal-git";
 
@@ -998,15 +1167,15 @@ fn rust_sources(dir: &Path) -> Result<Vec<PathBuf>> {
     Ok(out)
 }
 
-/// 저장소 루트 기준 상대 경로 — **구분자를 언제나 `/` 로 낸다.**
+/// 저장소 루트 기준 상대 경로 — **구분자를 언제나 `/` 로 산출한다.**
 ///
-/// ★ `read_dir` 이 낸 경로는 Windows 에서 `\` 를 쓰고, `root.join("crates/pal-core/src")`
+/// ★ `read_dir` 이 산출한 경로는 Windows 에서 `\` 를 쓰고, `root.join("crates/pal-core/src")`
 /// 의 `/` 와 섞이면 `crates/pal-core/src\binding.rs` 같은 **혼종**이 나온다. 그것을
 /// 등록된 자리(전부 `/`)와 `starts_with` 로 대면 절대 안 맞고, 검사는 *"자리가 늘었다"* 를
 /// 외친다 — **플랫폼이 판정을 뒤집는 자리다.**
 ///
-/// 화면에 내는 자리에도 같이 쓴다. 진단 문구가 플랫폼마다 다르면 그 문구를 기대하는
-/// 시험이 한쪽에서만 선다.
+/// 화면에 산출하는 자리에도 같이 쓴다. 진단 문구가 플랫폼마다 다르면 그 문구를 기대하는
+/// 시험이 한쪽에서만 성립한다.
 fn 상대_경로(root: &Path, file: &Path) -> String {
     file.strip_prefix(root).unwrap_or(file).to_string_lossy().replace('\\', "/")
 }
@@ -1014,7 +1183,7 @@ fn 상대_경로(root: &Path, file: &Path) -> String {
 /// 파생 문서 대조 — **줄바꿈을 정규화해서 댄다.**
 ///
 /// ★ `core.autocrlf=true` 인 워킹트리에서 체크아웃된 문서는 CRLF 이고 `render_*_doc()` 은
-/// LF 를 낸다. 바이트로 대면 Windows 에서 **언제나** 실패하고, `cargo xtask schema-doc`
+/// LF 를 산출한다. 바이트로 대면 Windows 에서 **언제나** 실패하고, `cargo xtask schema-doc`
 /// 으로 "고쳐도" 다음 체크아웃이 되돌린다 — 손쓸 수 없는 빨강이다.
 ///
 /// `install/eol.rs` 가 같은 문제를 푼 자리이고 그 규율을 그대로 빌린다:
@@ -1130,7 +1299,7 @@ fn check_schema(root: &Path) -> Result<String> {
     match std::fs::read_to_string(&doc_path) {
         Ok(have) if 줄바꿈_같은가(&have, &want) => {}
         Ok(_) => problems.push(
-            "docs/graph-schema.md 가 스키마와 다르다 — `cargo xtask schema-doc` 으로 다시 낸다"
+            "docs/graph-schema.md 가 스키마와 다르다 — `cargo xtask schema-doc` 으로 다시 제출한다"
                 .to_owned(),
         ),
         Err(_) => problems.push("docs/graph-schema.md 가 없다 — `cargo xtask schema-doc`".to_owned()),
@@ -1153,7 +1322,7 @@ fn check_schema(root: &Path) -> Result<String> {
 // **망가뜨려서** 세웠고, 여기서 그 자격을 낮추지 않는다(`scripts/f06-verify.py`).
 //
 // ⚠ **방향마다 루프를 따로 돈다.** 한 루프에서 두 방향을 돌면 한쪽의 `continue` 가
-// 다른 쪽을 끄고, 하필 **통제가 필요한 표본에서만** 꺼진다 — F05 의 바깥 오라클이
+// 다른 쪽을 끄고, 하필 **통제가 필요한 표본에서만** 멎는다 — F05 의 바깥 오라클이
 // 정확히 그렇게 꺼졌다(대조가 꺼지는 **열두째** 형태). `check_schema` 가 이미 그
 // 형태이고 여기서도 방향 1·2·3·4 가 각각 자기 루프다.
 //
@@ -1281,15 +1450,15 @@ fn check_catalog(root: &Path) -> Result<String> {
     // 자라고, 그러면 카탈로그가 단일 진실이 아니다.
     //
     // ★ **표면을 더하면 이 목록에 더한다** — 안 더하면 새 표면이 자기 목록을 갖고,
-    // 그것을 아무도 안 센다. F06b 의 어댑터가 정확히 그 자리였고(방향 4 가 꺼진 채로
-    // 자랐다), 2026-08-18 재고 처분이 그 어댑터를 지웠다. 꺼진 대조는 `–` 가 아니라
+    // 그것을 아무도 안 잰다. F06b 의 어댑터가 정확히 그 자리였고(방향 4 가 멎은 채로
+    // 자랐다), 2026-08-18 재고 처분이 그 어댑터를 지웠다. 멎은 대조는 `–` 가 아니라
     // 실패다.
     let mut 스캔 = 0usize;
     let mut 훑은_표면 = 0usize;
 
     // **하한을 먼저 본다.** 아래 루프는 목록이 비면 **한 바퀴도 안 돌고** 통과한다 —
     // 0 건은 *"리터럴이 없다"* 가 아니라 *"안 봤다"* 이고, 둘을 뭉개면 이 검사가
-    // 자기 대상이 사라진 것을 초록으로 낸다.
+    // 자기 대상이 사라진 것을 초록으로 판정한다.
     if SURFACE_SOURCES.len() < SURFACE_MIN {
         problems.push(format!(
             "훑을 표면이 {}곳이다 — {SURFACE_MIN}곳 미만이면 방향 4 가 공짜로 통과한다",
@@ -1302,7 +1471,7 @@ fn check_catalog(root: &Path) -> Result<String> {
         // **없으면 실패다.** feature 로 꺼서 디렉터리가 사라지는 일은 없고, 조용히
         // 건너뛰면 이 검사가 0 개를 훑고도 통과한다(대조가 꺼지는 형태 ①).
         if !dir.is_dir() {
-            problems.push(format!("표면 소스 {표면} 가 없다 — 스캔이 조용히 꺼진다"));
+            problems.push(format!("표면 소스 {표면} 가 없다 — 스캔이 조용히 멎는다"));
             continue;
         }
         훑은_표면 += 1;
@@ -1335,7 +1504,7 @@ fn check_catalog(root: &Path) -> Result<String> {
     match std::fs::read_to_string(&doc_path) {
         Ok(have) if 줄바꿈_같은가(&have, &want) => {}
         Ok(_) => problems.push(
-            "docs/query-catalog.md 가 카탈로그와 다르다 — `cargo xtask query-doc` 으로 다시 낸다"
+            "docs/query-catalog.md 가 카탈로그와 다르다 — `cargo xtask query-doc` 으로 다시 제출한다"
                 .to_owned(),
         ),
         Err(_) => {
@@ -1355,7 +1524,7 @@ fn check_catalog(root: &Path) -> Result<String> {
 /// 파생 — 질의 표. **손으로 쓰지 않는다.**
 /// ⚠ **여기서 나가는 문자열에 상대 링크를 쓰지 않는다.**
 ///
-/// 이 함수는 `xtask/src/` 에 살면서 `docs/` 아래에 파일을 낸다. 상대 링크를 담으면
+/// 이 함수는 `xtask/src/` 에 살면서 `docs/` 아래에 파일을 산출한다. 상대 링크를 담으면
 /// **두 기준 중 하나에서 반드시 죽는다** — 죽은 링크 검사는 「발신 파일 기준」으로
 /// 해석하므로 `xtask/src/…` 에서 보고, 사람은 `docs/…` 에서 본다. 둘을 동시에
 /// 만족시킬 수 없다. 그래서 경로는 **코드 표기(`` ` ` ``)로 적고 링크로 안 만든다.**
@@ -1363,8 +1532,8 @@ fn check_catalog(root: &Path) -> Result<String> {
 fn render_catalog_doc(c: &pal_core::QueryCatalog) -> String {
     use std::fmt::Write as _;
     let mut o = String::new();
-    o.push_str("<!-- 이 파일은 `cargo xtask query-doc` 이 낸다. 손으로 고치지 않는다. -->\n");
-    o.push_str("<!-- 정본은 surface/queries.toml 이고 CI 가 둘의 일치를 센다. -->\n\n");
+    o.push_str("<!-- 이 파일은 `cargo xtask query-doc` 이 산출한다. 손으로 고치지 않는다. -->\n");
+    o.push_str("<!-- 정본은 surface/queries.toml 이고 CI 가 둘의 일치를 잰다. -->\n\n");
     let _ = writeln!(o, "# 질의 카탈로그 v{}\n", c.version);
     let _ = writeln!(
         o,
@@ -1426,7 +1595,7 @@ fn marked_types(src: &Path) -> Result<BTreeMap<String, (Mark, String, TypeSpan)>
             out.insert(label, (Mark::Node, rust_type, span));
         }
 
-        // 엣지 표식은 **필드**에 붙는다 — 그 엣지를 싣고 있는 자리이기 때문이다.
+        // 엣지 표식은 **필드**에 붙는다 — 그 엣지를 싣고 있는 자리가기 때문이다.
         for (i, line) in lines.iter().enumerate() {
             let Some(label) = marker(line, "[graph-edge]") else { continue };
             let Some(owner) = enclosing_type(&lines, i) else {
@@ -1507,8 +1676,8 @@ fn enclosing_type(lines: &[&str], from: usize) -> Option<String> {
 fn render_schema_doc(s: &pal_core::GraphSchema) -> String {
     use std::fmt::Write as _;
     let mut o = String::new();
-    o.push_str("<!-- 이 파일은 `cargo xtask schema-doc` 이 낸다. 손으로 고치지 않는다. -->\n");
-    o.push_str("<!-- 정본은 schema/graph.toml 이고 CI 가 둘의 일치를 센다. -->\n\n");
+    o.push_str("<!-- 이 파일은 `cargo xtask schema-doc` 이 산출한다. 손으로 고치지 않는다. -->\n");
+    o.push_str("<!-- 정본은 schema/graph.toml 이고 CI 가 둘의 일치를 잰다. -->\n\n");
     o.push_str("# 그래프 스키마 v");
     let _ = writeln!(o, "{}\n", s.version);
     let _ = writeln!(
@@ -1522,7 +1691,7 @@ fn render_schema_doc(s: &pal_core::GraphSchema) -> String {
     o.push_str("## 노드\n\n| 라벨 | 출처 | Rust 타입 | 키 | 상태 |\n|---|---|---|---|---|\n");
     for n in s.nodes.values() {
         let status = match &n.status {
-            pal_core::NodeStatus::Built => "값이 선다".to_owned(),
+            pal_core::NodeStatus::Built => "값이 정해진다".to_owned(),
             pal_core::NodeStatus::NotBuilt { by } => format!("**자리만** — {by} 가 만든다"),
         };
         let _ = writeln!(
@@ -1731,14 +1900,14 @@ fn check_budget_constants(root: &Path) -> Result<String> {
 
 // ── 검사 10 — 벗어나는 경로 부재 (옛 F05 §5.1·§5.2) ─────────────────────────────
 //
-// 둘을 한 검사로 센다. **같은 형태이기 때문이다** — 둘 다 *"이 값을 안 지고 나갈 수
+// 둘을 한 검사로 잰다. **같은 형태이기 때문이다** — 둘 다 *"이 값을 안 지고 나갈 수
 // 있는 문"* 이고, 둘 다 **타입으로 100% 막히지 않는다.** 옛 F05 §5.1 이 그것을 인정했다:
 // *"타입으로 100% 막히지 않는다는 것을 인정하고, 대신 **빠지면 골든이 깨지는** 자리에
 // 검사를 둔다."* 여기가 그 검사의 정적인 절반이다.
 //
 // | | 무엇을 막나 | 합격선 |
 // |---|---|---|
-// | `Envelope` | 봉투를 버리고 `T` 만 들고 나가는 경로 | `[f05.3.pass]` ① |
+// | `Envelope` | 응답 묶음을 버리고 `T` 만 들고 나가는 경로 | `[f05.3.pass]` ① |
 // | `Budget` | 예산을 끄는 손잡이 | `[f05.1.pass]` ④ |
 //
 // # 이 검사가 지금 재는 것은 **회귀 방지**다
@@ -1752,7 +1921,7 @@ fn check_budget_constants(root: &Path) -> Result<String> {
 //     골든이 진다(`[f05].pass.everything_that_answers_carries_an_envelope`)
 //   · 다른 크레이트가 `Envelope` 를 감싸 벗기는 것 — `pal-core` 밖은 안 본다
 
-/// 봉투를 벗기는 문. **낱말이 코드에 나타나면 실패.**
+/// 응답 묶음을 벗기는 문. **낱말이 코드에 나타나면 실패.**
 const ENVELOPE_ESCAPES: &[&str] = &["into_answer", "impl Deref", "Deref for Envelope", "into_inner"];
 
 /// 예산을 끄는 손잡이.
@@ -1805,7 +1974,7 @@ fn check_no_escape_hatch(root: &Path) -> Result<String> {
         );
     }
     Ok(format!(
-        "봉투 {}개 · 예산 {}개 낱말에 0건",
+        "응답 묶음 {}개 · 예산 {}개 낱말에 0건",
         ENVELOPE_ESCAPES.len(),
         BUDGET_ESCAPES.len()
     ))
@@ -1856,7 +2025,7 @@ mod budget_tests {
 // **이 검사는 회귀 방지다.** 동작은 이미 참이고(`pal bind` 가 투영에서 읽는다) 없던
 // 것은 그 부재를 세는 장치다 — `[f05].envelope_boundary` 와 같은 형태.
 //
-// # 이름을 세지 않고 **자리를 센다**
+// # 이름을 세지 않고 **자리를 잰다**
 //
 // 낱말 목록으로 세면 새 이름이 생길 때 조용히 빠진다. 그래서 `WatchEntry` 를 **만드는
 // 자리의 수**를 등록하고, 그 수가 변하면 멈춘다 — 사람이 새 자리를 보고 판단한다.
@@ -1869,7 +2038,7 @@ const WATCH_ENTRY_SITES: &[(&str, &str)] = &[
     // ★ **F10 이 더한 자리이고, 이 검사가 그것을 잡아서 여기 적힌다.**
     // `pal narrative approve` 도 `pal bind` 와 **같은 자리에서 같은 값을 읽는다** —
     // 투영의 `symbol.body` 다. 제안이 지고 온 값을 앵커로 쓰는 경로가 **없다**:
-    // 제안은 좌표까지만 낸다(`Classification`). 그것이 옛 F09 §4.1(D32)이 요구한
+    // 제안은 좌표까지만 산출한다(`Classification`). 그것이 옛 F09 §4.1(D32)이 요구한
     // *"`watch_snapshot` 은 신고받지 않는다"* 를 인입 경로에서도 지키는 형태다.
     ("crates/pal-cli/src/narrative.rs", "승인이 투영에서 읽어 만든다 — 제안이 지고 오지 않는다"),
 ];
@@ -1931,7 +2100,7 @@ fn check_no_regeneration(root: &Path) -> Result<String> {
         let path = root.join(rel);
         let text = std::fs::read_to_string(&path)
             .with_context(|| format!("읽지 못했다: {}", path.display()))?;
-        // **하한** — `Stale` 을 안 다루는 파일을 검사하면 아무것도 안 센다.
+        // **하한** — `Stale` 을 안 다루는 파일을 검사하면 아무것도 안 잰다.
         if text.contains("CodeFreshness::Stale") {
             봤나 = true;
         }
@@ -1990,7 +2159,7 @@ fn check_no_similarity(root: &Path) -> Result<String> {
 
     for rel in files {
         let path = root.join(rel);
-        // **없는 파일은 건너뛰지 않고 센다** — 아래 하한이 그것을 잡는다.
+        // **없는 파일은 건너뛰지 않고 잰다** — 아래 하한이 그것을 잡는다.
         let Ok(text) = std::fs::read_to_string(&path) else { continue };
         센_파일 += 1;
         if text.contains(CASCADE_WITNESS) {
@@ -2008,7 +2177,7 @@ fn check_no_similarity(root: &Path) -> Result<String> {
         }
     }
 
-    // **하한** — 계단식이 있는 파일을 안 보고 있으면 이 검사는 아무것도 안 센다.
+    // **하한** — 계단식이 있는 파일을 안 보고 있으면 이 검사는 아무것도 안 잰다.
     if !봤나 {
         bail!(
             "`{CASCADE_WITNESS}` 를 쓰는 파일이 하나도 없다 — 이 검사는 아무것도 안 세고 있다 \
@@ -2064,7 +2233,7 @@ fn check_promotion_is_not_in_place(root: &Path) -> Result<String> {
         }
     }
 
-    // **하한** — 승격 함수가 없으면 이 검사는 아무것도 안 센다.
+    // **하한** — 승격 함수가 없으면 이 검사는 아무것도 안 잰다.
     if !봤나 {
         bail!("`{PROMOTION_WITNESS}` 가 어디에도 없다 — 이 검사는 아무것도 안 세고 있다");
     }
@@ -2132,7 +2301,7 @@ fn check_install_never_reaches_home(root: &Path) -> Result<String> {
         }
     }
 
-    // **하한** — 설치 경로를 안 보고 있으면 이 검사는 아무것도 안 센다.
+    // **하한** — 설치 경로를 안 보고 있으면 이 검사는 아무것도 안 잰다.
     if !봤나 {
         bail!(
             "`{INSTALL_WITNESS}` 가 어디에도 없다 — 이 검사는 아무것도 안 세고 있다 \
@@ -2143,7 +2312,7 @@ fn check_install_never_reaches_home(root: &Path) -> Result<String> {
         bail!(
             "설치 경로가 홈을 부른다 (F24 ⑦):\n    \
              소유자의 문장은 **\"`~/.claude/` 하위에 기대는 구조는 절대 있어서는 안 돼\"** \
-             였다.\n    설치·갱신·제거는 **대상 프로젝트 안에서만** 선다:\n    {}",
+             였다.\n    설치·갱신·제거는 **대상 프로젝트 안에서만** 미친다:\n    {}",
             hits.join("\n    ")
         );
     }
@@ -2188,7 +2357,7 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
         );
     }
 
-    /// ★ **요약 블록을 두 번 안 센다.** 위 입력의 `---- 또_깨진것 stdout ----` 과
+    /// ★ **요약 블록을 두 번 안 잰다.** 위 입력의 `---- 또_깨진것 stdout ----` 과
     /// `failures:` 목록은 `test … ... FAILED` 형태가 아니므로 안 걸려야 한다 — 걸리면
     /// 같은 이름이 두 번 세지고, 그러면 등록 대조가 뜻을 잃는다.
     #[test]
@@ -2217,7 +2386,7 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
 
     /// ★ **음성 대조 ① — 등록 안 된 것이 깨지면 걸린다.**
     ///
-    /// 이 줄이 없으면 이 명령은 *"언제나 통과"* 일 수 있고, 그러면 CI 가 아무것도 안 센다.
+    /// 이 줄이 없으면 이 명령은 *"언제나 통과"* 일 수 있고, 그러면 CI 가 아무것도 안 잰다.
     #[test]
     fn 등록_안_된_실패가_걸린다() {
         let 등록 = [("외침A", "까닭")];
@@ -2250,7 +2419,7 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
     ///
     /// 이것이 앞 판의 구멍이었다. 워크스페이스가 컴파일에 실패하면 stdout 에
     /// `test … ... FAILED` 가 **한 줄도 안 나고**, 그러면 「실패 0건 = 등록 0건」이 되어
-    /// 집합 대조가 **초록**을 냈다. CI 세 OS 가 이 명령 하나로 판정하므로 셋이 함께 속았다.
+    /// 집합 대조가 **초록**을 산출했다. CI 세 OS 가 이 명령 하나로 판정하므로 셋이 함께 속았다.
     #[test]
     fn 컴파일이_서지_못하면_초록이_아니다() {
         assert_eq!(판정한다(false, false, &[], &[]), 판정::시험을_못_돌렸다);
@@ -2264,7 +2433,7 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
     /// `r.섰나 || 시험이_돌았나(…)` 였어서 **rc=0 인 호출은 보고 검사를 통째로
     /// 건너뛰었고**, `외침` 이 비어 있으므로 집합 대조도 침묵했다. 실측(2026-08-17):
     /// 축 하나를 `--no-run` 으로 바꾸니 통과 수가 **753 에서 3 으로** 줄었는데
-    /// `cargo xtask test` 는 **rc=0 · "시험 통과"** 를 냈다.
+    /// `cargo xtask test` 는 **rc=0 · "시험 통과"** 를 산출했다.
     #[test]
     fn rc가_0이어도_보고가_없으면_초록이_아니다() {
         assert_eq!(판정한다(true, false, &[], &[]), 판정::시험을_못_돌렸다);
@@ -2349,7 +2518,7 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
     /// ★ **등록에는 언제나 까닭이 붙고, 그 까닭은 「원리상 불가능」이어야 한다.**
     ///
     /// ⚠ 앞 판은 여기서 `assert!(!외침.is_empty())` 를 했다 — *"목록이 비었으면 이
-    /// 대조가 아무것도 안 센다"* 는 이유로. **그 단언은 이제 틀렸다.** 빈 목록은
+    /// 대조가 아무것도 안 잰다"* 는 이유로. **그 단언은 이제 틀렸다.** 빈 목록은
     /// 「대조가 죽었다」가 아니라 **「안 재지는 것이 하나도 없다」**이고, 그것이 이
     /// 저장소가 가려던 자리다. 대조가 살아 있다는 것은 [`등록_안_된_실패가_걸린다`] 와
     /// [`승격됐는데_등록이_남으면_걸린다`] 가 **순수 함수 위에서** 잰다 — 목록의
@@ -2434,7 +2603,7 @@ test result: FAILED. 2 passed; 2 failed; 0 ignored
 // 말하는 *"낡은 문서의 문제는 거짓 신호가 되는 것"* 의 반대편이다.
 //
 // ⚠ **모집단이 비면 실패다** — 0 건은 *"죽은 링크가 없다"* 가 아니라 *"안 봤다"* 이고,
-// 둘을 뭉개면 이 검사가 자기 대상이 사라진 것을 초록으로 낸다(`SURFACE_MIN` 과 같은 자리).
+// 둘을 뭉개면 이 검사가 자기 대상이 사라진 것을 초록으로 판정한다(`SURFACE_MIN` 과 같은 자리).
 
 /// 훑지 않는 자리. 저장소 루트 기준 접두사이고 구분자는 언제나 `/` 다.
 const 링크_모집단_밖: &[&str] = &[
@@ -2448,7 +2617,7 @@ const 링크_모집단_밖: &[&str] = &[
 /// 게이트 디렉터리에서 **판정 문서만** 뺀다.
 ///
 /// ★ `docs/gates/` 를 통째로 빼면 이 회차가 거기 새로 놓는 `README.md` 와
-/// `inventory-disposal.md` 가 **자기가 세우는 검사의 모집단 밖**에 선다.
+/// `inventory-disposal.md` 가 **자기가 세우는 검사의 모집단 밖**에 성립한다.
 fn 동결된_판정_문서인가(상대: &str) -> bool {
     let Some(이름) = 상대.strip_prefix("docs/gates/") else { return false };
     if 이름.contains('/') {
@@ -2544,7 +2713,7 @@ fn 모을_문서(root: &Path, dir: &Path, sunset: &[String], out: &mut Vec<PathB
 ///
 /// ```text
 /// 인라인      [라벨](경로)
-/// 참조 정의   [라벨]: 경로        ← 줄 첫머리에 산다
+/// 참조 정의   [라벨]: 경로        ← 줄 첫머리에 있다
 /// ```
 ///
 /// 앞 판은 `']' + '('` 만 찾아서 정의형을 통째로 안 셌다. 그 결과 같은 파일 안에
@@ -2554,7 +2723,7 @@ fn 모을_문서(root: &Path, dir: &Path, sunset: &[String], out: &mut Vec<PathB
 /// ★ **rustdoc 의 항목 링크를 걸러야 한다.** `.rs` 안에는 `[Envelope](Envelope)` ·
 /// `[좌표](crate::Coord)` · `[심볼](Self::symbols)` 같은 **Rust 항목 링크**가 많고,
 /// 그것들은 파일이 아니다. `rustdoc` 의 `broken_intra_doc_links` 가 이미 그 축을
-/// 재고 있으므로 여기서 또 재면 **같은 것을 두 곳에서 세는 것**이고, 게다가 틀리게 센다.
+/// 재고 있으므로 여기서 또 재면 **같은 것을 두 곳에서 세는 것**이고, 게다가 틀리게 잰다.
 ///
 /// 가르는 자 둘:
 ///   · `::` 가 있으면 Rust 경로다.
@@ -2661,7 +2830,7 @@ fn 트리거가_참인가(root: &Path, glob: &str) -> Result<Vec<String>> {
         // ★ **깊이를 안 묶는다** (독립 리뷰 2026-08-18). 앞 판은 `rounds/<회차>/` 바로
         //   아래만 봤는데, **이 회차 자신이 이미 `rounds/<회차>/effect/` 를 만들었다.**
         //   `pal` 이 레코드를 한 단계 안쪽에 쓰면 트리거가 **영영 안 뜨고**, 그러면
-        //   검사는 초록인 채로 아무것도 안 지킨다 — 「꺼진 대조는 `–` 가 아니라 실패다」.
+        //   검사는 초록인 채로 아무것도 안 지킨다 — 「멎은 대조는 `–` 가 아니라 실패다」.
         //   이름을 안 묶은 것과 같은 이유로 깊이도 안 묶는다.
         아래_전부(&dir, ext, root, &mut 찾음)?;
     }
@@ -2725,7 +2894,7 @@ fn 링크로(대상: &str) -> Option<String> {
     Some(if 앵커.is_empty() { 경로.to_owned() } else { format!("{경로}#{앵커}") })
 }
 
-/// 마크다운 제목에서 GitHub 이 만드는 조각 이름을 낸다.
+/// 마크다운 제목에서 GitHub 이 만드는 조각 이름을 산출한다.
 ///
 /// 규칙(실측으로 맞춘 것): 링크는 **텍스트만** 남기고 · 강조와 코드 표기를 벗기고 ·
 /// 소문자로 · 글자·숫자·공백·`-`·`_` 아닌 것을 버리고 · 공백을 `-` 로.
@@ -2868,7 +3037,7 @@ const 사라진_문서: &[&str] = &[
 ];
 
 // ⚠ **「계획 §」은 토큰이 아니다** (독립 리뷰 10 라운드). 한때 넣었다가 뺐다 —
-//    `docs/plan/README.md` 는 **살아 있고** §4~§9 가 전부 선다. 넣었더니 검사가
+//    `docs/plan/README.md` 는 **살아 있고** §4~§9 가 전부 성립한다. 넣었더니 검사가
 //    **살아 있는 절을 인용한 일곱 자리에 거짓 「옛」을 강제했다.**
 //    ★ **장치가 거짓말을 요구하면 그것은 대조가 아니다.** 사라진 것만 토큰이 된다.
 
@@ -2883,19 +3052,19 @@ fn check_stale_citation(root: &Path) -> Result<String> {
             let _ = &상대;
             let Ok(body) = std::fs::read_to_string(&file) else { continue };
             파일수 += 1;
-            // 이 검사 자신이 사는 파일인가 — 면제는 여기서만 선다.
+            // 이 검사 자신이 든 파일인가 — 면제는 여기서만 걸린다.
             let 이_파일 = 상대 == "xtask/src/main.rs";
             // ★ **면제가 설 줄 범위** — 토큰 목록 선언 블록과 그 doc 주석뿐.
             //   ⚠ 앞 판은 주석에 *"블록 안에서만"* 이라 적고 **파일 전체**로 구현했다
             //   (독립 리뷰 12 라운드가 심어서 확인 — 블록 밖 52 줄이 면제됐다).
-            //   **선언과 구현이 갈리면 그것이 곧 꺼진 대조다.**
+            //   **선언과 구현이 갈리면 그것이 곧 멎은 대조다.**
             let 면제_범위 = 이_파일.then(|| 토큰_블록(&body)).flatten();
             for (n, line) in body.lines().enumerate() {
                 // ★ **이 검사 자신의 토큰 목록은 인용이 아니다.** 검사가 자기 정의를
                 //   위반으로 읽으면 그것은 대조가 아니라 자가당착이다.
                 // ★ **면제는 이 파일의 토큰 목록 블록 안에서만** (독립 리뷰 10 라운드).
                 //   앞 판은 파일을 안 가려서 **어느 파일이든** `// … 표기 …` 나
-                //   `"…",` 로 생긴 줄이 통째로 면제됐다 — 심어서 확인한 **꺼진 대조**다.
+                //   `"…",` 로 생긴 줄이 통째로 면제됐다 — 심어서 확인한 **멎은 대조**다.
                 //   이 저장소는 규약을 말할 때 「**「옛」 표기**」라는 낱말을 쓰므로,
                 //   그 면제는 **가장 잘 걸릴 문장 형태를 정확히 비켜 가고 있었다.**
                 if 면제_범위.is_some_and(|(a, b)| n >= a && n <= b) {
@@ -2952,7 +3121,7 @@ fn check_stale_citation(root: &Path) -> Result<String> {
 /// ⚠ 앞 판은 doc 과 게이트 합격선 ③b 가 둘 다 *"`docs/`·`.palimpsest/` **만** 뺀다"*
 ///   라고 적었는데 구현은 다섯이었다 — **선언과 구현이 갈린 자리**이고, 독립 리뷰 13
 ///   라운드가 `corpus/criteria.toml` 에 심어 확인했다(19/19 초록). 세는 문장이 자기
-///   사각을 안 적으면 그 문장이 곧 꺼진 대조다.
+///   사각을 안 적으면 그 문장이 곧 멎은 대조다.
 ///
 /// ★ **`docs/` 아래여도 코드가 실행 시점에 여는 파일은 들어온다** — 그것은 문서가
 ///   아니라 **설정**이다. 손으로 적지 않고 [`실행시점_docs`] 가 소스에서 뽑는다.
@@ -2962,7 +3131,7 @@ fn 인용_모집단(root: &Path) -> Result<Vec<PathBuf>> {
     // ★ **`.md` 도 본다** (독립 리뷰 8 라운드). 앞 판은 `.md` 를 빼서
     //   **설치 자산**(`crates/pal-cli/assets/**/*.md` — `include_str!` 로 사용자
     //   프로젝트에 실려 나간다)과 **하네스 표면 둘**(`.claude/agents/`·`.claude/skills/`)이
-    //   통째로 사각이었다. 심어서 확인한 **꺼진 대조**다 — 거기 「옛」 없는 인용을 넣어도
+    //   통째로 사각이었다. 심어서 확인한 **멎은 대조**다 — 거기 「옛」 없는 인용을 넣어도
     //   19/19 초록이었다. `docs/`·`.palimpsest/` 만 빼는 것이 이 검사의 선언이었으므로
     //   **선언과 구현이 갈린 자리**이기도 하다.
     const 확장자: &[&str] = &["rs", "toml", "py", "sh", "yml", "yaml", "json", "md"];
@@ -3078,7 +3247,7 @@ fn 계획문서_인용(line: &str) -> Vec<usize> {
     out
 }
 
-/// 토큰 목록 선언 블록의 줄 범위(0-기준, 양끝 포함) — **면제는 여기서만 선다.**
+/// 토큰 목록 선언 블록의 줄 범위(0-기준, 양끝 포함) — **면제는 여기서만 걸린다.**
 ///
 /// 앞의 doc 주석부터 `];` 까지. 그 밖은 아무리 그럴듯해 보여도 면제 안 한다 —
 /// 이 저장소는 규약을 말할 때 「「옛」 표기」라는 낱말을 쓰므로, 「표기」가 든 줄을
@@ -3107,7 +3276,7 @@ fn 토큰_블록(body: &str) -> Option<(usize, usize)> {
 //
 // ★ **이 검사가 재는 회차에서 계수 시도 셋 중 둘이 어긋났다** — 메인이 17 이라 말한 것이
 // 18 이었고, 사전부검이 11 이라 적은 것이 12 였다. **사람도 에이전트도 자기 산출을 잘못
-// 센다.** 그래서 합계 검산이 **독립된 둘째 원천**(보존된 원 반환문)을 댄다. 자기가 쓴 것을
+// 잰다.** 그래서 합계 검산이 **독립된 둘째 원천**(보존된 원 반환문)을 댄다. 자기가 쓴 것을
 // 자기가 세면 그것은 검산이 아니라 항등식이다.
 //
 // ⚠ **모집단이 비면 실패다.** 0 건은 「안 부른다」가 아니라 「안 봤다」일 수 있다.
@@ -3115,10 +3284,10 @@ fn 토큰_블록(body: &str) -> Option<(usize, usize)> {
 // [#71]: https://github.com/hskim-ecoletree/palimpsest/issues/71
 // [#72]: https://github.com/hskim-ecoletree/palimpsest/issues/72
 
-/// 회차 산출이 사는 자리.
+/// 회차 산출이 놓이는 자리.
 const 회차_뿌리: &str = ".palimpsest/rounds";
 
-/// 스키마와 **한 줄의 정합 규칙**이 사는 유일한 자리. 이 검사는 `check` 를 **불러서**
+/// 스키마와 **한 줄의 정합 규칙**이 있는 유일한 자리. 이 검사는 `check` 를 **불러서**
 /// 위임하고 파이썬 소스를 정규식으로 안 긁는다. 두 곳에 적으면 갈리고 갈린 것을 대는
 /// 장치가 없다.
 ///
@@ -3134,7 +3303,7 @@ const 스키마_원천: &str = ".claude/skills/round/bin/record.py";
 /// 것**이고, 그 분기는 **여기 한 번**이어야 한다. 두 곳에서 각자 답하면 한쪽이 조용히
 /// 낡는다(설치 쪽의 [`실행자 이름`] 이 같은 사유로 한 자리다).
 ///
-/// **찾은 이름을 판정에 실어 낸다** — 세 OS 의 답이 CI 로그에 남는 것이 이 저장소가
+/// **찾은 이름을 판정에 실어 보낸다** — 세 OS 의 답이 CI 로그에 남는 것이 이 저장소가
 /// 「쟀다」고 말할 수 있는 유일한 근거다.
 ///
 /// [`실행자 이름`]: https://github.com/hskim-ecoletree/palimpsest/blob/main/crates/pal-cli/src/install/exe.rs
@@ -3150,7 +3319,7 @@ fn 파이썬_실행자() -> Result<&'static str> {
         }
     }
     bail!(
-        "파이썬 실행자를 못 찾았다 — `python3` 도 `python` 도 안 선다. \
+        "파이썬 실행자를 못 찾았다 — `python3` 도 `python` 도 성립하지 않는다. \
          회차 레코드 검사는 스키마를 `{스키마_원천} --schema` 에 물어본다"
     )
 }
@@ -3184,9 +3353,9 @@ fn 아래_전부_확장자들(dir: &Path, exts: &[&str], out: &mut Vec<PathBuf>)
     Ok(())
 }
 
-/// 보존된 원 반환문에서 **항 수**를 센다 — 합계 검산의 둘째 원천.
+/// 보존된 원 반환문에서 **항 수**를 잰다 — 합계 검산의 둘째 원천.
 ///
-/// ★ **출처마다 규칙이 다르다.** 사전부검자는 `### 항`으로 내고 리뷰어는 **표**로 낸다.
+/// ★ **출처마다 규칙이 다르다.** 사전부검자는 `### 항`으로 내고 리뷰어는 **표**로 산출한다.
 /// 규칙을 여기 적는 까닭은, 파일마다 절 구성이 달라서(실측: `##` 절이 1 개인 반환문과
 /// 2 개인 반환문이 있다) **「전부 세기」가 원리상 안 되기 때문**이다.
 ///
@@ -3203,13 +3372,13 @@ fn 반환문_항_수(
     출처: &str,
     text: &str,
 ) -> usize {
-    // ★★ **코드펜스 안은 안 센다.** (독립 리뷰 R3 · 발견 6)
+    // ★★ **코드펜스 안은 안 잰다.** (독립 리뷰 R3 · 발견 6)
     //   반환문이 **마크다운 형식을 예시로 인용**하면 그 안의 항 표시와 표 머리가
     //   발견으로 세어진다 — 계수기도 추출기도 펜스를 안 봤다. 그러면 **두 원장이
     //   같이 부풀고** 초록으로 만드는 자연스러운 길이 「없는 레코드를 지어내기」다.
     let text = 펜스_밖(text);
     let text = text.as_str();
-    // ★★ **판정이지 발견이 아닌 절은 안 센다.** (같은 라운드 · 발견 4)
+    // ★★ **판정이지 발견이 아닌 절은 안 잰다.** (같은 라운드 · 발견 4)
     //   「미측정 목록」은 합격선 축 판정의 일부다. 그것을 항으로 세면 레코드가 되고,
     //   그러면 **A 축이 그 행을 닫을 때 발화한다** — `K1`·`K5` 행의 좌표는 워크플로
     //   파일인데 그 조건은 **CI 런으로** 재어지므로 그것을 만지는 커밋이 원리상 없다.
@@ -3256,8 +3425,8 @@ fn 반환문_항_수(
             시나리오 += 1;
             기각_절 = false;
         } else if 기각_절 {
-            // ★ **불릿이든 표든 센다.** (정정 2026-08-19 · 독립 리뷰 3 라운드)
-            // ★★ **헤더 행은 문구가 무엇이든 안 센다.** (2026-08-24 · `B5`)
+            // ★ **불릿이든 표든 잰다.** (정정 2026-08-19 · 독립 리뷰 3 라운드)
+            // ★★ **헤더 행은 문구가 무엇이든 안 잰다.** (2026-08-24 · `B5`)
             let s = line.trim_start();
             if s.starts_with("- ") {
                 기각 += 1;
@@ -3314,11 +3483,11 @@ mod 펜스_시험 {
         assert_eq!(반환문_항_수(&규칙(), &[], "사전부검", t), 1);
     }
 
-    /// ⚠ **판정이지 발견이 아닌 절도 센다** — 세는 자를 바꾸면 **옛 회차의 검산이
+    /// ⚠ **판정이지 발견이 아닌 절도 잰다** — 세는 자를 바꾸면 **옛 회차의 검산이
     /// 깨진다**(실측: 옛 회차 하나가 24↔25 로 갈렸다). 대신 **처분이 그것을 가른다** —
     /// 「미측정 목록」 행은 `처분=기각` 이고, `닫힘축` 이 그것을 원리상 못 잼으로 뺀다.
     #[test]
-    fn 절이_달라도_표는_전부_센다() {
+    fn 절이_달라도_표는_전부_잰다() {
         let t = "## 미측정 목록\n\n| # | a |\n|---|---|\n| 1 | x |\n\n\
                  ## 새 발견\n\n| # | b |\n|---|---|\n| 1 | y |\n";
         assert_eq!(반환문_항_수(&규칙(), &[], "독립리뷰", t), 2);
@@ -3385,20 +3554,31 @@ mod 기각_표_헤더_시험 {
         assert_eq!(기각_표_헤더(t, "내가 기각한 것"), 0);
     }
 
-    /// 다른 절의 표는 안 센다.
+    /// 다른 절의 표는 안 잰다.
     #[test]
-    fn 다른_절의_표는_안_센다() {
+    fn 다른_절의_표는_안_잰다() {
         let t = "## 다른 절\n\n| a | b |\n|---|---|\n| 1 | 2 |\n";
         assert_eq!(기각_표_헤더(t, "내가 기각한 것"), 0);
     }
 }
 
-/// 원 반환문이 사는 디렉터리 ↔ 그것을 낸 **출처**.
+/// 원 반환문이 놓이는 디렉터리 ↔ 그것을 산출한 **출처**.
 ///
 /// ★ **인터뷰와 실측은 여기 없다.** 인터뷰는 소유자와의 대화이고 실측은 메인의 관측이라
 /// **에이전트 반환문이 원리상 없다.** 그래서 검산에서 면제하되 — 면제라는 사실을 판정에
-/// 실어 낸다. 「안 잰 것」과 「잴 수 없는 것」을 같은 침묵으로 두지 않는다.
-const 반환문_자리: &[(&str, &str)] = &[("premortem", "사전부검"), ("review", "독립리뷰")];
+/// 실어 보낸다. 「안 잰 것」과 「잴 수 없는 것」을 같은 침묵으로 두지 않는다.
+///
+/// ★ **`dialectic` 은 #112 가 더했다.** 정반합이 여섯 역할로 서면서 취합 보고
+/// (`pal-debate-reporter`)가 `dialectic/r<n>-raw.md` 를 남긴다 — 그것이 이 출처의
+/// 둘째 원천이다. 여기 안 넣으면 새 역할의 반환문이 **아무 검산도 안 받는다.**
+/// ⚠ 이 자리는 `r<n>-raw.md` 라는 이름만 본다. 같은 디렉터리의 판정문
+/// (`*-thesis.md` 등)은 취합 보고가 아니므로 안 걸린다.
+const 반환문_자리: &[(&str, &str)] = &[
+    ("premortem", "사전부검"),
+    ("review", "독립리뷰"),
+    ("dialectic", "정반합"),
+    ("conditions-audit", "조건평가"),
+];
 
 /// 산출 파일이 어느 회차의 것인가 — `.palimpsest/rounds/<회차>/…` 의 `<회차>`.
 fn 회차_이름(root: &Path, p: &Path) -> String {
@@ -3411,9 +3591,9 @@ fn 회차_이름(root: &Path, p: &Path) -> String {
 
 /// 그 절이 섰는가 — **데이터 표가 있거나, 「없음」이 명시돼 있거나.**
 ///
-/// ★★ **이것이 「안 냈다」와 「낼 것이 없다」를 가르는 자다** (#93).
+/// ★★ **이것이 「안 산출했다」와 「산출할 것이 없다」를 가르는 자다** (#93).
 /// 둘을 같은 침묵으로 두면 계기판 ⑧(발견의 몇 %가 헛것인가)이 **조용히 빈다** —
-/// 실측: 앞 회차 리뷰어 여덟 중 기각 절을 낸 것은 **둘뿐**이었다.
+/// 실측: 앞 회차 리뷰어 여덟 중 기각 절을 산출한 것은 **둘뿐**이었다.
 ///
 /// **순수 함수다.**
 fn 절이_섰나(text: &str, 절: &str, 없음: &str) -> Result<(), String> {
@@ -3451,14 +3631,14 @@ fn 절이_섰나(text: &str, 절: &str, 없음: &str) -> Result<(), String> {
     }
     if !안 && !데이터 && !없음_적힘 {
         return Err(format!(
-            "`## {절}` 절이 없다 — **「안 냈다」와 「낼 것이 없다」는 다르다.** \
-             낼 것이 없으면 그 절을 두고 **표 밖에 「{없음}」이라 적어라"
+            "`## {절}` 절이 없다 — **「안 산출했다」와 「산출할 것이 없다」는 다르다.** \
+             산출할 것이 없으면 그 절을 두고 **표 밖에 「{없음}」이라 적어라"
         ));
     }
     if !데이터 && !없음_적힘 {
         return Err(format!(
             "`## {절}` 절이 비었다 — 데이터도 「{없음}」 선언도 없다. \
-             **빈 침묵은 「안 냈다」와 구별이 안 된다**"
+             **빈 침묵은 「안 산출했다」와 구별이 안 된다**"
         ));
     }
     Ok(())
@@ -3469,25 +3649,25 @@ mod 절이_섰나_시험 {
     use super::절이_섰나;
 
     #[test]
-    fn 데이터가_있으면_선다() {
+    fn 데이터가_있으면_성립한다() {
         let t = "## 내가 기각한 것\n\n| # | a |\n|---|---|\n| 1 | b |\n";
         assert!(절이_섰나(t, "내가 기각한 것", "없음").is_ok());
     }
 
     #[test]
-    fn 없음이_명시되면_선다() {
+    fn 없음이_명시되면_성립한다() {
         let t = "## 내가 기각한 것\n\n없음 — 전부 남겼다.\n";
         assert!(절이_섰나(t, "내가 기각한 것", "없음").is_ok());
     }
 
-    /// ★★ **절이 아예 없으면 「안 냈다」다.** 그것과 「낼 것이 없다」를 가른다.
+    /// ★★ **절이 아예 없으면 「안 산출했다」다.** 그것과 「산출할 것이 없다」를 가른다.
     #[test]
     fn 절이_없으면_걸린다() {
         let t = "## 다른 절\n\n- 하나\n";
         assert!(절이_섰나(t, "내가 기각한 것", "없음").is_err());
     }
 
-    /// 절머리만 두고 비워 두는 것도 「안 냈다」와 구별이 안 된다.
+    /// 절머리만 두고 비워 두는 것도 「안 산출했다」와 구별이 안 된다.
     #[test]
     fn 절이_비면_걸린다() {
         let t = "## 내가 기각한 것\n\n## 그다음\n\n- 무언가\n";
@@ -3781,7 +3961,7 @@ fn check_round_records(root: &Path) -> Result<String> {
             if i == 0 && v.get("schema_version").is_some() {
                 continue;
             }
-            // ★ **종류마다 따로 센다.** (독립 리뷰 R3) 예외표를 함께 넘기게 고친 뒤
+            // ★ **종류마다 따로 헤아린다.** (독립 리뷰 R3) 예외표를 함께 넘기게 고친 뒤
             //   판정문이 예외표 행까지 「레코드 N행」이라 불렀다 — `--schema` 가 `종류` 를
             //   둘로 선언하는데 판정문은 하나로 뭉갰다.
             총_행 += 1;
@@ -3824,7 +4004,7 @@ fn check_round_records(root: &Path) -> Result<String> {
 
     // ④ **합계 검산 — 독립된 둘째 원천을 댄다.**
     //
-    // ★ **(출처, 라운드) 쌍으로 센다.** 라운드 번호만으로 세면 ① 같은 라운드에 두 출처가
+    // ★ **(출처, 라운드) 쌍으로 잰다.** 라운드 번호만으로 세면 ① 같은 라운드에 두 출처가
     //   섞였을 때 **멀쩡한 레코드가 거짓 실패**를 내고, ② 반환문 파일이 없는 출처는
     //   **아무 검산도 안 받는다** — 그것이 「측정이 죽은 가지」다(독립 리뷰 2026-08-19).
     let mut 검산 = Vec::new();
@@ -3868,7 +4048,7 @@ fn check_round_records(root: &Path) -> Result<String> {
                 let raw본문 = std::fs::read_to_string(&f)?;
                 let 항 = 반환문_항_수(&스키마["합계검산"], &발견아닌절, 출처, &raw본문);
 
-                // ── D2 — **「안 냈다」와 「낼 것이 없다」를 가른다** (#93) ────────
+                // ── D2 — **「안 산출했다」와 「산출할 것이 없다」를 가른다** (#93) ────────
                 //
                 // ★ 앞 판은 에이전트에게 **일곱 표 전부**를 데이터 표로 내라고
                 //   시켰고, 그래서 *"빠진 것 — 없음"* 같은 **자리 채우기 행**이
@@ -3879,7 +4059,7 @@ fn check_round_records(root: &Path) -> Result<String> {
                 //   였는데 **부호만 뒤집힌 셈**이었다.
                 //
                 //   이제 「없음」은 **표 밖의 명시 문장**이다. 그러면 자리 채우기
-                //   행이 원천에서 사라지고, 「안 냈다」와 「낼 것이 없다」는
+                //   행이 원천에서 사라지고, 「안 산출했다」와 「산출할 것이 없다」는
                 //   **그 문장이** 가른다.
                 //
                 // ⚠ **닫힌 집합으로 안 본다.** 실측: 리뷰어들이 정의에 없는 절을
@@ -3922,7 +4102,7 @@ fn check_round_records(root: &Path) -> Result<String> {
                 // ⚠ **끝난 회차는 보고만 한다.** 그 라운드들은 추출기가 없던 때에
                 //    손으로 전사됐다 — 하한 없이 걸면 옛 기록을 대량으로 고쳐야 하고
                 //    그것은 「앞 회차의 판정을 다시 열지 마라」에 걸린다.
-                //    **진행 중인 회차(종료 보고가 없는 회차)만 실패로 낸다.**
+                //    **진행 중인 회차(종료 보고가 없는 회차)만 실패로 판정한다.**
                 let 진행중 = !기록이_확정됐나(&dir);
                 let 행들 = 쌍_행.get(&(회차.clone(), 출처.to_string(), n));
                 if let Some(행들) = 행들 {
@@ -4000,7 +4180,7 @@ fn check_round_records(root: &Path) -> Result<String> {
         if !있나 {
             problems.push(format!(
                 "회차 `{회차}` 의 `출처={출처}` · `라운드={n}` 레코드가 {행} 행인데 원 반환문이 \
-                 없다 — `{회차}/{자리}/r{n}-raw.md` 를 보존해야 합계 검산이 선다"
+                 없다 — `{회차}/{자리}/r{n}-raw.md` 를 보존해야 합계 검산이 성립한다"
             ));
         }
     }
@@ -4020,7 +4200,7 @@ fn check_round_records(root: &Path) -> Result<String> {
         if 면제.is_empty() {
             "없음".to_string()
         } else {
-            // ★ **몇 행이 면제됐는지 낸다.** 라벨만 내면 「11% 가 아무 대조도 안 받았다」는
+            // ★ **몇 행이 면제됐는지 산출한다.** 라벨만 내면 「11% 가 아무 대조도 안 받았다」는
             //   사실이 화면에 안 뜬다(독립 리뷰 2 라운드).
             format!(
                 "{} (반환문이 원리상 없다)",
@@ -4047,7 +4227,7 @@ fn check_round_records(root: &Path) -> Result<String> {
 //
 // | 처분 | 요구하는 자리 |
 // |---|---|
-// | `기각` | **없다** — 아무것도 안 고치는 처분이다. 「원리상 못 잼」으로 따로 센다 |
+// | `기각` | **없다** — 아무것도 안 고치는 처분이다. 「원리상 못 잼」으로 따로 헤아린다 |
 // | `축소`·`전환`·`범위밖` | 그 회차의 `intent.md` (개정·승격·`## 범위 밖` 이 거기 산다) |
 // | 출처가 `사전부검` | 그 회차의 `intent.md` — §2 의 처분 넷이 전부 계획 문서를 만진다 |
 // | `사전처분` 이 붙은 것 | 같음 |
@@ -4085,18 +4265,18 @@ fn check_round_records(root: &Path) -> Result<String> {
 ///
 /// 앞 판은 이 사전의 대부분을 **산문으로만** 두었고 `xtask` 는 `종류` 하나만 읽었다.
 /// 그래서 선언과 코드가 갈려도 **아무것도 안 울었고**, 세 라운드가 연달아 같은 자리를
-/// 냈다 — 매번 키를 더해도 다음 라운드가 또 잡았다. **소비자가 0 인 선언은 갈렸다는
+/// 산출했다 — 매번 키를 더해도 다음 라운드가 또 잡았다. **소비자가 0 인 선언은 갈렸다는
 /// 것을 원리상 못 잡는다.**
 ///
 /// 이제 갈래마다 여기서 읽는다. **값을 고치면 검사 동작이 바뀐다** — 그것이 이
 /// 선언이 정본이라는 증인이다. 안 읽는 키는 `설명` 아래로 내려가 **「정본 아님」이
 /// 선언**돼 있고, 갈려도 거짓이 아니다.
 ///
-/// ⚠⚠ **「값」이라고 적은 것이 정확하다 — 항 집합에 대해서는 안 선다.** (2026-09-03)
+/// ⚠⚠ **「값」이라고 적은 것이 정확하다 — 항 집합에 대해서는 성립하지 않는다.** (2026-09-03)
 ///   아래 읽는 자리가 대부분 `…as_str().unwrap_or("<같은 문자열>")` 이라 **키가 사라져도
 ///   같은 값으로 계속 돈다.** 실측: `unwrap_or` 로 받쳐진 키 일곱을 지우고 `check` 가
 ///   **23/23 초록**이었다(`.palimpsest/rounds/2026-09-03-gate-parser-schema/verification/`).
-///   그런데 독립 리뷰 세 라운드가 실제로 낸 결함은 전부 **항 누락**이었다.
+///   그런데 독립 리뷰 세 라운드가 실제로 산출한 결함은 전부 **항 누락**이었다.
 ///   **그러므로 「소비되는가」는 고른 변이 연산자에 상대적이다.** [#102] 가 그것을 진다.
 ///
 /// [#102]: https://github.com/hskim-ecoletree/palimpsest/issues/102
@@ -4232,14 +4412,655 @@ mod 종료와_선언_목록_시험 {
 // ★ **목록을 쓰는 자리에서 검증하면 무발화한다.** 새 회차는 표준 표를 갖고 끝나므로
 //   「표준 표가 없을 때만 목록을 읽는」 자연스러운 구현에서는 **그 회차를 목록에 넣어도
 //   분기에 도달하지 않는다**(사전부검 R2). 그래서 **목록 자체를 독립으로 검증한다.**
+// ── 검사 25 — 완수 조건 설계 평가 (§3.5 · #113) ─────────────────────────────
+
+/// **하한 이후에 연 회차는 조건 설계 평가를 지났는가.**
+///
+/// `/round` 스킬 §3.5 가 승인 앞에 세운 단계다. 문서에만 적으면 안 지켜진 전례가 이
+/// 저장소에 있으므로 **산출물의 존재**를 여기서 잰다 — `conditions-audit/r<n>-raw.md`.
+///
+/// ★ **하한은 `docs/gates/README.md` 의 선언이 진다.** 코드에 손으로 베면 갈린다
+/// (#94 와 같은 병). 그 선언은 **방향이 반대인 목록**이다 — 나머지 넷은 면제이고
+/// 이것은 적용이다.
+///
+/// ★★ **강제되지 않는 것: 평가의 질.** 감사자가 형식만 채우면 여기는 통과한다.
+/// 항 수와 레코드 수의 대조는 「회차 레코드」의 합계 검산이 따로 진다.
+fn check_condition_audit(root: &Path) -> Result<String> {
+    let (항목, 하한) = 선언_목록(root, "완수 조건 설계 평가 적용", true)?;
+    if !항목.is_empty() {
+        bail!(
+            "`완수 조건 설계 평가 적용` 선언에 항목이 있다 — 이 목록은 면제가 아니라 \
+             적용이라 항목을 두지 않는다"
+        );
+    }
+    let mut 없는_것 = Vec::new();
+    let mut 대상 = 0usize;
+    let mut 산출 = 0usize;
+    for e in std::fs::read_dir(root.join(회차_뿌리))? {
+        let dir = e?.path();
+        if !dir.is_dir() {
+            continue;
+        }
+        let name = dir.file_name().and_then(|x| x.to_str()).unwrap_or("").to_string();
+        // 회차 이름이 `YYYY-MM-DD-…` 이므로 문자열 비교로 족하다.
+        if name.as_str() < 하한.as_str() {
+            continue;
+        }
+        대상 += 1;
+        let d = dir.join("conditions-audit");
+        let 있나 = d.is_dir()
+            && std::fs::read_dir(&d)?.filter_map(Result::ok).any(|f| {
+                f.file_name()
+                    .to_str()
+                    .is_some_and(|n| n.starts_with('r') && n.ends_with("-raw.md"))
+            });
+        if 있나 {
+            산출 += 1;
+        } else {
+            없는_것.push(name);
+        }
+    }
+    if !없는_것.is_empty() {
+        bail!(
+            "하한 `{하한}` 이후에 연 회차에 `conditions-audit/r<n>-raw.md` 가 없다 — \
+             규약 §3.5 가 승인 앞에 그 단계를 세웠다: {}",
+            없는_것.join(" · ")
+        );
+    }
+    Ok(format!("하한 {하한} · 대상 회차 {대상}개 · 평가 반환문 {산출}개"))
+}
+
+// ── 검사 27 — 완성 장면 형식 (`A1`·`A1-a` · 2026-09-06) ─────────────────────
+
+/// 완성 장면 문서의 좌표. **하나뿐이라 상수로 지목한다** — 파일이 없으면 실패다.
+const 완성_장면_문서: &str = "docs/plan/01-completion-scenes.md";
+
+/// 장면 하나가 갖춰야 하는 소제목 셋. 잠긴 의도 `A1` 이 이름을 지목했다.
+const 장면_소제목: &[&str] = &["### 누가", "### 무엇을 해서", "### 무엇을 받는가"];
+
+/// 장면 수의 하한. `A1-a` 가 등록했다 — 하한이 없으면 0 건을 훑고 통과한다.
+const 장면_하한: usize = 3;
+
+/// 장면 절과 그 위반을 헤아린다. **순수 함수라 시험이 직접 댄다.**
+///
+/// # 무엇이 장면인가
+///
+/// `## <숫자>. …` 인 절만 장면이다. 머리말(`## 이 문서와 … 의 관계`)과 꼬리
+/// (`## 이 문서가 답하지 않는 것`)는 장면이 아니고, 그 둘을 장면으로 헤아리면
+/// 위반이 원리상 안 나오는 항등식이 된다.
+///
+/// # 소제목이 없는 절을 모집단에서 빼지 않는다
+///
+/// 잠긴 의도의 앞 문면(*"셋 중 하나라도 빠진 장면은 장면이 아니다"*)이 그 병이었다 —
+/// 셋이 없는 것이 정의상 모집단 밖으로 가므로 남은 것은 언제나 셋을 갖춘다. 그래서
+/// 여기서는 **번호가 붙은 절 전부**를 장면으로 잡고, 셋 중 빠진 것을 위반으로 산출한다.
+fn 장면_형식(text: &str) -> (usize, Vec<String>) {
+    let mut 장면 = 0usize;
+    let mut 위반 = Vec::new();
+    let mut 제목: Option<String> = None;
+    let mut 몸통 = String::new();
+    let 마감 = |제목: &Option<String>, 몸통: &str, 장면: &mut usize, 위반: &mut Vec<String>| {
+        let Some(t) = 제목 else { return };
+        *장면 += 1;
+        let 빠진: Vec<&str> = 장면_소제목
+            .iter()
+            .copied()
+            .filter(|h| !몸통.lines().any(|l| l.trim_end() == *h))
+            .collect();
+        if !빠진.is_empty() {
+            위반.push(format!("{t} — 빠진 소제목: {}", 빠진.join(" · ")));
+        }
+    };
+    for line in text.lines() {
+        if let Some(rest) = line.strip_prefix("## ") {
+            마감(&제목, &몸통, &mut 장면, &mut 위반);
+            몸통.clear();
+            제목 = rest
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_ascii_digit())
+                .then(|| rest.trim().to_string());
+            continue;
+        }
+        if 제목.is_some() {
+            몸통.push_str(line);
+            몸통.push('\n');
+        }
+    }
+    마감(&제목, &몸통, &mut 장면, &mut 위반);
+    (장면, 위반)
+}
+
+fn check_completion_scenes(root: &Path) -> Result<String> {
+    let p = root.join(완성_장면_문서);
+    let text = std::fs::read_to_string(&p)
+        .with_context(|| format!("완성 장면 문서를 못 읽었다: {완성_장면_문서}"))?;
+    let (장면, 위반) = 장면_형식(&text);
+    if 장면 == 0 {
+        bail!("{완성_장면_문서} 에 `## <숫자>.` 절이 하나도 없다 — 모집단이 비면 실패다");
+    }
+    if !위반.is_empty() {
+        bail!("소제목 셋이 안 갖춰진 장면 {}개:\n    {}", 위반.len(), 위반.join("\n    "));
+    }
+    if 장면 < 장면_하한 {
+        bail!("장면이 {장면}개다 — 하한 {장면_하한}(`A1-a`)에 못 닿는다");
+    }
+    Ok(format!("장면 {장면}개 · 소제목 셋 전부 갖춤"))
+}
+
+#[cfg(test)]
+mod 완성_장면_시험 {
+    use super::*;
+
+    const 온전한: &str = "# 제목\n\n## 머리말\n본문\n\n## 1. 첫 장면\n### 누가\nㄱ\n### 무엇을 해서\nㄴ\n### 무엇을 받는가\nㄷ\n\n## 2. 둘째\n### 누가\nㄱ\n### 무엇을 해서\nㄴ\n### 무엇을 받는가\nㄷ\n";
+
+    #[test]
+    fn 번호_없는_절은_장면이_아니다() {
+        let (장면, 위반) = 장면_형식(온전한);
+        assert_eq!(장면, 2, "머리말이 장면으로 헤아려졌다");
+        assert!(위반.is_empty(), "{위반:?}");
+    }
+
+    #[test]
+    fn 소제목이_빠진_절이_모집단에_남는다() {
+        let 결함 = 온전한.replace("### 무엇을 받는가\nㄷ\n\n## 2.", "## 2.");
+        let (_, 위반) = 장면_형식(&결함);
+        assert_eq!(위반.len(), 1, "빠진 소제목이 위반으로 안 산출됐다: {위반:?}");
+        assert!(위반[0].contains("무엇을 받는가"));
+    }
+
+    #[test]
+    fn 장면이_없으면_모집단이_비고_그것이_실패다() {
+        let (장면, 위반) = 장면_형식("# 제목\n\n## 머리말\n본문\n");
+        assert_eq!(장면, 0);
+        assert!(위반.is_empty());
+    }
+}
+
+// ── 검사 26 — 어색한 표현 부재 (`G2-a` · #114) ──────────────────────────────
+
+/// 소유자가 이름을 들어 지목한 표현 패턴 일곱.
+///
+/// # 사전형이 아니라 **활용형**으로 잰다
+///
+/// 조건 설계 평가(라운드 1)가 잡은 것이다 — 사전형은 이 저장소에 **0 건**이고,
+/// 실제로 있는 것은 활용형이다. 사전형으로 잠근
+/// 검출 수단은 일부러 심은 문자열에만 발화하고 그 발화는 실제 결함과 무관하다 —
+/// **자기가 만든 조건 위에서 발화 여부를 묻는 항등식**이 된다.
+///
+/// # 앞이 한글이면 안 잰다
+///
+/// `지켜진`·`삼켜진다`·`보낸다` 는 다른 낱말이다. 경계가 없으면 그 셋이 위반으로
+/// 세어지고, 그러면 합격선이 원리상 0 에 못 닿는다.
+///
+/// # 대상 밖 둘 — **기계 표식이지 산문이 아니다**
+///
+/// `## 왜 접었나` 는 `D3-b` 가 별칭으로 연 옛 표기이고 지난 회차의 종결 기록이 그것을
+/// 진다. 그리고 `docs/plan/00-stack.md` 의 앵커 하나는 동결 문서가 그 조각으로 가리키는
+/// 자리라 제목만 교정하고 앵커를 남겼다.
+// 검출-수단-자기-제외-시작 — 아래 표와 이 파일의 시험 픽스처는 그 낱말 자체를 진다.
+//
+// 셋째 칸은 **앞이 한글이면 다른 낱말인가**다. 어간으로 시작하는 것만 참이다 —
+// `지켜진`·`삼켜진다`·`보낸다` 가 위반으로 세어지면 합격선이 원리상 0 에 못 닿는다.
+// 반대로 조사를 포함한 것(`에 산다`)은 앞이 한글인 것이 정상이다.
+const 어색한_표현: &[(&str, &[&str], bool)] = &[
+    ("~에 산다", &["에 산다", "에 사는", "사는 곳", "에 살고"], false),
+    ("~가 산다", &["가 산다", "가 사는", "이 산다", "이 사는", "만 산다", "도 산다"], false),
+    ("~ 선다", &["선다"], true),
+    ("~를 낸다", &["낸다", "냈다", "내는", "낼 ", "낸 "], true),
+    ("~ 센다", &["센다"], true),
+    ("켜다", &["켜다", "켠다", "켜는", "켜진", "켜져", "켜고", "꺼진", "꺼져"], true),
+    ("접다", &["접는다", "접는 ", "접었", "접혔", "접기", "접지", "접고", "접어", "접은", "접힌", "접히", "접을"], true),
+    ("상태 N", &["상태 일곱", "상태 여섯", "상태 다섯", "상태 넷", "상태 셋", "상태 둘"], false),
+];
+
+// 검출-수단-자기-제외-끝
+
+/// 대상 밖 — 기계 표식. 잰 줄에서 먼저 지운다.
+const 표식_예외: &[&str] = &["접었나", "43-검사를-언제-켜는가", "접힘"];
+
+/// 이 회차가 교정한 아홉 뿌리. **동결 문서는 여기 없다.**
+const 교정_뿌리: &[&str] = &[
+    ".claude", "crates", "xtask", "docs", "schema", "surface", "scripts", ".github",
+];
+
+/// 동결 — 그때의 기록이거나 합격선 정본이다. **저장소 뿌리에서 잰 상대 경로**다.
+///
+/// ⚠ **디렉터리 이름으로 가르지 않는다.** `adr` 라는 이름의 디렉터리가 `crates/` 어디에
+/// 생겨도 조용히 대상 밖이 되는 것을 막는다(독립 리뷰 R1 · 발견 15).
+///
+/// ⚠⚠ **`docs/research` 는 여기 없다.** `G1` 의 정반합 판정이 그것을 **대상에 넣었다** —
+/// *"`docs/research/**` 를 동결로 빼지 않는다 — `disposal-map.md`·`domain.md`·`derived.rs`
+/// 가 그것을 **살아 있는 참조**로 인용한다"*(`g1-synthesis.md`). 한때 이 목록에 있었고,
+/// 그래서 **20곳이 「0곳」으로 집계됐다**(독립 리뷰 R1 · 발견 1 · 금지역).
+const 동결_경로: &[&str] = &["docs/adr", "docs/gates", "docs/instructions", "corpus", "target"];
+
+/// 이 회차의 **종결 문서**는 대상이다 — 「이 회차의 종결 문서부터는 교정 표기로 쓴다」.
+///
+/// 위 뿌리에는 `.palimpsest` 가 없고 `docs/gates` 는 동결이라, 그 규칙을 재는 자리가
+/// 원리상 없었다(독립 리뷰 R1 · 발견 4).
+///
+/// # 회차 이름을 손으로 안 적는다 (`E5-a` · 2026-09-06)
+///
+/// 앞 판은 앞 회차의 파일 이름 **두 문자열**을 상수로 지고 있었다. 그러면 회차가 하나
+/// 열릴 때마다 그 두 줄을 손으로 바꿔야 하고, **안 바꾸면 새 회차의 종결 문서가 어느
+/// 검사에도 안 든다** — 앞 회차가 세운 장치가 다음 회차를 여는 순간 죽은 가지가 된다.
+///
+/// ★★ **하나를 고르지 않는다 — 하한 이후에 끝난 회차를 전부 잰다.** (정정 2026-09-07 ·
+/// 독립 리뷰 R1 · 금지역)
+///
+/// 앞 판은 *"끝난 회차 중 가장 최근 것"* 을 **사전순 최대**로 골랐고, 그 자리에
+/// *"여기는 그 위험이 없다 — 종료 보고가 있는 것만 고르므로"* 라고 적었다. **그 선언이
+/// 거짓이었다.** 같은 날짜의 형제 회차가 사전순으로 뒤에 서면 **먼저 끝난 회차가 영영 안
+/// 뽑힌다** — `2026-09-06-terrain-and-completion-scene` 의 종결 문서가
+/// `…-user-surface-vocabulary` 에 가려 한 번도 안 재어졌다. 장래 회차의 슬러그는 전부
+/// 사전순으로 뒤에 서므로 **회복되지도 않는다.** 그것이 이 회차가 세운 장치 안에서 다시
+/// 난 「측정이 죽은 가지」다.
+///
+/// **하한은 `docs/gates/README.md` 의 선언이 지고**(「어색한 표현 교정 적용」), 게이트는
+/// 이름 규칙이 아니라 **본문이 그 회차를 대는지**로 찾는다. 회차 이름 상수는 여전히 없다.
+fn 이_회차_종결문서(root: &Path) -> Result<Vec<PathBuf>> {
+    let 뿌리 = root.join(회차_뿌리);
+    // ★★ **fail-open 을 막는다.** (정정 2026-09-07 · 독립 리뷰 R2 · 금지역)
+    //   앞 판은 하한을 못 읽으면 **빈 벡터**를 돌려주고 주석에 *"그러면 검사가
+    //   「모집단이 비면 실패」로 잡는다"* 라고 적었다. **부르는 쪽에 그런 자가 없다** —
+    //   빈 벡터는 조용히 넘어가고 종결 문서 넷이 모집단에서 빠진다. 실측: 선언의
+    //   하한 한 줄만 지우면 심어 둔 위반 둘이 남아 있는데도 초록이 났다.
+    //   **그래서 여기서 실패로 돌린다.**
+    let (_, 하한) = 선언_목록(root, "어색한 표현 교정 적용", true)
+        .context("「어색한 표현 교정 적용」 선언을 못 읽었다 — 그 선언이 대상 하한을 진다")?;
+    if 하한.is_empty() {
+        bail!(
+            "「어색한 표현 교정 적용」 선언에 **하한**이 없다 — 하한이 비면 종결 문서가 \
+             하나도 대상에 안 들고 이 검사가 조용히 초록이 된다"
+        );
+    }
+    let mut 회차들: Vec<String> = std::fs::read_dir(&뿌리)
+        .with_context(|| format!("회차 뿌리를 못 읽었다: {}", 뿌리.display()))?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_dir())
+        .filter_map(|e| e.file_name().into_string().ok())
+        .collect();
+    회차들.sort();
+    // 회차 이름이 `YYYY-MM-DD-…` 이므로 문자열 비교로 하한을 판별한다.
+    let 대상: Vec<String> = 회차들
+        .into_iter()
+        .filter(|회차| 회차.as_str() >= 하한.as_str())
+        .filter(|회차| 뿌리.join(회차).join("report.md").is_file())
+        .collect();
+    // **모집단이 비면 실패다.** 하한 이후에 끝난 회차가 하나도 없으면 이 자가 아무것도 안 잰다.
+    if 대상.is_empty() {
+        bail!(
+            "하한 `{하한}` 이후에 끝난 회차가 하나도 없다 — 이 자가 아무것도 안 잰다. \
+             선언의 하한이 장래로 밀렸는지 보라"
+        );
+    }
+    let mut out: Vec<PathBuf> = 대상
+        .iter()
+        .map(|회차| 뿌리.join(회차).join("report.md"))
+        .collect();
+    // 게이트는 이름 규칙이 아니라 **본문이 그 회차를 대는지**로 찾는다.
+    if let Ok(it) = std::fs::read_dir(root.join(게이트_뿌리)) {
+        for e in it.filter_map(|e| e.ok()) {
+            let p = e.path();
+            if p.extension().and_then(|x| x.to_str()) != Some("md") {
+                continue;
+            }
+            let Ok(본문) = std::fs::read_to_string(&p) else { continue };
+            if 대상.iter().any(|회차| 본문.contains(회차.as_str())) {
+                out.push(p);
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// **검출 수단 자신은 대상 밖이다.** 이 파일의 패턴 표와 시험 픽스처가 바로 그 낱말들을
+/// 지고 있어서, 안 가르면 검사가 자기를 잡고 원리상 초록에 못 닿는다.
+///
+/// ★ 가르는 방법을 **파일 안의 표지**로 둔다 — 경로로 가르면 `xtask` 전체가 대상 밖이
+/// 되고, 그러면 이 회차가 실제로 고친 `xtask` 의 100 곳을 아무도 안 잰다.
+///
+/// # 한 줄에 둘을 같이 쓰면 **그 줄 하나만** 빠진다
+///
+/// 시작과 끝이 같은 줄에 있으면 그 줄에서 상쇄되고 `continue` 가 걸린다. 구간을 여는
+/// 것이 아니라 **줄 하나를 지목하는** 형태다 — 게이트처럼 위반 낱말을 **인용해야만
+/// 하는** 문서가 그것을 쓴다. 구간으로 열면 그 문서의 진짜 결함까지 같이 묻힌다.
+const 자기_제외: (&str, &str) = ("검출-수단-자기-제외-시작", "검출-수단-자기-제외-끝");
+
+/// **표지를 듣는 파일의 닫힌 목록.** 전역으로 들으면 대상 안 어느 파일이든 표지 한 줄로
+/// 통째로 검출에서 빠진다 — 독립 리뷰 R1(발견 9 · 금지역)이 격리 사본의 `AGENTS.md` 로
+/// 그것을 실측했다. **여기 없는 파일에서 표지는 그냥 글자다.**
+const 표지를_듣는_파일: &[&str] =
+    &["xtask/src/main.rs", "docs/gates/user-surface-vocabulary.md"];
+
+/// 이 파일에서 자기 제외 표지를 듣나. **닫힌 목록이다** — 순수 함수라 시험이 직접 댄다.
+fn 표지를_듣나(상대: &str) -> bool {
+    표지를_듣는_파일.contains(&상대)
+}
+
+/// 잴 줄만 걷는다 — `(1부터 센 줄 번호, 줄)`. **순수 함수다.**
+///
+/// 표지를 안 듣는 파일에서는 표지가 그냥 글자이므로 **전부** 걷는다. 듣는 파일에서는
+/// 시작 표지가 여는 상태를 만들고 끝 표지가 닫으며, **둘이 한 줄에 있으면 그 줄만 빠진다.**
+///
+/// # 펜스 안은 **잡아 둔 출력**이지 산문이 아니다 — 표지를 듣는 파일에서만 뺀다
+///
+/// 게이트가 `pal touch` 의 실제 화면을 인용한다. 그 안에 위반 낱말이 있으면 검사가
+/// 발화하고, 초록으로 만들려면 **증거 바이트를 고쳐야 한다.** 실제로 그 일이 일어났다 —
+/// 앞 판이 인용 블록 안의 결박 본문에 표지 주석을 끼워 넣어 놓고 바로 위 문장에
+/// *"같은 실행의 같은 바이트다"* 라고 적었다(독립 리뷰 R5 · 발견 8 · 금지역).
+///
+/// **검출 수단이 증거를 고치라고 요구하면 그 수단이 틀린 것이다.** 펜스 안의 출력이
+/// 산출한 낱말은 그것을 인쇄한 **코드**에서 잡힌다 — 코드는 이 검사의 대상 안이다.
+/// 그래서 표지를 듣는 파일(닫힌 목록)에서만 펜스 안을 뺀다. 다른 파일은 그대로 잰다.
+fn 잴_줄들(text: &str, 표지를_듣는다: bool) -> Vec<(usize, &str)> {
+    let mut out = Vec::new();
+    let mut 제외_안 = false;
+    let mut 펜스_안 = false;
+    for (n, line) in text.lines().enumerate() {
+        if 표지를_듣는다 && line.trim_start().starts_with("```") {
+            펜스_안 = !펜스_안;
+            continue;
+        }
+        if 표지를_듣는다 && 펜스_안 {
+            continue;
+        }
+        if 표지를_듣는다 && line.contains(자기_제외.0) {
+            제외_안 = true;
+        }
+        if 표지를_듣는다 && line.contains(자기_제외.1) {
+            제외_안 = false;
+            continue;
+        }
+        if 제외_안 {
+            continue;
+        }
+        out.push((n + 1, line));
+    }
+    out
+}
+
+fn check_awkward_phrases(root: &Path) -> Result<String> {
+    let mut hits: Vec<String> = Vec::new();
+    let mut 잰_파일 = 0usize;
+    let mut 잰_줄 = 0usize;
+    let mut 파일들: Vec<PathBuf> = Vec::new();
+    for 뿌리 in 교정_뿌리 {
+        모으기(root, &root.join(뿌리), &mut 파일들)?;
+    }
+    let 종결 = 이_회차_종결문서(root)?;
+    let 종결_수 = 종결.len();
+    for p in 종결 {
+        if p.is_file() {
+            파일들.push(p);
+        }
+    }
+    // 루트 `*.md` 도 대상이다.
+    for e in std::fs::read_dir(root)? {
+        let p = e?.path();
+        if p.is_file() && p.extension().and_then(|x| x.to_str()) == Some("md") {
+            파일들.push(p);
+        }
+    }
+    for f in 파일들 {
+        let Ok(text) = std::fs::read_to_string(&f) else { continue };
+        잰_파일 += 1;
+        // ★★ **표지는 닫힌 목록의 파일에서만 듣는다** — `표지를_듣는_파일`.
+        let 상대 = 상대_경로(root, &f);
+        for (n, line) in 잴_줄들(&text, 표지를_듣나(&상대)) {
+            잰_줄 += 1;
+            for (이름, _) in 어색한_표현_이_든_줄(line) {
+                hits.push(format!("{상대}:{n} 「{이름}」"));
+            }
+        }
+    }
+    if !hits.is_empty() {
+        let 보일_것: Vec<&String> = hits.iter().take(30).collect();
+        bail!(
+            "소유자가 지목한 표현 패턴이 {}곳 남았다:\n    {}{}",
+            hits.len(),
+            보일_것.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n    "),
+            if hits.len() > 30 { "\n    …" } else { "" }
+        );
+    }
+    Ok(format!(
+        "패턴 {}개 · 파일 {잰_파일}개(종결 문서 {종결_수}개) · 줄 {잰_줄}개 · 남은 것 0곳",
+        어색한_표현.len()
+    ))
+}
+
+/// 한 줄에서 걸리는 패턴을 걷는다. **순수 함수다** — 그래야 음성 대조가 성립한다.
+///
+/// 돌려주는 것은 `(패턴 이름, 걸린 문자열)` 이다.
+fn 어색한_표현_이_든_줄(line: &str) -> Vec<(&'static str, &'static str)> {
+    let mut 잰_줄 = line.to_owned();
+    for 예외 in 표식_예외 {
+        while let Some(i) = 잰_줄.find(예외) {
+            let 끝 = i + 예외.len();
+            잰_줄.replace_range(i..끝, &"·".repeat(예외.chars().count()));
+        }
+    }
+    let mut o = Vec::new();
+    for (이름, 낱말들, 경계) in 어색한_표현 {
+        for w in *낱말들 {
+            let mut from = 0usize;
+            while let Some(i) = 잰_줄[from..].find(w) {
+                let at = from + i;
+                let 앞이_한글 = 잰_줄[..at].chars().next_back().is_some_and(한글인가);
+                if !(*경계 && 앞이_한글) {
+                    o.push((*이름, *w));
+                    break;
+                }
+                from = at + w.len();
+            }
+        }
+    }
+    o
+}
+
+const fn 한글인가(c: char) -> bool {
+    matches!(c, '\u{AC00}'..='\u{D7A3}')
+}
+
+fn 모으기(root: &Path, dir: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
+    if !dir.is_dir() {
+        return Ok(());
+    }
+    for e in std::fs::read_dir(dir)? {
+        let p = e?.path();
+        if p.is_dir() {
+            let 상대 = 상대_경로(root, &p);
+            if 동결_경로.iter().any(|f| 상대 == *f) {
+                continue;
+            }
+            모으기(root, &p, out)?;
+        } else if p.extension().and_then(|x| x.to_str()).is_some_and(|e| {
+            matches!(e, "md" | "rs" | "py" | "sh" | "toml" | "yml")
+        }) {
+            out.push(p);
+        }
+    }
+    Ok(())
+}
+
+// 검출-수단-자기-제외-시작
+#[cfg(test)]
+mod 어색한_표현_시험 {
+    use super::어색한_표현_이_든_줄;
+
+    /// **음성 대조 — 패턴 여덟 각각에 대해 발화를 관측한다.**
+    ///
+    /// 이 시험이 없으면 저장소가 초록인 것이 「패턴이 없다」인지 「판정기가 아무것도
+    /// 안 본다」인지 갈리지 않는다.
+    #[test]
+    fn 여덟_패턴이_각각_발화한다() {
+        let 표본: [(&str, &str); 8] = [
+            ("~에 산다", "상태는 문서가 아니라 이슈에 산다"),
+            ("~가 산다", "비어 있지 않다 — 남의 것 셋이 산다"),
+            ("~ 선다", "하네스 없이도 혼자 선다"),
+            ("~를 낸다", "pal-git 이 HEAD 트리의 파일 목록을 낸다"),
+            ("~ 센다", "$HOME 읽기가 소스에 없고, CI 가 그것을 센다"),
+            ("켜다", "그 커밋이 결박을 stale 로 켜진다"),
+            ("접다", "선행 하네스는 접는 문을 갖고 열일곱 번 접었다"),
+            ("상태 N", "상태 일곱으로 집계해서 대장을 만든다"),
+        ];
+        for (이름, 줄) in 표본 {
+            let 걸린 = 어색한_표현_이_든_줄(줄);
+            assert!(
+                걸린.iter().any(|(n, _)| *n == 이름),
+                "「{이름}」이 발화하지 않았다: {줄:?} → {걸린:?}"
+            );
+        }
+    }
+
+    /// **앞이 한글이면 다른 낱말이다** — 경계가 없으면 합격선이 원리상 0 에 못 닿는다.
+    #[test]
+    fn 다른_낱말은_안_잡는다() {
+        for 줄 in ["문서에만 적으면 안 지켜진 전례가 있다", "return 에 삼켜진다", "결과를 보낸다."] {
+            assert!(어색한_표현_이_든_줄(줄).is_empty(), "다른 낱말을 잡았다: {줄:?}");
+        }
+    }
+
+    /// **기계 표식은 대상 밖이다** — `D3-b` 가 별칭으로 연 옛 표기.
+    #[test]
+    fn 기계_표식은_안_잡는다() {
+        assert!(어색한_표현_이_든_줄("`## 왜 접었나` 도 계속 받는다").is_empty());
+        assert!(어색한_표현_이_든_줄("<a id=\"43-검사를-언제-켜는가--전부\"></a>").is_empty());
+    }
+
+    /// **활용형이 갈리면 같은 동사가 검사 밖으로 나간다** — 그 구멍을 여기서 잰다.
+    ///
+    /// 앞 판은 「낸다」만 재고 `냈다`·`내는`·`낼`·`낸` 을 안 봤고, 「접다」는 `접는다`·
+    /// `접었`·`접는 문` 셋만 봤다. 같은 모집단에 같은 동사가 **390곳** 남아 있는데
+    /// 검사는 「0곳」을 냈다(독립 리뷰 R4 · 발견 14). 낡은 검사는 통과한다.
+    #[test]
+    fn 활용형이_갈려도_같은_동사를_잡는다() {
+        for 줄 in [
+            "그 라운드가 금지역 둘을 냈다",
+            "계기판이 내는 것은 수가 아니다",
+            "낼 것이 없으면 표 밖에 「없음」이라고 적는다",
+            "read_dir 이 낸 경로는 Windows 에서 역슬래시다",
+        ] {
+            let 걸린 = 어색한_표현_이_든_줄(줄);
+            assert!(걸린.iter().any(|(n, _)| *n == "~를 낸다"), "안 잡았다: {줄:?}");
+        }
+        for 줄 in [
+            "안 잰 것을 0 으로 접지 않는다",
+            "판정이 한 노드로 접히면 불일치가 성립하지 않는다",
+            "기본값이 있으면 접은 것을 적는 것을 잊는다",
+            "그것을 0 으로 접고 나면 둘이 같아진다",
+        ] {
+            let 걸린 = 어색한_표현_이_든_줄(줄);
+            assert!(걸린.iter().any(|(n, _)| *n == "접다"), "안 잡았다: {줄:?}");
+        }
+    }
+
+    /// **일반 한국어는 안 잡는다** — 넓히다 한 번 넘어갔던 자리다.
+    ///
+    /// `살아남은`·`서 있다`·`셌다` 까지 넣으면 763곳이 나오는데 표본을 읽으니 소유자가
+    /// 든 오용과 **다른 낱말**이었다. 일반 한국어를 위반으로 세면 합격선이 원리상
+    /// 0 에 못 닿는다.
+    #[test]
+    fn 일반_한국어는_안_잡는다() {
+        for 줄 in [
+            "라운드마다 살아남은 반론의 해악도만 받는다",
+            "지금 어디에 서 있는가",
+            "표기가 없으면 계기판은 「못 셌다」고 말한다",
+            "검사는 그 줄에 대해 침묵한다",
+            "결과를 보낸다.",
+        ] {
+            assert!(어색한_표현_이_든_줄(줄).is_empty(), "일반 한국어를 잡았다: {줄:?}");
+        }
+    }
+
+    /// **표지는 닫힌 목록의 파일에서만 들린다.** 전역이면 표지 한 줄이 파일을 통째로 뺀다.
+    #[test]
+    fn 표지는_목록에_있는_파일에서만_들린다() {
+        assert!(super::표지를_듣나("xtask/src/main.rs"));
+        assert!(super::표지를_듣나("docs/gates/user-surface-vocabulary.md"));
+        assert!(!super::표지를_듣나("AGENTS.md"));
+        assert!(!super::표지를_듣나("crates/pal-core/src/binding.rs"));
+    }
+
+    /// **한 줄에 시작과 끝을 같이 쓰면 그 줄 하나만 빠진다** — 구간을 열지 않는다.
+    ///
+    /// 게이트는 위반 낱말을 **인용해야만** 하는 문서다. 구간으로 열면 그 문서의 진짜
+    /// 결함까지 같이 묻히므로, 지목한 줄만 빠지는 것을 여기서 잰다.
+    #[test]
+    fn 한_줄_표지는_그_줄만_뺀다() {
+        // ★ **표지를 리터럴로 안 쓴다** — 이 파일 자신이 대상이라, 시작·끝이 한 줄에
+        //   같이 든 리터럴은 여기서 자기 제외 구간을 **닫아 버린다**(실측).
+        let (시작, 끝) = super::자기_제외;
+        let text = format!("첫 줄\n인용 <!-- {시작} {끝} -->\n셋째 줄");
+        let 걷힌 = super::잴_줄들(&text, true);
+        assert_eq!(걷힌.iter().map(|(n, _)| *n).collect::<Vec<_>>(), vec![1, 3]);
+        // 안 듣는 파일에서는 표지가 그냥 글자다 — 세 줄 다 잰다.
+        assert_eq!(super::잴_줄들(&text, false).len(), 3);
+    }
+
+    /// **펜스 안은 잡아 둔 출력이지 산문이 아니다** — 표지를 듣는 파일에서만 뺀다.
+    ///
+    /// 검출 수단이 「초록으로 만들려면 증거 바이트를 고쳐라」를 요구하면 그 수단이
+    /// 틀린 것이다. 실제로 그 일이 일어났다 — 앞 판이 `pal touch` 인용 블록 안에
+    /// 표지 주석을 끼워 넣고 바로 위에 *"같은 실행의 같은 바이트다"* 라고 적었다
+    /// (독립 리뷰 R5 · 발견 8 · 금지역).
+    #[test]
+    fn 펜스_안은_표지를_듣는_파일에서만_빠진다() {
+        let text = "산문 한 줄\n```\n  이관 1067건 — 접는 문\n```\n뒤 산문";
+        // 듣는 파일 — 펜스 세 줄(여는 줄·안·닫는 줄)이 빠지고 산문 둘만 남는다.
+        let 걷힌 = super::잴_줄들(text, true);
+        assert_eq!(걷힌.iter().map(|(n, _)| *n).collect::<Vec<_>>(), vec![1, 5]);
+        // 안 듣는 파일 — 펜스도 그냥 글자다. 다섯 줄 다 잰다.
+        assert_eq!(super::잴_줄들(text, false).len(), 5);
+    }
+
+    /// **`접다` 의 둘째 잔여** — `R4` 가 넓힌 직후에 `접기`·`접혔`·`접는 `(단독)이
+    /// 또 밖에 있었고 선언된 뿌리 안에 33곳이 남아 있었다(독립 리뷰 R5 · 발견 5).
+    #[test]
+    fn 접다의_둘째_활용형_묶음도_잡는다() {
+        for 줄 in [
+            "회차가 접혔다",
+            "소유자가 이 회차를 접기로 결정했다",
+            "접는 사유는 둘이다",
+        ] {
+            let 걸린 = 어색한_표현_이_든_줄(줄);
+            assert!(걸린.iter().any(|(n, _)| *n == "접다"), "안 잡았다: {줄:?}");
+        }
+    }
+
+    /// 그리고 교정한 문장에는 침묵한다 — 「무엇이든 잡는다」로 통과하는 것을 막는다.
+    #[test]
+    fn 교정한_문장에는_침묵한다() {
+        for 줄 in [
+            "상태는 문서가 아니라 이슈로 판단한다",
+            "하네스와 별개로 동작한다",
+            "pal-git 이 HEAD 트리의 파일 목록을 제출한다",
+            "CI 가 그것을 잰다",
+            "그 커밋이 결박에 낡음을 붙인다",
+            "회차를 철회했다",
+            "철회 사유는 둘이다",
+            "비어 있지 않다 — 남의 것 셋이 남아 있다",
+            "7개의 상태로 집계해서 대장을 만든다",
+        ] {
+            assert!(어색한_표현_이_든_줄(줄).is_empty(), "교정한 문장을 잡았다: {줄:?}");
+        }
+    }
+}
+// 검출-수단-자기-제외-끝
+
 fn check_declared_lists(root: &Path) -> Result<String> {
     let mut problems = Vec::new();
     let mut 셈 = Vec::new();
+    // ⚠ **「어색한 표현 교정 적용」이 여기 있어야 한다** (2026-09-07 · 독립 리뷰 R2)
+    //   그 선언은 「어색한 표현 부재」의 **대상 하한**을 진다. 이 목록에 없으면 선언이
+    //   사라지거나 제목이 바뀌어도 아무도 안 잡고, 그때 그 검사의 모집단이 조용히 준다.
     for 제목 in [
         "형식 이전",
         "A 축 감사 대기",
         "종료 보고 검산 줄 유예",
         "종료 보고 없음 유예",
+        "어색한 표현 교정 적용",
     ] {
         let 빈항목_허용 = 제목 != "형식 이전";
         let (항목, 하한) = 선언_목록(root, 제목, 빈항목_허용)?;
@@ -4268,11 +5089,11 @@ fn check_declared_lists(root: &Path) -> Result<String> {
 /// **이 저장소의 파이썬 호출은 여기 하나로 모인다.**
 ///
 /// ★★ **`PYTHONUTF8=1` 을 못 박는다.** 안 주면 Windows 가 로케일 인코딩(cp949·cp1252)
-/// 으로 표준 입출력과 파일을 읽어 한글이 `UnicodeDecodeError` 를 낸다 —
+/// 으로 표준 입출력과 파일을 읽어 한글이 `UnicodeDecodeError` 를 산출한다 —
 /// **macOS 에서는 원리상 안 보이는 자리**다. CI 가 실측으로 잡았다(2026-08-24):
 /// 이 회차가 새로 쓴 추출기가 windows-latest 에서만 죽었고, 로컬은 내내 초록이었다.
 ///
-/// ADR-0023 — *"플랫폼 분기는 한 자리에 산다."* `깃()` 과 같은 규율이다.
+/// ADR-0023 — *"플랫폼 분기는 한 자리에 있다."* `깃()` 과 같은 규율이다.
 fn 파이썬_명령(파이썬_경로: &str) -> Command {
     let mut c = Command::new(파이썬_경로);
     c.env("PYTHONUTF8", "1").env("PYTHONIOENCODING", "utf-8");
@@ -4281,7 +5102,7 @@ fn 파이썬_명령(파이썬_경로: &str) -> Command {
 
 /// **이 저장소의 git 호출은 여기 하나로 모인다.**
 ///
-/// ★ ADR-0023 — *"플랫폼 분기는 한 자리에 산다."* `gix 격리` 검사가 `xtask` 의 `gix`
+/// ★ ADR-0023 — *"플랫폼 분기는 한 자리에 있다."* `gix 격리` 검사가 `xtask` 의 `gix`
 /// 사용을 막으므로 CLI 셸아웃뿐이고, 그러면 **자리를 하나로 모으는 것**이 그 규율을
 /// 지키는 유일한 길이다.
 ///
@@ -4359,7 +5180,7 @@ fn 닫힘에서_열림으로(
         }
         let 상대 = 상대_경로(root, p);
         let Some(이력) = 깃(root, &["log", "--format=%H", "--", &상대]) else {
-            bail!("{상대}: 이력을 못 읽는다 — **0 과 「못 쟀다」를 같은 글자로 안 낸다**");
+            bail!("{상대}: 이력을 못 읽는다 — **0 과 「못 쟀다」를 같은 글자로 적지 않는다**");
         };
         let mut 닫힌_적_있다: std::collections::BTreeSet<String> = Default::default();
         for sha in 이력.lines().filter(|s| !s.trim().is_empty()) {
@@ -4515,7 +5336,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     let 산출 = 회차_산출(root)?;
     // ★ **하한은 닫힌 선언 목록이다.** 이 축이 2026-08-24 에 처음 섰고, 그 전에 닫힌
     //   행들은 **그 자를 모르는 채로 쓰였다.** ⚠ **면제가 아니라 빚이다** — 그 회차들의
-    //   발화도 **세고 판정문에 낸다.** 조용히 안 재면 그것이 이 회차가 닫으려는 병이다.
+    //   발화도 **세고 판정문에 산출한다.** 조용히 안 재면 그것이 이 회차가 닫으려는 병이다.
     let (감사_대기, _) = 선언_목록(root, "A 축 감사 대기", true)?;
     // ★ 규칙은 선언이 진다 — 여기가 아니다(#94).
     let 스키마 = 스키마를_읽는다(root)?;
@@ -4528,7 +5349,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     let 상태칸 = 열림축["필드"][0].as_str().unwrap_or("상태").to_string();
     let 커밋칸 = 열림축["필드"][1].as_str().unwrap_or("닫은커밋").to_string();
     if 닫힘축["요구하는자리"].as_object().map_or(true, |m| m.is_empty()) {
-        bail!("`--schema` 의 `닫힘축.요구하는자리` 가 비었다 — 이 검사의 규칙이 원리상 안 선다");
+        bail!("`--schema` 의 `닫힘축.요구하는자리` 가 비었다 — 이 검사의 규칙이 원리상 성립하지 않는다");
     }
     let mut 대기_발화 = 0usize;
     let mut problems = Vec::new();
@@ -4537,8 +5358,8 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     // ★ 끝난 회차의 열림은 **즉시 실패**라 구조상 0 이다 — 그 0 이 화면에 떠야
     //   「그 자가 실제로 돌았다」를 사람이 안다(독립 리뷰 R2 · 발견 1).
     let mut 끝난_회차_열림 = 0usize;
-    // 접힌 회차의 열린 행 — **실패로 안 낸다. 세어서 보고만 한다**(아래 「접힌 회차는 여기서 빠진다」).
-    let mut 접힌_회차_열림 = 0usize;
+    // 철회한 회차의 열린 행 — **실패로 적지 않는다. 세어서 보고만 한다**(아래 「철회한 회차는 여기서 빠진다」).
+    let mut 철회한_회차_열림 = 0usize;
     let mut 못_잼: BTreeMap<&'static str, usize> = Default::default();
     let mut 발화 = Vec::new();
 
@@ -4596,13 +5417,13 @@ fn check_finding_closure(root: &Path) -> Result<String> {
             }
             if 상태 == 열림값 {
                 열림 += 1;
-                // ★★ **접힌 회차는 여기서 빠진다.** (정정 2026-08-24)
+                // ★★ **철회한 회차는 여기서 빠진다.** (정정 2026-08-24)
                 //
-                //   접힘은 §11 을 안 지난다 — 남은 검증 라운드·게이트·종료 보고를
-                //   치르지 않는다(규약 §5 「접힘」). 그런데 앞 판은 접힌 회차에
+                //   철회는 §11 을 안 지난다 — 남은 검증 라운드·게이트·종료 보고를
+                //   치르지 않는다(규약 §5 「철회」). 그런데 앞 판은 철회한 회차에
                 //   **§11 보다 엄한 것**(발견 전량 닫힘)을 요구했다.
                 //   빠져나가는 길이 **전부를 `기각` 으로 개칭하는 것**뿐이라,
-                //   만든 유인이 **「접을지 모르는 회차에서는 레코드를 아예 안 쓴다」**였다.
+                //   만든 유인이 **「철회할지 모르는 회차에서는 레코드를 아예 안 쓴다」**였다.
                 //   레코드를 죽이는 검사는 그 자체가 「측정이 죽은 가지」다.
                 //
                 //   ⚠ 대신 **판정문이 세어서 보고한다** — 조용히 사라지지 않는다.
@@ -4615,7 +5436,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
                         i + 1
                     ));
                 } else if 끝났나 {
-                    접힌_회차_열림 += 1;
+                    철회한_회차_열림 += 1;
                 }
                 continue;
             }
@@ -4681,7 +5502,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     // ★★ 「다시 연다」가 도피로가 되는 것을 막는 둘째 자다. `상태=열림` 이 되면
     //   그 행은 이 검사의 모집단에서 **빠져 즉시 초록**이 된다. 끝난 회차는
     //   위에서 실패로 막지만, **진행 중인 회차에서 닫힘을 열림으로 되돌리는 것**은
-    //   그 자가 못 본다. 그래서 **이력과 대어 전환 수를 낸다.**
+    //   그 자가 못 본다. 그래서 **이력과 대어 전환 수를 산출한다.**
     //
     //   ⚠ 이것은 방어가 아니라 **계기**다 — 되돌리는 것이 정당할 때도 있다.
     //   숨지 않게만 한다.
@@ -4730,7 +5551,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
     Ok(format!(
         "잰 것 {잰_것}행 · 발화 {발화_수} · **감사 대기 발화 {대기_발화}** · \
          원리상 못 잼 {못_잼_글} · 이 이력에서 안 보임 {안_보임}행 · \
-         열림 {열림}행 (끝난 회차 {끝난_회차_열림} · **접힌 회차 {접힌_회차_열림}** · **닫힘→열림 전환 {전환}**) · SHA {}개",
+         열림 {열림}행 (끝난 회차 {끝난_회차_열림} · **철회한 회차 {철회한_회차_열림}** · **닫힘→열림 전환 {전환}**) · SHA {}개",
         캐시.len()
     ))
 }
@@ -4740,7 +5561,7 @@ fn check_finding_closure(root: &Path) -> Result<String> {
 ///
 /// ★ 왜 `Path::is_absolute` 를 안 쓰나: 그 자가 **플랫폼마다 다르다.** `/tmp` 는
 /// 유닉스에서 절대이고 Windows 에서는 아니다. 그러면 같은 레코드가 OS 마다 다른
-/// 판정을 받고, 그것이 ADR-0023 이 금지한 자리다. **여기서는 세 OS 가 같은 답을 낸다.**
+/// 판정을 받고, 그것이 ADR-0023 이 금지한 자리다. **여기서는 세 OS 가 같은 답을 돌려준다.**
 fn 저장소_밖_절대경로(경로: &str) -> bool {
     let b = 경로.as_bytes();
     경로.starts_with('/')
@@ -4777,7 +5598,7 @@ mod 좌표_면제_시험 {
 
 /// 좌표가 실재하는가 — 경로째로 있거나, **끝이 맞는 파일이 저장소에 있거나.**
 ///
-/// ⚠ **접미 매칭을 여는 까닭**: 발견을 내는 자(에이전트)가 `layout.rs:161` 처럼 **파일
+/// ⚠ **접미 매칭을 여는 까닭**: 발견을 산출하는 자(에이전트)가 `layout.rs:161` 처럼 **파일
 /// 이름만** 적거나 `retro/09-categories.md` 처럼 **회차 안에서의 상대 경로**로 적는 일이
 /// 흔하다(실측: 좌표 59 개 중 그런 것이 17). 그것을 실패로 치면 검사가 실질을 안 재고
 /// **형식만** 재게 된다.
@@ -4827,7 +5648,7 @@ fn 좌표가_실재하는가(root: &Path, 경로: &str) -> bool {
 //
 // 판정 원장이 **두 자리**에 있었다. `intent.md` 의 완수 조건 상자와 게이트의 `## 판정`.
 // 최근 두 회차가 조건 90 개를 **열린 채로** 끝냈고 계기판 ② 는 그것을 읽어
-// 「미판정 44/44」라는 **거짓 신호**를 냈다 — 같은 회차의 게이트는 「통과 43」이라 적었다.
+// 「미판정 44/44」라는 **거짓 신호**를 산출했다 — 같은 회차의 게이트는 「통과 43」이라 적었다.
 // **둘이 갈리는 것을 아무도 안 댔다.** 그것이 이 검사가 닫는 금지역이다.
 //
 // # 왜 수가 아니라 ID 인가
@@ -4857,14 +5678,14 @@ fn 좌표가_실재하는가(root: &Path, 경로: &str) -> bool {
 //
 // `docs/gates/README.md` 의 선례 — *"옛 게이트를 그 형식으로 옮기지 않는다. 지난
 // 판정은 그때의 기록이라 형식을 바꿔도 새로 재는 것이 없다."* 표준 표가 없는 게이트는
-// **검사 밖**이고, 그 사실을 판정문에 실어 낸다. 「안 잰 것」을 침묵으로 두지 않는다.
+// **검사 밖**이고, 그 사실을 판정문에 실어 보낸다. 「안 잰 것」을 침묵으로 두지 않는다.
 
 const 게이트_뿌리: &str = "docs/gates";
 
 /// 파이썬 파서를 부르고 JSON 을 받는다.
 ///
 /// ★ **rc 로 판정하지 않는다.** `record.py` 의 `conditions`·`gate` 는 **형식 오류가
-/// 있으면 rc=1 을 내면서도 표준출력에 온전한 JSON 을 낸다** — 그것이 이 검사가 읽어야
+/// 있으면 rc=1 을 내면서도 표준출력에 온전한 JSON 을 산출한다** — 그것이 이 검사가 읽어야
 /// 하는 내용이다. rc 는 「말할 것이 있다」는 신호이지 「출력이 없다」가 아니다.
 fn 파서에_묻는다(파이썬: &str, 원천: &Path, 명령: &str, 대상: &Path) -> Result<serde_json::Value> {
     let out = 파이썬_명령(파이썬)
@@ -4875,7 +5696,7 @@ fn 파서에_묻는다(파이썬: &str, 원천: &Path, 명령: &str, 대상: &Pa
         .with_context(|| format!("`{파이썬} {스키마_원천} {명령} {}` 를 못 돌렸다", 대상.display()))?;
     if out.stdout.is_empty() {
         bail!(
-            "`{스키마_원천} {명령} {}` 가 아무것도 안 냈다 (rc={}):\n{}",
+            "`{스키마_원천} {명령} {}` 가 아무것도 안 산출했다 (rc={}):\n{}",
             대상.display(),
             out.status.code().unwrap_or(-1),
             String::from_utf8_lossy(&out.stderr)
@@ -4943,7 +5764,7 @@ mod 종료_보고_시험 {
 fn check_ledger_pair(root: &Path) -> Result<String> {
     let 뿌리 = root.join(회차_뿌리);
     if !뿌리.is_dir() {
-        bail!("`{회차_뿌리}` 가 없다 — 이 검사의 모집단이 원리상 안 선다");
+        bail!("`{회차_뿌리}` 가 없다 — 이 검사의 모집단이 원리상 성립하지 않는다");
     }
 
     // ① 모집단 — 회차 디렉터리 **전부**. `intent.md` 가 있는 것이 회차다.
@@ -4995,8 +5816,8 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     let mut 검산줄_유예_발화 = 0usize;
     let mut 보고없음_유예_발화 = 0usize;
     let mut 게이트없음: Vec<String> = Vec::new();
-    // 접힌 회차 — 게이트를 안 진다. **세어서 보고만 한다**(위 「접힌 회차는 게이트를 안 진다」).
-    let mut 접힘: Vec<String> = Vec::new();
+    // 철회한 회차 — 게이트를 안 진다. **세어서 보고만 한다**(위 「철회한 회차는 게이트를 안 진다」).
+    let mut 철회: Vec<String> = Vec::new();
     let mut 댄_조건 = 0usize;
     let mut 댄_미측정 = 0usize;
 
@@ -5019,31 +5840,35 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     //   > 그중 적어도 하나는 **끝났는데 안 썼거나 버려진 것**이다.
     //
     //   ⚠ 그 회차의 종료 보고를 **지금 지어내지 않는다** — 그때 쓴 사람만 쓸 수 있다.
-    //   그래서 선언 목록으로 **빚**을 세우고 판정문이 매 실행 수를 낸다.
-    // ★★ **접힘 — `folded.md` 가 기계 표시다.** (2026-08-24)
+    //   그래서 선언 목록으로 **빚**을 세우고 판정문이 매 실행 수를 산출한다.
+    // ★★ **철회 — `folded.md` 가 기계 표시다.** (2026-08-24)
     //
-    //   접힌 회차는 종료 보고를 안 쓴다(규약 §5 「접힘」). 그래서 `report.md` 만 보면
-    //   **접힌 회차가 영원히 「진행 중」**이 되고, 다음 회차를 여는 순간 이 검사가
+    //   철회한 회차는 종료 보고를 안 쓴다(규약 §5 「철회」). 그래서 `report.md` 만 보면
+    //   **철회한 회차가 영원히 「진행 중」**이 되고, 다음 회차를 여는 순간 이 검사가
     //   거짓으로 빨개진다(실측 2026-08-24 · 격리 클론에서 재현).
     //
     //   ⚠ **산문을 안 읽는다** — 위 C7 주석이 적은 그대로다. `state.md` 의 표기는
     //   회차마다 갈렸다. 그래서 **파일 하나의 존재**를 표시로 쓴다.
     //
     //   ★ **빈 파일로 비껴가지 못한다.** `## 왜 접었나` 가 없으면 표시로 안 쳐 주고
-    //   빨개진다 — 그것이 접힘과 「조용한 축소」를 가르는 유일한 것이다.
+    //   빨개진다 — 그것이 철회와 「조용한 축소」를 가르는 유일한 것이다.
     //   선행 하네스는 `abandoned` 를 열일곱 번 쓰고도 이유 필드가 없어 하나도 못 읽는다.
     for 회차 in &회차들 {
-        let 접힘문서 = 뿌리.join(회차).join("folded.md");
-        if 접힘문서.is_file() {
-            let 본문 = std::fs::read_to_string(&접힘문서).unwrap_or_default();
-            if !본문.contains("## 왜 접었나") {
+        let 철회문서 = 뿌리.join(회차).join("folded.md");
+        if 철회문서.is_file() {
+            let 본문 = std::fs::read_to_string(&철회문서).unwrap_or_default();
+            // ★ **옛 표기도 계속 읽는다** — 이 문자열을 지는 `folded.md` 둘이 전부
+            //   지난 회차의 종결 기록이고 「범위 밖」이 그것을 영구히 잠갔다.
+            //   고치면 증거 위조이고, 안 고치고 검사만 옮기면 빨개진다
+            //   (회차 `2026-09-06-user-surface-vocabulary` `D3-b` · ADR-0034).
+            if !본문.contains("## 왜 철회했나") && !본문.contains("## 왜 접었나") {
                 problems.push(format!(
-                    "`{회차}/folded.md` 에 **`## 왜 접었나` 가 없다** — 사유 없는 접힘은                      접힘이 아니라 **조용한 축소**다. 규약 §5 「접힘」이 그 절을 요구한다"
+                    "`{회차}/folded.md` 에 **`## 왜 철회했나` 가 없다** — 사유 없는 철회는                      철회가 아니라 **조용한 축소**다. 규약 §5 「철회」가 그 절을 요구한다"
                 ));
             }
             if 뿌리.join(회차).join("report.md").is_file() {
                 problems.push(format!(
-                    "`{회차}` 에 `folded.md` 와 `report.md` 가 **둘 다** 있다 —                      접힘과 종료는 배타다. 하나가 거짓이다"
+                    "`{회차}` 에 `folded.md` 와 `report.md` 가 **둘 다** 있다 —                      철회와 종료는 배타다. 하나가 거짓이다"
                 ));
             }
         }
@@ -5075,18 +5900,18 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         let 열쇠 = format!("{회차_뿌리}/{회차}/intent.md");
         let 짝: Vec<&(String, String)> =
             게이트들.iter().filter(|(_, 본문)| 본문.contains(&열쇠)).collect();
-        // ★★ **접힌 회차는 게이트를 안 진다.** (2026-08-24)
+        // ★★ **철회한 회차는 게이트를 안 진다.** (2026-08-24)
         //
         //   이 자리가 요구하는 것은 *"끝난 회차의 판정 원장이 한 자리뿐이다"* 인데,
-        //   **접힌 회차는 판정을 안 했다** — 완수 조건이 「통과」가 아니라 **「안 쟀다」**로
-        //   남는다(규약 §5 「접힘」·§11). 그런 회차에 게이트 문서를 요구하면
+        //   **철회한 회차는 판정을 안 했다** — 완수 조건이 「통과」가 아니라 **「안 쟀다」**로
+        //   남는다(규약 §5 「철회」·§11). 그런 회차에 게이트 문서를 요구하면
         //   **「안 쟀다」를 「판정했다」로 위장하게 만든다** — 기본 금지역
         //   「사실이 아닌 것을 사실로」다. 그러므로 요구하지 않고 **세어서 보고만 한다.**
         //
-        //   ⚠ 그래도 「끝났다」로는 봐야 한다. 안 그러면 접힌 회차가 「게이트 없음」에
+        //   ⚠ 그래도 「끝났다」로는 봐야 한다. 안 그러면 철회한 회차가 「게이트 없음」에
         //   영구히 뜨고, 다음 사람이 그것을 「게이트를 써야 하는데 안 썼다」로 읽어
-        //   **접은 회차를 되살린다.**
-        let 접혔나 = 뿌리.join(회차).join("folded.md").is_file();
+        //   **철회한 회차를 되살린다.**
+        let 철회했나 = 뿌리.join(회차).join("folded.md").is_file();
         let 종료보고를_썼나 = 뿌리.join(회차).join("report.md").is_file();
         let 끝났나 = 종료했나(&뿌리.join(회차));
         let 종료보고_형식이전 = 끝났나 && !종료보고를_썼나;
@@ -5154,19 +5979,19 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         }
         // ★★ **요구하지 않는 것과 있는 것도 안 보는 것은 다르다.** (정정 2026-08-24)
         //
-        //   앞 판은 여기서 바로 `continue` 했다. 그러면 **접힌 회차를 가리키는 게이트가
+        //   앞 판은 여기서 바로 `continue` 했다. 그러면 **철회한 회차를 가리키는 게이트가
         //   실재해도 대조를 안 한다** — 실측: 없는 조건을 「통과」로 적은 게이트를 두어도
         //   전량 초록이었다. 이 자리 주석이 막겠다고 적은 *"「안 쟀다」를 「판정했다」로
         //   위장"* 이 **바로 그 자리에서 성립했다.**
         //
-        //   그래서 갈랐다 — **없으면 요구하지 않고**(접힘은 판정을 안 했다),
+        //   그래서 갈랐다 — **없으면 요구하지 않고**(철회는 판정을 안 했다),
         //   **있으면 끝까지 대조한다**(썼으면 그것은 판정을 주장하는 것이다).
-        if 접혔나 && 짝.is_empty() {
-            접힘.push(회차.clone());
+        if 철회했나 && 짝.is_empty() {
+            철회.push(회차.clone());
             continue;
         }
-        if 접혔나 {
-            접힘.push(회차.clone());
+        if 철회했나 {
+            철회.push(회차.clone());
         }
         let Some((게이트, _)) = 짝.first().copied() else {
             // ③ 짝이 없다 — 「게이트 없음」.
@@ -5309,13 +6134,13 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
                              원장 둘이 갈렸다"
                         ));
                     }
-                    // 규약 §3: **상자 켜짐 = 판정이 났다.** 안 켜짐 = 미측정.
-                    let 켜져야 = 게 != "미측정";
-                    if *상자 != 켜져야 {
+                    // 규약 §3: **상자를 채웠다 = 판정이 났다.** 안 채웠다 = 미측정.
+                    let 채워야 = 게 != "미측정";
+                    if *상자 != 채워야 {
                         problems.push(format!(
                             "{회차}: `{id}` — 게이트는 「{게}」인데 상자가 {}. \
-                             상자 켜짐 = 판정이 났다는 뜻이다",
-                            if *상자 { "켜져 있다" } else { "안 켜져 있다" }
+                             상자를 채웠다 = 판정이 났다는 뜻이다",
+                            if *상자 { "채웠다" } else { "안 채웠다" }
                         ));
                     }
                 }
@@ -5332,7 +6157,7 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         댄_조건 += 의도판정.len();
         // ★ **「조건 N」은 판정한 수가 아니라 ID 집합 크기다.** (독립 리뷰 R3)
         //   양쪽이 전부 `미측정` 이어도 집합은 맞으므로 초록이고, 그때 `조건 N` 만
-        //   보면 N 개를 **쟀다**고 읽힌다. 미측정 수를 함께 낸다 — 판정하지는 않는다.
+        //   보면 N 개를 **쟀다**고 읽힌다. 미측정 수를 함께 싣는다 — 판정하지는 않는다.
         댄_미측정 += 의도판정.values().filter(|(_, v)| v == "미측정").count();
         검사안.push(format!("{회차} ({}개)", 의도판정.len()));
     }
@@ -5370,7 +6195,7 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     // ⚠ **끝난 회차가 하나도 없으면 이 가드를 안 건다.** (독립 리뷰 R3)
     //   앞 판은 무조건 걸어서 「진행 중인 회차 하나뿐인 새 프로젝트」를 **거짓 실패**
     //   시켰다 — E3 가 *"회차 진행 중이면 보고"* 라고 등록한 자리와 정면으로 어긋난다.
-    //   **잴 것이 있어야 할 때만** 「안 쟀다」를 실패로 낸다.
+    //   **잴 것이 있어야 할 때만** 「안 쟀다」를 실패로 판정한다.
     if 댄_조건 == 0 && 최근_끝난.is_some() {
         problems.push(format!(
             "이 검사가 조건을 **하나도 안 쟀다** — 끝난 회차 `{}` 가 있는데 표준 표를 \
@@ -5384,12 +6209,12 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
     }
     Ok(format!(
         "회차 {} · 검사 안 {} (조건 {댄_조건} · 그중 미측정 {댄_미측정}) · \
-         형식 이전 {} · 게이트 없음 {} · **접힘 {}** · 종료 보고 {종료보고_검사}개 검사 \
+         형식 이전 {} · 게이트 없음 {} · **철회 {}** · 종료 보고 {종료보고_검사}개 검사 \
          (검산 줄 유예 발화 {검산줄_유예_발화} · 보고 없음 유예 발화 {보고없음_유예_발화}) · {하한}",
         회차들.len(),
         if 검사안.is_empty() { "없음".to_string() } else { 검사안.join(" · ") },
         if 형식이전.is_empty() { "0".to_string() } else { 형식이전.join(" · ") },
         if 게이트없음.is_empty() { "0".to_string() } else { 게이트없음.join(" · ") },
-        if 접힘.is_empty() { "0".to_string() } else { 접힘.join(" · ") },
+        if 철회.is_empty() { "0".to_string() } else { 철회.join(" · ") },
     ))
 }

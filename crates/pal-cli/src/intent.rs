@@ -16,7 +16,7 @@ use pal_intent::IntentStore;
 
 use crate::touch::intent_file;
 
-/// 전부를 JSONL 로 낸다.
+/// 전부를 JSONL 로 산출한다.
 ///
 /// # Errors
 /// 의도 저장소를 읽지 못하거나 파일을 쓰지 못하면.

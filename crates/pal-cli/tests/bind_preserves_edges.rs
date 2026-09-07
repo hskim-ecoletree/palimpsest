@@ -17,7 +17,7 @@
 //! # 왜 F09 가 고치는가
 //!
 //! [`pal_core::Radius::Callers`] 가 **엣지를 요구한다.** `pal bind` 가 엣지를 지우는 채로
-//! 반경을 세우면 **감시 집합이 조용히 빈다** — 그리고 **빈 감시 집합은 언제나 `Live`** 다.
+//! 반경을 세우면 **감시 집합이 조용히 빈다** — 그리고 **빈 감시 집합은 언제나 `Fresh`** 다.
 //! 그러면 이 기능의 반대 방향 넷 중 셋이 **공짜로 통과한다.**
 //!
 //! # ⚠ `--read-only` 가 없으면 이 시험이 아무것도 안 잰다
@@ -35,9 +35,9 @@ mod common;
 
 use common::{pal, 저장소};
 
-/// 봉투에서 `(노드 수, 엣지 수, built_for_this_snapshot)`.
+/// 응답 묶음에서 `(노드 수, 엣지 수, built_for_this_snapshot)`.
 fn 그래프(out: &str) -> (usize, usize, bool) {
-    let v: serde_json::Value = serde_json::from_str(out).expect("봉투 JSON");
+    let v: serde_json::Value = serde_json::from_str(out).expect("응답 묶음 JSON");
     (
         v["answer"]["nodes"].as_array().expect("nodes").len(),
         v["answer"]["edges"].as_array().expect("edges").len(),
@@ -52,7 +52,7 @@ fn bind_는_엣지를_지우지_않는다() {
     // ── 전 — **쓰기로 붙어 스티칭한다** ────────────────────────────────────
     let (노드_전, 엣지_전, 선_전) = 그래프(&pal(&repo, &["query", "graph.dump", "--json"]));
 
-    // **하한.** `delta.ts` 의 `부름() → 도움()` 이 엣지 하나를 낸다. 0 이면 이 시험은
+    // **하한.** `delta.ts` 의 `부름() → 도움()` 이 엣지 하나를 산출한다. 0 이면 이 시험은
     // 아무것도 안 잰다.
     assert!(엣지_전 > 0, "결박 전에 엣지가 0 이다 — 이 시험이 아무것도 안 잰다");
     assert!(노드_전 > 0, "결박 전에 노드가 0 이다");
@@ -82,7 +82,7 @@ fn bind_는_엣지를_지우지_않는다() {
 /// **★ 반대 방향** — 이 시험이 무언가를 재고 있다는 증거.
 ///
 /// `--read-only` 없이 물으면 `pal query` 가 스티칭을 다시 돌린다. 즉 **엣지가 지워진
-/// 상태에서도 이 경로는 4,601 을 낸다.** 그래서 위 시험이 `--read-only` 를 쓰는 것이
+/// 상태에서도 이 경로는 4,601 을 산출한다.** 그래서 위 시험이 `--read-only` 를 쓰는 것이
 /// 우연이 아니라 **요구**임을 여기서 붙든다.
 #[test]
 fn 쓰기로_물으면_스티칭이_다시_돌아_증상이_가려진다() {
