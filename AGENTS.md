@@ -37,6 +37,7 @@
 |---|---|
 | 회차를 어떻게 도나 | **`/round`** — 절차의 정본 |
 | 무엇을 어느 순서로 만드나 (지형) | [docs/plan/02-order.md](docs/plan/02-order.md) — 능력 계약 `C1~C6`·`U` 를 실측하고 그 실측에서 순서를 도출했다(2026-09-06). **지금 어느 이슈가 열려 있는지는 `./scripts/frontier.sh` 가 답한다.** [docs/plan/README.md](docs/plan/README.md) 에는 **어느 회차에서든 걸리는 것**(상시 검사·판정 명령(oracle)·게이트 소유자·진행 규칙)만 남았다 |
+| **그 순서 중 어디까지가 제품인가** | [docs/plan/03-shortest-path.md](docs/plan/03-shortest-path.md) — 순서표의 항목 여섯에 `00-goals.md` 의 우선순위를 대어 **제품의 경계선**을 그었다(2026-09-07). 우선순위 1 에서 아직 안 서는 것은 참조 하나이고, 그 하나까지의 경로를 네 단계로 적는다. **순서 자체는 순서표가 이기고 우선순위는 `00-goals.md` 가 이긴다** |
 | 완성되면 실제로 어떻게 쓰이나 | [docs/plan/01-completion-scenes.md](docs/plan/01-completion-scenes.md) — 장면 다섯. 바깥쪽(설치한 사용자)과 안쪽(회차를 도는 에이전트)을 둘 다 그린다. **다섯 중 넷이 목표 상태다** — 지금 도는 것은 §1 의 화면뿐이고 그것도 상자 일곱 중 넷이 「능력 없음」을 찍는다(독립 리뷰 R3·R4 가 「둘」을 정정했다). **화면 한 장의 정본은 [00-goals §1](docs/plan/00-goals.md) 이고 그 문서가 승계한다** |
 | 무슨 언어·라이브러리·구조로 만드나 | [docs/plan/00-stack.md](docs/plan/00-stack.md) |
 | 무엇이 우리를 막을 것인가 | [docs/plan/00-risks.md](docs/plan/00-risks.md) |
