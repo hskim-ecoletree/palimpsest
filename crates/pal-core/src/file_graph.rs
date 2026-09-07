@@ -76,7 +76,7 @@ pub struct ExportSet {
     /// 이름으로 내보내는 것. **정렬·중복 제거** — 소스 순서에 의존하지 않는 집합이다.
     ///
     /// ⚠ **그 정렬은 이 타입이 강제하지 못한다 — 만드는 쪽의 계약이다.** 그래서 만드는
-    /// 쪽마다 시험이 하나씩 선다: TypeScript 는 `typescript.rs` 의 `finish`, Rust 는
+    /// 쪽마다 시험이 하나씩 붙는다: TypeScript 는 `typescript.rs` 의 `finish`, Rust 는
     /// `rust.rs` 의 `a12_exports_는_정렬_중복제거_뒤에_요약된다`. 안 지키면
     /// **소스에서 `pub` 을 재배열하는 것만으로 `export_digest` 가 움직이고**, 그것이
     /// 의존 파일 전체를 이유 없이 무효화한다(R-05).
@@ -121,9 +121,9 @@ impl ExportSet {
 /// 두 추출기(생산)뿐이다. **어떤 질의·투영·화면도 이 값을 안 읽는다** — `FileNode` 조차
 /// `export_digest` 와 `refs` 만 싣는다.
 ///
-/// 그래서 *"Rust 임포트가 선다"* 는 **산출까지의 사실**이고 관측 가능한 동작은 아직
+/// 그래서 *"Rust 임포트가 성립한다"* 는 **산출까지의 사실**이고 관측 가능한 동작은 아직
 /// 없다. 쓰는 것은 파일 간 해소(F07)이고, 그 사실을 여기 적어 두지 않으면 이 자리가
-/// 초록인 것이 「기능이 선다」로 읽힌다.
+/// 초록인 것이 「기능이 갖춰졌다」로 읽힌다.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportSet {
     /// 모듈 지정자. 정렬·중복 제거. 동적 `import()` 는 **리터럴 인자만** 담는다.
