@@ -305,17 +305,17 @@ def 코퍼스(r: 결과) -> None:
             return
         보고 = json.loads(p.stdout)["answer"]
         산출한 = {c["label"]: c["count"] for c in 보고["exported"]}
-        if 낸.get("Symbol") != 노드 or 낸.get("REFERENCES") != 엣지:
+        if 산출한.get("Symbol") != 노드 or 산출한.get("REFERENCES") != 엣지:
             r.fail(
                 "③ 내보내기 건수",
-                f"Symbol {낸.get('Symbol')} · REFERENCES {낸.get('REFERENCES')} "
+                f"Symbol {산출한.get('Symbol')} · REFERENCES {산출한.get('REFERENCES')} "
                 f"— `graph.dump` 는 {노드}·{엣지}",
             )
         else:
             사유 = {m["why"] for m in 보고["missing"]}
             r.ok(
                 "③ 내보내기",
-                f"{이름} Symbol {낸['Symbol']} · REFERENCES {낸['REFERENCES']} · "
+                f"{이름} Symbol {산출한['Symbol']} · REFERENCES {산출한['REFERENCES']} · "
                 f"못 산출한 라벨 {len(보고['missing'])}개 (사유 {len(사유)}갈래)",
             )
 

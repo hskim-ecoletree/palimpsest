@@ -720,7 +720,7 @@ def 실_이력(tmp: Path, corpus: Path, pin: str, ext: str, tag: str, radius: st
                 붙인_것 = [좌표_이름.get(x, x[:8])
                         for x in b["status"]["code"].get("triggered_by", [])]
                 표본.append((f"{직전[:8]}..{c[:8]}", b["binding"][:8], f,
-                            좌표_경로.get(b["target"], "?"), 제목[:44], 켠_것[:2]))
+                            좌표_경로.get(b["target"], "?"), 제목[:44], 붙인_것[:2]))
         직전 = c
         if len(표본) >= SAMPLES_PER_CORPUS:
             break
