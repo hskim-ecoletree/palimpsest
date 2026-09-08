@@ -1,0 +1,30 @@
+# 증인 26 — 착수 시점에 못 박는다 (커밋 0250673)
+# 명령: pal query symbol.callers <이름> --json  ·  오늘 outcome=symbols · symbols=[] 인 것
+Root	symbols 0
+GixRepo	symbols 0
+ConditionsReport	symbols 0
+AGENT_KEY	symbols 0
+AGENT_VALUE	symbols 0
+CLAUDE_DIR	symbols 0
+DERIVED	symbols 0
+IGNORE_MARKERS	symbols 0
+IMPORT_LINE	symbols 0
+LOCK	symbols 0
+MANIFEST	symbols 0
+MANIFEST_HOME	symbols 0
+MD_MARKERS	symbols 0
+path_앞에	symbols 0
+바이트_전부	symbols 0
+캐시_엔트리_수	symbols 0
+해시	symbols 0
+Budget	symbols 0
+Capable	symbols 0
+Coord	symbols 0
+ExtractorVersion	symbols 0
+GraphView	symbols 0
+RustScopeRules	symbols 0
+ScopeSource	symbols 0
+Slot	symbols 0
+Symbol	symbols 0
+
+총 26 · 오늘 빈 답 26
