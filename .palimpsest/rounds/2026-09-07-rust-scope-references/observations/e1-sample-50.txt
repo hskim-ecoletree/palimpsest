@@ -23,52 +23,52 @@ E1 층화 표본 — 50 건 (타입 15 · 호출·매크로 20 · 그 밖 15 배
       carried_by: Option<RawCarrier>,
  12  [타입] crates/pal-core/src/touch.rs:340  값이_있는_자리는_그대로_실린다 → SymbolFacts
       let v: Capable<SymbolFacts> = Capable::Present(SymbolFacts { callers: 9, callees: 14 });
- 13  [타입] crates/pal-extract/src/scopes.rs:246  declare_pass → ScopeRules
-      fn declare_pass(&mut self, rules: &dyn ScopeRules, node: Node<'_>, scope: ScopeIx) {
- 14  [타입] crates/pal-intent/src/store.rs:449  keep_refusal → IntentError
-      pub fn keep_refusal(&self, r: &Refusal) -> Result<(), IntentError> {
- 15  [타입] crates/pal-store/src/cache.rs:368  lookup → CacheKey
-      fn lookup<T: DeserializeOwned>(&self, key: &CacheKey) -> Result<Lookup<T>, CacheError> {
+ 13  [타입] crates/pal-extract/src/scopes.rs:238  bind_named → ScopeRules
+      rules: &dyn ScopeRules,
+ 14  [타입] crates/pal-intent/src/store.rs:438  entity_count → IntentError
+      pub fn entity_count(&self) -> Result<usize, IntentError> {
+ 15  [타입] crates/pal-store/src/cache.rs:332  quarantine → CacheError
+      fn quarantine(&self, key: &CacheKey, path: &Path) -> Result<PathBuf, CacheError> {
  16  [호출·매크로] crates/pal-cli/build.rs:27  main → git_dir
       if let Some(git) = git_dir(&manifest) {
- 17  [호출·매크로] crates/pal-cli/src/install/blocks.rs:236  상태 → 자리
-      if 자리(&existing, inserted.as_bytes()).is_some() {
- 18  [호출·매크로] crates/pal-cli/src/install/inside.rs:69  join → 실제_경로
-      let real = 실제_경로(&candidate, 0)?;
+ 17  [호출·매크로] crates/pal-cli/src/install/blocks.rs:254  마커가_남았나 → 마커가_있나
+      Ok(마커가_있나(&super::guard::읽는다(path)?, markers))
+ 18  [호출·매크로] crates/pal-cli/src/install/inside.rs:61  join → 글자로_벗어나나
+      if let Some(까닭) = 글자로_벗어나나(&rel.0) {
  19  [호출·매크로] crates/pal-cli/src/query.rs:384  print_bindings → 시각
       println!("      {}  ·  {}", b.subject, 시각(b.bound_at_time));
- 20  [호출·매크로] crates/pal-cli/src/round/stop.rs:135  command_enable → print_view
-      print_view(json, &view, &format!("Stop enabled: {}", activation.round));
- 21  [호출·매크로] crates/pal-cli/tests/common/mod.rs:116  저장소 → git
-      git(&root, &["init", "-q", "."]);
- 22  [호출·매크로] crates/pal-cli/tests/install.rs:539  리소스를_하나도_못_찾으면_실패한다 → 값
-      let m = 값(&root.join(".claude/pal/manifest.json"));
- 23  [호출·매크로] crates/pal-cli/tests/install_hooks.rs:270  등록된_명령이_돌고_차단을_산출한다 → 프로젝트
-      let root = 프로젝트("발화");
- 24  [호출·매크로] crates/pal-cli/tests/install_recovery.rs:201  못_지운_디렉터리를_말한다 → 프로젝트
-      let root = 프로젝트("남긴다");
- 25  [호출·매크로] crates/pal-cli/tests/round_approve_verify.rs:763  실행된_현재_negative_control없이는_주조건도_met이_아니다 → verify
-      assert_success(&verify(&repo, &approvals, "A1", &[]));
- 26  [호출·매크로] crates/pal-cli/tests/round_status.rs:332  명시_round의_디렉터리와_intent_부재는_resolve_error다 → status
-      let out = status(&root, "missing-round");
- 27  [호출·매크로] crates/pal-cli/tests/round_stop.rs:788  corrupt_progress와_trailing_partial_crlf를_보수적으로_판정한다 → enable
-      enable(&repo, &store);
- 28  [호출·매크로] crates/pal-core/src/cascade.rs:285  사슬 → 스냅샷
-      GraphView::new(스냅샷(), ViewCoverage::new()).with_nodes(nodes)
+ 20  [호출·매크로] crates/pal-cli/src/round/stop.rs:140  command_disable → disable
+      disable(repo, requested)?;
+ 21  [호출·매크로] crates/pal-cli/tests/common/mod.rs:117  저장소 → git
+      git(&root, &["add", "-A"]);
+ 22  [호출·매크로] crates/pal-cli/tests/install.rs:548  리소스를_하나도_못_찾으면_실패한다 → 실패
+      let stderr = 실패(&빈방, &["uninstall"]);
+ 23  [호출·매크로] crates/pal-cli/tests/install_hooks.rs:295  등록된_명령이_돌고_차단을_산출한다 → 페이로드
+      let out = 하네스처럼(&exe, &항목, &페이로드("다 했다", false));
+ 24  [호출·매크로] crates/pal-cli/tests/install_recovery.rs:268  스냅샷 → 훑기
+      훑기(root, root, &mut out);
+ 25  [호출·매크로] crates/pal-cli/tests/round_approve_verify.rs:794  실행된_현재_negative_control없이는_주조건도_met이_아니다 → assert_success
+      assert_success(&verify(&repo, &approvals, "A1-n", &[]));
+ 26  [호출·매크로] crates/pal-cli/tests/round_status.rs:334  명시_round의_디렉터리와_intent_부재는_resolve_error다 → value
+      assert_eq!(value(&out)["code"], "resolve_error");
+ 27  [호출·매크로] crates/pal-cli/tests/round_stop.rs:791  corrupt_progress와_trailing_partial_crlf를_보수적으로_판정한다 → blocked
+      assert!(blocked(&stop(
+ 28  [호출·매크로] crates/pal-core/src/cascade.rs:167  cascade → cut_residuals
+      let (residuals, unanchored_cutoff) = cut_residuals(view, &cutoff, depth_budget);
  29  [호출·매크로] crates/pal-core/src/doctor.rs:1391  담을_수_없는_불변식은_위반_0_이_아니라_능력_부재다 → 성한
       .with_edges(성한().edges().to_vec())
- 30  [호출·매크로] crates/pal-core/src/plan.rs:1045  포매팅만_바뀌면_변경_심볼이_0_이고_본문이_바뀌면_1_이다 → 심볼
-      let 같음 = vec![심볼("a", "src/a.ts", 1), 심볼("b", "src/a.ts", 2)];
- 31  [호출·매크로] crates/pal-core/src/schema.rs:750  공통_넷_각각이_없으면_엣지가_등록되지_않는다 → 성한
-      let 뺀 = 성한.replace(줄, "");
- 32  [호출·매크로] crates/pal-extract/src/parse.rs:608  다음_선언 → 벗긴다
-      return Some(벗긴다(x, wrappers).start_byte());
- 33  [호출·매크로] crates/pal-extract/src/shell.rs:149  capability_axis → AXIS
-      AXIS.get_or_init(|| {
- 34  [호출·매크로] crates/pal-intent/src/store.rs:403  entity_of → IntentError
-      let got = t.get(origin).map_err(|e| IntentError::Transaction(e.to_string()))?;
- 35  [호출·매크로] xtask/src/main.rs:623  check → check_vocabulary
-      ("코어 어휘 금지", check_vocabulary(root)),
+ 30  [호출·매크로] crates/pal-core/src/plan.rs:1048  포매팅만_바뀌면_변경_심볼이_0_이고_본문이_바뀌면_1_이다 → 심볼
+      let 다름 = vec![심볼("a", "src/a.ts", 9), 심볼("b", "src/a.ts", 2)];
+ 31  [호출·매크로] crates/pal-core/src/schema.rs:784  선택_필드는_적을_수_없다 → 성한
+      let s = 성한.replace(
+ 32  [호출·매크로] crates/pal-extract/src/parse.rs:802  빈_줄이_없으면_그대로_붙는다 → 첫_심볼_시작
+      assert_eq!(c[0].attaches_to_byte, Some(첫_심볼_시작(src, false)));
+ 33  [호출·매크로] crates/pal-extract/src/ts_scopes.rs:58  opens → CLASS_LIKE
+      } else if CLASS_LIKE.contains(&k) {
+ 34  [호출·매크로] crates/pal-intent/src/store.rs:470  refused → 거부_열쇠
+      .get(거부_열쇠(item, target).as_str())
+ 35  [호출·매크로] xtask/src/main.rs:637  check → check_promotion_is_not_in_place
+      ("승격이 원본을 안 고친다", check_promotion_is_not_in_place(root)),
  36  [그밖] crates/pal-cli/src/attach.rs:84  attach → How
       How::Stitching => {
  37  [그밖] crates/pal-cli/src/install/sha256.rs:71  digest → H0
@@ -89,13 +89,13 @@ E1 층화 표본 — 50 건 (타입 15 · 호출·매크로 20 · 그 밖 15 배
       1 => PlanBindingState::Bound { targets: found },
  45  [그밖] crates/pal-core/src/repo.rs:434  스냅샷은_집합이고_비어_있을_수_없다 → RepoId
       assert_eq!(둘.entries().next().unwrap().0, RepoId::new("a"));
- 46  [그밖] crates/pal-core/src/scope.rs:531  함수_경계를_지나면_뒤에_선_이름도_해소된다 → RefResolution
+ 46  [그밖] crates/pal-core/src/scope.rs:556  함수_경계를_지나면_뒤에_선_이름도_해소된다 → Namespace
       matches!(c.resolve(body, "LATER", Namespace::Value, 10), RefResolution::Bound { .. }),
- 47  [그밖] crates/pal-extract/src/narrative.rs:101  fragment → 자리
-      자리::본문 => 지금.body.push_str(&t),
- 48  [그밖] crates/pal-query/src/lib.rs:489  run → QueryResult
+ 47  [그밖] crates/pal-extract/src/narrative.rs:97  fragment → 자리
+      자리::헤딩 => {
+ 48  [그밖] crates/pal-query/src/lib.rs:489  run → NamedQuery
       NamedQuery::BindingStatus => Ok(QueryResult::Bindings {
- 49  [그밖] crates/pal-store/src/projection.rs:317  swap → tx
+ 49  [그밖] crates/pal-store/src/projection.rs:317  swap → BY_NAME
       write.delete_multimap_table(BY_NAME).map_err(tx)?;
- 50  [그밖] crates/pal-store/src/projection.rs:794  clear_stage → tx
+ 50  [그밖] crates/pal-store/src/projection.rs:794  clear_stage → SYMBOL_STAGE
       write.delete_table(SYMBOL_STAGE).map_err(tx)?;

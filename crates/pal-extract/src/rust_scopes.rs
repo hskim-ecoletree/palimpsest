@@ -248,7 +248,11 @@ impl ScopeRules for RustScopeRules {
                 if self.패턴_선언
                     && let Some(p) = node.child_by_field_name("pattern")
                 {
-                    self.패턴을_묶되_자리를_잰다(b, p, scope);
+                    // ★ **초기화식은 자기 자신을 못 본다** — `let root = root("x");` 의
+                    //   `root("x")` 는 바깥의 그것이다. 그래서 이 이름은 **선언문이
+                    //   끝난 뒤부터** 보인다(정반합 판 1 의 합(合)이 격리 파일로
+                    //   재현했다 · 저장소 후보 62 자리).
+                    self.패턴을_묶되_자리를_잰다(b, p, scope, node.end_byte());
                 }
             }
             "use_declaration" => self.use_를_묶는다(b, node, 자리),
@@ -308,7 +312,7 @@ impl RustScopeRules {
     /// `match` 팔 · `for` · `if let` 의 패턴이 여기 온다. 그 스코프가 패턴 자신을 담으므로
     /// 자리로 재면 패턴의 이름이 자기보다 앞에 없어 안 보인다.
     fn 패턴을_묶는다(&self, b: &mut Builder<'_, '_>, pattern: Node<'_>, scope: ScopeIx) {
-        self.패턴_순회(b, pattern, scope, true);
+        self.패턴_순회(b, pattern, scope, true, 0);
     }
 
     /// `let` 의 패턴 — **자리를 잰다.** `let x = 1; let x = f(x);` 의 `f(x)` 는 앞의 `x` 다.
@@ -317,8 +321,9 @@ impl RustScopeRules {
         b: &mut Builder<'_, '_>,
         pattern: Node<'_>,
         scope: ScopeIx,
+        visible_from: usize,
     ) {
-        self.패턴_순회(b, pattern, scope, false);
+        self.패턴_순회(b, pattern, scope, false, visible_from);
     }
 
     fn 패턴_순회(
@@ -327,6 +332,7 @@ impl RustScopeRules {
         node: Node<'_>,
         scope: ScopeIx,
         hoisted: bool,
+        visible_from: usize,
     ) {
         match node.kind() {
             // 경로는 **선언이 아니다** — `Some(x)` 의 `Some` · `S::Var` 의 전부.
@@ -340,20 +346,20 @@ impl RustScopeRules {
                 let 첫 = node.named_children(&mut cursor).next();
                 drop(cursor);
                 if let Some(첫) = 첫 {
-                    self.패턴_순회(b, 첫, scope, hoisted);
+                    self.패턴_순회(b, 첫, scope, hoisted, visible_from);
                 }
                 return;
             }
             "identifier" => {
                 // `Some(x)` 의 `Some` 은 부모의 `type` 필드다.
                 if !필드인가(node, "type") {
-                    b.bind(self, scope, node, Namespace::Value, hoisted);
+                    b.bind_visible_from(self, scope, node, Namespace::Value, hoisted, visible_from);
                 }
                 return;
             }
             // `T { a, b: bb }` 의 `a` — 축약 필드는 **이름을 묶는다.**
             "shorthand_field_identifier" => {
-                b.bind(self, scope, node, Namespace::Value, hoisted);
+                b.bind_visible_from(self, scope, node, Namespace::Value, hoisted, visible_from);
                 return;
             }
             _ => {}
@@ -371,7 +377,7 @@ impl RustScopeRules {
             if Some(child.id()) == 타입 || Some(child.id()) == 가드 {
                 continue;
             }
-            self.패턴_순회(b, child, scope, hoisted);
+            self.패턴_순회(b, child, scope, hoisted, visible_from);
         }
     }
 

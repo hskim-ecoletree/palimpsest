@@ -1,0 +1,145 @@
+# B1·B2 원 출력 — 2층을 지우고 다시 세운 뒤 잰 것
+#
+# rm -rf .palimpsest/index.redb .palimpsest/cache
+# ./target/release/pal query graph.dump --json > /dev/null
+# ./target/release/pal export --format cypher | <조인>
+
+File           139
+Symbol         3205
+REFERENCES     4258
+기여 파일       133  (.rs 132 · 그 밖 1)
+
+## REFERENCES 에 기여한 .rs 파일 전부 — B1 의 모집단
+
+     3  crates/pal-cli/build.rs
+     2  crates/pal-cli/src/attach.rs
+     2  crates/pal-cli/src/bind.rs
+     7  crates/pal-cli/src/cache.rs
+    12  crates/pal-cli/src/defect.rs
+    10  crates/pal-cli/src/doctor.rs
+     1  crates/pal-cli/src/evidence.rs
+    30  crates/pal-cli/src/export.rs
+     2  crates/pal-cli/src/hook.rs
+     5  crates/pal-cli/src/hook/catalog.rs
+     8  crates/pal-cli/src/hook/policy.rs
+    81  crates/pal-cli/src/install.rs
+    39  crates/pal-cli/src/install/blocks.rs
+     5  crates/pal-cli/src/install/casing.rs
+     4  crates/pal-cli/src/install/child.rs
+    23  crates/pal-cli/src/install/doctor.rs
+     2  crates/pal-cli/src/install/eol.rs
+     8  crates/pal-cli/src/install/exe.rs
+     8  crates/pal-cli/src/install/guard.rs
+    72  crates/pal-cli/src/install/hooks.rs
+    19  crates/pal-cli/src/install/ignore.rs
+     8  crates/pal-cli/src/install/inside.rs
+    15  crates/pal-cli/src/install/layout.rs
+    37  crates/pal-cli/src/install/manifest.rs
+    23  crates/pal-cli/src/install/settings.rs
+     5  crates/pal-cli/src/install/sha256.rs
+     1  crates/pal-cli/src/install/winpath.rs
+    24  crates/pal-cli/src/label.rs
+    37  crates/pal-cli/src/ledger.rs
+    38  crates/pal-cli/src/main.rs
+    28  crates/pal-cli/src/narrative.rs
+    16  crates/pal-cli/src/plan.rs
+    11  crates/pal-cli/src/query.rs
+    31  crates/pal-cli/src/round/approval.rs
+    64  crates/pal-cli/src/round/ledger.rs
+    18  crates/pal-cli/src/round/mod.rs
+    50  crates/pal-cli/src/round/status.rs
+    69  crates/pal-cli/src/round/stop.rs
+    52  crates/pal-cli/src/round/verify.rs
+    11  crates/pal-cli/src/touch.rs
+     2  crates/pal-cli/src/version.rs
+     2  crates/pal-cli/tests/bind_preserves_edges.rs
+    13  crates/pal-cli/tests/binding_status.rs
+     4  crates/pal-cli/tests/cache_hygiene.rs
+     6  crates/pal-cli/tests/catalog_surface.rs
+     5  crates/pal-cli/tests/common/mod.rs
+    34  crates/pal-cli/tests/envelope_two_layer.rs
+     5  crates/pal-cli/tests/export_ascii.rs
+    21  crates/pal-cli/tests/hook.rs
+    34  crates/pal-cli/tests/host_free.rs
+   152  crates/pal-cli/tests/install.rs
+    27  crates/pal-cli/tests/install_boundary.rs
+    14  crates/pal-cli/tests/install_eol.rs
+    90  crates/pal-cli/tests/install_hooks.rs
+    59  crates/pal-cli/tests/install_hostile.rs
+    39  crates/pal-cli/tests/install_recovery.rs
+    12  crates/pal-cli/tests/install_stays_inside.rs
+     4  crates/pal-cli/tests/intent_jsonl.rs
+    18  crates/pal-cli/tests/query_envelope.rs
+     2  crates/pal-cli/tests/rebuild_equivalence.rs
+   172  crates/pal-cli/tests/round_approve_verify.rs
+     8  crates/pal-cli/tests/round_scripts_run.rs
+   104  crates/pal-cli/tests/round_status.rs
+   112  crates/pal-cli/tests/round_stop.rs
+     5  crates/pal-cli/tests/rust_references.rs
+     9  crates/pal-cli/tests/stitching.rs
+    37  crates/pal-cli/tests/touch_recall.rs
+     2  crates/pal-cli/tests/version_is_in_the_binary.rs
+    16  crates/pal-core/src/attributes.rs
+   132  crates/pal-core/src/binding.rs
+     5  crates/pal-core/src/budget.rs
+     4  crates/pal-core/src/capable.rs
+    20  crates/pal-core/src/cascade.rs
+    17  crates/pal-core/src/catalog.rs
+    22  crates/pal-core/src/chain.rs
+     8  crates/pal-core/src/coord.rs
+    54  crates/pal-core/src/derived.rs
+   142  crates/pal-core/src/doctor.rs
+    31  crates/pal-core/src/entity.rs
+    43  crates/pal-core/src/envelope.rs
+    34  crates/pal-core/src/file_graph.rs
+    20  crates/pal-core/src/glob.rs
+    17  crates/pal-core/src/graph.rs
+    11  crates/pal-core/src/judgment.rs
+     6  crates/pal-core/src/language.rs
+    36  crates/pal-core/src/ledger.rs
+    25  crates/pal-core/src/manifest.rs
+   105  crates/pal-core/src/narrative.rs
+   154  crates/pal-core/src/plan.rs
+    44  crates/pal-core/src/projection.rs
+     5  crates/pal-core/src/query_log.rs
+    29  crates/pal-core/src/radius.rs
+    37  crates/pal-core/src/rebind.rs
+    42  crates/pal-core/src/repo.rs
+    66  crates/pal-core/src/schema.rs
+   122  crates/pal-core/src/scope.rs
+     1  crates/pal-core/src/slot.rs
+     2  crates/pal-core/src/symbol.rs
+    18  crates/pal-core/src/touch.rs
+    24  crates/pal-core/src/traverse.rs
+    33  crates/pal-core/src/view.rs
+     4  crates/pal-extract/examples/coord_collisions.rs
+     3  crates/pal-extract/examples/count_marked.rs
+    14  crates/pal-extract/examples/scope_variants.rs
+     9  crates/pal-extract/src/cached.rs
+    25  crates/pal-extract/src/classify.rs
+     4  crates/pal-extract/src/extractor.rs
+     5  crates/pal-extract/src/kotlin.rs
+     2  crates/pal-extract/src/lib.rs
+    20  crates/pal-extract/src/narrative.rs
+    62  crates/pal-extract/src/parse.rs
+    28  crates/pal-extract/src/plan.rs
+    22  crates/pal-extract/src/recognize.rs
+    69  crates/pal-extract/src/rust.rs
+     9  crates/pal-extract/src/rust_scopes.rs
+     9  crates/pal-extract/src/scopes.rs
+    20  crates/pal-extract/src/shell.rs
+     5  crates/pal-extract/src/ts_scopes.rs
+    75  crates/pal-extract/src/typescript.rs
+    10  crates/pal-extract/tests/normalize_props.rs
+    49  crates/pal-git/src/lib.rs
+    19  crates/pal-intent/src/round_condition.rs
+    59  crates/pal-intent/src/store.rs
+     2  crates/pal-intent/tests/survives_wipe.rs
+    60  crates/pal-query/src/lib.rs
+    10  crates/pal-query/tests/bench.rs
+    81  crates/pal-store/src/cache.rs
+   137  crates/pal-store/src/projection.rs
+     6  crates/pal-store/tests/isolation.rs
+     6  crates/pal-store/tests/stitch_batch.rs
+     4  scripts/syn-oracle/src/main.rs
+   229  xtask/src/main.rs

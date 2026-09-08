@@ -100,6 +100,19 @@ pub struct ScopeBinding {
     ///
     /// **이 값 하나가 TDZ 를 판정한다** — `let`/`const` 는 이보다 앞에서 참조될 수 없다.
     pub declared_at: usize,
+    /// 이 이름이 **어느 바이트부터 보이는가**. 대개 [`Self::declared_at`] 과 같다.
+    ///
+    /// # 갈라야 하는 자리가 하나 있다 — `let x = x(…)`
+    ///
+    /// Rust 의 `let root = root("x");` 에서 초기화식의 `root` 는 **바깥의 그것**이다.
+    /// 그런데 선언의 자리는 이름 토큰이고 그것이 초기화식보다 **앞**이라, 자리만으로
+    /// 재면 그 참조가 자기 자신으로 해소돼 **참 엣지가 조용히 사라진다**(실측: 이
+    /// 저장소에 후보 62 자리 · 정반합 판 1 의 합(合)이 격리 파일로 재현했다).
+    ///
+    /// 그래서 `let` 은 이 값을 **선언문이 끝나는 바이트**로 둔다. 두 값을 갈라 두는
+    /// 까닭: [`Self::declared_at`] 은 `file_edges` 가 **선언 자리 그 자체**를 거르는 데
+    /// 쓰고, 그 자는 이름 토큰이어야 한다.
+    pub visible_from: usize,
     /// 쓰이는 자리보다 **뒤에 있어도 해소되는가**. 함수 선언과 `var` 가 참이다.
     ///
     /// 거짓인 이름을 선언 전에 참조하면 그것은 TDZ 이고 [`RefResolution::BeforeDeclaration`]
@@ -353,11 +366,22 @@ impl ScopeChain {
                 if b.name != name || b.namespace != namespace {
                     continue;
                 }
+                // ★ **선언 자리 그 자체는 언제나 자기 자신이다.** [`ScopeBinding::visible_from`]
+                //   이 선언문 끝으로 밀리면 그 이름 토큰이 **바깥의 동명 아이템**으로
+                //   해소되고, 그러면 `let q = 1;` 한 줄이 `fn q` 로 가는 가짜 엣지를 낳는다.
+                //   `file_edges` 의 선언 거르기는 **뽑힌 바인딩**의 자리를 보므로 그 뒤에
+                //   서면 늦다.
+                if b.declared_at == at {
+                    return RefResolution::Bound {
+                        scope: cursor,
+                        binding: u32::try_from(i).unwrap_or(u32::MAX),
+                    };
+                }
                 let key = if b.hoisted {
                     아이템_수 += 1;
                     0
-                } else if b.declared_at <= at {
-                    b.declared_at + 1
+                } else if b.visible_from <= at {
+                    b.visible_from + 1
                 } else {
                     // 아직 안 섰다 — **오류가 아니다.** 바깥에서 찾는다.
                     continue;
@@ -457,6 +481,7 @@ mod tests {
             name: name.to_owned(),
             namespace: Namespace::Value,
             declared_at: at,
+            visible_from: at,
             hoisted,
             symbol: BoundSymbol::NotASymbol,
         }

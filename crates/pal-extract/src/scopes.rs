@@ -200,6 +200,22 @@ impl Builder<'_, '_> {
         namespace: Namespace,
         hoisted: bool,
     ) {
+        self.bind_visible_from(rules, scope, node, namespace, hoisted, 0);
+    }
+
+    /// [`Self::bind`] 인데 **보이기 시작하는 바이트**를 따로 준다.
+    ///
+    /// `let x = x(…)` 의 초기화식이 자기 자신을 보지 않게 하는 자리다 —
+    /// [`ScopeBinding::visible_from`] 의 문서가 그 사연을 진다.
+    pub(crate) fn bind_visible_from(
+        &mut self,
+        rules: &dyn ScopeRules,
+        scope: ScopeIx,
+        node: Node<'_>,
+        namespace: Namespace,
+        hoisted: bool,
+        visible_from: usize,
+    ) {
         if rules.unnameable(node.kind()) {
             self.unnameable.push(node.start_byte());
             return;
@@ -209,6 +225,7 @@ impl Builder<'_, '_> {
             name: self.text(node),
             namespace,
             declared_at: node.start_byte(),
+            visible_from: visible_from.max(node.start_byte()),
             hoisted,
             symbol,
         };
@@ -236,6 +253,7 @@ impl Builder<'_, '_> {
             // **선언의 자리는 이름 토큰의 자리다.** 선언문 전체의 시작으로 잡으면
             // `const x = x` 같은 자기 참조가 TDZ 를 벗어난다.
             declared_at: name.start_byte(),
+            visible_from: name.start_byte(),
             hoisted,
             symbol,
         };
