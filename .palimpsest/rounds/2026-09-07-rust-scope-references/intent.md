@@ -114,7 +114,7 @@
 - [x] C2 `pal query binding.status` 의 `status` 축이 `fresh` 23 · `stale` 2 그대로다  · 통과 ⟨전사 2026-09-08⟩
 - [x] C3 `cargo xtask check` 와 `cargo xtask test` 가 둘 다 통과한다  · 반증 ⟨전사 2026-09-08⟩
 - [x] C4 골든 `symbols.tsv` 대조가 회귀 없이 통과한다 — **재는 것은 「다른 언어로 새지 않았나」다.** 돌린 명령을 게이트에 적고, 골든 두 파일이 회차 전후로 같은 바이트인지를 `git diff` 로 함께 댄다(`--bless` 는 안 쓴다)  · 통과 ⟨전사 2026-09-08⟩
-- [ ] C5 회차의 마지막 커밋 SHA 에 `conclusion=success` 런이 붙어 있다
+- [x] C5 회차의 마지막 커밋 SHA 에 `conclusion=success` 런이 붙어 있다  · 통과 ⟨전사 2026-09-08⟩
 - [x] C6 Rust 픽스처를 지나는 통합 시험이 선다 — 추출 → 1층 캐시 → `stitch_of` → `pal touch` 호출자  · 통과 ⟨전사 2026-09-08⟩
 - [x] C7 TypeScript 산출이 안 바뀐다 — 골든 `ditto.symbols.tsv` 가 한 줄도 안 움직인다  · 통과 ⟨전사 2026-09-08⟩
 - [x] C8 **`EXTRACTOR_REV` 를 올렸다** — `ImportSet` 이나 `ScopeKind` 의 모양이 바뀌면 옛 캐시 항목이 같은 키로 새 스키마에 읽힌다. 안 바꿨으면 「안 바꿨다」를 적는다  · 통과 ⟨전사 2026-09-08⟩

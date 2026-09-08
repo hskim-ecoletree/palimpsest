@@ -5,7 +5,13 @@
 
 ## 지금 단계
 
-**검증.** 계획 아홉을 다 만졌고 게이트([`docs/gates/rust-scope-references.md`](../../../docs/gates/rust-scope-references.md))가 섰다.
+**종료.** 완수 조건 쉰둘을 전부 판정했다 — 통과 49 · 반증 2 · 대조불가 1 · 미측정 0.
+종료 보고는 [`report.md`](report.md) 이고 판정은
+[게이트](../../../docs/gates/rust-scope-references.md)가 진다. `5e6c152` 의 CI 가 초록이다.
+
+아래는 지나온 기록이다 — 다시 밟지 마라.
+
+**(지난 단계) 검증.** 계획 아홉을 다 만졌고 게이트([`docs/gates/rust-scope-references.md`](../../../docs/gates/rust-scope-references.md))가 섰다.
 아래 「계획」 표는 **이미 지나온 것**이니 다시 밟지 마라.
 
 지금 남은 것은 넷이다 — ① 정반합 판 2 의 라운드 2(종료 판단이 금지역 하나를 근거로 열었다) ·
