@@ -67,6 +67,7 @@
 | 속성 | 없다 | **`attribute_item` 아래는 전부 배제한다** — `#[cfg(test)]` 도 `token_tree` 라 앞형제 규칙이 안 걸린다 |
 | 같은 이름이 둘일 때 | 드물다 | **`cfg` 쌍둥이가 실재한다** — 해소하지 않는다 |
 | `impl` | 없다 | **스코프를 연다** ⟨승격 · 소유자 답 2026-09-07⟩ |
+| `trait` | 없다 | **`impl` 과 같은 `ScopeKind::Impl` 을 연다** — 둘이 담는 것이 같다(연관 항목). 등록 목록에 이름이 없었고 독립 리뷰 R3 이 잡았다 |
 | 호이스팅 | `function` 은 되고 `let`/`const` 는 TDZ | 아이템은 순서 무관, `let` 은 순서 있다. ⚠ **`hoist_home` 으로 표현하면 안 된다** — 그 함수가 `impl` 스코프를 건너뛴다. 그리고 **TDZ 는 Rust 에 없다** |
 | 섀도잉 | 드물다 | **관용이다**(`let x = 1; let x = f(x);`) |
 | 선언 이름의 노드 | `identifier` 계열 | **종류마다 다르다** — `struct_item`·`trait_item` 은 `type_identifier`, `mod_item`·`function_item` 은 `identifier` |
