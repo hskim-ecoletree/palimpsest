@@ -230,10 +230,6 @@ def 사전부검(text, 별칭, 불릿, 없음, 프로필="current", 역사별칭
             for 조각 in _한줄메타를_가른다(line, 불릿, 별칭):
                 _불릿을_읽는다(현재, 조각, 불릿, 별칭, 프로필, 역사별칭)
             continue
-        if False:
-            m = None
-            if m:
-                pass
     if 현재:
         out.append(현재)
     # 기각 절의 표
