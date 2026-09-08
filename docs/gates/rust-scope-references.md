@@ -1,0 +1,275 @@
+# 게이트 — Rust 스코프와 참조 엣지
+
+> 회차 `2026-09-07-rust-scope-references` · 착수 `a774053` · 이슈 [#130]
+> 잠긴 의도: [`intent.md`](../../.palimpsest/rounds/2026-09-07-rust-scope-references/intent.md)
+> 종료 보고: [`report.md`](../../.palimpsest/rounds/2026-09-07-rust-scope-references/report.md)
+
+## 합격선
+
+측정 전에 등록한 것은 잠긴 의도의 `## 완수 조건` **쉰두 항**이다. 그 문면은 사전부검 두
+라운드와 완수 조건 설계 평가 두 라운드를 **상한까지** 지났고, 소유자 승격 넷이 답을 받아
+열여덟 → 서른하나 → 쉰둘이 됐다. **개정 이력이 잠긴 의도에 남아 있다.**
+
+★ **증인은 수가 아니라 변형 대조다.** 앞 판의 증인(「기여한 서로 다른 Rust 파일 ≥ 80」)이
+사전부검 프로토타입의 변형 열셋에서 **전부 126** 을 산출했다 — 어떤 고장도 못 가른다.
+소유자가 그것을 보고 증인을 `V` 절 열둘로 옮겼다(2026-09-08).
+
+**RED 관측** — 착수 시점에 실제로 빨간 것을 봤다. 원 출력은
+[`baseline-red.txt`](../../.palimpsest/rounds/2026-09-07-rust-scope-references/baseline-red.txt).
+
+| 무엇 | 착수 `a774053` |
+|---|---|
+| `pal export --format cypher` | `File 135 · Symbol 3110 · **REFERENCES 3**` |
+| 그 3 건의 출처 | 전부 TypeScript 픽스처 하나 — Rust 기여 **0** |
+| `pal touch file_edges` | `호출자 0 · 피호출자 0` |
+| `pal query binding.status` 의 `status` 축 | `fresh 23 · stale 2` |
+| `grade_of(Rust)` | `ExtractGrade::L1` |
+
+**음성 대조** — 전문은
+[`observations/negative-controls.md`](../../.palimpsest/rounds/2026-09-07-rust-scope-references/observations/negative-controls.md).
+사본은 전부 `git clone --local` 로 뜨고 **사본에서 다시 빌드**했다.
+
+| 조건 | 무엇을 부쉈나 | 산출 | 발화 |
+|---|---|---|---|
+| `B1`·`B2` | `scopes` 를 `Capable::not_built` 로 되돌린 사본 | `REFERENCES 3` · 기여 `.rs` 0 · `호출자 0 · 피호출자 0` | ✓ |
+| `C1` | `grade_of(Rust)` 를 `L2` 로 | 그 시험이 `FAILED` | ✓ |
+| `C2` | 같은 사본의 결박 | 25 건이 전부 `orphaned` | ✓ |
+| `C6` | 픽스처의 `cfg` 쌍둥이를 하나로 | `cfg 쌍둥이를 조용히 하나로 골랐다` | ✓ |
+| `C7` | `ts_scopes.rs` 의 `CLASS_LIKE` 를 끔 | ditto 골든 바이트 동일 **False** | ✓ |
+| `A12` | `sort`·`dedup` 을 뺌 | 그 시험이 `FAILED` | ✓ |
+
+⚠ **`C7` 에서 안 발화한 시도 셋을 함께 적는다** — 참조 표의
+`shorthand_property_identifier` 제거 · `in_module_clause` 배제 해제 · 파라미터 주석 거르기
+해제. 셋 다 골든이 안 움직였다. **골든이 관측하는 것은 TypeScript 표의 스코프·선언
+축이고 참조 배제 축은 원리상 안 잰다** — `body_digest` 는 심볼 **안**의 이름만 지운다.
+그 경계를 안 적으면 `C7` 초록이 「TypeScript 표를 아무것도 안 건드렸다」로 읽힌다.
+
+**차선책** — 잠긴 의도 `## 차선책` 에 다섯을 등록했고 **하나도 발동하지 않았다.**
+
+- `B1` 이 80 에 못 미치면 → 128 이라 안 발동.
+- `E1` 표본에서 가짜가 나오면 → 가짜 0 이라 안 발동.
+- `C2` 가 흔들리면 → `fresh 23 · stale 2` 그대로라 안 발동.
+- `C7` 이 깨지면 → 골든 두 파일이 바이트 동일이라 안 발동.
+- 공용화가 회차를 삼키면 → 뼈대 공유가 노드 종류 표를 넘지 않았다. 안 발동.
+  ⚠ **다만 뼈대 밖에서 하나 갈렸다** — 해소 **규칙**이 언어마다 달라
+  `pal_core::ResolveRule` 이 새로 섰다. 계획의 *"위층은 안 만진다"* 가 그만큼 어긋났고,
+  `pal-core` 를 만진 것이 그 자리다. 축소가 아니라 확대라 승격 없이 갔다.
+
+## 판정
+
+⟨정반합과 남은 독립 리뷰가 끝나면 여기 표준 표가 온다⟩
+
+### `A` — 추출기가 산출한다
+
+시험 열일곱이 `crates/pal-extract/src/rust.rs` 의 `mod tests` 에 있고 이름이 조건 번호를
+진다(`a1_…` ~ `a17_…`). `cargo test -p pal-extract` 가 전량 초록이다.
+
+★ **`A2` 는 사슬 모양이 아니라 엣지 집합으로 잰다.** 사전부검이 그것을 지적했다 —
+`hoist_home` 오배치에서도 사슬은 셋으로 보인다. 시험이 `pal_core::file_edges` 를 직접
+불러 **엣지 0** 을 요구한다.
+
+★ **`A13` 의 선택과 근거** — `ExportSet.names` 는 **최상위이고 정확히 `pub`** 인 것만
+담는다. 근거는 `crates/pal-cli/src/ledger.rs` 의 `stitch_of` 가 `n.container.is_empty()`
+로 **최상위만** EXPORTS 로 옮긴다는 사실이고, 그 한 줄에 이 결정을 되짚는 주석을 달았다.
+중첩 `pub` 을 담으면 `export_digest` 와 EXPORTS 가 서로 다른 모집단을 잰다.
+
+### `V` — 변형 대조 (**이 절이 완수의 증인이다**)
+
+돌린 명령과 바이너리(`V12`):
+
+    cargo run -q --release -p pal-extract --example scope_variants -- .
+    # 바이너리: target/release/examples/scope_variants
+    # 소스:    crates/pal-extract/examples/scope_variants.rs
+
+원 출력:
+[`observations/v-variants.txt`](../../.palimpsest/rounds/2026-09-07-rust-scope-references/observations/v-variants.txt).
+표는 위 「음성 대조」 절과 그 파일에 있다. 열 중 아홉이 **엣지 집합**에서 갈렸고
+`V4`≠`V3` 도 갈렸다.
+
+**`V11` — 기준 변형의 엣지 수와 갈래별 분포**
+
+| 무엇 | 값 |
+|---|--:|
+| 엣지 쌍 | 4,211 |
+| 엣지가 된 참조 | 6,593 |
+| 타입 참조 | 1,197 |
+| 호출·매크로 | 3,799 |
+| 그 밖 | 1,597 |
+
+사전부검 프로토타입은 타입 1,182 · 호출·매크로 2,305 · 그 밖 2,529 를 산출했다. **타입 참조는
+거의 같고**(1,182 → 1,197) 뒤의 둘은 **분류 규칙이 달라서** 갈린다 — 이 회차는
+`token_tree` 안에서 뒤에 괄호 열이 오면 호출로 센다. 엣지 집합의 차이가 아니다.
+
+### `B` — 저장소 전체에서 성립한다
+
+2층을 지우고 다시 세운 뒤 쟀다(`rm -rf .palimpsest/index.redb .palimpsest/cache` →
+`pal query graph.dump` → `pal export`).
+
+| 조건 | 값 |
+|---|---|
+| `B1` | `REFERENCES` 에 기여한 서로 다른 `.rs` 파일 **132** ≥ 80. ⚠ 하한이지 증인이 아니다 |
+| `B2` | `pal touch file_edges` → `호출자 6 · 피호출자 3` |
+| `B3` | `b3_세_자리가_전부_present_이고_비지_않았다` — 셋이 `Capable::Present` 이고 값이 비지 않았다 |
+
+### `C` — 무엇이 안 움직였나
+
+| 조건 | 판정 | 근거 |
+|---|---|---|
+| `C1` | 통과 | `c1_rust_는_l1_로_잠겨_있다` |
+| `C2` | 통과 | `fresh 23 · stale 2` — 착수 값 그대로 |
+| **`C3`** | **반증** | 아래 절 |
+| `C4` | 통과 | 아래 절 |
+| `C5` | ⟨아래⟩ | 회차의 마지막 커밋에 붙는 런 |
+| `C6` | 통과 | `crates/pal-cli/tests/rust_references.rs` 두 시험 |
+| `C7` | 통과 | ditto 골든 4,578 행 **바이트 동일** |
+| `C8` | 통과 | `EXTRACTOR_REV` 를 `f03-2` → `f02-rust-scope` 로 올렸다. 까닭이 그 자리에 있다 |
+| `C9` | 통과 | `schema/graph.toml` 의 `[edge.REFERENCES]` 와 `ResolutionGrade::Scoped` 양쪽을 고쳤다 — 자격을 지는 것이 **등급 글자가 아니라 스코프 체인의 존재**다 |
+
+**`C4` — 무엇을 잰 조건인가.** 골든 둘에 `.rs` 가 0 행이라 **Rust 산출을 원리상 안
+잰다.** 이 조건이 재는 것은 *"다른 언어로 새지 않았나"* 다.
+
+    # 돌린 명령 — `--bless` 는 안 썼다
+    pal ledger ~/dev/projects/ditto --at aded7ce7f88f --cache-dir <임시> --symbols
+    pal ledger ~/dev/projects/boxwood/portal-backend --at a29cad0bf6a8 --cache-dir <임시> --symbols
+    git diff --stat corpus/golden/     # → 빈 출력
+
+| 골든 | 행 | 사라짐 | 새로 | 좌표 이동 | 요약 이동 | 바이트 동일 |
+|---|--:|--:|--:|--:|--:|---|
+| `ditto.symbols.tsv` | 4,578 | 0 | 0 | 0 | 0 | **참** |
+| `portal-backend.symbols.tsv` | 1,340 | 0 | 0 | 0 | 0 | **참** |
+
+⚠ **`scripts/f03-3-verify.py` 를 통째로 돌리면 ③ 에 못 닿는다** — 그 스크립트가 ③ 앞에
+`cargo xtask check` 를 걸어 두었고 그것이 아래 이유로 빨갛다. 그래서 ③ 의 절차를 같은
+입력·같은 열로 직접 돌렸다. `--bless` 는 안 썼고, 골든 두 파일이 회차 전후로 같은
+바이트인 것을 `git diff` 로 함께 댔다.
+
+### ★ `C3` 이 반증이다 — 그리고 **그 원인이 이 회차다**
+
+| 무엇 | 산출 |
+|---|---|
+| `cargo xtask test` | **통과** — 워크스페이스 전량 초록 |
+| `cargo xtask check` | **빨갛다** — 검사 27 중 셋 |
+
+⚠⚠ **착수 시점에도 빨갰다는 앞 판의 진술은 반증됐다.** 잠긴 의도 `## 착수 전에 연 이슈`
+가 *"그 빨강의 원인이 이 회차의 산출이 아니라 장치"* 라고 적었고, **그것을 확인하려고
+`a774053` 을 `git clone` 으로 뜨고 사본에서 다시 빌드해 돌렸더니 `검사 27/27 통과` 였다.**
+독립 리뷰 R1 이 같은 절차로 같은 값을 냈다.
+
+**빨강은 이 회차의 기록 파일이 만들었다.** 착수 커밋 뒤 회차가 얹은 커밋 넷(`4e36e5a` ·
+`a8b63ad` · `120e3ba` · `9ccbf23`)이 사전부검·조건 평가의 원 반환문과 발견 원장을 넣었고,
+그 셋이 검사를 빨갛게 만든다.
+
+| 검사 | 무엇이 걸렸나 | 누구의 것인가 | 이슈 |
+|---|---|---|---|
+| 죽은 링크 부재 | 에이전트 원 반환문 셋이 ADR 을 **저장소 뿌리 기준**으로 링크했다. `raw` 파일은 원문이라 고치면 증거 위조다 | 이 회차가 만든 기록 · 장치는 기존 것 | [#134] |
+| 회차 레코드 | 추출기 산출과 enum 이 서로를 배제한다 — 반환문의 항 수와 레코드 수가 갈리고 기계 칸이 산출과 갈린다 | 같음 | [#132] |
+| 발견이 닫혔나 | 착수 전 발견 쉰넷의 `닫은커밋` 이 이 회차의 `intent.md` 를 만져야 한다 | 이 회차 | — |
+
+셋째는 이 회차가 닫는다 — 판정을 `intent.md` 에 적는 커밋이 그 자리다.
+앞의 둘은 **원 반환문을 안 고치는 한 이 회차가 못 닫는다.**
+
+⚠ **그러므로 `C3` 은 「초록을 봤다」가 아니다.** 다음 회차가 이것을 통과로 읽으면 안 된다.
+
+### `D` — 이 회차가 낳은 것을 이 회차에서 없앤다
+
+| 조건 | 판정 | 어디 |
+|---|---|---|
+| `D1` | 통과 | [#133] — `L2` 등급 승격. 무엇이 참이면 닫히는지 넷을 적었다 |
+| `D2` | 통과 | 못 세는 몫 셋과 분모가 `crates/pal-extract/src/rust.rs` 모듈 주석의 표에 있다. **넷째 몫**(동명 아이템 둘이라 안 고른 참조 58)도 함께 |
+| `D3` | 통과 | `classify.rs` 의 `grade_of` 옆 — 왜 `L1` 인지 · 언제 풀리는지([#133]) |
+| `D4` | 통과 | 아래 절 |
+| `D5` | 통과 | 아래 절 |
+| `D6` | 통과 | `rust.rs:1`(모듈 제목이 「스코프 없음」에서 바뀌었다) · `classify.rs` · **`pal-core/src/scope.rs` 의 `ScopeKind`·`ScopeChain` 문서 계약** |
+| `D7` | 통과 | `docs/adr/0027-…` 에 「개정」 절. 금지역 둘 중 하나는 규칙을 갈아 없앴고 하나는 남아 있다(모집단 0) |
+| `D8` | 통과 | `crates/pal-cli/src/touch.rs` 의 `print_facts` 에 두 줄 |
+
+**`D2` — 못 세는 몫 셋과 분모** (`git ls-files '*.rs'` 134 파일)
+
+| 무엇 | 못 세는 수 / 후보 |
+|---|--:|
+| 포맷 문자열 캡처 (`println!("{x}")` 의 `x`) | 987 / 987 |
+| 멤버 호출 (`x.foo()` 의 `foo`) | 13,951 / 13,951 |
+| 경로 호출 (`S::new()` 의 `new`) | 4,217 / 4,217 |
+| ⟨넷째⟩ 동명 아이템이 둘이라 안 고른 참조 | 58 |
+
+비교: 실제로 성립하는 참조가 6,593 · 엣지가 4,214 다.
+
+**`D4` — 목록이 아니라 검색으로 찾았다.** 「참조 엣지 3」·「기여 0」·「스코프 없음」·
+「REFERENCES 3」·「Rust 134 파일 기여」를 저장소 전체에서 찾았다.
+
+| 어디 | 자리 | 무엇을 했나 |
+|---|--:|---|
+| `crates/pal-extract/src/rust.rs` | 1 | 모듈 제목을 고쳤다 |
+| `docs/plan/02-order.md` | 4 | §1 의 실측표는 **안 고치고**(측정 커밋이 달려 있다) 「그 뒤 무엇이 바뀌었나」 절을 얹었다. §2 의 1 번 행과 ★ 문단에 관측을 달았다 |
+| `docs/plan/03-shortest-path.md` | 5 | §3.1 · §3.2 표 · §3.2 의 강한 주장 · §4 의 1 단계 행 · §6 의 반증 1 번 · §7 |
+| 동결 문서 | 4 | **안 고쳤다** — 닫힌 게이트(`terrain-and-completion-scene.md`) · 소유자 지시 · 지난 회차 기록 셋. 그때의 기록이라 고치면 증거가 사라진다 |
+
+**찾은 자리 열넷 중 열을 갱신했고 넷은 동결이라 그대로 뒀다.**
+
+**`D5` — `pal doctor` 의 `REFERENCES` 선언: 어느 값으로 정했고 왜 참인가**
+
+**`.absent("REFERENCES", CapabilityId::new("F07", "graph-view-stitched-nodes"))` 를
+유지한다. 다만 사유를 바꿨다.**
+
+| 후보 | 왜 안 골랐나 |
+|---|---|
+| `.holding("REFERENCES")` 로 뒤집는다 | ⚠ **측정이 죽은 가지가 된다.** `build_view` 는 `symbols` 와 `bindings` 만 받고 2층의 엣지를 **아예 안 읽는다**. 선언만 뒤집으면 불변식 ①②가 REFERENCES 에 대해 **모집단 0 · 위반 0** 으로 초록이 된다 |
+| 뷰가 엣지를 싣게 한다 | 옳은 길이지만 **위층**이고 이 회차의 `## 범위 밖` 이다 |
+
+**왜 참인가**: 선언이 말하는 것은 *"이 뷰가 REFERENCES 를 안 싣는다"* 이고, 그것은
+`build_view` 의 인자에 엣지가 없다는 **코드의 사실**이다. 앞 사유(*"작아서 안 걸린 것"*)는
+엣지가 3 건일 때 쓴 말이라 4,214 건에서 거짓이 됐고, 그 문장을 바꿨다.
+자리: `crates/pal-cli/src/doctor.rs`.
+
+### `E` — 이 조건들이 의도를 재나 (정반합이 판정한다)
+
+⟨정반합 판 1 의 판정이 여기 온다⟩
+
+## 효과
+
+**테스트도 CI 도 아닌 것이 이 회차의 산출을 돌린 출력.** 전문:
+[`observations/effect-touch.txt`](../../.palimpsest/rounds/2026-09-07-rust-scope-references/observations/effect-touch.txt).
+
+물음은 이 회차가 실제로 물은 것이다 — **「`RefResolution` 에 팔을 하나 더하면 무엇이
+깨지나」**. 착수 시점에 그 물음의 답은 `호출자 0 · 피호출자 0` 이었다.
+
+    $ ./target/release/pal touch RefResolution
+      enum · crates/pal-core/src/scope.rs:155 · identity ordinal
+    ■ 이 심볼이 하는 것
+      호출자 17 · 피호출자 1
+
+    $ ./target/release/pal touch resolve_shadowing
+      fun · crates/pal-core/src/scope.rs:325 · identity ordinal
+    ■ 이 심볼이 하는 것
+      호출자 0 · 피호출자 4
+
+★ **둘째 답이 이 회차가 얻은 가장 값진 것이다.** `resolve_shadowing` 은 **바로 옆
+`resolve_with` 이 `self.resolve_shadowing(…)` 으로 부른다.** 그런데 화면은 `호출자 0` 을
+찍는다 — 멤버 호출은 `field_identifier` 라 이 층이 원리상 못 본다(`D2` 의 둘째 몫,
+13,951 자리).
+
+**그 0 을 그대로 두면 「아무도 안 부른다」로 읽힌다.** 그래서 `pal touch` 의 라벨에 줄을
+하나 더 넣었다 — *"`x.foo()` 와 `S::foo()` 는 아직 안 셉니다 … 그래서 0 은 「안 부른다」가
+아니라 「이 층이 못 본다」일 수 있습니다"*. **효과 관측이 화면을 고치게 한 자리다.**
+
+⚠ **틀린 답을 붙인다.** `호출자 0` 은 사람이 읽으면 틀린 답이고, 그것이 이 회차가 산출한
+것의 한계다. 고치는 것은 F07(멤버·경로 해소)이다.
+
+## 범위 밖
+
+이 게이트가 답하지 않기로 한 물음. 잠긴 의도 `## 범위 밖` 이 정본이고 여기 옮겨 적는다.
+
+- **파일 경계를 넘는 참조 해소** — `RefResolution::OutsideFile` 11,976 건은 세기만 한다. 순서표 §2 의 2 번
+- **Kotlin 추출기** — [#131]. 공용화한 뼈대는 Kotlin 이 받을 수 있는 모양이다
+- **[#78] 의 컨테이너 축** — `impl` 의 **스코프 소유**는 이 회차가 졌고(`A2`), 컨테이너가 트레잇을 못 담는 것은 그대로다
+- **`L2` 등급 승격과 재결박** — [#133]
+- **엣지 정확도의 전수 측정** — 표본 50 건까지만 잰다. 전수는 효과 확인 뒤다
+- **`ImportSet`·`ExportSet` 의 소비자를 만드는 것** — `imports` 는 아직 읽는 쪽이 0 이고 그 사실을 `file_graph.rs` 에 적었다
+- **1층 캐시 부피와 추출 시간의 상한** — `budget.rs` 에 항목 크기 축이 없다. 그 사실을 `cached.rs` 에 적었다
+
+[#78]: https://github.com/hskim-ecoletree/palimpsest/issues/78
+[#130]: https://github.com/hskim-ecoletree/palimpsest/issues/130
+[#131]: https://github.com/hskim-ecoletree/palimpsest/issues/131
+[#132]: https://github.com/hskim-ecoletree/palimpsest/issues/132
+[#133]: https://github.com/hskim-ecoletree/palimpsest/issues/133
+[#134]: https://github.com/hskim-ecoletree/palimpsest/issues/134

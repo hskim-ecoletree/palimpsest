@@ -136,8 +136,12 @@ pub const GRAMMAR_REV: &str = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e";
 /// 움직이면 이 회차의 전제가 무너진 것이다.
 ///
 /// ⚠ **2층 행의 모양도 함께 바뀌었다** — `RefCounts` 에 `ambiguous` 가 붙었다.
-/// 그 행은 postcard 로 자리 기반 직렬화라 **옛 2층 행은 다시 세워야 한다**(`pal index`).
-/// 이 축은 1층 캐시 키에만 들어가므로 2층은 재적재가 답이고, 그 사실을 여기 적는다.
+/// 그 행은 postcard 로 자리 기반 직렬화라 **옛 2층 행은 다시 세워야 한다.**
+/// 이 축은 1층 캐시 키에만 들어가므로 2층은 재적재가 답이다.
+///
+/// 다시 세우는 명령은 **`pal query graph.dump`** 다 — 2층이 없거나 낡으면 그것이 세운다.
+/// ⚠ **`pal index` 라는 명령은 없다**(실측: `error: unrecognized subcommand 'index'`).
+/// 없는 구제 경로를 적으면 그것이 「모르는 것을 안다고 적는」 형태다.
 ///
 /// [`FileOutcome`]: crate::FileOutcome
 pub const EXTRACTOR_REV: &str = "f02-rust-scope";

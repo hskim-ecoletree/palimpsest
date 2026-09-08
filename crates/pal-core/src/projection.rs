@@ -78,6 +78,18 @@ pub struct RefCounts {
     pub before_declaration: usize,
     /// 같은 스코프에 후보가 둘 이상이라 **안 고른 참조** — `cfg` 쌍둥이가 그 자리다.
     ///
+    /// ⚠ **이 칸이 붙으면서 2층 행의 모양이 바뀌었다**(2026-09-08 · #130). 저장은
+    /// postcard 라 자리 기반이고, 그래서 **옛 색인을 새 바이너리로 읽으면 디코드에서
+    /// 죽는다.** 구제는 색인을 지우고 다시 세우는 것 하나다:
+    ///
+    /// ```text
+    /// rm -rf .palimpsest/index.redb .palimpsest/cache
+    /// pal query graph.dump --json > /dev/null
+    /// ```
+    ///
+    /// 그 절차를 여기 적어 두지 않으면 화면이 원인 불명 오류만 내고 사람이 되짚을
+    /// 자리가 없다.
+    ///
     /// **미해소와 갈라 둔다.** 미해소는 F07 이 풀 수 있고 이것은 원리상 못 푼다 —
     /// 추출기가 `cfg` 를 해석하지 않기로 했기 때문이다.
     pub ambiguous: usize,

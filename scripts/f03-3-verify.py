@@ -138,14 +138,21 @@ def main() -> int:
         return 1
     print(f"  ok    ① · ② 의 시험 {len(필수)} 개가 성립한다")
 
+    # ★★ **④ 가 실패해도 ③ 을 돌린다** (2026-09-08 · 독립 리뷰 R1).
+    #   앞 판은 여기서 `return 1` 했다. 그러면 `cargo xtask check` 를 빨갛게 만든
+    #   회차에서 **골든 회귀 대조(③)가 한 줄도 안 돈다** — 이 스크립트가 존재하는
+    #   이유가 ③ 인데, 무관한 검사 하나가 그것을 통째로 가린다. 그것이 「측정이
+    #   죽은 가지」의 형태다. **실패는 모아서 끝에 산출한다.**
+    사고 = []
     x = run(["cargo", "xtask", "check"], cwd=ROOT)
     if "선택 필드 금지" not in x.stdout:
         print("  FAIL  ④ 선택 필드 금지 검사가 `cargo xtask check` 에 없다")
-        return 1
-    if x.returncode != 0:
+        사고.append("④ 검사 부재")
+    elif x.returncode != 0:
         print(f"  FAIL  ④ `cargo xtask check` 가 실패했다\n{x.stdout[-600:]}")
-        return 1
-    print("  ok    ④ 선택 필드 금지 검사가 돌고 통과한다")
+        사고.append("④ check 실패")
+    else:
+        print("  ok    ④ 선택 필드 금지 검사가 돌고 통과한다")
     print()
 
     # ── ② 자동 적용 경로가 없다 ★ ──────────────────────────────────────────
@@ -199,8 +206,12 @@ def main() -> int:
                 bad = True
 
     print()
+    if 사고:
+        print()
+        print(f"  ✗ ④ 가 실패했다 — {' · '.join(사고)}. ③ 은 위에 그대로 산출했다.")
     if bad:
         print("골든이 움직였다 — **목록을 게이트에 적고 나서** `--bless` 한다")
+    if bad or 사고:
         return 1
     print("넷 다 통과")
     return 0

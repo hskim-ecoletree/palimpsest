@@ -63,39 +63,39 @@ E1 층화 표본 — 50 건 (타입 15 · 호출·매크로 20 · 그 밖 15 배
       let 뺀 = 성한.replace(줄, "");
  32  [호출·매크로] crates/pal-extract/src/parse.rs:608  다음_선언 → 벗긴다
       return Some(벗긴다(x, wrappers).start_byte());
- 33  [호출·매크로] crates/pal-extract/src/shell.rs:193  껍데기는_추출기의_상수와_같다 → shell_of
-      let Capable::Present(kotlin) = shell_of(Language::Kotlin) else {
- 34  [호출·매크로] crates/pal-intent/src/store.rs:423  keep_entity → IntentError
-      let raw = postcard::to_allocvec(id).map_err(|e| IntentError::Decode(e.to_string()))?;
- 35  [호출·매크로] xtask/src/main.rs:625  check → check_intent_untouched
-      ("의도 저장소 폐기 경로 부재", check_intent_untouched(root)),
+ 33  [호출·매크로] crates/pal-extract/src/shell.rs:149  capability_axis → AXIS
+      AXIS.get_or_init(|| {
+ 34  [호출·매크로] crates/pal-intent/src/store.rs:403  entity_of → IntentError
+      let got = t.get(origin).map_err(|e| IntentError::Transaction(e.to_string()))?;
+ 35  [호출·매크로] xtask/src/main.rs:623  check → check_vocabulary
+      ("코어 어휘 금지", check_vocabulary(root)),
  36  [그밖] crates/pal-cli/src/attach.rs:84  attach → How
       How::Stitching => {
- 37  [그밖] crates/pal-cli/src/install/manifest.rs:538  표식_모으기 → 표식
-      serde_json::Value::String(s) if s.starts_with(표식) => {
- 38  [그밖] crates/pal-cli/src/round/status.rs:313  read_round → ConditionState
-      ConditionState::Pending | ConditionState::Unregistered => {
- 39  [그밖] crates/pal-cli/tests/round_approve_verify.rs:350  종료직전_전수재실행은_이미_met인_command와_정반합_finding을_같이_닫는다 → SLUG
-      json!({"schema_version":3,"종류":"레코드","회차":SLUG}),
- 40  [그밖] crates/pal-core/src/binding.rs:649  evaluate → CodeFreshness
-      CodeFreshness::Stale { triggered_by: changed }
- 41  [그밖] crates/pal-core/src/derived.rs:429  대상_집합이_다르면_다른_노드다 → DerivedId
-      DerivedId::compute("F", &둘, Provenance::Inferred, &Producer::Agent, &트리())
- 42  [그밖] crates/pal-core/src/envelope.rs:664  사유_넷과_상한_넷이_서로_다른_값이다 → BudgetName
-      BudgetName::CandidateSetMax,
- 43  [그밖] crates/pal-core/src/ledger.rs:459  칸의_합은_언제나_파일_총수다 → LanguageId
-      language: LanguageId::new("Kotlin"),
- 44  [그밖] crates/pal-core/src/plan.rs:658  by_name → UnresolvedWhy
-      why: UnresolvedWhy::NotAtBaseline,
- 45  [그밖] crates/pal-core/src/repo.rs:425  스냅샷은_집합이고_비어_있을_수_없다 → Snapshot
-      assert!(Snapshot::of(Vec::new()).is_none());
- 46  [그밖] crates/pal-core/src/scope.rs:518  함수_경계를_지나면_뒤에_선_이름도_해소된다 → Namespace
+ 37  [그밖] crates/pal-cli/src/install/sha256.rs:71  digest → H0
+      let mut h = H0;
+ 38  [그밖] crates/pal-cli/src/round/status.rs:314  read_round → ConditionState
+      ConditionState::Pending
+ 39  [그밖] crates/pal-cli/tests/round_approve_verify.rs:419  종료직전_전수대상이나_event가_실행중_바뀌면_seal하지_않는다 → SLUG
+      let dir = repo.join(".palimpsest/rounds").join(SLUG);
+ 40  [그밖] crates/pal-core/src/binding.rs:665  projection_stale → CodeFreshness
+      code: CodeFreshness::Undeterminable {
+ 41  [그밖] crates/pal-core/src/derived.rs:436  목록의_경계가_없으면_다른_집합이_하나가_된다 → ReproInput
+      let a = ReproInput::Files {
+ 42  [그밖] crates/pal-core/src/envelope.rs:665  사유_넷과_상한_넷이_서로_다른_값이다 → BudgetName
+      BudgetName::PathProductMax,
+ 43  [그밖] crates/pal-core/src/ledger.rs:460  칸의_합은_언제나_파일_총수다 → ExtractGrade
+      grade: ExtractGrade::L1,
+ 44  [그밖] crates/pal-core/src/plan.rs:661  by_name → PlanBindingState
+      1 => PlanBindingState::Bound { targets: found },
+ 45  [그밖] crates/pal-core/src/repo.rs:434  스냅샷은_집합이고_비어_있을_수_없다 → RepoId
+      assert_eq!(둘.entries().next().unwrap().0, RepoId::new("a"));
+ 46  [그밖] crates/pal-core/src/scope.rs:531  함수_경계를_지나면_뒤에_선_이름도_해소된다 → RefResolution
       matches!(c.resolve(body, "LATER", Namespace::Value, 10), RefResolution::Bound { .. }),
- 47  [그밖] crates/pal-extract/src/narrative.rs:97  fragment → 자리
-      자리::헤딩 => {
- 48  [그밖] crates/pal-query/src/lib.rs:489  run → NamedQuery
+ 47  [그밖] crates/pal-extract/src/narrative.rs:101  fragment → 자리
+      자리::본문 => 지금.body.push_str(&t),
+ 48  [그밖] crates/pal-query/src/lib.rs:489  run → QueryResult
       NamedQuery::BindingStatus => Ok(QueryResult::Bindings {
- 49  [그밖] crates/pal-store/src/projection.rs:317  swap → BY_NAME
+ 49  [그밖] crates/pal-store/src/projection.rs:317  swap → tx
       write.delete_multimap_table(BY_NAME).map_err(tx)?;
- 50  [그밖] crates/pal-store/src/projection.rs:794  clear_stage → SYMBOL_STAGE
+ 50  [그밖] crates/pal-store/src/projection.rs:794  clear_stage → tx
       write.delete_table(SYMBOL_STAGE).map_err(tx)?;

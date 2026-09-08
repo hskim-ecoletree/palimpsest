@@ -1,12 +1,12 @@
 # 효과 — 테스트가 아닌 것이 이 회차의 산출을 돌린 출력
 #
 # 물음: 「`RefResolution` 에 팔을 하나 더하면 무엇이 깨지나」 — 이 회차가 실제로 물은 것이다.
-# 돌린 것: ./target/release/pal touch <심볼>   (2026-09-08)
+# 돌린 것: ./target/release/pal touch <심볼>   (2026-09-08 · 마지막 산출 상태)
 
 $ ./target/release/pal touch RefResolution
 
-  RefResolution  ·  palimpsest@a74621a+worktree#82d70e05b8b8
-  enum · crates/pal-core/src/scope.rs:155 · identity ordinal · body d09bea84379b
+  RefResolution  ·  palimpsest@3de5e81+worktree#82d70e05b8b8
+  enum · crates/pal-core/src/scope.rs:164 · identity ordinal · body d09bea84379b
 
 ■ 이 좌표에 걸린 것 (0)
   아직 없습니다.
@@ -19,11 +19,12 @@ $ ./target/release/pal touch RefResolution
   **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
 ■ 내가 모르는 것
   (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
+■ 효과
 
 $ ./target/release/pal touch ScopeChain
 
-  ScopeChain  ·  palimpsest@a74621a+worktree#34f4b73fa3a6
-  struct · crates/pal-core/src/scope.rs:219 · identity ordinal · body e7a09647d3db
+  ScopeChain  ·  palimpsest@3de5e81+worktree#34f4b73fa3a6
+  struct · crates/pal-core/src/scope.rs:228 · identity ordinal · body e7a09647d3db
 
 ■ 이 좌표에 걸린 것 (0)
   아직 없습니다.
@@ -36,28 +37,30 @@ $ ./target/release/pal touch ScopeChain
   **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
 ■ 내가 모르는 것
   (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
+■ 효과
 
 $ ./target/release/pal touch resolve_shadowing
 
-  resolve_shadowing  ·  palimpsest@a74621a+worktree#80cd88b02cc2
-  fun · crates/pal-core/src/scope.rs:325 · identity ordinal · body 4c5f7035c0a7
+  resolve_shadowing  ·  palimpsest@3de5e81+worktree#80cd88b02cc2
+  fun · crates/pal-core/src/scope.rs:338 · identity ordinal · body 4c5f7035c0a7
 
-■ 이 좌표에 걸린 것 (0)
-  아직 없습니다.
-■ 이 좌표를 지켜보는 것 (0)
-  아직 없습니다.
-■ 이 심볼이 하는 것
-  호출자 0 · 피호출자 4
-  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조·구조체 리터럴·경로 머리도 셉니다
-  ※ **`x.foo()` 와 `S::foo()` 는 아직 안 셉니다** — 멤버·경로 해소가 F07 미구축입니다. 그래서 0 은 「안 부른다」가 아니라 「이 층이 못 본다」일 수 있습니다
-  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
-■ 내가 모르는 것
-  (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
+■ 이 좌표에 걸린 것 (1)
+  [39b92bd51bbc82c6] 최신 상태(fresh)  ·  symbol 반경 · 감시 1
+      회차 2026-09-07-rust-scope-references — Rust 는 「가장 뒤」 팔을 쓴다
+      
+      ADR-0027 §② 가 금지역으로 등록했던 것이 이 자리다 — *"Rust 의 shadowing 이
+      `ScopeChain::resolve` 의 「가장 앞선 것」 팔을 **상시 경로**로 만드는 것"*.
+      
+      **그 팔을 안 쓰는 것으로 없앴다.** `ResolveRule::Shadowing` 은 보이는 것 중 가장 뒤를
+      고르고, 「가장 앞선 것」은 `ResolveRule::Tdz`(TypeScript) 전용으로 남았다. 두 규칙이
+      갈린 것을 시험 넷이 잠근다(`섀도잉_규칙은_보이는_것_중_가장_뒤를_쓴다` 외).
+      
+      **여기를 TypeScript 규칙으로 되돌리면** 이 저장소에서 선언 판정 214 건이 참조로
 
 $ ./target/release/pal touch file_edges
 
-  file_edges  ·  palimpsest@a74621a+worktree#e09b7d058d5c
-  fun · crates/pal-core/src/projection.rs:222 · identity ordinal · body 008db0013f91
+  file_edges  ·  palimpsest@3de5e81+worktree#e09b7d058d5c
+  fun · crates/pal-core/src/projection.rs:234 · identity ordinal · body 008db0013f91
 
 ■ 이 좌표에 걸린 것 (0)
   아직 없습니다.
@@ -70,3 +73,4 @@ $ ./target/release/pal touch file_edges
   **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다
 ■ 내가 모르는 것
   (이 빌드에는 unresolved-refs 능력이 없습니다 — F08 미구축)
+■ 효과

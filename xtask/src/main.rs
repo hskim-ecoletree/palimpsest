@@ -2632,6 +2632,33 @@ fn 동결된_판정_문서인가(상대: &str) -> bool {
     matches!(첫, b'F' | b'G' | b'S') || 이름.starts_with("preflight")
 }
 
+/// **에이전트가 쓴 원문인가** — 링크 검사의 모집단 밖이다 (2026-09-08 · [#134]).
+///
+/// # 왜 재지 않기로 했나
+///
+/// 사전부검·조건 평가·독립 리뷰·정반합의 산출물은 **에이전트가 쓴 글을 한 글자도 안
+/// 고치고 옮긴 파일**이고, 그 선언이 파일 머리에 적혀 있다. 그래서 그 안의 링크를
+/// 고치는 것이 **증거 위조**다(#132 가 그 규칙을 못 박았다).
+///
+/// 그런데 에이전트는 ADR 을 `docs/adr/…` 처럼 **저장소 뿌리 기준**으로 쓰고, 이 검사는
+/// 그 파일의 디렉터리 기준으로 푼다. 그러면 **고칠 수 없는 파일을 재는 검사**가 되고,
+/// 초록으로 만드는 남은 길이 「증거를 고치기」 하나가 된다.
+///
+/// ⚠ **이것은 검사를 느슨하게 하는 것이 아니다.** 사람이 쓰고 사람이 고칠 수 있는
+/// 문서는 전부 그대로 잰다. 그리고 **원인은 따로 막는다** — 에이전트 정의가 이제
+/// *"저장소 안 문서는 링크가 아니라 코드 표기로 적어라"* 를 요구한다.
+///
+/// [#134]: https://github.com/hskim-ecoletree/palimpsest/issues/134
+fn 에이전트_원_반환문인가(상대: &str) -> bool {
+    let Some(rest) = 상대.strip_prefix(&format!("{회차_뿌리}/")) else { return false };
+    let mut 조각 = rest.split('/');
+    let (Some(_회차), Some(자리), Some(_이름)) = (조각.next(), 조각.next(), 조각.next()) else {
+        return false;
+    };
+    조각.next().is_none()
+        && matches!(자리, "premortem" | "conditions-audit" | "review" | "dialectic")
+}
+
 fn check_dead_links(root: &Path) -> Result<String> {
     let sunset = sunset_선언(root)?;
     let mut 파일들 = Vec::new();
@@ -2691,7 +2718,7 @@ fn 모을_문서(root: &Path, dir: &Path, sunset: &[String], out: &mut Vec<PathB
         }
         if p.is_dir() {
             모을_문서(root, &p, sunset, out)?;
-        } else if 동결된_판정_문서인가(&상대) {
+        } else if 동결된_판정_문서인가(&상대) || 에이전트_원_반환문인가(&상대) {
             continue;
         } else {
             let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("");
@@ -3438,7 +3465,24 @@ fn 반환문_항_수(
             } else if s.starts_with('|') && !s.starts_with("|-") && !s.starts_with("| -")
                 && !s.starts_with("|:")
             {
-                기각 += 1;
+                // ★★ **자리 채우기 행은 항이 아니다** (2026-09-08 · #132).
+                //   추출기(`extract.py`)는 `요약` 이 `—`·`-`·`없음` 인 행을 **발견이
+                //   아니라고 버린다.** 계수기가 그 행을 세면 두 자가 같은 파일에서
+                //   다른 수를 산출하고, 합계 검산이 **원리상 못 맞는 상태**가 된다 —
+                //   맞추는 유일한 길이 「없는 레코드를 지어내기」다.
+                //   ⚠ **첫 칸만 본다.** 넓히면 진짜 발견이 사라진다.
+                let 첫칸 = s
+                    .trim_start_matches('|')
+                    .split('|')
+                    .next()
+                    .unwrap_or("")
+                    .replace("**", "")
+                    .replace('`', "")
+                    .trim()
+                    .to_string();
+                if !matches!(첫칸.as_str(), "—" | "-" | "없음" | "") {
+                    기각 += 1;
+                }
             }
         }
     }

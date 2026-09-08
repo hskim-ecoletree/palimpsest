@@ -47,7 +47,12 @@ pub enum ScopeKind {
     /// ⚠ **TypeScript 의 `class` 다.** Rust 의 `impl` 을 여기 얹지 않는다 — 그러면 1층
     /// 캐시에 실리는 이 값의 뜻이 언어마다 갈린다(사전부검 R2). Rust 는 [`ScopeKind::Impl`].
     Class,
-    /// `impl` 블록 하나 — **Rust 전용.**
+    /// `impl` 또는 `trait` 의 본문 하나 — **Rust 전용.**
+    ///
+    /// 이름이 `Impl` 인데 `trait` 도 여는 까닭: 둘이 담는 것이 같다 — **연관 항목**
+    /// (메서드 · 연관 상수 · 연관 타입)이고, 그 이름은 바깥 모듈로 안 올라간다.
+    /// 두 값으로 가르면 `hoist_home` 류의 분기가 둘을 같은 자리로 다루는지 매번
+    /// 물어야 하고, 지금 그 답은 언제나 「같게」다.
     ///
     /// # 왜 [`ScopeKind::Class`] 를 재사용하지 않는가
     ///
@@ -66,7 +71,11 @@ pub enum ScopeKind {
     Braced,
 }
 
-/// TypeScript 의 두 이름 공간 — **뭉개면 해소가 조용히 틀린다.**
+/// 이름 공간 둘 — **뭉개면 해소가 조용히 틀린다.**
+///
+/// ⚠ **Rust 의 셋째 공간(매크로)을 못 담는다.** `macro_rules! m` 과 `fn m` 은 Rust 에서
+/// 공존하는데 이 타입은 둘을 같은 `Value` 로 본다. ADR-0027 §② 가 등록한 금지역이고
+/// 2026-09-08 개정이 *"남아 있다 — 이 저장소에서 모집단이 0"* 으로 적었다. 승격은 #133.
 ///
 /// `interface Foo` 와 `const Foo` 는 공존한다(옛 F02 §3.5). 한 공간으로 뭉개면 둘 중 하나가
 /// 다른 하나를 가리고, 그러면 `Foo` 를 타입 자리에서 쓴 참조가 **값 선언으로 해소된다.**
@@ -285,6 +294,10 @@ impl ScopeChain {
     /// ⚠ **이것은 [`ResolveRule::Tdz`] 한 규칙이다.** 다른 규칙이 필요한 언어는
     /// [`Self::resolve_with`] 를 부른다 — 여기 팔을 더하면 TypeScript 해소가 함께
     /// 움직이고, 그것은 골든 두 파일이 잡는 자리다.
+    ///
+    /// ⚠⚠ **추출기는 이 함수를 안 부른다.** 2026-09-08 부터 두 추출기가 전부
+    /// [`Self::resolve_with`] 를 부르고, 이 자리는 **기본값을 고정하는 껍데기와
+    /// 시험의 입구**로 남았다. 「부르는 곳이 없다」가 아니라 「기본값이 여기 있다」다.
     #[must_use]
     pub fn resolve(&self, from: ScopeIx, name: &str, namespace: Namespace, at: usize) -> RefResolution {
         self.resolve_with(from, name, namespace, at, ResolveRule::Tdz)

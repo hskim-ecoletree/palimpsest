@@ -131,7 +131,16 @@ fn 매크로_안_꼬리인가(node: Node<'_>) -> bool {
     if !조상에_있나(node, &["token_tree"]) {
         return false;
     }
-    node.prev_sibling().is_some_and(|s| matches!(s.kind(), "." | "::"))
+    if node.prev_sibling().is_some_and(|s| matches!(s.kind(), "." | "::")) {
+        return true;
+    }
+    // ★ **구조체 리터럴의 필드 이름도 참조가 아니다** (2026-09-08 · 독립 리뷰 R1).
+    //   실코드의 `Foo { bar: 2 }` 는 `field_identifier` 라 종류로 걸러지는데
+    //   `assert_eq!(g, Foo { bar: 2 })` 안에서는 벗은 `identifier` 다. 앞 형제가
+    //   `{` 나 `,` 라 위 규칙에 안 걸리고, 같은 파일에 `fn bar` 가 있으면 **가짜
+    //   엣지**가 만들어진다. 가르는 것은 **뒤 형제가 `:` 인가**다 — `S::Var` 의 `::` 와
+    //   다른 마디라 경로 머리를 안 삼킨다.
+    node.next_sibling().is_some_and(|s| s.kind() == ":")
 }
 
 /// 선언 이름 토큰이라 참조가 아닌 자리 — enum 변형의 이름.
