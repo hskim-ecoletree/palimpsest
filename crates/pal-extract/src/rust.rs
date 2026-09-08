@@ -58,8 +58,8 @@
 use std::collections::HashMap;
 
 use pal_core::{
-    BodyDigest, Capable, Containment, ExportSet, ExtractGrade, FileGraph, ImportSet, Language,
-    LanguageId, LocalIx, Span, Symbol, SymbolKind,
+    BodyDigest, Capable, Containment, ExportSet, ExtractGrade, FileGraph, ImportSet, ImportedItem,
+    Language, LanguageId, LocalIx, Span, Symbol, SymbolKind,
 };
 use tree_sitter::Node;
 
@@ -384,6 +384,7 @@ pub fn extract_with(source: &[u8], rules: RustScopeRules) -> Result<FileGraph, E
     exports.star_from.dedup();
     imports.modules.sort_unstable();
     imports.modules.dedup();
+    imports.normalize_items();
 
     // **정렬·중복 제거가 끝난 뒤에 잰다.**
     let export_digest = Capable::Present(exports.digest());
@@ -415,7 +416,9 @@ pub fn extract_with(source: &[u8], rules: RustScopeRules) -> Result<FileGraph, E
 /// `pub(crate)`·`pub(super)`·`pub(in …)` 과 중첩 `pub` 은 **안 담는다.**
 fn 표면(root: Node<'_>, source: &[u8]) -> (ExportSet, ImportSet) {
     let mut exports = ExportSet::default();
-    let mut imports = ImportSet::default();
+    // **`building()` 이지 `default()` 가 아니다** — 이름 임포트가 하나도 없는 파일이
+    // *"이 빌드가 안 만든다"* 로 나가지 않게 한다.
+    let mut imports = ImportSet::building();
 
     // **`use` 는 파일 어디에나 있다**(함수 안 · `mod` 안). 전부 훑는다.
     let mut stack = vec![root];
@@ -424,6 +427,7 @@ fn 표면(root: Node<'_>, source: &[u8]) -> (ExportSet, ImportSet) {
             if let Some(m) = 모듈_경로(n, source) {
                 imports.modules.push(m);
             }
+            항목을_담는다(n, source, &mut imports);
             if 최상위인가(n) && 공개인가(n, source) {
                 재수출을_담는다(n, source, &mut exports);
             }
@@ -496,6 +500,115 @@ fn 재수출을_담는다(node: Node<'_>, source: &[u8], exports: &mut ExportSet
                 }));
             }
         }
+    }
+}
+
+/// `use` 한 줄이 들여오는 **항목**을 전부 담는다 — [`ImportedItem`] 셋을 함께.
+///
+/// # 접두를 누적해서 내려간다
+///
+/// 평평하게 훑으면 중첩 목록에서 **실모듈이 뭉개진다** — `use a::{c::C, d::D};` 는
+/// [`모듈_경로`] 에게는 모듈 하나(`a`)지만 `C` 의 실모듈은 `a::c` 이고 `D` 의 것은 `a::d` 다.
+/// 그래서 목록에 들어갈 때마다 그 목록의 `path` 를 접두에 이어 붙인다.
+///
+/// # 갈래마다 무엇을 담나
+///
+/// | 쓴 것 | `module` | `name` | `local` |
+/// |---|---|---|---|
+/// | `use a::b::C;` | `a::b` | `C` | `C` |
+/// | `use a::b::C as D;` | `a::b` | `C` | **`D`** |
+/// | `use a::{c::C, d::D};` | `a::c` · `a::d` | `C` · `D` | 같음 |
+/// | `use a::b::{self};` | `a` | `b` | `b` |
+/// | `use a;` | **빈 문자열** | `a` | `a` |
+/// | `use a::*;` | **안 담는다** | | |
+///
+/// 마지막 둘이 왜 그런지:
+///
+/// - `use a;` 의 `a` 는 접두가 없다. 빈 모듈은 *"경로 뿌리"* 이고, 그것을 `a` 로 적으면
+///   **항목 자신이 자기 모듈이 되어** 해소기가 `a` 안에서 `a` 를 찾는다.
+///   [`모듈_경로`] 는 같은 줄을 모듈 `a` 로 적는데 **어긋난 것이 아니다** — 저쪽은
+///   *"이 파일이 참조하는 모듈"* 을 헤아리고 이쪽은 *"들여온 항목"* 을 헤아린다.
+/// - `use a::*;` 는 무슨 이름이 들어오는지 파일 하나만 보고 모른다. **지어내지 않는다.**
+fn 항목을_담는다(node: Node<'_>, source: &[u8], imports: &mut ImportSet) {
+    let Some(arg) = node.child_by_field_name("argument") else { return };
+    항목_갈래(arg, "", source, imports);
+}
+
+/// 경로 접두 하나를 이어 붙인다. 접두가 비면 뒤엣것이 통째로 경로다.
+fn 경로를_잇는다(prefix: &str, tail: &str) -> String {
+    if prefix.is_empty() { tail.to_owned() } else { format!("{prefix}::{tail}") }
+}
+
+/// `a::b::C` 를 `("a::b", "C")` 로 가른다. 세그먼트가 하나면 모듈이 빈 문자열이다.
+fn 꼬리를_뗀다(path: &str) -> (String, String) {
+    path.rsplit_once("::")
+        .map_or_else(|| (String::new(), path.to_owned()), |(m, n)| (m.to_owned(), n.to_owned()))
+}
+
+/// `use` 트리 한 마디. `prefix` 는 여기까지 누적된 모듈 경로다.
+fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut ImportSet) {
+    match node.kind() {
+        "identifier" | "type_identifier" => {
+            let name = 원문(node, source);
+            imports.push_item(ImportedItem {
+                module: prefix.to_owned(),
+                local: name.clone(),
+                name,
+            });
+        }
+        // `use a::b::{self};` — 들여오는 이름은 접두의 **마지막 세그먼트**다.
+        "self" => {
+            if !prefix.is_empty() {
+                let (module, name) = 꼬리를_뗀다(prefix);
+                imports.push_item(ImportedItem { module, local: name.clone(), name });
+            }
+        }
+        "scoped_identifier" => {
+            let Some(name) = node.child_by_field_name("name") else { return };
+            let module = node
+                .child_by_field_name("path")
+                .map_or_else(|| prefix.to_owned(), |p| 경로를_잇는다(prefix, &원문(p, source)));
+            let name = 원문(name, source);
+            imports.push_item(ImportedItem { module, local: name.clone(), name });
+        }
+        // `use a::B as C;` — **원본 이름과 부르는 이름이 갈린다.** 둘 다 담는다.
+        "use_as_clause" => {
+            let (Some(path), Some(alias)) =
+                (node.child_by_field_name("path"), node.child_by_field_name("alias"))
+            else {
+                return;
+            };
+            let local = 원문(alias, source);
+            let (module, name) = match path.kind() {
+                "self" if !prefix.is_empty() => 꼬리를_뗀다(prefix),
+                "scoped_identifier" => {
+                    let m = path
+                        .child_by_field_name("path")
+                        .map_or_else(|| prefix.to_owned(), |p| 경로를_잇는다(prefix, &원문(p, source)));
+                    let Some(n) = path.child_by_field_name("name") else { return };
+                    (m, 원문(n, source))
+                }
+                "identifier" | "type_identifier" => (prefix.to_owned(), 원문(path, source)),
+                _ => return,
+            };
+            imports.push_item(ImportedItem { module, name, local });
+        }
+        "scoped_use_list" | "use_list" => {
+            let path = node.child_by_field_name("path");
+            let 안쪽 = path.map_or_else(|| prefix.to_owned(), |p| 경로를_잇는다(prefix, &원문(p, source)));
+            let mut cursor = node.walk();
+            let kids: Vec<Node<'_>> = node.named_children(&mut cursor).collect();
+            drop(cursor);
+            for child in kids {
+                // `path` 는 모듈 쪽이라 항목이 아니다 — 이미 접두로 들어갔다.
+                if path.map(|p| p.id()) == Some(child.id()) {
+                    continue;
+                }
+                항목_갈래(child, &안쪽, source, imports);
+            }
+        }
+        // `use a::*;` — 무엇이 들어오는지 모른다. **지어내지 않는다.**
+        _ => {}
     }
 }
 
@@ -846,6 +959,89 @@ mod tests {
         assert_eq!(이름("use a::{b,c};"), ["b", "c"]);
         assert_eq!(이름("use a as e;"), ["e"]);
         assert_eq!(이름("use a::*;"), Vec::<String>::new(), "별표가 이름을 지어냈다");
+    }
+
+    /// 이 소스의 임포트 항목을 `(모듈, 원본, 부르는 이름)` 으로 뽑는다.
+    fn 항목(src: &str) -> Vec<(String, String, String)> {
+        let g = extract_detailed(src.as_bytes()).unwrap();
+        let Capable::Present(i) = g.imports else { panic!("imports 가 안 만들어졌다") };
+        let pal_core::Slot::Built(items) = i.items else {
+            panic!("Rust 추출기가 항목 축을 안 만들었다")
+        };
+        items.into_iter().map(|x| (x.module, x.name, x.local)).collect()
+    }
+
+    #[test]
+    fn a3_잠근_축1_의_임포트_형태_넷이_모듈과_항목으로_갈린다() {
+        // ★ 조건 `A3` — 잠근 축1 의 **넷 각각**이다. 하나라도 빠지면 그 형태의 파일 간
+        //   엣지가 원리상 서지 않는다.
+        let 짝 = |m: &str, n: &str| (m.to_owned(), n.to_owned(), n.to_owned());
+
+        // ① 균일 경로 형제 모듈
+        assert_eq!(
+            항목("use inside::{Rel, Root};"),
+            [짝("inside", "Rel"), 짝("inside", "Root")],
+            "형제 모듈의 목록이 안 갈렸다"
+        );
+        // ② 형제 크레이트 깊은 경로
+        assert_eq!(
+            항목("use pal_intent::round_condition::ConditionsReport;"),
+            [짝("pal_intent::round_condition", "ConditionsReport")],
+            "깊은 경로에서 모듈과 항목이 안 갈렸다"
+        );
+        // ③ 형제 크레이트 평평 경로 — 대상이 그 크레이트 루트의 최상위 `pub`
+        assert_eq!(항목("use pal_git::GixRepo;"), [짝("pal_git", "GixRepo")]);
+        // ④ `crate::`·`super::`·`self::` 접두 — 2026-09-08 에 범위 안으로 들어왔다
+        assert_eq!(항목("use crate::scope::ScopeChain;"), [짝("crate::scope", "ScopeChain")]);
+        assert_eq!(항목("use super::Walk;"), [짝("super", "Walk")]);
+        assert_eq!(항목("use self::inner::T;"), [짝("self::inner", "T")]);
+    }
+
+    #[test]
+    fn a4_별칭과_중첩_목록에서_원본_이름과_실모듈이_안_사라진다() {
+        // ★ 조건 `A4` — 평평한 `Vec` 하나를 더 붙이면 **정확히 여기서** 깨진다.
+        //   별칭은 원본 이름을 지우고 중첩 목록은 실모듈을 `a` 로 뭉갠다.
+        assert_eq!(
+            항목("use a::Error as IoError;"),
+            [("a".to_owned(), "Error".to_owned(), "IoError".to_owned())],
+            "별칭이 원본 이름을 지웠다"
+        );
+        assert_eq!(
+            항목("use b::{c::C, d::D};"),
+            [
+                ("b::c".to_owned(), "C".to_owned(), "C".to_owned()),
+                ("b::d".to_owned(), "D".to_owned(), "D".to_owned()),
+            ],
+            "중첩 목록이 실모듈을 뭉갰다"
+        );
+        // 둘이 겹친 자리 — 목록 안의 별칭
+        assert_eq!(
+            항목("use b::{c::C as X, d::D};"),
+            [
+                ("b::c".to_owned(), "C".to_owned(), "X".to_owned()),
+                ("b::d".to_owned(), "D".to_owned(), "D".to_owned()),
+            ],
+        );
+        // `self` — 들여오는 이름은 접두의 마지막 세그먼트다
+        assert_eq!(
+            항목("use a::b::{self, C};"),
+            [
+                ("a".to_owned(), "b".to_owned(), "b".to_owned()),
+                ("a::b".to_owned(), "C".to_owned(), "C".to_owned()),
+            ],
+            "`self` 가 접두의 꼬리를 안 집었다"
+        );
+        // 세그먼트가 하나면 모듈이 **빈 문자열**이다 — 자기 자신이 자기 모듈이 되면 안 된다
+        assert_eq!(항목("use serde;"), [(String::new(), "serde".to_owned(), "serde".to_owned())]);
+        // 별표는 무슨 이름이 들어오는지 모른다 — **지어내지 않는다**
+        assert_eq!(항목("use a::*;"), Vec::<(String, String, String)>::new(), "별표가 항목을 지어냈다");
+    }
+
+    #[test]
+    fn 항목이_정렬_중복제거_뒤에_나온다() {
+        // `modules` 와 같은 계약이다 — 소스 순서에 의존하면 `use` 재배열이 산출을 움직인다.
+        assert_eq!(항목("use a::Z; use a::A;"), 항목("use a::A; use a::Z;"));
+        assert_eq!(항목("use a::A; use a::A;").len(), 1, "중복이 안 지워졌다");
     }
 
     #[test]

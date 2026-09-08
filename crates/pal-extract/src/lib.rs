@@ -143,8 +143,27 @@ pub const GRAMMAR_REV: &str = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e";
 /// ⚠ **`pal index` 라는 명령은 없다**(실측: `error: unrecognized subcommand 'index'`).
 /// 없는 구제 경로를 적으면 그것이 「모르는 것을 안다고 적는」 형태다.
 ///
+/// # `f02-rust-scope` → `f07-import-items` (2026-09-09 · #134)
+///
+/// 여섯째다. **[`pal_core::ImportSet`] 의 모양이 바뀌었다** — `modules` 하나뿐이던 것에
+/// [`pal_core::ImportSet::items`]([`pal_core::ImportedItem`] 의 [`pal_core::Slot`])가
+/// 붙었다. 두 추출기가 다 그것을 채운다.
+///
+/// 안 올리면 **옛 캐시 항목이 새 필드 없이 되살아난다.** `FileGraph` 는 postcard 로
+/// 저장되고 그것은 자리 기반 직렬화라, 옛 바이트를 새 타입으로 읽으면 실패하거나 —
+/// 더 나쁘게 — 뒤 필드를 앞 필드로 읽는다. 능력 축(`shell.rs`)은 *"imports 자리를
+/// 만드나"* 만 보고 **그 안의 항목 축은 안 본다**, 그래서 이 승급이 그 자리를 진다.
+///
+/// ⚠ **`body_digest` 는 안 움직인다.** 임포트 항목은 심볼 요약의 입력이 아니다 —
+/// 결박 30 건이 `fresh` 26 · `stale` 4 그대로여야 한다(`D1`). 움직이면 **거기서 멈추고
+/// 소유자에게 올린다.**
+///
+/// ⚠ **`scripts/f04-verify.py:188` 의 리터럴도 같이 움직인다**(`D3`). 그 스크립트는
+/// 이 줄을 문자열로 찾아 변이시켜 「축을 움직였는데 캐시가 적중하나」를 재고, 찾을 것이
+/// 없으면 `어긋남` 을 적고 **비-0 으로 끝난다.** 조용히 꺼지는 것이 아니라 빨개진다.
+///
 /// [`FileOutcome`]: crate::FileOutcome
-pub const EXTRACTOR_REV: &str = "f02-rust-scope";
+pub const EXTRACTOR_REV: &str = "f07-import-items";
 
 #[must_use]
 pub const fn version() -> ExtractorVersion {

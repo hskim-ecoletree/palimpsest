@@ -17,7 +17,8 @@ use std::collections::HashMap;
 
 use pal_core::{
     BodyDigest, BoundSymbol, Capable, Containment, ExportSet, ExtractGrade, FileGraph, IdentityGrade,
-    ImportSet, Language, LanguageId, LocalIx, RecoverySite, RefResolution, ScopeIx, Span, Symbol,
+    ImportSet, ImportedItem, Language, LanguageId, LocalIx, RecoverySite, RefResolution, ScopeIx,
+    Span, Symbol,
     SymbolKind,
 };
 use tree_sitter::Node;
@@ -152,7 +153,9 @@ impl<'a, 't> Walk<'a, 't> {
             symbols: Vec::new(),
             contains: Vec::new(),
             exports: ExportSet::default(),
-            imports: ImportSet::default(),
+            // **`building()` 이지 `default()` 가 아니다** — 이름 임포트가 하나도 없는
+            // 파일(`import './side-effect';`)이 *"이 빌드가 안 만든다"* 로 나가지 않게 한다.
+            imports: ImportSet::building(),
         }
     }
 
@@ -164,6 +167,7 @@ impl<'a, 't> Walk<'a, 't> {
             v.sort_unstable();
             v.dedup();
         }
+        self.imports.normalize_items();
 
         let symbols = self
             .symbols
@@ -222,7 +226,10 @@ impl<'a, 't> Walk<'a, 't> {
     ) -> Result<Vec<LocalIx>, ExtractError> {
         match node.kind() {
             "import_statement" => {
-                self.record_source_module(node);
+                let module = self.record_source_module(node);
+                if let Some(m) = module {
+                    self.record_imported_items(node, &m)?;
+                }
                 Ok(Vec::new())
             }
             "export_statement" => self.visit_export(node, scope, container),
@@ -415,6 +422,64 @@ impl<'a, 't> Walk<'a, 't> {
         let module = string_text(node.child_by_field_name("source")?, self.source)?;
         self.imports.modules.push(module.clone());
         Some(module)
+    }
+
+    /// `import { a, b as c } from '<모듈>'` 의 **들여온 항목**.
+    ///
+    /// TypeScript 에서 [`ImportedItem::module`] 은 지정자 그대로다 — Rust 와 달리
+    /// 세그먼트를 뗄 것이 없다. [`ImportedItem::name`] 은 대상 모듈의 원본 이름이고
+    /// [`ImportedItem::local`] 은 이 파일이 부르는 이름이라, `b as c` 에서 갈린다.
+    ///
+    /// # 무엇이 여기 **안** 오나
+    ///
+    /// `import * as ns from '…'` 과 `import d from '…'`(기본) — 둘 다 대상 모듈의
+    /// **어느 이름**을 가리키는지가 파일 하나만 보고 서지 않는다. 별 임포트는 이름이
+    /// 아니라 이름공간이고, 기본 임포트의 원본 이름은 대상 파일이 정한다.
+    /// **지어내지 않는다.**
+    ///
+    /// ⚠ **TypeScript 의 파일 간 해소는 이 회차 밖이다**(`## 범위 밖`). 여기서 항목을
+    /// 담는 것은 [`ImportSet::items`] 축이 *"빈 벡터 = 이름 임포트 없음"* 과
+    /// *"안 만듦"* 을 실제로 가르게 하기 위해서다 — 한 언어만 담으면 그 축이 다른
+    /// 언어에서 무엇을 뜻하는지가 서지 않는다.
+    fn record_imported_items(&mut self, node: Node<'_>, module: &str) -> Result<(), ExtractError> {
+        // `import_clause` 는 필드 이름 없이 named child 로 온다.
+        let mut cursor = node.walk();
+        let top: Vec<Node<'_>> = node.named_children(&mut cursor).collect();
+        drop(cursor);
+        let mut kids: Vec<Node<'_>> = Vec::new();
+        for t in top {
+            if t.kind() != "import_clause" {
+                continue;
+            }
+            let mut c = t.walk();
+            kids.extend(t.named_children(&mut c));
+            drop(c);
+        }
+        for kid in kids {
+            if kid.kind() != "named_imports" {
+                continue;
+            }
+            let mut c = kid.walk();
+            let specs: Vec<Node<'_>> = kid.named_children(&mut c).collect();
+            drop(c);
+            for spec in specs {
+                if spec.kind() != "import_specifier" {
+                    continue;
+                }
+                let Some(name) = spec.child_by_field_name("name") else { continue };
+                let name = name.utf8_text(self.source).map_err(|_| ExtractError::NotUtf8)?;
+                let local = match spec.child_by_field_name("alias") {
+                    Some(a) => a.utf8_text(self.source).map_err(|_| ExtractError::NotUtf8)?,
+                    None => name,
+                };
+                self.imports.push_item(ImportedItem {
+                    module: module.to_owned(),
+                    name: name.to_owned(),
+                    local: local.to_owned(),
+                });
+            }
+        }
+        Ok(())
     }
 
     /// 동적 `import('<모듈>')` 과 `require('<모듈>')` — **리터럴 인자만.**
@@ -737,6 +802,49 @@ describe('a', () => { test('b', () => { const x = 1; }); });
     #[test]
     fn 별칭이_있으면_밖으로_나가는_이름은_별칭이다() {
         assert_eq!(export_집합("const a = 1; export { a as b };").names, vec!["b".to_owned()]);
+    }
+
+    #[test]
+    fn d5_이름_임포트가_없는_것과_이_빌드가_안_만드는_것이_다른_값이다() {
+        // ★ 조건 `D5` — `ImportSet` 에 필드를 더할 때 **빈 벡터가 부재를 뜻하면 안 된다.**
+        //   뭉개면 *"이름 임포트가 하나도 없는 파일"* 과 *"항목 축을 안 만드는 빌드"* 가
+        //   같은 출력이 되고, 그것이 ADR-0002 가 이름 붙인 형태다.
+        use pal_core::Slot;
+
+        // ① 안 만든다 — 아무 추출기도 안 지난 값
+        assert_eq!(
+            pal_core::ImportSet::default().items,
+            Slot::NotBuilt,
+            "만들기 전의 값이 「없다」로 나갔다"
+        );
+
+        // ② 만들었고 이름 임포트가 없다 — 부수 효과 임포트뿐인 파일
+        let g = 그래프("import './side-effect';\n");
+        let imports = g.imports.into_present().unwrap();
+        assert_eq!(imports.modules, vec!["./side-effect".to_owned()], "모듈은 담겼어야 한다");
+        assert_eq!(imports.items, Slot::Built(Vec::new()), "「없다」가 「안 만듦」으로 나갔다");
+
+        // ③ 둘은 **다른 값이다** — 이 한 줄이 이 조건의 전부다
+        assert_ne!(imports.items, pal_core::ImportSet::default().items);
+
+        // ④ 만들었고 이름 임포트가 있다 — 별칭에서 원본과 부르는 이름이 갈린다
+        let g = 그래프("import { a, b as c } from './x';\n");
+        let Slot::Built(items) = g.imports.into_present().unwrap().items else {
+            panic!("TypeScript 추출기가 항목 축을 안 만들었다")
+        };
+        let 짝: Vec<(String, String, String)> =
+            items.into_iter().map(|x| (x.module, x.name, x.local)).collect();
+        assert_eq!(
+            짝,
+            [
+                ("./x".to_owned(), "a".to_owned(), "a".to_owned()),
+                ("./x".to_owned(), "b".to_owned(), "c".to_owned()),
+            ]
+        );
+
+        // ⑤ 별 임포트와 기본 임포트는 **어느 이름인지 모른다** — 지어내지 않는다
+        let g = 그래프("import * as ns from './y';\nimport d from './z';\n");
+        assert_eq!(g.imports.into_present().unwrap().items, Slot::Built(Vec::new()));
     }
 
     #[test]

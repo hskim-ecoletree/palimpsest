@@ -83,7 +83,8 @@ pub use doctor::{
 pub use derived::{DerivedId, NodeRef, ReproInput};
 pub use attributes::{Attributes, FileAttributes};
 pub use file_graph::{
-    Containment, ExportSet, FileGraph, ImportSet, LocalIx, RecoveryKind, RecoverySite,
+    Containment, ExportSet, FileGraph, ImportSet, ImportedItem, LocalIx, RecoveryKind,
+    RecoverySite,
 };
 pub use glob::{Glob, GlobError};
 pub use graph::{AssertedVia, Producer, Provenance, ResolutionGrade};

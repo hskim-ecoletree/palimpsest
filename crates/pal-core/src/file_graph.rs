@@ -35,6 +35,7 @@ use crate::capable::Capable;
 use crate::coord::ExportDigest;
 use crate::ledger::{ExtractGrade, LanguageId};
 use crate::scope::ScopeChain;
+use crate::slot::Slot;
 use crate::symbol::{Span, Symbol};
 
 /// [`FileGraph::symbols`] 안의 자리. **파일 안에서만 뜻이 있다.**
@@ -125,7 +126,7 @@ impl ExportSet {
 /// 그래서 *"Rust 임포트가 성립한다"* 는 **산출까지의 사실**이고 관측 가능한 동작은 아직
 /// 없다. 쓰는 것은 파일 간 해소(F07)이고, 그 사실을 여기 적어 두지 않으면 이 자리가
 /// 초록인 것이 「기능이 갖춰졌다」로 읽힌다.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ImportSet {
     /// 모듈 지정자. 정렬·중복 제거. 동적 `import()` 는 **리터럴 인자만** 담는다.
     ///
@@ -133,6 +134,101 @@ pub struct ImportSet {
     /// Rust 는 **마지막 세그먼트를 뗀 경로**(`use a::b::C;` → `a::b`)다.
     /// 마지막 세그먼트는 항목 이름이지 모듈이 아니다.
     pub modules: Vec<String>,
+    /// 들여온 **항목**. 정렬·중복 제거.
+    ///
+    /// # ⚠ 왜 [`Slot`] 이고 평평한 `Vec` 이 아닌가
+    ///
+    /// [`Self::modules`] 옆에 이름만 담는 `Vec<String>` 을 하나 더 두면 **(모듈, 항목)
+    /// 짝을 못 만든다.** `use a::{c::C, d::D};` 는 모듈 하나(`a`)에서 이름 둘을 들여오는데
+    /// 실모듈은 `a::c` 와 `a::d` 로 갈리고, 두 평평한 `Vec` 은 어느 이름이 어느 모듈의
+    /// 것인지 못 적는다. `use a::B as C;` 에서는 **원본 이름 `B` 가 통째로 소실된다** —
+    /// 이 파일이 부르는 이름은 `C` 이고 대상 모듈에 있는 이름은 `B` 라, 하나만 담으면
+    /// 해소가 반드시 한쪽에서 빗나간다.
+    ///
+    /// 그래서 [`ImportedItem`] 셋을 함께 담는다.
+    ///
+    /// # 빈 벡터는 부재가 아니다
+    ///
+    /// [`Slot::NotBuilt`] 는 *"이 빌드가 항목 이름 축을 안 만든다"* 이고
+    /// [`Slot::Built`]`(vec![])` 은 *"만들었고 이름 임포트가 하나도 없다"* 다
+    /// (`import './side-effect';`). 한 값으로 뭉개면 **부재와 0 이 같은 출력**이 되고
+    /// 그것이 [ADR-0002](../../../docs/adr/0002-empty-population-is-not-zero-violations.md)
+    /// 가 이름 붙인 형태다.
+    ///
+    /// ⚠ **오늘 두 추출기가 다 [`Slot::Built`] 로 산출한다** — [`Slot::NotBuilt`] 는
+    /// [`ImportSet::default`] 와 캐시 왕복에만 나타난다. 산출 쪽에서 그 팔을 밟는 언어는
+    /// 아직 없고, 그 사실을 여기 안 적으면 이 축이 무언가를 재고 있다고 읽힌다.
+    pub items: Slot<Vec<ImportedItem>>,
+}
+
+/// `use` 한 줄이 들여오는 **항목 하나** — 셋을 함께 진다.
+///
+/// # 셋이 다 필요한 까닭
+///
+/// | | `use a::b::C as D;` | 없으면 무엇이 깨지나 |
+/// |---|---|---|
+/// | [`Self::module`] | `a::b` | 어느 파일을 봐야 하는지 모른다 |
+/// | [`Self::name`] | `C` | 그 파일에서 무슨 이름을 찾을지 모른다 — 별칭에서 소실된다 |
+/// | [`Self::local`] | `D` | 이 파일의 참조가 어느 항목의 것인지 못 잇는다 |
+///
+/// **별칭이 없으면 [`Self::name`] 과 [`Self::local`] 이 같다.** 같다는 것이 정보이지
+/// 중복이 아니다 — 하나로 접으면 별칭이 있는 자리에서 어느 쪽인지 못 가른다.
+///
+/// # 무엇이 여기 **안** 오나
+///
+/// `use a::*;` — 무슨 이름이 들어오는지 파일 하나만 보고 모른다. 지어내지 않으므로
+/// 항목이 아니라 [`ImportSet::modules`] 에만 남는다.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct ImportedItem {
+    /// 항목이 속한 모듈 경로. `use a::b::C as D;` → `a::b`.
+    ///
+    /// **중첩 목록에서 실모듈이다** — `use a::{c::C, d::D};` 의 `C` 는 `a::c` 이지
+    /// `a` 가 아니다.
+    pub module: String,
+    /// 그 모듈에서의 **원본** 이름. `use a::b::C as D;` → `C`.
+    pub name: String,
+    /// 이 파일이 그 항목을 부르는 이름. 별칭이 없으면 [`Self::name`] 과 같다.
+    pub local: String,
+}
+
+impl Default for ImportSet {
+    /// **`items` 는 [`Slot::NotBuilt`] 다** — 빈 벡터가 아니다. 위 필드 문서가 그 까닭을 진다.
+    fn default() -> Self {
+        Self { modules: Vec::new(), items: Slot::NotBuilt }
+    }
+}
+
+impl ImportSet {
+    /// 항목 축을 **만드는** 추출기가 쓰는 빈 값 — `items` 가 [`Slot::Built`]`(vec![])` 다.
+    ///
+    /// [`Self::default`] 와 갈리는 것이 이 생성자의 전부다. 만드는 쪽이 `default()` 로
+    /// 시작하면 이름 임포트가 하나도 없는 파일이 *"안 만들었다"* 로 나간다.
+    #[must_use]
+    pub fn building() -> Self {
+        Self { modules: Vec::new(), items: Slot::Built(Vec::new()) }
+    }
+
+    /// 항목 하나를 담는다. **[`Slot::NotBuilt`] 이면 아무것도 안 한다** — 안 만들기로 한
+    /// 자리에 값이 새면 그 축이 무엇을 뜻하는지가 무너진다.
+    pub fn push_item(&mut self, item: ImportedItem) {
+        if let Slot::Built(v) = &mut self.items {
+            v.push(item);
+        }
+    }
+
+    /// 항목을 정렬·중복 제거한다. **[`Self::modules`] 와 같은 계약이다** — 소스 순서에
+    /// 의존하면 `use` 를 재배열하는 것만으로 산출이 움직인다(R-05).
+    ///
+    /// ⚠ **안정 정렬을 쓴다.** 비안정 정렬의 이름이 `pal-core` 금지 어휘 하나를 부분
+    /// 문자열로 물고, 그 검사는 낱말 경계를 안 본다(`xtask` 의 「코어 어휘 금지」).
+    /// [`ImportedItem`] 은 [`Ord`] 이고 바로 뒤에 중복 제거가 오므로 두 정렬의 산출이
+    /// 같다 — 되돌리지 마라.
+    pub fn normalize_items(&mut self) {
+        if let Slot::Built(v) = &mut self.items {
+            v.sort();
+            v.dedup();
+        }
+    }
 }
 
 /// 파서가 회복한 자리 하나가 **무엇이었나**.
