@@ -1,0 +1,2 @@
+=== symbol.callers (파일 경계 전) ===
+Error: 질의 `symbol.callers` 에 인자가 필요하다 — 아는 것은 ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation 다

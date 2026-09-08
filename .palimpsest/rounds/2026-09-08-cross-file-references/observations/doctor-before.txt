@@ -1,0 +1,65 @@
+
+■ 불변식 여덟 — 표본 (불변식마다 최대 512 단위)
+
+  1  ok    검사 30 · 표본 밖 0 · 위반 0
+      모든 엣지의 양 끝 노드가 존재한다
+      담지 못하는 자리: AUTHORED_BY(F05) · FOLLOWS(F05) · INTRODUCED_BY(F05) · MANIFESTS_AT(F05) · REFERENCES(F07) · RESOLVED_BY(F05) · TOUCHES(F05)
+  2  ok    검사 467 · 표본 밖 2798 · 위반 0
+      모든 노드·엣지가 스키마에 등록된 라벨·타입이고 필수 속성을 갖는다
+      담지 못하는 자리: Actor(F05) · Change(F05) · Defect(F05) · File(F07) · Journey(F19) · NarrativeItem(F12) · NarrativeRefusal(F12) · UnresolvedRef(F08) · AUTHORED_BY(F05) · FOLLOWS(F05) · INTRODUCED_BY(F05) · MANIFESTS_AT(F05) · REFERENCES(F07) · RESOLVED_BY(F05) · TOUCHES(F05)
+  3  ok    검사 463 · 표본 밖 2772 · 위반 0
+      한 노드의 속성 producer 들이 그 노드의 provenance 와 정합한다
+      담지 못하는 자리: Actor(F05) · Change(F05) · Defect(F05) · File(F07) · Journey(F19) · NarrativeItem(F12) · NarrativeRefusal(F12) · UnresolvedRef(F08)
+  4  (모집단이 없습니다)
+      inferred 노드의 evidence_refs 가 비어 있지 않다
+      담지 못하는 자리: NarrativeItem(F12)
+  5  (모집단이 없습니다)
+      candidate 후보 집합의 크기가 K 이하이고 초과분에 대응하는 UnresolvedRef 가 있다
+      담지 못하는 자리: INTRODUCED_BY(F05)
+  6  (모집단이 없습니다)
+      모든 Residual·ScopeReduction 이 실재하는 좌표에 결박되어 있다
+      담지 못하는 자리: Residual(F15) · ScopeReduction(F20)
+  7  (모집단이 없습니다)
+      2층의 결박 색인이 가리키는 실체가 의도 저장소에 있다
+      담지 못하는 자리: BindingIndex(F09)
+  8  (모집단이 없습니다)
+      낡음 등급이 전파 규칙과 정합한다 — live 노드의 입력에 stale 이 없다
+      담지 못하는 자리: DerivedNode(F17)
+
+■ 위반 (0)
+  없습니다. **`clean` 이 아닙니다** — 위 표의 모집단과 표본을 함께 읽으십시오.
+
+■ 잔여 (2) — **검사하지 못한 것은 "이상 없음"이 아닙니다**
+  표본 밖(outside-sample) · 좌표 2798건
+      불변식 2 — 모든 노드·엣지가 스키마에 등록된 라벨·타입이고 필수 속성을 갖는다
+      해소: 전수 검사(`pal doctor --full`)
+  표본 밖(outside-sample) · 좌표 2772건
+      불변식 3 — 한 노드의 속성 producer 들이 그 노드의 provenance 와 정합한다
+      해소: 전수 검사(`pal doctor --full`)
+
+■ 이 답의 근거
+  Snapshot  palimpsest@6b6cb6d+worktree
+  대장      parsed 139 · partial 0 · unsupported 706 · unrecognized 309 / 1155 파일
+  2층       심볼 3205 색인됨
+  생략      없음 (명시)
+  이관      1155건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1155건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  **안 남았습니다** — 이 표면은 아직 질의 로그를 쓰지 않습니다
+  크기      약 484441 토큰 **이상** (잰 것: 1937767 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · graph.doctor · 미구축 F05 · F08 · F15 · F17 · F20
+
+
+■ 설치 검사 6개
+  잔여 1  설정 파일이 유효한 JSON 인가
+      .claude/settings.json 가 없다 — 읽을 것이 없다
+  잔여 2  매니페스트가 실물과 맞는가
+      설치를 찾지 못했다 — 대조할 상대가 없다
+  잔여 3  여기가 설치 루트인가
+      설치를 찾지 못했다
+  빨강 4  `pal` 실행 파일을 찾을 수 있는가
+      `PATH` 어디에도 `pal` 이 없다 — 설치된 커맨드가 못 돈다
+  ok   5  `.gitignore` 에 파생이 등재됐는가
+      파생 3개가 전부 등재됐다
+  잔여 6  등록된 훅이 실제로 도는가
+      설치를 찾지 못했다 — 등록된 훅이 없다
+

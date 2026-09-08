@@ -1,0 +1,1 @@
+Error: 질의 `coverage` 를 모른다 — 아는 것은 ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation 다
