@@ -39,7 +39,10 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use pal_core::{FileRow, QueryLogEntry, ReferenceEdge, RepoPath, SymbolId, SymbolNode};
+use pal_core::{
+    FileRow, ImportSet, PendingImportRef, QueryLogEntry, ReferenceEdge, RepoPath, Slot,
+    SymbolId, SymbolNode,
+};
 use redb::{
     Database, MultimapTableDefinition, MultimapTableHandle, ReadOnlyDatabase, ReadableDatabase,
     ReadableMultimapTable, ReadableTable, ReadableTableMetadata, TableDefinition, TableHandle,
@@ -135,6 +138,17 @@ pub struct FileStitch {
     pub exports: Vec<(String, SymbolId)>,
     /// 파일 **안**에서 해소된 참조.
     pub edges: Vec<ReferenceEdge>,
+    /// 이 파일이 들여온 것 — 2 층이 [`Self::pending`] 을 풀 때 쓰는 짝.
+    ///
+    /// ⚠ **[`Slot::NotBuilt`] 를 빈 값으로 뭉개지 않는다** — *"항목 축을 안 만드는
+    /// 언어"* 와 *"임포트가 하나도 없는 파일"* 이 여기서 갈린다.
+    pub imports: Slot<ImportSet>,
+    /// 파일 안에서 안 풀리고 **2 층이 풀** 임포트 참조.
+    ///
+    /// 길이가 [`RefCounts::imported`] 보다 작을 수 있다 — 어느 심볼 안에도 없는
+    /// 최상위 임포트 참조는 출발점이 없어 짝을 못 만든다. **건수는 그 칸이 지고
+    /// 짝은 여기가 진다.**
+    pub pending: Vec<PendingImportRef>,
 }
 
 /// 스티칭 한 회차의 회계. **커밋 수가 여기 있는 이유는 `[f05.2.pass]` ③ 이다** —

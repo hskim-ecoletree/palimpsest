@@ -359,13 +359,27 @@ fn stitch_of(
 ) -> Option<FileStitch> {
     let g = graph.graph()?;
 
-    // 스코프 체인이 있으면 엣지와 다섯 갈래의 건수가 나온다. 없으면 **0 이 아니라 안 만듦**.
-    let (edges, refs) = match &g.scopes {
+    // **임포트 항목을 함께 넘긴다.** `Slot::NotBuilt` 인 언어는 빈 슬라이스를 받고,
+    // 그러면 `file_edges` 가 임포트 갈래를 안 세운다 — *"항목 축을 안 만든다"* 와
+    // *"임포트가 0 건이다"* 가 여기서 갈린다. 뭉개면 Kotlin 처럼 항목 축이 없는
+    // 언어의 파일이 *"밖에서 이름을 하나도 안 쓴다"* 로 나간다.
+    let 임포트: &[pal_core::ImportedItem] = match &g.imports {
+        Slot::Built(set) => match &set.items {
+            Slot::Built(items) => items.as_slice(),
+            Slot::NotBuilt => &[],
+        },
+        Slot::NotBuilt => &[],
+    };
+
+    // 스코프 체인이 있으면 엣지와 갈래별 건수가 나온다. 없으면 **0 이 아니라 안 만듦**.
+    let (edges, refs, pending) = match &g.scopes {
         Slot::Built(chain) => {
-            let (edges, counts) = pal_core::file_edges(&g.symbols, nodes, chain, snapshot);
-            (edges, Slot::Built(counts))
+            let out = pal_core::file_edges(&g.symbols, nodes, chain, 임포트, snapshot);
+            (out.edges, Slot::Built(out.counts), out.pending)
         }
-        Slot::NotBuilt => (Vec::<ReferenceEdge>::new(), Slot::<RefCounts>::NotBuilt),
+        Slot::NotBuilt => {
+            (Vec::<ReferenceEdge>::new(), Slot::<RefCounts>::NotBuilt, Vec::new())
+        }
     };
 
     let exports = match &g.exports {
@@ -399,6 +413,8 @@ fn stitch_of(
         symbols: nodes.to_vec(),
         exports,
         edges,
+        imports: g.imports.clone(),
+        pending,
     })
 }
 

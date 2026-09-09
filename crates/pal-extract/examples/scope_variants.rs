@@ -184,7 +184,7 @@ fn 한_판(
             .collect();
 
         // ① 정본 — `pal_core` 가 센 것.
-        let (_, counts) = pal_core::file_edges(&g.symbols, &nodes, chain, &스냅샷);
+        let counts = pal_core::file_edges(&g.symbols, &nodes, chain, &[], &스냅샷).counts;
         합.더한다(&counts);
 
         // ② 자기 셈 — 같은 규칙을 자리로 다시 적용해 **바이트를 들고 있는다.**

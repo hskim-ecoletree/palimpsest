@@ -20,7 +20,8 @@ use crate::capable::Capable;
 use crate::coord::{ExportDigest, SymbolId};
 use crate::ledger::{ExtractGrade, LanguageId};
 use crate::repo::{RepoPath, Snapshot};
-use crate::scope::{BoundSymbol, RefResolution, ScopeChain};
+use crate::file_graph::ImportedItem;
+use crate::scope::{BoundSymbol, RefResolution, ScopeBinding, ScopeChain, ScopeIx, ScopeParent};
 use crate::slot::{ShellMismatch, Slot};
 use crate::symbol::Symbol;
 use crate::touch::SymbolNode;
@@ -93,6 +94,25 @@ pub struct RefCounts {
     /// **미해소와 갈라 둔다.** 미해소는 F07 이 풀 수 있고 이것은 원리상 못 푼다 —
     /// 추출기가 `cfg` 를 해석하지 않기로 했기 때문이다.
     pub ambiguous: usize,
+    /// `use` 로 들여온 이름을 가리킨 참조 — **파일 밖 심볼을 가리키므로 파일 안 엣지가
+    /// 아니고, 지역 변수도 아니다.**
+    ///
+    /// # 왜 [`Self::locals`] 에서 갈랐나 (2026-09-09)
+    ///
+    /// 이 갈래가 생기기 전 임포트 참조는 전부 `locals` 로 샜다. Rust 추출기가 `use` 로
+    /// 들어온 이름을 **모듈 스코프의 바인딩**으로 묶는데 그 바인딩은
+    /// [`crate::BoundSymbol::NotASymbol`] 이라, `file_edges` 가 지역 변수와 같은 칸에
+    /// 세었기 때문이다. 그래서 *"이 파일이 밖에서 이름을 몇 개나 쓰나"* 를 재는 자가
+    /// 없었고, [`Self::unresolved`] 는 `use` 를 안 거친 이름만 담았다.
+    ///
+    /// **이 칸은 「아직 안 풀린 것」이 아니라 「2 층이 풀 것」이다.** 파일 하나만 보는
+    /// 연산에서 대상 심볼은 원리상 안 보이고, 짝을 지어 줄 정보(어느 모듈의 어느
+    /// 이름인가)는 [`crate::ImportSet::items`] 에 있다. 그 둘을 잇는 자리가 2 층이고,
+    /// 이 갈래에 든 참조는 [`PendingImportRef`] 로 함께 나간다.
+    ///
+    /// ⚠ **[`Self::locals`] 로 되돌리면 파일 간 엣지의 분모가 사라진다** — 그러면
+    /// *"몇 건을 풀었나"* 를 셀 모집단이 없다.
+    pub imported: usize,
 }
 
 impl RefCounts {
@@ -106,7 +126,45 @@ impl RefCounts {
             + self.unresolved
             + self.before_declaration
             + self.ambiguous
+            + self.imported
     }
+}
+
+/// 파일 하나 안에서 **풀리지 않고 2 층으로 넘어가는** 임포트 참조 하나.
+///
+/// # 왜 이름이 아니라 셋을 싣나
+///
+/// 2 층이 이 참조를 풀려면 *"어느 심볼이"*(`from`) *"무슨 이름을"*(`local`) 가리켰는지가
+/// 둘 다 있어야 한다. `local` 하나만 실으면 엣지의 출발점이 없고, `from` 만 실으면
+/// 무엇을 찾을지 모른다. `at` 은 같은 이름을 여러 번 부른 참조를 가르는 자리다 —
+/// 없으면 세 번 부른 것이 한 건으로 뭉개진다.
+///
+/// ⚠ **`local` 은 이 파일이 부르는 이름이지 대상 모듈의 이름이 아니다.**
+/// `use a::B as C;` 에서 여기 실리는 것은 `C` 이고, `B` 로 되돌리는 것은
+/// [`crate::ImportedItem`] 이 진다. 그래서 이 타입은 모듈도 원본 이름도 안 싣는다 —
+/// 두 곳에 적으면 별칭이 있는 자리에서 갈린다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PendingImportRef {
+    /// 참조를 한 심볼 — 엣지의 출발점.
+    pub from: SymbolId,
+    /// 이 파일이 그 항목을 부르는 이름. [`crate::ImportedItem::local`] 과 짝짓는다.
+    pub local: String,
+    /// 참조가 일어난 바이트.
+    pub at: usize,
+}
+
+/// [`file_edges`] 가 파일 하나에서 산출하는 것 셋.
+///
+/// 튜플이 아니라 이름을 붙인 까닭 하나 — 셋째가 붙으면서 `(edges, counts)` 의 자리
+/// 기억이 안 통하게 됐고, 자리로 받는 코드는 셋째를 조용히 빠뜨린다.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct FileRefs {
+    /// 파일 **안**에서 해소된 엣지.
+    pub edges: Vec<ReferenceEdge>,
+    /// 갈래별 건수. 합이 `refs` 의 길이와 같아야 한다.
+    pub counts: RefCounts,
+    /// 2 층이 풀 임포트 참조. [`RefCounts::imported`] 와 **길이가 같아야 한다**.
+    pub pending: Vec<PendingImportRef>,
 }
 
 /// 2층에 있는 파일 하나.
@@ -230,18 +288,29 @@ pub struct ReferenceEdge {
 ///
 /// `a` 가 `b` 를 세 번 부르면 참조 셋이고 엣지 쌍은 하나다. [`RefCounts::edges`] 는
 /// **참조**를 세고 저장은 **쌍**을 담는다 — 둘이 다른 것이 정상이다.
+///
+/// # `imports` 를 왜 받나
+///
+/// `use` 로 들여온 이름은 **모듈 스코프의 바인딩**이고 그 바인딩은
+/// [`BoundSymbol::NotASymbol`] 이다. 그래서 그것을 가리킨 참조는 아래에서 지역 변수와
+/// 같은 갈래로 떨어진다 — 이 인자가 없으면 [`RefCounts::locals`] 로 샌다.
+///
+/// **빈 슬라이스를 주면 오늘까지의 동작 그대로다.** 항목 축을 안 만드는 언어와, 이
+/// 함수를 스코프 산출만 재려고 부르는 자리가 그것을 쓴다.
 #[must_use]
 pub fn file_edges(
     symbols: &[Symbol],
     nodes: &[SymbolNode],
     scopes: &ScopeChain,
+    imports: &[ImportedItem],
     at: &Snapshot,
-) -> (Vec<ReferenceEdge>, RefCounts) {
+) -> FileRefs {
     let mut counts = RefCounts::default();
     if symbols.len() != nodes.len() {
-        return (Vec::new(), counts);
+        return FileRefs::default();
     }
 
+    let mut pending = Vec::new();
     let mut edges = Vec::new();
     for r in &scopes.refs {
         match r.resolved {
@@ -261,6 +330,28 @@ pub fn file_edges(
                     continue;
                 }
                 let Some(BoundSymbol::Symbol(ix)) = bound.map(|b| b.symbol) else {
+                    // **임포트가 여기로 온다.** `use` 로 들여온 이름은 모듈 스코프에
+                    // 묶이고 심볼이 아니라, 이 갈래에서 지역 변수와 섞인다.
+                    // 갈라 두지 않으면 파일 간 엣지의 분모가 사라진다.
+                    //
+                    // ⚠ **이름만으로 안 가른다** — 같은 이름의 지역 변수가 있으면
+                    // 그것도 잡힌다. 바인딩이 **모듈 스코프**의 것이어야 한다.
+                    if 임포트된_이름인가(scopes, scope, bound, imports) {
+                        counts.imported += 1;
+                        if let Some(from) = innermost(symbols, nodes, r.at) {
+                            pending.push(PendingImportRef {
+                                from,
+                                local: r.name.clone(),
+                                at: r.at,
+                            });
+                        } else {
+                            // 어느 심볼 안에도 없는 임포트 참조 — 출발점이 없어 2 층도
+                            // 엣지를 못 만든다. **건수는 `imported` 에 남기고 짝은 안
+                            // 만든다** — 그래야 `pending` 의 길이와 이 칸이 갈린 이유가
+                            // 하나뿐이 되고, 아래 불변식이 그것을 잰다.
+                        }
+                        continue;
+                    }
                     // 지역 변수·파라미터. **심볼이 아니므로 엣지가 아니다.**
                     counts.locals += 1;
                     continue;
@@ -279,7 +370,39 @@ pub fn file_edges(
             }
         }
     }
-    (edges, counts)
+    FileRefs { edges, counts, pending }
+}
+
+/// 이 바인딩이 `use` 로 들여온 이름인가.
+///
+/// # 둘을 함께 봐야 한다
+///
+/// **① 모듈 스코프의 바인딩인가** — `use` 는 파일 꼭대기에서만 이름을 묶는다
+/// ([`ScopeParent::Root`]). 함수 안의 지역 변수는 여기서 걸러진다.
+/// **② 그 이름이 [`ImportSet::items`] 에 있나** — 모듈 스코프에는 `use` 말고도
+/// [`BoundSymbol::NotASymbol`] 인 것이 올 수 있다(타입 파라미터·매크로).
+///
+/// 하나만 보면 어느 쪽이든 샌다 — ① 만 보면 모듈 스코프의 다른 비-심볼이 임포트로
+/// 세어지고, ② 만 보면 임포트와 같은 이름의 지역 변수가 임포트로 세어진다.
+///
+/// ⚠ **`items` 가 [`Slot::NotBuilt`] 인 언어는 빈 슬라이스를 받는다** — 그러면 이
+/// 함수가 언제나 거짓이고 오늘까지의 동작 그대로다. *"항목 축을 안 만든다"* 와
+/// *"임포트가 0 건이다"* 를 부르는 쪽이 갈라서 넘긴다.
+fn 임포트된_이름인가(
+    scopes: &ScopeChain,
+    scope: ScopeIx,
+    bound: Option<&ScopeBinding>,
+    imports: &[ImportedItem],
+) -> bool {
+    if imports.is_empty() {
+        return false;
+    }
+    let Some(binding) = bound else { return false };
+    let Some(s) = scopes.scopes.get(scope.0 as usize) else { return false };
+    if s.parent != ScopeParent::Root {
+        return false;
+    }
+    imports.iter().any(|item| item.local == binding.name)
 }
 
 /// `byte` 를 담는 **가장 안쪽** 심볼.
@@ -461,7 +584,8 @@ mod tests {
         // ⑥ 선언 자리 — `g` 의 선언 자리(50)에서 `g` 를 가리킨다
         chain.refs.push(참조("g", 50, RefResolution::Bound { scope: crate::ScopeIx(0), binding: 0 }));
 
-        let (edges, c) = file_edges(&symbols, &nodes, &chain, &스냅샷());
+        let FileRefs { edges, counts: c, .. } =
+            file_edges(&symbols, &nodes, &chain, &[], &스냅샷());
 
         assert_eq!(c.declarations, 1, "선언 자리를 참조로 셌다");
         assert_eq!(c.edges, 1, "엣지가 된 참조");
@@ -500,7 +624,7 @@ mod tests {
             },
         );
         chain.refs.push(참조("g", 20, RefResolution::Bound { scope: crate::ScopeIx(0), binding: 0 }));
-        let (edges, _) = file_edges(&symbols, &nodes, &chain, &스냅샷());
+        let edges = file_edges(&symbols, &nodes, &chain, &[], &스냅샷()).edges;
         assert_eq!(edges[0].from, nodes[1].id, "메서드가 아니라 클래스가 출발점이 됐다");
     }
 
@@ -509,7 +633,7 @@ mod tests {
         // **틀린 엣지가 없는 엣지보다 나쁘다**(C2). 길이가 다르면 `LocalIx` 가 가리키는
         // 자리가 다른 심볼이고, 그것은 조용한 오답이다.
         let (symbols, _, chain) = 판();
-        let (edges, c) = file_edges(&symbols, &[], &chain, &스냅샷());
+        let FileRefs { edges, counts: c, .. } = file_edges(&symbols, &[], &chain, &[], &스냅샷());
         assert!(edges.is_empty());
         assert_eq!(c.total(), 0);
     }
@@ -520,7 +644,8 @@ mod tests {
         for at in [10, 12, 14] {
             chain.refs.push(참조("g", at, RefResolution::Bound { scope: crate::ScopeIx(0), binding: 0 }));
         }
-        let (edges, c) = file_edges(&symbols, &nodes, &chain, &스냅샷());
+        let FileRefs { edges, counts: c, .. } =
+            file_edges(&symbols, &nodes, &chain, &[], &스냅샷());
         assert_eq!(c.edges, 3, "참조를 셋으로 안 셌다");
         assert_eq!(edges.len(), 3);
         let 쌍: std::collections::BTreeSet<(_, _)> =
@@ -529,8 +654,11 @@ mod tests {
     }
 
     #[test]
-    fn 일곱_갈래의_합이_전체다() {
+    fn 여덟_갈래의_합이_전체다() {
         // 갈래 하나가 새면 이 합이 안 맞는다 — `[f05.2.pass]` ① 이 이것을 쓴다.
+        //
+        // ⚠ **갈래가 늘면 이 시험이 먼저 빨개져야 한다.** 값을 서로 다르게 두는 까닭도
+        // 그것이다 — 같은 값을 쓰면 두 칸이 뒤바뀌어도 합이 안 움직인다.
         let c = RefCounts {
             declarations: 6,
             edges: 1,
@@ -539,8 +667,9 @@ mod tests {
             unresolved: 4,
             before_declaration: 5,
             ambiguous: 7,
+            imported: 8,
         };
-        assert_eq!(c.total(), 28);
+        assert_eq!(c.total(), 36);
     }
 
     #[test]
@@ -553,7 +682,8 @@ mod tests {
         let nodes = 좌표들(&symbols);
         let mut chain = ScopeChain::new();
         chain.refs.push(참조("t", 70, RefResolution::Ambiguous));
-        let (edges, c) = file_edges(&symbols, &nodes, &chain, &스냅샷());
+        let FileRefs { edges, counts: c, .. } =
+            file_edges(&symbols, &nodes, &chain, &[], &스냅샷());
         assert!(edges.is_empty(), "모호한 참조가 엣지가 됐다");
         assert_eq!(c.ambiguous, 1);
         assert_eq!(c.total(), chain.refs.len());
@@ -579,7 +709,8 @@ mod tests {
         // 선언 자리(9)와 재귀 호출(30).
         chain.refs.push(참조("f", 9, RefResolution::Bound { scope: crate::ScopeIx(0), binding: 0 }));
         chain.refs.push(참조("f", 30, RefResolution::Bound { scope: crate::ScopeIx(0), binding: 0 }));
-        let (edges, c) = file_edges(&symbols, &nodes, &chain, &스냅샷());
+        let FileRefs { edges, counts: c, .. } =
+            file_edges(&symbols, &nodes, &chain, &[], &스냅샷());
         assert_eq!(c.declarations, 1);
         assert_eq!(c.edges, 1, "재귀 호출이 사라졌다");
         assert_eq!(edges[0].from, edges[0].to, "재귀 엣지가 자기를 안 가리킨다");

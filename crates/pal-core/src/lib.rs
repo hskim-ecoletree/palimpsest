@@ -117,7 +117,9 @@ pub use schema::{
     AttrDecl, Cardinality, Carried, Carrier, EdgeDecl, EvidenceRule, GradeRule, GraphSchema, NodeDecl,
     NodeStatus, Requirement, SchemaError,
 };
-pub use projection::{FileNode, FileRow, RefCounts, ReferenceEdge, file_edges};
+pub use projection::{
+    FileNode, FileRow, FileRefs, PendingImportRef, RefCounts, ReferenceEdge, file_edges,
+};
 pub use query_log::{QueryLogEntry, QueryName};
 pub use entity::{EntityId, EntityKind, EntityOrigin, EntityRegistry, Ulid};
 pub use radius::{BudgetRefusal, Neighborhood, Radius, check_budget, expand};

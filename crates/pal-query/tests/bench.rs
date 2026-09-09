@@ -91,6 +91,10 @@ fn 그래프(n: usize) -> Vec<FileStitch> {
             },
             exports: vec![(symbols[0].name.clone(), symbols[0].id)],
             edges,
+            // 이 벤치는 **질의 지연**을 재지 임포트 해소를 안 잰다. 값을 지어내면
+            // 그것이 측정 대상에 섞인다.
+            imports: Slot::NotBuilt,
+            pending: Vec::new(),
             symbols,
         });
     }

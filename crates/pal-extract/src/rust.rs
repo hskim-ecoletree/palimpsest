@@ -831,7 +831,8 @@ mod tests {
             pal_core::RepoId::new("r"),
             pal_core::TreeRef::Committed(pal_core::ObjectName::from_bytes([0u8; 20])),
         );
-        let (edges, _) = pal_core::file_edges(&g.symbols, &nodes, chain, &스냅샷);
+        let pal_core::FileRefs { edges, .. } =
+            pal_core::file_edges(&g.symbols, &nodes, chain, &[], &스냅샷);
         let 이름 = |id: pal_core::SymbolId| {
             nodes.iter().position(|n| n.id == id).map(|i| g.symbols[i].name.clone()).unwrap()
         };
@@ -843,6 +844,91 @@ mod tests {
     /// 이 이름이 `refs` 에 참조로 들어 있나.
     fn 참조에_있나(src: &str, name: &str) -> bool {
         사슬(src).refs.iter().any(|r| r.name == name)
+    }
+
+    /// 이 소스의 갈래별 건수 — **임포트 항목을 실제로 넘겨서 잰다.**
+    ///
+    /// 추출기가 산출한 [`pal_core::ImportSet`] 을 그대로 쓴다. 손으로 지어낸 항목을
+    /// 넘기면 *"추출기가 항목을 뽑는다"* 와 *"`file_edges` 가 그것을 쓴다"* 중 뒤엣것만
+    /// 재고, 앞엣것이 깨져도 초록이 된다.
+    fn 갈래(src: &str) -> pal_core::RefCounts {
+        let g = extract_detailed(src.as_bytes()).unwrap();
+        let Capable::Present(chain) = &g.scopes else { panic!("스코프를 안 만들었다") };
+        let Capable::Present(set) = &g.imports else { panic!("임포트를 안 만들었다") };
+        let pal_core::Slot::Built(items) = &set.items else { panic!("항목 축을 안 만들었다") };
+        let path = pal_core::RepoPath::new("a.rs");
+        let nodes: Vec<pal_core::SymbolNode> = g
+            .symbols
+            .iter()
+            .enumerate()
+            .map(|(i, s)| pal_core::SymbolNode {
+                id: pal_core::SymbolId::compute(
+                    &pal_core::RepoId::new("r"),
+                    &path,
+                    &[],
+                    &format!("#{i}"),
+                    &pal_core::Discriminator::new(s.kind, 0),
+                ),
+                path: path.clone(),
+                container: Vec::new(),
+                name: s.name.clone(),
+                kind: s.kind,
+                body: s.body,
+                span: s.span,
+                identity: s.identity,
+            })
+            .collect();
+        let 스냅샷 = pal_core::Snapshot::single(
+            pal_core::RepoId::new("r"),
+            pal_core::TreeRef::Committed(pal_core::ObjectName::from_bytes([0u8; 20])),
+        );
+        pal_core::file_edges(&g.symbols, &nodes, chain, items, &스냅샷).counts
+    }
+
+    #[test]
+    fn a2_임포트한_이름의_참조가_locals_로_안_샌다() {
+        // `Rel` 은 `use inside::Rel;` 로 들어온 이름이고 `n` 은 지역 변수다.
+        // **둘이 같은 칸에 들어가면 파일 간 엣지의 분모가 사라진다.**
+        let src = "use inside::Rel;
+fn f() { let n = 1; let _ = Rel; let _ = n; }
+";
+        let c = 갈래(src);
+        assert_eq!(c.imported, 1, "임포트 참조 `Rel` 이 임포트 갈래에 있어야 한다: {c:?}");
+        assert_eq!(c.locals, 1, "지역 변수 참조 `n` 만 지역 갈래에 남아야 한다: {c:?}");
+    }
+
+    #[test]
+    fn a2_같은_이름의_지역변수는_임포트로_안_세어진다() {
+        // **음성 대조** — 이름만으로 가르면 이 지역 변수가 임포트로 세어진다.
+        // 그러면 위 시험은 통과하면서 분모가 부풀고, 그 부풀음은 화면에 안 나온다.
+        let src = "use inside::Rel;
+fn f() { let Rel = 1; let _ = Rel; }
+";
+        let c = 갈래(src);
+        assert_eq!(c.imported, 0, "함수 안의 `Rel` 은 지역 변수다: {c:?}");
+        assert_eq!(c.locals, 1, "그 참조는 지역 갈래에 있어야 한다: {c:?}");
+    }
+
+    #[test]
+    fn a2_임포트가_없으면_임포트_갈래가_0_이다() {
+        // **음성 대조** — 이 갈래가 무엇이든 잡아 세면 여기서 0 이 아니게 된다.
+        let src = "fn f() { let n = 1; let _ = n; }
+";
+        let c = 갈래(src);
+        assert_eq!(c.imported, 0, "임포트가 없다: {c:?}");
+    }
+
+    #[test]
+    fn a2_갈래의_합이_참조_수와_같다() {
+        // `RefCounts::total` 의 불변식. 갈래를 더하면서 어느 하나가 새면 여기서 갈린다.
+        let src = "use inside::Rel;
+use other::Root as R;
+                   fn f() { let n = 1; let _ = Rel; let _ = R; let _ = n; }
+";
+        let c = 갈래(src);
+        let 참조 = 사슬(src).refs.len();
+        assert_eq!(c.total(), 참조, "갈래의 합이 참조 수와 갈렸다: {c:?}");
+        assert_eq!(c.imported, 2, "`Rel` 과 별칭 `R` 둘: {c:?}");
     }
 
     #[test]
