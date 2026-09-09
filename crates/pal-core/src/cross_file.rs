@@ -383,9 +383,27 @@ pub fn cross_file_edges(
 
     let mut edges = Vec::new();
     let mut report = CrossFileReport::default();
+    // 갈래 **하나만** 막힌 자리를 헤아린다 — 그 갈래의 통에만 들어간다.
     let miss = |r: &mut CrossFileReport, b: bool, why: Unresolved| {
         let bucket = if b { &mut r.b_unresolved } else { &mut r.unresolved };
         *bucket.entry(why.as_str().to_owned()).or_default() += 1;
+    };
+    // ★ **공유 단계의 실패는 갈래 **둘 다**를 넘어뜨린다** (2026-09-10 · 판 4 라운드 2).
+    //
+    // 임포트 항목 찾기와 모듈 경로 펴기는 ⓐ·ⓑ 가 **같이** 지나는 자리다. 거기서 끊기면
+    // 머리 엣지도 꼬리 엣지도 못 만든다. 그런데 앞 판은 꼬리가 있는 짝(`b`)의 공유 단계
+    // 실패를 **ⓑ 통에만** 넣었고, 그래서 **ⓐ 의 까닭 합이 ⓐ 의 못 선 수보다 작았다** —
+    // 실측 `5705 − 1460 = 4245` 인데 까닭의 합은 3929 였고 차 316 이 `282 + 20 + 14`
+    // 로 딱 맞았다.
+    //
+    // ⚠ **수가 안 맞는 것보다 나쁜 것은 화면이 그것을 안 말하는 것이다.** 「못 선 까닭」
+    // 줄이 갈래의 미달을 남김없이 가른다고 읽히는데 316 건이 어느 까닭에도 없었다 —
+    // 그것이 거짓 신호다. **한 자리가 두 갈래를 넘어뜨리면 두 통에 다 헤아린다.**
+    let miss_shared = |r: &mut CrossFileReport, b: bool, why: Unresolved| {
+        *r.unresolved.entry(why.as_str().to_owned()).or_default() += 1;
+        if b {
+            *r.b_unresolved.entry(why.as_str().to_owned()).or_default() += 1;
+        }
     };
     // 「심볼이 없다」가 어느 문으로 가는지는 **대상이 크레이트 뿌리인가**로 갈린다 —
     // 뿌리면 재수출 경유(`A5`·`A5-a` · 축1 **밖**)이고 아니면 꼬리가 심볼로 안 선
@@ -413,7 +431,7 @@ pub fn cross_file_edges(
             }
 
             let Some(item) = f.imports.iter().find(|i| i.local == p.local) else {
-                miss(&mut report, b, Unresolved::NoImport);
+                miss_shared(&mut report, b, Unresolved::NoImport);
                 continue;
             };
 
@@ -439,7 +457,7 @@ pub fn cross_file_edges(
             let target = match hit.as_slice() {
                 [one] => *one,
                 [] => {
-                    miss(
+                    miss_shared(
                         &mut report,
                         b,
                         if 우리것 { Unresolved::NoTargetFile } else { Unresolved::OutsideRepo },
@@ -447,7 +465,7 @@ pub fn cross_file_edges(
                     continue;
                 }
                 _ => {
-                    miss(&mut report, b, Unresolved::Ambiguous);
+                    miss_shared(&mut report, b, Unresolved::Ambiguous);
                     continue;
                 }
             };
