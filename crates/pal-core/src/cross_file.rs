@@ -61,7 +61,7 @@ pub enum Unresolved {
     Ambiguous,
 }
 
-/// 이 패스의 회계. **[`crate::RefCounts`] 에 못 넣는 것을 여기서 센다.**
+/// 이 패스의 회계. **[`crate::RefCounts`] 에 못 넣는 것을 여기서 헤아린다.**
 ///
 /// ⚠ 그 타입은 `total() == refs.len()` 을 진다. ⓑ 는 참조 자리가 아니라 **머리 참조에
 /// 실려 온 값**이라 그 합에 못 들어간다 — 넣으면 불변식이 깨진다. 그래서 갈래별 분모와
@@ -126,14 +126,14 @@ fn crate_root_of<'c>(path: &str, crates: &'c [Crate]) -> Option<&'c Crate> {
         .max_by_key(|c| c.root.len())
 }
 
-/// 모듈 경로를 파일 후보로 — **찾는 것이 아니라 후보를 내는 것이다.**
+/// 모듈 경로를 파일 후보로 — **찾는 것이 아니라 후보를 만드는 것이다.**
 ///
 /// # 넷을 가른다 (잠근 축1)
 ///
 /// | 첫 세그먼트 | 뿌리 |
 /// |---|---|
 /// | `crate` | 이 파일이 속한 크레이트의 `src` |
-/// | `self` | 이 파일이 사는 모듈 디렉터리 |
+/// | `self` | 이 파일이 속한 모듈 디렉터리 |
 /// | `super` (연속) | 그만큼 위 |
 /// | 다른 크레이트 이름 | 그 크레이트의 `src` |
 /// | 그 밖 | **이 파일과 같은 디렉터리의 형제 모듈** |
@@ -178,7 +178,7 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> Vec<String> 
     for s in &segs {
         base = if base.is_empty() { (*s).to_owned() } else { format!("{base}/{s}") };
     }
-    // 셋을 다 낸다 — `a/b.rs` · `a/b/mod.rs` · 그리고 `a.rs` 안의 인라인 `mod b`.
+    // 셋을 다 만든다 — `a/b.rs` · `a/b/mod.rs` · 그리고 `a.rs` 안의 인라인 `mod b`.
     let mut out = vec![format!("{base}.rs"), format!("{base}/mod.rs")];
     if let Some((p, _)) = base.rsplit_once('/') {
         out.push(format!("{p}.rs"));
@@ -193,7 +193,7 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> Vec<String> 
 /// 이 파일이 여는 모듈의 디렉터리.
 ///
 /// `a/b.rs` 는 모듈 `b` 이고 그 형제는 `a/` 안에 있다. `a/mod.rs`·`lib.rs` 는 자기가
-/// 디렉터리이고 그 형제도 같은 디렉터리다 — **둘이 같은 답을 낸다.**
+/// 디렉터리이고 그 형제도 같은 디렉터리다 — **둘이 같은 답으로 간다.**
 fn module_dir_of(path: &str) -> String {
     path.rsplit_once('/').map_or(String::new(), |(d, _)| d.to_owned())
 }
@@ -243,7 +243,7 @@ pub fn cross_file_edges(
     for f in files {
         let from_path = f.path.as_str();
         for p in &f.pending {
-            let b = p.tail.is_some();
+            let b = p.tail.is_call();
             if b { report.b_pending += 1 } else { report.a_pending += 1 }
 
             let Some(item) = f.imports.iter().find(|i| i.local == p.local) else {
@@ -262,7 +262,7 @@ pub fn cross_file_edges(
             let hit: Vec<&str> =
                 cands.iter().filter_map(|c| paths.get(c.as_str()).copied()).collect();
             let mut hit = hit;
-            hit.sort_unstable();
+            hit.sort();
             hit.dedup();
             let target = match hit.as_slice() {
                 [one] => *one,
@@ -280,7 +280,7 @@ pub fn cross_file_edges(
             };
 
             // ⓐ 는 임포트 항목의 **원본 이름**, ⓑ 는 꼬리. 별칭은 여기서 원본으로 돌아간다.
-            let want = p.tail.as_deref().unwrap_or(item.name.as_str());
+            let want = p.tail.name().unwrap_or(item.name.as_str());
             match by_name.get(&(target, want)).map(Vec::as_slice) {
                 Some([one]) => {
                     edges.push(ReferenceEdge { from: p.from, to: *one, at: at.clone() });

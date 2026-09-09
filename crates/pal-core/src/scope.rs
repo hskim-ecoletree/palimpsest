@@ -182,10 +182,47 @@ pub struct LocalRef {
     /// `a::b` 를 먼저 풀어야 하고 그것은 2 단계 해소다. 실측(잠근 겹): 머리가 임포트인
     /// 경로 호출 893 자리 중 **892** 가 사슬 길이 2 다. 남는 1 건은 이 축 밖이다.
     ///
-    /// ⚠ **[`None`] 은 「꼬리가 없다」이지 「이 언어가 안 만든다」가 아니다.** 항목 축을
-    /// 안 만드는 언어는 어차피 임포트 갈래로 안 가므로 이 값을 안 읽는다.
+    /// ⚠ **[`CallTail::NotACall`] 은 「꼬리가 없다」이지 「이 언어가 안 만든다」가
+    /// 아니다.** 항목 축을 안 만드는 언어는 어차피 임포트 갈래로 안 가므로 이 값을
+    /// 안 읽는다.
     #[serde(default)]
-    pub tail: Option<String>,
+    pub tail: CallTail,
+}
+
+/// 참조에 붙은 **경로 호출의 꼬리** — `S::foo()` 의 `foo`.
+///
+/// # 왜 [`Option`] 이 아닌가
+///
+/// `pal-core` 의 `pub struct` 는 선택 필드를 안 진다(ADR-0005 · `stack` §5.4) —
+/// [`None`] 이 「없음」인지 「안 만듦」인지 구별되지 않기 때문이다. 이 축은 그 물음에
+/// **분명한 답**이 있고, 갈래에 이름을 붙이면 그 답이 타입에 실린다.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum CallTail {
+    /// 이 참조는 **경로 호출의 머리가 아니다.** 값이 빠진 것이 아니라 그 형태가 아니다.
+    #[default]
+    NotACall,
+    /// 경로 호출의 머리이고 꼬리 이름이 이것이다.
+    Tail(String),
+}
+
+impl CallTail {
+    /// 꼬리 이름 — 호출이 아니면 [`None`].
+    ///
+    /// **메서드로 두는 것과 필드로 두는 것은 다르다.** 여기서 나오는 [`None`] 은
+    /// *"이 자리는 호출이 아니다"* 라는 판정이지 안 만든 자리가 아니다.
+    #[must_use]
+    pub fn name(&self) -> Option<&str> {
+        match self {
+            Self::NotACall => None,
+            Self::Tail(t) => Some(t.as_str()),
+        }
+    }
+
+    /// 경로 호출의 머리인가.
+    #[must_use]
+    pub const fn is_call(&self) -> bool {
+        matches!(self, Self::Tail(_))
+    }
 }
 
 /// 이름 하나가 어디로 해소됐나.
@@ -596,14 +633,14 @@ mod tests {
         let mut c = ScopeChain::new();
         c.declare(모듈, 이름("x", 0, false));
         c.refs.push(LocalRef {
-            tail: None,
+            tail: CallTail::NotACall,
             name: "x".to_owned(),
             namespace: Namespace::Value,
             at: 5,
             resolved: RefResolution::Bound { scope: 모듈, binding: 0 },
         });
         c.refs.push(LocalRef {
-            tail: None,
+            tail: CallTail::NotACall,
             name: "console".to_owned(),
             namespace: Namespace::Value,
             at: 9,

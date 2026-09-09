@@ -32,7 +32,8 @@
 use std::collections::{HashMap, HashSet};
 
 use pal_core::{
-    BoundSymbol, LocalIx, LocalRef, Namespace, ResolveRule, ScopeBinding, ScopeChain, ScopeIx,
+    BoundSymbol, CallTail, LocalIx, LocalRef, Namespace, ResolveRule, ScopeBinding, ScopeChain,
+    ScopeIx,
     ScopeKind,
 };
 use tree_sitter::Node;
@@ -164,7 +165,7 @@ pub(crate) struct Builder<'a, 'm> {
     chain: ScopeChain,
     unnameable: Vec<usize>,
     /// (바이트, 이름, 이름 공간, 그 자리의 스코프) — 해소는 선언을 다 모은 뒤에 한다.
-    refs: Vec<(usize, String, Namespace, ScopeIx, Option<String>)>,
+    refs: Vec<(usize, String, Namespace, ScopeIx, CallTail)>,
     /// 객체 리터럴 축약 속성의 바이트 — **정규화가 이 자리를 지우면 안 된다.**
     protected: HashSet<usize>,
     /// 1 차가 연 스코프 — **노드 신원으로 잡는다.**
@@ -302,7 +303,9 @@ impl Builder<'_, '_> {
             if rules.protects(node) {
                 self.protected.insert(node.start_byte());
             }
-            let tail = rules.call_tail(node).map(|t| self.text(t));
+            let tail = rules
+                .call_tail(node)
+                .map_or(CallTail::NotACall, |t| CallTail::Tail(self.text(t)));
             self.refs.push((node.start_byte(), self.text(node), namespace, here, tail));
         }
         let mut cursor = node.walk();

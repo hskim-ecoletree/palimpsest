@@ -61,7 +61,7 @@ pub struct Attached {
     /// 이번에 돈 파일 간 해소의 회계. **[`None`] 은 「안 돌렸다」이지 「0 건」이 아니다** —
     /// [`How::SymbolsOnly`]·[`How::ReadOnly`] 는 그 패스를 원리상 안 지난다.
     pub cross: Option<pal_core::CrossFileReport>,
-    /// 이번에 선 파일 **간** 엣지. 파일 안 엣지와 갈라 센다.
+    /// 이번에 만들어진 파일 **간** 엣지. 파일 안 엣지와 갈라 헤아린다.
     pub cross_edges: usize,
 }
 

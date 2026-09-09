@@ -17,6 +17,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::capable::Capable;
+use crate::scope::CallTail;
 use crate::coord::{ExportDigest, SymbolId};
 use crate::ledger::{ExtractGrade, LanguageId};
 use crate::repo::{RepoPath, Snapshot};
@@ -157,16 +158,16 @@ pub struct PendingImportRef {
     ///
     /// | 값 | 2 층이 무엇을 찾나 | 축2 의 갈래 |
     /// |---|---|---|
-    /// | [`None`] | 임포트 항목 자체 — [`crate::ImportedItem::name`] | **ⓐ** |
-    /// | [`Some`] | **대상 파일에서만** 그 꼬리 이름 | **ⓑ** |
+    /// | [`CallTail::NotACall`] | 임포트 항목 자체 — [`crate::ImportedItem::name`] | **ⓐ** |
+    /// | [`CallTail::Tail`] | **대상 파일에서만** 그 꼬리 이름 | **ⓑ** |
     ///
     /// ★ **이 칸이 ⓐ 와 ⓑ 를 가르는 유일한 자다.** 없으면 두 갈래가 한 수로 뭉개지고
     /// `E2` 의 두 하한을 따로 못 잰다 — `E2-b` 가 이름 붙인 형태다.
     ///
-    /// ⚠ **[`crate::RefCounts`] 에는 이 갈래가 안 선다** — `total() == refs.len()` 이
-    /// 깨진다. 세는 자리는 2 층 산출이다([`crate::CrossFileReport`]).
+    /// ⚠ **[`crate::RefCounts`] 에는 이 갈래가 안 만들어진다** — `total() == refs.len()`
+    /// 이 깨진다. 헤아리는 자리는 2 층 산출이다([`crate::CrossFileReport`]).
     #[serde(default)]
-    pub tail: Option<String>,
+    pub tail: CallTail,
 }
 
 /// [`file_edges`] 가 파일 하나에서 산출하는 것 셋.
@@ -544,7 +545,7 @@ mod tests {
 
     fn 참조(name: &str, at: usize, resolved: RefResolution) -> crate::LocalRef {
         crate::LocalRef {
-            tail: None,
+            tail: CallTail::NotACall,
             name: name.to_owned(),
             namespace: crate::Namespace::Value,
             at,
