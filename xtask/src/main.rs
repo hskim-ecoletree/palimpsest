@@ -641,6 +641,7 @@ fn check(root: &Path) -> Result<()> {
         ("사라진 문서를 현재형으로 안 부른다", check_stale_citation(root)),
         ("회차 레코드", check_round_records(root)),
         ("원장 둘 대조", check_ledger_pair(root)),
+        ("원장 enum 두 자리", check_ledger_enum_pair(root)),
         ("발견이 닫혔나", check_finding_closure(root)),
         ("선언 목록이 닫혀 있나", check_declared_lists(root)),
         ("완수 조건 설계 평가", check_condition_audit(root)),
@@ -6270,5 +6271,131 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
         if 형식이전.is_empty() { "0".to_string() } else { 형식이전.join(" · ") },
         if 게이트없음.is_empty() { "0".to_string() } else { 게이트없음.join(" · ") },
         if 철회.is_empty() { "0".to_string() } else { 철회.join(" · ") },
+    ))
+}
+
+/// **원장 enum 이 두 자리에 적혀 있다 — 그 둘이 같은지 잰다.**
+///
+/// 축 아홉(`출처`·`모집단`·`유효성`·`해악도`·`처분`·`승격됨`·`조건변경`·`사전처분`·`상태`)의
+/// 허용값이 `.claude/skills/round/bin/record.py` 의 `ENUM` 과
+/// `crates/pal-cli/src/round/status.rs` 의 `findings_state` 에 **각각 손으로 적혀 있다.**
+/// `AGENTS.md` 가 *"같은 것을 두 곳에 적으면 그것이 곧 drift 다"* 라고 적는 바로 그 형태다.
+///
+/// ★ **그 drift 가 실제로 일어났고 회차 하나를 원리상 못 닫게 만들었다.**
+/// `조건평가`·`정반합` 이 파이썬 쪽에 먼저 들어오고(`7c1f7f4` 2026-09-06) Rust 쪽은
+/// 넷에 머물러(`3134a25` 2026-09-02), 그 값을 쓴 회차의 원장 123 행 중 97 행이
+/// `findings_state` 의 조기 반환에 걸렸다. `findings_current` 가 영원히 `false` 라
+/// `CompletionState::Complete` 에 **도달하는 길이 없었다.** 조건을 다 닫아도 못 닫는다.
+///
+/// ⚠ **한 자리로 합치는 것이 이 검사보다 낫지만 그 길이 지금 없다** — Rust 의
+/// `matches!` 는 컴파일 시점 리터럴을 요구하고 파이썬 목록은 실행 시점에 온다.
+/// **그래서 합치는 대신 갈리는 것을 빨갛게 만든다.**
+///
+/// 음성 대조 — `status.rs` 의 어느 축에서든 값 하나를 지우면 이 검사가 그 축을 짚어야 한다.
+fn check_ledger_enum_pair(root: &Path) -> Result<String> {
+    /// 축 이름 → `status.rs` 에서 그 축의 `Some(...)` 앞에 오는 표지.
+    ///
+    /// 축 일곱은 `row.get("<축>")` 으로 읽고 둘(`상태`·`해악도`)은 먼저 변수에 담는다.
+    /// 표지를 손으로 적지만 **모집단은 스키마가 준다** — 스키마에 있는 축이 여기서
+    /// 하나라도 안 잡히면 아래에서 실패로 산출한다.
+    const 표지: &[(&str, &str)] = &[
+        ("출처", r#"row.get("출처").and_then(serde_json::Value::as_str),"#),
+        ("모집단", r#"row.get("모집단").and_then(serde_json::Value::as_str),"#),
+        ("유효성", r#"row.get("유효성").and_then(serde_json::Value::as_str),"#),
+        ("처분", r#"row.get("처분").and_then(serde_json::Value::as_str),"#),
+        ("승격됨", r#"row.get("승격됨").and_then(serde_json::Value::as_str),"#),
+        ("조건변경", r#"row.get("조건변경").and_then(serde_json::Value::as_str),"#),
+        ("사전처분", r#"row.get("사전처분").and_then(serde_json::Value::as_str),"#),
+        ("상태", "matches!(state, "),
+        ("해악도", "matches!(severity, "),
+    ];
+    const 소비자: &str = "crates/pal-cli/src/round/status.rs";
+
+    let 스키마 = 스키마를_읽는다(root)?;
+    let enum_들 = 스키마
+        .get("enum")
+        .and_then(serde_json::Value::as_object)
+        .context("`--schema` 출력에 `enum` 객체가 없다")?;
+    if enum_들.is_empty() {
+        bail!("`--schema` 의 `enum` 이 비었다 — 이 검사가 아무것도 안 잰다");
+    }
+
+    let 경로 = root.join(소비자);
+    let 소스 = std::fs::read_to_string(&경로).with_context(|| format!("{소비자} 를 못 읽었다"))?;
+
+    let mut problems = Vec::new();
+    let mut 잰_축 = 0usize;
+
+    for (축, 원문값) in enum_들 {
+        let 기대: Vec<&str> = 원문값
+            .as_array()
+            .map(|values| values.iter().filter_map(serde_json::Value::as_str).collect())
+            .unwrap_or_default();
+        if 기대.is_empty() {
+            problems.push(format!("`{축}` 축의 스키마 값이 비었다"));
+            continue;
+        }
+        let Some((_, 표지문)) = 표지.iter().find(|(이름, _)| 이름 == 축) else {
+            problems.push(format!(
+                "`{축}` 축이 스키마에 있는데 이 검사가 `{소비자}` 에서 그것을 찾는 표지를 모른다 \
+                 — 축이 늘었으면 `표지` 에 더한다"
+            ));
+            continue;
+        };
+        let Some(시작) = 소스.find(표지문) else {
+            problems.push(format!(
+                "`{소비자}` 에서 `{축}` 축을 못 찾았다 (표지 `{표지문}`) — \
+                 그 자리가 사라졌으면 이 검사가 그 축을 안 재고 있다"
+            ));
+            continue;
+        };
+        let 꼬리 = &소스[시작 + 표지문.len()..];
+        let Some(some_시작) = 꼬리.find("Some(") else {
+            problems.push(format!("`{축}` 축의 표지 뒤에 `Some(` 이 없다"));
+            continue;
+        };
+        let 안 = &꼬리[some_시작 + "Some(".len()..];
+        let Some(끝) = 안.find(')') else {
+            problems.push(format!("`{축}` 축의 `Some(` 이 안 닫힌다"));
+            continue;
+        };
+        let mut 실제: Vec<&str> = Vec::new();
+        let mut 나머지 = &안[..끝];
+        while let Some(열림) = 나머지.find('"') {
+            나머지 = &나머지[열림 + 1..];
+            let Some(닫힘) = 나머지.find('"') else { break };
+            실제.push(&나머지[..닫힘]);
+            나머지 = &나머지[닫힘 + 1..];
+        }
+        잰_축 += 1;
+
+        let 빠진: Vec<&str> = 기대.iter().copied().filter(|v| !실제.contains(v)).collect();
+        let 남는: Vec<&str> = 실제.iter().copied().filter(|v| !기대.contains(v)).collect();
+        if !빠진.is_empty() {
+            problems.push(format!(
+                "`{축}`: `{스키마_원천}` 에 있는데 `{소비자}` 에 없다 — {}",
+                빠진.join(" · ")
+            ));
+        }
+        if !남는.is_empty() {
+            problems.push(format!(
+                "`{축}`: `{소비자}` 에 있는데 `{스키마_원천}` 에 없다 — {}",
+                남는.join(" · ")
+            ));
+        }
+    }
+
+    if 잰_축 == 0 {
+        bail!("축을 하나도 못 쟀다 — 0 건은 「안 부른다」가 아니라 「안 봤다」다");
+    }
+    if !problems.is_empty() {
+        bail!(
+            "원장 enum 이 두 자리에서 갈렸다 ({}건):\n  - {}",
+            problems.len(),
+            problems.join("\n  - ")
+        );
+    }
+    Ok(format!(
+        "축 {잰_축}개 — `{스키마_원천}` ↔ `{소비자}` 값 집합이 축마다 같다"
     ))
 }

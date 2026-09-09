@@ -484,7 +484,13 @@ fn findings_state(dir: &Path) -> Result<(bool, usize), StatusError> {
         }
         if !matches!(
             row.get("출처").and_then(serde_json::Value::as_str),
-            Some("독립리뷰" | "사전부검" | "인터뷰" | "실측")
+            // ⚠ **이 목록은 `.claude/skills/round/bin/record.py` 의 `ENUM["출처"]` 와 같은
+            //   축이고 두 자리에 적혀 있다.** 한 번 갈렸다 — `조건평가`·`정반합` 이 파이썬 쪽에
+            //   먼저 들어오고(`7c1f7f4`) 여기(`3134a25`)는 넷에 머물러, 그 값을 쓴 회차의
+            //   원장이 통째로 `findings_current=false` 가 됐다. 그러면 그 회차는 조건을 다
+            //   닫아도 `CompletionState::Complete` 에 **원리상 도달하지 못한다.**
+            //   갈림을 다시 열지 않도록 `cargo xtask check` 의 「원장 enum 두 자리」가 잰다.
+            Some("독립리뷰" | "사전부검" | "인터뷰" | "실측" | "정반합" | "조건평가")
         ) || !matches!(
             row.get("모집단").and_then(serde_json::Value::as_str),
             Some("원의도" | "저장소" | "자기장치" | "회차기록" | "규약")
