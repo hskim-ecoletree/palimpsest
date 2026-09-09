@@ -166,6 +166,26 @@ pub struct LocalRef {
     /// 참조가 일어난 바이트.
     pub at: usize,
     pub resolved: RefResolution,
+    /// 이 참조가 **경로 호출의 머리**일 때 그 꼬리 이름 — `S::foo()` 의 `foo`.
+    ///
+    /// # 왜 꼬리를 참조로 안 만들고 머리에 붙이나 (2026-09-09 · `A7` 갈래 (다2))
+    ///
+    /// 꼬리를 참조로 세면 **같은 파일의 동명 선언으로 해소돼 조용한 오답**이 된다 —
+    /// `crates/pal-extract/src/rust_scopes.rs` 의 `경로_꼬리인가` 가 그 까닭을 지고,
+    /// 그 자리를 끄면 실측으로 잠근 겹에서 31 건이 파일 안 선언에 잘못 붙는다.
+    /// **꼬리가 무엇인지는 머리를 풀어야 알고, 머리를 푸는 것은 2 층이다.**
+    ///
+    /// 그래서 꼬리는 참조가 아니라 **머리 참조에 실려 나가는 값**이다. 참조 자리의
+    /// 수는 한 건도 안 늘고, [`crate::RefCounts::total`] 의 불변식도 그대로다.
+    ///
+    /// ⚠ **사슬 길이가 정확히 2 인 것만 싣는다** — `a::b::c()` 의 `c` 를 찾으려면
+    /// `a::b` 를 먼저 풀어야 하고 그것은 2 단계 해소다. 실측(잠근 겹): 머리가 임포트인
+    /// 경로 호출 893 자리 중 **892** 가 사슬 길이 2 다. 남는 1 건은 이 축 밖이다.
+    ///
+    /// ⚠ **[`None`] 은 「꼬리가 없다」이지 「이 언어가 안 만든다」가 아니다.** 항목 축을
+    /// 안 만드는 언어는 어차피 임포트 갈래로 안 가므로 이 값을 안 읽는다.
+    #[serde(default)]
+    pub tail: Option<String>,
 }
 
 /// 이름 하나가 어디로 해소됐나.
@@ -576,12 +596,14 @@ mod tests {
         let mut c = ScopeChain::new();
         c.declare(모듈, 이름("x", 0, false));
         c.refs.push(LocalRef {
+            tail: None,
             name: "x".to_owned(),
             namespace: Namespace::Value,
             at: 5,
             resolved: RefResolution::Bound { scope: 모듈, binding: 0 },
         });
         c.refs.push(LocalRef {
+            tail: None,
             name: "console".to_owned(),
             namespace: Namespace::Value,
             at: 9,

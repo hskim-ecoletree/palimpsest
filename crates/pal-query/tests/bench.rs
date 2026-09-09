@@ -131,7 +131,7 @@ fn 한_규모(n: usize) -> 회차값 {
     let _ = std::fs::remove_dir_all(&dir);
     let p = Projection::open(&dir.join("index.redb")).expect("2층");
     let files = 그래프(n);
-    p.stitch("bench", &files, 1_000).expect("스티칭");
+    p.stitch("bench", &files, 1_000, &스냅샷()).expect("스티칭");
 
     let 대상: Vec<SymbolId> = files.iter().map(|f| f.symbols[0].id).collect();
     let budget = Budget::new(
@@ -162,7 +162,7 @@ fn 한_규모(n: usize) -> 회차값 {
                 })
                 .sum()
         }),
-        재구축: 잰다("④ 전체 재구축", || p.stitch("bench", &files, 1_000).expect("스티칭").symbols),
+        재구축: 잰다("④ 전체 재구축", || p.stitch("bench", &files, 1_000, &스냅샷()).expect("스티칭").symbols),
     };
     let _ = std::fs::remove_dir_all(&dir);
     out

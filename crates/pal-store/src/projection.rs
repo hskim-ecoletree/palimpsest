@@ -40,8 +40,8 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 use pal_core::{
-    FileRow, ImportSet, PendingImportRef, QueryLogEntry, ReferenceEdge, RepoPath, Slot,
-    SymbolId, SymbolNode,
+    CrossFileInput, CrossFileReport, FileRow, ImportSet, PendingImportRef, QueryLogEntry,
+    ReferenceEdge, RepoPath, Slot, Snapshot, SymbolId, SymbolNode,
 };
 use redb::{
     Database, MultimapTableDefinition, MultimapTableHandle, ReadOnlyDatabase, ReadableDatabase,
@@ -153,7 +153,7 @@ pub struct FileStitch {
 
 /// 스티칭 한 회차의 회계. **커밋 수가 여기 있는 이유는 `[f05.2.pass]` ③ 이다** —
 /// 배치를 넣었다는 주장은 커밋 수를 세지 않으면 검사되지 않는다.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize)]
 pub struct StitchReport {
     pub files: usize,
     pub symbols: usize,
@@ -162,6 +162,13 @@ pub struct StitchReport {
     /// **배치 커밋의 수.** 이 값이 없으면 *"배치를 넣었다"* 는 주장뿐이다
     /// (`[f05.2.pass]` ③).
     pub batch_commits: usize,
+    /// 파일 **경계를 넘은** 엣지. [`Self::edges`] 와 갈라 센다.
+    ///
+    /// ⚠ **합치면 `E2` 의 두 하한을 못 잰다** — 파일 안 4,294 건이 파일 간 0 건을
+    /// 덮어 *"엣지가 많다"* 로 읽힌다. 그것이 이 회차 착수 관측의 형태다.
+    pub cross_edges: usize,
+    /// 파일 간 해소의 갈래별 회계 — ⓐ·ⓑ 의 분모와 산출, 못 선 까닭.
+    pub cross: CrossFileReport,
     /// 전체 커밋 수 — 무대 준비 1 + 배치 N + 교체 1.
     pub commits: usize,
 }
@@ -253,6 +260,7 @@ impl Projection {
         built_for: &str,
         files: &[FileStitch],
         batch_files: usize,
+        at: &Snapshot,
     ) -> Result<StitchReport, ProjectionError> {
         let batch = batch_files.max(1);
         let mut report = StitchReport::default();
@@ -314,7 +322,47 @@ impl Projection {
             report.batch_commits += 1;
         }
 
-        // ③ **한 트랜잭션에서 교체한다.** 읽는 쪽은 옛 세대 전체 아니면 새 세대 전체다.
+        // ③ **파일 경계를 넘는다** — F07. 여기가 그 자리인 까닭은 하나다: 이 함수만이
+        //    저장소 전체의 심볼을 한 번에 본다. 배치 루프 안에서는 원리상 못 한다.
+        let inputs: Vec<CrossFileInput> = files
+            .iter()
+            .map(|f| CrossFileInput {
+                path: f.file.path.clone(),
+                // **`Slot::NotBuilt` 를 빈 값으로 뭉개지 않는다** — 항목 축을 안 만드는
+                // 언어는 임포트가 0 건인 것이 아니라 잴 수 없는 것이고, 그 파일의
+                // `pending` 도 원리상 비어 있어 이 패스에 안 들어온다.
+                imports: match &f.imports {
+                    Slot::Built(set) => match &set.items {
+                        Slot::Built(v) => v.clone(),
+                        Slot::NotBuilt => Vec::new(),
+                    },
+                    Slot::NotBuilt => Vec::new(),
+                },
+                pending: f.pending.clone(),
+            })
+            .collect();
+        let all: Vec<pal_core::SymbolNode> =
+            files.iter().flat_map(|f| f.symbols.iter().cloned()).collect();
+        let (cross, cross_report) = pal_core::cross_file_edges(&inputs, &all, at);
+        report.cross = cross_report;
+        if !cross.is_empty() {
+            let write = self.write()?;
+            {
+                let mut out = write.open_multimap_table(EDGE_OUT_STAGE).map_err(tx)?;
+                let mut into = write.open_multimap_table(EDGE_IN_STAGE).map_err(tx)?;
+                for e in &cross {
+                    out.insert(e.from.as_bytes().as_slice(), e.to.as_bytes().as_slice())
+                        .map_err(tx)?;
+                    into.insert(e.to.as_bytes().as_slice(), e.from.as_bytes().as_slice())
+                        .map_err(tx)?;
+                    report.cross_edges += 1;
+                }
+            }
+            write.commit().map_err(tx)?;
+            report.commits += 1;
+        }
+
+        // ④ **한 트랜잭션에서 교체한다.** 읽는 쪽은 옛 세대 전체 아니면 새 세대 전체다.
         self.swap(built_for)?;
         report.commits += 1;
 

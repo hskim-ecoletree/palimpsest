@@ -151,6 +151,22 @@ pub struct PendingImportRef {
     pub local: String,
     /// 참조가 일어난 바이트.
     pub at: usize,
+    /// 이 참조가 **경로 호출의 머리**일 때 그 꼬리 이름 — `S::foo()` 의 `foo`.
+    ///
+    /// [`crate::LocalRef::tail`] 이 그대로 실려 온다. 2 층이 이 값으로 갈래를 가른다:
+    ///
+    /// | 값 | 2 층이 무엇을 찾나 | 축2 의 갈래 |
+    /// |---|---|---|
+    /// | [`None`] | 임포트 항목 자체 — [`crate::ImportedItem::name`] | **ⓐ** |
+    /// | [`Some`] | **대상 파일에서만** 그 꼬리 이름 | **ⓑ** |
+    ///
+    /// ★ **이 칸이 ⓐ 와 ⓑ 를 가르는 유일한 자다.** 없으면 두 갈래가 한 수로 뭉개지고
+    /// `E2` 의 두 하한을 따로 못 잰다 — `E2-b` 가 이름 붙인 형태다.
+    ///
+    /// ⚠ **[`crate::RefCounts`] 에는 이 갈래가 안 선다** — `total() == refs.len()` 이
+    /// 깨진다. 세는 자리는 2 층 산출이다([`crate::CrossFileReport`]).
+    #[serde(default)]
+    pub tail: Option<String>,
 }
 
 /// [`file_edges`] 가 파일 하나에서 산출하는 것 셋.
@@ -343,6 +359,7 @@ pub fn file_edges(
                                 from,
                                 local: r.name.clone(),
                                 at: r.at,
+                                tail: r.tail.clone(),
                             });
                         } else {
                             // 어느 심볼 안에도 없는 임포트 참조 — 출발점이 없어 2 층도
@@ -527,6 +544,7 @@ mod tests {
 
     fn 참조(name: &str, at: usize, resolved: RefResolution) -> crate::LocalRef {
         crate::LocalRef {
+            tail: None,
             name: name.to_owned(),
             namespace: crate::Namespace::Value,
             at,

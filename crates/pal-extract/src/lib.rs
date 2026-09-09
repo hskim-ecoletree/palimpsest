@@ -162,8 +162,24 @@ pub const GRAMMAR_REV: &str = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e";
 /// 이 줄을 문자열로 찾아 변이시켜 「축을 움직였는데 캐시가 적중하나」를 재고, 찾을 것이
 /// 없으면 `어긋남` 을 적고 **비-0 으로 끝난다.** 조용히 꺼지는 것이 아니라 빨개진다.
 ///
+/// # `f07-import-items` → `f08-call-tails` (2026-09-09 · #134 · `A7` 갈래 (다2))
+///
+/// 일곱째다. **[`pal_core::ScopeChain`] 의 행 모양이 바뀌었다** —
+/// [`pal_core::LocalRef`] 에 [`tail`](pal_core::LocalRef::tail) 이 붙었다. 경로 호출의
+/// 꼬리(`S::foo()` 의 `foo`)를 **참조로 만들지 않고** 머리 참조에 실어 2 층으로 보내는
+/// 자리다. 꼬리를 참조로 세면 같은 파일의 동명 선언에 붙어 조용한 오답이 되고(실측 31
+/// 건), 그것이 `경로_꼬리_배제` 가 서 있는 까닭이다. **그 배제는 안 끈다.**
+///
+/// 안 올리면 **옛 캐시 항목이 꼬리 없이 되살아난다.** `ScopeChain` 은 `CachedGraph` 의
+/// `scopes` 슬롯에 postcard 로 저장되고 그것은 자리 기반이라, 옛 바이트를 새 타입으로
+/// 읽으면 실패하거나 — 더 나쁘게 — `Option` 자리를 뒤 필드로 읽는다. 그러면 파일 간
+/// 엣지가 **캐시가 적중한 파일에서만 안 서고**, 그 어긋남은 화면 어디에도 안 나온다.
+///
+/// ⚠ **`body_digest` 는 안 움직인다.** 꼬리는 심볼 요약의 입력이 아니다 — 결박 30 건이
+/// `fresh` 25 · `stale` 5 그대로여야 한다(`D1`). 움직이면 거기서 멈추고 올린다.
+///
 /// [`FileOutcome`]: crate::FileOutcome
-pub const EXTRACTOR_REV: &str = "f07-import-items";
+pub const EXTRACTOR_REV: &str = "f08-call-tails";
 
 #[must_use]
 pub const fn version() -> ExtractorVersion {

@@ -58,6 +58,11 @@ pub struct Attached {
     pub indexed: usize,
     /// 이 답이 선 스냅샷의 이름. 2층의 `built_for` 와 **대조하는 값**이다.
     pub built_for: String,
+    /// 이번에 돈 파일 간 해소의 회계. **[`None`] 은 「안 돌렸다」이지 「0 건」이 아니다** —
+    /// [`How::SymbolsOnly`]·[`How::ReadOnly`] 는 그 패스를 원리상 안 지난다.
+    pub cross: Option<pal_core::CrossFileReport>,
+    /// 이번에 선 파일 **간** 엣지. 파일 안 엣지와 갈라 센다.
+    pub cross_edges: usize,
 }
 
 impl Attached {
@@ -80,14 +85,25 @@ impl Attached {
 /// 2층을 열지 못하거나 세우지 못하면.
 pub fn attach(index: &Path, report: &LedgerReport, how: How) -> Result<Attached> {
     let built_for = report.ledger.snapshot.to_string();
+    // **스티칭을 안 거친 문에서는 `None` 이다** — 0 이 아니다. `SymbolsOnly` 는 파일
+    // 간 해소를 원리상 안 돌리고, 0 으로 적으면 *"엣지가 0 건"* 과 *"안 돌렸다"* 가
+    // 같은 값이 된다(`ADR-0002`).
+    let mut cross: Option<pal_core::CrossFileReport> = None;
+    let mut cross_edges = 0usize;
     let (projection, indexed) = match how {
         How::Stitching => {
             let p = Projection::open(index).context("2층을 열지 못했다")?;
-            let n = p
-                .stitch(&built_for, &report.stitches, PROVISIONAL_STITCH_BATCH)
-                .context("2층을 세우지 못했다")?
-                .symbols;
-            (p, n)
+            let r = p
+                .stitch(
+                    &built_for,
+                    &report.stitches,
+                    PROVISIONAL_STITCH_BATCH,
+                    &report.ledger.snapshot,
+                )
+                .context("2층을 세우지 못했다")?;
+            cross = Some(r.cross.clone());
+            cross_edges = r.cross_edges;
+            (p, r.symbols)
         }
         How::SymbolsOnly => {
             let p = Projection::open(index).context("2층을 열지 못했다")?;
@@ -101,5 +117,5 @@ pub fn attach(index: &Path, report: &LedgerReport, how: How) -> Result<Attached>
             (p, n)
         }
     };
-    Ok(Attached { projection, indexed, built_for })
+    Ok(Attached { projection, indexed, built_for, cross, cross_edges })
 }

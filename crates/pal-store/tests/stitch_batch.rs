@@ -74,7 +74,7 @@ fn 배치가_실제로_나뉜다() {
     let p = Projection::open(&path).expect("2층");
     let files: Vec<FileStitch> = (0..5).map(파일치).collect();
 
-    let 나뉨 = p.stitch("s", &files, 2).expect("스티칭");
+    let 나뉨 = p.stitch("s", &files, 2, &스냅샷()).expect("스티칭");
     // 파일 5 · 배치 2 → **배치 커밋 셋**(2+2+1). 그리고 무대 준비 1 + 교체 1.
     assert_eq!(나뉨.batch_commits, 3, "배치가 안 나뉘었다");
     assert_eq!(나뉨.commits, 5, "무대 준비와 교체를 안 셌다");
@@ -84,7 +84,7 @@ fn 배치가_실제로_나뉜다() {
 
     // ── 음성 대조 — **배치를 안 나누면 커밋이 하나여야 한다.**
     // 늘 여럿이면 위의 3 이 배치의 증거가 아니다.
-    let 안나뉨 = p.stitch("s", &files, 1_000).expect("스티칭");
+    let 안나뉨 = p.stitch("s", &files, 1_000, &스냅샷()).expect("스티칭");
     assert_eq!(안나뉨.batch_commits, 1, "배치 크기를 무시하고 나눴다");
 
     // 그리고 **값이 같다** — 배치 크기는 산출을 안 바꾼다.
@@ -110,11 +110,11 @@ fn 스티칭은_옛_세대를_남기지_않는다() {
     let path = 방("replace");
     let p = Projection::open(&path).expect("2층");
     let 다섯: Vec<FileStitch> = (0..5).map(파일치).collect();
-    p.stitch("s1", &다섯, 2).expect("첫 회");
+    p.stitch("s1", &다섯, 2, &스냅샷()).expect("첫 회");
     assert_eq!(p.file_count().expect("파일"), 5);
 
     let 둘: Vec<FileStitch> = (0..2).map(파일치).collect();
-    p.stitch("s2", &둘, 2).expect("둘째 회");
+    p.stitch("s2", &둘, 2, &스냅샷()).expect("둘째 회");
     assert_eq!(p.file_count().expect("파일"), 2, "옛 세대가 남았다");
     assert_eq!(p.count().expect("심볼"), 4, "옛 심볼이 남았다");
     assert_eq!(p.edge_count().expect("엣지"), 2, "옛 엣지가 남았다");
@@ -129,7 +129,7 @@ fn 파일이_없어도_교체가_성립한다() {
     // 첫 스티칭이 터진다.**
     let path = 방("empty");
     let p = Projection::open(&path).expect("2층");
-    let r = p.stitch("s", &[], 1_000).expect("빈 스티칭");
+    let r = p.stitch("s", &[], 1_000, &스냅샷()).expect("빈 스티칭");
     assert_eq!(r.batch_commits, 0);
     assert_eq!(p.file_count().expect("파일"), 0);
     assert!(!p.rebuilding().expect("무대"));

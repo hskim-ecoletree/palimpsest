@@ -83,6 +83,17 @@ pub(crate) trait ScopeRules {
 
     /// 참조로 세되 **정규화가 지우면 안 되는** 자리인가.
     fn protects(&self, node: Node<'_>) -> bool;
+
+    /// 이 참조가 **경로 호출의 머리**라면 그 꼬리 노드 — `S::foo()` 의 `foo`.
+    ///
+    /// 꼬리를 참조로 만들지 않고 머리에 실어 보내는 자리다. 까닭은
+    /// [`pal_core::LocalRef::tail`] 이 진다 — 꼬리를 참조로 세면 같은 파일의 동명
+    /// 선언에 잘못 붙는다.
+    ///
+    /// **기본값은 [`None`] 이다.** 이 축을 안 만드는 언어는 구현하지 않는다.
+    fn call_tail<'t>(&self, _node: Node<'t>) -> Option<Node<'t>> {
+        None
+    }
 }
 
 /// 이 파일의 스코프 체인 + 이름을 못 잡은 자리들.
@@ -139,10 +150,10 @@ pub(crate) fn build(
     let mut ref_at = HashMap::with_capacity(b.refs.len());
     b.refs.sort_by_key(|(at, ..)| *at);
     let rule = rules.rule();
-    for (at, name, namespace, scope) in b.refs {
+    for (at, name, namespace, scope, tail) in b.refs {
         let resolved = chain.resolve_with(scope, &name, namespace, at, rule);
         ref_at.insert(at, chain.refs.len());
-        chain.refs.push(LocalRef { name, namespace, at, resolved });
+        chain.refs.push(LocalRef { name, namespace, at, resolved, tail });
     }
     Scoped { chain, unnameable: b.unnameable, ref_at, protected: b.protected }
 }
@@ -153,7 +164,7 @@ pub(crate) struct Builder<'a, 'm> {
     chain: ScopeChain,
     unnameable: Vec<usize>,
     /// (바이트, 이름, 이름 공간, 그 자리의 스코프) — 해소는 선언을 다 모은 뒤에 한다.
-    refs: Vec<(usize, String, Namespace, ScopeIx)>,
+    refs: Vec<(usize, String, Namespace, ScopeIx, Option<String>)>,
     /// 객체 리터럴 축약 속성의 바이트 — **정규화가 이 자리를 지우면 안 된다.**
     protected: HashSet<usize>,
     /// 1 차가 연 스코프 — **노드 신원으로 잡는다.**
@@ -291,7 +302,8 @@ impl Builder<'_, '_> {
             if rules.protects(node) {
                 self.protected.insert(node.start_byte());
             }
-            self.refs.push((node.start_byte(), self.text(node), namespace, here));
+            let tail = rules.call_tail(node).map(|t| self.text(t));
+            self.refs.push((node.start_byte(), self.text(node), namespace, here, tail));
         }
         let mut cursor = node.walk();
         let kids: Vec<Node<'_>> = node.children(&mut cursor).collect();

@@ -120,6 +120,51 @@ fn 경로_꼬리인가(node: Node<'_>) -> bool {
     })
 }
 
+/// 이 참조가 **경로 호출의 머리**라면 그 꼬리 노드 — `S::foo()` 의 `foo`.
+///
+/// # 규칙은 측정 앞에 등록했다
+///
+/// `.palimpsest/rounds/2026-09-08-cross-file-references/observations/a7-call-preregistration.md`
+/// 의 C-1~C-3 이 정본이고 이 함수가 그 구현이다. 같은 자로 재야 분모와 산출이 안 갈린다.
+///
+/// - **C-1** 머리는 `scoped_identifier`/`scoped_type_identifier` 의 `path` 이고 꼬리는
+///   그 `name` 이다.
+/// - **C-2** 그 사슬 위에 `generic_function` 이 있으면 한 칸 올린다 — `Vec::<u8>::new()`.
+/// - **C-3** 올라간 노드가 `call_expression` 의 `function` 필드여야 한다. 아니면
+///   호출이 아니다 — `S::Assoc` 같은 타입 자리와 `E::Variant` 같은 값 자리가 거기로
+///   떨어지고, 그 둘은 이 회차의 범위 밖이다.
+///
+/// ⚠ **사슬 길이가 정확히 2 인 것만 잡는다** — `a::b::c()` 에서 `a` 를 넘겨받으면 그
+/// 부모의 `name` 은 `b` 이지 `c` 가 아니고, `c` 에 닿으려면 `a::b` 를 먼저 풀어야 한다.
+/// 그것은 2 단계 해소라 이 축 밖이다. 실측(잠근 겹): 머리가 임포트인 경로 호출 893
+/// 자리 중 **892** 가 사슬 길이 2 라 이 좁힘이 버리는 것은 1 건이다.
+///
+/// ⚠ **매크로 `token_tree` 안은 원리상 안 잡힌다** — 그 안에서는 `scoped_identifier`
+/// 가 서지 않아 C-1 이 항등적으로 거짓이다(실측: 잠근 겹에서 0 건). 그 안의 경로 호출
+/// 모양 488 건은 이 축이 못 담는 자리이고, 잔여가 아니라 경계다.
+fn 경로_호출의_꼬리<'t>(head: Node<'t>) -> Option<Node<'t>> {
+    let p = head.parent()?;
+    if !matches!(p.kind(), "scoped_identifier" | "scoped_type_identifier") {
+        return None;
+    }
+    // C-1 — 넘겨받은 것이 `path` 여야 머리다. `name` 이면 그것이 꼬리이고 여기 안 온다.
+    if !필드인가(head, "path") {
+        return None;
+    }
+    let tail = p.child_by_field_name("name")?;
+    // C-2 — `generic_function` 한 칸.
+    let 자리 = p
+        .parent()
+        .filter(|g| g.kind() == "generic_function")
+        .unwrap_or(p);
+    // C-3 — 호출의 `function` 인가.
+    let call = 자리.parent()?;
+    if call.kind() != "call_expression" || !필드인가(자리, "function") {
+        return None;
+    }
+    Some(tail)
+}
+
 /// 매크로 토큰 열 안에서 앞 형제가 `.` 이나 `::` 인가.
 ///
 /// # 같은 규칙이 매크로 안팎에서 반대로 돈다
@@ -303,6 +348,17 @@ impl ScopeRules for RustScopeRules {
     /// `ordinal` 이다(`grade_of(Rust) == L1`).
     fn protects(&self, _node: Node<'_>) -> bool {
         false
+    }
+
+    /// ⚠ **`경로_꼬리_배제` 를 끄지 않는다.** 이 훅은 꼬리를 참조로 만드는 것이 아니라
+    /// 머리 참조에 이름을 **실어 보낸다.** 두 규칙이 반대로 도는 것이 아니라 같은
+    /// 판정을 두 쪽에서 쓰는 것이다 — 배제는 그대로 서고(`skips`), 2 층이 풀 정보만
+    /// 함께 나간다.
+    ///
+    /// **변형 대조에서 `경로_꼬리_배제` 를 끄면 이 훅은 무의미해진다** — 꼬리가 참조로
+    /// 서 버리기 때문이다. 그래도 끄지 않는다: 이 훅은 기준 조합에서만 값을 낸다.
+    fn call_tail<'t>(&self, node: Node<'t>) -> Option<Node<'t>> {
+        경로_호출의_꼬리(node)
     }
 }
 

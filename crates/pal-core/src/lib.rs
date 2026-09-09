@@ -18,6 +18,7 @@ mod catalog;
 mod cascade;
 mod chain;
 mod coord;
+mod cross_file;
 mod derived;
 mod entity;
 mod doctor;
@@ -117,6 +118,9 @@ pub use ledger::{
 pub use schema::{
     AttrDecl, Cardinality, Carried, Carrier, EdgeDecl, EvidenceRule, GradeRule, GraphSchema, NodeDecl,
     NodeStatus, Requirement, SchemaError,
+};
+pub use cross_file::{
+    CrossFileInput, CrossFileReport, Unresolved, cross_file_edges,
 };
 pub use projection::{
     FileNode, FileRow, FileRefs, PendingImportRef, RefCounts, ReferenceEdge, file_edges,
