@@ -32,7 +32,41 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{ImportedItem, PendingImportRef, ReferenceEdge, RepoPath, Snapshot, SymbolId, SymbolNode};
+use serde::{Deserialize, Serialize};
+
+use crate::{ImportedItem, PendingImportRef, RepoPath, Snapshot, SymbolId, SymbolNode};
+
+/// 파일 **경계를 넘은** 참조 엣지 하나.
+///
+/// # 왜 [`crate::ReferenceEdge`] 와 다른 타입인가 (`C3`)
+///
+/// **등급이 다르다.** `REFERENCES` 는 `grade = "scoped"` 로 고정돼 있다 — 스코프
+/// 체인이 후보를 하나로 좁혔다는 뜻이다. 파일 간 엣지는 그 자로 서지 않는다:
+/// 임포트 경로를 파일로 펴고 그 파일 안에서 이름이 유일할 때 서므로 **`exact`** 다.
+///
+/// 같은 라벨에 두 등급을 실을 수는 없다. 등급 칸을 새로 만드는 것은 이 회차의 범위
+/// 밖이고(`## 범위 밖` 이 등급 축을 `#133` 에 주었다), 고정값을 그대로 둔 채 파일 간
+/// 엣지를 밀어 넣으면 **파생 문서가 거짓을 산출한다.** 남는 길이 하나뿐이라 그것을
+/// 골랐다 — `C3` 이 그 사실을 문면으로 적고 `## 차선책` 이 같은 답을 등록해 두었다.
+///
+/// ⚠ **2 층의 저장 자리는 같다.** `EDGE_OUT`/`EDGE_IN` 은 라벨을 안 담고 `(출발, 도착)`
+/// 쌍만 담는다. 라벨이 갈리는 자리는 **스키마와 그래프 뷰**이고, 뷰는 양 끝 심볼의
+/// 파일이 다른가로 두 라벨을 가른다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CrossFileEdge {
+    /// 참조가 **일어난** 심볼 — 엣지의 출발점.
+    pub from: SymbolId,
+    /// 참조가 **가리키는** 다른 파일의 심볼.
+    ///
+    /// **[graph-edge] `REFERENCES_ACROSS`** — `schema/graph.toml`
+    ///
+    /// 표식이 필드에 붙는 것은 `xtask` 의 규약이다 — 엣지는 *"그것을 싣고 있는 자리"*
+    /// 에 표시된다. **이 타입은 노드가 아니라 엣지의 행 자체이므로 자기가 자기
+    /// 운반자다.**
+    pub to: SymbolId,
+    /// 공통 넷의 넷째 — 이 엣지가 선 스냅샷.
+    pub at: Snapshot,
+}
 
 /// 파일 하나가 이 패스에 내놓는 것.
 #[derive(Debug, Clone)]
@@ -289,7 +323,7 @@ pub fn cross_file_edges(
     files: &[CrossFileInput],
     symbols: &[SymbolNode],
     at: &Snapshot,
-) -> (Vec<ReferenceEdge>, CrossFileReport) {
+) -> (Vec<CrossFileEdge>, CrossFileReport) {
     let paths: BTreeSet<&str> = symbols.iter().map(|s| s.path.as_str()).collect();
     let crates = crates_of(&paths);
     // (파일, 이름) → 그 이름의 심볼들. 유일성 판정에 개수가 필요하고, **담은 것**이
@@ -368,7 +402,7 @@ pub fn cross_file_edges(
             //    그 타입으로 가는 엣지가 통째로 사라졌다(2026-09-09 실측: `Root`·`Origin`).
             match by_name.get(&(target, item.name.as_str())).map(Vec::as_slice) {
                 Some([(one, _)]) => {
-                    edges.push(ReferenceEdge { from: p.from, to: *one, at: at.clone() });
+                    edges.push(CrossFileEdge { from: p.from, to: *one, at: at.clone() });
                     report.a_edges += 1;
                 }
                 Some(_) => miss(&mut report, false, Unresolved::Ambiguous),
@@ -396,7 +430,7 @@ pub fn cross_file_edges(
             let 고른 = if 주인.len() == 1 { 주인.as_slice() } else { hits.as_slice() };
             match 고른 {
                 [(one, _)] => {
-                    edges.push(ReferenceEdge { from: p.from, to: *one, at: at.clone() });
+                    edges.push(CrossFileEdge { from: p.from, to: *one, at: at.clone() });
                     report.b_edges += 1;
                 }
                 _ => miss(&mut report, b, Unresolved::Ambiguous),

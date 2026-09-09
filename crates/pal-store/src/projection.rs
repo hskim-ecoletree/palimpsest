@@ -582,6 +582,37 @@ impl Projection {
     ///
     /// # Errors
     /// 읽기가 실패하면.
+    /// 이 투영의 **참조 엣지 전수** — `(출발, 도착)` 쌍.
+    ///
+    /// # 왜 전수가 필요한가
+    ///
+    /// `pal doctor` 의 그래프 뷰가 이것을 싣는다. 뷰가 엣지를 안 읽으면 불변식 ① 이
+    /// `REFERENCES` 에 대해 **모집단 0 · 위반 0** 으로 초록이 되고, 그것이 「없는 것을
+    /// 통과로 헤아리는」 형태다(`C1`·`C2`). 그래서 선언을 뒤집기 **전에** 이 자리가
+    /// 먼저 서야 한다.
+    ///
+    /// ⚠ **한쪽 방향만 읽는다.** `EDGE_OUT` 과 `EDGE_IN` 은 같은 것을 두 번 담으므로
+    /// 둘 다 읽으면 엣지가 두 배가 된다.
+    ///
+    /// # Errors
+    /// 읽기가 실패하거나 열쇠가 심볼 id 가 아니면.
+    pub fn edges(&self) -> Result<Vec<(SymbolId, SymbolId)>, ProjectionError> {
+        let read = self.read()?;
+        let Ok(t) = read.open_multimap_table(EDGE_OUT) else { return Ok(Vec::new()) };
+        let mut out = Vec::new();
+        for row in t.iter().map_err(tx)? {
+            let (k, vs) = row.map_err(tx)?;
+            let Some(from) = symbol_id_of(k.value()) else { continue };
+            for v in vs {
+                let v = v.map_err(tx)?;
+                if let Some(to) = symbol_id_of(v.value()) {
+                    out.push((from, to));
+                }
+            }
+        }
+        Ok(out)
+    }
+
     pub fn callees(&self, id: SymbolId) -> Result<Vec<SymbolId>, ProjectionError> {
         self.adjacent(EDGE_OUT, id)
     }

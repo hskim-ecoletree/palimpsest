@@ -132,17 +132,27 @@ pub fn run(args: Args) -> Result<()> {
 
     let report = ledger::compute(repo_path, rev, cache_dir)?;
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
-    // ⚠ **통째로 다시 만든다 — 그리고 그것이 엣지를 지운다**(F06 게이트 §6-가-2).
-    // §12.7 이 든 네 위협 중 *부분 갱신*은 이 경로가 없어서 이 빌드에서 일어나지
-    // 않는다. **`Stitching` 으로 옮기는 것이 옳지만 그러면 이 명령의 불변식 모집단이
-    // 바뀌고 `[f22.4]` 의 판정이 움직인다** — F22 후속이다.
-    let indexed = attach::attach(&index, &report, attach::How::SymbolsOnly)?.indexed;
+    // ★★ **2026-09-09 에 `SymbolsOnly` 에서 `Stitching` 으로 옮겼다** (`C1`·`C2`).
+    //
+    // 앞 판이 *"`Stitching` 으로 옮기는 것이 옳지만 그러면 이 명령의 불변식 모집단이
+    // 바뀌고 `[f22.4]` 의 판정이 움직인다 — F22 후속이다"* 로 미뤄 둔 자리다.
+    // **이 회차의 `C1`·`C2` 가 정확히 그 모집단 이동을 요구한다** — 불변식 ① 이
+    // `REFERENCES` 를 하나도 안 보는 채로 초록인 것이 「없는 것을 통과로 헤아리는」
+    // 형태이기 때문이다.
+    //
+    // ⚠ **모집단이 움직이는 것은 의도된 것이고 위반이 늘어나는 것은 아니다** —
+    // 그 둘을 가르는 자가 `D2`(위반 수)와 `D2-a`(모집단)다.
+    let attached = attach::attach(&index, &report, attach::How::Stitching)?;
+    let indexed = attached.indexed;
+    // 뷰가 실을 참조 엣지. **읽는 자리가 하나다** — 파일 안과 파일 간이 2 층에서
+    // 이미 한 벌로 서 있으므로 여기서 다시 합치지 않는다.
+    let 참조엣지 = attached.projection.edges().context("2층의 참조 엣지를 읽지 못했다")?;
 
     let intent = IntentStore::open_read_only(&intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;
     let bindings = intent.all().context("결박을 읽지 못했다")?;
 
-    let view = build_view(&report.ledger.snapshot, &report.symbols, &bindings);
+    let view = build_view(&report.ledger.snapshot, &report.symbols, &bindings, &참조엣지);
     let diagnosis = pal_core::doctor(&schema, &view, scope);
 
     let envelope = Envelope::new(
@@ -189,7 +199,12 @@ pub fn run(args: Args) -> Result<()> {
 }
 
 /// 2층·의도 저장소에서 뷰를 세운다.
-fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Binding]) -> GraphView {
+fn build_view(
+    at: &Snapshot,
+    symbols: &[SymbolNode],
+    bindings: &[pal_core::Binding],
+    참조엣지: &[(pal_core::SymbolId, pal_core::SymbolId)],
+) -> GraphView {
     let (repo, tree) = at.entries().next().expect("스냅샷은 비어 있을 수 없다");
     let coord = |s: pal_core::SymbolId| Coord {
         repo: repo.clone(),
@@ -257,6 +272,44 @@ fn build_view(at: &Snapshot, symbols: &[SymbolNode], bindings: &[pal_core::Bindi
         ));
     }
 
+    // ── 참조 엣지 — **2 층에 실제로 서 있는 것**(파일 안 + 파일 간) ─────────
+    //
+    // ★ 이 자리가 서기 전까지 불변식 ① 은 `REFERENCES` 를 **하나도 안 보고** 초록이었다.
+    //   선언만 뒤집으면 모집단 0 · 위반 0 이 되어 「없는 것을 통과로 헤아리는」 형태가
+    //   된다 — 그래서 선언을 뒤집기 전에 값을 먼저 실었다(`C2`·`C2-a`).
+    //
+    // 등급이 `Exact` 인 까닭: 이 빌드가 산출하는 참조 엣지는 **후보가 유일할 때만**
+    // 만들어진다. 파일 안은 스코프 해소가 하나를 고른 것이고, 파일 간은
+    // `pal_core::cross_file_edges` 가 후보 둘이면 버린다(`A6`).
+    // ★ **라벨을 양 끝의 파일로 가른다.** 2 층은 라벨을 안 담고 `(출발, 도착)` 쌍만
+    //   담으므로, 파일 간인지는 여기서 심볼을 보고 판정한다. 등급이 갈리는 것이 두
+    //   라벨을 나눈 이유이므로(`C3`) 이 자리도 함께 갈려야 한다 — 한쪽 라벨로 뭉치면
+    //   불변식 ② 가 *"등급이 `exact` 인데 스키마는 `scoped` 하나뿐"* 으로 발화한다.
+    let 파일: std::collections::BTreeMap<pal_core::SymbolId, &str> =
+        symbols.iter().map(|s| (s.id, s.path.as_str())).collect();
+    for (from, to) in 참조엣지 {
+        let 넘는가 = match (파일.get(from), 파일.get(to)) {
+            (Some(a), Some(b)) => a != b,
+            // 한쪽 끝의 심볼이 이 목록에 없다. **`REFERENCES` 로 둔다** — 불변식 ① 이
+            // 그 자리를 「양 끝이 존재하나」로 잡아야 하고, 라벨을 바꿔 피하면 그 검사가
+            // 무엇을 재는지 흐려진다.
+            _ => false,
+        };
+        let (label, grade) = if 넘는가 {
+            ("REFERENCES_ACROSS", ResolutionGrade::Exact)
+        } else {
+            ("REFERENCES", ResolutionGrade::Scoped)
+        };
+        edges.push(pal_core::EdgeInstance::one(
+            label,
+            symbol_key(*from),
+            symbol_key(*to),
+            grade,
+            Provenance::Extracted,
+            at.clone(),
+        ));
+    }
+
     GraphView::new(at.clone(), coverage())
         .with_nodes(nodes)
         .with_edges(edges)
@@ -271,6 +324,11 @@ fn coverage() -> pal_core::ViewCoverage {
         .holding("Symbol")
         .holding("Binding")
         .holding("BOUND_TO")
+        // ★★ **2026-09-09 에 `absent` 에서 뒤집었다** (`C1`). 위 `build_view` 가
+        //    2 층의 참조 엣지를 실제로 싣는다 — **선언보다 값이 먼저 섰다.**
+        .holding("REFERENCES")
+        // 파일 경계를 넘은 몫. 등급이 갈려 라벨을 나눴다 — `C3`.
+        .holding("REFERENCES_ACROSS")
         // ── 계산만 하고 저장하지 않는 셋과 그 엣지 여섯 ──────────────────────
         //
         // `pal defect` 가 `Change`·`Actor`·`Defect` 를 git 에서 만들지만 **저장하지
@@ -313,7 +371,6 @@ fn coverage() -> pal_core::ViewCoverage {
         // 읽는다」다.** 그 문장은 코드로 확인된다 — `build_view` 의 인자에 엣지가 없다.
         // 능력 번호는 그대로 F07 이 진다: 뷰가 엣지를 싣는 시점이 파일 간 해소와 같다.
         .absent("File", CapabilityId::new("F07", "graph-view-stitched-nodes"))
-        .absent("REFERENCES", CapabilityId::new("F07", "graph-view-stitched-nodes"))
         // ── 스키마가 이미 `not_built` 로 적은 둘 ─────────────────────────────
         //
         // 여기 적지 않아도 `doctor` 가 스키마에서 파생시키지만, **선언을 빠뜨리면

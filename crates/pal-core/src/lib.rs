@@ -120,7 +120,7 @@ pub use schema::{
     NodeStatus, Requirement, SchemaError,
 };
 pub use cross_file::{
-    CrossFileInput, CrossFileReport, Unresolved, cross_file_edges,
+    CrossFileEdge, CrossFileInput, CrossFileReport, Unresolved, cross_file_edges,
 };
 pub use projection::{
     FileNode, FileRow, FileRefs, PendingImportRef, RefCounts, ReferenceEdge, file_edges,

@@ -3,7 +3,7 @@
 
 # 그래프 스키마 v1
 
-노드 라벨 **10개** · 엣지 타입 **8개**. 자라는 것 자체가 관측 대상이다(옛 `DESIGN §1.2` · 처분은 `docs/plan/disposal-map.md`).
+노드 라벨 **10개** · 엣지 타입 **9개**. 자라는 것 자체가 관측 대상이다(옛 `DESIGN §1.2` · 처분은 `docs/plan/disposal-map.md`).
 
 ## 노드
 
@@ -71,5 +71,6 @@
 | `INTRODUCED_BY` | `Defect` | `Change` | many-to-one | `candidate` (고정) | `extracted` | 해당 없음 | `at` | `Defect::introduced_by` |
 | `MANIFESTS_AT` | `Defect` | `Symbol` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Defect::manifests_at` |
 | `REFERENCES` | `Symbol` | `Symbol` | many-to-many | `scoped` (고정) | `extracted` | 해당 없음 | `at` | `ReferenceEdge::to` |
+| `REFERENCES_ACROSS` | `Symbol` | `Symbol` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `CrossFileEdge::to` |
 | `RESOLVED_BY` | `Defect` | `Change` | many-to-one | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Defect::resolved_by` |
 | `TOUCHES` | `Change` | `Symbol` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Change::touches` |
