@@ -197,7 +197,14 @@ pub enum QueryResult {
     ///
     /// `detector` 는 **낡음을 재는 자의 낡음**이다(옛 F09 §5). 안 실으면 낡은 감지기가 낸
     /// `Fresh` 가 지금의 `Fresh` 로 읽힌다 — 그것이 *"감지기가 낡는다"* 의 실패 형태다.
-    Bindings { bindings: Vec<BindingReport>, detector: DetectorReport },
+    /// `store` 는 **빈 목록의 뜻을 가른다** — `present == false` 면 「결박이 0 건」이
+    /// 아니라 「파생 저장소를 못 읽었다」다. 안 실으면 그 둘이 같은 답이 되고, 이
+    /// 저장소에서 그 침묵이 실제로 거짓 한 줄을 원장에 실었다(2026-09-09).
+    Bindings {
+        bindings: Vec<BindingReport>,
+        detector: DetectorReport,
+        store: pal_core::IntentStorePresence,
+    },
     /// 좌표를 못 찾은 문서 조각들 — **이것이 사람의 작업 목록이다** (옛 F10 §2).
     ///
     /// # 후보가 있는 것은 여기 없다
@@ -354,6 +361,10 @@ pub struct QueryCtx<'a> {
     pub extractor: pal_core::ExtractorVersion,
     /// **낡음을 재는 자의 낡음** — 대장에서 온다(F01). 표면이 지고 온다.
     pub detector: DetectorReport,
+    /// 파생 의도 저장소가 거기 있었나 — `binding.status` 의 빈 목록을 읽는 자가
+    /// 부재와 0 건을 가르는 자리다. **채우는 것은 표면의 일이다** — 파일이 있는지는
+    /// 투영이 아니라 파일시스템이 안다.
+    pub intent_store: pal_core::IntentStorePresence,
     /// ★ 이 계획의 이탈 — **부르는 쪽이 지고 온다** (F12).
     ///
     /// # 왜 여기서 계산하지 않는가
@@ -489,6 +500,7 @@ fn run(
         NamedQuery::BindingStatus => Ok(QueryResult::Bindings {
             bindings: binding_reports(ctx, accessed),
             detector: ctx.detector.clone(),
+            store: ctx.intent_store.clone(),
         }),
         NamedQuery::BindingTouch { name } => touch_result(ctx, name, elision, accessed),
         NamedQuery::PlanDeviation { .. } => match &ctx.deviation {

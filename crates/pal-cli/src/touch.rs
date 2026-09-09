@@ -129,8 +129,17 @@ pub fn run(a: Args) -> Result<()> {
     let attach::Attached { projection, indexed, .. } = attached;
 
     // **의도 저장소는 파생층과 다른 파일이다** — R-21. 2층을 지워도 이쪽은 남는다.
-    let intent = IntentStore::open_read_only(&intent_file(repo_path, intent_path))
-        .context("의도 저장소를 열지 못했다")?;
+    // ⚠ **그러나 없을 수도 있다** — `intent.redb` 는 커밋된 `intent/bindings.jsonl` 에서
+    // 세우는 파생물이고 `.gitignore` 가 지운다. 그 부재가 답에 실려야 빈 목록이
+    // 「0 건」으로 안 읽힌다.
+    let 의도_자리 = intent_file(repo_path, intent_path);
+    let intent_store = pal_core::IntentStorePresence::of(
+        의도_자리.exists(),
+        의도_자리.display().to_string(),
+        intent_canonical(repo_path),
+    );
+    let intent =
+        IntentStore::open_read_only(&의도_자리).context("의도 저장소를 열지 못했다")?;
     let bound = IntentIndex(&intent);
 
     let counts = report.ledger.counts();
@@ -168,6 +177,7 @@ pub fn run(a: Args) -> Result<()> {
         bound: &bound,
         binding_max: binding_max.unwrap_or(PROVISIONAL_TOUCH_BINDING_MAX),
         extractor: pal_extract::version(),
+        intent_store,
         detector: pal_core::DetectorReport {
             grammar: report.ledger.detector.grammar.clone(),
             extractor: report.ledger.detector.extractor.clone(),
@@ -210,6 +220,21 @@ pub fn run(a: Args) -> Result<()> {
 /// 의도 저장소 위치. **기본값이 2층과 다른 파일이다**(stack §2.4).
 pub fn intent_file(repo_path: &Path, given: Option<PathBuf>) -> PathBuf {
     given.unwrap_or_else(|| repo_path.join(".palimpsest/intent.redb"))
+}
+
+/// 결박의 **커밋된 정본** — 파생 저장소(`intent.redb`)를 여기서 세운다.
+///
+/// ★ **이 자리를 재는 것이 「0 건」과 「못 읽었다」를 가르는 유일한 자다.** 파생 파일이
+/// 없는 것만으로는 못 가른다 — 아무도 안 건 저장소도 그렇고, 세우기 전의 저장소도
+/// 그렇다. 정본이 있으면 뒤의 것이다.
+#[must_use]
+pub fn intent_canonical(repo_path: &Path) -> pal_core::CanonicalSource {
+    let p = repo_path.join(".palimpsest/intent/bindings.jsonl");
+    if p.exists() {
+        pal_core::CanonicalSource::Present(p.display().to_string())
+    } else {
+        pal_core::CanonicalSource::Absent
+    }
 }
 
 /// 답의 모양 한 줄 — `pal query binding.touch` 가 이것만 출력한다.

@@ -1218,6 +1218,75 @@ pub struct DetectorReport {
     pub matches_head: bool,
 }
 
+/// 파생 의도 저장소가 **거기 있었나** — `binding.status` 의 빈 목록을 읽는 자가
+/// 「결박이 0 건」과 「결박을 못 읽었다」를 가르는 자리다.
+///
+/// # 왜 이 칸이 필요한가 — 이 저장소에서 실제로 거짓이 하나 실렸다
+///
+/// 결박의 정본은 커밋된 `.palimpsest/intent/bindings.jsonl` 이고 `.palimpsest/intent.redb`
+/// 는 그것에서 세우는 **파생물**이라 `.gitignore` 가 지운다. 그래서 갓 받은 저장소에서
+/// `binding.status` 는 `bindings: []` 와 `EXIT 0` 으로 답하는데, 그때까지 응답 어디에도
+/// **저장소가 없다는 말이 없었다** — `built_for_this_snapshot: true` 만 실려 깨끗하게
+/// 보였다. 2026-09-09 에 한 회차가 그 침묵에 속아 *"`pal doctor` 축 ① 이 발동했다"* 를
+/// 원장에 실었고, 다시 세워 재니 축 ① 은 착수와 같은 값이었다.
+///
+/// **`present == false` 이면 빈 목록은 값이 아니라 부재다.** 세우는 명령은
+/// `pal intent import .palimpsest/intent/bindings.jsonl` 이다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct IntentStorePresence {
+    /// 파생 저장소 파일이 그 자리에 있었나.
+    pub present: bool,
+    /// 어느 자리를 봤나 — 저장소 뿌리 기준의 상대 경로이거나, 밖이면 절대 경로다.
+    pub path: String,
+    /// 커밋된 **정본**이 있나.
+    ///
+    /// ★ **`present == false` 하나로는 못 가른다.** 아무도 안 건 저장소도 파생 파일이
+    /// 없고, 정본을 아직 안 세운 저장소도 파생 파일이 없다. **앞의 것은 「0 건」이 참이고
+    /// 뒤의 것은 거짓이다.** 가르는 것은 정본의 존재뿐이다.
+    ///
+    /// ⚠ **`Option<String>` 이 아니다.** 이 저장소의 검사 「선택 필드 금지」가 그것을
+    /// 막는다 — `None` 이 「없음」인지 「안 봤다」인지 안 갈리기 때문이고, 그 갈리지
+    /// 않음이 정확히 이 타입이 고치려는 병이다.
+    pub canonical: CanonicalSource,
+}
+
+/// 결박 정본이 그 자리에 있었나 — **「없다」와 「안 봤다」를 가른다.**
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case", tag = "state", content = "path")]
+pub enum CanonicalSource {
+    /// 그 자리에 있다. 값은 어디인지다.
+    Present(String),
+    /// **그 자리를 봤고 없었다.** 안 본 것이 아니다.
+    Absent,
+}
+
+impl CanonicalSource {
+    /// 있으면 그 자리.
+    #[must_use]
+    pub fn path(&self) -> Option<&str> {
+        match self {
+            Self::Present(p) => Some(p),
+            Self::Absent => None,
+        }
+    }
+}
+
+impl IntentStorePresence {
+    /// **명시적으로 부른다.** 기본값을 두지 않는 것이 요점이다 — 안 채우면 이 칸이
+    /// 조용히 `true` 가 되고 그것이 바로 고치려던 침묵이다.
+    #[must_use]
+    pub fn of(present: bool, path: impl Into<String>, canonical: CanonicalSource) -> Self {
+        Self { present, path: path.into(), canonical }
+    }
+
+    /// **빈 목록을 「0 건」으로 읽으면 안 되는 자리인가.** 파생 저장소가 없는데 정본이
+    /// 있으면 그 답은 값이 아니라 부재다.
+    #[must_use]
+    pub fn unread(&self) -> bool {
+        !self.present && self.canonical.path().is_some()
+    }
+}
+
 /// 결박 하나의 **산출 한 줄** — `binding.status` 가 이것을 산출한다 (옛 F09 §8).
 ///
 /// # 무엇이 실려야 하는가 — 문서 §5 의 마지막 행이 요구한 것

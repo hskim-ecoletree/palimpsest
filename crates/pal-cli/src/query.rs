@@ -109,8 +109,22 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
     let attach::Attached { projection, indexed, .. } = attached;
 
     // **의도 저장소는 읽기로만 연다** — 이 명령은 결박을 안 만든다.
-    // 파일이 없으면 결박이 0 건이고 **그것이 정확한 값**이다(아직 아무도 안 걸었다).
-    let intent = IntentStore::open_read_only(&touch::intent_file(a.repo, a.intent.clone()))
+    //
+    // ⚠ **파일이 없는 것과 결박이 0 건인 것은 다르다.** 옛 주석은 *"파일이 없으면
+    // 결박이 0 건이고 그것이 정확한 값이다"* 였고 **그것이 거짓이었다** — 이 저장소에서
+    // 결박의 정본은 커밋된 `.palimpsest/intent/bindings.jsonl` 이고 `intent.redb` 는
+    // `.gitignore` 가 지우는 파생물이다. 그래서 갓 받은 저장소에서 이 명령이
+    // `bindings: []` 와 `EXIT 0` 으로 답하는데 응답 어디에도 부재가 안 실렸고, 2026-09-09 에
+    // 한 회차가 그 침묵에 속아 거짓 한 줄을 원장에 실었다.
+    //
+    // **그래서 존재 여부를 열기 전에 재서 답에 싣는다.**
+    let intent_path = touch::intent_file(a.repo, a.intent.clone());
+    let intent_store = pal_core::IntentStorePresence::of(
+        intent_path.exists(),
+        intent_path.display().to_string(),
+        touch::intent_canonical(a.repo),
+    );
+    let intent = IntentStore::open_read_only(&intent_path)
         .context("의도 저장소를 열지 못했다")?;
     // ⚠ **`binding.status` 만 전수가 필요하다** — 그 질의의 답이 결박 전부다.
     // 다른 질의에서 전수를 들면 좌표 하나에 답하는 데 O(전체 결박)을 산출한다(옛 F11 §3.1).
@@ -166,6 +180,7 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
         // `matches_head` 는 **상수 시간**이다(문서 §5: *"그래서 무한 후퇴하지 않는다"*).
         // 대장이 계산될 때의 HEAD 와 이 답이 선 트리를 댄다 — 다르면 대장이 그 사이의
         // 커밋들을 안 봤다는 뜻이고 판정 전부가 「그때 기준」이 된다.
+        intent_store: intent_store.clone(),
         detector: pal_core::DetectorReport {
             grammar: report.ledger.detector.grammar.clone(),
             extractor: report.ledger.detector.extractor.clone(),
@@ -284,7 +299,9 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
         QueryResult::Graph { nodes, edges } => {
             println!("  노드 {} · 엣지 {}", nodes.len(), edges.len());
         }
-        QueryResult::Bindings { bindings, detector } => print_bindings(bindings, detector),
+        QueryResult::Bindings { bindings, detector, store } => {
+            print_bindings(bindings, detector, store);
+        }
         QueryResult::Narrative { unbound, candidates, bound, candidate_sizes } => {
             print_narrative(unbound, *candidates, *bound, candidate_sizes);
         }
@@ -342,10 +359,24 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
 /// 그러면 표시를 무시하기 시작한다 — 그것이 [목표 G1] 의 반증 조건이다.
 ///
 /// [목표 G1]: ../../../docs/plan/00-goals.md
-fn print_bindings(bindings: &[pal_core::BindingReport], detector: &pal_core::DetectorReport) {
+fn print_bindings(
+    bindings: &[pal_core::BindingReport],
+    detector: &pal_core::DetectorReport,
+    store: &pal_core::IntentStorePresence,
+) {
     if bindings.is_empty() {
-        // **빈 목록이 정직하다** — 능력이 있고 값이 없는 것이다. `not_built` 가 아니다.
-        println!("  결박이 아직 없습니다.");
+        // ⚠ **빈 목록이 둘을 뜻한다.** 저장소가 있으면 「능력이 있고 값이 없다」이고,
+        // 없으면 「못 읽었다」다. 옛 판은 앞의 것만 찍었고 그것이 침묵이었다.
+        if let Some(정본) = store.canonical.path().filter(|_| !store.present) {
+            println!(
+                "  의도 저장소를 못 읽었습니다 — {} 가 없습니다. **결박이 0 건이라는 뜻이 아닙니다.**",
+                store.path
+            );
+            println!("  정본이 여기 있습니다: {정본}");
+            println!("  세우려면: pal intent import {정본}");
+        } else {
+            println!("  결박이 아직 없습니다.");
+        }
         return;
     }
     println!("  결박 {}건", bindings.len());

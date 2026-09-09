@@ -233,3 +233,72 @@ fn 결박이_없어도_응답묶음을_지고_빈_목록으로_답한다() {
 
     let _ = std::fs::remove_dir_all(&repo);
 }
+
+/// **파생 저장소의 부재가 「결박 0 건」으로 안 읽힌다** (2026-09-08-cross-file-references
+/// 승격 칸 5 · 금지역 「측정이 죽은 가지」).
+///
+/// # 이 시험이 없으면 무엇이 조용한가
+///
+/// 결박의 정본은 커밋된 `.palimpsest/intent/bindings.jsonl` 이고 `intent.redb` 는 거기서
+/// 세우는 파생물이라 `.gitignore` 가 지운다. 갓 받은 저장소에서 `binding.status` 는
+/// `bindings: []` 와 `EXIT 0` 으로 답하는데, **응답 어디에도 부재가 안 실렸다.** 2026-09-09 에
+/// 한 회차가 그 침묵에 속아 *"`pal doctor` 축 ① 이 발동했다"* 를 원장에 실었고, 저장소를
+/// 다시 세워 재니 그 축은 착수와 같은 값이었다.
+///
+/// # 음성 대조 — **정본이 없으면 이 신호가 안 뜬다**
+///
+/// 아무도 안 건 저장소도 파생 파일이 없다. 부재만으로 발화하면 그 저장소가 영영 「못
+/// 읽었다」로 읽히고, 그것은 반대 방향의 거짓이다. 그래서 **정본이 있을 때만** 발화하는
+/// 것을 같은 시험이 잰다.
+#[test]
+fn 파생_저장소의_부재가_결박_0_건으로_안_읽힌다() {
+    let repo = 저장소("store-absent");
+
+    // ① 정본이 없다 — 아무도 안 걸었다. 「0 건」이 참이고 이 신호는 안 떠야 한다.
+    let v: serde_json::Value =
+        serde_json::from_str(&pal(&repo, &["query", "binding.status", "--json"])).expect("응답 묶음");
+    let store = &v["answer"]["store"];
+    assert_eq!(store["present"].as_bool(), Some(false), "파생 저장소가 없는데 있다고 적었다");
+    assert_eq!(
+        store["canonical"]["state"].as_str(),
+        Some("absent"),
+        "정본이 없는데 「봤고 없었다」로 안 적었다 — `null` 은 「안 봤다」와 안 갈린다: {store}"
+    );
+    let 사람 = pal(&repo, &["query", "binding.status"]);
+    assert!(
+        사람.contains("결박이 아직 없습니다"),
+        "정본이 없는데 「못 읽었다」로 발화했다 — 반대 방향의 거짓이다:\n{사람}"
+    );
+
+    // ② 정본을 놓는다 — 파생 저장소는 여전히 없다. 이제 빈 목록은 값이 아니라 부재다.
+    let 정본 = repo.join(".palimpsest/intent/bindings.jsonl");
+    std::fs::create_dir_all(정본.parent().expect("부모")).expect("정본 디렉터리");
+    std::fs::write(&정본, "{\"schema\":1}\n").expect("정본");
+    assert!(!repo.join(".palimpsest/intent.redb").exists(), "파생 저장소가 이미 있다 — 이 시험이 아무것도 안 잰다");
+
+    let v: serde_json::Value =
+        serde_json::from_str(&pal(&repo, &["query", "binding.status", "--json"])).expect("응답 묶음");
+    let store = &v["answer"]["store"];
+    assert_eq!(store["present"].as_bool(), Some(false));
+    assert_eq!(store["canonical"]["state"].as_str(), Some("present"));
+    assert!(
+        store["canonical"]["path"].as_str().is_some_and(|p| p.ends_with("bindings.jsonl")),
+        "정본을 놓았는데 답이 그 자리를 안 실었다: {store}"
+    );
+    assert!(
+        v["answer"]["bindings"].as_array().expect("배열").is_empty(),
+        "이 시험은 빈 목록 위에서만 뜻이 있다"
+    );
+
+    let 사람 = pal(&repo, &["query", "binding.status"]);
+    assert!(
+        사람.contains("결박이 0 건이라는 뜻이 아닙니다"),
+        "정본이 있고 파생 저장소가 없는데 화면이 부재를 안 말했다:\n{사람}"
+    );
+    assert!(
+        !사람.contains("결박이 아직 없습니다"),
+        "부재인데 「0 건」으로도 함께 말했다 — 두 문장이 서로를 지운다:\n{사람}"
+    );
+
+    let _ = std::fs::remove_dir_all(&repo);
+}
