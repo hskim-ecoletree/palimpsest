@@ -189,6 +189,40 @@ pub struct ImportedItem {
     pub name: String,
     /// 이 파일이 그 항목을 부르는 이름. 별칭이 없으면 [`Self::name`] 과 같다.
     pub local: String,
+    /// [`Self::local`] 이 **선언된 바이트** — `use a::B as C;` 의 `C` 자리.
+    ///
+    /// # 왜 필요한가 (2026-09-10 · 판 4 의 `A2`)
+    ///
+    /// 이 값이 없으면 *"이 바인딩이 `use` 로 들여온 이름인가"* 를 **이름으로만** 물어야
+    /// 하고, 그러면 임포트와 같은 이름의 지역 변수가 임포트로 세어진다. 그것을 막으려고
+    /// 앞 판은 **모듈 스코프(`ScopeParent::Root`)의 바인딩만** 임포트로 인정했는데,
+    /// **Rust 에서 `use` 는 함수 안에도 `mod` 안에도 있다** — 같은 저장소의
+    /// `crates/pal-extract/src/rust.rs` 가 *"`use` 는 파일 어디에나 있다. 전부 훑는다"*
+    /// 라 적고 실제로 그것을 담는다. 그래서 그 제약은 **잠근 축1 안의 임포트를
+    /// `RefCounts::locals` 로 흘려보냈다**(실측: 잠근 겹 129 건, 그중 축1 안 101).
+    ///
+    /// **선언 자리로 짝지으면 둘 다 푼다** — 스코프 종류를 안 물어도 되고, 이름이 같은
+    /// 지역 변수는 선언 바이트가 달라 안 걸린다.
+    ///
+    /// ⚠ **바인딩을 안 만드는 형태는 짝이 안 지어진다** — `use a::{self};` 가 그렇다.
+    /// 그 자리는 오늘까지의 동작 그대로 남는다.
+    ///
+    /// # 왜 목록인가 — 같은 이름이 여러 자리에서 들어온다
+    ///
+    /// ```text
+    /// fn a() { use crate::X; … }
+    /// fn b() { use crate::X; … }
+    /// ```
+    ///
+    /// 이것은 Rust 에서 정상이고 **바인딩이 둘**이다. 하나만 담으면 다른 하나가 안
+    /// 짝지어져 그 참조가 [`crate::RefCounts::locals`] 로 샌다 — 이 필드를 만든 이유가
+    /// 바로 그 새는 자리이므로, 하나만 담는 것은 문제를 반만 푸는 것이다.
+    ///
+    /// ⚠ **정렬·중복 제거의 축에서 빠진다**([`ImportSet::normalize_items`]). 그 축은
+    /// `(module, name, local)` 이고 이 목록은 접힐 때 **합쳐진다** — `at` 을 축에 넣으면
+    /// `use` 를 재배열하는 것만으로 산출이 움직여 R-05 의 계약이 깨진다.
+    #[serde(default)]
+    pub at: Vec<usize>,
 }
 
 impl Default for ImportSet {
@@ -225,8 +259,31 @@ impl ImportSet {
     /// 같다 — 되돌리지 마라.
     pub fn normalize_items(&mut self) {
         if let Slot::Built(v) = &mut self.items {
-            v.sort();
-            v.dedup();
+            // **축은 `(module, name, local)` 셋이다** — [`ImportedItem::at`] 은 빠진다.
+            // 그것을 축에 넣으면 `use` 를 재배열하는 것만으로 산출이 움직인다.
+            v.sort_by(|a, b| {
+                (&a.module, &a.name, &a.local).cmp(&(&b.module, &b.name, &b.local))
+            });
+            // 같은 셋이면 하나로 모으고 **자리는 합친다.** 버리면 그 자리의 바인딩이
+            // 안 짝지어져 참조가 `locals` 로 샌다.
+            let mut out: Vec<ImportedItem> = Vec::with_capacity(v.len());
+            for item in v.drain(..) {
+                match out.last_mut() {
+                    Some(prev)
+                        if prev.module == item.module
+                            && prev.name == item.name
+                            && prev.local == item.local =>
+                    {
+                        prev.at.extend(item.at);
+                    }
+                    _ => out.push(item),
+                }
+            }
+            for it in &mut out {
+                it.at.sort();
+                it.at.dedup();
+            }
+            *v = out;
         }
     }
 }

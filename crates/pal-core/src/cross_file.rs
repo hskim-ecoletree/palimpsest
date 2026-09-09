@@ -175,7 +175,12 @@ struct Crate {
 fn crates_of(paths: &BTreeSet<&str>) -> Vec<Crate> {
     let mut out = Vec::new();
     for p in paths {
-        let Some(root) = p.strip_suffix("/lib.rs") else { continue };
+        // ★ **`main.rs` 도 크레이트 뿌리다** (2026-09-10 · 판 4 의 A7). 앞 판은
+        //   `/lib.rs` 만 알아봤고, 그래서 `crates/pal-cli` 처럼 라이브러리가 없는
+        //   바이너리 크레이트 안에서는 `crate::` 가 통째로 안 풀렸다(실측 20 건).
+        let Some(root) = p.strip_suffix("/lib.rs").or_else(|| p.strip_suffix("/main.rs")) else {
+            continue;
+        };
         // `crates/pal-core/src/lib.rs` → root=`crates/pal-core/src`, dir=`pal-core`
         let Some(dir) = root.strip_suffix("/src").and_then(|d| d.rsplit('/').next()) else {
             continue;
@@ -221,6 +226,8 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> (Vec<String>
         module.split("::").filter(|s| !s.is_empty()).collect()
     };
 
+    // 형제 모듈 갈래는 **base 가 둘**이다 — 아래 `또다른` 이 그 둘째를 진다.
+    let mut 또다른: Option<String> = None;
     let mut base = match segs.first().copied() {
         Some("crate") => {
             segs.remove(0);
@@ -243,15 +250,35 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> (Vec<String>
                 segs.remove(0);
                 c.root.clone()
             }
-            // 크레이트가 아니면 형제 모듈이다 — 세그먼트를 안 걷어낸다.
-            None => module_dir_of(from),
+            // ★ **크레이트가 아니면 자기 모듈 안의 형제다** (2026-09-10 · 판 4).
+            //   Rust 의 균일 경로는 **현재 모듈** 기준이고, 앞 판이 쓴
+            //   `module_dir_of`(형제 디렉터리)는 `a.rs` 꼴 모듈 파일에서 한 칸 어긋난다 —
+            //   `crates/pal-cli/src/install.rs` 의 `use inside::{Rel, Root};` 가
+            //   `src/inside.rs` 를 찾아 못 만났다. 그 줄은 `intent.md` 의 축1 「안」 표
+            //   **첫째 칸에 예시로 적힌 바로 그 줄**이고, 실측 22 건이 통째로
+            //   「저장소 밖」 통에 들어가 있었다.
+            None => {
+                // ⚠ **자리가 둘이라 둘 다 후보로 삼는다.** 형제 디렉터리 쪽을 버리면 실측으로
+                //    ⓐ 가 103 건 줄었다 — `use common::{…}` 처럼 부모 디렉터리에 놓인
+                //    형제가 그 자리다.
+                또다른 = Some(module_dir_of(from));
+                모듈_자리(from)
+            }
         },
-        None => module_dir_of(from),
+        None => {
+            또다른 = Some(module_dir_of(from));
+            모듈_자리(from)
+        }
     };
 
-    for s in &segs {
-        base = if base.is_empty() { (*s).to_owned() } else { format!("{base}/{s}") };
-    }
+    let 잇는다 = |mut b: String| {
+        for s in &segs {
+            b = if b.is_empty() { (*s).to_owned() } else { format!("{b}/{s}") };
+        }
+        b
+    };
+    let 또다른 = 또다른.map(&잇는다);
+    base = 잇는다(base);
     // ★ **층이 둘이다.** 1 차는 그 모듈 자신의 파일이고, 2 차는 부모 파일 안의
     //   인라인 `mod` 다. **1 차에 맞는 파일이 있으면 2 차는 안 본다** — 둘을 한 벌로
     //   내면 `deep/leaf` 를 찾을 때 실재하는 `deep/mod.rs` 가 함께 잡혀 모호가 된다
@@ -260,10 +287,20 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> (Vec<String>
     if segs.is_empty() {
         일차.push(format!("{base}/lib.rs"));
     }
-    let 이차 = base
+    let mut 이차 = base
         .rsplit_once('/')
         .map(|(p, _)| vec![format!("{p}.rs"), format!("{p}/mod.rs")])
         .unwrap_or_default();
+    // 형제 모듈의 둘째 자리도 **1 차**다 — 같은 층의 다른 후보이지 부모 안의 인라인
+    // `mod` 가 아니다.
+    if let Some(b2) = 또다른 {
+        일차.push(format!("{b2}.rs"));
+        일차.push(format!("{b2}/mod.rs"));
+        if let Some((p, _)) = b2.rsplit_once('/') {
+            이차.push(format!("{p}.rs"));
+            이차.push(format!("{p}/mod.rs"));
+        }
+    }
     (일차, 이차)
 }
 

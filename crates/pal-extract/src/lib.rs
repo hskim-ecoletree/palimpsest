@@ -178,8 +178,26 @@ pub const GRAMMAR_REV: &str = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e";
 /// ⚠ **`body_digest` 는 안 움직인다.** 꼬리는 심볼 요약의 입력이 아니다 — 결박 30 건이
 /// `fresh` 25 · `stale` 5 그대로여야 한다(`D1`). 움직이면 거기서 멈추고 올린다.
 ///
+/// # `f08-call-tails` → `f09-import-sites` (2026-09-10 · #134 · 판 4 의 `A2`)
+///
+/// 여덟째다. **[`pal_core::ImportedItem`] 에 [`at`](pal_core::ImportedItem::at) 이
+/// 붙었다** — 부르는 이름이 선언된 바이트다. 그것으로 *"이 바인딩이 `use` 가 만든
+/// 것인가"* 를 이름이 아니라 **자리**로 짝짓는다.
+///
+/// 앞 판은 그 물음을 스코프 종류(`ScopeParent::Root`)로 갈랐고 **그 자가 거짓이었다** —
+/// 이 파일 자신이 *"`use` 는 파일 어디에나 있다(함수 안 · `mod` 안). 전부 훑는다"* 라
+/// 적고 그것을 담는데, 받는 쪽이 모듈 스코프만 인정해 **잠근 축1 안의 임포트 101 건이
+/// `RefCounts::locals` 로 샜다.**
+///
+/// 안 올리면 **옛 캐시 항목이 `at` 없이 되살아난다.** `serde(default)` 로 0 이 들어가
+/// 어느 바인딩과도 안 짝지어지고, 그러면 **캐시가 적중한 파일에서만 임포트가 0 건**이
+/// 된다 — 그 어긋남은 화면 어디에도 안 나온다.
+///
+/// ⚠ **`body_digest` 는 여기서도 안 움직인다.** 임포트 항목의 좌표는 심볼 요약의
+/// 입력이 아니다.
+///
 /// [`FileOutcome`]: crate::FileOutcome
-pub const EXTRACTOR_REV: &str = "f08-call-tails";
+pub const EXTRACTOR_REV: &str = "f09-import-sites";
 
 #[must_use]
 pub const fn version() -> ExtractorVersion {

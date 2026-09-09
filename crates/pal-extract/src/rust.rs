@@ -554,13 +554,21 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
                 module: prefix.to_owned(),
                 local: name.clone(),
                 name,
+                    at: vec![node.start_byte()],
             });
         }
         // `use a::b::{self};` — 들여오는 이름은 접두의 **마지막 세그먼트**다.
         "self" => {
             if !prefix.is_empty() {
                 let (module, name) = 꼬리를_뗀다(prefix);
-                imports.push_item(ImportedItem { module, local: name.clone(), name });
+                // ⚠ `use a::{self};` 는 스코프 바인딩이 안 서므로 짝이 안 지어진다 —
+                //    `at` 을 이 노드로 두되 그 자리는 오늘까지의 동작 그대로다.
+                imports.push_item(ImportedItem {
+                    module,
+                    local: name.clone(),
+                    name,
+                        at: vec![node.start_byte()],
+                });
             }
         }
         "scoped_identifier" => {
@@ -568,8 +576,9 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
             let module = node
                 .child_by_field_name("path")
                 .map_or_else(|| prefix.to_owned(), |p| 경로를_잇는다(prefix, &원문(p, source)));
+            let at = vec![name.start_byte()];
             let name = 원문(name, source);
-            imports.push_item(ImportedItem { module, local: name.clone(), name });
+            imports.push_item(ImportedItem { module, local: name.clone(), name, at });
         }
         // `use a::B as C;` — **원본 이름과 부르는 이름이 갈린다.** 둘 다 담는다.
         "use_as_clause" => {
@@ -579,6 +588,7 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
                 return;
             };
             let local = 원문(alias, source);
+            let at = vec![alias.start_byte()];
             let (module, name) = match path.kind() {
                 "self" if !prefix.is_empty() => 꼬리를_뗀다(prefix),
                 "scoped_identifier" => {
@@ -591,7 +601,7 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
                 "identifier" | "type_identifier" => (prefix.to_owned(), 원문(path, source)),
                 _ => return,
             };
-            imports.push_item(ImportedItem { module, name, local });
+            imports.push_item(ImportedItem { module, name, local, at });
         }
         "scoped_use_list" | "use_list" => {
             let path = node.child_by_field_name("path");

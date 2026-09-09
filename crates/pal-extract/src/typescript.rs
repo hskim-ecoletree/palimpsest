@@ -467,8 +467,10 @@ impl<'a, 't> Walk<'a, 't> {
                     continue;
                 }
                 let Some(name) = spec.child_by_field_name("name") else { continue };
+                let alias = spec.child_by_field_name("alias");
+                let at = vec![alias.unwrap_or(name).start_byte()];
                 let name = name.utf8_text(self.source).map_err(|_| ExtractError::NotUtf8)?;
-                let local = match spec.child_by_field_name("alias") {
+                let local = match alias {
                     Some(a) => a.utf8_text(self.source).map_err(|_| ExtractError::NotUtf8)?,
                     None => name,
                 };
@@ -476,6 +478,7 @@ impl<'a, 't> Walk<'a, 't> {
                     module: module.to_owned(),
                     name: name.to_owned(),
                     local: local.to_owned(),
+                    at,
                 });
             }
         }

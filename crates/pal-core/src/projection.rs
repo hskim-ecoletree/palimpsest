@@ -22,7 +22,7 @@ use crate::coord::{ExportDigest, SymbolId};
 use crate::ledger::{ExtractGrade, LanguageId};
 use crate::repo::{RepoPath, Snapshot};
 use crate::file_graph::ImportedItem;
-use crate::scope::{BoundSymbol, RefResolution, ScopeBinding, ScopeChain, ScopeIx, ScopeParent};
+use crate::scope::{BoundSymbol, RefResolution, ScopeBinding, ScopeChain, ScopeIx};
 use crate::slot::{ShellMismatch, Slot};
 use crate::symbol::Symbol;
 use crate::touch::SymbolNode;
@@ -391,24 +391,41 @@ pub fn file_edges(
     FileRefs { edges, counts, pending }
 }
 
-/// 이 바인딩이 `use` 로 들여온 이름인가.
+/// 이 바인딩이 `use` 로 들여온 이름인가 — **선언 자리로 짝짓는다.**
 ///
-/// # 둘을 함께 봐야 한다
+/// # 이름만으로는 못 가른다
 ///
-/// **① 모듈 스코프의 바인딩인가** — `use` 는 파일 꼭대기에서만 이름을 묶는다
-/// ([`ScopeParent::Root`]). 함수 안의 지역 변수는 여기서 걸러진다.
-/// **② 그 이름이 [`ImportSet::items`] 에 있나** — 모듈 스코프에는 `use` 말고도
-/// [`BoundSymbol::NotASymbol`] 인 것이 올 수 있다(타입 파라미터·매크로).
+/// 임포트와 같은 이름의 지역 변수가 있으면 이름 대조는 그것을 임포트로 헤아린다. 그래서
+/// **선언된 바이트**를 함께 본다 — [`ScopeBinding::declared_at`] 과
+/// [`ImportedItem::at`] 이 같아야 그 바인딩이 그 `use` 가 만든 것이다.
 ///
-/// 하나만 보면 어느 쪽이든 샌다 — ① 만 보면 모듈 스코프의 다른 비-심볼이 임포트로
-/// 세어지고, ② 만 보면 임포트와 같은 이름의 지역 변수가 임포트로 세어진다.
+/// # ★ 앞 판은 스코프 종류로 갈랐고 그것이 틀렸다 (2026-09-10 · 판 4 의 `A2`)
 ///
-/// ⚠ **`items` 가 [`Slot::NotBuilt`] 인 언어는 빈 슬라이스를 받는다** — 그러면 이
-/// 함수가 언제나 거짓이고 오늘까지의 동작 그대로다. *"항목 축을 안 만든다"* 와
+/// 앞 문면은 *"`use` 는 파일 꼭대기에서만 이름을 묶는다([`ScopeParent::Root`])"* 로
+/// 적고 `s.parent != ScopeParent::Root` 를 걸었다. **Rust 에서 그 문장은 거짓이다** —
+/// `mod tests { use crate::repo::RepoId; }` 는 그 블록 안에서 이름을 묶고,
+/// `crates/pal-extract/src/rust.rs` 자신이 *"`use` 는 파일 어디에나 있다(함수 안 ·
+/// `mod` 안). 전부 훑는다"* 라 적고 그것을 [`ImportSet::items`] 에 담는다.
+///
+/// 두 문면이 정면으로 어긋난 채, 뒤의 것이 **잠근 축1 안의 임포트를
+/// [`RefCounts::locals`] 로 흘려보냈다** — 실측(2026-09-10 · 잠근 겹): 129 건이 그렇게
+/// 샜고 그중 **101 이 축1 안**(`crate::` 85 · `super::` 15 · 형제 크레이트 1)이다.
+/// [`RefCounts::locals`] 로 안 새는 것이 이 회차의 완수 조건 `A2` 가 지는 자이므로,
+/// 그것은 「범위 밖」이 아니라 **이미 잠근 조건의 미이행**이었다.
+///
+/// **선언 자리로 바꾸면 둘 다 푼다** — 스코프 종류를 안 물어도 되고, 동명 지역 변수는
+/// 선언 바이트가 달라 안 걸린다.
+///
+/// ⚠ **`items` 가 [`crate::Slot::NotBuilt`] 인 언어는 빈 슬라이스를 받는다** — 그러면
+/// 이 함수가 언제나 거짓이고 오늘까지의 동작 그대로다. *"항목 축을 안 만든다"* 와
 /// *"임포트가 0 건이다"* 를 부르는 쪽이 갈라서 넘긴다.
+///
+/// ⚠ **`at` 이 빈 옛 색인은 안 걸린다** — `serde(default)` 로 되살아난 항목은 빈 목록을
+/// 지고 어느 바인딩과도 안 짝지어진다. 캐시 판이 올라 다시 서므로 이 경로는 한 회
+/// 지나면 사라진다.
 fn 임포트된_이름인가(
-    scopes: &ScopeChain,
-    scope: ScopeIx,
+    _scopes: &ScopeChain,
+    _scope: ScopeIx,
     bound: Option<&ScopeBinding>,
     imports: &[ImportedItem],
 ) -> bool {
@@ -416,11 +433,9 @@ fn 임포트된_이름인가(
         return false;
     }
     let Some(binding) = bound else { return false };
-    let Some(s) = scopes.scopes.get(scope.0 as usize) else { return false };
-    if s.parent != ScopeParent::Root {
-        return false;
-    }
-    imports.iter().any(|item| item.local == binding.name)
+    imports
+        .iter()
+        .any(|item| item.local == binding.name && item.at.contains(&binding.declared_at))
 }
 
 /// `byte` 를 담는 **가장 안쪽** 심볼.

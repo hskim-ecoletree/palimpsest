@@ -185,7 +185,7 @@ def 검사1() -> None:
     (
         "추출기 코드 버전",
         LIB_RS,
-        'pub const EXTRACTOR_REV: &str = "f08-call-tails";',
+        'pub const EXTRACTOR_REV: &str = "f09-import-sites";',
         'pub const EXTRACTOR_REV: &str = "f04-mutant";',
     ),
     (
