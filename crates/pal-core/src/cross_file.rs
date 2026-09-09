@@ -89,18 +89,25 @@ pub enum Unresolved {
     OutsideRepo,
     /// 모듈 경로에 맞는 파일이 이 저장소에 없다.
     NoTargetFile,
-    /// 대상 파일에 그 이름의 심볼이 없다.
+    /// 대상 파일에 그 이름의 심볼이 없는데 **그 파일이 크레이트 뿌리**다.
     ///
-    /// # 이 갈래는 대부분 **결함이 아니라 경계다** (2026-09-09 실측)
+    /// `use pal_core::Snapshot;` 뒤의 `Snapshot::single(…)` 이 그 형태다 —
+    /// `crates/pal-core/src/lib.rs` 에는 `pub use` 만 있고 정의가 없다.
+    /// **재수출 추적은 잠근 축1 의 「밖」**이므로 이 자리들은 설계대로 엣지가 아니다.
     ///
-    /// ⓑ 의 340 건을 뜯어보니 **298 건(87.6%)이 크레이트 루트 `lib.rs`** 를 대상으로
-    /// 한다 — `use pal_core::Snapshot;` 뒤의 `Snapshot::single(…)` 이 그 형태다. 그
-    /// 파일에는 `pub use` 만 있고 정의가 없다. **재수출 추적은 잠근 축1 의 「밖」**
-    /// 이므로 이 자리들은 설계대로 안 서는 것이다(`A5`·`A5-a`).
+    /// ★ **[`NoSymbol`] 에서 갈라 둔 까닭은 가는 문이 다르기 때문이다** (2026-09-10 ·
+    /// 판 4 의 이관표). 이쪽은 `A5`·`A5-a` 가 지는 **범위 밖**이고 저쪽은 `#133`(L2)의
+    /// 잔여다. 한 이름으로 묶여 있으면 화면이 *"못 풀었다"* 만 말하고 **그것이 결함인지
+    /// 경계인지**를 못 말한다 — 앞 판이 이 자리에 산문으로 적어 둔 비율(340 중 298)은
+    /// 값이 움직이는 순간 거짓이 됐다. 그래서 산문을 **회계 열쇠로 바꾼다.**
     ///
-    /// 남은 42 건의 상당수는 꼬리가 **enum 변형**이다(`Present` 34 · `Committed` 15 ·
-    /// `At` 11). 추출기가 변형 이름을 선언도 참조도 안 만들기로 이미 정했고, 소유자가
-    /// 2026-09-09 에 그것을 `#133`(L2) 잔여로 보냈다.
+    /// [`NoSymbol`]: Self::NoSymbol
+    NoSymbolAtCrateRoot,
+    /// 대상 파일에 그 이름의 심볼이 없고 **그 파일은 크레이트 뿌리가 아니다.**
+    ///
+    /// 꼬리가 **enum 변형**이거나 연관 상수라 그래프에 심볼이 안 선 자리가 여기 든다.
+    /// 추출기가 변형 이름을 선언도 참조도 안 만들기로 이미 정했고(`rust_scopes.rs`),
+    /// 소유자가 2026-09-09 에 그것을 **`#133`(L2) 잔여**로 보냈다.
     NoSymbol,
     /// 후보가 둘 이상이라 **안 골랐다.**
     Ambiguous,
@@ -115,6 +122,7 @@ impl Unresolved {
             Self::NoImport => "no_import",
             Self::OutsideRepo => "outside_repo",
             Self::NoTargetFile => "no_target_file",
+            Self::NoSymbolAtCrateRoot => "no_symbol_at_crate_root",
             Self::NoSymbol => "no_symbol",
             Self::Ambiguous => "ambiguous",
         }
@@ -379,6 +387,19 @@ pub fn cross_file_edges(
         let bucket = if b { &mut r.b_unresolved } else { &mut r.unresolved };
         *bucket.entry(why.as_str().to_owned()).or_default() += 1;
     };
+    // 「심볼이 없다」가 어느 문으로 가는지는 **대상이 크레이트 뿌리인가**로 갈린다 —
+    // 뿌리면 재수출 경유(`A5`·`A5-a` · 축1 **밖**)이고 아니면 꼬리가 심볼로 안 선
+    // 것(`#133` L2 잔여)이다. 문이 다르므로 회계도 갈라 헤아린다.
+    //
+    // ⚠ **`crates_of` 와 같은 자를 쓴다** — 그쪽이 뿌리로 인정한 파일만 뿌리다.
+    // 접미사만 보면 크레이트가 아닌 디렉터리의 `lib.rs` 도 뿌리가 된다.
+    let 심볼_없음 = |target: &str| {
+        let 뿌리 = target
+            .strip_suffix("/lib.rs")
+            .or_else(|| target.strip_suffix("/main.rs"))
+            .is_some_and(|root| crates.iter().any(|c| c.root == root));
+        if 뿌리 { Unresolved::NoSymbolAtCrateRoot } else { Unresolved::NoSymbol }
+    };
 
     for f in files {
         let from_path = f.path.as_str();
@@ -443,13 +464,13 @@ pub fn cross_file_edges(
                     report.a_edges += 1;
                 }
                 Some(_) => miss(&mut report, false, Unresolved::Ambiguous),
-                None => miss(&mut report, false, Unresolved::NoSymbol),
+                None => miss(&mut report, false, 심볼_없음(target)),
             }
 
             // ── ⓑ **경로 호출의 꼬리.** 없으면 여기서 끝이다.
             let Some(want) = p.tail.name() else { continue };
             let Some(hits) = by_name.get(&(target, want)) else {
-                miss(&mut report, b, Unresolved::NoSymbol);
+                miss(&mut report, b, 심볼_없음(target));
                 continue;
             };
             // ★ **ⓑ 에서는 머리의 이름이 곧 담은 것이다** — `S::foo()` 의 `foo` 는
