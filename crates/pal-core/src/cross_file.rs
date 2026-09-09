@@ -94,7 +94,10 @@ impl Unresolved {
 /// 산출을 이 구조가 진다.
 #[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CrossFileReport {
-    /// ⓐ 로 넘어온 짝 — 꼬리가 없는 것.
+    /// ⓐ 의 시도 — **넘어온 짝 전부**다.
+    ///
+    /// ⚠ 꼬리가 있는 짝을 빼지 않는다. `Root::make()` 는 `Root` 로 가는 엣지도 낳으므로
+    /// 그것도 ⓐ 의 시도이고, 빼면 그 시도가 어느 분모에도 안 든다.
     pub a_pending: usize,
     /// ⓐ 에서 엣지가 선 수.
     pub a_edges: usize,
@@ -172,7 +175,12 @@ fn crate_root_of<'c>(path: &str, crates: &'c [Crate]) -> Option<&'c Crate> {
 /// | 그 밖 | **이 파일과 같은 디렉터리의 형제 모듈** |
 ///
 /// 마지막 줄이 `use inside::{Rel, Root}` 를 잡는다 — 같은 `mod` 안의 형제다.
-fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> Vec<String> {
+///
+/// # 돌려주는 것이 **두 층**이다
+///
+/// 앞이 그 모듈 자신의 파일(`a/b.rs`·`a/b/mod.rs`), 뒤가 부모 파일 안의 인라인
+/// `mod`(`a.rs`·`a/mod.rs`). **앞에 맞는 것이 있으면 뒤는 안 본다.**
+fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> (Vec<String>, Vec<String>) {
     let mut segs: Vec<&str> = if module.is_empty() {
         Vec::new()
     } else {
@@ -186,11 +194,10 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> Vec<String> 
         }
         Some("self") => {
             segs.remove(0);
-            // 이 파일이 `mod.rs`·`lib.rs` 면 자기 디렉터리, 아니면 자기 파일이 곧 모듈.
-            module_dir_of(from)
+            모듈_자리(from)
         }
         Some("super") => {
-            let mut d = module_dir_of(from);
+            let mut d = 모듈_자리(from);
             while segs.first().copied() == Some("super") {
                 segs.remove(0);
                 d = d.rsplit_once('/').map_or(String::new(), |(p, _)| p.to_owned());
@@ -211,24 +218,52 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> Vec<String> 
     for s in &segs {
         base = if base.is_empty() { (*s).to_owned() } else { format!("{base}/{s}") };
     }
-    // 셋을 다 만든다 — `a/b.rs` · `a/b/mod.rs` · 그리고 `a.rs` 안의 인라인 `mod b`.
-    let mut out = vec![format!("{base}.rs"), format!("{base}/mod.rs")];
-    if let Some((p, _)) = base.rsplit_once('/') {
-        out.push(format!("{p}.rs"));
-        out.push(format!("{p}/mod.rs"));
-    }
+    // ★ **층이 둘이다.** 1 차는 그 모듈 자신의 파일이고, 2 차는 부모 파일 안의
+    //   인라인 `mod` 다. **1 차에 맞는 파일이 있으면 2 차는 안 본다** — 둘을 한 벌로
+    //   내면 `deep/leaf` 를 찾을 때 실재하는 `deep/mod.rs` 가 함께 잡혀 모호가 된다
+    //   (2026-09-09 실측: `Leaf` 가 통째로 안 섰다).
+    let mut 일차 = vec![format!("{base}.rs"), format!("{base}/mod.rs")];
     if segs.is_empty() {
-        out.push(format!("{base}/lib.rs"));
+        일차.push(format!("{base}/lib.rs"));
     }
-    out
+    let 이차 = base
+        .rsplit_once('/')
+        .map(|(p, _)| vec![format!("{p}.rs"), format!("{p}/mod.rs")])
+        .unwrap_or_default();
+    (일차, 이차)
 }
 
-/// 이 파일이 여는 모듈의 디렉터리.
+/// 이 파일의 **형제**가 놓이는 디렉터리.
 ///
 /// `a/b.rs` 는 모듈 `b` 이고 그 형제는 `a/` 안에 있다. `a/mod.rs`·`lib.rs` 는 자기가
 /// 디렉터리이고 그 형제도 같은 디렉터리다 — **둘이 같은 답으로 간다.**
 fn module_dir_of(path: &str) -> String {
     path.rsplit_once('/').map_or(String::new(), |(d, _)| d.to_owned())
+}
+
+/// 이 파일이 **여는 모듈 자신**의 자리 — [`module_dir_of`] 와 한 칸 다르다.
+///
+/// # 왜 갈라야 하나
+///
+/// `super` 는 **자기 모듈의 부모**다. `deep/leaf.rs` 의 모듈은 `crate::deep::leaf` 이고
+/// 그 부모는 `crate::deep`(= `src/deep`)인데, 형제 디렉터리로 재면 이미 `src/deep` 이라
+/// 거기서 한 번 더 올라가 `src` 가 된다 — **`super` 하나가 두 칸을 간다.**
+/// 실측(2026-09-09): 그래서 `super::super::inside::Root` 가 통째로 안 섰다.
+///
+/// | 파일 | 여는 모듈 | 이 함수 |
+/// |---|---|---|
+/// | `src/deep/leaf.rs` | `crate::deep::leaf` | `src/deep/leaf` |
+/// | `src/deep/mod.rs` | `crate::deep` | `src/deep` |
+/// | `src/lib.rs` | `crate` | `src` |
+fn 모듈_자리(path: &str) -> String {
+    let dir = path.rsplit_once('/').map_or("", |(d, _)| d);
+    let file = path.rsplit('/').next().unwrap_or("");
+    if matches!(file, "mod.rs" | "lib.rs") {
+        dir.to_owned()
+    } else {
+        let stem = file.strip_suffix(".rs").unwrap_or(file);
+        if dir.is_empty() { stem.to_owned() } else { format!("{dir}/{stem}") }
+    }
 }
 
 /// 이 파일이 속한 크레이트의 `src`, 없으면 자기 디렉터리.
@@ -277,8 +312,13 @@ pub fn cross_file_edges(
     for f in files {
         let from_path = f.path.as_str();
         for p in &f.pending {
+            // ★ **모든 짝이 ⓐ 의 시도다.** 꼬리가 있는 짝도 머리 엣지를 낳으므로
+            //   ⓐ 의 분모에서 빼면 그 시도가 어디에도 안 세어진다.
             let b = p.tail.is_call();
-            if b { report.b_pending += 1 } else { report.a_pending += 1 }
+            report.a_pending += 1;
+            if b {
+                report.b_pending += 1;
+            }
 
             let Some(item) = f.imports.iter().find(|i| i.local == p.local) else {
                 miss(&mut report, b, Unresolved::NoImport);
@@ -292,12 +332,18 @@ pub fn cross_file_edges(
             let 접두 = matches!(head, "crate" | "self" | "super");
             let 우리것 = 접두 || crates.iter().any(|c| c.name == head) || head.is_empty();
 
-            let cands = module_candidates(from_path, &item.module, &crates);
-            let hit: Vec<&str> =
-                cands.iter().filter_map(|c| paths.get(c.as_str()).copied()).collect();
-            let mut hit = hit;
-            hit.sort();
-            hit.dedup();
+            let (일차, 이차) = module_candidates(from_path, &item.module, &crates);
+            let 훑는다 = |cs: &[String]| {
+                let mut v: Vec<&str> =
+                    cs.iter().filter_map(|c| paths.get(c.as_str()).copied()).collect();
+                v.sort();
+                v.dedup();
+                v
+            };
+            let mut hit = 훑는다(&일차);
+            if hit.is_empty() {
+                hit = 훑는다(&이차);
+            }
             let target = match hit.as_slice() {
                 [one] => *one,
                 [] => {
@@ -314,8 +360,23 @@ pub fn cross_file_edges(
                 }
             };
 
-            // ⓐ 는 임포트 항목의 **원본 이름**, ⓑ 는 꼬리. 별칭은 여기서 원본으로 돌아간다.
-            let want = p.tail.name().unwrap_or(item.name.as_str());
+            // ── ⓐ **임포트한 이름 자체.** 별칭은 여기서 원본으로 돌아간다.
+            //
+            //    ★ **꼬리가 있어도 이 엣지는 만들어진다.** `Root::make()` 는 자리 하나이지만
+            //    `Root` 를 가리키는 것도 `make` 를 가리키는 것도 참이다. 앞 판은 꼬리가
+            //    머리를 **대체**했고, 그래서 `use` 로 들여온 타입이 경로 호출로만 쓰이면
+            //    그 타입으로 가는 엣지가 통째로 사라졌다(2026-09-09 실측: `Root`·`Origin`).
+            match by_name.get(&(target, item.name.as_str())).map(Vec::as_slice) {
+                Some([(one, _)]) => {
+                    edges.push(ReferenceEdge { from: p.from, to: *one, at: at.clone() });
+                    report.a_edges += 1;
+                }
+                Some(_) => miss(&mut report, false, Unresolved::Ambiguous),
+                None => miss(&mut report, false, Unresolved::NoSymbol),
+            }
+
+            // ── ⓑ **경로 호출의 꼬리.** 없으면 여기서 끝이다.
+            let Some(want) = p.tail.name() else { continue };
             let Some(hits) = by_name.get(&(target, want)) else {
                 miss(&mut report, b, Unresolved::NoSymbol);
                 continue;
@@ -327,19 +388,16 @@ pub fn cross_file_edges(
             //   ⚠ **찾는 자리는 여전히 대상 파일 안이다** — 잠근 문면이 *"대상 파일에서만
             //   찾는다"* 이고, 저장소 전체에서 `impl S` 를 뒤지는 것은 그 밖이다.
             //   그래서 이 좁힘은 확대가 아니라 **모호를 가르는 자**다.
-            let 주인: Vec<(SymbolId, &[String])> = match p.tail.name() {
-                Some(_) => hits
-                    .iter()
-                    .filter(|(_, c)| c.last().is_some_and(|last| last == &item.name))
-                    .copied()
-                    .collect(),
-                None => Vec::new(),
-            };
+            let 주인: Vec<(SymbolId, &[String])> = hits
+                .iter()
+                .filter(|(_, c)| c.last().is_some_and(|last| last == &item.name))
+                .copied()
+                .collect();
             let 고른 = if 주인.len() == 1 { 주인.as_slice() } else { hits.as_slice() };
             match 고른 {
                 [(one, _)] => {
                     edges.push(ReferenceEdge { from: p.from, to: *one, at: at.clone() });
-                    if b { report.b_edges += 1 } else { report.a_edges += 1 }
+                    report.b_edges += 1;
                 }
                 _ => miss(&mut report, b, Unresolved::Ambiguous),
             }
