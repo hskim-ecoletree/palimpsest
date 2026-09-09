@@ -75,9 +75,11 @@ fn 배치가_실제로_나뉜다() {
     let files: Vec<FileStitch> = (0..5).map(파일치).collect();
 
     let 나뉨 = p.stitch("s", &files, 2, &스냅샷()).expect("스티칭");
-    // 파일 5 · 배치 2 → **배치 커밋 셋**(2+2+1). 그리고 무대 준비 1 + 교체 1.
+    // 파일 5 · 배치 2 → **배치 커밋 셋**(2+2+1). 그리고 무대 준비 1 + 교체 1 + 회계 1.
+    // ⚠ 회계 커밋은 2026-09-09 에 붙었다 — 파일 간 해소의 산출을 `META` 에 남기는
+    //   자리이고, 읽기 전용으로 붙는 질의가 그것을 읽는다. **커밋 하나가 늘었다.**
     assert_eq!(나뉨.batch_commits, 3, "배치가 안 나뉘었다");
-    assert_eq!(나뉨.commits, 5, "무대 준비와 교체를 안 셌다");
+    assert_eq!(나뉨.commits, 6, "무대 준비·교체·회계를 안 셌다");
     assert_eq!(나뉨.files, 5);
     assert_eq!(나뉨.symbols, 10);
     assert_eq!(나뉨.edges, 5);

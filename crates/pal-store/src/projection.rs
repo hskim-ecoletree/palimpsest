@@ -105,6 +105,15 @@ const STAGE_SUFFIX: &str = ".staging";
 /// `META` 안의 열쇠 — 이 투영이 선 스냅샷.
 const META_BUILT_FOR: &str = "built_for";
 
+/// `META` 안의 열쇠 — 파일 간 해소의 회계(JSON).
+///
+/// # 왜 저장하나
+///
+/// 이 회계는 **스티칭 때만** 만들어진다. 읽기 전용으로 붙는 질의(`pal touch`)는 그
+/// 패스를 안 지나므로, 저장 안 하면 화면이 *"안 잼"* 밖에 못 적는다 — 그런데 이 층은
+/// 이미 잰 것이다. **「안 잰 것」과 「안 실은 것」을 가르는 자리다.**
+const META_CROSS: &str = "cross_report";
+
 #[derive(Debug, thiserror::Error)]
 pub enum ProjectionError {
     #[error("2층을 열지 못했다: {0}")]
@@ -365,6 +374,19 @@ impl Projection {
         // ④ **한 트랜잭션에서 교체한다.** 읽는 쪽은 옛 세대 전체 아니면 새 세대 전체다.
         self.swap(built_for)?;
         report.commits += 1;
+
+        // ⑤ 회계를 남긴다 — 읽기 전용으로 붙는 질의가 이것을 읽는다.
+        {
+            let write = self.write()?;
+            {
+                let mut meta = write.open_table(META).map_err(tx)?;
+                let raw = serde_json::to_string(&report.cross)
+                    .map_err(|e| ProjectionError::Decode(e.to_string()))?;
+                meta.insert(META_CROSS, raw).map_err(tx)?;
+            }
+            write.commit().map_err(tx)?;
+            report.commits += 1;
+        }
 
         Ok(report)
     }
@@ -744,6 +766,27 @@ impl Projection {
         let Some(v) = t.get(META_BUILT_FOR).map_err(tx)? else { return Ok(None) };
         let raw = v.value();
         if raw.is_empty() { Ok(None) } else { Ok(Some(raw)) }
+    }
+
+    /// 이 투영이 마지막 스티칭에서 만든 파일 간 해소의 회계.
+    ///
+    /// **[`None`] 은 「0 건」이 아니라 「이 투영이 그 패스를 안 지났다」다** — 심볼만
+    /// 다시 세운 자리(`rebuild`)와 옛 세대가 거기 든다. 0 으로 뭉개면 화면이
+    /// *"파일 간 엣지가 없다"* 를 사실로 적는다.
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn cross_report(&self) -> Result<Option<CrossFileReport>, ProjectionError> {
+        let read = self.read()?;
+        let Ok(t) = read.open_table(META) else { return Ok(None) };
+        let Some(v) = t.get(META_CROSS).map_err(tx)? else { return Ok(None) };
+        let raw = v.value();
+        if raw.is_empty() {
+            return Ok(None);
+        }
+        serde_json::from_str(&raw)
+            .map(Some)
+            .map_err(|e| ProjectionError::Decode(e.to_string()))
     }
 
     /// **지금 재구축 중인가** — 무대가 서 있으면 그렇다.

@@ -198,7 +198,7 @@ pub fn run(a: Args) -> Result<()> {
     if json {
         println!("{}", serde_json::to_string_pretty(&envelope)?);
     } else {
-        print_screen(&envelope);
+        print_screen(&envelope, attached.cross.as_ref());
     }
 
     // **두 시계를 둘 다 산출한다** — 합격선은 질의 시간에만 걸리고(`[f11.pass]` ⑦),
@@ -260,7 +260,7 @@ fn 수(v: &Capable<Vec<BoundItem>>) -> String {
 }
 
 /// 옛 `how-it-works §2.3` 의 화면 (그 문서는 2026-08-18 에 지웠다 — `docs/plan/disposal-map.md`).
-fn print_screen(envelope: &Envelope<TouchAnswer>) {
+fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::CrossFileReport>) {
     println!();
     match &envelope.answer {
         TouchAnswer::Unknown { name, near } => {
@@ -286,7 +286,7 @@ fn print_screen(envelope: &Envelope<TouchAnswer>) {
             // ★ **다른 구역이다.** *"내 코드에 걸린 결정"* 과 *"남의 코드에 걸렸는데
             // 나를 지켜보는 결정"* 은 고치러 갈 자리가 다르다.
             print_bindings("이 좌표를 지켜보는 것", &r.watching, &envelope.elision);
-            print_facts(&r.facts);
+            print_facts(&r.facts, cross);
             slot("내가 모르는 것", &r.unresolved);
             slot("효과", &r.effects);
             slot("판정", &r.judgments);
@@ -411,7 +411,26 @@ fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elisio
 }
 
 /// 이 심볼이 하는 것 — **수를 산출한다. `(있음)` 은 아무것도 안 말한다.**
-fn print_facts(value: &Capable<pal_core::SymbolFacts>) {
+///
+/// # 능력 축이 **셋**이다 (2026-09-09 · `E4`)
+///
+/// 앞 판은 `x.foo()` 와 `S::foo()` 를 한 줄에 묶어 *"멤버·경로 해소가 F07 미구축"* 이라
+/// 적었다. **그 묶음이 이제 거짓이다** — `S::foo()` 에는 값이 있고 `x.foo()` 에는 없다.
+/// 묶어 두면 선 것과 안 선 것이 같은 문장을 지고, 어느 쪽이 참인지 화면이 말하지 못한다.
+///
+/// | 축 | 오늘 | 까닭 |
+/// |---|---|---|
+/// | `cross-file-import` | **값이 있다** | 임포트한 이름이 다른 파일의 심볼에 붙는다 |
+/// | `path-resolution` | **값이 있다** | `S::foo()` 의 꼬리를 대상 파일에서만 찾는다 |
+/// | `member-resolution` | **범위 밖** | `x.foo()` 는 타입 추론이 필요하다 |
+///
+/// ★ **마지막 줄이 「능력 부재」가 아니라 「범위 밖」인 것이 요점이다.** 부재는 언젠가
+/// 만들 것이고 범위 밖은 이 회차가 안 하기로 정한 것이다 — 화면이 그 둘을 안 가르면
+/// 사람이 *"곧 될 것"* 으로 읽는다.
+fn print_facts(
+    value: &Capable<pal_core::SymbolFacts>,
+    cross: Option<&pal_core::CrossFileReport>,
+) {
     println!("■ 이 심볼이 하는 것");
     match value {
         Capable::NotBuilt { capability } => println!(
@@ -436,13 +455,41 @@ fn print_facts(value: &Capable<pal_core::SymbolFacts>) {
             //   L2c · F07), 경로 호출(`S::new()`)의 꼬리도 마찬가지다. 이 줄이 없으면
             //   그 0 이 **「아무도 안 부른다」로 읽힌다.**
             println!(
-                "  ※ **`x.foo()` 와 `S::foo()` 는 아직 안 셉니다** — 멤버·경로 해소가 \
-F07 미구축입니다. 그래서 0 은 「안 부른다」가 아니라 「이 층이 못 본다」일 수 있습니다"
+                "  ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 \
+타입 추론이 필요해 **이 회차의 범위 밖**입니다. 능력 부재가 아니라 안 하기로 정한 자리입니다"
             );
-            // ⚠ **파일 경계를 넘는 것은 여기 없다.** 그 수는 응답 묶음의 `coverage.unresolved`
-            // 가 지고, 그 사실을 화면에서 지우면 0 이 *"아무도 안 부른다"* 로 읽힌다.
-            println!("  **파일 안의 관계만입니다** — 파일 경계를 넘는 것은 F07 미구축입니다");
+            print_cross(cross);
         }
+    }
+}
+
+/// 파일 경계를 넘는 해소의 회계 — **`cross-file-import`(ⓐ)와 `path-resolution`(ⓑ)**.
+///
+/// # 수를 안 찍을 때는 **「안 잼」이라 적는다**
+///
+/// [`None`] 은 이 투영이 그 패스를 안 지났다는 뜻이지 0 건이라는 뜻이 아니다. 0 으로
+/// 적으면 *"파일 간 엣지가 없다"* 가 사실로 나가고, 그것이 이 회차 착수 관측의 형태다.
+///
+/// ⚠ **ⓑ 의 분모는 [`pal_core::RefCounts`] 에 못 넣는다** — 그 타입은
+/// `total() == refs.len()` 을 지고 꼬리는 참조 자리가 아니다. 그래서 이 회계가 그
+/// 자리를 대신 지고, 화면은 여기서만 ⓑ 를 읽는다.
+fn print_cross(cross: Option<&pal_core::CrossFileReport>) {
+    let Some(c) = cross else {
+        println!(
+            "  ※ **파일 간 해소를 이 답에서는 안 쟀습니다** — 0 건이라는 뜻이 아닙니다"
+        );
+        return;
+    };
+    println!(
+        "  ※ 파일 간 해소 — ⓐ `cross-file-import` {}/{} · ⓑ `path-resolution` {}/{} (선 것/짝)",
+        c.a_edges, c.a_pending, c.b_edges, c.b_pending
+    );
+    for (축, m) in [("ⓐ", &c.unresolved), ("ⓑ", &c.b_unresolved)] {
+        if m.is_empty() {
+            continue;
+        }
+        let 까닭: Vec<String> = m.iter().map(|(k, v)| format!("{k} {v}")).collect();
+        println!("  ※ {축} 가 못 선 까닭 — {}", 까닭.join(" · "));
     }
 }
 

@@ -46,7 +46,7 @@ pub struct CrossFileInput {
 }
 
 /// 짝을 못 지은 까닭. **수만 세면 무엇이 막혔는지 모른다.**
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Unresolved {
     /// 참조한 이름이 이 파일의 임포트 항목에 없다 — 매크로가 만든 이름 따위.
@@ -55,10 +55,36 @@ pub enum Unresolved {
     OutsideRepo,
     /// 모듈 경로에 맞는 파일이 이 저장소에 없다.
     NoTargetFile,
-    /// 대상 파일에 그 이름의 심볼이 없다 — **재수출 경유이거나 enum 변형**이다.
+    /// 대상 파일에 그 이름의 심볼이 없다.
+    ///
+    /// # 이 갈래는 대부분 **결함이 아니라 경계다** (2026-09-09 실측)
+    ///
+    /// ⓑ 의 340 건을 뜯어보니 **298 건(87.6%)이 크레이트 루트 `lib.rs`** 를 대상으로
+    /// 한다 — `use pal_core::Snapshot;` 뒤의 `Snapshot::single(…)` 이 그 형태다. 그
+    /// 파일에는 `pub use` 만 있고 정의가 없다. **재수출 추적은 잠근 축1 의 「밖」**
+    /// 이므로 이 자리들은 설계대로 안 서는 것이다(`A5`·`A5-a`).
+    ///
+    /// 남은 42 건의 상당수는 꼬리가 **enum 변형**이다(`Present` 34 · `Committed` 15 ·
+    /// `At` 11). 추출기가 변형 이름을 선언도 참조도 안 만들기로 이미 정했고, 소유자가
+    /// 2026-09-09 에 그것을 `#133`(L2) 잔여로 보냈다.
     NoSymbol,
     /// 후보가 둘 이상이라 **안 골랐다.**
     Ambiguous,
+}
+
+impl Unresolved {
+    /// 회계의 열쇠로 쓰는 이름. **`serde` 표기와 같은 문자열이어야 한다** — 갈리면
+    /// 저장된 회계와 화면이 서로 다른 이름을 쓴다.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::NoImport => "no_import",
+            Self::OutsideRepo => "outside_repo",
+            Self::NoTargetFile => "no_target_file",
+            Self::NoSymbol => "no_symbol",
+            Self::Ambiguous => "ambiguous",
+        }
+    }
 }
 
 /// 이 패스의 회계. **[`crate::RefCounts`] 에 못 넣는 것을 여기서 헤아린다.**
@@ -66,7 +92,7 @@ pub enum Unresolved {
 /// ⚠ 그 타입은 `total() == refs.len()` 을 진다. ⓑ 는 참조 자리가 아니라 **머리 참조에
 /// 실려 온 값**이라 그 합에 못 들어간다 — 넣으면 불변식이 깨진다. 그래서 갈래별 분모와
 /// 산출을 이 구조가 진다.
-#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct CrossFileReport {
     /// ⓐ 로 넘어온 짝 — 꼬리가 없는 것.
     pub a_pending: usize,
@@ -76,8 +102,15 @@ pub struct CrossFileReport {
     pub b_pending: usize,
     /// ⓑ 에서 엣지가 선 수.
     pub b_edges: usize,
-    /// 못 선 까닭별 건수. **0 건인 까닭은 안 싣는다** — 없는 것과 안 센 것을 가른다.
+    /// ⓐ 가 못 선 까닭별 건수. **0 건인 까닭은 안 싣는다** — 없는 것과 안 헤아린 것을 가른다.
     pub unresolved: BTreeMap<String, usize>,
+    /// ⓑ 가 못 선 까닭별 건수.
+    ///
+    /// ★ **ⓐ 와 갈라 두는 것이 요점이다.** 합쳐 두면 어느 갈래가 막혔는지 못 읽는다 —
+    /// 실측(2026-09-09): 합계로는 `no_symbol` 이 가장 컸는데 그 대부분이 ⓐ 의 재수출
+    /// 경유였고, ⓑ 가 막힌 자리는 다른 곳이었다.
+    #[serde(default)]
+    pub b_unresolved: BTreeMap<String, usize>,
 }
 
 impl CrossFileReport {
@@ -224,20 +257,21 @@ pub fn cross_file_edges(
 ) -> (Vec<ReferenceEdge>, CrossFileReport) {
     let paths: BTreeSet<&str> = symbols.iter().map(|s| s.path.as_str()).collect();
     let crates = crates_of(&paths);
-    // (파일, 이름) → 그 이름의 심볼들. 유일성 판정에 개수가 필요하다.
-    let mut by_name: BTreeMap<(&str, &str), Vec<SymbolId>> = BTreeMap::new();
+    // (파일, 이름) → 그 이름의 심볼들. 유일성 판정에 개수가 필요하고, **담은 것**이
+    // 필요한 까닭은 아래 `주인` 이 진다.
+    let mut by_name: BTreeMap<(&str, &str), Vec<(SymbolId, &[String])>> = BTreeMap::new();
     for s in symbols {
-        by_name.entry((s.path.as_str(), s.name.as_str())).or_default().push(s.id);
+        by_name
+            .entry((s.path.as_str(), s.name.as_str()))
+            .or_default()
+            .push((s.id, s.container.as_slice()));
     }
 
     let mut edges = Vec::new();
     let mut report = CrossFileReport::default();
-    let miss = |r: &mut CrossFileReport, why: Unresolved| {
-        let key = serde_json::to_value(why)
-            .ok()
-            .and_then(|v| v.as_str().map(str::to_owned))
-            .unwrap_or_else(|| format!("{why:?}"));
-        *r.unresolved.entry(key).or_default() += 1;
+    let miss = |r: &mut CrossFileReport, b: bool, why: Unresolved| {
+        let bucket = if b { &mut r.b_unresolved } else { &mut r.unresolved };
+        *bucket.entry(why.as_str().to_owned()).or_default() += 1;
     };
 
     for f in files {
@@ -247,7 +281,7 @@ pub fn cross_file_edges(
             if b { report.b_pending += 1 } else { report.a_pending += 1 }
 
             let Some(item) = f.imports.iter().find(|i| i.local == p.local) else {
-                miss(&mut report, Unresolved::NoImport);
+                miss(&mut report, b, Unresolved::NoImport);
                 continue;
             };
 
@@ -269,25 +303,45 @@ pub fn cross_file_edges(
                 [] => {
                     miss(
                         &mut report,
+                        b,
                         if 우리것 { Unresolved::NoTargetFile } else { Unresolved::OutsideRepo },
                     );
                     continue;
                 }
                 _ => {
-                    miss(&mut report, Unresolved::Ambiguous);
+                    miss(&mut report, b, Unresolved::Ambiguous);
                     continue;
                 }
             };
 
             // ⓐ 는 임포트 항목의 **원본 이름**, ⓑ 는 꼬리. 별칭은 여기서 원본으로 돌아간다.
             let want = p.tail.name().unwrap_or(item.name.as_str());
-            match by_name.get(&(target, want)).map(Vec::as_slice) {
-                Some([one]) => {
+            let Some(hits) = by_name.get(&(target, want)) else {
+                miss(&mut report, b, Unresolved::NoSymbol);
+                continue;
+            };
+            // ★ **ⓑ 에서는 머리의 이름이 곧 담은 것이다** — `S::foo()` 의 `foo` 는
+            //   `impl S` 안에 있다. 그러므로 대상 파일에 `foo` 가 여럿이어도
+            //   담은 것이 `S` 인 하나가 있으면 그것이 답이고 모호가 아니다.
+            //
+            //   ⚠ **찾는 자리는 여전히 대상 파일 안이다** — 잠근 문면이 *"대상 파일에서만
+            //   찾는다"* 이고, 저장소 전체에서 `impl S` 를 뒤지는 것은 그 밖이다.
+            //   그래서 이 좁힘은 확대가 아니라 **모호를 가르는 자**다.
+            let 주인: Vec<(SymbolId, &[String])> = match p.tail.name() {
+                Some(_) => hits
+                    .iter()
+                    .filter(|(_, c)| c.last().is_some_and(|last| last == &item.name))
+                    .copied()
+                    .collect(),
+                None => Vec::new(),
+            };
+            let 고른 = if 주인.len() == 1 { 주인.as_slice() } else { hits.as_slice() };
+            match 고른 {
+                [(one, _)] => {
                     edges.push(ReferenceEdge { from: p.from, to: *one, at: at.clone() });
                     if b { report.b_edges += 1 } else { report.a_edges += 1 }
                 }
-                Some(_) => miss(&mut report, Unresolved::Ambiguous),
-                None => miss(&mut report, Unresolved::NoSymbol),
+                _ => miss(&mut report, b, Unresolved::Ambiguous),
             }
         }
     }
