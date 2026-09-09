@@ -1,0 +1,30 @@
+# E1 관측 — 증인 26 의 오늘 산출 (커밋 0047404 · 2026-09-10)
+# 명령: pal query symbol.callers <이름> --json  ·  이름은 착수 시점 목록 그대로다
+Root	symbols 30 
+GixRepo	symbols 15 
+ConditionsReport	symbols 2 
+AGENT_KEY	symbols 1 
+AGENT_VALUE	symbols 1 
+CLAUDE_DIR	symbols 2 
+DERIVED	symbols 3 
+IGNORE_MARKERS	symbols 11 
+IMPORT_LINE	symbols 1 
+LOCK	symbols 2 
+MANIFEST	symbols 6 
+MANIFEST_HOME	symbols 1 
+MD_MARKERS	symbols 2 
+path_앞에	symbols 16 
+바이트_전부	symbols 1 
+캐시_엔트리_수	symbols 1 
+해시	symbols 4 
+Budget	symbols 11 
+Capable	symbols 21 
+Coord	symbols 17 
+ExtractorVersion	symbols 4 
+GraphView	symbols 12 
+RustScopeRules	symbols 2 
+ScopeSource	symbols 2 
+Slot	symbols 7 
+Symbol	symbols 9 
+
+총 26 · 값을 돌려준 이름 26 · 하한 18 · 착수 시점은 26/26 이 빈 답이었다
