@@ -118,6 +118,23 @@ const META_CROSS: &str = "cross_report";
 /// ⚠ **회계(`META_CROSS`)와 갈라 둔다.** 회계는 까닭별 **수**이고 이것은 **자리와
 /// 이름과 지난 걸음**이다. 한 열쇠에 묶으면 회계만 읽는 자리가 목록 전량을 지고 온다.
 const META_UNRESOLVED: &str = "unresolved_refs";
+/// 2 층 행의 **형식 판**.
+const META_FORMAT: &str = "row_format";
+
+/// 이 바이너리가 쓰는 2 층 행의 형식 판 — **행의 모양이 바뀔 때마다 올린다** (`D4`).
+///
+/// # 왜 있나
+///
+/// 저장이 postcard 라 **자리 기반**이다. [`pal_core::RefCounts`] 에 칸이 하나 붙으면
+/// 옛 색인의 바이트는 새 타입으로 못 읽히고, 판 표시가 없으면 그 어긋남이
+/// **디코드 오류**로 나온다 — 화면은 원인 불명을 내고 사람은 되짚을 자리가 없다.
+/// 이 회차에서만 그 모양이 두 번 움직였다(`ambiguous` · `imported`).
+///
+/// ⚠ **판을 안 올리면 이 장치가 죽은 가지다.** 모양을 바꾸는 커밋이 이 상수를 함께
+/// 올려야 하고, 그것을 재는 자는 없다 — 재려면 행의 모양을 기계가 알아야 하는데
+/// postcard 는 그것을 안 싣는다. **그 사실을 여기 적는 것이 이 장치가 강제하는 것과
+/// 강제하지 못하는 것의 경계다.**
+pub const ROW_FORMAT_REV: &str = "f09-imported-and-unresolved";
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProjectionError {
@@ -132,6 +149,16 @@ pub enum ProjectionError {
     /// 조용히 무시하지 않는 이유: 무시하면 스티칭이 아무것도 안 하고 성공했다고
     /// 말하고, 그 뒤의 질의는 **빈 2층 위에서** 답한다. 그 답은 비어 있고 정직해
     /// 보이지만 실제로는 이 빌드가 자기 인덱스를 안 세운 것이다.
+    /// **행 형식 판이 어긋난다** (`D4`).
+    ///
+    /// 저장이 postcard 라 자리 기반이고, 옛 색인을 새 바이너리로 읽으면 값이 조용히
+    /// 어긋나거나 디코드에서 죽는다. **낡음으로 산출하고 구제를 이름으로 적는다** —
+    /// 원인 불명 오류를 내면 사람이 되짚을 자리가 없다.
+    #[error(
+        "2층의 행 형식이 낡았다 — 색인 `{found}` · 이 빌드 `{want}`. \
+         구제는 다시 세우는 것 하나다: `rm -rf .palimpsest/index.redb .palimpsest/cache`"
+    )]
+    RowFormat { found: String, want: &'static str },
     #[error("2층에 읽기 전용으로 붙었다 — 쓸 수 없다")]
     ReadOnly,
 }
@@ -255,7 +282,24 @@ impl Projection {
     pub fn open_read_only(path: &Path) -> Result<Self, ProjectionError> {
         let db = ReadOnlyDatabase::open(path)
             .map_err(|e| ProjectionError::Open(format!("{}: {e}", path.display())))?;
-        Ok(Self { db: Attached::ReadOnly(db) })
+        let me = Self { db: Attached::ReadOnly(db) };
+        // ★★ **읽기 전에 형식 판을 본다** (`D4` · `D4-a`). 이 자리가 하나인 것이
+        //    요점이다 — 읽는 표면마다 검사를 놓으면 새 표면이 생길 때 빠진다.
+        //    `crates/` 에서 읽기로 여는 자리는 둘이고(`export.rs` · `attach.rs` 의
+        //    `How::ReadOnly`) **둘 다 이 함수를 지난다.**
+        //
+        // ⚠ **한 번도 쓰인 적 없는 2 층은 통과시킨다** — 행이 없으면 잘못 읽을 것도
+        //    없고, 막으면 첫 사용이 형식 오류로 죽는다. 가르는 자는 **`META` 표가
+        //    있는가**다: 무엇이든 쓴 적이 있으면 그 표가 생긴다.
+        //    ⚠ `built_for` 로 가르지 않는다 — `rebuild` 가 그것을 **빈 문자열로** 갈아
+        //    끼우므로 「세운 적 있다」와 「빈 값」이 같은 말이 된다.
+        if me.meta_written()? && !me.row_format_matches()? {
+            return Err(ProjectionError::RowFormat {
+                found: me.row_format()?.unwrap_or_else(|| "판 표시 없음".to_owned()),
+                want: ROW_FORMAT_REV,
+            });
+        }
+        Ok(me)
     }
 
     /// 읽기 전용으로 붙었는가. **값이다** — 질의 로그를 못 남긴 사유가 여기서 나온다.
@@ -396,6 +440,9 @@ impl Projection {
                 let raw = serde_json::to_string(&unresolved)
                     .map_err(|e| ProjectionError::Decode(e.to_string()))?;
                 meta.insert(META_UNRESOLVED, raw).map_err(tx)?;
+                // **형식 판을 같은 트랜잭션에 남긴다** — 따로 쓰면 그 사이에 죽었을 때
+                // 행은 새것이고 판은 옛것이 된다.
+                meta.insert(META_FORMAT, ROW_FORMAT_REV.to_owned()).map_err(tx)?;
             }
             write.commit().map_err(tx)?;
             report.commits += 1;
@@ -854,6 +901,38 @@ impl Projection {
             .map_err(|e| ProjectionError::Decode(e.to_string()))
     }
 
+    /// `META` 표에 무엇이든 쓴 적이 있는가 — **형식 판을 물을 자격의 자**.
+    fn meta_written(&self) -> Result<bool, ProjectionError> {
+        let read = self.read()?;
+        Ok(read.open_table(META).is_ok())
+    }
+
+    /// 이 2 층이 적은 행 형식 판. **[`None`] 은 「판 표시가 없다」**다.
+    ///
+    /// 옛 세대(`D4` 이전)에는 이 열쇠가 원리상 없다. 그것을 이 바이너리의 판과 같다고
+    /// 삼키면 **판 검사가 죽은 가지**가 된다.
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn row_format(&self) -> Result<Option<String>, ProjectionError> {
+        let read = self.read()?;
+        let Ok(t) = read.open_table(META) else { return Ok(None) };
+        let Some(v) = t.get(META_FORMAT).map_err(tx)? else { return Ok(None) };
+        let raw = v.value();
+        if raw.is_empty() { Ok(None) } else { Ok(Some(raw)) }
+    }
+
+    /// 이 2 층의 행을 이 바이너리가 **읽어도 되는가** (`D4`).
+    ///
+    /// ★ **오류가 아니라 값이다.** 부르는 쪽이 「낡음」으로 산출해야 하고, 오류로 내면
+    /// 화면이 *"2 층을 못 읽었다"* 만 적어 옛 색인과 깨진 색인이 같은 말이 된다.
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn row_format_matches(&self) -> Result<bool, ProjectionError> {
+        Ok(self.row_format()?.as_deref() == Some(ROW_FORMAT_REV))
+    }
+
     /// **지금 재구축 중인가** — 무대가 서 있으면 그렇다.
     ///
     /// 옛 DESIGN §12.7 격리 3번이 요구한 값이고, 응답 묶음의 `projection.rebuild` 가 지금까지
@@ -1031,4 +1110,110 @@ impl pal_core::Coordinates for Projection {
         self.symbols_of(path).map(|v| v.into_iter().map(좌표로).collect()).unwrap_or_default()
     }
 
+}
+
+#[cfg(test)]
+mod 행_형식_판 {
+    use super::{META, META_FORMAT, Projection, ProjectionError, ROW_FORMAT_REV};
+
+    fn 자리(tag: &str) -> std::path::PathBuf {
+        let d = std::env::temp_dir()
+            .join(format!("pal-rowfmt-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&d).expect("임시");
+        d.join("index.redb")
+    }
+
+    /// 판이 어긋난 2 층은 **읽기로 안 열린다** — `D4`.
+    #[test]
+    fn 옛_판은_읽기로_안_열린다() {
+        let path = 자리("old");
+        {
+            let p = Projection::open(&path).expect("쓰기");
+            // 세워진 적 있는 2 층으로 만든다 — `built_for` 가 그 표시다.
+            p.rebuild(&[]).expect("세우기");
+            let w = p.write().expect("트랜잭션");
+            {
+                let mut meta = w.open_table(META).expect("META");
+                meta.insert(META_FORMAT, "옛판".to_owned()).expect("쓰기");
+            }
+            w.commit().expect("커밋");
+        }
+        let Err(e) = Projection::open_read_only(&path) else {
+            panic!("옛 판인데 열렸다");
+        };
+        let ProjectionError::RowFormat { found, want } = &e else {
+            panic!("낡음이 아니라 다른 오류다: {e}");
+        };
+        assert_eq!(found, "옛판");
+        assert_eq!(*want, ROW_FORMAT_REV);
+        // **구제를 이름으로 적는다** — 원인 불명 오류를 내면 되짚을 자리가 없다.
+        assert!(e.to_string().contains("rm -rf .palimpsest/index.redb"), "{e}");
+    }
+
+    /// **음성 대조** — 판을 안 건드리면 열려야 한다. 안 그러면 이 관문은
+    /// *"읽기 전용을 통째로 막는 것"* 이지 판을 재는 것이 아니다.
+    #[test]
+    fn 판이_같으면_열린다() {
+        let path = 자리("same");
+        {
+            let p = Projection::open(&path).expect("쓰기");
+            p.rebuild(&[]).expect("세우기");
+            let w = p.write().expect("트랜잭션");
+            {
+                let mut meta = w.open_table(META).expect("META");
+                meta.insert(META_FORMAT, ROW_FORMAT_REV.to_owned()).expect("쓰기");
+            }
+            w.commit().expect("커밋");
+        }
+        Projection::open_read_only(&path).expect("판이 같은데 안 열렸다");
+    }
+
+    /// **세워진 적 없는 2 층은 통과한다** — 행이 없으면 잘못 읽을 것도 없다.
+    #[test]
+    fn 안_세운_2층은_판을_안_묻는다() {
+        let path = 자리("fresh");
+        {
+            let _ = Projection::open(&path).expect("쓰기");
+        }
+        Projection::open_read_only(&path).expect("안 세운 2 층이 막혔다");
+    }
+
+    /// `D4-a` — **읽는 자리의 전수.** 이 관문이 하나인 것이 그 근거다.
+    ///
+    /// 읽기로 붙는 길이 [`Projection::open_read_only`] 하나뿐이면 표면이 몇 개든 전부
+    /// 이 관문을 지난다. 새 표면이 `ReadOnlyDatabase::open` 을 직접 부르면 이 시험이
+    /// 빨개진다 — **그때가 관문이 새는 순간이다.**
+    #[test]
+    fn 읽기로_붙는_길이_하나다() {
+        // **모집단은 이 크레이트의 소스다.** `pal-intent` 는 의도 저장소라 다른
+        // 데이터베이스이고, 이 관문이 지는 것은 2 층 하나다.
+        let 뿌리 = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut 자리 = Vec::new();
+        let mut 볼_것 = vec![뿌리.to_path_buf()];
+        while let Some(d) = 볼_것.pop() {
+            for e in std::fs::read_dir(&d).expect("읽기") {
+                let e = e.expect("엔트리");
+                let p = e.path();
+                if p.is_dir() {
+                    볼_것.push(p);
+                } else if p.extension().is_some_and(|x| x == "rs") {
+                    let t = std::fs::read_to_string(&p).expect("소스");
+                    for (i, line) in t.lines().enumerate() {
+                        // 자기 줄을 안 세려고 이름을 쪼개서 찾는다.
+                        let 찾을 = concat!("ReadOnlyDatabase", "::open");
+                        if line.contains(찾을) && !line.trim_start().starts_with("//") {
+                            자리.push(format!("{}:{}", p.display(), i + 1));
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(
+            자리.len(),
+            1,
+            "읽기로 붙는 자리가 하나가 아니다 — 관문을 안 지나는 길이 생겼다: {자리:?}"
+        );
+        assert!(자리[0].contains("projection.rs"), "{자리:?}");
+    }
 }
