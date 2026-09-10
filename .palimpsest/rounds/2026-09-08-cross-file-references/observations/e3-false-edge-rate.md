@@ -144,3 +144,44 @@ n=30 에서 참 오류율이 15% 여도 관측 거짓이 3 건 이하일 확률�
 `E3-b` 는 여전히 **반증**이다 — 규칙이 유일한 표본을 안 정한다는 사실은 모집단이 바뀌어도
 그대로다. `E3-c` 의 검정력 한계도 그대로다: 0/30 의 95% 상한은 약 **11.6%** 라
 **상한 10% 를 표본만으로는 못 배제한다.**
+
+## 표본 30 건 전수 — 좌표와 대조 재료 ⟨2026-09-10 · 독립 리뷰 항 11 이 요구했다⟩
+
+앞 판은 ⓑ 넷만 표로 실었다. **「0/30」을 원장이 재검하려면 서른 건의 좌표가 다 있어야
+한다** — 없으면 그 스냅샷의 색인을 다시 세워 정렬을 재현해야 하고, 그것은 재검이 아니라
+재실행이다.
+
+| # | 위치 | 출발 (이름 @ 파일:줄) | 도착 (이름 @ 파일:줄) | `use` 줄 또는 본문의 참조 자리 |
+|---|---:|---|---|---|
+| 1 | 0 | `조각` @ `crates/pal-core/src/narrative.rs:619` | `new` @ `crates/pal-core/src/repo.rs:45` | 본문 `:621` `path: RepoPath::new(path),` |
+| 2 | 43 | `스냅샷` @ `crates/pal-core/src/cascade.rs:243` | `single` @ `crates/pal-core/src/repo.rs:293` | 본문 `:244` `Snapshot::single(…)` |
+| 3 | 86 | `심볼` @ `crates/pal-core/src/plan.rs:987` | `new` @ `crates/pal-core/src/repo.rs:45` | 본문 `:990` `&RepoPath::new(path),` |
+| 4 | 129 | `응답묶음을_지는_표면_전부가_아홉을_진다` @ `crates/pal-cli/tests/envelope_two_layer.rs:257` | `pal` @ `crates/pal-cli/tests/common/mod.rs:128` | `:10` `use common::{PAL, git, pal};` |
+| 5 | 172 | `재귀는_선언_거르기에_안_걸린다` @ `crates/pal-core/src/projection.rs:727` | `SymbolKind` @ `crates/pal-core/src/symbol.rs:34` | `:465` `use crate::symbol::{Span, SymbolKind};` |
+| 6 | 216 | `use_를_묶는다` @ `crates/pal-extract/src/rust_scopes.rs:527` | `Builder` @ `crates/pal-extract/src/scopes.rs:162` | `:33` `use crate::scopes::{Builder, ScopeRules};` |
+| 7 | 259 | `감시_원소가_사라진_것과_대상이_사라진_것은_다른_사건이다` @ `crates/pal-core/src/binding.rs:943` | `of_normalized` @ `crates/pal-core/src/coord.rs:137` | 본문 `:948` `BodyDigest::of_normalized(b"x")` |
+| 8 | 302 | `블록_하나` @ `crates/pal-cli/src/install.rs:790` | `Manifest` @ `crates/pal-cli/src/install/manifest.rs:171` | `:54` `use manifest::{… Manifest …};` |
+| 9 | 345 | `좌표` @ `crates/pal-core/src/cascade.rs:247` | `Discriminator` @ `crates/pal-core/src/coord.rs:243` | `:236` `use crate::coord::{Discriminator, SymbolId};` |
+| 10 | 389 | `노드` @ `crates/pal-core/src/rebind.rs:130` | `RepoId` @ `crates/pal-core/src/repo.rs:16` | `:127` `use crate::repo::{RepoId, RepoPath};` |
+| 11 | 432 | `모르는_이름은_…_0_이다` @ `crates/pal-cli/tests/catalog_surface.rs:112` | `PAL` @ `crates/pal-cli/tests/common/mod.rs:24` | `:14` `use common::{PAL, 저장소};` |
+| 12 | 475 | `유일_해소는_경로_곱을_안_올린다` @ `crates/pal-core/src/traverse.rs:276` | `Budget` @ `crates/pal-core/src/budget.rs:278` | `:34` `use crate::budget::Budget;` |
+| 13 | 518 | `심볼` @ `crates/pal-core/src/file_graph.rs:467` | `SymbolKind` @ `crates/pal-core/src/symbol.rs:34` | `:465` `use crate::symbol::{Span, SymbolKind};` |
+| 14 | 562 | `저장소` @ `crates/pal-cli/tests/touch_recall.rs:21` | `git` @ `crates/pal-cli/tests/common/mod.rs:122` | `:14` `use common::{git, pal};` |
+| 15 | 605 | `질의` @ `crates/pal-cli/tests/envelope_two_layer.rs:113` | `pal` @ `crates/pal-cli/tests/common/mod.rs:128` | `:10` `use common::{PAL, git, pal};` |
+| 16 | 648 | `capability` @ `crates/pal-extract/src/lib.rs:228` | `extractor_for` @ `crates/pal-extract/src/extractor.rs:72` | `:28` `pub use extractor::{LanguageExtractor, extractor_for};` |
+| 17 | 691 | `변경이_0_이면_이탈률이_정의되지_않는다` @ `crates/pal-core/src/plan.rs:1243` | `RepoPath` @ `crates/pal-core/src/repo.rs:41` | `:63` `use crate::repo::RepoPath;` |
+| 18 | 734 | `명시적_oracle_store와_default_finalization_store를_같이_쓴다` @ `crates/pal-cli/tests/round_approve_verify.rs:446` | `PAL` @ `crates/pal-cli/tests/common/mod.rs:24` | `:11` `use common::PAL;` |
+| 19 | 778 | `훑기` @ `crates/pal-cli/src/install/manifest.rs:404` | `sha256` @ `crates/pal-cli/src/install.rs:37` | `:24` `use super::sha256;` |
+| 20 | 821 | `매니페스트가_실물과_양방향으로_맞는다` @ `crates/pal-cli/tests/install.rs:232` | `해시` @ `crates/pal-cli/tests/common/mod.rs:62` | `:30` `use common::{… 해시};` |
+| 21 | 864 | `경로_곱만_낮추면_탐색이_멈추고_남은_대기열이_세어진다` @ `crates/pal-core/src/traverse.rs:237` | `Budget` @ `crates/pal-core/src/budget.rs:278` | `:34` `use crate::budget::Budget;` |
+| 22 | 907 | `스냅샷을_잰다` @ `crates/pal-cli/src/plan.rs:53` | `ledger` @ `crates/pal-cli/src/main.rs:25` | `:28` `use crate::ledger;` |
+| 23 | 951 | `rust_참조가_2층까지_도착하고_화면이_답한다` @ `crates/pal-cli/tests/rust_references.rs:71` | `pal` @ `crates/pal-cli/tests/common/mod.rs:128` | `:16` `use common::{git, pal};` |
+| 24 | 994 | `설치_루트` @ `crates/pal-cli/src/install/doctor.rs:93` | `MANIFEST` @ `crates/pal-cli/src/install/layout.rs:150` | `:31` `use super::layout::{DERIVED, MANIFEST, SETTINGS};` |
+| 25 | 1037 | `제안` @ `crates/pal-core/src/rebind.rs:278` | `RepoPath` @ `crates/pal-core/src/repo.rs:41` | `:275` `use crate::repo::{RepoId, RepoPath};` |
+| 26 | 1080 | `블록_넣기` @ `crates/pal-cli/src/install.rs:713` | `IGNORE_MARKERS` @ `crates/pal-cli/src/install/layout.rs:245` | `:50` `use layout::{… IGNORE_MARKERS, …};` |
+| 27 | 1124 | `GradeRule` @ `crates/pal-core/src/schema.rs:146` | `ResolutionGrade` @ `crates/pal-core/src/graph.rs:163` | `:33` `use crate::graph::{Producer, Provenance, ResolutionGrade};` |
+| 28 | 1167 | `불변식_1_엣지의_양_끝_노드가_존재한다` @ `crates/pal-core/src/doctor.rs:1319` | `one` @ `crates/pal-core/src/view.rs:195` | 본문 `:1322` `EdgeInstance::one(` |
+| 29 | 1210 | `성한` @ `crates/pal-core/src/doctor.rs:1136` | `Provenance` @ `crates/pal-core/src/graph.rs:32` | `:31` `use crate::graph::{Provenance, ResolutionGrade};` |
+| 30 | 1253 | `후보가_상한을_넘으면_잡힌다` @ `crates/pal-core/src/doctor.rs:1418` | `Provenance` @ `crates/pal-core/src/graph.rs:32` | `:31` `use crate::graph::{Provenance, ResolutionGrade};` |
+
+★ **앞 표본과 겹치는 것은 7** — 번호 1·12·15·16·24·28·30.

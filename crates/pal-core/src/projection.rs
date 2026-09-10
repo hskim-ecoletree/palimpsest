@@ -117,7 +117,10 @@ pub struct RefCounts {
 }
 
 impl RefCounts {
-    /// 일곱의 합. **`refs` 의 길이와 같아야 한다** — 다르면 갈래 하나가 샜다.
+    /// **여덟의 합.** `refs` 의 길이와 같아야 한다 — 다르면 갈래 하나가 샜다.
+    ///
+    /// ⚠ 앞 문면은 「일곱」이었고 착수 시점에는 그것이 맞았다. 이 회차가 `imported` 를
+    /// 여덟째로 더하면서 **주석만 안 따라왔다**(독립 리뷰 라운드 1 이 잡았다).
     #[must_use]
     pub const fn total(&self) -> usize {
         self.declarations
