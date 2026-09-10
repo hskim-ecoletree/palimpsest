@@ -481,6 +481,45 @@ def 검사8() -> None:
 # ═════════════════════════════════════════════════════════════════════════════
 
 비율_하한 = 10.0
+# **고정비가 콜드의 이 몫을 넘으면 대조 불가다** — `bench_ratio_correction` 원문:
+# *"고정비가 콜드 벽시계에 가까우면 분모·분자가 둘 다 0 에 붙어 비율이 폭발한다.
+# 고정비가 콜드의 50% 를 넘으면 이 지표는 대조 불가로 적는다."*
+고정비_상한_몫 = 0.5
+
+
+def 고정비(repo: Path, at: str, name: str) -> float | None:
+    """**추출 대상이 0 인 회차의 벽시계.** 없으면 `None`.
+
+    `bench_ratio_correction` 이 뜨는 방법까지 못 박았다 —
+    *"`.palimpsest/manifest.toml` 의 제외 규칙으로 전부 범위 밖으로 만들고 한 번 돈다"*.
+
+    ⚠ **코퍼스를 안 만진다.** 제외 규칙을 원본에 심으면 그 저장소의 다른 대조가 전부
+    움직인다. `git clone --local` 로 뜬 사본에 심는다 — 검사 ⑦ 이 쓰는 것과 같은 자다.
+    """
+    사본 = Path(tempfile.mkdtemp(prefix=f"f04-fixed-{name}-")) / "repo"
+    p = run(["git", "clone", "--quiet", "--local", str(repo), str(사본)])
+    if p.returncode != 0:
+        return None
+    run(["git", "checkout", "--quiet", at], cwd=사본)
+    (사본 / ".palimpsest").mkdir(parents=True, exist_ok=True)
+    (사본 / ".palimpsest/manifest.toml").write_text(
+        '[[repo]]\nid = "%s"\npath = "."\n\n'
+        '[[repo.exclude.rules]]\nid = "everything"\nglob = "**"\n' % name,
+        encoding="utf-8",
+    )
+    cache = 새_캐시(f"fixed-{name}")
+    걸린 = 잰다(lambda: 대장(사본, at, cache))
+    # **정말 0 인가를 확인하고 쓴다.** 제외가 안 걸렸으면 이 값은 고정비가 아니라
+    # 콜드다 — 그대로 쓰면 비율이 폭발하고 그것이 거짓 통과다.
+    d = json.loads(대장(사본, at, cache))["ledger"]
+    대상 = sum(
+        1
+        for e in d["entries"]
+        if isinstance(e.get("state"), dict) and set(e["state"]) & {"parsed", "partial"}
+    )
+    if 대상 != 0:
+        return None
+    return 걸린
 
 
 def 잰다(fn) -> float:
@@ -490,7 +529,17 @@ def 잰다(fn) -> float:
 
 
 def 검사9() -> None:
-    적음(f"⑨ 벤치 — 합격선은 **비율**(증분이 콜드보다 {비율_하한:.0f}배 이상 빠르다)")
+    # ★★ **선은 `corpus/criteria.toml` 의 `bench_ratio_correction` 이 진다** —
+    #    `[f04.pass].bench_ratio` 의 「콜드÷증분 ≥ 10」이 아니다. 그 선은 2026-08-13 에
+    #    등록됐다가 `ditto` 에서 6.5 배로 어긋났고, `docs/gates/F04.md` §7 이 원인을
+    #    *"2,451 중 491(20%) 만 추출 대상"* 으로 진단한 뒤 **재기 전에** 새 선이
+    #    `5c49f5b`(2026-08-14)로 등록됐다. 이 스크립트만 옛 선에 남아 있었다.
+    #    ⚠ **값을 10 에서 내리는 것이 아니다** — 그것은 `[f04].self_judged` 가 금한
+    #    사후 조정이다. 분자에서 **고정비를 뺀다.**
+    적음(
+        f"⑨ 벤치 — 합격선은 **(콜드 − 고정비) ÷ (증분 − 고정비) ≥ {비율_하한:.0f}** "
+        f"⟨`corpus/criteria.toml` `bench_ratio_correction`⟩"
+    )
     적음(f"      기계: {platform.platform()} · CPU {os.cpu_count()}")
     for repo, at, name in (DITTO, PORTAL):
         cache = 새_캐시(f"bench-{name}")
@@ -503,13 +552,33 @@ def 검사9() -> None:
         기록.append(
             f"{name}: 콜드 {콜드:.2f}s ({파일수} 파일) · 증분 {증분:.2f}s · 비율 {비율:.1f}배"
         )
+        고정 = 고정비(repo, at, name)
+        기록.append(
+            f"{name}: 고정비 {'못 떴다' if 고정 is None else f'{고정:.2f}s'}"
+        )
         # ★ 증분이 실제로 캐시를 썼는가 — 안 읽고 빠르면 비율이 예뻐진다.
         if 빗나감 != 0:
             어긋남(f"⑨ {name} — 증분 회차의 빗나감이 {빗나감} 이다. 캐시를 안 썼다")
-        elif 비율 < 비율_하한:
-            어긋남(f"⑨ {name} — 비율 {비율:.1f}배 (하한 {비율_하한:.0f})")
+        elif 고정 is None:
+            어긋남(f"⑨ {name} — 고정비를 못 떴다. 등록된 정정이 그것을 요구한다")
+        elif 고정 > 콜드 * 고정비_상한_몫:
+            # **대조 불가는 실패가 아니라 산출이다** — 등록된 정정이 그렇게 못 박았다.
+            적음(
+                f"  --    ⑨ {name}  **대조 불가** — 고정비 {고정:.2f}s 가 콜드 {콜드:.2f}s 의 "
+                f"{고정/콜드:.0%} 다. 이 코퍼스에서는 추출이 지배적이지 않다"
+            )
         else:
-            ok(f"⑨ {name}  콜드 {콜드:.2f}s · 증분 {증분:.2f}s · **{비율:.1f}배** · 적중 {적중}")
+            정정비율 = (콜드 - 고정) / (증분 - 고정) if 증분 > 고정 else float("inf")
+            if 정정비율 < 비율_하한:
+                어긋남(
+                    f"⑨ {name} — 고정비를 뺀 비율 {정정비율:.1f}배 (선 {비율_하한:.0f}) · "
+                    f"콜드 {콜드:.2f}s · 증분 {증분:.2f}s · 고정비 {고정:.2f}s"
+                )
+            else:
+                ok(
+                    f"⑨ {name}  콜드 {콜드:.2f}s · 증분 {증분:.2f}s · 고정비 {고정:.2f}s · "
+                    f"**{정정비율:.1f}배** · 적중 {적중}"
+                )
     적음()
     적음("   G50 이 남긴 비용 — 문법 축이 하나라 Kotlin 문법을 올리면 TypeScript 캐시도")
     적음("   전량 무효화된다. **그 비용이 위 `ditto` 콜드 시간**이다.")
@@ -525,12 +594,24 @@ def 검사_ci() -> None:
     적음("②⑥ CI 상시 — `cargo test` 가 재는 둘이 실제로 도는가")
     p = run(["cargo", "test", "-p", "pal-cli", "--test", "prune_boundary",
              "--test", "rebuild_equivalence"], cwd=ROOT)
+    # ★ **바이너리가 둘 다 돌았는가를 잰다 — 시험이 몇 개인가가 아니다.**
+    #
+    # 앞 판은 `"2 passed"` 나 `"1 passed"` 두 번을 찾았다. 그 자는 2026-08-13(`8e8ea94`)
+    # 에 **바이너리마다 시험이 하나**였을 때 참이었고, F24 가 `tests/common/mod.rs` 에
+    # `#[path]` 로 제품 소스 셋(`eol`·`sha256`·`winpath`)을 끌어오면서 거짓이 됐다 —
+    # 그 파일들이 자기 `#[test]` 아홉을 지고 있어 두 바이너리가 각각 `10 passed` 를 찍는다.
+    # 그래서 이 판정문은 **시험이 다 통과한 자리에서 「돌지 않았다」를 찍었다.**
+    #
+    # ⚠ **판정문이 가리킨 물음(*"이름이 바뀌었는가"*)부터 틀렸다.** 이름은 안 바뀌었다.
+    #   그러므로 자를 세는 방식이 아니라 **재는 대상**을 고친다 — `test result:` 줄의
+    #   수가 곧 돌아간 바이너리의 수다.
+    돈_바이너리 = p.stdout.count("test result:")
     if p.returncode != 0:
         어긋남("②⑥ 통합 시험이 실패했다\n" + p.stdout[-1500:])
-    elif "2 passed" not in p.stdout and p.stdout.count("1 passed") < 2:
-        어긋남("②⑥ 시험이 돌지 않았다 — 이름이 바뀌었는가")
+    elif 돈_바이너리 != 2:
+        어긋남(f"②⑥ 시험 바이너리가 {돈_바이너리} 개 돌았다 (기대 2) — 이름이 바뀌었는가")
     else:
-        ok("②⑥ `prune_boundary` · `rebuild_equivalence` 둘 다 돈다")
+        ok(f"②⑥ `prune_boundary` · `rebuild_equivalence` 둘 다 돈다 ({p.stdout.count(' passed')} 산출줄)")
     적음()
 
 
