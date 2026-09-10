@@ -99,16 +99,20 @@ n=30 에서 참 오류율이 15% 여도 관측 거짓이 3 건 이하일 확률�
 
 ### `D2`·`D2-a` — 축 여덟의 위반이 안 늘었고 다섯은 종료 시에도 모집단 0 이다
 
-전수: ① `checked 10400 · violations 0` · ② `18442 · 0` · ③ `8042 · 0`.
+전수: ① `checked 10416 · violations 0` · ② `18375 · 0` · ③ `7959 · 0`.
 축 ④⑤⑥⑦⑧ 은 종료 시점에도 `not_built` — **모집단 0 이다.** `D2-a` 가 요구한 대로
 그 사실을 판정에 적는다. 그러므로 `D2` 의 본체는 ①②③ 이다.
 
 ### `C2`·`C2-a` — 라벨별 몫이 서고 나서야 잴 자가 생겼다
 
 조건은 *"전체 `checked` 가 아니라 **`REFERENCES` 몫**"* 인데 산출에 그 값이 없었다.
-`Outcome.by_label` 을 더했다 — 축 ① `REFERENCES 4394 · REFERENCES_ACROSS 1263 ·
-REFERS_UNRESOLVED 4743`(합 10400 = `checked`). 음성 대조는 시험이 진다: 그 라벨이 없는
-픽스처에서 `checked > 0` 이면서 `REFERENCES` 몫이 **0** 이다.
+`Outcome.by_label` 을 더했다 — 종료 시점 축 ① `BOUND_TO 34 · REFERENCES 4463 ·
+REFERENCES_ACROSS 1297 · REFERS_UNRESOLVED 4622`(합 10416 = `checked`). 음성 대조는
+시험이 진다: 그 라벨이 없는 픽스처에서 `checked > 0` 이면서 `REFERENCES` 몫이 **0** 이다.
+
+⚠ **`BOUND_TO 34` 가 든 것은 `.palimpsest/intent.redb` 가 서 있기 때문이다** — 이 회차가
+결박을 걸며 세웠다. 그 파생물이 없으면 그 라벨의 몫은 0 이고, **그것이 「0 건」이 아니라
+「못 읽었다」**임을 `pal touch` 의 화면이 이제 말한다(`## 효과`).
 
 ### `D3` — 초록이다. **그러나 스크립트의 종료 코드는 안정적이지 않다**
 
@@ -259,8 +263,20 @@ REFERS_UNRESOLVED 4743`(합 10400 = `checked`). 음성 대조는 시험이 진�
 ```
 
 같은 실행이 이 회차의 산출도 함께 답한다 — `호출자 1 · 피호출자 1` ·
-`파일 간 해소 ⓐ 1463/5741 · ⓑ 276/1058` · `■ 내가 모르는 것 3 건` 과 못 푼 까닭과
+`파일 간 해소 ⓐ 1610/5751 · ⓑ 283/1060` · `■ 내가 모르는 것 3 건` 과 못 푼 까닭과
 지난 걸음. **착수 시점 그 자리는 *"이 빌드에는 unresolved-refs 능력이 없습니다"* 였다.**
+
+★★ **그리고 고친 화면이 종료 시점에 실제로 답을 바꿨다.** 결박을 걸며
+`.palimpsest/intent.redb` 를 세운 뒤 같은 명령의 산출이 이렇게 바뀐다:
+
+```text
+■ 이 좌표에 걸린 것 (1)
+  [91cdc3add647a3f7] 최신 상태 아님(stale) ← 1 개가 변했습니다  ·  symbol 반경 · 감시 1
+      회차 2026-09-07-rust-scope-references — 이 라벨은 두 방향을 다 적어야 한다
+```
+
+**「0 건」이었던 자리에 결박이 나타났다.** 그 결박은 내내 정본에 있었고 화면만 못 읽고
+있었다. 전문: [`observations/effect-touch-print-facts-after.txt`](../../.palimpsest/rounds/2026-09-08-cross-file-references/observations/effect-touch-print-facts-after.txt)
 
 전문: [`observations/effect-touch-print-facts.txt`](../../.palimpsest/rounds/2026-09-08-cross-file-references/observations/effect-touch-print-facts.txt)
 

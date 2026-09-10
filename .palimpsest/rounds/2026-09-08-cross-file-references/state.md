@@ -18,10 +18,10 @@
 | 완수 조건 | **39 개 전부 판정 — 통과 37 · 반증 2 · 대조불가 0 · 미측정 0** | `pal round conditions --file <intent.md> --json` → `열림 0 · 닫힘 39 · 형식오류 0` |
 | 반증 둘 | `E2`(ⓑ 가 하한 333 에 못 닿았다 · 276) · `E3-b`(등록된 표본 규칙이 유일한 표본을 안 정한다) | 게이트 `## 판정` |
 | 회차 상태 | `terminal: reported` · `findings_current: true` · `open_harmful_findings: **0**` · `completion: unavailable` | `pal round status --round <slug> --json` |
-| 파일 간 해소 | ⓐ **1463/5741** · ⓑ **276/1058** | `./target/release/pal touch print_facts` |
+| 파일 간 해소 | ⓐ **1610/5751** · ⓑ **283/1060** · **`no_target_file` 통이 0 이 됐다** | `./target/release/pal touch print_facts` |
 | 못 푼 참조 | **값이다** — 이름 · 못 푼 까닭 · 지난 걸음 | 같은 화면의 `■ 내가 모르는 것` |
-| 내보내기 | `REFERENCES 4394` · `REFERENCES_ACROSS 1263` · `UnresolvedRef 4744` · `REFERS_UNRESOLVED 4744` | `pal export --format cypher` |
-| `pal doctor` 축 ① | `검사 10400 · 위반 0` · 라벨별 `REFERENCES 4394 · REFERENCES_ACROSS 1263 · REFERS_UNRESOLVED 4743` | `pal doctor --full --json` |
+| 내보내기 | `REFERENCES 4463` · `REFERENCES_ACROSS 1297` · `UnresolvedRef 4622` · `REFERS_UNRESOLVED 4622` | `pal export --format cypher` |
+| `pal doctor` 축 ① | `검사 10416 · 위반 0` · 라벨별 `BOUND_TO 34 · REFERENCES 4463 · REFERENCES_ACROSS 1297 · REFERS_UNRESOLVED 4622` | `pal doctor --full --json` |
 | 결박 | **판정 시점 30** · `fresh` 24 · `stale` 6 — 신원이 `c9a6bae` 때와 같다. **결박 뒤 34** · `fresh` 28 · `stale` 6 | `pal intent import` 뒤 `pal query binding.status --json` |
 | 검사 | `검사 28/28 통과` · `cargo test --workspace` 실패 0 · `f04-verify.py` exit 0 | 세 명령의 원문 |
 
