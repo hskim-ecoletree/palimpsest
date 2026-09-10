@@ -474,11 +474,13 @@ impl<'a, 't> Walk<'a, 't> {
                     Some(a) => a.utf8_text(self.source).map_err(|_| ExtractError::NotUtf8)?,
                     None => name,
                 };
+                // TypeScript 에는 인라인 `mod` 가 없다 — 언제나 0 이다.
                 self.imports.push_item(ImportedItem {
                     module: module.to_owned(),
                     name: name.to_owned(),
                     local: local.to_owned(),
                     at,
+                    inline_depth: 0,
                 });
             }
         }

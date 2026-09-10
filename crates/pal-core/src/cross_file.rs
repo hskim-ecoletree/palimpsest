@@ -323,7 +323,12 @@ fn crate_root_of<'c>(path: &str, crates: &'c [Crate]) -> Option<&'c Crate> {
 ///
 /// 앞이 그 모듈 자신의 파일(`a/b.rs`·`a/b/mod.rs`), 뒤가 부모 파일 안의 인라인
 /// `mod`(`a.rs`·`a/mod.rs`). **앞에 맞는 것이 있으면 뒤는 안 본다.**
-fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> (Vec<String>, Vec<String>) {
+fn module_candidates(
+    from: &str,
+    module: &str,
+    crates: &[Crate],
+    item_inline_depth: usize,
+) -> (Vec<String>, Vec<String>) {
     let mut segs: Vec<&str> = if module.is_empty() {
         Vec::new()
     } else {
@@ -342,9 +347,24 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> (Vec<String>
             모듈_자리(from)
         }
         Some("super") => {
+            // ★★ **인라인 `mod` 의 겹만큼은 파일 안에서 소진된다** (2026-09-10 ·
+            //    독립 리뷰 라운드 2). `super` 는 **쓴 자리의 모듈**을 기준으로 한 칸
+            //    올라가는데, 이 함수는 모듈 자리를 **파일 경로로만** 계산한다.
+            //    그래서 `mod tests` 안의 `use super::{…}` 가 파일의 **부모** 모듈로
+            //    가고 — 한 칸 높다 — 거기서 꼬리가 **남의 사적 심볼**을 잡는다.
+            //
+            //    실측: `install/manifest.rs` 의 `mod tests` 안 `use super::{… Rel …}`
+            //    가 `install.rs` 로 풀려 `Rel::new` 의 꼬리가 그 파일의 사적
+            //    `Report::new` 를 잡았다 — **거짓 엣지 3 건**.
+            let mut 남은겹 = item_inline_depth;
             let mut d = 모듈_자리(from);
             while segs.first().copied() == Some("super") {
                 segs.remove(0);
+                if 남은겹 > 0 {
+                    // 이 `super` 는 **같은 파일 안**의 한 겹을 벗는다. 파일은 안 넘는다.
+                    남은겹 -= 1;
+                    continue;
+                }
                 d = d.rsplit_once('/').map_or(String::new(), |(p, _)| p.to_owned());
             }
             d
@@ -571,7 +591,8 @@ pub fn cross_file_edges(
             let 접두 = matches!(head, "crate" | "self" | "super");
             let 우리것 = 접두 || crates.iter().any(|c| c.name == head) || head.is_empty();
 
-            let (일차, 이차) = module_candidates(from_path, &item.module, &crates);
+            let (일차, 이차) =
+                module_candidates(from_path, &item.module, &crates, item.inline_depth);
             let 훑는다 = |cs: &[String]| {
                 let mut v: Vec<&str> =
                     cs.iter().filter_map(|c| paths.get(c.as_str()).copied()).collect();
@@ -711,5 +732,20 @@ pub fn cross_file_edges(
             }
         }
     }
+    // ★★ **키가 키여야 한다** (2026-09-10 · 독립 리뷰 라운드 2).
+    //
+    // 스키마가 `key = ["site", "name"]` 으로 적는데 산출에 그 짝이 **여러 번** 있었다 —
+    // 같은 자리에서 같은 이름이 여러 번 참조되면 그때마다 한 행이 났기 때문이다.
+    // 실측: 행 4417 중 서로 다른 짝이 2883 · 중복 키 814 · 한 짝이 최대 **27** 번.
+    //
+    // ⚠ **바깥 도구에 실리면 엣지가 증식한다** — `pal export` 가 같은 키로 노드를 여러
+    // 번 만들고, 이어지는 `MATCH (a:UnresolvedRef {site, name})` 이 **그 전부에 매치**한다.
+    // 어떤 검사도 이 유일성을 안 재고 있었다: 불변식 ② 는 필수 속성만 보고 `xtask` 의
+    // 스키마 정합은 이름과 형만 본다.
+    //
+    // **첫 것을 남긴다.** 같은 짝의 걸음은 같은 자리를 지나므로 첫 것이 그 자리를 진다.
+    let mut 본것: BTreeSet<(SymbolId, String)> = BTreeSet::new();
+    unresolved.retain(|u| 본것.insert((u.site, u.name.clone())));
+
     (edges, report, unresolved)
 }

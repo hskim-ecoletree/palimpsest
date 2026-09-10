@@ -2,7 +2,7 @@
 
 ## 지금 단계
 
-**종료 절차 안이다.** 완수 조건 39 개가 전부 판정됐고(통과 37 · 반증 2) 열린 금지역·실패가
+**종료 절차 안이다.** 완수 조건 39 개가 전부 판정됐고(**통과 35 · 반증 4**) 열린 금지역·실패가
 0 이며 효과가 게이트에 붙었다. 남은 것은 **열린 발견 전부를 닫는 것**과 **독립 리뷰**와
 **push · CI** 다.
 
@@ -18,10 +18,10 @@
 | 완수 조건 | **39 개 전부 판정 — 통과 35 · 반증 4 · 대조불가 0 · 미측정 0** | `pal round conditions --file <intent.md> --json` → `열림 0 · 닫힘 39 · 형식오류 0` |
 | 반증 넷 | `E2`(ⓑ 283 < 333) · `E3-b`(표본 규칙이 유일한 표본을 안 정한다) · **`A5`·`A5-a`**(재수출에 가린 사적 모듈이 엣지를 받았고 그 음성 대조가 원리상 못 잡는다) | 게이트 `## 판정` |
 | 회차 상태 | `terminal: reported` · `findings_current: true` · `open_harmful_findings: **0**` · `completion: unavailable` | `pal round status --round <slug> --json` |
-| 파일 간 해소 | ⓐ **1610/5751** · ⓑ **283/1060** · **`no_target_file` 통이 0 이 됐다** | `./target/release/pal touch print_facts` |
+| 파일 간 해소 | ⓐ **1823/5760** · ⓑ **281/1061** · **`no_target_file` 통이 0 이 됐다** | `./target/release/pal touch print_facts` |
 | 못 푼 참조 | **값이다** — 이름 · 못 푼 까닭 · 지난 걸음 | 같은 화면의 `■ 내가 모르는 것` |
-| 내보내기 | `REFERENCES 4463` · `REFERENCES_ACROSS 1297` · `UnresolvedRef 4622` · `REFERS_UNRESOLVED 4622` | `pal export --format cypher` |
-| `pal doctor` 축 ① | `검사 10416 · 위반 0` · 라벨별 `BOUND_TO 34 · REFERENCES 4463 · REFERENCES_ACROSS 1297 · REFERS_UNRESOLVED 4622` | `pal doctor --full --json` |
+| 내보내기 | `REFERENCES 4619` · `REFERENCES_ACROSS 1292` · `UnresolvedRef 2883` · `REFERS_UNRESOLVED 2883` | `pal export --format cypher` |
+| `pal doctor` 축 ① | `검사 8828 · 위반 0` · 라벨별 `BOUND_TO 34 · REFERENCES 4619 · REFERENCES_ACROSS 1292 · REFERS_UNRESOLVED 2883` | `pal doctor --full --json` |
 | 결박 | **판정 시점 30** · `fresh` 24 · `stale` 6 — 신원이 `c9a6bae` 때와 같다. **결박 뒤 34** · `fresh` 28 · `stale` 6 | `pal intent import` 뒤 `pal query binding.status --json` |
 | 검사 | `검사 28/28 통과` · `cargo test --workspace` 실패 0 · `f04-verify.py` exit 0 | 세 명령의 원문 |
 

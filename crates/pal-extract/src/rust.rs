@@ -427,7 +427,7 @@ fn 표면(root: Node<'_>, source: &[u8]) -> (ExportSet, ImportSet) {
             if let Some(m) = 모듈_경로(n, source) {
                 imports.modules.push(m);
             }
-            항목을_담는다(n, source, &mut imports);
+            항목을_담는다(n, 인라인_겹(n), source, &mut imports);
             if 최상위인가(n) && 공개인가(n, source) {
                 재수출을_담는다(n, source, &mut exports);
             }
@@ -529,9 +529,25 @@ fn 재수출을_담는다(node: Node<'_>, source: &[u8], exports: &mut ExportSet
 ///   [`모듈_경로`] 는 같은 줄을 모듈 `a` 로 적는데 **어긋난 것이 아니다** — 저쪽은
 ///   *"이 파일이 참조하는 모듈"* 을 헤아리고 이쪽은 *"들여온 항목"* 을 헤아린다.
 /// - `use a::*;` 는 무슨 이름이 들어오는지 파일 하나만 보고 모른다. **지어내지 않는다.**
-fn 항목을_담는다(node: Node<'_>, source: &[u8], imports: &mut ImportSet) {
+fn 항목을_담는다(node: Node<'_>, 겹: usize, source: &[u8], imports: &mut ImportSet) {
     let Some(arg) = node.child_by_field_name("argument") else { return };
-    항목_갈래(arg, "", source, imports);
+    항목_갈래(arg, "", 겹, source, imports);
+}
+
+/// 이 노드를 감싸는 **인라인 `mod` 의 겹 수** — 본문을 가진 `mod m { … }` 만 헤아린다.
+///
+/// `mod m;`(파일 참조)은 안 헤아린다 — 그것은 겹이 아니라 **다른 파일**이고, 그 파일의
+/// 모듈 자리는 경로가 이미 진다.
+fn 인라인_겹(node: Node<'_>) -> usize {
+    let mut n = node.parent();
+    let mut 겹 = 0;
+    while let Some(p) = n {
+        if p.kind() == "mod_item" && p.child_by_field_name("body").is_some() {
+            겹 += 1;
+        }
+        n = p.parent();
+    }
+    겹
 }
 
 /// 경로 접두 하나를 이어 붙인다. 접두가 비면 뒤엣것이 통째로 경로다.
@@ -546,7 +562,7 @@ fn 꼬리를_뗀다(path: &str) -> (String, String) {
 }
 
 /// `use` 트리 한 마디. `prefix` 는 여기까지 누적된 모듈 경로다.
-fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut ImportSet) {
+fn 항목_갈래(node: Node<'_>, prefix: &str, 겹: usize, source: &[u8], imports: &mut ImportSet) {
     match node.kind() {
         "identifier" | "type_identifier" => {
             let name = 원문(node, source);
@@ -554,7 +570,8 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
                 module: prefix.to_owned(),
                 local: name.clone(),
                 name,
-                    at: vec![node.start_byte()],
+                at: vec![node.start_byte()],
+                inline_depth: 겹,
             });
         }
         // `use a::b::{self};` — 들여오는 이름은 접두의 **마지막 세그먼트**다.
@@ -567,7 +584,8 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
                     module,
                     local: name.clone(),
                     name,
-                        at: vec![node.start_byte()],
+                    at: vec![node.start_byte()],
+                    inline_depth: 겹,
                 });
             }
         }
@@ -578,7 +596,7 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
                 .map_or_else(|| prefix.to_owned(), |p| 경로를_잇는다(prefix, &원문(p, source)));
             let at = vec![name.start_byte()];
             let name = 원문(name, source);
-            imports.push_item(ImportedItem { module, local: name.clone(), name, at });
+            imports.push_item(ImportedItem { module, local: name.clone(), name, at, inline_depth: 겹 });
         }
         // `use a::B as C;` — **원본 이름과 부르는 이름이 갈린다.** 둘 다 담는다.
         "use_as_clause" => {
@@ -601,7 +619,7 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
                 "identifier" | "type_identifier" => (prefix.to_owned(), 원문(path, source)),
                 _ => return,
             };
-            imports.push_item(ImportedItem { module, name, local, at });
+            imports.push_item(ImportedItem { module, name, local, at, inline_depth: 겹 });
         }
         "scoped_use_list" | "use_list" => {
             let path = node.child_by_field_name("path");
@@ -614,7 +632,7 @@ fn 항목_갈래(node: Node<'_>, prefix: &str, source: &[u8], imports: &mut Impo
                 if path.map(|p| p.id()) == Some(child.id()) {
                     continue;
                 }
-                항목_갈래(child, &안쪽, source, imports);
+                항목_갈래(child, &안쪽, 겹, source, imports);
             }
         }
         // `use a::*;` — 무엇이 들어오는지 모른다. **지어내지 않는다.**

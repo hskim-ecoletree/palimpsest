@@ -162,7 +162,10 @@ pub fn run(args: Args) -> Result<()> {
         .context("의도 저장소를 열지 못했다")?;
     let bindings = intent.all().context("결박을 읽지 못했다")?;
 
-    let view = build_view(&report.ledger.snapshot, &report.symbols, &bindings, &참조엣지, &못푼참조);
+    // 뷰가 실을 **파일 노드.** 2 층에 실제로 있다 — `pal export` 가 141 건을 산출한다.
+    let 파일들 = attached.projection.files().context("2층의 파일을 읽지 못했다")?;
+    let view =
+        build_view(&report.ledger.snapshot, &report.symbols, &bindings, &참조엣지, &못푼참조, &파일들);
     let diagnosis = pal_core::doctor(&schema, &view, scope);
 
     let envelope = Envelope::new(
@@ -215,6 +218,7 @@ fn build_view(
     bindings: &[pal_core::Binding],
     참조엣지: &[(pal_core::SymbolId, pal_core::SymbolId)],
     못푼참조: &[pal_core::UnresolvedRef],
+    파일들: &[pal_core::FileRow],
 ) -> GraphView {
     let (repo, tree) = at.entries().next().expect("스냅샷은 비어 있을 수 없다");
     let coord = |s: pal_core::SymbolId| Coord {
@@ -344,6 +348,27 @@ fn build_view(
         ));
     }
 
+    // ── 파일 노드 — **2 층에 있는 것을 뷰가 안 담고 있었다** (2026-09-10 · 독립 리뷰 R2)
+    //
+    // 앞 판은 `.absent("File", …)` 로 적고 사유를 주석 열여덟 줄로 달았다. 그런데
+    // **사용자에게 보이는 문장은 「담지 못하는 자리: … File …」 하나**이고, 같은 빌드의
+    // `pal export` 의 산출에는 `File` 141 건이 있다. `E5-a` 가 *"「근거를 적었다」로는 안 닫힌다"*
+    // 를 명시한다 — **값을 실어야 닫힌다.**
+    for f in 파일들 {
+        nodes.push(
+            NodeInstance::new(
+                NodeKey::new("File", f.path.as_str()),
+                Provenance::Extracted,
+                // 파일은 심볼이 아니라 **좌표가 없다** — 그것이 정확한 값이다.
+                Anchor::Coordless,
+            )
+            .with_attr("language", Producer::Extractor)
+            .with_attr("grade", Producer::Extractor)
+            .with_attr("export_digest", Producer::Extractor)
+            .with_attr("refs", Producer::Extractor),
+        );
+    }
+
     GraphView::new(at.clone(), coverage())
         .with_nodes(nodes)
         .with_edges(edges)
@@ -401,6 +426,19 @@ fn coverage() -> pal_core::ViewCoverage {
         // | `.holding("REFERENCES")` 로 뒤집는다 | ⚠ **측정이 죽은 가지가 된다.** `build_view`(이 파일 위쪽)는 `symbols` 와 `bindings` 만 받고 **2층의 엣지를 아예 안 읽는다.** 선언만 뒤집으면 불변식 ①②가 REFERENCES 에 대해 **모집단 0 · 위반 0** 으로 초록이 된다 — 「없는 것을 통과로 세는」 정확한 형태다 |
         // | 뷰가 엣지를 싣게 한다 | 옳은 길이지만 **위층이다.** 이 회차는 추출기 한 겹만 만지기로 잠겼고(`## 범위 밖`), 뷰를 넓히면 `[f22.4]` 의 모집단이 함께 움직인다 |
         //
+        // ★★★★ **2026-09-10 에 네 번째로 다시 판정했고, 이번엔 뒤집었다**
+        // (독립 리뷰 라운드 2 가 잡았다).
+        //
+        // 라운드 1 이 사유와 능력 번호의 거짓을 잡았고 나는 **주석을 고쳤다.** 라운드 2 가
+        // 그것을 다시 잡았다 — *"이 회차는 능력 id 를 바꾸고 주석 열여덟 줄을 달았을 뿐,
+        // **사용자에게 보이는 두 문장은 그대로다**"*. `E5-a` 가 *"「근거를 적었다」로는
+        // 안 닫힌다"* 를 명시한다.
+        //
+        // **그래서 값을 실었다** — 위 `build_view` 가 `Projection::files` 의 행을
+        // `File` 노드로 담는다. `C1`·`B1` 이 두 번 지킨 순서(값을 먼저, 선언을 나중에)를
+        // 세 번째로 지킨다. 아래 옛 판단 기록은 **왜 두 번 안 뒤집었는지**의 기록으로 남긴다.
+        //
+        // ── 옛 판단 (2026-09-08 · #130 · `D5`) ────────────────────────────────
         // ★★★ **2026-09-10 에 세 번째로 다시 판정했다** (독립 리뷰 라운드 1 이 잡았다).
         //
         // 앞 사유 *"이 뷰가 엣지를 안 읽는다 — `build_view` 의 인자에 엣지가 없다"* 는
@@ -418,7 +456,7 @@ fn coverage() -> pal_core::ViewCoverage {
         // ⚠ **`.holding` 으로 뒤집지 않는다** — 뒤집으려면 값을 먼저 실어야 하고
         // (`C1`·`B1` 이 그 순서를 두 번 지켰다), `File` 을 실으면 불변식 ②③ 의 모집단이
         // 함께 움직여 `D2` 를 이 회차가 자기 손으로 건드린다. **판정이 이미 났다.**
-        .absent("File", CapabilityId::new("F05", "graph-view-file-nodes"))
+        .holding("File")
         // ── 스키마가 이미 `not_built` 로 적은 둘 ─────────────────────────────
         //
         // 여기 적지 않아도 `doctor` 가 스키마에서 파생시키지만, **선언을 빠뜨리면

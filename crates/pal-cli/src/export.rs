@@ -246,13 +246,24 @@ fn cypher(p: &Projection, schema: &GraphSchema) -> Result<(String, Vec<Counted>)
     //    *"이 빌드의 2층에 없다"* 를 적고, 그것이 지금 거짓이다.
     for u in &못푼 {
         let key = format!("{}#{}", u.site.to_hex(), u.name);
+        // ⚠ **스키마가 적은 칸을 그대로 싣는다** (2026-09-10 · 독립 리뷰 라운드 2).
+        //   앞 판은 `attempts` 를 **길이(정수)** 로 내고 스키마가 `required` 로 적은
+        //   다섯째 칸 `at` 이 **아예 빠져 있었다.** `B1` 이 `at` 을 더한 사유가
+        //   *"없는 필드 이름을 스키마에 적는 것이 곧 거짓"* 이었는데, 바깥이 읽는 산출은
+        //   **반대 방향으로** 어긋나 있었다. export ↔ 스키마를 대조하는 자가 없다.
+        let 걸음: Vec<String> = u
+            .attempts
+            .iter()
+            .map(|a| format!("{}:{}/{}", a.step.as_str(), a.found, a.tried.len()))
+            .collect();
         let _ = writeln!(
             o,
-            "CREATE (:{unresolved_label} {{site: {}, name: {}, reason: {}, attempts: {}}});",
+            "CREATE (:{unresolved_label} {{site: {}, name: {}, reason: {}, attempts: {}, at: {}}});",
             quote(&u.site.to_string()),
             quote(&u.name),
             quote(u.reason.as_str()),
-            u.attempts.len()
+            quote(&걸음.join(" ")),
+            quote(&u.at.to_string())
         );
         let _ = writeln!(
             o,

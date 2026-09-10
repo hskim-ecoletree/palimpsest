@@ -548,3 +548,96 @@ fn a3_형제_크레이트_평평_경로와_깊은_경로가_각각_엣지가_된
         "형제 크레이트 깊은 경로: `Deep` 이 안 섰다 — {대상:?}"
     );
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 독립 리뷰 라운드 2 가 잡은 것 — **셋 다 잴 자가 없었다**
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// 인라인 `mod` 안의 `use super::{…}` 가 **한 칸 높게** 풀리던 자리.
+///
+/// `super` 는 **쓴 자리의 모듈**을 기준으로 올라가는데 2 층은 모듈 자리를 파일 경로로만
+/// 계산했다. 그래서 `mod tests` 안의 `use super::{…}` 가 파일의 **부모** 모듈로 가고,
+/// 거기서 꼬리가 **남의 사적 심볼**을 잡아 거짓 엣지가 섰다(실측 3 건).
+///
+/// ⚠ **`A3` 픽스처는 이 형태를 원리상 안 지난다** — 거기 `super::` 는 `deep/leaf.rs` 의
+/// **파일 수준**이라 인라인 겹이 0 이다.
+#[test]
+fn 인라인_mod_안의_super_가_한_칸_높게_안_풀린다() {
+    let root = std::env::temp_dir()
+        .join(format!("pal-inlinesuper-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("src/outer/leaf")).expect("임시 저장소");
+    let w = |p: &str, s: &str| std::fs::write(root.join(p), s).expect("쓰기");
+
+    // `안` 은 `outer::leaf::안` 이다. 그 안의 `super` 는 **`outer::leaf`** — 곧 그 파일
+    // 자신의 모듈이다. 한 칸 높게 풀리면 `outer` 가 되고 `outer::sib` 가 잡힌다.
+    w("src/lib.rs", "pub mod outer;\n");
+    w("src/outer.rs", "pub mod leaf;\npub mod sib;\n");
+    // ★ **미끼** — 한 칸 높게 풀렸을 때 잡히는 자리다. 이것이 없으면 그 오답이
+    //   `NoTargetFile` 로 조용히 빠져 음성 대조가 안 문다.
+    w("src/outer/sib.rs",
+      "pub struct Mark;\n\
+       impl Mark { pub fn 미끼() -> Mark { Mark } }\n");
+    // 참인 대상 — `outer::leaf::sib::Mark`.
+    w("src/outer/leaf/sib.rs",
+      "pub struct Mark;\n\
+       impl Mark { pub fn 형제() -> Mark { Mark } }\n");
+    w("src/outer/leaf.rs",
+      "pub mod sib;\n\
+       pub mod 안 {\n\
+       \x20   use super::sib::Mark;\n\
+       \x20   pub fn 쓴다() { let _ = Mark::형제(); }\n\
+       }\n");
+
+    git(&root, &["init", "-q"]);
+    git(&root, &["add", "-A"]);
+    git(&root, &["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "첫 커밋"]);
+
+    pal(&root, &["touch", "쓴다", "--json"]);
+    let p = 투영(&root);
+    let 쓴다 = p.resolve_name("쓴다").expect("이름").into_iter().next().expect("쓴다 가 없다");
+    let 대상: Vec<(String, String)> = p
+        .callees(쓴다.id)
+        .expect("정방향")
+        .into_iter()
+        .filter_map(|id| p.symbol(id).ok().flatten())
+        .filter(|s| s.path.as_str() != "src/outer/leaf.rs")
+        .map(|s| (s.name.clone(), s.path.as_str().to_owned()))
+        .collect();
+
+    assert!(!대상.is_empty(), "파일 간 엣지가 0 이다 — 아래가 공짜로 통과한다: {대상:?}");
+    // ★ **참인 자리** — `super` 가 인라인 겹 하나를 소진해 `outer` 에 머문다.
+    assert!(
+        대상.iter().any(|(n, f)| n == "Mark" && f == "src/outer/leaf/sib.rs"),
+        "`super::sib::Mark` 가 그 파일 자신의 형제 모듈로 안 풀렸다: {대상:?}"
+    );
+    // ★ **음성 대조** — 한 칸 높게 풀리면 부모 파일의 동명 심볼이 잡힌다. 그러면 안 된다.
+    assert!(
+        !대상.iter().any(|(_, f)| f == "src/outer/sib.rs"),
+        "`super` 가 한 칸 높게 풀려 미끼(`outer::sib`)를 잡았다: {대상:?}"
+    );
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+/// `[node.UnresolvedRef] key = ["site","name"]` 이 **산출 데이터에서도 키다.**
+///
+/// ⚠ 어떤 검사도 이 유일성을 안 쟀다 — 불변식 ② 는 필수 속성만 보고 `xtask` 의 스키마
+/// 정합은 이름과 형만 본다. 실측(고치기 전): 행 4417 · 서로 다른 짝 2883 · 한 짝이 최대
+/// **27** 번. 바깥 도구에 실리면 `MATCH (a:UnresolvedRef {site, name})` 이 그 전부에
+/// 매치해 **엣지가 증식한다.**
+#[test]
+fn 못_푼_참조의_키가_유일하다() {
+    let repo = 저장소("uniqkey");
+    pal(&repo, &["touch", "씀", "--json"]);
+    let p = 투영(&repo);
+    let 목록 = 못푼참조(&p);
+    assert!(!목록.is_empty(), "못 푼 참조가 0 건이다 — 이 시험이 공짜로 통과한다");
+
+    let mut 본것 = std::collections::BTreeSet::new();
+    let 중복: Vec<String> = 목록
+        .iter()
+        .filter(|u| !본것.insert((u.site, u.name.clone())))
+        .map(|u| u.name.clone())
+        .collect();
+    assert!(중복.is_empty(), "키 `(site, name)` 이 중복이다: {중복:?}");
+}
