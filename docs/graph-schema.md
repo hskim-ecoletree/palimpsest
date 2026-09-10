@@ -3,7 +3,7 @@
 
 # 그래프 스키마 v1
 
-노드 라벨 **10개** · 엣지 타입 **9개**. 자라는 것 자체가 관측 대상이다(옛 `DESIGN §1.2` · 처분은 `docs/plan/disposal-map.md`).
+노드 라벨 **10개** · 엣지 타입 **10개**. 자라는 것 자체가 관측 대상이다(옛 `DESIGN §1.2` · 처분은 `docs/plan/disposal-map.md`).
 
 ## 노드
 
@@ -18,7 +18,7 @@
 | `NarrativeItem` | `inferred` | `Proposal` | `item` | 값이 정해진다 |
 | `NarrativeRefusal` | `asserted` | `Refusal` | `item`, `target` | 값이 정해진다 |
 | `Symbol` | `extracted` | `SymbolNode` | `id` | 값이 정해진다 |
-| `UnresolvedRef` | `extracted` | `UnresolvedRef` | `site`, `name` | **자리만** — F08 가 만든다 |
+| `UnresolvedRef` | `extracted` | `UnresolvedRef` | `site`, `name` | 값이 정해진다 |
 
 ### 속성
 
@@ -57,6 +57,7 @@
 | `Symbol` | `identity` | `enum:IdentityGrade` | `extractor` | 예 |
 | `UnresolvedRef` | `reason` | `enum:UnresolvedReason` | `extractor` | 예 |
 | `UnresolvedRef` | `attempts` | `attempt[]` | `machine-record` | 예 |
+| `UnresolvedRef` | `at` | `snapshot` | `machine-record` | 예 |
 
 ## 엣지
 
@@ -72,5 +73,6 @@
 | `MANIFESTS_AT` | `Defect` | `Symbol` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Defect::manifests_at` |
 | `REFERENCES` | `Symbol` | `Symbol` | many-to-many | `scoped` (고정) | `extracted` | 해당 없음 | `at` | `ReferenceEdge::to` |
 | `REFERENCES_ACROSS` | `Symbol` | `Symbol` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `CrossFileEdge::to` |
+| `REFERS_UNRESOLVED` | `UnresolvedRef` | `Symbol` | many-to-one | `exact` (고정) | `extracted` | 해당 없음 | `at` | `UnresolvedRef::site` |
 | `RESOLVED_BY` | `Defect` | `Change` | many-to-one | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Defect::resolved_by` |
 | `TOUCHES` | `Change` | `Symbol` | many-to-many | `exact` (고정) | `extracted` | 해당 없음 | `at` | `Change::touches` |

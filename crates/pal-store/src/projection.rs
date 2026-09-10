@@ -113,6 +113,11 @@ const META_BUILT_FOR: &str = "built_for";
 /// 패스를 안 지나므로, 저장 안 하면 화면이 *"안 잼"* 밖에 못 적는다 — 그런데 이 층은
 /// 이미 잰 것이다. **「안 잰 것」과 「안 실은 것」을 가르는 자리다.**
 const META_CROSS: &str = "cross_report";
+/// 파일 간 해소가 **못 푼 참조** 전량 — `F08` 의 값을 담는 자리.
+///
+/// ⚠ **회계(`META_CROSS`)와 갈라 둔다.** 회계는 까닭별 **수**이고 이것은 **자리와
+/// 이름과 지난 걸음**이다. 한 열쇠에 묶으면 회계만 읽는 자리가 목록 전량을 지고 온다.
+const META_UNRESOLVED: &str = "unresolved_refs";
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProjectionError {
@@ -178,6 +183,8 @@ pub struct StitchReport {
     pub cross_edges: usize,
     /// 파일 간 해소의 갈래별 회계 — ⓐ·ⓑ 의 분모와 산출, 못 선 까닭.
     pub cross: CrossFileReport,
+    /// 이 패스가 산출한 **못 푼 참조**의 수. 목록 자체는 회계와 갈라 저장한다.
+    pub unresolved: usize,
     /// 전체 커밋 수 — 무대 준비 1 + 배치 N + 교체 1.
     pub commits: usize,
 }
@@ -352,8 +359,9 @@ impl Projection {
             .collect();
         let all: Vec<pal_core::SymbolNode> =
             files.iter().flat_map(|f| f.symbols.iter().cloned()).collect();
-        let (cross, cross_report) = pal_core::cross_file_edges(&inputs, &all, at);
+        let (cross, cross_report, unresolved) = pal_core::cross_file_edges(&inputs, &all, at);
         report.cross = cross_report;
+        report.unresolved = unresolved.len();
         if !cross.is_empty() {
             let write = self.write()?;
             {
@@ -383,6 +391,11 @@ impl Projection {
                 let raw = serde_json::to_string(&report.cross)
                     .map_err(|e| ProjectionError::Decode(e.to_string()))?;
                 meta.insert(META_CROSS, raw).map_err(tx)?;
+                // **못 푼 참조도 같은 트랜잭션에 남긴다** — 회계만 남기고 목록을 버리면
+                // 화면이 *"몇 건이 막혔다"* 까지만 말한다(`B3`).
+                let raw = serde_json::to_string(&unresolved)
+                    .map_err(|e| ProjectionError::Decode(e.to_string()))?;
+                meta.insert(META_UNRESOLVED, raw).map_err(tx)?;
             }
             write.commit().map_err(tx)?;
             report.commits += 1;
@@ -811,6 +824,27 @@ impl Projection {
         let read = self.read()?;
         let Ok(t) = read.open_table(META) else { return Ok(None) };
         let Some(v) = t.get(META_CROSS).map_err(tx)? else { return Ok(None) };
+        let raw = v.value();
+        if raw.is_empty() {
+            return Ok(None);
+        }
+        serde_json::from_str(&raw)
+            .map(Some)
+            .map_err(|e| ProjectionError::Decode(e.to_string()))
+    }
+
+    /// 이 투영이 마지막 스티칭에서 산출한 **못 푼 참조** 전량.
+    ///
+    /// [`Self::cross_report`] 와 같은 규약이다 — **[`None`] 은 「0 건」이 아니라
+    /// 「이 투영이 그 패스를 안 지났다」**다. 0 으로 뭉개면 화면이 *"모르는 것이 없다"* 를
+    /// 사실로 적는다.
+    ///
+    /// # Errors
+    /// 읽기가 실패하면.
+    pub fn unresolved_refs(&self) -> Result<Option<Vec<pal_core::UnresolvedRef>>, ProjectionError> {
+        let read = self.read()?;
+        let Ok(t) = read.open_table(META) else { return Ok(None) };
+        let Some(v) = t.get(META_UNRESOLVED).map_err(tx)? else { return Ok(None) };
         let raw = v.value();
         if raw.is_empty() {
             return Ok(None);

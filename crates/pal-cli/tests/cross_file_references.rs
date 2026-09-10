@@ -315,3 +315,115 @@ fn e4_화면이_능력_축_셋을_가르고_회계를_찍는다() {
         );
     }
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// B — **못 푼 참조가 표시된다.** 잠근 원문의 뒤 절반(*"경계 + 못 푼 참조"*)이다.
+//
+// ⚠ **이 넷은 A 계열과 짝이다.** 해소가 서면 「푼 것」이 관계가 되고, 이 넷이 있어야
+//    「못 푼 것」도 관계가 된다. 뒤엣것이 없으면 화면은 *"몇 건이 막혔다"* 까지만 말하고
+//    **어느 자리의 무엇이 왜 막혔는지**를 못 말한다.
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// 이 저장소가 산출한 못 푼 참조 전량. **[`None`] 이면 패스를 안 지난 것이라 실패다.**
+fn 못푼참조(p: &Projection) -> Vec<pal_core::UnresolvedRef> {
+    p.unresolved_refs()
+        .expect("못 푼 참조를 읽지 못했다")
+        .expect("이 투영이 파일 간 해소 패스를 안 지났다 — 「0 건」이 아니다")
+}
+
+#[test]
+fn b1_unresolved_ref_가_사전_등록된_네_칸_그대로_있다() {
+    let repo = 저장소("b1");
+    pal(&repo, &["touch", "씀", "--json"]);
+    let p = 투영(&repo);
+    let 목록 = 못푼참조(&p);
+    assert!(!목록.is_empty(), "못 푼 참조가 0 건이다 — 아래 단언이 전부 공짜로 통과한다");
+
+    // 스키마가 사전 등록한 넷이 **그대로** 서는가. `at` 는 `REFERS_UNRESOLVED` 가
+    // 요구하는 공통 넷의 넷째다.
+    let v = serde_json::to_value(&목록[0]).expect("직렬화");
+    let mut 칸: Vec<&str> = v.as_object().expect("객체").keys().map(String::as_str).collect();
+    칸.sort_unstable();
+    assert_eq!(
+        칸,
+        vec!["at", "attempts", "name", "reason", "site"],
+        "스키마가 사전 등록한 칸과 실물이 갈렸다"
+    );
+}
+
+#[test]
+fn b2_attempts_가_빈_배열이_아니다() {
+    let repo = 저장소("b2");
+    pal(&repo, &["touch", "씀", "--json"]);
+    let p = 투영(&repo);
+    let 목록 = 못푼참조(&p);
+    assert!(!목록.is_empty(), "못 푼 참조가 0 건이다");
+
+    // ⚠ **빈 배열로 채우고 통과라 적지 않는다** — 스키마 주석이 이름 붙인 실패 형태이고
+    //    잠긴 의도의 `## 차선책` 이 그것을 명시로 금한다.
+    let 빈것: Vec<&str> =
+        목록.iter().filter(|u| u.attempts.is_empty()).map(|u| u.name.as_str()).collect();
+    assert!(빈것.is_empty(), "`attempts` 가 빈 행이 있다: {빈것:?}");
+
+    // **걸음이 실제로 지난 것인가** — 첫 걸음은 언제나 임포트 항목 찾기다. 그 순서가
+    // 안 지켜지면 이 목록은 관측이 아니라 재구성이다.
+    for u in &목록 {
+        assert_eq!(
+            u.attempts[0].step,
+            pal_core::AttemptStep::ImportItem,
+            "첫 걸음이 임포트 항목 찾기가 아니다: {} {:?}", u.name, u.attempts
+        );
+        // 마지막 걸음이 끊긴 자리다. **끊김은 「0」이 아니라 「유일하지 않다」**이고
+        // 그 둘이 각각 `no_*` 와 `Ambiguous` 로 간다 — 잠근 문면의 *"exact 만"* 이
+        // 그 자리다. 그래서 재는 값은 0 이 아니라 **1 이 아님**이다.
+        let 마지막 = u.attempts.last().expect("걸음").found;
+        assert_ne!(
+            마지막, 1,
+            "마지막 걸음이 후보를 하나로 좁혔는데 못 푼 참조로 실렸다: {} {:?}",
+            u.name, u.attempts
+        );
+    }
+}
+
+#[test]
+fn b3_화면이_능력_부재_대신_값을_찍는다() {
+    let repo = 저장소("b3");
+    let 화면 = pal(&repo, &["touch", "씀"]);
+
+    assert!(화면.contains("■ 내가 모르는 것"), "그 구역이 화면에 없다:\n{화면}");
+    // 착수 시점의 문자열. **이것이 남아 있으면 값이 안 선 것이다.**
+    assert!(
+        !화면.contains("이 빌드에는 unresolved-refs 능력이 없습니다"),
+        "능력 부재 선언이 그대로 남았다 — `E5-a` 가 반증으로 잡는 자리다:\n{화면}"
+    );
+    assert!(
+        !화면.contains("F08 미구축"),
+        "F08 을 미구축으로 적는데 값이 서 있다:\n{화면}"
+    );
+    // 값이다 — 이름과 까닭과 지난 걸음이 함께 찍힌다.
+    assert!(
+        화면.contains("지난 걸음 import_item"),
+        "못 푼 참조가 「(있음)」으로만 찍힌다 — 수만 있으면 고칠 자리를 안 준다:\n{화면}"
+    );
+}
+
+#[test]
+fn b4_참조_자리에_잇는_엣지가_등록돼_있다() {
+    let schema = pal_core::GraphSchema::parse(include_str!("../../../schema/graph.toml"))
+        .expect("스키마 정본");
+    let e = schema
+        .edges
+        .get("REFERS_UNRESOLVED")
+        .expect("`UnresolvedRef` 를 참조 자리에 잇는 엣지가 등록돼 있지 않다");
+
+    // **이름·양 끝·운반 자리** 셋을 다 잰다. 하나라도 안 재면 아무 엣지나 등록해도 닫힌다.
+    assert_eq!(e.from, "UnresolvedRef", "출발점이 다르다");
+    assert_eq!(e.to, vec!["Symbol".to_owned()], "도착점이 다르다");
+    let c = e.carried_by.carrier().expect("실린 자리가 없다");
+    assert_eq!(c.rust_type, "UnresolvedRef");
+    assert_eq!(c.field, "site", "참조가 일어난 자리를 지는 필드가 아니다");
+
+    // 그 노드가 더 이상 `not_built` 가 아니다 — 값이 서는데 자리만 있다고 적으면 거짓이다.
+    let n = schema.nodes.get("UnresolvedRef").expect("노드 선언");
+    assert_eq!(n.status, pal_core::NodeStatus::Built, "값이 서는데 `not_built` 로 적혀 있다");
+}

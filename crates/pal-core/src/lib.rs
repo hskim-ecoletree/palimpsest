@@ -120,7 +120,8 @@ pub use schema::{
     NodeStatus, Requirement, SchemaError,
 };
 pub use cross_file::{
-    CrossFileEdge, CrossFileInput, CrossFileReport, Unresolved, cross_file_edges,
+    Attempt, AttemptStep, CrossFileEdge, CrossFileInput, CrossFileReport, UnresolvedReason,
+    UnresolvedRef, cross_file_edges,
 };
 pub use projection::{
     FileNode, FileRow, FileRefs, PendingImportRef, RefCounts, ReferenceEdge, file_edges,
@@ -142,7 +143,7 @@ pub use symbol::{Span, Symbol, SymbolKind};
 pub use traverse::{Step, traverse};
 pub use touch::{
     BoundItem, BoundTarget, EffectSet, JudgmentSummary, NearKind, NearName, SymbolFacts,
-    SymbolNode, TargetPlace, TouchAnswer, TouchResult, UnresolvedRef, near_kind, 낡았나,
+    SymbolNode, TargetPlace, TouchAnswer, TouchResult, near_kind, 낡았나,
     정렬_열쇠,
 };
 pub use version::ExtractorVersion;

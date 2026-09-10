@@ -27,7 +27,7 @@
 //! # 후보가 유일하지 않으면 **엣지가 아니다**
 //!
 //! 모듈 경로가 여러 파일로 읽히거나 대상 파일에 같은 이름의 심볼이 둘이면
-//! [`Unresolved::Ambiguous`] 로 나간다. 하나를 고르면 그것이 조용한 오답이고,
+//! [`UnresolvedReason::Ambiguous`] 로 나간다. 하나를 고르면 그것이 조용한 오답이고,
 //! `## 원문` 이 잠근 *"exact 만"* 이 정확히 이 자리다.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -82,7 +82,7 @@ pub struct CrossFileInput {
 /// 짝을 못 지은 까닭. **수만 세면 무엇이 막혔는지 모른다.**
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum Unresolved {
+pub enum UnresolvedReason {
     /// 참조한 이름이 이 파일의 임포트 항목에 없다 — 매크로가 만든 이름 따위.
     NoImport,
     /// 모듈 경로가 이 저장소 밖을 가리킨다 — `std`·외부 크레이트.
@@ -113,7 +113,7 @@ pub enum Unresolved {
     Ambiguous,
 }
 
-impl Unresolved {
+impl UnresolvedReason {
     /// 회계의 열쇠로 쓰는 이름. **`serde` 표기와 같은 문자열이어야 한다** — 갈리면
     /// 저장된 회계와 화면이 서로 다른 이름을 쓴다.
     #[must_use]
@@ -127,6 +127,102 @@ impl Unresolved {
             Self::Ambiguous => "ambiguous",
         }
     }
+}
+
+/// 해소를 **실제로 지난 걸음** 하나.
+///
+/// # 왜 빈 배열이면 안 되나
+///
+/// 스키마가 `attempts` 를 `required = true` 로 적어 두고도 선행 구현은 그 자리를
+/// 146 건 전부에서 비워 두었다(`schema/graph.toml` 의 `UnresolvedRef` 주석). 빈 배열은
+/// *"시도를 안 했다"* 와 *"시도했는데 못 찾았다"* 를 같은 값으로 만든다 —
+/// **어느 걸음에서 끊겼는지가 사라지면 「못 푼 참조」는 수일 뿐이고 고칠 자리를 안 준다.**
+///
+/// 그래서 이 타입은 걸음마다 **본 것**과 **그중 성립한 수**를 함께 진다. 마지막 걸음의
+/// [`Self::found`] 가 0 인 자리가 끊긴 자리이고, [`UnresolvedRef::reason`] 이 그것을
+/// 이름으로 말한다. 둘은 같은 사실의 두 표현이라 **어긋나면 그것이 결함이다.**
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Attempt {
+    /// 어느 걸음인가.
+    pub step: AttemptStep,
+    /// 그 걸음이 **실제로 본 것** — 찾은 이름 · 편 모듈 경로 후보 · 대상 파일의 이름.
+    pub tried: Vec<String>,
+    /// 그중 성립한 수. **0 이면 여기서 끊겼다.**
+    pub found: usize,
+}
+
+/// 해소가 지나는 걸음 셋. **순서가 있고, 앞이 끊기면 뒤는 안 돈다.**
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AttemptStep {
+    /// 참조한 지역 이름을 이 파일의 임포트 항목에서 찾는다.
+    ImportItem,
+    /// 임포트의 모듈 경로를 저장소의 파일로 편다.
+    ModulePath,
+    /// 펴진 파일 **안에서** 이름을 찾는다.
+    TargetSymbol,
+}
+
+impl AttemptStep {
+    /// 회계·화면이 쓰는 이름. **`serde` 표기와 같은 문자열이어야 한다.**
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::ImportItem => "import_item",
+            Self::ModulePath => "module_path",
+            Self::TargetSymbol => "target_symbol",
+        }
+    }
+}
+
+/// 못 푼 참조 하나 — **F08 의 값.**
+///
+/// **[graph-node] `UnresolvedRef`** — `schema/graph.toml`
+///
+/// # 자리만 있던 것이 값이 된다
+///
+/// 이 타입은 2026-09-10 까지 **거주 불가한 빈 enum** 이었고 스키마가 그것을
+/// `status = "not_built"` · `built_by = "F08"` 로 적었다. 그 짝은
+/// *"안 만들었음"* 과 *"없음"* 이 같은 출력이 되는 것을 막는 장치였다 —
+/// 자리만 두고 값을 만들 수 있으면 누군가 빈 값을 채워 넣기 때문이다.
+///
+/// **그 짝을 함께 뒤집는다.** 값을 만들 원천이 실제로 섰기 때문이다:
+/// [`cross_file_edges`] 는 짝마다 임포트 항목 · 모듈 경로 · 대상 파일의 심볼을 순서대로
+/// 훑고, 끊긴 자리와 그때까지 본 것을 이미 알고 있다. 그 앎을 버리지 않고 싣는 것이
+/// 이 타입이다.
+///
+/// # 해소돼도 안 지운다
+///
+/// 스키마 주석이 그것을 못 박는다 — *"**해소돼도 지우지 않는다** — 정적 하한과 관측된
+/// 해소를 겹쳐 보이는 것이 정직한 형태다."* 그러므로 이 목록은 「지금 못 푼 것」이 아니라
+/// **「이 패스가 못 푼 것」**이고, 같은 자리에 엣지가 서 있을 수 있다.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UnresolvedRef {
+    /// 참조가 **일어난** 심볼 — 열쇠의 앞 칸.
+    ///
+    /// **[graph-edge] `REFERS_UNRESOLVED`** — `schema/graph.toml`
+    ///
+    /// 표식이 필드에 붙는 것은 `xtask` 의 규약이다 — 엣지는 *"그것을 싣고 있는 자리"* 에
+    /// 표시된다. `BOUND_TO` 가 `Binding::target` 에 실리는 것과 같은 자리다.
+    ///
+    /// ★ **엣지가 없으면 못 푼 참조는 떠 있는 행이다.** 어느 심볼이 무엇을 못 풀었는지가
+    /// 그래프의 관계로 안 서면 *"여기를 바꾸면 무엇이 깨지나"* 의 역방향 색인에서
+    /// **못 푼 몫이 통째로 안 보인다** — 그것이 `B4` 가 이름을 못 박은 까닭이다.
+    pub site: SymbolId,
+    /// 못 푼 이름 — 열쇠의 뒤 칸.
+    ///
+    /// ⓐ 는 임포트 항목의 **원본 이름**(별칭이 아니다), ⓑ 는 **경로 호출의 꼬리**다.
+    pub name: String,
+    /// 왜 못 풀었나.
+    pub reason: UnresolvedReason,
+    /// 실제로 지난 걸음들. **비어 있으면 형식 오류다** — [`Attempt`] 가 그 까닭을 진다.
+    pub attempts: Vec<Attempt>,
+    /// 공통 넷의 넷째 — 이 행이 선 스냅샷. `REFERS_UNRESOLVED` 가 이 값을 진다.
+    ///
+    /// ⚠ **사전 등록된 넷을 안 건드린다** — `site`·`name`·`reason`·`attempts` 는 그대로고
+    /// 이 칸은 **엣지 등록이 요구하는 공통 넷**의 자리다(`B4`). 엣지를 세우려면 발생
+    /// 스냅샷을 실을 자리가 있어야 하고, 없는 필드 이름을 스키마에 적는 것이 곧 거짓이다.
+    pub at: Snapshot,
 }
 
 /// 이 패스의 회계. **[`crate::RefCounts`] 에 못 넣는 것을 여기서 헤아린다.**
@@ -362,13 +458,20 @@ fn crate_root_or_dir(from: &str, crates: &[Crate]) -> String {
 /// # 후보가 유일하지 않으면 엣지가 아니다
 ///
 /// 모듈 경로가 여러 파일로 읽히거나 대상 파일에 동명 심볼이 둘이면
-/// [`Unresolved::Ambiguous`] 다. **하나를 고르면 그것이 조용한 오답이다.**
+/// [`UnresolvedReason::Ambiguous`] 다. **하나를 고르면 그것이 조용한 오답이다.**
+///
+/// # 셋째 반환값 — 못 푼 것도 산출이다 (`B1`~`B4`)
+///
+/// 이 함수는 짝마다 걸음 셋을 순서대로 지나고 끊긴 자리를 이미 안다. 그 앎을 회계의
+/// **수**로만 남기면 *"몇 건이 막혔다"* 까지만 말하고 **어느 자리의 무엇이 막혔는지**를
+/// 못 말한다 — [`UnresolvedRef`] 가 그 자리다. 회계([`CrossFileReport`])와 이 목록은
+/// **같은 사실의 두 표현**이고, 까닭별 합이 서로 어긋나면 그것이 결함이다.
 #[must_use]
 pub fn cross_file_edges(
     files: &[CrossFileInput],
     symbols: &[SymbolNode],
     at: &Snapshot,
-) -> (Vec<CrossFileEdge>, CrossFileReport) {
+) -> (Vec<CrossFileEdge>, CrossFileReport, Vec<UnresolvedRef>) {
     let paths: BTreeSet<&str> = symbols.iter().map(|s| s.path.as_str()).collect();
     let crates = crates_of(&paths);
     // (파일, 이름) → 그 이름의 심볼들. 유일성 판정에 개수가 필요하고, **담은 것**이
@@ -384,7 +487,7 @@ pub fn cross_file_edges(
     let mut edges = Vec::new();
     let mut report = CrossFileReport::default();
     // 갈래 **하나만** 막힌 자리를 헤아린다 — 그 갈래의 통에만 들어간다.
-    let miss = |r: &mut CrossFileReport, b: bool, why: Unresolved| {
+    let miss = |r: &mut CrossFileReport, b: bool, why: UnresolvedReason| {
         let bucket = if b { &mut r.b_unresolved } else { &mut r.unresolved };
         *bucket.entry(why.as_str().to_owned()).or_default() += 1;
     };
@@ -399,7 +502,7 @@ pub fn cross_file_edges(
     // ⚠ **수가 안 맞는 것보다 나쁜 것은 화면이 그것을 안 말하는 것이다.** 「못 선 까닭」
     // 줄이 갈래의 미달을 남김없이 가른다고 읽히는데 316 건이 어느 까닭에도 없었다 —
     // 그것이 거짓 신호다. **한 자리가 두 갈래를 넘어뜨리면 두 통에 다 헤아린다.**
-    let miss_shared = |r: &mut CrossFileReport, b: bool, why: Unresolved| {
+    let miss_shared = |r: &mut CrossFileReport, b: bool, why: UnresolvedReason| {
         *r.unresolved.entry(why.as_str().to_owned()).or_default() += 1;
         if b {
             *r.b_unresolved.entry(why.as_str().to_owned()).or_default() += 1;
@@ -416,8 +519,10 @@ pub fn cross_file_edges(
             .strip_suffix("/lib.rs")
             .or_else(|| target.strip_suffix("/main.rs"))
             .is_some_and(|root| crates.iter().any(|c| c.root == root));
-        if 뿌리 { Unresolved::NoSymbolAtCrateRoot } else { Unresolved::NoSymbol }
+        if 뿌리 { UnresolvedReason::NoSymbolAtCrateRoot } else { UnresolvedReason::NoSymbol }
     };
+
+    let mut unresolved: Vec<UnresolvedRef> = Vec::new();
 
     for f in files {
         let from_path = f.path.as_str();
@@ -430,8 +535,26 @@ pub fn cross_file_edges(
                 report.b_pending += 1;
             }
 
-            let Some(item) = f.imports.iter().find(|i| i.local == p.local) else {
-                miss_shared(&mut report, b, Unresolved::NoImport);
+            // ★ **걸음을 지나면서 적는다 — 끊긴 뒤에 되짚어 만들지 않는다.**
+            //   되짚은 것은 관측이 아니라 재구성이고, 재구성은 해소기가 실제로 무엇을
+            //   봤는지를 못 말한다. `attempts` 가 요구하는 것은 **지난 것**이다.
+            let mut attempts: Vec<Attempt> = Vec::new();
+
+            let 항목 = f.imports.iter().find(|i| i.local == p.local);
+            attempts.push(Attempt {
+                step: AttemptStep::ImportItem,
+                tried: vec![p.local.clone()],
+                found: usize::from(항목.is_some()),
+            });
+            let Some(item) = 항목 else {
+                miss_shared(&mut report, b, UnresolvedReason::NoImport);
+                unresolved.push(UnresolvedRef {
+                    site: p.from,
+                    name: p.local.clone(),
+                    reason: UnresolvedReason::NoImport,
+                    attempts,
+                    at: at.clone(),
+                });
                 continue;
             };
 
@@ -451,21 +574,40 @@ pub fn cross_file_edges(
                 v
             };
             let mut hit = 훑는다(&일차);
+            let mut 본_후보 = 일차.clone();
             if hit.is_empty() {
                 hit = 훑는다(&이차);
+                본_후보.extend(이차.iter().cloned());
             }
+            attempts.push(Attempt {
+                step: AttemptStep::ModulePath,
+                tried: 본_후보,
+                found: hit.len(),
+            });
             let target = match hit.as_slice() {
                 [one] => *one,
                 [] => {
-                    miss_shared(
-                        &mut report,
-                        b,
-                        if 우리것 { Unresolved::NoTargetFile } else { Unresolved::OutsideRepo },
-                    );
+                    let why =
+                        if 우리것 { UnresolvedReason::NoTargetFile } else { UnresolvedReason::OutsideRepo };
+                    miss_shared(&mut report, b, why);
+                    unresolved.push(UnresolvedRef {
+                        site: p.from,
+                        name: item.name.clone(),
+                        reason: why,
+                        attempts,
+                        at: at.clone(),
+                    });
                     continue;
                 }
                 _ => {
-                    miss_shared(&mut report, b, Unresolved::Ambiguous);
+                    miss_shared(&mut report, b, UnresolvedReason::Ambiguous);
+                    unresolved.push(UnresolvedRef {
+                        site: p.from,
+                        name: item.name.clone(),
+                        reason: UnresolvedReason::Ambiguous,
+                        attempts,
+                        at: at.clone(),
+                    });
                     continue;
                 }
             };
@@ -476,19 +618,60 @@ pub fn cross_file_edges(
             //    `Root` 를 가리키는 것도 `make` 를 가리키는 것도 참이다. 앞 판은 꼬리가
             //    머리를 **대체**했고, 그래서 `use` 로 들여온 타입이 경로 호출로만 쓰이면
             //    그 타입으로 가는 엣지가 통째로 사라졌다(2026-09-09 실측: `Root`·`Origin`).
-            match by_name.get(&(target, item.name.as_str())).map(Vec::as_slice) {
+            let a_hits = by_name.get(&(target, item.name.as_str()));
+            let mut a_attempts = attempts.clone();
+            a_attempts.push(Attempt {
+                step: AttemptStep::TargetSymbol,
+                tried: vec![format!("{target}#{}", item.name)],
+                found: a_hits.map_or(0, Vec::len),
+            });
+            match a_hits.map(Vec::as_slice) {
                 Some([(one, _)]) => {
                     edges.push(CrossFileEdge { from: p.from, to: *one, at: at.clone() });
                     report.a_edges += 1;
                 }
-                Some(_) => miss(&mut report, false, Unresolved::Ambiguous),
-                None => miss(&mut report, false, 심볼_없음(target)),
+                Some(_) => {
+                    miss(&mut report, false, UnresolvedReason::Ambiguous);
+                    unresolved.push(UnresolvedRef {
+                        site: p.from,
+                        name: item.name.clone(),
+                        reason: UnresolvedReason::Ambiguous,
+                        attempts: a_attempts,
+                        at: at.clone(),
+                    });
+                }
+                None => {
+                    let why = 심볼_없음(target);
+                    miss(&mut report, false, why);
+                    unresolved.push(UnresolvedRef {
+                        site: p.from,
+                        name: item.name.clone(),
+                        reason: why,
+                        attempts: a_attempts,
+                        at: at.clone(),
+                    });
+                }
             }
 
             // ── ⓑ **경로 호출의 꼬리.** 없으면 여기서 끝이다.
             let Some(want) = p.tail.name() else { continue };
-            let Some(hits) = by_name.get(&(target, want)) else {
-                miss(&mut report, b, 심볼_없음(target));
+            let b_hits = by_name.get(&(target, want));
+            let mut b_attempts = attempts;
+            b_attempts.push(Attempt {
+                step: AttemptStep::TargetSymbol,
+                tried: vec![format!("{target}#{want}")],
+                found: b_hits.map_or(0, Vec::len),
+            });
+            let Some(hits) = b_hits else {
+                let why = 심볼_없음(target);
+                miss(&mut report, b, why);
+                unresolved.push(UnresolvedRef {
+                    site: p.from,
+                    name: want.to_owned(),
+                    reason: why,
+                    attempts: b_attempts,
+                    at: at.clone(),
+                });
                 continue;
             };
             // ★ **ⓑ 에서는 머리의 이름이 곧 담은 것이다** — `S::foo()` 의 `foo` 는
@@ -509,9 +692,18 @@ pub fn cross_file_edges(
                     edges.push(CrossFileEdge { from: p.from, to: *one, at: at.clone() });
                     report.b_edges += 1;
                 }
-                _ => miss(&mut report, b, Unresolved::Ambiguous),
+                _ => {
+                    miss(&mut report, b, UnresolvedReason::Ambiguous);
+                    unresolved.push(UnresolvedRef {
+                        site: p.from,
+                        name: want.to_owned(),
+                        reason: UnresolvedReason::Ambiguous,
+                        attempts: b_attempts,
+                        at: at.clone(),
+                    });
+                }
             }
         }
     }
-    (edges, report)
+    (edges, report, unresolved)
 }

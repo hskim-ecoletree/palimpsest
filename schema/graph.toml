@@ -181,26 +181,33 @@ attrs = [
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# UnresolvedRef — **자리만 있다.** 값을 만드는 것은 F08 이다.
+# UnresolvedRef — **값이 됐다** (2026-09-10 · F08 · 회차 `2026-09-08-cross-file-references`).
 #
-# `status = "not_built"` 인 노드의 Rust 타입은 **거주 불가**여야 한다(검사가 잰다).
-# 자리만 두고 값을 만들 수 있으면 그것이 곧 *"있는데 안 나오는"* 상태가 되고,
-# 선행 구현의 `runs` 가 146 건 전부에서 비어 있던 자리가 정확히 그것이다([연구 E §7]).
+# 2026-09-10 까지 이 노드는 `status = "not_built"` 였고 Rust 타입은 **거주 불가한 빈
+# enum** 이었다. 그 짝은 *"안 만들었음"* 과 *"없음"* 이 같은 출력이 되는 것을 막는
+# 장치였다 — 자리만 두고 값을 만들 수 있으면 누군가 빈 값을 채워 넣고, 선행 구현의
+# `runs` 가 146 건 전부에서 비어 있던 자리가 정확히 그것이다([연구 E §7]).
 #
-# 아래 속성 목록은 **F08 에 대한 계약**이다 — 옛 DESIGN §5.3 이 정의한 넷을 옮겨 적었다.
+# **둘을 함께 뒤집는다.** 값을 만들 원천이 실제로 섰기 때문이다 — `cross_file_edges` 는
+# 짝마다 임포트 항목 · 모듈 경로 · 대상 파일의 심볼을 순서대로 훑고 **끊긴 자리와
+# 그때까지 본 것을 이미 안다.** 그 앎을 회계의 수로만 남기면 *"몇 건이 막혔다"* 까지만
+# 말한다. `attempts` 가 빈 배열이면 이 노드는 다시 그 자리로 돌아간다.
+#
+# 아래 속성 목록의 앞 둘은 **옛 DESIGN §5.3 이 정의한 계약 그대로**이고, `at` 는
+# `REFERS_UNRESOLVED` 가 요구하는 공통 넷의 넷째다.
 # ─────────────────────────────────────────────────────────────────────────────
 
 [node.UnresolvedRef]
 provenance = "extracted"
 rust_type  = "UnresolvedRef"
-status     = "not_built"
-built_by   = "F08"
 key = ["site", "name"]
 attrs = [
   # { 정의 없음 · 후보 과다 · 언어 등급 미달 · 범위 밖 · 동적 디스패치 · 문자열 기반 }
   { name = "reason",   type = "enum:UnresolvedReason", producer = "extractor",      required = true },
   # **해소돼도 지우지 않는다** — 정적 하한과 관측된 해소를 겹쳐 보이는 것이 정직한 형태다.
   { name = "attempts", type = "attempt[]",             producer = "machine-record", required = true },
+  # `REFERS_UNRESOLVED` 가 지는 발생 Snapshot. 공통 넷 중 넷째다.
+  { name = "at",       type = "snapshot",              producer = "machine-record", required = true },
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -453,3 +460,28 @@ evidence    = "not_applicable"
 snapshot    = "at"
 # **이 타입은 노드가 아니라 엣지의 행 자체다** — 자기가 자기 운반자다.
 carried_by  = { rust_type = "CrossFileEdge", field = "to" }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REFERS_UNRESOLVED — **못 푼 참조가 어느 심볼에서 났나** (`B4`).
+#
+# 이 엣지가 없으면 `UnresolvedRef` 는 그래프에 떠 있는 행이다. *"여기를 바꾸면 무엇이
+# 깨지나"* 의 역방향 색인이 **못 푼 몫을 통째로 못 본다** — 해소된 것만 관계로 서고
+# 못 푼 것은 수로만 남기 때문이다.
+#
+# ⚠ **`REFERENCES`·`REFERENCES_ACROSS` 와 갈라 둔다.** 저 둘은 도착점이 심볼이고
+# 이것은 도착점이 **못 푼 이름**이다. 한 라벨로 묶으면 *"엣지가 섰다"* 가 해소를 뜻하지
+# 않게 되고, 그것이 이 회차가 `C3` 에서 이미 한 번 가른 자리다.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[edge.REFERS_UNRESOLVED]
+from        = "UnresolvedRef"
+to          = ["Symbol"]
+# 못 푼 참조 여럿이 심볼 하나에서 날 수 있고, 못 푼 참조 하나는 자리 하나를 갖는다.
+cardinality = "many-to-one"
+# 자리는 2 층이 이미 푼 심볼 id 다 — 후보가 여럿일 자리가 없다.
+grade       = "exact"
+provenance  = ["extracted"]
+evidence    = "not_applicable"
+snapshot    = "at"
+carried_by  = { rust_type = "UnresolvedRef", field = "site" }

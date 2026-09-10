@@ -663,8 +663,6 @@ pub fn capabilities() -> CapabilitySet {
     CapabilitySet::new(
         QueryName::ALL.iter().map(|q| q.name().to_owned()).collect(),
         vec![
-            pal_core::CapabilityId::new("F07", "cross-file-resolution"),
-            pal_core::CapabilityId::new("F08", "unresolved-refs"),
             pal_core::CapabilityId::new("F13", "effects"),
             pal_core::CapabilityId::new("F15", "judgment"),
         ],
@@ -808,7 +806,7 @@ fn touch_result(
         callees: p.callees(symbol.id)?.len(),
     };
     Ok(QueryResult::Touch {
-        result: Box::new(조립(ctx, symbol, here, watching, facts)),
+        result: Box::new(조립(ctx, symbol, here, watching, facts)?),
     })
 }
 
@@ -921,14 +919,17 @@ fn near_names(
     Ok(out)
 }
 
-/// 좌표 넷과 자리 다섯. **채워지는 것은 지금 넷이고 나머지는 `NotBuilt` 다.**
+/// 좌표 넷과 자리 다섯. **채워지는 것은 지금 다섯이고 나머지는 `NotBuilt` 다.**
+///
+/// # Errors
+/// 2 층에서 못 푼 참조를 읽지 못하면.
 fn 조립(
     ctx: &QueryCtx,
     symbol: SymbolNode,
     bindings: Vec<BoundItem>,
     watching: Vec<BoundItem>,
     facts: SymbolFacts,
-) -> pal_core::TouchResult {
+) -> Result<pal_core::TouchResult, QueryError> {
     // 좌표는 **저장소 하나**를 가리킨다. 스냅샷은 집합이므로 그중 하나를 골라야 하고,
     // 이 빌드는 저장소를 하나만 본다. **멀티레포는 F14 다.**
     let (repo, tree) = ctx
@@ -936,7 +937,19 @@ fn 조립(
         .entries()
         .next()
         .expect("스냅샷은 비어 있을 수 없다");
-    pal_core::TouchResult {
+    // ★ **F08 이 값이 됐다** (`B1`~`B4` · 2026-09-10). 파일 간 해소가 짝마다 지난 걸음을
+    //   싣고 나오므로 이 자리는 더 이상 능력 부재가 아니다.
+    //
+    // ⚠ **[`None`] 은 「0 건」이 아니다** — 이 투영이 파일 간 해소 패스를 한 번도 안
+    //   지났다는 뜻이다. 그때 빈 목록을 내면 *"이 좌표에 모르는 것이 없다"* 를 사실로
+    //   적게 된다. 그래서 그 상태만 `NotBuilt` 로 남는다.
+    let unresolved = match ctx.projection.unresolved_refs()? {
+        Some(all) => Capable::Present(
+            all.into_iter().filter(|u| u.site == symbol.id).collect::<Vec<_>>(),
+        ),
+        None => Capable::not_built(pal_core::CapabilityId::new("F08", "unresolved-refs")),
+    };
+    Ok(pal_core::TouchResult {
         target: pal_core::Coord {
             repo: repo.clone(),
             tree: *tree,
@@ -948,10 +961,10 @@ fn 조립(
         // ★ **F11 이 이 자리를 만들었다** — 대상이 다른 좌표인 결박들.
         watching: Capable::Present(watching),
         facts: Capable::Present(facts),
-        unresolved: Capable::not_built(pal_core::CapabilityId::new("F08", "unresolved-refs")),
+        unresolved,
         effects: Capable::not_built(pal_core::CapabilityId::new("F13", "effects")),
         judgments: Capable::not_built(pal_core::CapabilityId::new("F15", "judgment")),
-    }
+    })
 }
 
 /// 좌표 하나를 만진다 — **표면이 부르는 자리.**

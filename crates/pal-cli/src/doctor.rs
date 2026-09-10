@@ -147,12 +147,19 @@ pub fn run(args: Args) -> Result<()> {
     // 뷰가 실을 참조 엣지. **읽는 자리가 하나다** — 파일 안과 파일 간이 2 층에서
     // 이미 한 벌로 서 있으므로 여기서 다시 합치지 않는다.
     let 참조엣지 = attached.projection.edges().context("2층의 참조 엣지를 읽지 못했다")?;
+    // 뷰가 실을 **못 푼 참조**. **[`None`] 은 「0 건」이 아니라 「그 패스를 안 지났다」**이고,
+    // 그때 빈 벡터로 뭉개면 뷰가 *"모르는 것이 없다"* 를 담은 것처럼 보인다.
+    let 못푼참조 = attached
+        .projection
+        .unresolved_refs()
+        .context("2층의 못 푼 참조를 읽지 못했다")?
+        .unwrap_or_default();
 
     let intent = IntentStore::open_read_only(&intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;
     let bindings = intent.all().context("결박을 읽지 못했다")?;
 
-    let view = build_view(&report.ledger.snapshot, &report.symbols, &bindings, &참조엣지);
+    let view = build_view(&report.ledger.snapshot, &report.symbols, &bindings, &참조엣지, &못푼참조);
     let diagnosis = pal_core::doctor(&schema, &view, scope);
 
     let envelope = Envelope::new(
@@ -204,6 +211,7 @@ fn build_view(
     symbols: &[SymbolNode],
     bindings: &[pal_core::Binding],
     참조엣지: &[(pal_core::SymbolId, pal_core::SymbolId)],
+    못푼참조: &[pal_core::UnresolvedRef],
 ) -> GraphView {
     let (repo, tree) = at.entries().next().expect("스냅샷은 비어 있을 수 없다");
     let coord = |s: pal_core::SymbolId| Coord {
@@ -310,6 +318,29 @@ fn build_view(
         ));
     }
 
+    // ── 못 푼 참조 — **F08 이 값이 됐다**(`B1`~`B4` · 2026-09-10) ────────────
+    //
+    // ★ 위 참조 엣지와 **같은 순서**다 — 값을 먼저 싣고 그다음에 선언을 뒤집는다.
+    //   선언만 뒤집으면 모집단 0 · 위반 0 이 되어 「없는 것을 통과로 헤아리는」 형태가
+    //   된다. 그 형태를 이 파일이 2026-09-09 에 한 번 밟았고 주석이 그것을 적어 두었다.
+    for u in 못푼참조 {
+        let key = NodeKey::new("UnresolvedRef", format!("{}#{}", u.site.to_hex(), u.name));
+        nodes.push(
+            NodeInstance::new(key.clone(), Provenance::Extracted, Anchor::At(coord(u.site)))
+                .with_attr("reason", Producer::Extractor)
+                .with_attr("attempts", Producer::MachineRecord)
+                .with_attr("at", Producer::MachineRecord),
+        );
+        edges.push(pal_core::EdgeInstance::one(
+            "REFERS_UNRESOLVED",
+            key,
+            symbol_key(u.site),
+            ResolutionGrade::Exact,
+            Provenance::Extracted,
+            u.at.clone(),
+        ));
+    }
+
     GraphView::new(at.clone(), coverage())
         .with_nodes(nodes)
         .with_edges(edges)
@@ -377,7 +408,10 @@ fn coverage() -> pal_core::ViewCoverage {
         // 구멍으로 세어진다**(`coverage_gaps`). 그 검사가 무엇을 세는지 흐리지 않으려고
         // 여기서도 적는다.
         .absent("Journey", CapabilityId::new("F19", "journey-authoring"))
-        .absent("UnresolvedRef", CapabilityId::new("F08", "unresolved-refs"))
+        // ★★ **2026-09-10 에 `absent` 에서 뒤집었다** (`B1`·`E5`). 위 `build_view` 가
+        //    2 층의 못 푼 참조를 실제로 싣는다 — 여기서도 **선언보다 값이 먼저 섰다.**
+        .holding("UnresolvedRef")
+        .holding("REFERS_UNRESOLVED")
         // ── F10 이 더한 둘 — **담을 수 없는 것이 아니라 이 뷰가 안 담는 것** ──
         //
         // `NarrativeItem`(제안)은 **저장되지 않는다** — 결정론적 파생이라 다시 계산하고,

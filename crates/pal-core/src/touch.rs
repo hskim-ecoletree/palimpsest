@@ -15,7 +15,7 @@
 //!
 //! # 아래 타입들이 변형 없이 비어 있는 것은 의도다
 //!
-//! `BoundItem` · `UnresolvedRef` · `EffectSet` · `JudgmentSummary` 는 **자리를 잡되
+//! `BoundItem` · `EffectSet` · `JudgmentSummary` 는 **자리를 잡되
 //! 값을 만들 수 없다.** 그 기능이 도착하면 변형과 필드가 생기고, 그때까지 타입 시스템이
 //! *"여기에 값이 있을 수 없다"* 를 보증한다. 자리표시 문자열이나 `()` 로 두면 그 보증이
 //! 사라지고 누군가 빈 값을 채워 넣을 수 있게 된다.
@@ -247,14 +247,6 @@ pub struct SymbolFacts {
 
 /// 내가 모르는 것 — **F08 이 채운다.**
 ///
-/// **[graph-node] `UnresolvedRef`** — `schema/graph.toml` (`status = "not_built"`)
-///
-/// **변형이 없는 것이 스키마가 요구하는 상태다.** 자리만 만든 노드의 타입이 거주
-/// 가능하면 누군가 빈 값을 채워 넣을 수 있고, 그 순간 *"안 만들었음"* 과 *"없음"* 이
-/// 같은 출력이 된다. `xtask` 의 스키마 정합 검사가 이 거주 불가능성을 잰다.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub enum UnresolvedRef {}
-
 /// 효과 집합 — **F13 이 채운다.**
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum EffectSet {}
@@ -290,7 +282,7 @@ pub struct TouchResult {
     /// 이 심볼이 하는 것 — F07
     pub facts: Capable<SymbolFacts>,
     /// 내가 모르는 것 — F08
-    pub unresolved: Capable<Vec<UnresolvedRef>>,
+    pub unresolved: Capable<Vec<crate::UnresolvedRef>>,
     /// 효과 — F13
     pub effects: Capable<EffectSet>,
     /// 판정 — F15

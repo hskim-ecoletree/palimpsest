@@ -287,7 +287,7 @@ fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::Cross
             // 나를 지켜보는 결정"* 은 고치러 갈 자리가 다르다.
             print_bindings("이 좌표를 지켜보는 것", &r.watching, &envelope.elision);
             print_facts(&r.facts, cross);
-            slot("내가 모르는 것", &r.unresolved);
+            print_unresolved(&r.unresolved);
             slot("효과", &r.effects);
             slot("판정", &r.judgments);
         }
@@ -522,6 +522,45 @@ fn print_transfer() {
 }
 
 /// 미구축 자리를 **빈 목록이 아니라 문장으로** 산출한다.
+/// **내가 모르는 것** — `F08` 의 값 (`B3`).
+///
+/// # 왜 `slot` 이 아닌가
+///
+/// [`slot`] 은 `Capable::Present` 를 *"(있음)"* 으로만 찍는다. 그것은 자리가 비어 있던
+/// 동안에는 정확한 화면이었다 — 값이 없으니 말할 것도 없었다. 값이 서면 그 화면이
+/// **거짓 신호**가 된다: *"있음"* 은 몇 건이 무엇 때문에 막혔는지를 안 말하면서
+/// 말했다는 인상만 준다.
+///
+/// ⚠ **`NotBuilt` 는 이제 「이 빌드가 못 만든다」가 아니다** — 이 빌드는 만든다.
+/// 남은 뜻은 하나뿐이다: **이 투영이 파일 간 해소 패스를 안 지났다.** 그 문장을
+/// 화면이 그대로 적는다. 안 그러면 능력 부재 선언과 실물이 어긋난 채 남고, 그것이
+/// `E5-a` 가 반증으로 잡는 자리다.
+fn print_unresolved(value: &Capable<Vec<pal_core::UnresolvedRef>>) {
+    println!("■ 내가 모르는 것");
+    let items = match value {
+        Capable::NotBuilt { .. } => {
+            println!("  (이 투영은 파일 간 해소 패스를 안 지났습니다 — 「0 건」이 아닙니다)");
+            return;
+        }
+        Capable::Present(v) => v,
+    };
+    if items.is_empty() {
+        println!("  없음 — 이 좌표에서 못 푼 참조가 0 건입니다");
+        return;
+    }
+    println!("  {} 건", items.len());
+    for u in items {
+        // 마지막 걸음이 끊긴 자리다. **`reason` 과 같은 사실의 두 표현이고**,
+        // 걸음을 안 찍으면 *"못 풀었다"* 만 남아 고칠 자리를 안 준다.
+        let 걸음: Vec<String> = u
+            .attempts
+            .iter()
+            .map(|a| format!("{}({}→{})", a.step.as_str(), a.tried.len(), a.found))
+            .collect();
+        println!("  · {} — {} · 지난 걸음 {}", u.name, u.reason.as_str(), 걸음.join(" "));
+    }
+}
+
 fn slot<T>(title: &str, value: &Capable<T>) {
     println!("■ {title}");
     match value {
