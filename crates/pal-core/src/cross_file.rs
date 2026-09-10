@@ -389,7 +389,13 @@ fn module_candidates(from: &str, module: &str, crates: &[Crate]) -> (Vec<String>
     //   (2026-09-09 실측: `Leaf` 가 통째로 안 섰다).
     let mut 일차 = vec![format!("{base}.rs"), format!("{base}/mod.rs")];
     if segs.is_empty() {
+        // ★ **뿌리는 둘이다** (2026-09-10 · `DL4-11`). `crates_of` 는 `lib.rs` 와
+        //   `main.rs` 를 **둘 다** 크레이트 뿌리로 인정하는데(2026-09-10 · 판 4 의 `A7`)
+        //   후보를 펴는 이 자리는 `lib.rs` 만 넣고 있었다. 그러면 라이브러리가 없는
+        //   바이너리 크레이트를 이름으로 부른 임포트가 **`NoTargetFile` 통으로 조용히
+        //   간다** — 인정한 자와 펴는 자가 갈리면 그 갈림은 회계에 안 나온다.
         일차.push(format!("{base}/lib.rs"));
+        일차.push(format!("{base}/main.rs"));
     }
     let mut 이차 = base
         .rsplit_once('/')

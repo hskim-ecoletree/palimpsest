@@ -72,8 +72,13 @@ fn 저장소(tag: &str) -> PathBuf {
     w("src/hide.rs", "pub struct Hidden;\nimpl Hidden { pub fn only() -> Hidden { Hidden } }\n");
 
     // 쓰는 자리. **여기서 나가는 엣지가 이 시험의 대상이다.**
+    // ★ **`use inside::…` 는 균일 경로다** — 잠근 축1 의 첫 칸(`use inside::{Rel, Root}`)이
+    //   그 꼴이고, 크레이트 루트의 모듈을 접두 없이 부른다. 앞 판은 여기에
+    //   `use crate::inside::…` 를 심어 **넷째 칸(접두)을 두 번 재고 첫 칸을 0 번 쟀다**
+    //   (`DL4-17`). 접두는 `deep/leaf.rs` 의 `super::super::…` 와 아래 `use crate::…`
+    //   셋이 이미 진다.
     w("src/user.rs",
-      "use crate::inside::{Rel, Root};\n\
+      "use inside::{Rel, Root};\n\
        use crate::deep::leaf::Leaf;\n\
        use crate::alias::Origin as Alias;\n\
        use crate::twin::{Twin, 쌍둥이};\n\
@@ -470,5 +475,66 @@ fn 파생_저장소가_없으면_화면이_0_건이라_안_적는다() {
     assert!(
         화면2.contains("아직 없습니다"),
         "정본이 없는데도 「못 읽었다」로 적는다 — 이 자가 부재를 안 가른다:\n{화면2}"
+    );
+}
+
+/// 잠근 축1 의 **형제 크레이트** 두 칸을 심는다 — 위 [`저장소`] 로는 원리상 못 잰다.
+///
+/// ⚠ **[`저장소`] 에는 크레이트가 하나도 없다.** `crates_of` 는 `<이름>/src/lib.rs`
+/// 꼴만 크레이트 뿌리로 인정하는데(디렉터리 이름이 곧 `use` 의 이름이다) 그 픽스처의
+/// `src/lib.rs` 는 그 꼴이 아니다. 그래서 「형제 크레이트 깊은 경로」와 「형제 크레이트
+/// 평평 경로」가 거기서 **한 번도 안 걸린다** — `A3` 가 넷을 잰다고 적고 하나를 쟀다.
+///
+/// | 파일 | 무엇을 심었나 |
+/// |---|---|
+/// | `crates/alpha/src/lib.rs` | 크레이트 뿌리. **최상위 `pub`**(`Flat`)와 `pub mod deep` |
+/// | `crates/alpha/src/deep.rs` | 깊은 경로의 대상(`Deep`) |
+/// | `crates/beta/src/lib.rs` | 다른 크레이트. `pub mod user` |
+/// | `crates/beta/src/user.rs` | `use alpha::Flat;` 와 `use alpha::deep::Deep;` 가 여기 있다 |
+fn 저장소_크레이트_둘(tag: &str) -> PathBuf {
+    let root = std::env::temp_dir().join(format!("pal-xcrate-{tag}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("crates/alpha/src")).expect("임시 저장소");
+    std::fs::create_dir_all(root.join("crates/beta/src")).expect("임시 저장소");
+    let w = |p: &str, s: &str| std::fs::write(root.join(p), s).expect("쓰기");
+
+    // **평평 경로의 대상은 크레이트 루트의 최상위 `pub` 이어야 한다** — 잠근 축1 이
+    // 그렇게 적는다(`use pal_git::GixRepo`). 재수출이 아니라 **정의**다.
+    w("crates/alpha/src/lib.rs", "pub mod deep;\npub struct Flat;\n");
+    w("crates/alpha/src/deep.rs", "pub struct Deep;\n");
+
+    w("crates/beta/src/lib.rs", "pub mod user;\n");
+    w("crates/beta/src/user.rs",
+      "use alpha::Flat;\n\
+       use alpha::deep::Deep;\n\
+       pub fn 씀둘() { let _ = Flat; let _ = Deep; }\n");
+
+    git(&root, &["init", "-q"]);
+    git(&root, &["add", "-A"]);
+    git(&root, &["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "첫 커밋"]);
+    root
+}
+
+#[test]
+fn a3_형제_크레이트_평평_경로와_깊은_경로가_각각_엣지가_된다() {
+    let repo = 저장소_크레이트_둘("a3x");
+    pal(&repo, &["touch", "씀둘", "--json"]);
+    let p = 투영(&repo);
+    let 씀둘 = p.resolve_name("씀둘").expect("이름").into_iter().next().expect("씀둘 이 없다");
+    let 대상 = 파일_간_대상(&p, 씀둘.id, "crates/beta/src/user.rs");
+
+    assert!(
+        !대상.is_empty(),
+        "크레이트를 건너는 엣지가 **0** 이다 — 이 시험의 나머지가 공짜로 통과한다"
+    );
+    // ③ 형제 크레이트 **평평 경로** — 대상이 그 크레이트 루트 `lib.rs` 의 최상위 `pub`.
+    assert!(
+        대상.contains(&"Flat".to_owned()),
+        "형제 크레이트 평평 경로: `Flat` 이 안 섰다 — {대상:?}"
+    );
+    // ② 형제 크레이트 **깊은 경로**.
+    assert!(
+        대상.contains(&"Deep".to_owned()),
+        "형제 크레이트 깊은 경로: `Deep` 이 안 섰다 — {대상:?}"
     );
 }
