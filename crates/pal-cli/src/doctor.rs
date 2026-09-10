@@ -54,7 +54,10 @@ fn capabilities() -> CapabilitySet {
         ],
         vec![
             CapabilityId::new("F05", "graph-storage"),
-            CapabilityId::new("F08", "unresolved-refs"),
+            // ⚠ **`F08` 을 2026-09-10 에 뺐다** (`E5`·`E5-a`). 같은 파일의 `coverage()` 가
+            //    `.holding("UnresolvedRef")` 로 뒤집혔는데 이 목록은 손으로 적혀 있어
+            //    안 따라왔다 — **한 파일이 값을 싣는다고 선언하면서 능력은 「없다」로
+            //    적고 있었다.** 그 어긋남이 화면의 `미구축 … F08` 을 찍던 자리다.
             CapabilityId::new("F15", "judgment"),
             CapabilityId::new("F17", "synthesis"),
             CapabilityId::new("F20", "conformance"),

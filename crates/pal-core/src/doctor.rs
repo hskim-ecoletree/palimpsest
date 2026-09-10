@@ -174,6 +174,17 @@ pub struct Outcome {
     /// 표본 밖이라 보지 않은 단위 수. **0 이 아니면 잔여가 함께 나간다.**
     pub skipped: usize,
     pub violations: usize,
+    /// 실제로 검사한 단위를 **라벨로 가른 것** (`C2` · 2026-09-10).
+    ///
+    /// # 왜 전체 [`Self::checked`] 로는 못 재나
+    ///
+    /// *"이 불변식이 `REFERENCES` 를 실제로 검사했나"* 를 전체 수로 물으면 **다른 라벨이
+    /// 하나라도 있으면 통과한다.** 실측(2026-09-09)으로 그 자리가 났다 — 축 ① 의
+    /// `검사 30` 이 전부 `BOUND_TO` 였고 `REFERENCES` 몫은 **0** 이었는데, 전체 수만
+    /// 보면 그 사실이 안 보였다.
+    ///
+    /// **[`Self::checked`] 의 합과 같아야 한다** — 갈리면 라벨 하나가 샌 것이다.
+    pub by_label: std::collections::BTreeMap<String, usize>,
 }
 
 /// 불변식 하나의 처지.
@@ -479,10 +490,11 @@ impl<'a> Context<'a> {
         ))
     }
 
+    /// **검사한 단위를 라벨로 가른다** (`C2`). 부르는 쪽이 자기 단위의 라벨을 안다.
     fn finish(
         &self,
         id: InvariantId,
-        checked: usize,
+        labels: Vec<String>,
         skipped: Vec<Coord>,
         violations: usize,
         residuals: &mut Vec<Residual>,
@@ -491,7 +503,13 @@ impl<'a> Context<'a> {
         if let Some(r) = self.skipped_residual(id, skipped) {
             residuals.push(r);
         }
-        Outcome { checked, skipped: n, violations }
+        let checked = labels.len();
+        let mut by_label: std::collections::BTreeMap<String, usize> =
+            std::collections::BTreeMap::new();
+        for l in labels {
+            *by_label.entry(l).or_default() += 1;
+        }
+        Outcome { checked, skipped: n, violations, by_label }
     }
 
     fn edge_anchor(&self, e: &EdgeInstance) -> Anchor {
@@ -541,7 +559,8 @@ impl<'a> Context<'a> {
                 });
             }
         }
-        self.finish(InvariantId::EdgeEndsExist, checked.len(), skipped, found, residuals)
+        let labels = checked.iter().map(|e| e.kind.clone()).collect();
+        self.finish(InvariantId::EdgeEndsExist, labels, skipped, found, residuals)
     }
 
     // ── ② 등록된 라벨이고 필수 속성을 갖는다 ─────────────────────────────────
@@ -580,9 +599,16 @@ impl<'a> Context<'a> {
                 });
             }
         }
+        let labels = checked
+            .iter()
+            .map(|u| match u {
+                Unit::Node(n) => n.key.label.clone(),
+                Unit::Edge(e) => e.kind.clone(),
+            })
+            .collect();
         self.finish(
             InvariantId::RegisteredAndRequired,
-            checked.len(),
+            labels,
             skipped,
             found,
             residuals,
@@ -721,9 +747,10 @@ impl<'a> Context<'a> {
                 });
             }
         }
+        let labels = checked.iter().map(|n| n.key.label.clone()).collect();
         self.finish(
             InvariantId::ProducerFitsProvenance,
-            checked.len(),
+            labels,
             skipped,
             found,
             residuals,
@@ -758,9 +785,10 @@ impl<'a> Context<'a> {
                 });
             }
         }
+        let labels = checked.iter().map(|n| n.key.label.clone()).collect();
         self.finish(
             InvariantId::InferredCarriesEvidence,
-            checked.len(),
+            labels,
             skipped,
             found,
             residuals,
@@ -809,9 +837,10 @@ impl<'a> Context<'a> {
                 });
             }
         }
+        let labels = checked.iter().map(|e| e.kind.clone()).collect();
         self.finish(
             InvariantId::CandidateSetWithinLimit,
-            checked.len(),
+            labels,
             skipped,
             found,
             residuals,
@@ -854,7 +883,9 @@ impl<'a> Context<'a> {
                 });
             }
         }
-        self.finish(InvariantId::ResidualAnchored, checked.len(), skipped, found, residuals)
+        // 잔여는 라벨이 하나다 — 스키마 라벨이 아니라 이 불변식의 단위 이름이다.
+        let labels = checked.iter().map(|_| "Residual".to_owned()).collect();
+        self.finish(InvariantId::ResidualAnchored, labels, skipped, found, residuals)
     }
 
     // ── ⑦ 결박 색인이 가리키는 실체 ──────────────────────────────────────────
@@ -896,9 +927,10 @@ impl<'a> Context<'a> {
                 });
             }
         }
+        let labels = checked.iter().map(|b| b.target.label.clone()).collect();
         self.finish(
             InvariantId::BindingIndexResolves,
-            checked.len(),
+            labels,
             skipped,
             found,
             residuals,
@@ -942,9 +974,10 @@ impl<'a> Context<'a> {
                 });
             }
         }
+        let labels = checked.iter().map(|n| n.key.label.clone()).collect();
         self.finish(
             InvariantId::FreshnessConsistent,
-            checked.len(),
+            labels,
             skipped,
             found,
             residuals,
@@ -1225,6 +1258,64 @@ snapshot    = "at"
     // ── 깨진 픽스처 여덟 ─────────────────────────────────────────────────────
 
     #[test]
+    /// `C4-a` — **파일 간 참조 엣지**로 건다. 그리고 「위반 1」을 수로 단언한다.
+    ///
+    /// ⚠ 위 시험은 `BOUND_TO` 를 심고 [`잡혔다`] 로 *"비어 있지 않다"* 만 본다.
+    /// 이 회차가 세운 것은 `REFERENCES_ACROSS` 이고, **그 라벨로 걸어야 이 대조가
+    /// 이 회차의 산출을 잰다.** 그리고 수를 안 재면 위반이 열이어도 통과한다.
+    #[test]
+    fn c4a_파일_간_엣지의_한쪽_끝이_없으면_불변식_1_의_위반이_정확히_1_이다() {
+        let 성 = 성한();
+        let 없는_심볼 = NodeKey::new("Symbol", 심볼_아이디("사라진").to_hex());
+        let mut edges = 성.edges().to_vec();
+        edges.push(EdgeInstance::one(
+            "REFERENCES_ACROSS",
+            심볼_키("f"),
+            없는_심볼,
+            ResolutionGrade::Exact,
+            Provenance::Extracted,
+            스냅샷(),
+        ));
+        let d = 전수(&성한().with_edges(edges));
+        let 잡힌: Vec<&Violation> = d
+            .violations
+            .iter()
+            .filter(|v| v.invariant == InvariantId::EdgeEndsExist)
+            .collect();
+        assert_eq!(잡힌.len(), 1, "위반이 정확히 1 이 아니다: {:?}", d.violations);
+
+        // ── 음성 대조의 음성 대조 — **안 심으면 0 이어야 한다.** 안 그러면 이 자는
+        //    픽스처와 무관하게 언제나 발화하는 것이고 아무것도 안 잰다.
+        let 성한_판 = 전수(&성한());
+        assert!(
+            성한_판.violations.iter().all(|v| v.invariant != InvariantId::EdgeEndsExist),
+            "성한 뷰에서 불변식 ① 이 발화한다: {:?}", 성한_판.violations
+        );
+    }
+
+    /// `C2`·`C2-a` — **라벨별 몫이 실제로 갈린다.**
+    ///
+    /// 전체 `checked` 로 재면 다른 라벨이 하나만 있어도 통과한다. 그 자로는
+    /// *"이 불변식이 `REFERENCES` 를 검사했나"* 를 못 묻는다.
+    #[test]
+    fn c2_불변식_1_이_라벨별_몫을_가른다() {
+        let d = 전수(&성한());
+        let InvariantOutcome::Checked(o) = &d.invariants[0].outcome else {
+            panic!("불변식 ① 이 안 돌았다");
+        };
+        // **합이 전체와 같다** — 갈리면 라벨 하나가 샜다.
+        assert_eq!(o.by_label.values().sum::<usize>(), o.checked, "{:?}", o.by_label);
+
+        // ── 음성 대조 — 이 픽스처에는 `REFERENCES` 가 **없다.** 전체 `checked` 는
+        //    0 이 아닌데 그 라벨의 몫은 0 이어야 한다. 그것이 갈리는 자의 증인이다.
+        assert!(o.checked > 0, "모집단이 0 이라 아무것도 안 잰다");
+        assert_eq!(
+            o.by_label.get("REFERENCES").copied().unwrap_or(0),
+            0,
+            "이 픽스처에 없는 라벨의 몫이 0 이 아니다: {:?}", o.by_label
+        );
+    }
+
     fn 불변식_1_엣지의_양_끝_노드가_존재한다() {
         let 없는_심볼 = NodeKey::new("Symbol", 심볼_아이디("사라진").to_hex());
         let mut edges = 성한().edges().to_vec();
