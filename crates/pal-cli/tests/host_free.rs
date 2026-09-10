@@ -475,7 +475,18 @@ fn 내보내기의_라벨이_스키마에서_오고_못_산출한_것을_적는�
             schema.nodes.contains_key(label) || schema.edges.contains_key(label),
             "`{label}` 이 스키마에 없다 — 손으로 쓴 라벨이다"
         );
-        assert!(text.contains(label), "Cypher 에 `{label}` 이 없다");
+        // ★ **라벨이 산출에 나타나는 것과 건수가 0 인 것은 같은 자다.** (2026-09-10)
+        //   `REFERENCES_ACROSS`·`UnresolvedRef` 처럼 이 빌드가 **만들 수 있는데 이
+        //   저장소에서 0 건**인 라벨이 생겼다. 그런 라벨을 `missing` 으로 보내면
+        //   *"이 빌드의 2층에 없다"* 가 거짓이 되고, `exported` 에 두면 산출에 줄이
+        //   없다. 그래서 **양방향으로** 잰다 — 0 건이면 없어야 하고 0 건이 아니면
+        //   있어야 한다. 한쪽만 재면 손으로 쓴 라벨을 못 잡는다.
+        let 건수 = c["count"].as_u64().expect("건수");
+        assert_eq!(
+            건수 > 0,
+            text.contains(label),
+            "`{label}` 이 {건수} 건인데 Cypher 의 등장 여부가 그것과 어긋난다"
+        );
     }
 
     // ★ **못 산출한 것을 0 건이 아니라 사유와 함께 적는다**(ADR-0002).

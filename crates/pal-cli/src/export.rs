@@ -178,9 +178,17 @@ fn cypher(p: &Projection, schema: &GraphSchema) -> Result<(String, Vec<Counted>)
     let file_label = node_label(schema, "FileNode")?;
     let symbol_label = node_label(schema, "SymbolNode")?;
     let ref_label = edge_label(schema, "ReferenceEdge")?;
+    // 파일 경계를 넘은 몫은 **다른 라벨**이다 — 등급이 갈려 스키마가 둘로 나눴다(`C3`).
+    let across_label = edge_label(schema, "CrossFileEdge")?;
+    let unresolved_label = node_label(schema, "UnresolvedRef")?;
+    let unresolved_edge = edge_label(schema, "UnresolvedRef")?;
 
     let files = p.files().context("파일을 읽지 못했다")?;
     let (symbols, edges) = p.dump().context("2층을 읽지 못했다")?;
+    let 못푼 = p
+        .unresolved_refs()
+        .context("못 푼 참조를 읽지 못했다")?
+        .unwrap_or_default();
 
     let mut o = String::new();
     o.push_str("// pal export --format cypher\n");
@@ -209,20 +217,61 @@ fn cypher(p: &Projection, schema: &GraphSchema) -> Result<(String, Vec<Counted>)
             quote(identity_name(s.identity))
         );
     }
+    // ★ **라벨을 양 끝의 파일로 가른다.** 2 층은 라벨을 안 담고 `(출발, 도착)` 쌍만
+    //   담으므로, 파일 간인지는 여기서 심볼을 보고 판정한다 — `doctor.rs` 의 `build_view`
+    //   와 **같은 자**다. 한 라벨로 뭉치면 스키마가 `REFERENCES_ACROSS` 를 `exact` 로
+    //   선언한 채 **산출이 0 건**이 되고, 파생 문서가 없는 것을 있다고 적는다.
+    let 파일: std::collections::BTreeMap<pal_core::SymbolId, &str> =
+        symbols.iter().map(|s| (s.id, s.path.as_str())).collect();
+    let (mut 안, mut 간) = (0usize, 0usize);
     for (from, to) in &edges {
+        let 넘는가 = match (파일.get(from), 파일.get(to)) {
+            (Some(a), Some(b)) => a != b,
+            // 한쪽 끝의 심볼이 이 목록에 없다. **`REFERENCES` 로 둔다** — 라벨을 바꿔
+            // 피하면 그 자리가 무엇인지 흐려진다(`doctor.rs` 와 같은 판단).
+            _ => false,
+        };
+        let label = if 넘는가 { &across_label } else { &ref_label };
+        if 넘는가 { 간 += 1 } else { 안 += 1 }
         let _ = writeln!(
             o,
             "MATCH (a:{symbol_label} {{id: {}}}), (b:{symbol_label} {{id: {}}}) \
-             CREATE (a)-[:{ref_label}]->(b);",
+             CREATE (a)-[:{label}]->(b);",
             quote(&from.to_string()),
             quote(&to.to_string())
         );
     }
 
+    // ── 못 푼 참조 — **F08 이 값이 됐다**(`B1`~`B4`). 안 내보내면 동반 산출이
+    //    *"이 빌드의 2층에 없다"* 를 적고, 그것이 지금 거짓이다.
+    for u in &못푼 {
+        let key = format!("{}#{}", u.site.to_hex(), u.name);
+        let _ = writeln!(
+            o,
+            "CREATE (:{unresolved_label} {{site: {}, name: {}, reason: {}, attempts: {}}});",
+            quote(&u.site.to_string()),
+            quote(&u.name),
+            quote(u.reason.as_str()),
+            u.attempts.len()
+        );
+        let _ = writeln!(
+            o,
+            "MATCH (a:{unresolved_label} {{site: {}, name: {}}}), \
+             (b:{symbol_label} {{id: {}}}) CREATE (a)-[:{unresolved_edge}]->(b);",
+            quote(&u.site.to_string()),
+            quote(&u.name),
+            quote(&u.site.to_string())
+        );
+        let _ = key;
+    }
+
     let counted = vec![
         Counted { label: file_label, count: files.len() },
         Counted { label: symbol_label, count: symbols.len() },
-        Counted { label: ref_label, count: edges.len() },
+        Counted { label: ref_label, count: 안 },
+        Counted { label: across_label, count: 간 },
+        Counted { label: unresolved_label, count: 못푼.len() },
+        Counted { label: unresolved_edge, count: 못푼.len() },
     ];
     Ok((o, counted))
 }
