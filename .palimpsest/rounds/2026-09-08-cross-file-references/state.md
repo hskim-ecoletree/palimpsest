@@ -22,7 +22,7 @@
 | 못 푼 참조 | **값이다** — 이름 · 못 푼 까닭 · 지난 걸음 | 같은 화면의 `■ 내가 모르는 것` |
 | 내보내기 | `REFERENCES 4394` · `REFERENCES_ACROSS 1263` · `UnresolvedRef 4744` · `REFERS_UNRESOLVED 4744` | `pal export --format cypher` |
 | `pal doctor` 축 ① | `검사 10400 · 위반 0` · 라벨별 `REFERENCES 4394 · REFERENCES_ACROSS 1263 · REFERS_UNRESOLVED 4743` | `pal doctor --full --json` |
-| 결박 | 30 · `fresh` **24** · `stale` **6** — 신원이 `c9a6bae` 때와 같다 | `pal intent import` 뒤 `pal query binding.status --json` |
+| 결박 | **판정 시점 30** · `fresh` 24 · `stale` 6 — 신원이 `c9a6bae` 때와 같다. **결박 뒤 34** · `fresh` 28 · `stale` 6 | `pal intent import` 뒤 `pal query binding.status --json` |
 | 검사 | `검사 28/28 통과` · `cargo test --workspace` 실패 0 · `f04-verify.py` exit 0 | 세 명령의 원문 |
 
 ★★ **정정 ⟨2026-09-10 · `DL2-13`⟩ — 「축 ① 은 안 움직였다」는 거짓이다.**
@@ -65,6 +65,7 @@
 | 완수 조건 설계 평가 | 2 | 2(소진) | `conditions-audit/r1-raw.md`·`r2-raw.md` |
 | 승인 | — | 완료 | `intent.md` 의 `## 승인` |
 | 판정 | — | 완료 | `docs/gates/cross-file-references.md` |
+| 결박 | — | 완료 | `.palimpsest/intent/bindings.jsonl` — 이 회차의 결정 넷을 더했다(30 → 34) |
 | 효과 | — | 완료 | 게이트 `## 효과` · `observations/effect-touch-print-facts.txt` |
 | 종료 보고 | — | 완료 | `report.md` |
 | 독립 리뷰 | 4 | 진행 중 | — |
