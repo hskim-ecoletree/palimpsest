@@ -15,8 +15,8 @@
 
 | | 값 | 어떻게 쟀나 |
 |---|---|---|
-| 완수 조건 | **39 개 전부 판정 — 통과 37 · 반증 2 · 대조불가 0 · 미측정 0** | `pal round conditions --file <intent.md> --json` → `열림 0 · 닫힘 39 · 형식오류 0` |
-| 반증 둘 | `E2`(ⓑ 가 하한 333 에 못 닿았다 · 276) · `E3-b`(등록된 표본 규칙이 유일한 표본을 안 정한다) | 게이트 `## 판정` |
+| 완수 조건 | **39 개 전부 판정 — 통과 35 · 반증 4 · 대조불가 0 · 미측정 0** | `pal round conditions --file <intent.md> --json` → `열림 0 · 닫힘 39 · 형식오류 0` |
+| 반증 넷 | `E2`(ⓑ 283 < 333) · `E3-b`(표본 규칙이 유일한 표본을 안 정한다) · **`A5`·`A5-a`**(재수출에 가린 사적 모듈이 엣지를 받았고 그 음성 대조가 원리상 못 잡는다) | 게이트 `## 판정` |
 | 회차 상태 | `terminal: reported` · `findings_current: true` · `open_harmful_findings: **0**` · `completion: unavailable` | `pal round status --round <slug> --json` |
 | 파일 간 해소 | ⓐ **1610/5751** · ⓑ **283/1060** · **`no_target_file` 통이 0 이 됐다** | `./target/release/pal touch print_facts` |
 | 못 푼 참조 | **값이다** — 이름 · 못 푼 까닭 · 지난 걸음 | 같은 화면의 `■ 내가 모르는 것` |
@@ -68,7 +68,7 @@
 | 결박 | — | 완료 | `.palimpsest/intent/bindings.jsonl` — 이 회차의 결정 넷을 더했다(30 → 34) |
 | 효과 | — | 완료 | 게이트 `## 효과` · `observations/effect-touch-print-facts.txt` |
 | 종료 보고 | — | 완료 | `report.md` |
-| 독립 리뷰 | 4 | 진행 중 | — |
+| 독립 리뷰 | 4 | 1 | `review/r1-raw.md` — 금지역 넷 · 거짓신호 다섯을 잡았고 전부 처분했다 |
 
 ## 다음 컨텍스트가 받는 것
 
