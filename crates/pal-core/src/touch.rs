@@ -267,6 +267,18 @@ pub struct TouchResult {
     pub symbol: SymbolNode,
     /// 이 좌표에 **걸린** 것 — F09
     pub bindings: Capable<Vec<BoundItem>>,
+    /// 결박 정본과 파생 저장소가 그 자리에 있었나.
+    ///
+    /// ★★ **[`Self::bindings`] 의 빈 목록을 「0 건」으로 읽어도 되는지가 여기서 갈린다.**
+    /// 파생 저장소(`.palimpsest/intent.redb`)는 커밋된 정본에서 세우는 것이고
+    /// `.gitignore` 가 지운다. 없으면 조회가 빈 목록을 돌려주는데, 그 빈 목록은
+    /// *"아무것도 안 걸렸다"* 가 아니라 *"못 읽었다"* 다.
+    ///
+    /// ⚠ **실측(2026-09-10)으로 그 거짓이 화면에 나갔다** — `pal touch print_facts` 가
+    /// 「걸린 것 (0) 아직 없습니다」를 찍는데 `intent/bindings.jsonl` 에는 그 심볼
+    /// 다이제스트를 지켜보는 결박이 실재했다. [`crate::IntentStorePresence::unread`] 가
+    /// 바로 그 자리를 가르려고 만들어졌는데 **이 답이 그 값을 안 싣고 있었다.**
+    pub store: crate::IntentStorePresence,
     /// ★ 이 좌표를 **지켜보는** 것 — 대상이 **다른 좌표**인 결박들 (`[f11.pass]` ⑤).
     ///
     /// # 왜 `bindings` 와 한 목록이 아닌가

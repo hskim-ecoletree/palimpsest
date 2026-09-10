@@ -282,10 +282,10 @@ fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::Cross
                      r.symbol.kind.name(), r.symbol.path, r.symbol.span.line_start,
                      r.symbol.identity.name(), r.symbol.body.short());
             println!();
-            print_bindings("이 좌표에 걸린 것", &r.bindings, &envelope.elision);
+            print_bindings("이 좌표에 걸린 것", &r.bindings, &envelope.elision, &r.store);
             // ★ **다른 구역이다.** *"내 코드에 걸린 결정"* 과 *"남의 코드에 걸렸는데
             // 나를 지켜보는 결정"* 은 고치러 갈 자리가 다르다.
-            print_bindings("이 좌표를 지켜보는 것", &r.watching, &envelope.elision);
+            print_bindings("이 좌표를 지켜보는 것", &r.watching, &envelope.elision, &r.store);
             print_facts(&r.facts, cross);
             print_unresolved(&r.unresolved);
             slot("효과", &r.effects);
@@ -354,7 +354,12 @@ pub fn print_near(near: &[pal_core::NearName], elision: &Elision) {
 }
 
 /// 결박을 띄운다 — **제품의 형태가 보이는 자리다.**
-fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elision) {
+fn print_bindings(
+    title: &str,
+    value: &Capable<Vec<BoundItem>>,
+    elision: &Elision,
+    store: &pal_core::IntentStorePresence,
+) {
     let Capable::Present(items) = value else {
         println!("■ {title}");
         println!("  (이 빌드에는 binding 능력이 없습니다)");
@@ -362,7 +367,29 @@ fn print_bindings(title: &str, value: &Capable<Vec<BoundItem>>, elision: &Elisio
     };
     println!("■ {title} ({})", items.len());
     if items.is_empty() {
-        // **여기의 빈 목록은 정직하다** — 능력이 있고 값이 없는 것이다.
+        // ★★ **빈 목록이 정직한지가 여기서 갈린다** (2026-09-10).
+        //
+        // 앞 판은 여기에 *"여기의 빈 목록은 정직하다 — 능력이 있고 값이 없는 것이다"*
+        // 라고 적고 언제나 「아직 없습니다」를 찍었다. **그 문장이 거짓인 경우가 있다** —
+        // 파생 저장소(`.palimpsest/intent.redb`)는 커밋된 정본에서 세우는 것이고
+        // `.gitignore` 가 지운다. 없으면 조회가 빈 목록을 돌려주고, 그 빈 목록은
+        // *"아무것도 안 걸렸다"* 가 아니라 **"못 읽었다"** 다.
+        //
+        // ⚠ **실측으로 그 거짓이 화면에 나갔다** — `pal touch print_facts` 가
+        // 「걸린 것 (0) 아직 없습니다」를 찍는데 `intent/bindings.jsonl` 에는 그 심볼
+        // 다이제스트를 지켜보는 결박이 실재했다. `IntentStorePresence::unread` 가 바로
+        // 이 자리를 가르려고 만들어졌는데 화면이 그 값을 안 읽고 있었다.
+        if store.unread() {
+            println!(
+                "  **못 읽었습니다 — 「0 건」이 아닙니다.** 파생 저장소가 없습니다: {}",
+                store.path
+            );
+            if let Some(정본) = store.canonical.path() {
+                println!("  정본은 있습니다: {정본}");
+                println!("  세우려면 — `pal intent import {정본}`");
+            }
+            return;
+        }
         println!("  아직 없습니다.");
         return;
     }

@@ -958,6 +958,8 @@ fn 조립(
         },
         symbol,
         bindings: Capable::Present(bindings),
+        // **빈 목록을 「0 건」으로 읽어도 되는지의 자** — 부르는 쪽이 이 값을 봐야 한다.
+        store: ctx.intent_store.clone(),
         // ★ **F11 이 이 자리를 만들었다** — 대상이 다른 좌표인 결박들.
         watching: Capable::Present(watching),
         facts: Capable::Present(facts),
