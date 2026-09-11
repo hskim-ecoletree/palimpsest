@@ -1,0 +1,28 @@
+# 재실행 대조 — ㉢ `#129` ⟨`A2-b`⟩
+#
+# 같은 HEAD(`22cf488`) · 같은 워킹트리(깨끗)에서 두 번째 실행. **바이트로 동일하다.**
+# ⚠ **후보 목록 답도 재실행이 선다** — `A2-b` 는 산출 종류를 안 가린다.
+# 본문 sha256   0766ec2faa24ca44990f1cc14d07d61976ad1c6bf8ca319cfbb314f764531bc3
+# 재실행 sha256 0766ec2faa24ca44990f1cc14d07d61976ad1c6bf8ca319cfbb314f764531bc3
+--- 전 출력 (여기서부터 바이트 그대로 · 위는 머리) ---
+
+  `write` 의 후보가 3건입니다. 하나를 고르지 않습니다.
+
+  fun        write                    crates/pal-cli/src/install/manifest.rs:373
+  fun        write                    crates/pal-intent/src/store.rs:163
+  fun        write                    crates/pal-store/src/projection.rs:251
+
+■ 이 답의 근거
+  Snapshot  palimpsest@22cf488+worktree
+  대장      parsed 141 · partial 0 · unsupported 781 · unrecognized 350 / 1273 파일
+            결박 불가 언어 7개 — 그 파일들에는 좌표가 없습니다
+  2층       심볼 3325 색인됨
+  워킹트리  일치
+  재구축    아님
+  생략      없음 (명시)
+  이관      1273건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1273건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 538 토큰 **이상** (잰 것: 2152 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+

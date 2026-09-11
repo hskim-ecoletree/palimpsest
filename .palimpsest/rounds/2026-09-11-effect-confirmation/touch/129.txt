@@ -1,0 +1,38 @@
+# `pal touch` 산출 — ㉢ `#129`
+#
+# 부른 명령      ./target/release/pal touch write
+#                (저장소 뿌리에서 · `--at` 없음 · `--repo` 기본값 `.`)
+# HEAD           22cf4889261ca69938f40c22002bfa96f24d0f6e  ⟨봉인 커밋 = plan/129-pre.md⟩
+# 심볼 ID        **원리상 없다** ⟨`A2-c`⟩ — 답이 **후보 목록**이라 둘째 줄이
+#                `\`write\` 의 후보가 3건입니다` 이고 `palimpsest@…#<hex>` 가 안 찍힌다.
+#                근거 줄도 `Snapshot palimpsest@22cf488+worktree` 로 `#<hex>` 가 없다.
+# 사전등록-blob  00c807cd4ecda4ca54ef22a6ffdc0e5e85e54f24  ⟨git rev-parse 22cf488:….../plan/129-pre.md⟩
+#
+# 종료값 0 · 표준오류 0 바이트 · 워킹트리 깨끗 · 산출 21 줄 · **1201 바이트**
+# 본문 sha256   0766ec2faa24ca44990f1cc14d07d61976ad1c6bf8ca319cfbb314f764531bc3
+# ⚠ 산출 안의 `크기 … 잰 것: 2152 바이트` ↔ 본문 1201 바이트. `MS-06` 의 **셋째 관측**이고
+#   방향이 같다(잰 값 > 화면). ㉡ 4108↔3346 · ㉠ 7749↔4066 · ㉢ 2152↔1201.
+#
+# ★ **`A5-b` 의 앵커가 원리상 못 선다** ⟨`A5-e` ⓐ⟩ — `fun · … body <hash>` 줄이 없다.
+--- 전 출력 (여기서부터 바이트 그대로 · 위는 머리) ---
+
+  `write` 의 후보가 3건입니다. 하나를 고르지 않습니다.
+
+  fun        write                    crates/pal-cli/src/install/manifest.rs:373
+  fun        write                    crates/pal-intent/src/store.rs:163
+  fun        write                    crates/pal-store/src/projection.rs:251
+
+■ 이 답의 근거
+  Snapshot  palimpsest@22cf488+worktree
+  대장      parsed 141 · partial 0 · unsupported 781 · unrecognized 350 / 1273 파일
+            결박 불가 언어 7개 — 그 파일들에는 좌표가 없습니다
+  2층       심볼 3325 색인됨
+  워킹트리  일치
+  재구축    아님
+  생략      없음 (명시)
+  이관      1273건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1273건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 538 토큰 **이상** (잰 것: 2152 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+
