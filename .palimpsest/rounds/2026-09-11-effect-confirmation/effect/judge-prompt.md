@@ -1516,3 +1516,624 @@ index 02950c4..145b372 100644
 - 주장하는 사실: 이 심볼에 걸린 **결박이 0** 이다.
 
 ═════════ 프롬프트 끝 ═════════
+
+
+════════════════════════════════════════════════════════════════════════
+# `C3` 판정자 프롬프트 — ㉢ `#129` ⟨보존본 · 판 4⟩
+════════════════════════════════════════════════════════════════════════
+
+> 사전 등록 blob: `00c807cd4ecda4ca54ef22a6ffdc0e5e85e54f24`.
+
+═════════ 여기서부터 프롬프트 ═════════
+
+너는 **귀속 판정자**다. 아래 넷을 읽고 물음 하나에 답한다.
+
+## 물음
+
+제출된 **귀속 후보**마다, 그 후보가 인용한 줄이 담은 **사실**이
+**① 사전 등록 전문에도 없고 ② §5.8 표에도 없는가.** 있으면 그 귀속은 **무효**다.
+
+- 같은 낱말이 있는지가 아니라 **같은 사실이 있는지**를 본다.
+- 사실이 부분적으로만 있으면 **어느 부분이 있고 어느 부분이 없는지** 적는다.
+- **네가 스스로 후보를 더하지 마라.** 제출된 것만 판정한다.
+
+## 반환 형식
+
+후보마다 한 절씩:
+
+    ### <후보 기호> — 유효 | 무효
+    - 인용한 줄: <touch 산출의 그 줄>
+    - 담은 사실: <한 문장>
+    - 사전 등록에 있나: 있다(인용) | 없다
+    - §5.8 표에 있나: 있다(인용) | 없다
+    - 판정 근거: <두 문장 이내>
+
+마지막에 `## 합계` 절을 두고 `유효 N · 무효 M` 을 적는다.
+
+## 그리고 **받은 것을 되불러 준다** — 맨 앞에 `## 받은 것` 절을 둔다
+
+아래 넷 각각에 대해 **첫 줄 · 마지막 줄 · 줄 수**를 적는다. 옮겨 적는 것이지 요약이
+아니다. **이것이 네가 읽은 바이트를 사후에 대조하는 유일한 자리다** — 부르는 쪽이 그
+셋을 파일과 기계로 댄다.
+
+    ## 받은 것
+    | 절 | 첫 줄 | 마지막 줄 | 줄 수 |
+    |---|---|---|---|
+    | ① 사전 등록 | … | … | N |
+    | ② touch 산출 | … | … | N |
+    | ③ diff | … | … | N |
+    | ④ §5.8 표 | … | … | N |
+
+⚠ **저장소를 읽지 마라.** 아래 인라인된 넷만으로 판정한다. 파일을 열거나 명령을
+돌리지 않는다 — 네가 읽은 바이트가 사후에 복원되는 것이 이 판정의 조건이다.
+
+────────────────────────────────────────────────────────────────────────
+## ① 사전 등록 전문 (`plan/129-pre.md`)
+────────────────────────────────────────────────────────────────────────
+# 사전 등록 — ㉢ `#129`
+
+> 회차 `2026-09-11-effect-confirmation` · 재는 자리 **㉢** · 이슈 **`#129`**
+> **이 파일은 `pal touch` 를 돌리기 전에 봉인된다.**
+
+## 0. 이 파일이 지는 조건
+
+`A3` · `A4` · `A6` · `A2-c`(후보 목록이면 그 사실을 적는다) · `A5-d`·`A5-e`(앵커) ·
+`B1-a`(RED 는 **이미 관측했다** — 아래 §2.4) · `B1-d`(GREEN) · `B1-e`(시험 ↔ RED) ·
+`C2-b` 의 내용 시험 기준선.
+
+★ 여기 적힌 사실은 `C2` 의 귀속에서 빠진다.
+⚠ **이 자리는 「touch 가 쓸모없었다」가 나올 수 있는 음성 방향의 표본**으로 고른 자리다
+(`intent.md ## 재는 자리 셋`). 그리고 **`C2` 의 귀속 모집단에 착수부터 0 으로 들어간다** —
+후보 목록 가지에서는 사실 줄이 안 찍히기 때문이다.
+
+## 1. 심볼 선정 ⟨`A6`⟩
+
+**`write`** 하나. `pal touch write` 를 저장소 뿌리에서 `--at` 없이 부른다.
+`#129` 의 뿌리가 `crates/pal-intent/src/store.rs:163-172` 의 `fn write` 이고,
+그 함수가 `Handle::Absent | Handle::Reading(_)` 을 **둘 다** 거부한다.
+
+⚠ **답이 후보 목록일 것으로 예상한다** ⟨`A2-c`⟩ — `write` 는 흔한 이름이라 여러 심볼이
+맞을 것이다. 그러면 `fun · … body` 줄이 없고 `A5-b` 의 앵커가 **원리상 못 선다**
+⟨`A5-e` ⓐ⟩. 산출을 보고 판정한다.
+
+## 2. touch 를 돌리기 전에 무엇을 봤나 ⟨`A4`⟩
+
+### 2.1 읽은 것
+- 이슈 **`#129`** 전문 — 상태 `OPEN`. 재현 명령과 오류 문구, 그리고 *"광고된 질의 하나가
+  어떤 입력으로도 안 돈다"*.
+- `crates/pal-intent/src/store.rs:162-172` — `fn write` 가 `Handle::Writing` 에만 쓰기
+  트랜잭션을 주고 `Absent` 와 `Reading` 을 거부한다. **파일이 없어도 같은 오류**다
+  ⟨`CA1-01` 이 정정한 자리⟩.
+- `crates/pal-cli/src/query.rs:109-128` — ⚠ **주석이 계약을 선언한다**:
+  *"의도 저장소는 **읽기로만 연다** — 이 명령은 결박을 안 만든다."* 그리고 `:127` 이
+  `IntentStore::open_read_only` 를 부른다.
+- `crates/pal-cli/src/query.rs:166-169` — `NarrativeUnbound` 일 때만
+  `crate::narrative::ingest(...)` 를 부른다. 주석: *"이 질의에서만 문서를 읽는다."*
+- `crates/pal-cli/src/narrative.rs:130-220` `ingest` — 조각마다 `intent.entity_of(&origin)`
+  을 묻고, **없으면 `EntityId::mint` 로 새 개체를 만들어 `intent.keep_entity(...)` 로
+  남긴다**(`:187-201`). ★ **그 한 줄이 읽기 전용 저장소에 쓰는 자리**다.
+- `crates/pal-cli/src/narrative.rs:112` — `pal narrative` 명령은 `IntentStore::open`(쓰기)
+  으로 연다. **같은 `ingest` 를 두 표면이 부르는데 하나는 쓰기, 하나는 읽기다.**
+- `crates/pal-query/src/lib.rs:150-162` `UnboundItem` — `item` 필드 주석이
+  *"개체의 이름 — `decision/01J…`. **승인·거부가 이 이름으로 부른다**"* 다.
+  **그래서 이름을 아무렇게나 지어 낼 수 없다** — 지속되지 않는 이름을 찍으면 그 이름으로
+  승인하려다 실패한다.
+- `crates/pal-core/src/envelope.rs:90-113` `ElisionReason` — 넷이 전부 **탐색 예산**의
+  사유다(후보 넘침·경로 곱·깊이·노드). 「개체가 아직 없다」는 그 축이 아니다.
+- `crates/pal-core/src/narrative.rs:476-481` `Proposal` — `item: EntityId` 로 **필수**다.
+  `Option` 은 「선택 필드 금지 (1단계)」가 막는다.
+- `crates/pal-cli/tests/query_envelope.rs:1-40` 과 `tests/common` — 통합 시험이 임시
+  저장소에서 **바이너리를 실제로 돌린다**. ㉢ 의 시험이 설 자리다.
+
+### 2.2 돌린 것
+- `gh issue view 129`
+- `./target/release/pal query narrative.unbound` — **RED 를 실제로 관측했다**(아래 §2.4)
+- `./target/release/pal narrative --help`
+- `grep -rn "narrative.unbound|IntentStore::|mint|keep_entity"` 계열
+
+### 2.3 §5.8 표 전문 ⟨`observations/red.md` §5.8⟩
+
+| 심볼 | 메인이 이미 아는 것 |
+|---|---|
+| `nodes_of` | 결박 **0** · 지켜보는 것 **0** · 산출이 52 줄 |
+| `identity_ceiling` | 결박 **0** · `pal touch` 의 **호출자 0** · `pal query symbol.callers` 가 **(없음)** · ⚠ **그 0 이 거짓 음성이고 실제 호출 자리가 넷**이라는 것(`grep` 으로 재었다). 까닭은 touch 가 스스로 적는 *"`x.foo()` 는 아직 안 셉니다"* |
+| `check_ledger_pair` | 결박 **0** · 산출이 46 줄 · 같은 파일 `xtask/src/main.rs` 안에 결박 **8** 건이 있고 그중 하나가 **한 칸 옆**이다 |
+| 둘 사이 | `nodes_of` 와 `check_ledger_pair` 의 산출이 **38 줄 동일**하다 |
+
+⚠ 이 표에 **`write` 는 없다** — 사전부검이 안 돌린 심볼이다.
+
+### 2.4 RED 를 이미 관측했다 ⟨`B1-a`⟩ — `observations/red-129.txt`
+
+`.palimpsest/intent.redb` 가 **있는 상태**(1,351,680 바이트 · 2026-09-08)에서 쟀다:
+
+    $ ./target/release/pal query narrative.unbound
+    Error: 개체를 남기지 못했다
+    Caused by: 의도 저장소 트랜잭션이 실패했다: 읽기로 연 의도 저장소에 쓰려 했다
+    rc=1
+
+**종료값은 1 이다.** ⟨앞 판이 `MS-02` 에서 *"종료값 0"* 이라 적었고 그 뒤 `B1-b` 를 철회하며
+거짓으로 판정한 자리다 — 이번 관측도 **1** 이다.⟩
+
+### 2.5 이 회차의 앞 자리들이 이미 말해 준 것 — 귀속에서 뺀다
+- `MS-06` — `크기` 줄의 바이트가 화면 본문과 다르다(㉡·㉠ 에서 두 번).
+- `MS-08` — 「호출자 N」이 파일 간 미해소 몫을 표시 없이 뺀다(㉠).
+- `MS-07`·`MS-09` — `identity ordinal` 이 원인을 안 가른다(㉡·㉠).
+
+## 3. 두 갈래 중 고른 것
+
+| 갈래 | 무엇 | 고르나 |
+|---|---|---|
+| ⓐ **질의를 쓰기로 연다** | `query.rs:127` 을 `IntentStore::open` 으로 바꾼다. 한 줄이다 | **아니다** |
+| ⓑ **질의가 안 민팅한다** | `ingest` 에 민팅 스위치를 달고, 읽기 경로에서는 **개체가 없는 조각을 목록에서 빼고 그 수를 답에 싣는다** | **고른다** |
+
+**까닭.** ⓐ 는 **코드가 그 자리에 적어 둔 계약을 깬다** — `query.rs:109` 이
+*"의도 저장소는 읽기로만 연다 — 이 명령은 결박을 안 만든다"* 라고 선언한다. 질의가
+민팅하면 **읽기가 `intent.redb` 를 불린다**. 그 저장소는 *"재구축 불가한 것의 유일한 복구
+경로"*(`pal --help`)라 질의의 부작용으로 자라면 안 된다. 그리고 민팅은 **`pal narrative`
+라는 제 표면이 이미 있다**.
+
+⚠ **ⓑ 가 남기는 것을 미리 적는다** — 아직 `pal narrative` 를 안 지난 조각은 **목록에
+안 나온다.** 그러므로 **수를 답에 싣는다**(`unminted`). 안 실으면 목록이 조용히 짧아지고,
+그것이 이 저장소가 「거짓신호」라 부르는 형태다. 그리고 **이름을 지어내지 않는다** —
+지속 안 되는 이름을 찍으면 승인이 실패한다(`UnboundItem.item` 주석).
+
+## 4. 바꿀 좌표와 각 자리에 무엇을 쓰나 ⟨`A3`⟩
+
+| # | 좌표 | 무엇을 쓰나 |
+|---|---|---|
+| ⑴ | `crates/pal-cli/src/narrative.rs` · `ingest` 앞 (새 자리) | `pub enum 민팅 { 한다, 안한다 }` — **읽기 표면과 쓰기 표면을 타입으로 가른다** |
+| ⑵ | `crates/pal-cli/src/narrative.rs:130-135` | `ingest(..., 민팅: 민팅)` 로 받는다 |
+| ⑶ | `crates/pal-cli/src/narrative.rs:186-203` | `entity_of` 가 `None` 일 때 **민팅::안한다면 `keep_entity` 를 안 부르고** `개체_없음 += 1` 하고 `continue` 한다 |
+| ⑷ | `crates/pal-cli/src/narrative.rs` · `Ingested`(`:60-80` 부근) | 필드 `개체_없음: usize` 를 더한다 |
+| ⑸ | `crates/pal-cli/src/query.rs:166-169` | `민팅::안한다` 를 넘기고 `개체_없음` 을 받아 `QueryCtx` 로 올린다 |
+| ⑹ | `crates/pal-query/src/lib.rs` · `QueryCtx` · `QueryResult::Narrative` | `unminted: usize` 를 싣는다 — **답이 자기가 뺀 것을 진다** |
+| ⑺ | `crates/pal-cli/src/query.rs` · `print_narrative` | `unminted` 를 화면에 적는다. 0 이면 0 이라 적는다 |
+| ⑻ | `crates/pal-cli/src/narrative.rs:112` 쪽 호출 | `민팅::한다` — **기존 행동 그대로** |
+| ⑼ | `crates/pal-cli/tests/` (새 파일 또는 기존) | 아래 §5 의 시험 |
+
+⚠ **안 건드리는 것**: `store.rs` 의 `write()` 거부 규칙(그것이 옳다) · `pal narrative` 의
+행동 · `EntityId` 생성 방식 · `ElisionReason` enum.
+
+## 5. 시험과 그것이 재는 RED ⟨`B1-c`·`B1-e`⟩
+
+| 시험 이름 | 재는 RED |
+|---|---|
+| `narrative_unbound_는_읽기로도_돈다` | **지금은 어떤 입력으로도 안 돈다** — 임시 저장소에 조각이 있는 문서를 두고 `pal query narrative.unbound` 를 돌리면 지금은 `rc=1` 에 *"읽기로 연 의도 저장소에 쓰려 했다"* 가 난다. 고친 뒤에는 **rc 0** 이고 `미결박`·`개체 없음` 이 화면에 뜬다 ⟨`B1-d` 와 같은 자⟩ |
+| `읽기_경로는_의도_저장소를_안_불린다` | **민팅이 질의의 부작용으로 남는 것.** 질의 전후로 `.palimpsest/intent.redb` 의 **바이트가 같아야** 한다(파일이 없으면 없는 채로). 안 재면 ⓐ 로 슬쩍 고쳐도 첫 시험이 초록이다 |
+
+★ **음성 대조** — ⑶ 의 분기를 **끄면**(안한다에서도 민팅하면) 첫 시험이 다시 빨개진다.
+실제로 돌려 `effect/129-delta.md` 에 적는다.
+
+## 6. 앵커 ⟨`A5-d`·`A5-e`⟩
+
+- **touch 를 건 `write` 는 변경 대상이 아니다** — §4 의 「안 건드리는 것」에 `store.rs` 의
+  `write()` 가 들어 있다. 그러므로 `A5-d` 의 **뒤쪽 갈래**가 걸린다: 그 사실과 까닭을 여기
+  적고 **`A5-b` 를 「대조불가」로 판정한다.**
+- ⚠ 그리고 답이 **후보 목록**이면 `body` 줄 자체가 없어 `A5-e` ⓐ 도 함께 걸린다.
+
+## 7. 이 사전 등록이 예상하는 것
+
+- `write` 는 흔한 이름이라 **후보 목록**이 나올 것이다(3 건 안팎).
+- 그러면 **touch 가 이 자리에 줄 것이 거의 없다** — 「후보가 여럿입니다」와 좌표 목록뿐이다.
+- **차이 0 이 나오면 0 으로 적는다** ⟨`C5`⟩. 이 회차는 그 경우를 **음성 방향의 표본**으로
+  미리 골라 뒀다.
+────────────────────────────────────────────────────────────────────────
+## ② `pal touch` 산출 전문 (`touch/129.txt`)
+────────────────────────────────────────────────────────────────────────
+# `pal touch` 산출 — ㉢ `#129`
+#
+# 부른 명령      ./target/release/pal touch write
+#                (저장소 뿌리에서 · `--at` 없음 · `--repo` 기본값 `.`)
+# HEAD           22cf4889261ca69938f40c22002bfa96f24d0f6e  ⟨봉인 커밋 = plan/129-pre.md⟩
+# 심볼 ID        **원리상 없다** ⟨`A2-c`⟩ — 답이 **후보 목록**이라 둘째 줄이
+#                「`write` 의 후보가 3건입니다」 이고 `palimpsest@…#<hex>` 가 안 찍힌다.
+#                근거 줄도 `Snapshot palimpsest@22cf488+worktree` 로 `#<hex>` 가 없다.
+# 사전등록-blob  00c807cd4ecda4ca54ef22a6ffdc0e5e85e54f24  ⟨git rev-parse 22cf488:….../plan/129-pre.md⟩
+#
+# 종료값 0 · 표준오류 0 바이트 · 워킹트리 깨끗 · 산출 21 줄 · **1201 바이트**
+# 본문 sha256   0766ec2faa24ca44990f1cc14d07d61976ad1c6bf8ca319cfbb314f764531bc3
+# ⚠ 산출 안의 `크기 … 잰 것: 2152 바이트` ↔ 본문 1201 바이트. `MS-06` 의 **셋째 관측**이고
+#   방향이 같다(잰 값 > 화면). ㉡ 4108↔3346 · ㉠ 7749↔4066 · ㉢ 2152↔1201.
+#
+# ★ **`A5-b` 의 앵커가 원리상 못 선다** ⟨`A5-e` ⓐ⟩ — `fun · … body <hash>` 줄이 없다.
+--- 전 출력 (여기서부터 바이트 그대로 · 위는 머리) ---
+
+  `write` 의 후보가 3건입니다. 하나를 고르지 않습니다.
+
+  fun        write                    crates/pal-cli/src/install/manifest.rs:373
+  fun        write                    crates/pal-intent/src/store.rs:163
+  fun        write                    crates/pal-store/src/projection.rs:251
+
+■ 이 답의 근거
+  Snapshot  palimpsest@22cf488+worktree
+  대장      parsed 141 · partial 0 · unsupported 781 · unrecognized 350 / 1273 파일
+            결박 불가 언어 7개 — 그 파일들에는 좌표가 없습니다
+  2층       심볼 3325 색인됨
+  워킹트리  일치
+  재구축    아님
+  생략      없음 (명시)
+  이관      1273건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1273건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 538 토큰 **이상** (잰 것: 2152 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+
+────────────────────────────────────────────────────────────────────────
+## ③ 실제 변경 diff (`git diff 22cf488..1abc0e9 -- crates/`)
+────────────────────────────────────────────────────────────────────────
+diff --git a/crates/pal-cli/src/narrative.rs b/crates/pal-cli/src/narrative.rs
+index 24a7531..90668d3 100644
+--- a/crates/pal-cli/src/narrative.rs
++++ b/crates/pal-cli/src/narrative.rs
+@@ -63,6 +63,29 @@ pub enum What<'a> {
+     Refuse { item: &'a str, pick: &'a str, reason: &'a str },
+ }
+ 
++/// **민팅을 하는 표면인가** — 읽기 표면과 쓰기 표면을 타입으로 가른다. ([#129])
++///
++/// # 왜 불리언이 아닌가
++///
++/// `ingest(…, true)` 는 부르는 자리에서 **무엇이 참인지 안 읽힌다.** 이 스위치가 가르는
++/// 것은 *"이 표면이 의도 저장소를 불려도 되는가"* 이고, 그것은 두 표면의 **계약**이다.
++///
++/// # 두 표면이 같은 `ingest` 를 부른다
++///
++/// `pal narrative` 는 쓰기로 열고([`run`]), `pal query narrative.unbound` 는 **읽기로
++/// 연다** — `query.rs` 가 그 자리에 *"의도 저장소는 읽기로만 연다 — 이 명령은 결박을 안
++/// 만든다"* 라고 적어 두었다. 그런데 `ingest` 는 개체가 없으면 **민팅해서 남겼고**,
++/// 그래서 광고된 질의 하나가 **어떤 입력으로도 안 돌았다**([#129]).
++///
++/// [#129]: https://github.com/hskim-ecoletree/palimpsest/issues/129
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++pub enum 민팅 {
++    /// 개체가 없으면 만들어 남긴다 — `pal narrative` 의 계약.
++    한다,
++    /// **아무것도 안 남긴다.** 개체가 없는 조각은 목록에서 빼고 수만 헤아린다 — 질의의 계약.
++    안한다,
++}
++
+ /// 인입 한 회차의 산출 — **건수가 아니라 회계다.**
+ pub struct Ingested {
+     pub proposals: Vec<Proposal>,
+@@ -75,9 +98,31 @@ pub struct Ingested {
+     pub history_window: usize,
+     /// 그 창 안에서 마지막 변경을 못 찾은 문서 수.
+     pub outside_window: usize,
++    /// [`민팅::안한다`] 라서 **목록에서 뺀** 조각 수 — 아직 개체가 없는 것들이다. ([#129])
++    ///
++    /// ★ **0 이 아닌 값을 침묵으로 두지 않는다.** 이 수를 안 실으면 읽기 표면의 목록이
++    /// **조용히 짧아지고**, 보는 사람은 그것을 *"미결박이 그만큼뿐"* 으로 읽는다.
++    /// 그 조각들은 `pal narrative` 를 한 번 돌리면 이름을 받는다.
++    pub 개체_없음: usize,
+ }
+ 
+ impl Ingested {
++    /// **묻지 않은 질의의 값** — 빈 인입. ([#129])
++    ///
++    /// `Vec::new()` 를 세 자리에 흩어 두면 *"안 물었다"* 와 *"물었는데 0"* 이 같은 글자가
++    /// 된다. 이름을 붙여 그 구별을 부르는 자리에 남긴다.
++    pub const fn 비어_있다() -> Self {
++        Self {
++            proposals: Vec::new(),
++            docs: 0,
++            fragments: 0,
++            minted: 0,
++            history_window: 0,
++            outside_window: 0,
++            개체_없음: 0,
++        }
++    }
++
+     /// 분류별 건수 — **셋이 전부 실린다.** 하나라도 0 이면 그 사실이 보인다.
+     #[must_use]
+     pub fn counts(&self) -> BTreeMap<&'static str, usize> {
+@@ -112,7 +157,8 @@ pub fn run(a: Args) -> Result<()> {
+     let intent = IntentStore::open(&touch::intent_file(a.repo, a.intent))
+         .context("의도 저장소를 열지 못했다")?;
+ 
+-    let got = ingest(a.repo, &report, &attached.projection, &intent)?;
++    // **쓰기 표면이다** — 위에서 `IntentStore::open`(쓰기)으로 열었다 ([#129]).
++    let got = ingest(a.repo, &report, &attached.projection, &intent, 민팅::한다)?;
+ 
+     match a.what {
+         What::Ingest => 화면(&got, a.json),
+@@ -132,6 +178,7 @@ pub fn ingest(
+     report: &ledger::LedgerReport,
+     projection: &pal_store::Projection,
+     intent: &IntentStore,
++    민팅: 민팅,
+ ) -> Result<Ingested> {
+     let git = GixRepo::open(repo).context("저장소를 열지 못했다")?;
+     let at = &report.ledger.snapshot_tree();
+@@ -146,6 +193,7 @@ pub fn ingest(
+     let mut docs = 0;
+     let mut fragments = 0;
+     let mut minted = 0;
++    let mut 개체_없음 = 0;
+     let mut outside = 0;
+ 
+     for entry in &report.ledger.entries {
+@@ -187,6 +235,13 @@ pub fn ingest(
+             let 이미 = intent.entity_of(&origin).context("개체를 읽지 못했다")?;
+             let item = if let Some(id) = 이미 {
+                 id
++            } else if 민팅 == self::민팅::안한다 {
++                // ★ **읽기 표면은 이름을 지어내지 않는다** ([#129]).
++                //   `UnboundItem::item` 은 *"승인·거부가 이 이름으로 부른다"* 라 적혀 있고,
++                //   지속되지 않는 이름을 찍으면 그 이름으로 승인하려다 실패한다.
++                //   **빼되 세고**, 답이 그 수를 싣는다.
++                개체_없음 += 1;
++                continue;
+             } else {
+                     // ★ **민팅은 처음 한 번뿐이다.** 매번 뽑으면 같은 문서를 두 번 읽을 때
+                     //   개체가 둘이 되고, **읽기가 더하기가 아니라 복제가 된다**.
+@@ -218,6 +273,7 @@ pub fn ingest(
+         docs,
+         fragments,
+         minted,
++        개체_없음,
+         history_window: PROVISIONAL_HISTORY_BUDGET,
+         outside_window: outside,
+     })
+diff --git a/crates/pal-cli/src/query.rs b/crates/pal-cli/src/query.rs
+index 3ab2b33..bed4954 100644
+--- a/crates/pal-cli/src/query.rs
++++ b/crates/pal-cli/src/query.rs
+@@ -140,6 +140,25 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
+         - counts.get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
+         - counts.get(&pal_core::Bucket::Partial).copied().unwrap_or(0);
+ 
++    // **이 질의에서만 문서를 읽는다.** 다른 질의에서 비어 있는 것은 *"미결박이 0"* 이
++    // 아니라 *"안 물었다"* 이고, 그 구별이 `QueryCtx::narrative` 의 머리에 적혀 있다.
++    // 인입은 저장소 전체의 문서를 읽으므로 **묻지 않은 질의에 그 비용을 지우지 않는다.**
++    //
++    // ★ **`민팅::안한다` 다** ([#129]). 위에서 의도 저장소를 **읽기로** 열었고, 그
++    //   계약대로 이 경로는 개체를 **안 만든다**. 앞 판은 여기서 민팅해서 *"읽기로 연
++    //   의도 저장소에 쓰려 했다"* 로 **어떤 입력으로도 안 돌았다.**
++    let 인입 = if matches!(query, NamedQuery::NarrativeUnbound) {
++        crate::narrative::ingest(
++            a.repo,
++            &report,
++            &projection,
++            &intent,
++            crate::narrative::민팅::안한다,
++        )?
++    } else {
++        crate::narrative::Ingested::비어_있다()
++    };
++
+     let ctx = QueryCtx {
+         projection: &projection,
+         snapshot: report.ledger.snapshot.clone(),
+@@ -163,11 +182,10 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
+         // 0"* 이 아니라 *"안 물었다"* 이고, 그 구별이 `QueryCtx::narrative` 의 머리에
+         // 적혀 있다. 인입은 저장소 전체의 문서를 읽으므로 **묻지 않은 질의에 그 비용을
+         // 지우지 않는다.**
+-        narrative: if matches!(query, NamedQuery::NarrativeUnbound) {
+-            crate::narrative::ingest(a.repo, &report, &projection, &intent)?.proposals
+-        } else {
+-            Vec::new()
+-        },
++        narrative: 인입.proposals,
++        // **답이 자기가 뺀 것을 진다** ([#129]). 읽기 표면이라 개체를 안 만들고,
++        // 그래서 이름 없는 조각은 목록에 안 실린다 — 그 수를 여기로 올린다.
++        narrative_unminted: 인입.개체_없음,
+         bindings,
+         // ★ **계산은 표면의 일이다** — 이탈은 **두 스냅샷**을 요구하는데 `QueryCtx` 는
+         // 투영 하나만 든다. `narrative` 와 같은 자리이고 이유가 하나 더 있다.
+@@ -302,8 +320,8 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
+         QueryResult::Bindings { bindings, detector, store } => {
+             print_bindings(bindings, detector, store);
+         }
+-        QueryResult::Narrative { unbound, candidates, bound, candidate_sizes } => {
+-            print_narrative(unbound, *candidates, *bound, candidate_sizes);
++        QueryResult::Narrative { unbound, candidates, bound, unminted, candidate_sizes } => {
++            print_narrative(unbound, *candidates, *bound, *unminted, candidate_sizes);
+         }
+         QueryResult::Ambiguous { name, candidates } => {
+             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
+@@ -476,9 +494,16 @@ fn print_narrative(
+     unbound: &[pal_query::UnboundItem],
+     candidates: usize,
+     bound: usize,
++    unminted: usize,
+     spread: &[pal_query::CandidateSpread],
+ ) {
+     println!("  결박됨 {bound} · 후보 있음 {candidates} · **미결박 {}**", unbound.len());
++    // ★ **뺀 것을 같은 줄 아래에 적는다** ([#129]). 이 질의는 읽기라 개체를 안 만들고,
++    //   이름이 없는 조각은 **부를 수가 없어** 목록에 안 실린다. 0 이어도 적는다 —
++    //   *"뺀 것이 없다"* 와 *"그 축을 안 본다"* 는 다르다.
++    println!(
++        "  이름이 아직 없어 뺀 조각 **{unminted}** — `pal narrative` 를 한 번 돌리면 이름이 섭니다"
++    );
+     println!();
+     if !spread.is_empty() {
+         // ★ **수만 내면 「후보 있음 1,563」이 「승인 대기 1,563 건」으로 읽힌다.**
+diff --git a/crates/pal-cli/src/touch.rs b/crates/pal-cli/src/touch.rs
+index 89457ee..683e81a 100644
+--- a/crates/pal-cli/src/touch.rs
++++ b/crates/pal-cli/src/touch.rs
+@@ -149,6 +149,8 @@ pub fn run(a: Args) -> Result<()> {
+ 
+     let ctx = QueryCtx {
+         projection: &projection,
++        // **`pal touch` 는 인입을 안 부른다** — 그래서 뺀 것도 0 이다 ([#129]).
++        narrative_unminted: 0,
+         snapshot: report.ledger.snapshot.clone(),
+         ledger: pal_core::LedgerRef::of(&report.ledger),
+         freshness: pal_query::freshness(
+diff --git a/crates/pal-cli/tests/narrative_read_only.rs b/crates/pal-cli/tests/narrative_read_only.rs
+new file mode 100644
+index 0000000..61a7c0d
+--- /dev/null
++++ b/crates/pal-cli/tests/narrative_read_only.rs
+@@ -0,0 +1,99 @@
++//! **읽기 표면은 의도 저장소를 안 불린다** — [#129].
++//!
++//! `pal query narrative.unbound` 는 `IntentStore::open_read_only` 로 열면서도 인입이
++//! 개체를 **민팅해서 남기려** 했고, 그래서 *"읽기로 연 의도 저장소에 쓰려 했다"* 로
++//! **어떤 입력으로도 안 돌았다.** 광고된 질의 하나가 통째로 죽은 자리다.
++//!
++//! # 시험 둘이 서로를 받친다
++//!
++//! 첫째만 두면 **질의를 쓰기로 여는 고침**(한 줄)으로도 초록이 된다. 그 고침은
++//! `query.rs` 가 스스로 적어 둔 계약(*"의도 저장소는 읽기로만 연다"*)을 깨고, **읽기가
++//! `intent.redb` 를 불리게** 만든다. 둘째가 그 길을 막는다.
++//!
++//! [#129]: https://github.com/hskim-ecoletree/palimpsest/issues/129
++
++mod common;
++
++use common::{git, PAL};
++use std::path::{Path, PathBuf};
++use std::process::Command;
++
++/// 문서 조각이 **실재하는** 저장소. 조각이 없으면 민팅할 것도 없어 이 시험이
++/// 아무것도 안 잰다.
++fn 저장소(tag: &str) -> PathBuf {
++    let root = std::env::temp_dir().join(format!("pal-129-{tag}-{}", std::process::id()));
++    let _ = std::fs::remove_dir_all(&root);
++    std::fs::create_dir_all(root.join("docs")).expect("임시 저장소");
++    std::fs::write(root.join("alpha.ts"), "export function 도움() { return 1 }\n")
++        .expect("alpha.ts");
++    std::fs::write(
++        root.join("docs/결정.md"),
++        "# 결정 하나\n\n`도움` 을 남긴다. 이 문단이 조각이 된다.\n\n## 둘째 결정\n\n또 하나.\n",
++    )
++    .expect("결정.md");
++    git(&root, &["init", "-q", "."]);
++    git(&root, &["add", "-A"]);
++    git(&root, &["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "첫"]);
++    root
++}
++
++fn 돌린다(cwd: &Path, args: &[&str]) -> (bool, String, String) {
++    let out = Command::new(PAL).args(args).current_dir(cwd).output().expect("pal 을 못 돌렸다");
++    (
++        out.status.success(),
++        String::from_utf8_lossy(&out.stdout).into_owned(),
++        String::from_utf8_lossy(&out.stderr).into_owned(),
++    )
++}
++
++/// ★ **RED 는 이것이었다** — `rc=1` · *"읽기로 연 의도 저장소에 쓰려 했다"*.
++#[test]
++fn narrative_unbound_는_읽기로도_돈다() {
++    let repo = 저장소("runs");
++    let (ok, out, err) = 돌린다(&repo, &["query", "narrative.unbound"]);
++    assert!(ok, "질의가 실패했다\nstdout: {out}\nstderr: {err}");
++    assert!(
++        !err.contains("읽기로 연 의도 저장소에 쓰려 했다"),
++        "#129 의 그 오류가 그대로다: {err}"
++    );
++    // **답이 자기가 뺀 것을 진다** — 0 이어도 줄이 있어야 한다.
++    assert!(
++        out.contains("이름이 아직 없어 뺀 조각"),
++        "뺀 조각 수가 답에 없다 — 목록이 조용히 짧아진다\n{out}"
++    );
++    assert!(out.contains("미결박"), "미결박 줄이 없다\n{out}");
++    let _ = std::fs::remove_dir_all(&repo);
++}
++
++/// ★★ **이 시험이 「쓰기로 열면 된다」는 길을 막는다.**
++///
++/// 질의를 돌려도 의도 저장소가 **생기지 않아야** 한다. 생기면 읽기가 쓰기가 된 것이고,
++/// `query.rs` 가 그 자리에 적어 둔 계약이 거짓이 된다.
++#[test]
++fn 읽기_경로는_의도_저장소를_안_불린다() {
++    let repo = 저장소("readonly");
++    let 의도 = repo.join(".palimpsest/intent.redb");
++    assert!(!의도.exists(), "시작 상태가 이미 틀렸다");
++
++    let (ok, _, err) = 돌린다(&repo, &["query", "narrative.unbound"]);
++    assert!(ok, "질의가 실패했다: {err}");
++    assert!(
++        !의도.exists(),
++        "질의가 의도 저장소를 **만들었다** — 읽기 표면이 쓰고 있다"
++    );
++
++    // 그리고 저장소가 **있을 때**도 바이트가 안 움직여야 한다.
++    // `pal narrative` 로 한 번 세우고(그쪽은 쓰기 표면이 맞다) 그 뒤 질의를 돌린다.
++    let (세웠나, _, err2) = 돌린다(&repo, &["narrative"]);
++    assert!(세웠나, "`pal narrative` 가 실패했다: {err2}");
++    assert!(의도.exists(), "쓰기 표면이 저장소를 안 세웠다");
++    let 전 = std::fs::read(&의도).expect("읽기");
++
++    let (ok2, _, err3) = 돌린다(&repo, &["query", "narrative.unbound"]);
++    assert!(ok2, "둘째 질의가 실패했다: {err3}");
++    let 후 = std::fs::read(&의도).expect("읽기");
++    assert_eq!(전.len(), 후.len(), "질의 뒤 의도 저장소의 크기가 움직였다");
++    assert!(전 == 후, "질의 뒤 의도 저장소의 바이트가 움직였다");
++
++    let _ = std::fs::remove_dir_all(&repo);
++}
+diff --git a/crates/pal-query/src/lib.rs b/crates/pal-query/src/lib.rs
+index d86dec0..f9df88b 100644
+--- a/crates/pal-query/src/lib.rs
++++ b/crates/pal-query/src/lib.rs
+@@ -216,6 +216,15 @@ pub enum QueryResult {
+         unbound: Vec<UnboundItem>,
+         candidates: usize,
+         bound: usize,
++        /// **답이 목록에서 뺀 조각 수** — 아직 개체 이름이 없어서다. ([#129])
++        ///
++        /// 읽기 표면은 개체를 **안 만든다**. 그래서 `pal narrative` 를 한 번도 안 지난
++        /// 조각은 부를 이름이 없고, 이 답은 그것을 **목록에 안 싣는다.**
++        ///
++        /// ★ **그 수를 여기 싣는 것이 이 필드의 전부다.** 안 실으면 목록이 조용히
++        /// 짧아지고 보는 사람은 *"미결박이 그만큼뿐"* 으로 읽는다 — 이 저장소가
++        /// 「거짓신호」라 부르는 형태다.
++        unminted: usize,
+         /// ★ **후보가 몇 개짜리인가** — 신호별로.
+         ///
+         /// # 왜 수만으로는 거짓말이 되는가 (F10 실측 · 2026-08-15)
+@@ -320,6 +329,10 @@ pub struct QueryCtx<'a> {
+     /// **`narrative.unbound` 가 아닌 질의에서는 비어 있고, 그것이 정확한 값이다** —
+     /// 문서를 안 읽었으므로 *"미결박이 0"* 이 아니라 *"안 물었다"* 다.
+     pub narrative: Vec<pal_core::Proposal>,
++    /// 인입이 **이름이 없어 뺀** 조각 수 ([#129]). 읽기 표면에서만 0 이 아니다.
++    ///
++    /// [#129]: https://github.com/hskim-ecoletree/palimpsest/issues/129
++    pub narrative_unminted: usize,
+     /// 이 저장소의 결박 전부 — **부르는 쪽이 지고 온다.**
+     ///
+     /// # 왜 이 크레이트가 `pal-intent` 에 의존하지 않는가
+@@ -483,6 +496,7 @@ fn 미결박(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> QueryResult {
+         unbound,
+         candidates,
+         bound,
++        unminted: ctx.narrative_unminted,
+         candidate_sizes: 후보_퍼짐(&ctx.narrative),
+     }
+ }
+────────────────────────────────────────────────────────────────────────
+## ④ §5.8 「메인이 이미 오염됐다」 표 전문 (`observations/red.md`)
+────────────────────────────────────────────────────────────────────────
+### 5.8 ⚠ 메인이 이미 오염됐다 — 사전부검이 `pal touch` 를 먼저 돌렸다
+
+**사전 등록을 쓰기 전에** 사전부검 라운드 1 이 세 심볼에 `pal touch` 를 돌리고 **그 결과를
+메인에 요약해 돌려줬다.** 숨기지 않고 여기 전수로 적는다. 이 목록에 있는 것은 **`C2` 의
+귀속에서 뺀다** — touch 가 아니라 사전부검이 말해 준 것이기 때문이다.
+
+| 심볼 | 메인이 이미 아는 것 |
+|---|---|
+| `nodes_of` | 결박 **0** · 지켜보는 것 **0** · 산출이 52 줄 |
+| `identity_ceiling` | 결박 **0** · `pal touch` 의 **호출자 0** · `pal query symbol.callers` 가 **(없음)** · ⚠ **그 0 이 거짓 음성이고 실제 호출 자리가 넷**이라는 것(`grep` 으로 재었다). 까닭은 touch 가 스스로 적는 *"`x.foo()` 는 아직 안 셉니다"* |
+| `check_ledger_pair` | 결박 **0** · 산출이 46 줄 · 같은 파일 `xtask/src/main.rs` 안에 결박 **8** 건이 있고 그중 하나가 **한 칸 옆**이다 |
+| 둘 사이 | `nodes_of` 와 `check_ledger_pair` 의 산출이 **38 줄 동일**하다 |
+
+★ **이것은 회차를 무르게 하지 않는다 — 기록으로 세운다.** 인터뷰 3 이 잠근 답이
+*"평소대로 조사하고, **무엇을 봤는지 기록한다**"* 이고, 사전부검은 이 회차의 평소 절차다.
+**그러나 ㉠ 의 값은 실제로 깎였다** — `identity_ceiling` 의 거짓 음성을 touch 가 아니라
+사전부검이 먼저 말했다.
+────────────────────────────────────────────────────────────────────────
+## 제출된 귀속 후보
+────────────────────────────────────────────────────────────────────────
+
+### ⓐ
+- 인용한 줄: `  fun        write                    crates/pal-cli/src/install/manifest.rs:373` 과
+  `  fun        write                    crates/pal-store/src/projection.rs:251`  (`:21`·`:23`)
+- 주장하는 사실: `write` 라는 이름의 함수가 **셋**이고 그중 둘이 `install/manifest.rs:373` ·
+  `pal-store/src/projection.rs:251` 이다.
+
+═════════ 프롬프트 끝 ═════════
