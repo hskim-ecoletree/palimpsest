@@ -63,6 +63,29 @@ pub enum What<'a> {
     Refuse { item: &'a str, pick: &'a str, reason: &'a str },
 }
 
+/// **민팅을 하는 표면인가** — 읽기 표면과 쓰기 표면을 타입으로 가른다. ([#129])
+///
+/// # 왜 불리언이 아닌가
+///
+/// `ingest(…, true)` 는 부르는 자리에서 **무엇이 참인지 안 읽힌다.** 이 스위치가 가르는
+/// 것은 *"이 표면이 의도 저장소를 불려도 되는가"* 이고, 그것은 두 표면의 **계약**이다.
+///
+/// # 두 표면이 같은 `ingest` 를 부른다
+///
+/// `pal narrative` 는 쓰기로 열고([`run`]), `pal query narrative.unbound` 는 **읽기로
+/// 연다** — `query.rs` 가 그 자리에 *"의도 저장소는 읽기로만 연다 — 이 명령은 결박을 안
+/// 만든다"* 라고 적어 두었다. 그런데 `ingest` 는 개체가 없으면 **민팅해서 남겼고**,
+/// 그래서 광고된 질의 하나가 **어떤 입력으로도 안 돌았다**([#129]).
+///
+/// [#129]: https://github.com/hskim-ecoletree/palimpsest/issues/129
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum 민팅 {
+    /// 개체가 없으면 만들어 남긴다 — `pal narrative` 의 계약.
+    한다,
+    /// **아무것도 안 남긴다.** 개체가 없는 조각은 목록에서 빼고 수만 헤아린다 — 질의의 계약.
+    안한다,
+}
+
 /// 인입 한 회차의 산출 — **건수가 아니라 회계다.**
 pub struct Ingested {
     pub proposals: Vec<Proposal>,
@@ -75,9 +98,31 @@ pub struct Ingested {
     pub history_window: usize,
     /// 그 창 안에서 마지막 변경을 못 찾은 문서 수.
     pub outside_window: usize,
+    /// [`민팅::안한다`] 라서 **목록에서 뺀** 조각 수 — 아직 개체가 없는 것들이다. ([#129])
+    ///
+    /// ★ **0 이 아닌 값을 침묵으로 두지 않는다.** 이 수를 안 실으면 읽기 표면의 목록이
+    /// **조용히 짧아지고**, 보는 사람은 그것을 *"미결박이 그만큼뿐"* 으로 읽는다.
+    /// 그 조각들은 `pal narrative` 를 한 번 돌리면 이름을 받는다.
+    pub 개체_없음: usize,
 }
 
 impl Ingested {
+    /// **묻지 않은 질의의 값** — 빈 인입. ([#129])
+    ///
+    /// `Vec::new()` 를 세 자리에 흩어 두면 *"안 물었다"* 와 *"물었는데 0"* 이 같은 글자가
+    /// 된다. 이름을 붙여 그 구별을 부르는 자리에 남긴다.
+    pub const fn 비어_있다() -> Self {
+        Self {
+            proposals: Vec::new(),
+            docs: 0,
+            fragments: 0,
+            minted: 0,
+            history_window: 0,
+            outside_window: 0,
+            개체_없음: 0,
+        }
+    }
+
     /// 분류별 건수 — **셋이 전부 실린다.** 하나라도 0 이면 그 사실이 보인다.
     #[must_use]
     pub fn counts(&self) -> BTreeMap<&'static str, usize> {
@@ -112,7 +157,8 @@ pub fn run(a: Args) -> Result<()> {
     let intent = IntentStore::open(&touch::intent_file(a.repo, a.intent))
         .context("의도 저장소를 열지 못했다")?;
 
-    let got = ingest(a.repo, &report, &attached.projection, &intent)?;
+    // **쓰기 표면이다** — 위에서 `IntentStore::open`(쓰기)으로 열었다 ([#129]).
+    let got = ingest(a.repo, &report, &attached.projection, &intent, 민팅::한다)?;
 
     match a.what {
         What::Ingest => 화면(&got, a.json),
@@ -132,6 +178,7 @@ pub fn ingest(
     report: &ledger::LedgerReport,
     projection: &pal_store::Projection,
     intent: &IntentStore,
+    민팅: 민팅,
 ) -> Result<Ingested> {
     let git = GixRepo::open(repo).context("저장소를 열지 못했다")?;
     let at = &report.ledger.snapshot_tree();
@@ -146,6 +193,7 @@ pub fn ingest(
     let mut docs = 0;
     let mut fragments = 0;
     let mut minted = 0;
+    let mut 개체_없음 = 0;
     let mut outside = 0;
 
     for entry in &report.ledger.entries {
@@ -187,6 +235,13 @@ pub fn ingest(
             let 이미 = intent.entity_of(&origin).context("개체를 읽지 못했다")?;
             let item = if let Some(id) = 이미 {
                 id
+            } else if 민팅 == self::민팅::안한다 {
+                // ★ **읽기 표면은 이름을 지어내지 않는다** ([#129]).
+                //   `UnboundItem::item` 은 *"승인·거부가 이 이름으로 부른다"* 라 적혀 있고,
+                //   지속되지 않는 이름을 찍으면 그 이름으로 승인하려다 실패한다.
+                //   **빼되 세고**, 답이 그 수를 싣는다.
+                개체_없음 += 1;
+                continue;
             } else {
                     // ★ **민팅은 처음 한 번뿐이다.** 매번 뽑으면 같은 문서를 두 번 읽을 때
                     //   개체가 둘이 되고, **읽기가 더하기가 아니라 복제가 된다**.
@@ -218,6 +273,7 @@ pub fn ingest(
         docs,
         fragments,
         minted,
+        개체_없음,
         history_window: PROVISIONAL_HISTORY_BUDGET,
         outside_window: outside,
     })

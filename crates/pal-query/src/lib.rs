@@ -216,6 +216,15 @@ pub enum QueryResult {
         unbound: Vec<UnboundItem>,
         candidates: usize,
         bound: usize,
+        /// **답이 목록에서 뺀 조각 수** — 아직 개체 이름이 없어서다. ([#129])
+        ///
+        /// 읽기 표면은 개체를 **안 만든다**. 그래서 `pal narrative` 를 한 번도 안 지난
+        /// 조각은 부를 이름이 없고, 이 답은 그것을 **목록에 안 싣는다.**
+        ///
+        /// ★ **그 수를 여기 싣는 것이 이 필드의 전부다.** 안 실으면 목록이 조용히
+        /// 짧아지고 보는 사람은 *"미결박이 그만큼뿐"* 으로 읽는다 — 이 저장소가
+        /// 「거짓신호」라 부르는 형태다.
+        unminted: usize,
         /// ★ **후보가 몇 개짜리인가** — 신호별로.
         ///
         /// # 왜 수만으로는 거짓말이 되는가 (F10 실측 · 2026-08-15)
@@ -320,6 +329,10 @@ pub struct QueryCtx<'a> {
     /// **`narrative.unbound` 가 아닌 질의에서는 비어 있고, 그것이 정확한 값이다** —
     /// 문서를 안 읽었으므로 *"미결박이 0"* 이 아니라 *"안 물었다"* 다.
     pub narrative: Vec<pal_core::Proposal>,
+    /// 인입이 **이름이 없어 뺀** 조각 수 ([#129]). 읽기 표면에서만 0 이 아니다.
+    ///
+    /// [#129]: https://github.com/hskim-ecoletree/palimpsest/issues/129
+    pub narrative_unminted: usize,
     /// 이 저장소의 결박 전부 — **부르는 쪽이 지고 온다.**
     ///
     /// # 왜 이 크레이트가 `pal-intent` 에 의존하지 않는가
@@ -483,6 +496,7 @@ fn 미결박(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> QueryResult {
         unbound,
         candidates,
         bound,
+        unminted: ctx.narrative_unminted,
         candidate_sizes: 후보_퍼짐(&ctx.narrative),
     }
 }

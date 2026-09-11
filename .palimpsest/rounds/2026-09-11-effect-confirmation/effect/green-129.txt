@@ -1,0 +1,39 @@
+# ㉢ `#129` 의 GREEN — 고친 뒤 ⟨`B1-d`⟩
+#
+# 잰 때: 2026-09-11T14:48:40Z · 코드는 워킹트리(커밋 직전)
+# 명령: ./target/release/pal query narrative.unbound
+#
+# **종료값 0** · 표준출력 466960 바이트 · 표준오류 **0 바이트**
+# ⚠ 전 출력이 466KB 다(미결박 1705 건의 목록). **앞 14 줄과 꼬리 6 줄만 싣는다** —
+#   판정에 쓰는 것은 종료값·오류 부재·머리 두 줄이고, 목록 전량은 재실행으로 얻는다.
+#
+# ⚠ **줄 하나를 여기 적어 둔다**: zsh 의 MULTIOS 때문에 `2>&1 1>/dev/null` 이 표준출력을
+#   표준오류인 것처럼 보여 준다. 처음 잴 때 그것에 속아 「오류가 있다」로 읽을 뻔했다.
+#   **파일 둘로 갈라 받아야 안 속는다** — 위의 두 바이트 수가 그렇게 잰 것이다.
+
+--- 표준출력 · 앞 14 줄 ---
+
+■ narrative.unbound  
+
+  결박됨 37 · 후보 있음 647 · **미결박 1705**
+  이름이 아직 없어 뺀 조각 **4186** — `pal narrative` 를 한 번 돌리면 이름이 섭니다
+
+■ 후보를 좁혔는가 — 신호별
+  fenced-path            조각     7 · 후보 중앙    65 · 최대   232 · **셋 이하 0**
+  span                   조각   640 · 후보 중앙     3 · 최대    59 · **셋 이하 430**
+  **「셋 이하」가 사람이 실제로 고를 수 있는 것입니다.**
+
+  decision/01M08TP7PAFKNG6QPQP1XHYNZ1
+      .claude/agents/baseline-runner.md#_preamble
+      너는 palimpsest 기준선 러너다. 판정하지 않는다 — 재고 적을 뿐이다.
+
+--- 표준출력 · 꼬리 6 줄 ---
+  생략      없음 (명시)
+  이관      1276건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1276건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 96720 토큰 **이상** (잰 것: 386882 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 미구축 F13 · F15
+
+--- 표준오류 ---
+(0 바이트 — 비어 있다)

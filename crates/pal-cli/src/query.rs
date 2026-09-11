@@ -140,6 +140,25 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
         - counts.get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
         - counts.get(&pal_core::Bucket::Partial).copied().unwrap_or(0);
 
+    // **이 질의에서만 문서를 읽는다.** 다른 질의에서 비어 있는 것은 *"미결박이 0"* 이
+    // 아니라 *"안 물었다"* 이고, 그 구별이 `QueryCtx::narrative` 의 머리에 적혀 있다.
+    // 인입은 저장소 전체의 문서를 읽으므로 **묻지 않은 질의에 그 비용을 지우지 않는다.**
+    //
+    // ★ **`민팅::안한다` 다** ([#129]). 위에서 의도 저장소를 **읽기로** 열었고, 그
+    //   계약대로 이 경로는 개체를 **안 만든다**. 앞 판은 여기서 민팅해서 *"읽기로 연
+    //   의도 저장소에 쓰려 했다"* 로 **어떤 입력으로도 안 돌았다.**
+    let 인입 = if matches!(query, NamedQuery::NarrativeUnbound) {
+        crate::narrative::ingest(
+            a.repo,
+            &report,
+            &projection,
+            &intent,
+            crate::narrative::민팅::안한다,
+        )?
+    } else {
+        crate::narrative::Ingested::비어_있다()
+    };
+
     let ctx = QueryCtx {
         projection: &projection,
         snapshot: report.ledger.snapshot.clone(),
@@ -163,11 +182,10 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
         // 0"* 이 아니라 *"안 물었다"* 이고, 그 구별이 `QueryCtx::narrative` 의 머리에
         // 적혀 있다. 인입은 저장소 전체의 문서를 읽으므로 **묻지 않은 질의에 그 비용을
         // 지우지 않는다.**
-        narrative: if matches!(query, NamedQuery::NarrativeUnbound) {
-            crate::narrative::ingest(a.repo, &report, &projection, &intent)?.proposals
-        } else {
-            Vec::new()
-        },
+        narrative: 인입.proposals,
+        // **답이 자기가 뺀 것을 진다** ([#129]). 읽기 표면이라 개체를 안 만들고,
+        // 그래서 이름 없는 조각은 목록에 안 실린다 — 그 수를 여기로 올린다.
+        narrative_unminted: 인입.개체_없음,
         bindings,
         // ★ **계산은 표면의 일이다** — 이탈은 **두 스냅샷**을 요구하는데 `QueryCtx` 는
         // 투영 하나만 든다. `narrative` 와 같은 자리이고 이유가 하나 더 있다.
@@ -302,8 +320,8 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
         QueryResult::Bindings { bindings, detector, store } => {
             print_bindings(bindings, detector, store);
         }
-        QueryResult::Narrative { unbound, candidates, bound, candidate_sizes } => {
-            print_narrative(unbound, *candidates, *bound, candidate_sizes);
+        QueryResult::Narrative { unbound, candidates, bound, unminted, candidate_sizes } => {
+            print_narrative(unbound, *candidates, *bound, *unminted, candidate_sizes);
         }
         QueryResult::Ambiguous { name, candidates } => {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
@@ -476,9 +494,16 @@ fn print_narrative(
     unbound: &[pal_query::UnboundItem],
     candidates: usize,
     bound: usize,
+    unminted: usize,
     spread: &[pal_query::CandidateSpread],
 ) {
     println!("  결박됨 {bound} · 후보 있음 {candidates} · **미결박 {}**", unbound.len());
+    // ★ **뺀 것을 같은 줄 아래에 적는다** ([#129]). 이 질의는 읽기라 개체를 안 만들고,
+    //   이름이 없는 조각은 **부를 수가 없어** 목록에 안 실린다. 0 이어도 적는다 —
+    //   *"뺀 것이 없다"* 와 *"그 축을 안 본다"* 는 다르다.
+    println!(
+        "  이름이 아직 없어 뺀 조각 **{unminted}** — `pal narrative` 를 한 번 돌리면 이름이 섭니다"
+    );
     println!();
     if !spread.is_empty() {
         // ★ **수만 내면 「후보 있음 1,563」이 「승인 대기 1,563 건」으로 읽힌다.**

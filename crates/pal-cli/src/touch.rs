@@ -149,6 +149,8 @@ pub fn run(a: Args) -> Result<()> {
 
     let ctx = QueryCtx {
         projection: &projection,
+        // **`pal touch` 는 인입을 안 부른다** — 그래서 뺀 것도 0 이다 ([#129]).
+        narrative_unminted: 0,
         snapshot: report.ledger.snapshot.clone(),
         ledger: pal_core::LedgerRef::of(&report.ledger),
         freshness: pal_query::freshness(
