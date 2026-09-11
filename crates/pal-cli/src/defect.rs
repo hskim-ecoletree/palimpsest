@@ -319,7 +319,11 @@ fn digests_at(
         return Ok(BTreeMap::new());
     };
     let Ok(graph) = extractor.extract(&source) else { return Ok(BTreeMap::new()) };
+    // ⚠ **`.0` 이다** — `nodes_of` 는 정체성 tally 를 함께 돌려준다([#79]). 결함 계보는
+    //   좌표만 쓰므로 tally 를 버린다. **버리는 것을 여기 적는다** — 조용히 버리면 다음에
+    //   이 자리를 읽는 사람이 대장의 수와 이 경로의 수가 왜 다른지 못 짚는다.
     Ok(ledger::nodes_of(repo, path, &graph.symbols, &graph.contains)
+        .0
         .into_iter()
         .map(|n| (n.id, n.body))
         .collect())

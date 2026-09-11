@@ -1,0 +1,36 @@
+# 고치기 전 — 언어 단위 등급만 있던 판 (HEAD f60df1d)
+
+
+Snapshot  palimpsest@f60df1d+worktree  (워킹트리)
+저장소    선언 1 · 본 것 1
+범위      매니페스트 없음 — 경로에서 유도했습니다 (선언이 아니라 추정)
+
+워킹트리  f60df1d 와 같음  ·  인덱스 신뢰 1268 · 다시 잼 0
+
+파일      1268
+  parsed             141  파싱됨
+  partial              0  일부만 파싱됨
+  unsupported        779  미지원  추출기 없음(로드맵)
+  unrecognized       347  언어 미인식
+  excluded             0  설정으로 제외
+  binary               1  이진 파일
+  generated            0  생성물
+
+언어      Markdown          L0  unavailable      573 파일  ·  텍스트만 · 결박 불가
+          Python            L0  unavailable      165 파일  ·  텍스트만 · 결박 불가
+          Rust              L1  ordinal          140 파일  ·  구조 · 선언 순서
+          TOML              L0  unavailable       29 파일  ·  텍스트만 · 결박 불가
+          Shell             L0  unavailable        6 파일  ·  텍스트만 · 결박 불가
+          JSON              L0  unavailable        3 파일  ·  텍스트만 · 결박 불가
+          YAML              L0  unavailable        2 파일  ·  텍스트만 · 결박 불가
+          JavaScript        L0  unavailable        1 파일  ·  텍스트만 · 결박 불가
+          TypeScript        L2  exact              1 파일  ·  참조 해소 · 정확
+
+          ← 결박 불가 언어 7개 · 779 파일. 이 파일들에는 좌표가 없습니다
+
+캐시      적중 1268 · 빗나감 0
+
+provider  (이 빌드에 provider 포트가 없습니다 — F21 미구축)
+조달      (이 빌드에 관측 수용이 없습니다 — F16 미구축)
+감지기    추출기 f09-import-sites · 문법 acb9630 · HEAD 그대로
+

@@ -16,7 +16,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use pal_core::{
     Attributes, Bucket, CORRUPT_NOTES, Containment, DetectorFreshness, Discriminator,
-    EXTRACT_CHUNK, ExtractGrade, FileRow, FileState, OVERSIZE_BYTES, RefCounts, ReferenceEdge,
+    EXTRACT_CHUNK, ExtractGrade, FileRow, FileState, IdentityGrade, OVERSIZE_BYTES, RefCounts,
+    ReferenceEdge,
     Slot,
     LanguageCapability, LanguageId, Ledger, LedgerEntry, Manifest, RepoId, RepoPath,
     ScopeSource, Snapshot, SymbolId, SymbolNode, TreeRef, UnsupportedReason,
@@ -39,6 +40,11 @@ use serde::Serialize;
 pub struct LedgerReport {
     pub ledger: Ledger,
     pub cache: CacheStats,
+    /// 심볼 단위 정체성을 넷으로 가른 수 ([`IdentityTally`]).
+    ///
+    /// **`#[serde(skip)]` 이 아니다** — `pal ledger --json` 이 이 구조를 그대로 직렬화하고,
+    /// `#79` 가 요구한 *"그 수를 산출하는 경로"* 가 그것이다.
+    pub identity: IdentityTally,
     /// 2층에 들어갈 심볼들. **표에는 안 나오고 `pal touch` 가 쓴다.**
     #[serde(skip)]
     pub symbols: Vec<SymbolNode>,
@@ -121,6 +127,8 @@ pub fn compute(
     let mut entries = Vec::with_capacity(files.len());
     let mut symbols: Vec<SymbolNode> = Vec::new();
     let mut stitches: Vec<FileStitch> = Vec::new();
+    // 심볼 단위 정체성 — 파일마다 `nodes_of` 가 돌려준 것을 더한다 ([#79]).
+    let mut identity = IdentityTally::default();
 
     // **덩어리 하나씩 — 읽기는 직렬, 추출은 병렬**(옛 F02 §3.6 · `[f02.4]`).
     //
@@ -209,7 +217,8 @@ pub fn compute(
                 entries.push(LedgerEntry { path: path.clone(), state: FileState::Excluded { rule } });
                 continue;
             };
-            let nodes = nodes_of(&repo_id, path, outcome.graph.symbols(), outcome.graph.contains());
+            let (nodes, 파일치) = nodes_of(&repo_id, path, outcome.graph.symbols(), outcome.graph.contains());
+            identity.합친다(파일치);
             if let Some(stitch) = stitch_of(&snapshot, path, &outcome.graph, &nodes) {
                 stitches.push(stitch);
             }
@@ -219,7 +228,7 @@ pub fn compute(
     }
 
     let ledger = assemble(repo_id, tree, manifest.as_ref(), entries, version, worktree.base);
-    Ok(LedgerReport { ledger, cache: stats, corrupt, symbols, stitches, worktree })
+    Ok(LedgerReport { ledger, cache: stats, identity, corrupt, symbols, stitches, worktree })
 }
 
 /// 센 것을 대장으로 조립한다. **정책이 없다** — 세는 일은 위에서 끝났다.
@@ -285,7 +294,75 @@ fn container_chains(symbols: &[pal_core::Symbol], contains: &[Containment]) -> V
     out
 }
 
-/// 파일 하나의 심볼들에 좌표를 붙인다.
+/// 심볼 단위 정체성을 **넷으로 가른 수**. ([#79])
+///
+/// # 왜 필요한가 — `min` 이 두 모집단을 한 글자로 만든다
+///
+/// [`nodes_of`] 는 심볼의 정체성 등급을 `discriminator.identity_ceiling().min(s.identity)`
+/// 로 산출한다. 소비자에게는 그 **낮은 쪽**이 맞는 값이지만, `ordinal` 이라는 한 글자가 두 가지
+/// 서로 다른 사실을 덮는다:
+///
+/// - **순서에 취약하다** — 같은 (체인·이름·종류)가 여럿이라 **선언 순서**로 가렸다.
+///   `impl` 순서를 바꾸면 정체성이 맞바뀐다([R-16] 의 조용한 재결박).
+/// - **등급이 낮다** — 순서 위험은 없고, 추출기가 스코프를 못 풀어 `ordinal` 이다.
+///
+/// 앞의 것은 **고칠 수 있는 위험**이고 뒤의 것은 **언어·추출기의 한계**다. 한 글자로 덮으면
+/// 어느 쪽이 몇인지 셀 수 없고, 그러면 *"손으로 센 수를 판정 표에 싣는"* 길만 남는다
+/// (`#79` 가 닫는 조건으로 적은 자리다).
+///
+/// # 합이 분모와 같다
+///
+/// 넷은 **배타적이고 전체를 덮는다** — 먼저 `ordinal > 0` 으로 가르고, 그렇지 않은 것을
+/// 추출기 등급으로 셋으로 나눈다. [`합`](Self::합) 이 심볼 수와 다르면 버킷이 겹치거나
+/// 빠진 것이고, `pal ledger` 가 그 검산을 화면에 적는다.
+///
+/// [#79]: https://github.com/hskim-ecoletree/palimpsest/issues/79
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+pub struct IdentityTally {
+    /// `ordinal > 0` — **선언 순서로 가렸다.** 순서가 바뀌면 정체성이 맞바뀐다.
+    pub 순서에_취약: usize,
+    /// `ordinal == 0` 인데 추출기 등급이 `ordinal` — 순서 위험은 없다.
+    pub 등급이_낮음: usize,
+    /// `ordinal == 0` 이고 추출기 등급이 `exact`.
+    pub 정확: usize,
+    /// `ordinal == 0` 이고 추출기 등급이 `unavailable`.
+    pub 불가: usize,
+}
+
+impl IdentityTally {
+    /// 심볼 하나를 헤아린다 — **가르는 규칙이 이 한 자리에만 있다.**
+    ///
+    /// `ceiling` 은 판별자의 상한([`Discriminator::identity_ceiling`])이고 `grade` 는
+    /// 추출기가 심볼 단위로 잰 등급이다. **둘을 여기서 처음이자 마지막으로 함께 본다.**
+    fn 헤아린다(&mut self, ceiling: IdentityGrade, grade: IdentityGrade) {
+        if ceiling == IdentityGrade::Ordinal {
+            // 판별자 상한이 `Ordinal` 인 것은 `ordinal > 0` 과 같은 뜻이다.
+            self.순서에_취약 += 1;
+            return;
+        }
+        match grade {
+            IdentityGrade::Exact => self.정확 += 1,
+            IdentityGrade::Ordinal => self.등급이_낮음 += 1,
+            IdentityGrade::Unavailable => self.불가 += 1,
+        }
+    }
+
+    /// 넷을 더한 것 — **분모다.** 2층에 들어가는 심볼 수와 같아야 한다.
+    #[must_use]
+    pub const fn 합(&self) -> usize {
+        self.순서에_취약 + self.등급이_낮음 + self.정확 + self.불가
+    }
+
+    /// 다른 파일치를 더한다 — 대장이 파일마다 부른다.
+    fn 합친다(&mut self, 다른: Self) {
+        self.순서에_취약 += 다른.순서에_취약;
+        self.등급이_낮음 += 다른.등급이_낮음;
+        self.정확 += 다른.정확;
+        self.불가 += 다른.불가;
+    }
+}
+
+/// 파일 하나의 심볼들에 좌표를 붙인다. **그리고 정체성 상한을 버리지 않고 세어 돌려준다.**
 ///
 /// # `ordinal` 을 여기서 헤아린다 — **그리고 컨테이너마다 따로 헤아린다** ([R-16])
 ///
@@ -303,10 +380,11 @@ pub(crate) fn nodes_of(
     path: &RepoPath,
     symbols: &[pal_core::Symbol],
     contains: &[Containment],
-) -> Vec<SymbolNode> {
+) -> (Vec<SymbolNode>, IdentityTally) {
     let chains = container_chains(symbols, contains);
     let mut seen: BTreeMap<(&[String], &str, &str), u32> = BTreeMap::new();
     let mut out = Vec::with_capacity(symbols.len());
+    let mut tally = IdentityTally::default();
     for (i, s) in symbols.iter().enumerate() {
         let chain = &chains[i];
         let slot = seen.entry((chain.as_slice(), s.name.as_str(), s.kind.name())).or_insert(0);
@@ -333,8 +411,12 @@ pub(crate) fn nodes_of(
             // 못한다(#48 · `[f02.3.pass]` ②).
             identity: discriminator.identity_ceiling().min(s.identity),
         });
+        // ★ **버리지 않는다** ([#79]). 위의 `min` 은 소비자가 쓰는 값이라 그대로 두고,
+        //   합치기 전의 두 값을 여기서 헤아린다. 이것이 없으면 「순서에 취약」과 「등급이 낮음」을
+        //   가르는 수가 **어느 명령으로도 안 난다.**
+        tally.헤아린다(discriminator.identity_ceiling(), s.identity);
     }
-    out
+    (out, tally)
 }
 
 /// 파일 하나치의 2층 입력 — **1패스가 파일마다 만드는 것**(옛 F05 §4).
@@ -554,6 +636,41 @@ fn print_corrupt(report: &LedgerReport) {
     }
 }
 
+/// 심볼 단위 정체성 넷 — **언어 단위 등급 아래에 따로 적는다.** ([#79])
+///
+/// 위의 「언어」 블록은 `Rust L1 ordinal` 처럼 **언어**의 등급을 적는다. 그 줄만 보면
+/// *"Rust 심볼은 다 `ordinal` 이다"* 로 읽히고, 그 안에서 **순서에 취약한 것**과
+/// **등급이 낮은 것**이 몇인지는 알 수 없다. 이 블록이 그 둘을 가른다.
+///
+/// **검산을 함께 적는다** — 넷의 합과 2층에 들어가는 심볼 수가 같아야 한다. 다르면
+/// 버킷이 겹치거나 빠진 것이고, 그때 화면은 조용히 틀린 수를 싣는다.
+fn print_identity(report: &LedgerReport) {
+    let t = &report.identity;
+    println!();
+    if t.합() == 0 {
+        // **0 을 침묵으로 두지 않는다** — 심볼이 없는 것과 이 블록이 없는 것은 다르다.
+        println!("정체성    (심볼 0 — 좌표를 받은 선언이 없습니다)");
+        return;
+    }
+    println!("정체성    심볼 {}", t.합());
+    println!("  {:<16}{:>6}  {}", "순서에 취약", t.순서에_취약,
+             "같은 이름·종류가 여럿 · 선언 순서로 가렸습니다 — 순서가 바뀌면 정체성이 맞바뀝니다");
+    // ⚠ **그룹 수가 아니라 초과분이다.** 첫 선언은 `ordinal == 0` 이라 판별자 상한이
+    //   `Exact` 이고 「등급이 낮음」으로 갑니다. 이 줄이 없으면 사람이 위 수를
+    //   「같은 이름이 겹친 자리의 수」로 읽습니다.
+    println!("  {:<16}{:>6}  {}", "", "", "↑ 그룹마다 **첫 선언은 빠집니다**(`ordinal 0`) — 겹친 자리의 수가 아니라 초과분입니다");
+    println!("  {:<16}{:>6}  {}", "등급이 낮음", t.등급이_낮음,
+             "순서 위험은 없고 추출기가 스코프를 못 풀었습니다");
+    println!("  {:<16}{:>6}  {}", "정확", t.정확, "이름으로 유일하고 참조가 해소됩니다");
+    println!("  {:<16}{:>6}  {}", "불가", t.불가, "좌표를 세울 수 없습니다");
+    // ⚠ **여기서 두 수를 나란히 적는다.** 합이 심볼 수와 다르면 사람이 바로 본다.
+    println!("          ← 검산 {} + {} + {} + {} = {} · 2층에 들어가는 심볼 {}",
+             t.순서에_취약, t.등급이_낮음, t.정확, t.불가, t.합(), report.symbols.len());
+    if t.합() != report.symbols.len() {
+        println!("          ⚠ **합이 심볼 수와 다릅니다** — 버킷이 겹치거나 빠졌습니다");
+    }
+}
+
 pub fn print_table(report: &LedgerReport) {
     let l = &report.ledger;
     let counts = l.counts();
@@ -660,6 +777,8 @@ pub fn print_table(report: &LedgerReport) {
         }
     }
 
+    print_identity(report);
+
     println!();
     print_cache(report);
 
@@ -715,7 +834,107 @@ mod tests {
     }
 
     fn 좌표(symbols: &[Symbol], contains: &[Containment]) -> Vec<SymbolNode> {
-        nodes_of(&RepoId::new("r"), &RepoPath::new("a.ts"), symbols, contains)
+        nodes_of(&RepoId::new("r"), &RepoPath::new("a.ts"), symbols, contains).0
+    }
+
+    /// 추출기 등급을 심볼마다 지정한 판 — `IdentityTally` 는 **두 값을 함께** 본다.
+    fn 등급_심볼(name: &str, at: usize, grade: IdentityGrade) -> Symbol {
+        let mut s = 심볼(name, SymbolKind::Function, at);
+        s.identity = grade;
+        s
+    }
+
+    fn 세어_본다(symbols: &[Symbol]) -> (Vec<SymbolNode>, IdentityTally) {
+        nodes_of(&RepoId::new("r"), &RepoPath::new("a.rs"), symbols, &[])
+    }
+
+    /// ★ **RED 는 이것이었다** ([#79]) — `min` 이 합친 뒤에는 세 심볼이 **같은 글자**다.
+    ///
+    /// 같은 이름·종류 둘(`dup`)과 유일한 하나(`solo`)를 한 파일에 둔다. 추출기 등급은
+    /// 셋 다 `ordinal`(Rust 의 L1)이다. 합친 값(`SymbolNode::identity`)으로는 **셋을
+    /// 가를 수가 없고**, tally 는 `순서에 취약 1 · 등급이 낮음 2` 로 가른다.
+    ///
+    /// ⚠ **`dup` 둘 중 하나만 「취약」이다** — 첫 선언은 `ordinal == 0` 이라 판별자 상한이
+    /// `Exact` 다. 그래서 이 수는 **그룹 수가 아니라 그룹마다의 초과분**이다. `#79` 본문의
+    /// 「464 건(`ordinal>0`)」도 같은 셈법이다.
+    #[test]
+    fn 순서로_가린_것과_등급이_낮은_것이_갈린다() {
+        let symbols = vec![
+            등급_심볼("dup", 0, IdentityGrade::Ordinal),
+            등급_심볼("dup", 10, IdentityGrade::Ordinal),
+            등급_심볼("solo", 20, IdentityGrade::Ordinal),
+        ];
+        let (nodes, tally) = 세어_본다(&symbols);
+
+        // ① 합친 값은 셋을 못 가른다 — 그것이 이 이슈가 말하는 「같은 글자」다.
+        assert!(
+            nodes.iter().all(|n| n.identity == IdentityGrade::Ordinal),
+            "합친 값이 이미 갈려 있다면 이 시험은 아무것도 안 잰다"
+        );
+        // ② tally 는 가른다.
+        assert_eq!(tally.순서에_취약, 1, "선언 순서로 가린 것은 둘째 `dup` 하나다");
+        assert_eq!(tally.등급이_낮음, 2, "첫 `dup` 과 `solo` 는 순서 위험이 없다");
+        assert_eq!(tally.정확, 0);
+        assert_eq!(tally.불가, 0);
+    }
+
+    /// 넷의 합이 **분모**와 같다 — 다르면 버킷이 겹치거나 빠진 것이고, 그때 화면은
+    /// 조용히 틀린 수를 싣는다. `#79` 가 *"손으로 센 수를 판정 표에 싣지 마라"* 라고
+    /// 적은 자리를 검산으로 막는다.
+    #[test]
+    fn 합이_분모와_같다() {
+        let symbols = vec![
+            등급_심볼("dup", 0, IdentityGrade::Ordinal),
+            등급_심볼("dup", 10, IdentityGrade::Unavailable),
+            등급_심볼("solo", 20, IdentityGrade::Exact),
+            등급_심볼("또", 30, IdentityGrade::Ordinal),
+        ];
+        let (nodes, tally) = 세어_본다(&symbols);
+        assert_eq!(tally.합(), nodes.len(), "합이 심볼 수와 다르다");
+        assert_eq!(tally.합(), 4);
+        // 등급이 섞여도 넷이 배타적이다 — 둘째 `dup` 은 등급이 `unavailable` 이지만
+        // **순서로 가린 것**이 먼저 이긴다(판별자 상한이 낮은 쪽이다).
+        assert_eq!(tally.순서에_취약, 1);
+        assert_eq!(tally.정확, 1);
+        assert_eq!(tally.등급이_낮음, 2);
+        assert_eq!(tally.불가, 0, "둘째 `dup` 은 `순서에_취약` 으로 갔다");
+
+        // 심볼이 없으면 0 — 화면은 그때 「심볼 0」을 적고 침묵하지 않는다.
+        let (빈, 빈_tally) = 세어_본다(&[]);
+        assert!(빈.is_empty());
+        assert_eq!(빈_tally.합(), 0);
+    }
+
+    /// ⟨`MS-07` 을 닫는 시험⟩ ㉡ 의 산출이 준 **실물 입력**이다.
+    ///
+    /// `pal touch check_ledger_pair` 가 `identity ordinal` 을 찍었고(`touch/126.txt:17`),
+    /// 그것만 보면 그 심볼이 **선언 순서에 취약한지** 알 수 없다. `grep -n
+    /// "check_ledger_pair" xtask/src/main.rs` 로 확인한 사실은 **선언이 하나**라는 것이고,
+    /// 그러면 판별자 상한은 `Exact` 이므로 이 심볼은 ②(등급이 낮음)여야 한다.
+    ///
+    /// **이 시험은 그 규칙을 재고, 실물 심볼이 그 규칙의 입력임을 위 두 사실이 잇는다.**
+    /// 파일을 읽어 재지 않는 까닭은 그 파일이 회차마다 바뀌기 때문이다 — 바뀌는 것을
+    /// 시험 입력으로 쓰면 시험이 무엇을 재는지가 회차마다 달라진다.
+    /// ⚠ **짝을 함께 잰다.** 앞 판은 「하나면 ②」만 재서, 가르는 자리를 **끄면
+    /// 전부 ②가 되므로 그때도 초록**이었다(사전 등록 §6 의 음성 대조 예상이 그래서
+    /// 틀렸다 — 실측으로 확인했다). 같은 이름이 **둘일 때 ①이 되는 것**을 같은 시험에서
+    /// 요구하면 그 구멍이 닫힌다.
+    #[test]
+    fn check_ledger_pair_는_순서에_취약하지_않다() {
+        let symbols = vec![등급_심볼("check_ledger_pair", 0, IdentityGrade::Ordinal)];
+        let (nodes, tally) = 세어_본다(&symbols);
+        assert_eq!(nodes[0].identity, IdentityGrade::Ordinal, "합친 값은 여전히 `ordinal` 이다");
+        assert_eq!(tally.순서에_취약, 0, "선언이 하나인데 순서로 가렸다고 셌다");
+        assert_eq!(tally.등급이_낮음, 1, "추출기 등급 때문인 것을 그렇게 세지 않았다");
+
+        // 짝 — 같은 이름이 둘이면 둘째가 ①이다. 가르는 자리를 끄면 **이쪽이 빨개진다.**
+        let 둘 = vec![
+            등급_심볼("check_ledger_pair", 0, IdentityGrade::Ordinal),
+            등급_심볼("check_ledger_pair", 10, IdentityGrade::Ordinal),
+        ];
+        let (_, 둘_tally) = 세어_본다(&둘);
+        assert_eq!(둘_tally.순서에_취약, 1, "같은 이름 둘인데 순서 위험을 0 으로 셌다");
+        assert_eq!(둘_tally.등급이_낮음, 1);
     }
 
     #[test]
@@ -821,8 +1040,8 @@ mod tests {
     fn 불변식_g_파일을_옮기면_정체성만_바뀐다() {
         // 이동은 *변경*이 아니라 *정체성 사건*이다 — 그 분리가 재결박 제안의 근거다(R-08).
         let (s, c) = 두_클래스();
-        let 여기 = nodes_of(&RepoId::new("r"), &RepoPath::new("a.ts"), &s, &c);
-        let 저기 = nodes_of(&RepoId::new("r"), &RepoPath::new("b/a.ts"), &s, &c);
+        let 여기 = nodes_of(&RepoId::new("r"), &RepoPath::new("a.ts"), &s, &c).0;
+        let 저기 = nodes_of(&RepoId::new("r"), &RepoPath::new("b/a.ts"), &s, &c).0;
         assert_ne!(여기[1].id, 저기[1].id, "옮겼는데 정체성이 그대로다");
         assert_eq!(여기[1].body, 저기[1].body, "옮겼는데 본문 요약이 움직였다");
     }
