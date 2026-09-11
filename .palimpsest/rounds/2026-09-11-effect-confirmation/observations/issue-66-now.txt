@@ -1,0 +1,54 @@
+# `#66` 의 낡은 전제 둘을 지금 값으로 잰다 ⟨`D1`·`D3`⟩
+
+잰 때: 2026-09-11T14:59:45Z · HEAD 49a6b6b
+
+## 전제 ① — 「결박 가능한 좌표 7 개 · 파일 1 개」
+
+```
+$ ./target/release/pal ledger
+파일      1279
+  parsed             142  파싱됨
+  partial              0  일부만 파싱됨
+  unsupported        783  미지원  추출기 없음(로드맵)
+  unrecognized       353  언어 미인식
+  excluded             0  설정으로 제외
+  binary               1  이진 파일
+  generated            0  생성물
+
+언어      Markdown          L0  unavailable      577 파일  ·  텍스트만 · 결박 불가
+          Python            L0  unavailable      165 파일  ·  텍스트만 · 결박 불가
+          Rust              L1  ordinal          141 파일  ·  구조 · 선언 순서
+          TOML              L0  unavailable       29 파일  ·  텍스트만 · 결박 불가
+          Shell             L0  unavailable        6 파일  ·  텍스트만 · 결박 불가
+          JSON              L0  unavailable        3 파일  ·  텍스트만 · 결박 불가
+          YAML              L0  unavailable        2 파일  ·  텍스트만 · 결박 불가
+          JavaScript        L0  unavailable        1 파일  ·  텍스트만 · 결박 불가
+          TypeScript        L2  exact              1 파일  ·  참조 해소 · 정확
+
+          ← 결박 불가 언어 7개 · 783 파일. 이 파일들에는 좌표가 없습니다
+
+정체성    심볼 3332
+  순서에 취약              10  같은 이름·종류가 여럿 · 선언 순서로 가렸습니다 — 순서가 바뀌면 정체성이 맞바뀝니다
+                          ↑ 그룹마다 **첫 선언은 빠집니다**(`ordinal 0`) — 겹친 자리의 수가 아니라 초과분입니다
+  등급이 낮음            3316  순서 위험은 없고 추출기가 스코프를 못 풀었습니다
+  정확                   6  이름으로 유일하고 참조가 해소됩니다
+  불가                   0  좌표를 세울 수 없습니다
+          ← 검산 10 + 3316 + 6 + 0 = 3332 · 2층에 들어가는 심볼 3332
+```
+
+## 전제 ② — 「추출기는 Kotlin·Java·JavaScript·TypeScript 넷뿐」
+
+```
+$ ./target/release/pal symbols /dev/null
+Error: 확장자 `.` 를 언어로 알지 못한다 — 아는 것은 Kotlin · Java · JavaScript · TypeScript · Rust 다섯 이다
+```
+
+## 물음 2 의 갈래 ⓑ — 「다른 저장소의 실사용」의 현재 상태
+
+```
+$ ./target/release/pal ledger   # 머리 세 줄
+
+Snapshot  palimpsest@49a6b6b+worktree  (워킹트리)
+저장소    선언 1 · 본 것 1
+범위      매니페스트 없음 — 경로에서 유도했습니다 (선언이 아니라 추정)
+```
