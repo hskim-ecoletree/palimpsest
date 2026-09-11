@@ -1,0 +1,16 @@
+# ㉢ `#129` 의 RED — 작업 저장소에서 관측 ⟨`B1-a`⟩
+#
+# 잰 때: 2026-09-11T14:26:32Z · HEAD a359909
+# ⚠ **`.palimpsest/intent.redb` 가 **있는데도** 실패하는 것을 요구한다** ⟨CA1-01⟩.
+#    그 파일: 1351680 바이트 · 9월 8 07:49
+#    (추적 안 됨 — `.gitignore` 가 막는 파생물이고 정본은 intent/bindings.jsonl 이다)
+#
+# 명령: ./target/release/pal query narrative.unbound
+--- 표준출력 ---
+--- 표준오류 ---
+Error: 개체를 남기지 못했다
+
+Caused by:
+    의도 저장소 트랜잭션이 실패했다: 읽기로 연 의도 저장소에 쓰려 했다
+--- 종료값 ---
+rc=1
