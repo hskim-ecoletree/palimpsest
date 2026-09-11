@@ -1,0 +1,45 @@
+
+  container_chains  ·  palimpsest@1a01057+worktree#9cef8289f4c8
+  fun · crates/pal-cli/src/ledger.rs:269 · identity ordinal · body 1803bdb4ddc0
+
+■ 이 좌표에 걸린 것 (0)
+  아직 없습니다.
+■ 이 좌표를 지켜보는 것 (0)
+  아직 없습니다.
+■ 이 심볼이 하는 것
+  호출자 1 · 피호출자 0
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조·구조체 리터럴·경로 머리도 셉니다
+  ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 타입 추론이 필요해 **이 회차의 범위 밖**입니다. 능력 부재가 아니라 안 하기로 정한 자리입니다
+  ※ 파일 간 해소 — ⓐ `cross-file-import` 1823/5767 · ⓑ `path-resolution` 281/1062 (선 것/짝)
+  ※ ⓐ 가 못 선 까닭 — ambiguous 214 · no_symbol 668 · no_symbol_at_crate_root 1924 · outside_repo 1138
+  ※ ⓑ 가 못 선 까닭 — ambiguous 14 · no_symbol 154 · no_symbol_at_crate_root 330 · outside_repo 283
+  ※ 못 선 몫이 가는 문 — 이 회차가 안 세우기로 정한 자리와 못 세우는 자리를 가릅니다
+      ⚠ 갈래 하나는 **아직 안 갈렸습니다** — 그 자리는 문이 아니라 「미측정」을 적습니다
+      `outside_repo` → **경계** — 저장소 밖(`std::*` 등)이라 원리상 못 섭니다
+      `no_symbol_at_crate_root` → `A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다
+      `no_symbol` → **갈래가 아직 안 갈렸습니다** — `#133`(L2)로 갈 몫과 이 회차의 구현 여지가 섞여 있고 그 크기는 **미측정**입니다
+      `no_target_file` → **이 회차의 구현** — 모듈 경로를 파일로 못 폈습니다
+      `ambiguous` → **후보 생성의 모호** — 모듈 경로가 여러 파일로 읽힙니다. 하나를 고르면 조용한 오답이라 **안 고르는 것이 설계입니다**
+■ 내가 모르는 것
+  2 건
+  · Containment — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · BTreeMap — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+■ 효과
+  (이 빌드에는 effects 능력이 없습니다 — F13 미구축)
+■ 판정
+  (이 빌드에는 judgment 능력이 없습니다 — F15 미구축)
+
+■ 이 답의 근거
+  Snapshot  palimpsest@1a01057+worktree
+  대장      parsed 141 · partial 0 · unsupported 770 · unrecognized 325 / 1237 파일
+            결박 불가 언어 7개 — 그 파일들에는 좌표가 없습니다
+  2층       심볼 3306 색인됨
+  워킹트리  일치
+  재구축    아님
+  생략      없음 (명시)
+  이관      1237건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1237건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 882 토큰 **이상** (잰 것: 3528 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+

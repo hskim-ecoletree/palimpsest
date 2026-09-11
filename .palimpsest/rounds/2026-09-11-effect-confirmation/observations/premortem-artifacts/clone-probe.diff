@@ -1,0 +1,13 @@
+diff --git a/xtask/src/main.rs b/xtask/src/main.rs
+index 18e505a..328dc48 100644
+--- a/xtask/src/main.rs
++++ b/xtask/src/main.rs
+@@ -5849,6 +5849,8 @@ mod 종료_보고_시험 {
+ }
+ 
+ fn check_ledger_pair(root: &Path) -> Result<String> {
++    let _사전부검_삽입 = 1;
++    let _사전부검_삽입2 = 2;
+     let 뿌리 = root.join(회차_뿌리);
+     if !뿌리.is_dir() {
+         bail!("`{회차_뿌리}` 가 없다 — 이 검사의 모집단이 원리상 성립하지 않는다");

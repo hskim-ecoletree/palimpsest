@@ -1,0 +1,22 @@
+
+  `grade` 의 후보가 4건입니다. 하나를 고르지 않습니다.
+
+  fun        grade                    crates/pal-core/src/coord.rs:224
+  fun        grade                    crates/pal-extract/src/kotlin.rs:45
+  fun        grade                    crates/pal-extract/src/rust.rs:93
+  fun        grade                    crates/pal-extract/src/typescript.rs:62
+
+■ 이 답의 근거
+  Snapshot  palimpsest@1a01057+worktree
+  대장      parsed 141 · partial 0 · unsupported 770 · unrecognized 325 / 1237 파일
+            결박 불가 언어 7개 — 그 파일들에는 좌표가 없습니다
+  2층       심볼 3306 색인됨
+  워킹트리  일치
+  재구축    아님
+  생략      없음 (명시)
+  이관      1237건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1237건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 628 토큰 **이상** (잰 것: 2512 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+

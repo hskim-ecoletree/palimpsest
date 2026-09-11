@@ -1,0 +1,8 @@
+1:
+2:  check_ledger_pair  ·  palimpsest@1a01057+worktree#076728deab4f
+3:  fun · xtask/src/main.rs:5851 · identity ordinal · body 1f1846428f55
+4:
+10:  호출자 1 · 피호출자 12
+32:
+44:  크기      약 1027 토큰 **이상** (잰 것: 4108 바이트 · 가정: 4 바이트/토큰)
+46:
