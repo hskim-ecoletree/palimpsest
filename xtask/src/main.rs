@@ -3988,6 +3988,7 @@ fn check_round_records(root: &Path) -> Result<String> {
         Default::default();
     let mut 좌표_해소_실패 = Vec::new();
     let mut 좌표_면제 = 0usize;
+    let mut 무시_면제 = 0usize;
     let mut 총_행 = 0usize;
     let mut 예외_행 = 0usize;
     for p in 레코드들.iter().copied() {
@@ -4045,9 +4046,22 @@ fn check_round_records(root: &Path) -> Result<String> {
                 //   `21/21` 을 착수 기준선으로 적었다(「사실이 아닌 것을 사실로」).
                 //   ⚠ **면제하되 수를 판정문에 싣는다** — 「안 잰 것」과 「잴 수 없는 것」을
                 //   같은 침묵으로 두지 않는다.
+                // ★★ **git 이 뺀 좌표도 좌표가 아니다.** (2026-09-11 · CI 가 잡았다)
+                //   `.palimpsest/index.redb` 를 가리킨 행 하나가 **세 OS 전부**를
+                //   죽였다 — 그 파일은 파생물이라 `.gitignore` 가 막고, **그래서
+                //   갓 클론한 나무에는 원리상 없다.** 있는 기계에서는 초록이고 없는
+                //   기계에서는 빨강이라, **같은 커밋이 기계마다 다른 판정**을 받았다
+                //   (ADR-0023 이 금지한 자리다).
+                //   ⚠ **무시 여부를 실재보다 먼저 묻는다.** 뒤에 물으면 그 파일이
+                //   있는 기계에서는 면제 수가 0 이고 없는 기계에서는 1 이라
+                //   **판정문의 수가 기계 고유의 값**이 된다.
+                //   ⚠ **목록을 여기 베끼지 않는다** — 무엇이 무시 대상인지는
+                //   `git` 이 안다(`AGENTS.md`: *"검사의 모집단은 검사가 안다"*).
                 if 경로 != "(경로 없음)" {
                     if 저장소_밖_절대경로(경로) {
                         좌표_면제 += 1;
+                    } else if 저장소가_무시하는가(root, 경로) {
+                        무시_면제 += 1;
                     } else if !좌표가_실재하는가(root, 경로) {
                         좌표_해소_실패.push(format!("{상대}:{}: `{경로}` 가 없다", i + 1));
                     }
@@ -4245,7 +4259,7 @@ fn check_round_records(root: &Path) -> Result<String> {
     }
     Ok(format!(
         "산출 {}개 · 레코드 {}행 · 예외표 {예외_행}행 · 좌표 면제 {좌표_면제}행 \
-         (저장소 밖 절대경로) · **손으로 채운 칸 — 진행 중 {진행중_손_전사} · 끝난 회차 {손_전사}(보고만) \
+         (저장소 밖 절대경로) · {무시_면제}행 (git 이 뺀 파생물) · **손으로 채운 칸 — 진행 중 {진행중_손_전사} · 끝난 회차 {손_전사}(보고만) \
          [갈린 칸 {갈린_칸} · 빠진 행 {빠진_행}]** · \
          검산 {} · 검산 면제 {} · \
          파이썬 `{파이썬}`",
@@ -5657,9 +5671,34 @@ fn 저장소_밖_절대경로(경로: &str) -> bool {
         || (b.len() > 2 && b[1] == b':' && (b[2] == b'/' || b[2] == b'\\'))
 }
 
+/// 저장소가 **뺀** 좌표인가 — **목록을 베끼지 않고 `git` 에게 묻는다.**
+///
+/// ★ 왜 `git` 인가: 무엇이 파생물인지는 `.gitignore` 가 정하고 그 파일은 자란다.
+/// 여기 목록을 손으로 베면 **놓은 날부터 갈린다** — `AGENTS.md` 가 같은 병을 이미
+/// 두 번 적었다(*"검사의 모집단은 검사가 안다. 베끼지 말고 돌려라"*).
+///
+/// ★ `git check-ignore` 는 **파일이 없어도** 답한다 — 패턴 판정이라 갓 클론한 나무에서도
+/// 같은 답이 난다. 그리고 **추적 중인 파일은 무시 대상이 아니다**(`--no-index` 를 안 준다) —
+/// 그래서 이 면제가 **커밋된 좌표를 삼키지 못한다.**
+///
+/// ⚠ **git 이 없거나 대답을 못 하면 면제가 아니다**(fail-closed). 면제 쪽으로 기울면
+/// 도구가 없는 자리에서 검사가 통째로 무뎌진다.
+fn 저장소가_무시하는가(root: &Path, 경로: &str) -> bool {
+    std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["check-ignore", "-q", "--"])
+        .arg(경로)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
 #[cfg(test)]
 mod 좌표_면제_시험 {
-    use super::저장소_밖_절대경로;
+    use super::{저장소_밖_절대경로, 저장소가_무시하는가};
 
     /// ★ **세 OS 가 같은 답을 내야 한다.** 이 자는 파일시스템을 안 만지고 문자열만
     /// 본다 — `Path::is_absolute` 는 플랫폼마다 다르므로 안 쓴다(ADR-0023).
@@ -5680,6 +5719,50 @@ mod 좌표_면제_시험 {
         assert!(!저장소_밖_절대경로("layout.rs"));
         // ⚠ **한 글자짜리 조각을 드라이브로 오인하지 않는다.**
         assert!(!저장소_밖_절대경로("a:b"));
+    }
+
+    /// ★ **음성 대조 — 이 면제가 고장 나면 여기서 드러난다.** (2026-09-11)
+    ///
+    /// 면제를 넓게 잡으면 「좌표가 실재하는가」가 통째로 죽은 가지가 된다. 그래서
+    /// 네 자리를 못 박는다: **파생물은 파일이 없어도 면제 · 추적 중인 것은 면제 아님 ·
+    /// 무시 패턴에 맞는데도 추적 중인 것은 면제 아님 · 그냥 없는 좌표는 면제 아님.**
+    #[test]
+    fn 무시된_파생물만_면제하고_추적_중인_좌표는_삼키지_않는다() {
+        use std::fs;
+        let 뿌리 =
+            std::env::temp_dir().join(format!("pal-xtask-ignored-coord-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&뿌리);
+        fs::create_dir_all(&뿌리).unwrap();
+        let git = |인자: &[&str]| {
+            let 결과 =
+                std::process::Command::new("git").arg("-C").arg(&뿌리).args(인자).status();
+            // ⚠ 조용히 넘기지 않는다 — git 이 없으면 이 시험은 **시끄럽게** 실패해야 한다.
+            assert!(
+                matches!(&결과, Ok(코드) if 코드.success()),
+                "git {인자:?} 가 실패했다({결과:?}) — 이 검사는 git 을 요구한다"
+            );
+        };
+        git(&["init", "-q"]);
+        fs::write(뿌리.join(".gitignore"), "/derived-coord.bin\n/forced-coord.txt\n").unwrap();
+        fs::write(뿌리.join("derived-coord.bin"), "파생물").unwrap();
+        fs::write(뿌리.join("tracked-coord.txt"), "추적 중").unwrap();
+        fs::write(뿌리.join("forced-coord.txt"), "무시 패턴에 맞는데 추적 중").unwrap();
+        git(&["add", "tracked-coord.txt"]);
+        git(&["add", "-f", "forced-coord.txt"]);
+
+        // ① 파생물은 면제다 — **파일을 지워도 같은 답**이어야 한다. 그것이 갓 클론한 나무다.
+        assert!(저장소가_무시하는가(&뿌리, "derived-coord.bin"));
+        fs::remove_file(뿌리.join("derived-coord.bin")).unwrap();
+        assert!(저장소가_무시하는가(&뿌리, "derived-coord.bin"));
+
+        // ② 추적 중인 좌표는 면제가 아니다 — 사라지면 검사가 빨개져야 한다.
+        assert!(!저장소가_무시하는가(&뿌리, "tracked-coord.txt"));
+        // ③ **무시 패턴에 맞는데 추적 중인 것**도 면제가 아니다 — 가장 날카로운 자리다.
+        assert!(!저장소가_무시하는가(&뿌리, "forced-coord.txt"));
+        // ④ 그냥 없는 좌표는 면제가 아니다 — 이것을 삼키면 검사가 아무것도 안 잰다.
+        assert!(!저장소가_무시하는가(&뿌리, "absent-coord.txt"));
+
+        let _ = fs::remove_dir_all(&뿌리);
     }
 }
 
