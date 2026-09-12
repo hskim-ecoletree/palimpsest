@@ -152,6 +152,71 @@ fn 후_대상(repo: &std::path::Path) -> serde_json::Value {
     결박(repo)["target"].clone()
 }
 
+/// ★★ **조건 `A1-a`·`A2-a` 의 음성 대조** — `pal bind` 재호출은 여섯을 **안** 보존한다.
+///
+/// # 이 시험이 없으면 `A1`·`A2` 가 아무것도 안 잰다
+///
+/// 위 두 시험이 *"여섯이 보존됐다"* 를 재는데, **두 경로가 어차피 같다면** 그 통과는
+/// 공짜다. 이 시험이 *"다른 경로로 하면 정말 깨진다"* 를 붙들어 그 가능성을 없앤다.
+///
+/// # 무엇이 깨지는지 둘을 함께 잰다
+///
+///   · **`A1-a`** — `bound_at` 이 HEAD 로 재기준된다(다섯 중 하나가 바뀐다)
+///   · **`A2-a`** — 그래서 **`stale` 이 사라진다.** 격리 실측의 `stale 7 → 6` 이 그 형태다
+#[test]
+fn pal_bind_재호출은_여섯을_안_보존하고_stale_을_지운다() {
+    let repo = 저장소("radius-negative");
+    pal(&repo, &["bind", "도움", "--note", "이 함수의 계약"]);
+
+    let 전 = 결박(&repo);
+    let 감시_전 = 감시(&전);
+
+    // ── 대상을 고쳐서 `stale` 을 만든다 ───────────────────────────────────
+    std::fs::write(
+        repo.join("delta.ts"),
+        "export function 도움() { return 99 }\nexport function 부름() { return 도움() }\n",
+    )
+    .expect("delta.ts");
+    git(&repo, &["add", "-A"]);
+    git(&repo, &["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "대상을 고친다"]);
+
+    let 판정_전 = 판정(&repo);
+    assert_eq!(
+        판정_전["status"]["code"]["freshness"], "stale",
+        "고쳤는데 stale 이 아니면 이 음성 대조가 아무것도 안 잰다"
+    );
+
+    // ── `pal bind` 를 **같은 이름·같은 조각으로 다시** 부른다 ─────────────
+    //
+    // `id` 는 `(대상, 조각)` 에서 유도되므로 **같은 결박**이다. 그런데…
+    pal(&repo, &["bind", "도움", "--note", "이 함수의 계약"]);
+
+    let 후 = 결박(&repo);
+    assert_eq!(전["id"], 후["id"], "id 가 달라지면 이 시험이 다른 결박을 보고 있다");
+
+    // ── `A1-a` — 다섯 중 `bound_at` 이 HEAD 로 재기준됐다 ─────────────────
+    assert_ne!(
+        전["bound_at"], 후["bound_at"],
+        "`pal bind` 재호출이 bound_at 을 그대로 뒀다 — 그러면 `A1` 이 두 경로를 못 가르고 \
+         보존 경로를 세운 근거가 사라진다"
+    );
+
+    // ── `A2-a` — 옛 감시 원소의 digest 가 덮여 `stale` 이 사라졌다 ────────
+    let 감시_후 = 감시(&후);
+    assert!(
+        !감시_전.is_subset(&감시_후),
+        "`pal bind` 재호출이 옛 (symbol, digest) 쌍을 보존했다 — 그러면 `A1` 의 여섯째가 \
+         아무것도 안 잰다\n전: {감시_전:?}\n후: {감시_후:?}"
+    );
+    assert_eq!(
+        판정(&repo)["status"]["code"]["freshness"], "fresh",
+        "★ `pal bind` 재호출 뒤에도 stale 이 남았다 — 격리 실측의 `stale 7 → 6` 이 \
+         재현되지 않는다는 뜻이고, 그러면 이 회차가 보존 경로를 세운 근거가 거짓이다"
+    );
+
+    let _ = std::fs::remove_dir_all(&repo);
+}
+
 /// ★ **조건 `A4`** — 보존 경로는 결박을 **새로 만들지 못한다.**
 #[test]
 fn 없는_결박을_지목하면_실패한다() {
