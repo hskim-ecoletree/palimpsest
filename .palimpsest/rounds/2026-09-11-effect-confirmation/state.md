@@ -22,7 +22,7 @@
 ### 지나온 것 ⟨이 세션⟩
 
 소유자 답 적재(`8d7b3b4`) → 처분 전수 기록 `dialectic/6-corrections.md`(`2cb0c70`) →
-이슈 `#143`·`#144` → 원장 서른 닫기(`4b6ce1e` 계열) → **`cargo xtask check` 28/28** →
+이슈 `#143`·`#144` → 원장 서른 닫기(`58991b6`) → **`cargo xtask check` 28/28** →
 **결박 셋**(`ef071a1` · `pal bind` × 3 · `pal intent import`→`export`) → `pal doctor` 위반 0.
 
 ### 남은 것 — **둘**
