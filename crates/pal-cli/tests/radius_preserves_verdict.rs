@@ -1,4 +1,4 @@
-//! **`pal rebind` 가 반경만 바꾸고 낡음 판정을 보존한다** — 조건 `A1`·`A3`·`A4`.
+//! **`pal radius` 가 반경만 바꾸고 낡음 판정을 보존한다** — 조건 `A1`·`A3`·`A4`.
 //!
 //! # 이 시험이 존재하는 이유
 //!
@@ -67,7 +67,7 @@ fn 반경만_바뀌고_여섯이_보존된다() {
     let 감시_전 = 감시(&전);
     assert_eq!(감시_전.len(), 1, "symbol 반경의 감시 집합은 대상 하나다");
 
-    pal(&repo, &["rebind", &id, "--radius", "callers"]);
+    pal(&repo, &["radius", &id, "--to", "callers"]);
 
     let 후 = 결박(&repo);
 
@@ -129,7 +129,7 @@ fn 새_감시_원소의_기준은_bound_at_의_base_커밋이다() {
     git(&repo, &["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "호출자를 고친다"]);
 
     // ── 넓힌다 ────────────────────────────────────────────────────────────
-    pal(&repo, &["rebind", &id, "--radius", "callers"]);
+    pal(&repo, &["radius", &id, "--to", "callers"]);
 
     let 판정_후 = 판정(&repo);
     assert_eq!(
@@ -160,7 +160,7 @@ fn 없는_결박을_지목하면_실패한다() {
     let 전 = pal(&repo, &["intent", "export"]);
 
     let out = std::process::Command::new(PAL)
-        .args(["rebind", "0000000000000000", "--radius", "callers"])
+        .args(["radius", "0000000000000000", "--to", "callers"])
         .current_dir(&repo)
         .output()
         .expect("pal 을 못 돌렸다");
@@ -171,7 +171,7 @@ fn 없는_결박을_지목하면_실패한다() {
     );
 
     // **아무것도 안 더해졌다.** 종료값만 보면 「실패했는데 더했다」를 못 잡는다.
-    assert_eq!(전, pal(&repo, &["intent", "export"]), "실패한 rebind 가 정본을 바꿨다");
+    assert_eq!(전, pal(&repo, &["intent", "export"]), "실패한 radius 가 정본을 바꿨다");
 
     let _ = std::fs::remove_dir_all(&repo);
 }

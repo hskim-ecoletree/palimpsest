@@ -1,0 +1,176 @@
+# 착수 기준선 — 넓히기 **전**의 저장소  ⟨조건 `B3-a` · `B3` 의 RED⟩
+
+> 회차 `2026-09-12-binding-radius-in-use` · 2026-09-13 · HEAD `750e3ea`
+> **아직 한 건도 안 넓혔다.** 이 파일이 `B3` 의 세 양성 축의 분모다.
+>
+> ⚠ **넓힌 뒤에 이 값을 재구성하지 않는다** — 그러면 RED 가 관측이 아니라 주장이다.
+
+## ① 반경 분포 · ② 감시 집합 크기 합 · 판정 분포
+
+`pal query binding.status --json` 을 집계했다.
+
+```
+결박 수            = 37
+반경 분포          = {'"symbol"': 37}
+감시 집합 크기 합   = 37   (건당 1)
+판정 분포          = {'fresh': 30, 'stale': 7}
+감시 원소 등급      = {'ordinal': 37}   ← `exact` 축 모집단이 이 저장소에 0 이다
+```
+
+## ③ 「■ 이 좌표를 지켜보는 것」이 호출자 자리에서 **0** 이다
+
+⚠⚠ **좌표를 고쳤다.** 앞 판은 이 축을 *"넓힌 결박의 **대상**"* 에서 재려 했고, 그것은
+**원리상 0 을 안 벗어난다** — `crates/pal-query/src/lib.rs:849` 가
+`.filter(|b| b.target != symbol.id)` 로 자기 결박을 빼고 `crates/pal-core/src/radius.rs:134`
+가 `out.insert(target)` 으로 대상을 언제나 감시에 넣기 때문이다. **GREEN 이 도달
+불가**였다(조건 평가 R1 의 유일한 「실패」). 그래서 **새로 들 호출자**에서 잰다.
+
+### 사전 등록한 선정 규칙 — 결과를 보고 고르지 않는다
+
+사전 등록한 선정 규칙
+넓어지는 결박(감시후 > 감시전)을 **결박 id 사전순**으로 정렬한 **첫 셋**의 새 호출자 전부.
+결과를 보고 고르지 않는다 — 규칙을 먼저 적고 그대로 적용했다.
+넓어지는 결박 24 건 중 첫 셋: 1cc70cc19ef92186 · 1cf63ec5e0e9937a · 3d9979946eb321de
+
+
+### 그 셋의 새 호출자 전량
+
+```
+## 결박 1cc70cc19ef92186 — 대상 `Elision` (crates/pal-core/src/envelope.rs)
+   새로 들 호출자 17 개:
+     Envelope	crates/pal-core/src/envelope.rs
+     new	crates/pal-core/src/envelope.rs
+     자른_것이_없어도_명시된다	crates/pal-core/src/envelope.rs
+     같은_노드로_가는_두_엣지는_깊이_초과를_둘로_세지_않는다	crates/pal-core/src/traverse.rs
+     유일_해소는_경로_곱을_안_올린다	crates/pal-core/src/traverse.rs
+     같은_사유는_합쳐지고_같은_상한은_두_번_안_실린다	crates/pal-core/src/envelope.rs
+     멈출_때_대기열에_남은_것이_건수에_들어간다	crates/pal-core/src/traverse.rs
+     생략은_쌓인다	crates/pal-core/src/traverse.rs
+     노드_상한만_낮추면_노드_상한만_걸린다	crates/pal-core/src/traverse.rs
+     후보_상한만_낮추면_그_가지만_버리고_탐색은_계속된다	crates/pal-core/src/traverse.rs
+     이미_본_노드는_깊이_초과로_안_세어진다	crates/pal-core/src/traverse.rs
+     넉넉하면_생략이_0_이다	crates/pal-core/src/traverse.rs
+     경로_곱만_낮추면_탐색이_멈추고_남은_대기열이_세어진다	crates/pal-core/src/traverse.rs
+     자른_것에는_사유와_건수가_붙는다	crates/pal-core/src/envelope.rs
+     traverse	crates/pal-core/src/traverse.rs
+     QueryLogEntry	crates/pal-core/src/query_log.rs
+     깊이만_낮추면_깊이만_걸린다	crates/pal-core/src/traverse.rs
+
+## 결박 1cf63ec5e0e9937a — 대상 `표면` (crates/pal-extract/src/rust.rs)
+   새로 들 호출자 1 개:
+     extract_with	crates/pal-extract/src/rust.rs
+
+## 결박 3d9979946eb321de — 대상 `RepoPath` (crates/pal-core/src/repo.rs)
+   새로 들 호출자 77 개:
+     조각	crates/pal-core/src/narrative.rs
+     확장자는_마지막_점_뒤다	crates/pal-core/src/repo.rs
+     symbols_in	crates/pal-core/src/radius.rs
+     안_만든_추출기의_참조_수는_0_이_아니라_notbuilt_다	crates/pal-core/src/projection.rs
+     파일시스템_경로는_구분자를_한쪽으로_모은다	crates/pal-core/src/repo.rs
+     resolve_pattern	crates/pal-core/src/plan.rs
+     대장에_없는_경로는_아무것도_안_산출한다	crates/pal-core/src/narrative.rs
+     심볼	crates/pal-core/src/plan.rs
+     넓은_패턴은_거부된다	crates/pal-core/src/plan.rs
+     Plan	crates/pal-core/src/plan.rs
+     디렉터리의_점은_파일_확장자가_아니다	crates/pal-core/src/repo.rs
+     심볼	crates/pal-core/src/binding.rs
+     좌표	crates/pal-core/src/judgment.rs
+     RawSignals	crates/pal-core/src/narrative.rs
+     in_path	crates/pal-core/src/narrative.rs
+     심볼	crates/pal-core/src/radius.rs
+     걸리지_않는_파일은_범위_안이다	crates/pal-core/src/manifest.rs
+     TargetPlace	crates/pal-core/src/touch.rs
+     좌표들	crates/pal-core/src/projection.rs
+     항목	crates/pal-core/src/plan.rs
+     SymbolNode	crates/pal-core/src/touch.rs
+     new	crates/pal-core/src/plan.rs
+     좌표	crates/pal-core/src/cascade.rs
+     노드	crates/pal-core/src/rebind.rs
+     규칙_id_와_함께_제외된다	crates/pal-core/src/manifest.rs
+     파일_반경은_그_파일의_심볼_전부다	crates/pal-core/src/radius.rs
+     Uncapturable	crates/pal-core/src/chain.rs
+     점으로_시작하는_이름은_확장자가_없다	crates/pal-core/src/repo.rs
+     repro_into	crates/pal-core/src/derived.rs
+     by_ground	crates/pal-core/src/narrative.rs
+     대상	crates/pal-core/src/derived.rs
+     LedgerEntry	crates/pal-core/src/ledger.rs
+     derive	crates/pal-core/src/plan.rs
+     하위_gitattributes_는_자기_아래에만_건다	crates/pal-core/src/attributes.rs
+     parse	crates/pal-core/src/radius.rs
+     대상_집합이_다르면_다른_노드다	crates/pal-core/src/derived.rs
+     Neighborhood	crates/pal-core/src/radius.rs
+     of	crates/pal-core/src/attributes.rs
+     깊은_디렉터리가_이긴다	crates/pal-core/src/attributes.rs
+     목록의_경계가_없으면_다른_집합이_하나가_된다	crates/pal-core/src/derived.rs
+     계획	crates/pal-core/src/plan.rs
+     변경이_0_이면_이탈률이_정의되지_않는다	crates/pal-core/src/plan.rs
+     속성	crates/pal-core/src/attributes.rs
+     자리가_어긋나면_조용히_넘기지_않는다	crates/pal-core/src/projection.rs
+     FileRow	crates/pal-core/src/projection.rs
+     NamedCoord	crates/pal-core/src/narrative.rs
+     compute	crates/pal-core/src/coord.rs
+     계획한_자리를_끝내_안_만들면_미구현이다	crates/pal-core/src/plan.rs
+     저장_왕복이_항등이다	crates/pal-core/src/projection.rs
+     SnapshotView	crates/pal-core/src/plan.rs
+     신규로_명시한_것은_pending_이고_좌표가_생기면_bound_다	crates/pal-core/src/plan.rs
+     동점이면_확정하지_않는다	crates/pal-core/src/narrative.rs
+     Coordinates	crates/pal-core/src/narrative.rs
+     ReproInput	crates/pal-core/src/derived.rs
+     다른_저장소의_규칙은_걸리지_않는다	crates/pal-core/src/manifest.rs
+     Radius	crates/pal-core/src/radius.rs
+     아직_없는_경로는_pending_이다	crates/pal-core/src/plan.rs
+     아이디	crates/pal-core/src/coord.rs
+     심볼_아이디	crates/pal-core/src/doctor.rs
+     Fragment	crates/pal-core/src/narrative.rs
+     손잡이를_읽고_모르는_것은_거부한다	crates/pal-core/src/radius.rs
+     제안	crates/pal-core/src/rebind.rs
+     이름이_기준선에_없으면_후보가_아니다	crates/pal-core/src/plan.rs
+     항목이_없는_계획은_거부된다	crates/pal-core/src/plan.rs
+     감시_집합은_절대_비지_않는다	crates/pal-core/src/radius.rs
+     대장	crates/pal-core/src/ledger.rs
+     대상의_순서는_정체성을_바꾸지_않는다	crates/pal-core/src/derived.rs
+     요약은_담기지_않은_것을_잰다	crates/pal-core/src/chain.rs
+     넷이_각각_성립한다	crates/pal-core/src/plan.rs
+     in_path	crates/pal-core/src/plan.rs
+     뺀_신호의_날것은_아무것도_안_건다	crates/pal-core/src/narrative.rs
+     동점을_약한_신호로_깨지_않는다	crates/pal-core/src/narrative.rs
+     여럿으로_해소되면_고르지_않는다	crates/pal-core/src/plan.rs
+     FileNode	crates/pal-core/src/projection.rs
+     더	crates/pal-core/src/narrative.rs
+     PlanRefusal	crates/pal-core/src/plan.rs
+     excluded_by	crates/pal-core/src/manifest.rs
+
+```
+
+★ **여기서 `PM1-06` 이 실측으로 확증된다** — 새로 드는 감시 원소의 **상당수가 시험
+함수**다(`같은_노드로_가는_두_엣지는_…`·`넉넉하면_생략이_0_이다` 등). 그것이 `callers`
+반경의 거짓 양성률이 등록된 30% 상한을 **구조가 먼저 깨뜨린다**고 적힌 자리이고,
+㈂-a 가 그 값을 `대조불가` 로 다시 적는 까닭의 하나다.
+
+### RED — 한 좌표에서 실물로 관측
+
+`1cf63ec5e0e9937a` 는 새 호출자가 **하나**(`extract_with`)라 관측이 가장 깨끗하다.
+
+```
+$ pal touch extract_with
+■ 이 좌표에 걸린 것 (0)
+  아직 없습니다.
+■ 이 좌표를 지켜보는 것 (0)
+  아직 없습니다.
+■ 이 심볼이 하는 것
+  호출자 1 · 피호출자 8
+```
+
+**`(0)` 이고 「아직 없습니다」다.** 넓힌 뒤 이 줄이 `(1)` 이 되어야 `B3` ⑶ 이 통과한다.
+
+## ④ 예산 — 걸리나 ⟨조건 `B5`⟩
+
+```
+결박 수            = 37
+넓힌 뒤 최대 감시   = 78
+곱               = 2886
+PROVISIONAL_WATCH_PRODUCT_MAX = 1000000   (crates/pal-core/src/budget.rs:330)
+걸리나            = 안 걸린다
+```
+
+**값을 바꾸지 않는다** — `## 범위 밖`. 다만 걸리는지는 관측하고 적는다.

@@ -13,7 +13,7 @@ use pal_core::{Capable, Language};
 
 mod attach;
 mod bind;
-mod rebind;
+mod radius;
 mod cache;
 mod defect;
 mod doctor;
@@ -155,17 +155,20 @@ enum Command {
     },
     /// 있는 결박의 **반경만 바꾼다** — 낡음 판정을 보존한다
     ///
+    /// ⚠ **「재결박」이 아니다.** 좌표는 그대로고 반경만 바뀐다 — 재결박(사라진 좌표를
+    /// 새 좌표에 다시 거는 일)은 `pal_core::rebind` 의 것이고 `[f09.pass]` ⑦ 이 진다.
+    ///
     /// `pal bind` 재호출은 `bound_at` 과 감시 다이제스트를 **HEAD 로 재기준해서** 지금
     /// `stale` 인 결박을 조용히 `fresh` 로 만든다. 이 명령은 여섯을 그대로 둔다 —
     /// `id`·`subject`·`note`·`bound_at`·`bound_at_time`·**옛 감시 원소의 다이제스트**.
     ///
     /// **결박을 새로 만들지 못한다** — 없는 결박을 지목하면 실패한다.
-    Rebind {
+    Radius {
         /// 어느 결박인가 — **결박 id** 다(`pal touch` 와 `pal query binding.status` 가 찍는다)
         id: String,
-        /// 무엇까지 지켜보나 — `symbol` · `callers` · `closure:<k>` · `files:<경로,…>`.
+        /// 무엇까지 지켜보게 바꾸나 — `symbol` · `callers` · `closure:<k>` · `files:<경로,…>`.
         #[arg(long)]
-        radius: String,
+        to: String,
         /// 저장소 경로
         #[arg(long, default_value = ".")]
         repo: PathBuf,
@@ -179,6 +182,9 @@ enum Command {
         /// 산출을 기계가 읽는 형태로
         #[arg(long)]
         json: bool,
+        /// **재기만 한다** — 의도 저장소에 안 쓴다. 넓히기 전에 판정 표를 세우는 자리다
+        #[arg(long)]
+        dry_run: bool,
     },
     /// 문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
     ///
@@ -572,13 +578,15 @@ fn main() -> Result<()> {
             bind::Args { repo: &repo, rev: at.as_deref(), cache_dir, index, intent,
                          name: &name, note: &note, radius: &radius },
         ),
-        Command::Rebind { id, radius, repo, cache_dir, index, intent, json } => {
-            let r = rebind::run(rebind::Args {
-                repo: &repo, cache_dir, index, intent, id: &id, radius: &radius,
+        Command::Radius { id, to, repo, cache_dir, index, intent, json, dry_run } => {
+            let r = radius::run(radius::Args {
+                repo: &repo, cache_dir, index, intent, id: &id, radius: &to, dry_run,
             })?;
             if json {
                 println!("{}", serde_json::json!({
                     "결박": id,
+                    "대상심볼": r.대상심볼,
+                    "대상파일": r.대상파일,
                     "옛반경": r.옛반경,
                     "새반경": r.새반경,
                     "감시전": r.감시전,
@@ -586,10 +594,16 @@ fn main() -> Result<()> {
                     "기준시점커밋": r.기준시점커밋,
                     "base에없던새원소": r.base에없던새원소,
                     "대상digest차이": r.대상digest차이,
+                    "타파일새원소": r.타파일새원소,
+                    "재기만": r.재기만,
                 }));
             } else {
                 println!();
-                println!("반경을 바꿨습니다. **결박은 그대로입니다.**");
+                if r.재기만 {
+                    println!("**재기만 했습니다 — 아무것도 쓰지 않았습니다.**");
+                } else {
+                    println!("반경을 바꿨습니다. **결박은 그대로입니다.**");
+                }
                 println!("  결박    [{id}]");
                 println!("  반경    {} → {}", r.옛반경, r.새반경);
                 println!("  감시    {} → {} 개", r.감시전, r.감시후);

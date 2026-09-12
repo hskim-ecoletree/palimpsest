@@ -1,4 +1,14 @@
-//! `pal rebind <결박> --radius <반경>` — **반경만 바꾼다. 결박을 새로 만들지 않는다.**
+//! `pal radius <결박> --to <반경>` — **반경만 바꾼다. 결박을 새로 만들지 않는다.**
+//!
+//! # ⚠ 이 명령은 **「재결박」이 아니다** — 그래서 `pal rebind` 가 아니다
+//!
+//! 처음에 `pal rebind` 로 세웠다가 고쳤다. [`pal_core::rebind`] 가 이미 있고 그것은
+//! **재결박 제안**이다 — *"사라진 좌표 하나에 대한 새 좌표 후보"*(옛 F03 §4.2). 그리고
+//! `[f09.pass]` ⑦ 이 **「재결박 일괄 승인 정확도」**로 그 이름을 게이트에 싣고 있다.
+//!
+//! **이 명령은 좌표를 안 바꾼다.** `target` 이 그대로고 반경만 바뀐다. `rebind` 라 부르면
+//! 읽는 사람이 그 게이트 줄로 가고, 거기서 만나는 것은 다른 기능이다. 이름이 잘못
+//! 읽히는 것은 병기로 안 고쳐진다(ADR-0033).
 //!
 //! # 왜 `pal bind` 로는 안 되나
 //!
@@ -65,10 +75,22 @@ pub struct Args<'a> {
     pub id: &'a str,
     /// 무엇까지 지켜보나 — [`Radius::parse`] 가 읽는다.
     pub radius: &'a str,
+    /// **재기만 한다** — 의도 저장소에 안 쓴다.
+    ///
+    /// # 왜 이 손잡이가 있나
+    ///
+    /// 37 건을 넓히기 **전에** 판정과 근거를 보이는 자리에 세워야 한다(조건 `B2-a`).
+    /// 그 산출을 **별도 스크립트**로 만들면 재는 경로와 넓히는 경로가 갈리고, 그러면
+    /// 표에 적힌 수가 실제로 일어날 일과 같다는 보장이 없다. **같은 함수가 재고 같은
+    /// 함수가 쓴다** — 갈릴 자리를 안 만든다.
+    pub dry_run: bool,
 }
 
 /// 한 결박의 반경을 바꾼 결과 — **산출이 이 값을 그대로 찍는다.**
 pub struct Report {
+    /// 무엇에 걸린 결박인가 — 표가 좌표를 져야 한다.
+    pub 대상심볼: String,
+    pub 대상파일: String,
     pub 옛반경: String,
     pub 새반경: String,
     pub 감시전: usize,
@@ -80,6 +102,17 @@ pub struct Report {
     /// 저장된 대상 `digest` 와 base 커밋에서 읽은 대상 `digest` 가 다른가 —
     /// **근사의 크기**다(모듈 머리의 ⚠⚠).
     pub 대상digest차이: bool,
+    /// 새로 든 감시 원소 중 **대상과 다른 파일**에 있는 것의 수.
+    ///
+    /// # 왜 이 수를 세나 — 목적 기여의 전제가 여기 걸려 있다
+    ///
+    /// 이 회차가 지금인 근거는 *"순서표 §2 의 2 번(파일 경계를 넘는 참조 해소)이 서면서
+    /// **넓은 반경이 빈 집합이 아니게 됐다**"* 다. 새로 든 원소가 **전부 같은 파일 안**
+    /// 이었다면 이 일은 2 단계 전에도 가능했고 그 전제가 성립하지 않는다.
+    /// **그 반증 가능성을 열어 두는 것이 이 열이다**(조건 `B8`).
+    pub 타파일새원소: usize,
+    /// 재기만 했나 — `--dry-run`.
+    pub 재기만: bool,
 }
 
 /// 결박 하나의 반경을 바꾼다.
@@ -88,7 +121,7 @@ pub struct Report {
 /// 저장소·2층·의도 저장소 중 하나에 닿지 못하거나, **그 결박이 없거나**, 반경을 모르거나,
 /// 반경이 저장 시점 예산을 넘거나, base 커밋의 투영을 세우지 못하면.
 pub fn run(a: Args) -> Result<Report> {
-    let Args { repo: repo_path, cache_dir, index: index_path, intent: intent_path, id, radius } = a;
+    let Args { repo: repo_path, cache_dir, index: index_path, intent: intent_path, id, radius, dry_run } = a;
     let Some(radius) = Radius::parse(radius) else {
         bail!("반경 `{radius}` 를 모른다 — 아는 것은 {} 다", Radius::NAMES.join(" · "));
     };
@@ -99,7 +132,7 @@ pub fn run(a: Args) -> Result<Report> {
     // **없는 결박은 여기서 멈춘다.** 이 명령은 결박을 만들지 못한다 — 그것이 `pal bind` 다.
     let Some(옛) = intent.get(&id).context("의도 저장소를 읽지 못했다")? else {
         bail!(
-            "결박 `{}` 이 없다 — `pal rebind` 는 있는 결박의 반경만 바꾼다. \
+            "결박 `{}` 이 없다 — `pal radius` 는 있는 결박의 반경만 바꾼다. \
              새로 걸려면 `pal bind <이름> --note <조각>` 이다",
             id.as_str()
         );
@@ -137,11 +170,25 @@ pub fn run(a: Args) -> Result<Report> {
     };
 
     // ── 감시 집합을 HEAD 에서 펴고 기준값을 base 에서 읽는다 ─────────────────
+    let 대상_실물 = head_p
+        .symbol(옛.target)
+        .context("2층을 읽지 못했다")?
+        .context("대상 좌표가 지금 2층에 없다 — 넓히기 전에 그 사실을 먼저 적어야 한다")?;
+    let 대상파일 = 대상_실물.path.as_str().to_owned();
+
     let 감시 = expand(옛.target, &radius, head_p);
     let mut 넓힌: Vec<WatchEntry> = Vec::with_capacity(감시.len());
     let mut base에없던새원소 = 0usize;
+    let mut 타파일새원소 = 0usize;
     let 옛_원소: Vec<SymbolId> = 옛.watch.iter().map(|w| w.symbol).collect();
     for s in 감시 {
+        // **새로 든 원소가 대상과 다른 파일에 있나** — 조건 `B8` 의 축.
+        if !옛_원소.contains(&s) {
+            let 어디 = head_p.symbol(s).context("2층을 읽지 못했다")?.map(|n| n.path);
+            if 어디.is_some_and(|p| p.as_str() != 대상파일) {
+                타파일새원소 += 1;
+            }
+        }
         // 옛 원소는 `with_radius` 가 옛 값으로 덮는다 — 여기서 읽은 값은 안 쓰인다.
         // 그래도 **읽어서 넣는다**: 그래야 그 함수의 보존이 실제로 일했는지 시험이 잰다.
         let base_body: Option<BodyDigest> =
@@ -164,6 +211,7 @@ pub fn run(a: Args) -> Result<Report> {
 
     let 옛반경 = 옛.radius.name();
     let 감시전 = 옛.watch.len();
+    let 대상심볼 = 옛.target.to_hex();
     // ★ **여기가 보존이 일어나는 한 자리다** — 옛 원소의 digest 를 그 함수가 덮는다.
     let 새 = 옛.with_radius(radius, 넓힌);
     let 감시후 = 새.watch.len();
@@ -172,12 +220,18 @@ pub fn run(a: Args) -> Result<Report> {
     let 건수 = intent.count().unwrap_or(0);
     check_budget(건수, 새.watch.len()).map_err(|e| anyhow::anyhow!("{e}"))?;
 
-    intent.record(&새).context("결박을 남기지 못했다")?;
+    // **`--dry-run` 은 여기서만 갈린다.** 예산까지 같은 길을 지나므로, 재기만 한 산출이
+    // *"쓰면 거부될 것"* 을 숨기지 않는다.
+    if !dry_run {
+        intent.record(&새).context("결박을 남기지 못했다")?;
+    }
 
     // 임시 색인은 쓰고 버린다 — 남기면 다음 회차가 그것을 2층으로 오독한다.
     let _ = std::fs::remove_file(&base_index);
 
     Ok(Report {
+        대상심볼,
+        대상파일,
         옛반경,
         새반경: 새.radius.name(),
         감시전,
@@ -185,6 +239,8 @@ pub fn run(a: Args) -> Result<Report> {
         기준시점커밋: base_hex,
         base에없던새원소,
         대상digest차이,
+        타파일새원소,
+        재기만: dry_run,
     })
 }
 
@@ -218,5 +274,5 @@ fn base_commit(bound_at: &pal_core::Snapshot, head: &ledger::LedgerReport) -> Re
 
 /// base 커밋 투영을 붙일 **임시 색인** 자리.
 fn 임시_색인(repo: &Path, base_hex: &str) -> PathBuf {
-    repo.join(".palimpsest").join(format!("rebind-base-{}.redb", &base_hex[..12]))
+    repo.join(".palimpsest").join(format!("radius-base-{}.redb", &base_hex[..12]))
 }
