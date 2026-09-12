@@ -286,13 +286,19 @@ fn process_helper() {
         "spawn-detached-descendant" => {
             let _child = Command::new(std::env::current_exe().expect("self"))
                 .args(["--exact", "process_helper", "--nocapture"])
-                .env("PAL_HELPER_MODE", "delayed-marker")
+                // ★ **오래 사는 손자를 쓴다** (2026-09-12). 짧은 손자를 쓰면 「안 기다렸다」와
+                //   「기계가 느렸다」가 같은 벽시계 값이 된다 — 아래 `오래_끄는_손자` 참고.
+                .env("PAL_HELPER_MODE", "long-delayed-marker")
                 .env("PAL_HELPER_TARGET", target.expect("marker"))
                 .spawn()
                 .expect("detached descendant");
         }
         "delayed-marker" => {
             std::thread::sleep(Duration::from_secs(3));
+            std::fs::write(target.expect("marker"), "escaped\n").expect("marker");
+        }
+        "long-delayed-marker" => {
+            std::thread::sleep(오래_끄는_손자());
             std::fs::write(target.expect("marker"), "escaped\n").expect("marker");
         }
         other => panic!("unknown helper mode {other}"),
@@ -876,6 +882,19 @@ fn timeout_output_cap과_descendant는_bounded_cleanup된다() {
     std::thread::sleep(Duration::from_secs(4));
     assert!(!marker.exists(), "descendant escaped cleanup");
 
+    // ★★ **벽시계 상수가 기계 속도에 걸려 있었다** (2026-09-12 · CI `windows-latest` 가
+    //   `fc961d3` 에서 이것만으로 빨개졌다 — ubuntu·macos 는 초록이었다).
+    //
+    //   앞 판은 손자가 **3 초**를 자고 판정선이 **4 초**였다. 「안 기다렸다」는 대략
+    //   `--timeout 1` + verify 자신의 착수 비용이고, 「기다렸다」는 3 초다 — **둘의 간격이
+    //   1 초**라 느린 러너에서 두 경우가 같은 값이 된다. 그러면 이 시험은 무엇을 재는지가
+    //   기계마다 달라진다.
+    //
+    //   **고친 자**: 손자를 오래 살리고 판정선을 그 절반 아래에 둔다. 그러면 간격이
+    //   초 단위가 아니라 **배수**가 되어 기계 속도가 판정을 못 뒤집는다.
+    //   ⚠ **판정선을 늘리기만 하면 안 된다** — 그러면 「기다렸다」도 통과한다.
+    //   ⚠ 그리고 **잰 값을 실패 문면에 싣는다.** 앞 판은 `assert!(…)` 한 줄이라 CI 로그가
+    //   *"assertion failed"* 만 냈고, 얼마나 걸렸는지를 아무도 못 봤다.
     let (_base, repo, approvals) = root("detached-descendant");
     let marker = repo.parent().expect("base").join("detached-escaped.txt");
     round(
@@ -895,9 +914,35 @@ fn timeout_output_cap과_descendant는_bounded_cleanup된다() {
         verify(&repo, &approvals, "A1", &extra).status.code(),
         Some(1)
     );
-    assert!(started.elapsed() < Duration::from_secs(4));
-    std::thread::sleep(Duration::from_secs(3));
+    let 걸린 = started.elapsed();
+    assert!(
+        걸린 < 판정선(),
+        "verify 가 detached 손자를 기다렸다 — {걸린:?} · 판정선 {:?} · 손자 수명 {:?}",
+        판정선(),
+        오래_끄는_손자()
+    );
+    // 손자가 제 수명을 다 채우고도 마커를 못 쓰는지 본다 — 그것이 청소의 증거다.
+    // **수명보다 넉넉히 더 기다린다.** 덜 기다리면 「청소됐다」와 「아직 안 썼다」가 같아진다.
+    while started.elapsed() < 오래_끄는_손자() + Duration::from_secs(2) {
+        std::thread::sleep(Duration::from_millis(200));
+    }
     assert!(!marker.exists(), "detached descendant escaped cleanup");
+}
+
+/// detached 손자의 수명 — **판정선의 두 배 이상**이어야 한다.
+///
+/// 이 둘의 간격이 시험의 분해능이다. 좁히면 느린 기계에서 「안 기다렸다」와 「기다렸다」가
+/// 같은 값이 되고, 그때 시험은 **기계 속도를 재는 것**이 된다.
+fn 오래_끄는_손자() -> Duration {
+    Duration::from_secs(20)
+}
+
+/// 「verify 가 손자를 안 기다렸다」의 판정선.
+///
+/// `--timeout 1` 에 verify 자신의 착수 비용을 더한 것보다 **훨씬 크고**,
+/// [`오래_끄는_손자`] 보다 **훨씬 작아야** 한다. 두 조건이 같이 서야 이 상수가 뜻을 가진다.
+fn 판정선() -> Duration {
+    Duration::from_secs(8)
 }
 
 #[test]
