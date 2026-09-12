@@ -1,0 +1,56 @@
+# 음성 대조 — 「합 = 분모」 축 ⟨`DL2-10`⟩
+
+> 회차 `2026-09-11-effect-confirmation` · 잰 날 2026-09-12 · HEAD `f75b4b0` + 워킹트리
+
+`DL2-10` 은 *"음성 대조가 「합 = 분모」 축을 **한 번도 안 껐다**"* 였다. 껐다.
+
+## 무엇을 껐나
+
+`crates/pal-cli/src/ledger.rs` 의 `IdentityTally::헤아린다` 에서 `그룹_크기 > 1` 가지의
+**`return` 한 줄을 지웠다.** 그러면 중복 그룹의 심볼이 `순서에_취약` 과 등급 버킷에
+**둘 다** 더해져 `합() = n + 중복수` 가 되고 분모를 넘는다.
+
+```diff
+         if 그룹_크기 > 1 {
+             self.순서에_취약 += 1;
+-            return;
+         }
+```
+
+## 결과 — **발화한다**
+
+```
+$ cargo test -p pal-cli --bin pal 합이_분모와_같다
+     Running unittests src/main.rs (target/debug/deps/pal-d3df312df2a58818)
+
+running 1 test
+test ledger::tests::합이_분모와_같다 ... FAILED
+
+failures:
+
+---- ledger::tests::합이_분모와_같다 stdout ----
+
+thread 'ledger::tests::합이_분모와_같다' (33799420) panicked at crates/pal-cli/src/ledger.rs:938:9:
+assertion `left == right` failed: 합이 심볼 수와 다르다
+  left: 6
+ right: 4
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    ledger::tests::합이_분모와_같다
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 99 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p pal-cli --bin pal`
+```
+
+★★ **이것이 라운드 2 의 `AT2-01` 을 실측으로 닫는다.** 그 반론은 *"이 회차가 세운 「검산」이
+항등식이라 원리상 못 빨개진다"* 였고 합(合)이 문면으로 기각했다 — **기각이 옳았다.**
+합의 문장이 예고한 그대로다: *"`ledger.rs` 의 `return` 을 지우면 … `합() = n + 중복수 ≠ n`
+이 되고 `:705-707` 과 시험이 빨개진다."* 그 예고를 **아무도 안 돌렸던 것**이 `DL2-10` 이고,
+이 파일이 그 자리를 메운다.
+
+⚠ **변이는 되돌렸다** — `git diff crates/pal-cli/src/ledger.rs` 에 이 변이가 없다.
+저장소에 남는 것은 이 산출뿐이고, 회차가 착수 시점에 (가)(*"장치를 안 만든다 — 일회성으로
+돌리고 수만 남긴다"*)를 골랐으므로 변이 스크립트를 저장소에 안 남긴다.

@@ -6355,7 +6355,12 @@ fn check_ledger_pair(root: &Path) -> Result<String> {
             // 구별되지 않는다. 커밋 시각이 없으면 그 사실을 적는다(아래 함수의 처분).
             let 근거 = match 종료_커밋_시각(root, 회차) {
                 Some(t) => format!("종료 커밋 시각 {t}"),
-                None => "커밋 시각 없음 — 가장 최근으로 본다".to_string(),
+                // ⚠ **시각 없는 회차가 여럿이면 그중 사전순 최대가 뽑힌다** ⟨`DL2-04`⟩ —
+                //   `최근에_끝난` 의 두 번째 키다. 그 사실을 여기 적는다. 안 적으면
+                //   읽는 사람이 「사전순은 더 이상 안 쓴다」로 읽는데, 이 가지에서는
+                //   **여전히 사전순이 최종 판정자**다.
+                None => "커밋 시각 없음 — 가장 최근으로 본다(그런 회차가 여럿이면 사전순 최대)"
+                    .to_string(),
             };
             if 검사안.iter().any(|s| s.starts_with(회차.as_str())) {
                 format!("최근 끝난 회차 `{회차}` 가 검사에 들었다 ({근거})")
@@ -6448,7 +6453,67 @@ fn 종료_커밋_시각(root: &Path, 회차: &str) -> Option<i64> {
 
 #[cfg(test)]
 mod 최근_끝난_시험 {
-    use super::최근에_끝난;
+    use super::{종료_커밋_시각, 최근에_끝난, 회차_뿌리};
+
+    /// ★★ **`종료_커밋_시각` 자신을 재는 유일한 시험이다.** ⟨`DL1-03`·`DL2-04`·`DL2-26`⟩
+    ///
+    /// 아래 셋은 시각을 **닫힘 함수로 주입**해서 고르는 규칙만 잰다. 그러면 「커밋 시각」을
+    /// 실제로 `git` 에서 읽는 함수는 **한 번도 안 걸린다** — 그 함수가 `%at` 으로 돌아가거나
+    /// 경로를 틀려도 셋이 전부 초록이다. 같은 자리를 라운드 1 `R3` 과 라운드 2 `AT2-04` 가
+    /// 두 번 쳤고, 그 재발이 이 시험이 없다는 사실 자체였다.
+    ///
+    /// **RED 는 관측됐다** — 이 시험을 세우기 전 `grep` 으로 `종료_커밋_시각` 을 부르는
+    /// `#[test]` 가 **0** 이었다.
+    #[test]
+    fn 종료_커밋_시각은_report_md_의_커밋_시각을_읽는다() {
+        let 뿌리 = std::env::temp_dir()
+            .join(format!("pal-xtask-close-ct-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&뿌리);
+        let 회차 = "2026-01-02-ct";
+        let 방 = 뿌리.join(회차_뿌리).join(회차);
+        std::fs::create_dir_all(&방).unwrap();
+
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&뿌리)
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?} 가 실패했다");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+
+        // ① 커밋 안 된 `report.md` 는 `None` 이다 — 그 처분은 `최근에_끝난` 이 진다.
+        std::fs::write(방.join("report.md"), "# 종료 보고
+").unwrap();
+        assert_eq!(종료_커밋_시각(&뿌리, 회차), None);
+
+        // ② 커밋하면 그 커밋의 **커밋 시각**(`%ct`)이 나온다.
+        git(&["add", "-A"]);
+        let 첫 = "1800000000";
+        std::process::Command::new("git")
+            .arg("-C")
+            .arg(&뿌리)
+            .args(["commit", "-q", "-m", "report"])
+            .env("GIT_AUTHOR_DATE", "1700000000 +0000")
+            .env("GIT_COMMITTER_DATE", format!("{첫} +0000"))
+            .status()
+            .unwrap();
+        assert_eq!(종료_커밋_시각(&뿌리, 회차), Some(1_800_000_000));
+
+        // ★ **음성 대조 — 작성 시각(`%at`)을 읽고 있으면 이 줄이 빨개진다.**
+        //   위 커밋의 `%at` 은 1700000000 이고 `%ct` 는 1800000000 이라 둘이 갈린다.
+        assert_ne!(종료_커밋_시각(&뿌리, 회차), Some(1_700_000_000));
+
+        // ③ 그 회차에 `report.md` 가 없으면 `None` 이다 — 경로를 틀리게 잡으면 빨개진다.
+        assert_eq!(종료_커밋_시각(&뿌리, "2026-01-02-없는회차"), None);
+
+        let _ = std::fs::remove_dir_all(&뿌리);
+    }
 
     fn 회차들(이름: &[&str]) -> Vec<String> {
         이름.iter().map(|s| (*s).to_string()).collect()
