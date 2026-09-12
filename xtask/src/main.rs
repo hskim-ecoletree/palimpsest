@@ -2047,6 +2047,19 @@ const WATCH_ENTRY_SITES: &[(&str, &str)] = &[
     // 제안은 좌표까지만 산출한다(`Classification`). 그것이 옛 F09 §4.1(D32)이 요구한
     // *"`watch_snapshot` 은 신고받지 않는다"* 를 인입 경로에서도 지키는 형태다.
     ("crates/pal-cli/src/narrative.rs", "승인이 투영에서 읽어 만든다 — 제안이 지고 오지 않는다"),
+    // ★ **회차 `2026-09-12-binding-radius-in-use` 가 더한 자리이고, 이 검사가 그것을
+    //   잡아서 여기 적힌다** (조건 `A5-a` 가 그 발화를 RED 로 등록했다).
+    //
+    //   `pal rebind` 는 **반경만 바꾼다.** 넓히면서 새로 드는 감시 원소의 `digest` 를
+    //   **`bound_at` 의 base 커밋 투영에서** 읽는다 — 그러므로 이 자리도 **투영에서
+    //   읽는다.** 등록된 앞 셋과 **같은 종류이고 스냅샷만 다르다.**
+    //
+    //   ⚠ **「옛 결박에서 물려받는다」가 아니다.** 옛 감시 원소의 값은 이 자리가
+    //   아니라 `Binding::with_radius` 가 덮는다(`crates/pal-core/src/binding.rs`) —
+    //   부르는 쪽이 무엇을 읽어 왔든 그 함수에서 옛 값으로 되돌아간다. 그래서 여기
+    //   실리는 것은 **새 원소의 기계가 잰 값**뿐이고, 옛 F09 §4.1(D32)의
+    //   *"`watch_snapshot` 은 신고받지 않는다"* 가 그대로 성립한다.
+    ("crates/pal-cli/src/rebind.rs", "반경만 바꿀 때 **base 커밋 투영에서** 읽어 만든다 — 스냅샷만 다르다"),
 ];
 
 fn check_anchor_is_measured(root: &Path) -> Result<String> {

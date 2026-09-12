@@ -403,6 +403,50 @@ impl Binding {
             promoted_by: PromotedBy::Hand,
         }
     }
+
+    /// **반경만 바꾼다** — 여섯을 그대로 둔다 (회차 `2026-09-12-binding-radius-in-use`).
+    ///
+    /// # 왜 함수가 필요한가 — `pal bind` 재호출이 일을 지운다
+    ///
+    /// 반경을 바꾸는 유일한 길이 `pal bind` 재호출이었고, 그것은 `bound_at` 과 감시
+    /// 다이제스트를 **HEAD 로 재기준한다.** 그러면 지금 `stale` 인 결박이 조용히
+    /// `fresh` 가 된다 — 격리 실측에서 `stale 7 → 6` 이었다. **반경을 넓히는 일이
+    /// 원리상 데이터 손실**이라는 뜻이고, 그것을 막는 것이 이 함수다.
+    ///
+    /// # 무엇을 보존하나 — 여섯
+    ///
+    /// `id` · `subject` · `note` · `bound_at` · `bound_at_time` 다섯은 `..self` 가 지고,
+    /// 여섯째 — **넓히기 전 감시 집합의 `(symbol, digest)` 쌍 전부** — 는 이 함수가 진다.
+    /// 그것이 `if` 가 아니라 **여기 한 자리**에 있어야 하는 까닭:
+    ///
+    ///   · 옛 원소의 `digest` 를 새로 읽으면 **그 원소가 켠 `stale` 이 사라진다**
+    ///   · 옛 원소가 새 집합에서 **빠지면** 지켜보던 것이 줄고 그만큼 덜 본다
+    ///
+    /// 그래서 넓힌 집합에 옛 원소가 없으면 **되넣는다.** 반경이 좁아지는 방향으로도
+    /// 같다 — 감시 집합은 이 함수를 지나 **줄지 않는다.**
+    ///
+    /// # `promoted_by` 도 안 바꾼다
+    ///
+    /// 반경을 넓히는 것은 승격이 아니다. [`PromotedBy`] 가 *"셋째 길이 생기려면 이
+    /// 열거를 늘려야 한다"* 로 세운 것을 반경 변경이 우회하지 않는다.
+    #[must_use]
+    pub fn with_radius(self, radius: Radius, 넓힌_감시: Vec<WatchEntry>) -> Self {
+        let 옛: std::collections::BTreeMap<SymbolId, BodyDigest> =
+            self.watch.iter().map(|w| (w.symbol, w.digest)).collect();
+        let mut watch: Vec<WatchEntry> = 넓힌_감시
+            .into_iter()
+            // **옛 원소면 옛 값을 쓴다.** 부르는 쪽이 무엇을 읽어 왔든 여기서 덮인다.
+            .map(|w| WatchEntry { symbol: w.symbol, digest: *옛.get(&w.symbol).unwrap_or(&w.digest) })
+            .collect();
+        for (symbol, digest) in 옛 {
+            if !watch.iter().any(|w| w.symbol == symbol) {
+                watch.push(WatchEntry { symbol, digest });
+            }
+        }
+        // 결정론적 순서 — 같은 입력에서 같은 정본 JSONL 이 나온다(`A5` 의 재현).
+        watch.sort_by(|a, b| a.symbol.cmp(&b.symbol));
+        Self { radius, watch, ..self }
+    }
 }
 
 /// **판정할 수 없는 이유** — 옛 F09 §2.1 · [R16].
@@ -961,6 +1005,138 @@ mod tests {
                 at: vec![b],
             }
         );
+    }
+
+    /// ★★ **조건 `C2-a`** — `Undeterminable` 이 `Stale` 을 **가린다.**
+    ///
+    /// 위 시험은 *"사라진 원소에서 판정 불가가 나온다"* 까지다. 이 시험이 재는 것은 다르다 —
+    /// **동시에 변한 것이 있어도** 판정이 `Stale` 이 아니라 `Undeterminable` 이라는 것.
+    /// [`BindingStatus::evaluate`] 의 ②가 ③④ **앞에서** 반환하기 때문이다.
+    ///
+    /// # 왜 이것이 회차 `2026-09-12-binding-radius-in-use` 의 조건인가
+    ///
+    /// 반경을 넓히면 감시 원소가 늘고, 늘어난 원소 하나가 사라지면 **그 결박은
+    /// `Stale`/`Fresh` 라는 답 자체를 잃는다.** 코퍼스 실측이 그것을 `callers` 반경에서
+    /// **84 회** · `symbol` 반경에서 **0 회** 로 적었다 — 넓히는 일의 **비용**이고,
+    /// 드문 사고가 아니라 예상된 대량 발생이다.
+    ///
+    /// **그러므로 넓히는 쪽이 그 수를 세고 상한을 지켜야 한다**(조건 `C2`·`C4`).
+    /// 이 시험은 그 상한이 재려는 경로가 **실재함**을 붙든다.
+    #[test]
+    fn 사라진_감시_원소가_변한_것을_가린다() {
+        let a = 심볼("a");
+        let b = 심볼("b");
+        let 옛 = BodyDigest::of_normalized(b"x");
+        let 새 = BodyDigest::of_normalized(b"y");
+        let 결박 = 결박_반경(a, &[(a, 옛), (b, 옛)], crate::Radius::Callers);
+
+        // ① 원소가 사라지지 않았으면 **`Stale` 이다** — 이 하한이 없으면 아래 주장이
+        //    「원래 Stale 이 아니었다」와 구별되지 않는다.
+        assert_eq!(
+            상태(&결박, |s| if s == a { Now::Digest(새) } else { Now::Digest(옛) }),
+            CodeFreshness::Stale { triggered_by: vec![a] },
+            "대상이 변했는데 Stale 이 아니다 — 이 시험의 ②가 무엇을 가리는지 말할 수 없게 된다"
+        );
+
+        // ② 대상이 **같은 방식으로** 변했는데 원소 하나가 사라지면 — **가려진다.**
+        let 가려진 = 상태(&결박, |s| if s == b { Now::Gone } else { Now::Digest(새) });
+        assert_eq!(
+            가려진,
+            CodeFreshness::Undeterminable {
+                reason: UndeterminableReason::WatchMemberGone,
+                at: vec![b],
+            },
+            "가려지지 않았다 — evaluate 의 ②가 ③④ 뒤로 옮겨졌다는 뜻이고, 그러면 넓힘의 \
+             비용 상한(조건 `C4`)이 다른 것을 재고 있다"
+        );
+        // ★ **그리고 `triggered_by` 가 사라졌다** — 무엇이 변했는지가 산출에서 없어진다.
+        assert!(
+            !matches!(가려진, CodeFreshness::Stale { .. }),
+            "가려진 판정이 아직 Stale 이다"
+        );
+    }
+
+    /// ★ **조건 `A1` 의 여섯째** — [`Binding::with_radius`] 가 옛 `digest` 를 지킨다.
+    ///
+    /// 부르는 쪽이 무엇을 읽어 왔든 옛 원소는 옛 값으로 되돌아간다. 그것이 **한 자리에**
+    /// 있어야 하는 까닭: 옛 원소의 값을 새로 읽으면 **그 원소가 켠 `stale` 이 사라진다.**
+    #[test]
+    fn with_radius_는_옛_digest_를_지킨다() {
+        let a = 심볼("a");
+        let b = 심볼("b");
+        let 옛 = BodyDigest::of_normalized(b"x");
+        let 새 = BodyDigest::of_normalized(b"y");
+        let 결박 = 결박_반경(a, &[(a, 옛)], crate::Radius::Symbol);
+
+        // 부르는 쪽이 **대상까지 HEAD 값으로** 읽어 왔다고 하자 — 흔한 실수다.
+        let 넓힌 = 결박.clone().with_radius(
+            crate::Radius::Callers,
+            vec![WatchEntry { symbol: a, digest: 새 }, WatchEntry { symbol: b, digest: 새 }],
+        );
+
+        let 대상_값 = 넓힌.watch.iter().find(|w| w.symbol == a).expect("대상이 감시에 있다").digest;
+        assert_eq!(대상_값, 옛, "옛 원소의 digest 가 덮였다 — 그 원소가 켠 stale 이 사라진다");
+        let 새_값 = 넓힌.watch.iter().find(|w| w.symbol == b).expect("새 원소가 감시에 있다").digest;
+        assert_eq!(새_값, 새, "새 원소는 부르는 쪽이 읽어 온 값을 쓴다");
+
+        // 그리고 다섯이 그대로다.
+        assert_eq!(넓힌.id, 결박.id);
+        assert_eq!(넓힌.subject, 결박.subject);
+        assert_eq!(넓힌.note, 결박.note);
+        assert_eq!(넓힌.bound_at, 결박.bound_at);
+        assert_eq!(넓힌.bound_at_time, 결박.bound_at_time);
+        assert_eq!(넓힌.promoted_by, 결박.promoted_by, "반경 변경은 승격이 아니다");
+        assert_eq!(넓힌.radius, crate::Radius::Callers);
+    }
+
+    /// ★ **감시 집합은 [`Binding::with_radius`] 를 지나 줄지 않는다.**
+    ///
+    /// 반경이 **좁아지는** 방향으로도 같다 — 줄이면 지켜보던 것이 줄고 그만큼 덜 본다.
+    #[test]
+    fn with_radius_는_감시_집합을_줄이지_않는다() {
+        let a = 심볼("a");
+        let b = 심볼("b");
+        let d = BodyDigest::of_normalized(b"x");
+        let 넓은 = 결박_반경(a, &[(a, d), (b, d)], crate::Radius::Callers);
+
+        // `symbol` 로 되돌리면 부르는 쪽이 대상 하나만 들고 온다.
+        let 좁힌 = 넓은.clone().with_radius(
+            crate::Radius::Symbol,
+            vec![WatchEntry { symbol: a, digest: d }],
+        );
+        assert_eq!(좁힌.radius, crate::Radius::Symbol, "선언된 반경은 좁아진다");
+        assert_eq!(
+            좁힌.watch.len(),
+            2,
+            "감시 집합이 줄었다 — 지켜보던 것을 잃는다. 선언(radius)과 실물(watch)은 다른 축이다"
+        );
+    }
+
+    /// 감시 집합의 순서가 결정론적이다 — 같은 입력에서 같은 정본 JSONL 이 나온다(`A5`).
+    #[test]
+    fn with_radius_의_감시_순서가_결정론적이다() {
+        let a = 심볼("a");
+        let b = 심볼("b");
+        let c = 심볼("c");
+        let d = BodyDigest::of_normalized(b"x");
+        let 결박 = 결박_반경(a, &[(a, d)], crate::Radius::Symbol);
+        let 하나 = 결박.clone().with_radius(
+            crate::Radius::Callers,
+            vec![
+                WatchEntry { symbol: c, digest: d },
+                WatchEntry { symbol: a, digest: d },
+                WatchEntry { symbol: b, digest: d },
+            ],
+        );
+        let 둘 = 결박.with_radius(
+            crate::Radius::Callers,
+            vec![
+                WatchEntry { symbol: b, digest: d },
+                WatchEntry { symbol: c, digest: d },
+                WatchEntry { symbol: a, digest: d },
+            ],
+        );
+        assert_eq!(하나.watch, 둘.watch, "입력 순서가 산출을 바꿨다 — 재현이 성립하지 않는다");
     }
 
     #[test]

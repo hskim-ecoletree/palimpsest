@@ -13,6 +13,7 @@ use pal_core::{Capable, Language};
 
 mod attach;
 mod bind;
+mod rebind;
 mod cache;
 mod defect;
 mod doctor;
@@ -151,6 +152,33 @@ enum Command {
         /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
         #[arg(long)]
         intent: Option<PathBuf>,
+    },
+    /// 있는 결박의 **반경만 바꾼다** — 낡음 판정을 보존한다
+    ///
+    /// `pal bind` 재호출은 `bound_at` 과 감시 다이제스트를 **HEAD 로 재기준해서** 지금
+    /// `stale` 인 결박을 조용히 `fresh` 로 만든다. 이 명령은 여섯을 그대로 둔다 —
+    /// `id`·`subject`·`note`·`bound_at`·`bound_at_time`·**옛 감시 원소의 다이제스트**.
+    ///
+    /// **결박을 새로 만들지 못한다** — 없는 결박을 지목하면 실패한다.
+    Rebind {
+        /// 어느 결박인가 — **결박 id** 다(`pal touch` 와 `pal query binding.status` 가 찍는다)
+        id: String,
+        /// 무엇까지 지켜보나 — `symbol` · `callers` · `closure:<k>` · `files:<경로,…>`.
+        #[arg(long)]
+        radius: String,
+        /// 저장소 경로
+        #[arg(long, default_value = ".")]
+        repo: PathBuf,
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        #[arg(long)]
+        index: Option<PathBuf>,
+        /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
+        #[arg(long)]
+        intent: Option<PathBuf>,
+        /// 산출을 기계가 읽는 형태로
+        #[arg(long)]
+        json: bool,
     },
     /// 문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
     ///
@@ -544,6 +572,41 @@ fn main() -> Result<()> {
             bind::Args { repo: &repo, rev: at.as_deref(), cache_dir, index, intent,
                          name: &name, note: &note, radius: &radius },
         ),
+        Command::Rebind { id, radius, repo, cache_dir, index, intent, json } => {
+            let r = rebind::run(rebind::Args {
+                repo: &repo, cache_dir, index, intent, id: &id, radius: &radius,
+            })?;
+            if json {
+                println!("{}", serde_json::json!({
+                    "결박": id,
+                    "옛반경": r.옛반경,
+                    "새반경": r.새반경,
+                    "감시전": r.감시전,
+                    "감시후": r.감시후,
+                    "기준시점커밋": r.기준시점커밋,
+                    "base에없던새원소": r.base에없던새원소,
+                    "대상digest차이": r.대상digest차이,
+                }));
+            } else {
+                println!();
+                println!("반경을 바꿨습니다. **결박은 그대로입니다.**");
+                println!("  결박    [{id}]");
+                println!("  반경    {} → {}", r.옛반경, r.새반경);
+                println!("  감시    {} → {} 개", r.감시전, r.감시후);
+                println!("  기준    {} ← 새 감시 원소의 다이제스트를 이 커밋에서 읽었습니다",
+                         &r.기준시점커밋[..7.min(r.기준시점커밋.len())]);
+                if r.base에없던새원소 > 0 {
+                    println!("  ⚠ 그 커밋에 없던 새 원소 {} 개 — 기준값이 원리상 없어 지금 값을 썼습니다",
+                             r.base에없던새원소);
+                }
+                if r.대상digest차이 {
+                    println!("  ⚠ 대상의 저장된 다이제스트와 그 커밋의 값이 **다릅니다** —");
+                    println!("     이 결박에서 base 커밋은 결박한 순간의 충실한 대리가 아닙니다");
+                }
+                println!();
+            }
+            Ok(())
+        }
         Command::Defect { rev, repo, history_limit, json } => {
             let report = defect::run(
                 &rev,
