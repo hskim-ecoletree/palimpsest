@@ -1,0 +1,180 @@
+# `E2` — 테스트도 CI 도 아닌 것이 이 회차의 산출을 돌린 출력
+#
+# 잰 때  2026-09-12T02:30:29Z · HEAD 9e092e322983997e94194da08836a2496a19cd68
+# 돌린 것 사람(메인)이 셸에서 직접 — `cargo test` 도 `cargo xtask check` 도 CI 도 아니다
+# 워킹트리 커밋 안 된 변경 1(이 파일 자신)
+#
+# ⚠ **한 자리만 줄였다** — `pal query narrative.unbound` 의 전 출력은 **8550 줄 ·
+#   466960 바이트**(sha256 `d64c509d6d8bd6929c9f922f98d72534b9fb2bd82c419f4fd31a9798d055851d`)
+#   이고 여기에는 **머리 40 줄**만 싣는다. 회차 디렉터리에 반 메가를 넣지 않기 위해서다.
+#   ★ 줄인 것이 판정에 쓰이는 자리는 **머리 여섯 줄**(결박·후보·미결박·뺀 조각·신호별)이고
+#   그것은 통째로 들어 있다. 나머지는 같은 형식의 조각 나열이다.
+#   나머지 셋은 **전 출력**이다.
+#
+--- 전 출력 (여기서부터 바이트 그대로 · 위는 머리) ---
+
+$ pal query narrative.unbound   # ㉢ 의 RED 를 관측한 바로 그 명령
+#   `observations/red-129.txt` 에서 이것이 `rc=1` · `Error: 개체를 남기지 못했다` 였다.
+#   `.palimpsest/intent.redb` 는 **그때도 지금도 있다** — 1351680 바이트.
+
+■ narrative.unbound  
+
+  결박됨 37 · 후보 있음 647 · **미결박 1705**
+  이름이 아직 없어 뺀 조각 **4733** — `pal narrative` 를 한 번 돌리면 이름이 섭니다
+
+■ 후보를 좁혔는가 — 신호별
+  fenced-path            조각     7 · 후보 중앙    65 · 최대   232 · **셋 이하 0**
+  span                   조각   640 · 후보 중앙     3 · 최대    59 · **셋 이하 430**
+  **「셋 이하」가 사람이 실제로 고를 수 있는 것입니다.**
+
+  decision/01M08TP7PAFKNG6QPQP1XHYNZ1
+      .claude/agents/baseline-runner.md#_preamble
+      너는 palimpsest 기준선 러너다. 판정하지 않는다 — 재고 적을 뿐이다.
+      신호 0 — **이 조각은 코드를 아예 안 가리킵니다**
+
+  decision/01M08TP7PXWQDB68564KPPE1Y8
+      .claude/agents/baseline-runner.md#리턴-형식-이것만-메인에-돌아간다
+      리턴 형식 — 이것만 메인에 돌아간다
+      신호 0 — **이 조각은 코드를 아예 안 가리킵니다**
+
+  decision/01M08TP7PJP3B0AMP0974GSWHY
+      .claude/agents/baseline-runner.md#절대-규칙
+      절대 규칙
+      신호 30 — 신호는 있는데 대장·인덱스에서 아무것도 못 찾았습니다
+
+  decision/01M08TP7PR4ZWB4CEXKGBXDNGW
+      .claude/agents/baseline-runner.md#절차
+      절차
+      신호 4 — 신호는 있는데 대장·인덱스에서 아무것도 못 찾았습니다
+
+  decision/01M08TP7Q27Q6SCD866JYF0618
+      .claude/agents/corpus-surveyor.md#_preamble
+      너는 실측자다. 해석하지 않는다 — 세고 적을 뿐이다.
+      신호 0 — **이 조각은 코드를 아예 안 가리킵니다**
+
+  decision/01M08TP7QEVSTRQZPKQH7Y0K73
+      .claude/agents/corpus-surveyor.md#리턴-형식
+      리턴 형식
+      신호 0 — **이 조각은 코드를 아예 안 가리킵니다**
+…⟨8510 줄 줄임 — 위 sha256 이 전문을 진다⟩
+  ← 종료값 0   ★ **RED 가 GREEN 이 됐다**
+
+$ pal ledger
+
+Snapshot  palimpsest@9e092e3+worktree  (워킹트리)
+저장소    선언 1 · 본 것 1
+범위      매니페스트 없음 — 경로에서 유도했습니다 (선언이 아니라 추정)
+
+워킹트리  9e092e3 와 같음  ·  인덱스 신뢰 1311 · 다시 잼 0
+
+파일      1311
+  parsed             142  파싱됨
+  partial              0  일부만 파싱됨
+  unsupported        812  미지원  추출기 없음(로드맵)
+  unrecognized       356  언어 미인식
+  excluded             0  설정으로 제외
+  binary               1  이진 파일
+  generated            0  생성물
+
+언어      Markdown          L0  unavailable      606 파일  ·  텍스트만 · 결박 불가
+          Python            L0  unavailable      165 파일  ·  텍스트만 · 결박 불가
+          Rust              L1  ordinal          141 파일  ·  구조 · 선언 순서
+          TOML              L0  unavailable       29 파일  ·  텍스트만 · 결박 불가
+          Shell             L0  unavailable        6 파일  ·  텍스트만 · 결박 불가
+          JSON              L0  unavailable        3 파일  ·  텍스트만 · 결박 불가
+          YAML              L0  unavailable        2 파일  ·  텍스트만 · 결박 불가
+          JavaScript        L0  unavailable        1 파일  ·  텍스트만 · 결박 불가
+          TypeScript        L2  exact              1 파일  ·  참조 해소 · 정확
+
+          ← 결박 불가 언어 7개 · 812 파일. 이 파일들에는 좌표가 없습니다
+
+정체성    심볼 3332
+  순서에 취약              20  같은 이름·종류가 여럿 · 선언 순서로 가렸습니다 — 순서가 바뀌면 정체성이 맞바뀝니다
+                          ↑ **겹친 자리의 심볼 전원**입니다(첫 선언 포함) — `#79` 본문의 `ordinal>0` 보다 큽니다
+  등급이 낮음            3306  이름이 겹치지 않았고 추출기가 스코프를 못 풀었습니다
+  정확                   6  이름이 겹치지 않았고 참조가 해소됩니다
+  불가                   0  좌표를 세울 수 없습니다
+          ← 검산 20 + 3306 + 6 + 0 = 3332 · 2층에 들어가는 심볼 3332
+
+캐시      적중 1311 · 빗나감 0
+
+provider  (이 빌드에 provider 포트가 없습니다 — F21 미구축)
+조달      (이 빌드에 관측 수용이 없습니다 — F16 미구축)
+감지기    추출기 f09-import-sites · 문법 acb9630 · HEAD 그대로
+
+  ← 종료값 0
+
+$ pal symbols /dev/null   # `#66` 전제 ② 를 재는 명령
+Error: 확장자 `.` 를 언어로 알지 못한다 — 아는 것은 Kotlin · Java · JavaScript · TypeScript · Rust 다섯 이다
+  ← 종료값 1
+
+$ pal doctor
+
+■ 불변식 여덟 — 표본 (불변식마다 최대 512 단위)
+
+  1  ok    검사 494 · 표본 밖 8384 · 위반 0
+      모든 엣지의 양 끝 노드가 존재한다
+      담지 못하는 자리: AUTHORED_BY(F05) · FOLLOWS(F05) · INTRODUCED_BY(F05) · MANIFESTS_AT(F05) · RESOLVED_BY(F05) · TOUCHES(F05)
+  2  ok    검사 647 · 표본 밖 14640 · 위반 0
+      모든 노드·엣지가 스키마에 등록된 라벨·타입이고 필수 속성을 갖는다
+      담지 못하는 자리: Actor(F05) · Change(F05) · Defect(F05) · Journey(F19) · NarrativeItem(F12) · NarrativeRefusal(F12) · AUTHORED_BY(F05) · FOLLOWS(F05) · INTRODUCED_BY(F05) · MANIFESTS_AT(F05) · RESOLVED_BY(F05) · TOUCHES(F05)
+  3  ok    검사 625 · 표본 밖 5784 · 위반 0
+      한 노드의 속성 producer 들이 그 노드의 provenance 와 정합한다
+      담지 못하는 자리: Actor(F05) · Change(F05) · Defect(F05) · Journey(F19) · NarrativeItem(F12) · NarrativeRefusal(F12)
+  4  (모집단이 없습니다)
+      inferred 노드의 evidence_refs 가 비어 있지 않다
+      담지 못하는 자리: NarrativeItem(F12)
+  5  (모집단이 없습니다)
+      candidate 후보 집합의 크기가 K 이하이고 초과분에 대응하는 UnresolvedRef 가 있다
+      담지 못하는 자리: INTRODUCED_BY(F05)
+  6  (모집단이 없습니다)
+      모든 Residual·ScopeReduction 이 실재하는 좌표에 결박되어 있다
+      담지 못하는 자리: Residual(F15) · ScopeReduction(F20)
+  7  (모집단이 없습니다)
+      2층의 결박 색인이 가리키는 실체가 의도 저장소에 있다
+      담지 못하는 자리: BindingIndex(F09)
+  8  (모집단이 없습니다)
+      낡음 등급이 전파 규칙과 정합한다 — live 노드의 입력에 stale 이 없다
+      담지 못하는 자리: DerivedNode(F17)
+
+■ 위반 (0)
+  없습니다. **`clean` 이 아닙니다** — 위 표의 모집단과 표본을 함께 읽으십시오.
+
+■ 잔여 (3) — **검사하지 못한 것은 "이상 없음"이 아닙니다**
+  표본 밖(outside-sample) · 좌표 8384건
+      불변식 1 — 모든 엣지의 양 끝 노드가 존재한다
+      해소: 전수 검사(`pal doctor --full`)
+  표본 밖(outside-sample) · 좌표 14640건
+      불변식 2 — 모든 노드·엣지가 스키마에 등록된 라벨·타입이고 필수 속성을 갖는다
+      해소: 전수 검사(`pal doctor --full`)
+  표본 밖(outside-sample) · 좌표 5784건
+      불변식 3 — 한 노드의 속성 producer 들이 그 노드의 provenance 와 정합한다
+      해소: 전수 검사(`pal doctor --full`)
+
+■ 이 답의 근거
+  Snapshot  palimpsest@9e092e3+worktree
+  대장      parsed 142 · partial 0 · unsupported 812 · unrecognized 356 / 1311 파일
+  2층       심볼 3332 색인됨
+  생략      없음 (명시)
+  이관      1311건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1311건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  **안 남았습니다** — 이 표면은 아직 질의 로그를 쓰지 않습니다
+  크기      약 2514835 토큰 **이상** (잰 것: 10059340 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · graph.doctor · 미구축 F05 · F15 · F17 · F20
+
+
+■ 설치 검사 6개
+  잔여 1  설정 파일이 유효한 JSON 인가
+      .claude/settings.json 가 없다 — 읽을 것이 없다
+  잔여 2  매니페스트가 실물과 맞는가
+      설치를 찾지 못했다 — 대조할 상대가 없다
+  잔여 3  여기가 설치 루트인가
+      설치를 찾지 못했다
+  ok   4  `pal` 실행 파일을 찾을 수 있는가
+      /Users/incognito/dev/projects/palimpsest/target/release/pal
+  ok   5  `.gitignore` 에 파생이 등재됐는가
+      파생 3개가 전부 등재됐다
+  잔여 6  등록된 훅이 실제로 도는가
+      설치를 찾지 못했다 — 등록된 훅이 없다
+
+  ← 종료값 0
