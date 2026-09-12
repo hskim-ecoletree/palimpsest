@@ -1,0 +1,29 @@
+⑤ 실 이력 · ditto(exact) · 반경 symbol — 거짓 양성률 상한 10%
+      3b1e8563..6f298c8e  3656b7e8  orphaned  —                          tests/core/charter-region.test.ts                    | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  70566199  orphaned  —                          tests/cli/push-gate-hook-provenance.test.ts          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  75b07766  orphaned  —                          tests/cli/prism-cli.test.ts                          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  83acbda6  orphaned  —                          tests/core/autopilot-approval-artifact.test.ts       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  c05bda51  orphaned  —                          tests/acg/fitness-injected-provider.test.ts          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  c5060762  orphaned  —                          tests/scripts/check-npx-distribution.test.ts         | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  d4aeffd7  orphaned  —                          tests/core/land-commit.test.ts                       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  d7935ead  orphaned  —                          tests/core/provisioner.test.ts                       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  dc57271e  orphaned  —                          tests/cli/autopilot-loop-cli.test.ts                 | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  dc978e1d  orphaned  —                          tests/integration/coverage-depth-dial.test.ts        | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+
+⑤ 실 이력 · ditto(exact) · 반경 callers — 거짓 양성률 상한 30%
+      3b1e8563..6f298c8e  3656b7e8  orphaned  —                          tests/core/charter-region.test.ts                    | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  70566199  orphaned  —                          tests/cli/push-gate-hook-provenance.test.ts          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  75b07766  orphaned  —                          tests/cli/prism-cli.test.ts                          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  83acbda6  orphaned  —                          tests/core/autopilot-approval-artifact.test.ts       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  c05bda51  orphaned  —                          tests/acg/fitness-injected-provider.test.ts          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  c5060762  orphaned  —                          tests/scripts/check-npx-distribution.test.ts         | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  d4aeffd7  orphaned  —                          tests/core/land-commit.test.ts                       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  d7935ead  orphaned  —                          tests/core/provisioner.test.ts                       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  dc57271e  orphaned  —                          tests/cli/autopilot-loop-cli.test.ts                 | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  dc978e1d  orphaned  —                          tests/integration/coverage-depth-dial.test.ts        | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+
+=== 결과 ===
+  ok    ⑤ ditto(exact)/symbol 표본  — 커밋 119개 훑음 · 바뀐 파일의 심볼에 결박 · 표본 10 · stale 0 · orphaned 10 — **거짓 양성 판정은 게이트에 목록으로** (상한 10%)
+  ok    ⑤ ditto(exact)/callers 표본  — 커밋 119개 훑음 · 바뀐 파일의 심볼에 결박 · 표본 10 · stale 0 · orphaned 10 — **거짓 양성 판정은 게이트에 목록으로** (상한 30%)
+=== 관측된 사유 === []
+rc=0

@@ -1,0 +1,2179 @@
+{
+ "symbol": {
+  "바인딩수": 20,
+  "걸림": 20,
+  "이름후보": 40,
+  "watch_total": 20,
+  "watch_per": {
+   "3656b7e8": 1,
+   "59632e02": 1,
+   "70566199": 1,
+   "75b07766": 1,
+   "7965dd2b": 1,
+   "83acbda6": 1,
+   "95ed86da": 1,
+   "a88539ce": 1,
+   "c05bda51": 1,
+   "c5060762": 1,
+   "ced475c1": 1,
+   "d4aeffd7": 1,
+   "d7935ead": 1,
+   "dc57271e": 1,
+   "dc978e1d": 1,
+   "dce3f4f5": 1,
+   "e1cbf968": 1,
+   "ede9995c": 1,
+   "f40907a7": 1,
+   "fb57cbbb": 1
+  },
+  "기준분포": {
+   "fresh": 20
+  },
+  "핀분포": {
+   "orphaned": 13,
+   "fresh": 6,
+   "stale": 1
+  },
+  "전이": {
+   "3656b7e8": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "70566199": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "75b07766": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "83acbda6": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "c05bda51": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "c5060762": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "d4aeffd7": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "d7935ead": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "dc57271e": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "dc978e1d": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "e1cbf968": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "ede9995c": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "f40907a7": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "ced475c1": [
+    "15447478..a822aacf",
+    "stale"
+   ]
+  },
+  "전이수": 14,
+  "사유": {},
+  "커밋수": 119,
+  "시작": "d6ee4ad6",
+  "바인딩목록": [
+   "3656b7e8",
+   "59632e02",
+   "70566199",
+   "75b07766",
+   "7965dd2b",
+   "83acbda6",
+   "95ed86da",
+   "a88539ce",
+   "c05bda51",
+   "c5060762",
+   "ced475c1",
+   "d4aeffd7",
+   "d7935ead",
+   "dc57271e",
+   "dc978e1d",
+   "dce3f4f5",
+   "e1cbf968",
+   "ede9995c",
+   "f40907a7",
+   "fb57cbbb"
+  ],
+  "targets": {
+   "3656b7e8": "12526580eb4fca38461bdcbad7ea4da71399565760772cc6866c0e405dc802d0",
+   "59632e02": "19d6fc066734f338080bf60741e3469baffdb57ca45555e19222e31cb53c998a",
+   "70566199": "1580400e6a810f9d5eed260647f4a9745af6d5f51069ea7bd433db8efea340cf",
+   "75b07766": "58d1116c18f51d0e8ec15e1c8b30e10a62053a6de96c330911d844c7bc55e589",
+   "7965dd2b": "75050f10a074d48c85a846789bce2e612788029bf66f56a59b027be2b8417dd5",
+   "83acbda6": "38c47faf7c076ef76b6bff047abcc0d37fffd9aeb04681c13f975730945aff39",
+   "95ed86da": "0011f4d61934d2b47ab35c5a0348fb00f2c6ab340882b8845de58aedb6afd7e3",
+   "a88539ce": "26e1b62df31fb031b97d6e15f81d4e4c5c5df7e5fc3ba60f800e3f673967b6a5",
+   "c05bda51": "448d3432f8ed14461db031215057f79b53d4850c739dcc773573dca51b93b23a",
+   "c5060762": "52a09409270e27ded7ef9c3b45d7fabeeb70e1c0c41e61442cedd9c71200d2ee",
+   "ced475c1": "204ffceb84640832428d38c9eb81dc8bbfbdc902ea40c1624e15c1e0e775811f",
+   "d4aeffd7": "0d250e8ed53a2bfc3260d560cdeddc64a7b41f9458051d55640974d0522db028",
+   "d7935ead": "07b40542f35913f475e26290140a505091532be007c31418a5e81086b0f7a609",
+   "dc57271e": "32a07e821a825b63d0f12e077ff00e227f07813eebabd40fa134ae22759fd9fc",
+   "dc978e1d": "695d067f9297e2b1014414ba6909c5d4f2178ded36c9f7ea7a37ce7ed9c39b45",
+   "dce3f4f5": "4c906893a943a715e0485ab419146870097de537a290711a74bee6c8c5ecbf17",
+   "e1cbf968": "3db458205e469a3949afc490dfa87ae9df7d80f1531ce1b24eb1eb5cd6716b15",
+   "ede9995c": "2d4e5f6e39b0356474a288c4cfc7780e0046faf652f244954f47ad2d0ab6da75",
+   "f40907a7": "607bae977b25e1be6c4c84f3384e16b7198d5596499e85a702b4ab73aa0d437e",
+   "fb57cbbb": "6e943f8c449d8961247fdf419374904e7335efcee962d16b92771269669618e9"
+  },
+  "궤적": [
+   [
+    "4be51739",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "5a461bb4",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "6bf688de",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "30a4c15d",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "740a40ca",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "08f5b89a",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "64878289",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "8e041ec3",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "a9830a31",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "3caee03e",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "7bb6e645",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "3b1e8563",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "6f298c8e",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "73aefac7",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "97424024",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "085494a6",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "5cb9e68a",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "d425bd90",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "6c6cf97c",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "e92faaed",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "b13881f3",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "28d5d394",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "208a3a18",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "cf08985d",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "4fc6d447",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "d9978a5e",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "be0f4f7b",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "238ca390",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "5f94ffea",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "f5cef43b",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "0b548093",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "2f44fb53",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "37b88d6d",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "ddfb01d3",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "bf0bf5b2",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "a0db9e1a",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "6f1fd37a",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "3ad68099",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "15447478",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "a822aacf",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "3275fc54",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "a05048c8",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "6cae7e22",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "567f2bd6",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "e18ec675",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "e7c24703",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "b0ac15fe",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "4bd81d0d",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "0baa1f00",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "b09db9da",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "1fc6afe5",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "6a45bf76",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "ae37a8a7",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "6fb0907e",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "c653d5dc",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "156b3f1a",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "c9503928",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "2bccbab8",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "ea09cded",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "dedc9d1b",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "9f020b36",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "85bb13d9",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "18c28106",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "932d627f",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "f9f91535",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "4d15bad3",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "bb23ed4a",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "0d335097",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "43a8483d",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "bf13bac1",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "864d9ce6",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "17affcb5",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "62ae2182",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "9d56c481",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "057698ec",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "05b24334",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "db2b9edc",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "a14713d4",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "357c5fdb",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "f45ad758",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "268f45c8",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "588f46b7",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "91972462",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "a1b58570",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "486e4227",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "964c9bad",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "efc77da0",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "36f50e92",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "895d0d73",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "00e8025d",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "b06bcba9",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "7d799325",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "22016468",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "4490020d",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "f47e8d52",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "801b13d6",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "cc4d79a8",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "89675d65",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "866b9e20",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "44a40ad8",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "87f0c509",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "3f236ca5",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "5226b65b",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "71f5ec7a",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "614a7d12",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "06f24681",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "02d7ec00",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "d3e3d450",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "91c7e87a",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "85d59cf9",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "20401115",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "4c8a8f9d",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "ecffa239",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "3eab430e",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "6ba2805e",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "035af2d9",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "d2808d17",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "a4f27325",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ],
+   [
+    "aded7ce7",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "stale": 1
+    }
+   ]
+  ]
+ },
+ "callers": {
+  "바인딩수": 20,
+  "걸림": 20,
+  "이름후보": 40,
+  "watch_total": 27,
+  "watch_per": {
+   "3656b7e8": 1,
+   "59632e02": 2,
+   "70566199": 1,
+   "75b07766": 1,
+   "7965dd2b": 2,
+   "83acbda6": 1,
+   "95ed86da": 3,
+   "a88539ce": 2,
+   "c05bda51": 1,
+   "c5060762": 1,
+   "ced475c1": 2,
+   "d4aeffd7": 1,
+   "d7935ead": 1,
+   "dc57271e": 1,
+   "dc978e1d": 1,
+   "dce3f4f5": 1,
+   "e1cbf968": 1,
+   "ede9995c": 1,
+   "f40907a7": 1,
+   "fb57cbbb": 2
+  },
+  "기준분포": {
+   "fresh": 20
+  },
+  "핀분포": {
+   "orphaned": 13,
+   "fresh": 5,
+   "undeterminable": 1,
+   "stale": 1
+  },
+  "전이": {
+   "3656b7e8": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "70566199": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "75b07766": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "83acbda6": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "c05bda51": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "c5060762": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "d4aeffd7": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "d7935ead": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "dc57271e": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "dc978e1d": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "e1cbf968": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "ede9995c": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "f40907a7": [
+    "3b1e8563..6f298c8e",
+    "orphaned"
+   ],
+   "ced475c1": [
+    "15447478..a822aacf",
+    "stale"
+   ]
+  },
+  "전이수": 14,
+  "사유": {
+   "watch_member_gone": 84
+  },
+  "커밋수": 119,
+  "시작": "d6ee4ad6",
+  "바인딩목록": [
+   "3656b7e8",
+   "59632e02",
+   "70566199",
+   "75b07766",
+   "7965dd2b",
+   "83acbda6",
+   "95ed86da",
+   "a88539ce",
+   "c05bda51",
+   "c5060762",
+   "ced475c1",
+   "d4aeffd7",
+   "d7935ead",
+   "dc57271e",
+   "dc978e1d",
+   "dce3f4f5",
+   "e1cbf968",
+   "ede9995c",
+   "f40907a7",
+   "fb57cbbb"
+  ],
+  "targets": {
+   "3656b7e8": "12526580eb4fca38461bdcbad7ea4da71399565760772cc6866c0e405dc802d0",
+   "59632e02": "19d6fc066734f338080bf60741e3469baffdb57ca45555e19222e31cb53c998a",
+   "70566199": "1580400e6a810f9d5eed260647f4a9745af6d5f51069ea7bd433db8efea340cf",
+   "75b07766": "58d1116c18f51d0e8ec15e1c8b30e10a62053a6de96c330911d844c7bc55e589",
+   "7965dd2b": "75050f10a074d48c85a846789bce2e612788029bf66f56a59b027be2b8417dd5",
+   "83acbda6": "38c47faf7c076ef76b6bff047abcc0d37fffd9aeb04681c13f975730945aff39",
+   "95ed86da": "0011f4d61934d2b47ab35c5a0348fb00f2c6ab340882b8845de58aedb6afd7e3",
+   "a88539ce": "26e1b62df31fb031b97d6e15f81d4e4c5c5df7e5fc3ba60f800e3f673967b6a5",
+   "c05bda51": "448d3432f8ed14461db031215057f79b53d4850c739dcc773573dca51b93b23a",
+   "c5060762": "52a09409270e27ded7ef9c3b45d7fabeeb70e1c0c41e61442cedd9c71200d2ee",
+   "ced475c1": "204ffceb84640832428d38c9eb81dc8bbfbdc902ea40c1624e15c1e0e775811f",
+   "d4aeffd7": "0d250e8ed53a2bfc3260d560cdeddc64a7b41f9458051d55640974d0522db028",
+   "d7935ead": "07b40542f35913f475e26290140a505091532be007c31418a5e81086b0f7a609",
+   "dc57271e": "32a07e821a825b63d0f12e077ff00e227f07813eebabd40fa134ae22759fd9fc",
+   "dc978e1d": "695d067f9297e2b1014414ba6909c5d4f2178ded36c9f7ea7a37ce7ed9c39b45",
+   "dce3f4f5": "4c906893a943a715e0485ab419146870097de537a290711a74bee6c8c5ecbf17",
+   "e1cbf968": "3db458205e469a3949afc490dfa87ae9df7d80f1531ce1b24eb1eb5cd6716b15",
+   "ede9995c": "2d4e5f6e39b0356474a288c4cfc7780e0046faf652f244954f47ad2d0ab6da75",
+   "f40907a7": "607bae977b25e1be6c4c84f3384e16b7198d5596499e85a702b4ab73aa0d437e",
+   "fb57cbbb": "6e943f8c449d8961247fdf419374904e7335efcee962d16b92771269669618e9"
+  },
+  "궤적": [
+   [
+    "4be51739",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "5a461bb4",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "6bf688de",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "30a4c15d",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "740a40ca",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "08f5b89a",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "64878289",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "8e041ec3",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "a9830a31",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "3caee03e",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "7bb6e645",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "3b1e8563",
+    {
+     "fresh": 20
+    }
+   ],
+   [
+    "6f298c8e",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "73aefac7",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "97424024",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "085494a6",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "5cb9e68a",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "d425bd90",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "6c6cf97c",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "e92faaed",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "b13881f3",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "28d5d394",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "208a3a18",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "cf08985d",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "4fc6d447",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "d9978a5e",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "be0f4f7b",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "238ca390",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "5f94ffea",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "f5cef43b",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "0b548093",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "2f44fb53",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "37b88d6d",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "ddfb01d3",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "bf0bf5b2",
+    {
+     "orphaned": 13,
+     "fresh": 7
+    }
+   ],
+   [
+    "a0db9e1a",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "undeterminable": 1
+    }
+   ],
+   [
+    "6f1fd37a",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "undeterminable": 1
+    }
+   ],
+   [
+    "3ad68099",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "undeterminable": 1
+    }
+   ],
+   [
+    "15447478",
+    {
+     "orphaned": 13,
+     "fresh": 6,
+     "undeterminable": 1
+    }
+   ],
+   [
+    "a822aacf",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "3275fc54",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "a05048c8",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "6cae7e22",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "567f2bd6",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "e18ec675",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "e7c24703",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "b0ac15fe",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "4bd81d0d",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "0baa1f00",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "b09db9da",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "1fc6afe5",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "6a45bf76",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "ae37a8a7",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "6fb0907e",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "c653d5dc",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "156b3f1a",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "c9503928",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "2bccbab8",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "ea09cded",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "dedc9d1b",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "9f020b36",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "85bb13d9",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "18c28106",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "932d627f",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "f9f91535",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "4d15bad3",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "bb23ed4a",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "0d335097",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "43a8483d",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "bf13bac1",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "864d9ce6",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "17affcb5",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "62ae2182",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "9d56c481",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "057698ec",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "05b24334",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "db2b9edc",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "a14713d4",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "357c5fdb",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "f45ad758",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "268f45c8",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "588f46b7",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "91972462",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "a1b58570",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "486e4227",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "964c9bad",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "efc77da0",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "36f50e92",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "895d0d73",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "00e8025d",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "b06bcba9",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "7d799325",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "22016468",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "4490020d",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "f47e8d52",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "801b13d6",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "cc4d79a8",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "89675d65",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "866b9e20",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "44a40ad8",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "87f0c509",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "3f236ca5",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "5226b65b",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "71f5ec7a",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "614a7d12",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "06f24681",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "02d7ec00",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "d3e3d450",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "91c7e87a",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "85d59cf9",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "20401115",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "4c8a8f9d",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "ecffa239",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "3eab430e",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "6ba2805e",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "035af2d9",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "d2808d17",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "a4f27325",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ],
+   [
+    "aded7ce7",
+    {
+     "orphaned": 13,
+     "fresh": 5,
+     "undeterminable": 1,
+     "stale": 1
+    }
+   ]
+  ]
+ }
+}

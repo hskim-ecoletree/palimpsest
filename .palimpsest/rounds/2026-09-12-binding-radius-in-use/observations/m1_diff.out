@@ -1,0 +1,28 @@
+결박	symbol	callers	watch(s/c)	경로
+3656b7e8	orphaned(None)	orphaned(None)	1/1	tests/core/charter-region.test.ts
+59632e02	fresh(None)	fresh(None)	1/2	src/core/work-item-store.ts
+70566199	orphaned(None)	orphaned(None)	1/1	tests/cli/push-gate-hook-provenance.test.ts
+75b07766	orphaned(None)	orphaned(None)	1/1	tests/cli/prism-cli.test.ts
+7965dd2b	fresh(None)	fresh(None)	1/2	src/core/work-item-store.ts
+83acbda6	orphaned(None)	orphaned(None)	1/1	tests/core/autopilot-approval-artifact.test.ts
+95ed86da	fresh(None)	fresh(None)	1/3	src/cli/commands/work.ts
+a88539ce	fresh(None)	undeterminable(watch_member_gone)	1/2	src/core/handoff-store.ts  ← 갈림
+c05bda51	orphaned(None)	orphaned(None)	1/1	tests/acg/fitness-injected-provider.test.ts
+c5060762	orphaned(None)	orphaned(None)	1/1	tests/scripts/check-npx-distribution.test.ts
+ced475c1	stale(None)	stale(None)	1/2	src/core/autopilot-loop.ts
+d4aeffd7	orphaned(None)	orphaned(None)	1/1	tests/core/land-commit.test.ts
+d7935ead	orphaned(None)	orphaned(None)	1/1	tests/core/provisioner.test.ts
+dc57271e	orphaned(None)	orphaned(None)	1/1	tests/cli/autopilot-loop-cli.test.ts
+dc978e1d	orphaned(None)	orphaned(None)	1/1	tests/integration/coverage-depth-dial.test.ts
+dce3f4f5	fresh(None)	fresh(None)	1/1	src/core/autopilot-loop.ts
+e1cbf968	orphaned(None)	orphaned(None)	1/1	tests/core/e2e-generator.test.ts
+ede9995c	orphaned(None)	orphaned(None)	1/1	tests/integration/decision-conflict-guardrail-e2e.test.ts
+f40907a7	orphaned(None)	orphaned(None)	1/1	tests/cli/worktree-surface.test.ts
+fb57cbbb	fresh(None)	fresh(None)	1/2	src/core/gates.ts
+
+갈린 수: 1 / 20
+symbol 첫U: {}
+callers 첫U: {'a88539ce': ('a0db9e1a', 'watch_member_gone')}
+symbol 핀분포: Counter({'orphaned': 13, 'fresh': 6, 'stale': 1})
+callers 핀분포: Counter({'orphaned': 13, 'fresh': 5, 'undeterminable': 1, 'stale': 1})
+rc=0
