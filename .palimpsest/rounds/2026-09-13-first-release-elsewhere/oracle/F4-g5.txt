@@ -1,0 +1,26 @@
+# F4 — 앞 회차 G5 (착수 커밋의 CI 런) · 2026-09-13T14:10:30Z
+
+## gh api repos/hskim-ecoletree/palimpsest/actions/runs?head_sha=6ee9eb30f2dc97fc217167121f36f888c753ed2f
+```
+{"runs":[],"total_count":0}
+rc=0
+```
+
+## gh api repos/hskim-ecoletree/palimpsest/actions/permissions
+```
+{"enabled":true,"allowed_actions":"all","sha_pinning_required":false}
+rc=0
+```
+
+## git log 6ee9eb3..HEAD -- docs/gates/binding-radius-in-use.md
+```
+```
+
+## 최근 런 5 (참고 — 판정에 안 쓴다)
+```
+34694615603 1276b8f push completed success 2026-09-12T12:47:00Z
+34693038146 d9f3954 push completed success 2026-09-12T12:12:20Z
+34672995421 72bd281 push completed success 2026-09-12T04:26:13Z
+34672775708 0a6f8c6 push completed cancelled 2026-09-12T04:21:10Z
+34672708590 3c22485 push completed cancelled 2026-09-12T04:19:43Z
+```
