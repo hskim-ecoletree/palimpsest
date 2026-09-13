@@ -1,3 +1,7 @@
+<!-- X4 — 커밋된 바이너리 확인: 빌드 직전 -->
+HEAD ba0a9835e803
+crates porcelain(추적): []
+
 
 ■ pal export --format cypher
 

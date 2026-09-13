@@ -26,7 +26,7 @@
             TOUCHES        2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
 
 ■ 이 답의 근거
-  Snapshot  ditto-x4@aded7ce+worktree
+  Snapshot  ditto-x3@aded7ce+worktree
   2층       심볼 4656 색인됨
   능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 이 빌드에 없음 effects · judgment
   이관      2451건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
@@ -34,7 +34,7 @@
   질의 로그  **안 남았습니다** — 2층에 읽기 전용으로 붙어 남기지 못했습니다
   크기      약 702 토큰 **이상** (잰 것: 2811 바이트 · 가정: 4 바이트/토큰)
 
-# TypeScript 컴파일러 대조 — ditto-x4
+# TypeScript 컴파일러 대조 — ditto-x3
 
 - pal: `pal 0.0.0+ba0a9835e803`
 - typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)

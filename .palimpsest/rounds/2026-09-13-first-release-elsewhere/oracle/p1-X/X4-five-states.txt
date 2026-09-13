@@ -1,0 +1,9 @@
+# X4 — 다섯 파일의 대장 상태 (`pal ledger --json` · 새 복제본 aded7ce · pal 0.0.0+ba0a9835e803)
+
+- `src/acg/boundary/codeql-edges.ts` {"partial": {"language": "TypeScript", "grade": "l2", "recovery_sites": 1}}
+- `src/acg/icl/static-check.ts` {"partial": {"language": "TypeScript", "grade": "l2", "recovery_sites": 2}}
+- `src/acg/impact/codeql-analyzer.ts` {"partial": {"language": "TypeScript", "grade": "l2", "recovery_sites": 1}}
+- `src/core/memory-query.ts` {"partial": {"language": "TypeScript", "grade": "l2", "recovery_sites": 2}}
+- `src/core/mode-doctor.ts` {"partial": {"language": "TypeScript", "grade": "l2", "recovery_sites": 2}}
+
+- 상태 분포 {'unsupported': 1932, 'unrecognized': 14, 'excluded': 3, 'binary': 6, 'parsed': 491, 'partial': 5}

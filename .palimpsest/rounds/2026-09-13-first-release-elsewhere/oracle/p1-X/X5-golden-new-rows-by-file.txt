@@ -1,0 +1,5 @@
+   5 +src/acg/boundary/codeql-edges.ts
+   3 +src/acg/icl/static-check.ts
+   7 +src/acg/impact/codeql-analyzer.ts
+  43 +src/core/memory-query.ts
+  20 +src/core/mode-doctor.ts

@@ -1,0 +1,32 @@
+F03-3 — 이동과 골든
+
+  ok    ① · ② 의 시험 5 개가 성립한다
+  FAIL  ④ `cargo xtask check` 가 실패했다
+und/bin/record.py` ↔ `crates/pal-cli/src/round/status.rs` 값 집합이 축마다 같다
+  ok    발견이 닫혔나  — 잰 것 1875행 · 발화 0 · **감사 대기 발화 0** · 원리상 못 잼 1272 (경로 없음 18 · 기각 822 · 형식 이전 432) · 이 이력에서 안 보임 0행 · 열림 0행 (끝난 회차 0 · **철회한 회차 0** · **닫힘→열림 전환 0**) · SHA 236개
+  ok    선언 목록이 닫혀 있나  — 형식 이전 2개 (하한 2026-08-19) · A 축 감사 대기 0개 (하한 2026-08-24) · 종료 보고 검산 줄 유예 0개 (하한 2026-08-24) · 종료 보고 없음 유예 0개 (하한 2026-08-19) · 어색한 표현 교정 적용 0개 (하한 2026-09-06)
+  ok    완수 조건 설계 평가  — 하한 2026-09-06 · 대상 회차 7개 · 평가 반환문 7개
+  ok    어색한 표현 부재  — 패턴 8개 · 파일 270개(종결 문서 12개) · 줄 99734개 · 남은 것 0곳
+  ok    완성 장면 형식  — 장면 5개 · 소제목 셋 전부 갖춤
+
+
+  ok    ② 의도 저장소에 제안을 받는 경로가 없다 ★
+
+  FAIL  ③ ditto  움직인 것 78
+        새로 78
+          src/core/mode-doctor.ts		ModeBanner	interface
+          src/core/memory-query.ts		MemoryAuditLogStore	class
+          src/core/memory-query.ts		explainNode	function
+          src/core/memory-query.ts		recordPullQuery	function
+          src/core/memory-query.ts		SymbolBriefResult	interface
+          src/core/memory-query.ts		AuditEntry	interface
+          src/core/memory-query.ts		BodyQueryResult	interface
+          src/core/mode-doctor.ts		computeSurfaceStamp	function
+          src/acg/boundary/codeql-edges.ts	CodeqlEdgeAnalyzer	constructor	method
+          src/core/memory-query.ts	MemoryAuditLogStore	list	method
+          … 68 더 (전부는 게이트에)
+  ok    ③ portal-backend  1340 줄 · 움직인 것 0
+
+
+  ✗ ④ 가 실패했다 — ④ check 실패. ③ 은 위에 그대로 산출했다.
+골든이 움직였다 — **목록을 게이트에 적고 나서** `--bless` 한다
