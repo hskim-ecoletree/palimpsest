@@ -1,0 +1,46 @@
+
+Snapshot  ditto@aded7ce+worktree  (워킹트리)
+저장소    선언 1 · 본 것 1
+범위      매니페스트 없음 — 경로에서 유도했습니다 (선언이 아니라 추정)
+
+워킹트리  aded7ce 와 다른 파일 3개  ·  인덱스 신뢰 2448 · 다시 잼 3
+
+파일      2451
+  parsed             491  파싱됨
+  partial              0  일부만 파싱됨
+  unsupported       1932  미지원  추출기 없음(로드맵)
+  unrecognized        14  언어 미인식
+  excluded             3  설정으로 제외  규칙: oversize(3)
+  binary              11  이진 파일
+  generated            0  생성물
+
+언어      JSON              L0  unavailable     1571 파일  ·  텍스트만 · 결박 불가
+          TypeScript        L2  exact            491 파일  ·  참조 해소 · 정확
+          Markdown          L0  unavailable      314 파일  ·  텍스트만 · 결박 불가
+          Shell             L0  unavailable       16 파일  ·  텍스트만 · 결박 불가
+          JavaScript        L0  unavailable       13 파일  ·  텍스트만 · 결박 불가
+          YAML              L0  unavailable        9 파일  ·  텍스트만 · 결박 불가
+          CSS               L0  unavailable        3 파일  ·  텍스트만 · 결박 불가
+          Python            L0  unavailable        2 파일  ·  텍스트만 · 결박 불가
+          TOML              L0  unavailable        2 파일  ·  텍스트만 · 결박 불가
+          Batch             L0  unavailable        1 파일  ·  텍스트만 · 결박 불가
+          HTML              L0  unavailable        1 파일  ·  텍스트만 · 결박 불가
+
+          ← 결박 불가 언어 10개 · 1932 파일. 이 파일들에는 좌표가 없습니다
+
+정체성    심볼 4578
+  순서에 취약               0  같은 이름·종류가 여럿 · 선언 순서로 가렸습니다 — 순서가 바뀌면 정체성이 맞바뀝니다
+                          ↑ **겹친 자리의 심볼 전원**입니다(첫 선언 포함) — `#79` 본문의 `ordinal>0` 보다 큽니다
+  등급이 낮음             325  이름이 겹치지 않았고 추출기가 스코프를 못 풀었습니다
+  정확                4253  이름이 겹치지 않았고 참조가 해소됩니다
+  불가                   0  좌표를 세울 수 없습니다
+          ← 검산 0 + 325 + 4253 + 0 = 4578 · 2층에 들어가는 심볼 4578
+
+캐시      적중 0 · 빗나감 2451
+
+provider  (이 빌드에 provider 포트가 없습니다 — F21 미구축)
+조달      (이 빌드에 관측 수용이 없습니다 — F16 미구축)
+감지기    추출기 f09-import-sites · 문법 acb9630 · HEAD 그대로
+
+$P ledger  1.42s user 0.46s system 259% cpu 0.722 total
+rc=0
