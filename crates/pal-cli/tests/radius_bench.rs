@@ -116,6 +116,8 @@ fn 그래프(n: usize) -> Vec<FileStitch> {
             edges,
             imports: Slot::NotBuilt,
             pending: Vec::new(),
+            export_names: Vec::new(),
+            star_export: false,
             symbols,
         });
     }

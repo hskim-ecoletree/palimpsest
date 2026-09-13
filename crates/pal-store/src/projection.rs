@@ -190,6 +190,13 @@ pub struct FileStitch {
     /// 최상위 임포트 참조는 출발점이 없어 짝을 못 만든다. **건수는 그 칸이 지고
     /// 짝은 여기가 진다.**
     pub pending: Vec<PendingImportRef>,
+    /// 이 파일이 이름으로 내보내는 것 전부 — **재수출까지**(`ExportSet::names`).
+    ///
+    /// [`Self::exports`] 는 최상위 선언이 있는 이름만 싣는다. 이 칸은 파일 간 해소가
+    /// 「재수출을 지나는 이름」을 가르는 데 쓴다.
+    pub export_names: Vec<String>,
+    /// `export * from '…'` 가 있는가.
+    pub star_export: bool,
 }
 
 /// 스티칭 한 회차의 회계. **커밋 수가 여기 있는 이유는 `[f05.2.pass]` ③ 이다** —
@@ -322,6 +329,21 @@ impl Projection {
         batch_files: usize,
         at: &Snapshot,
     ) -> Result<StitchReport, ProjectionError> {
+        self.stitch_in(built_for, files, batch_files, at, &pal_core::TsProject::default())
+    }
+
+    /// [`Self::stitch`] 에 **TS 해소 재료**를 함께 준다 — 파일 간 해소가 TS 지정자를 편다.
+    ///
+    /// # Errors
+    /// 쓰기가 실패하거나 값을 담지 못하면.
+    pub fn stitch_in(
+        &self,
+        built_for: &str,
+        files: &[FileStitch],
+        batch_files: usize,
+        at: &Snapshot,
+        project: &pal_core::TsProject,
+    ) -> Result<StitchReport, ProjectionError> {
         let batch = batch_files.max(1);
         let mut report = StitchReport::default();
 
@@ -399,11 +421,13 @@ impl Projection {
                     Slot::NotBuilt => Vec::new(),
                 },
                 pending: f.pending.clone(),
+                export_names: f.export_names.clone(),
+                star_export: f.star_export,
             })
             .collect();
         let all: Vec<pal_core::SymbolNode> =
             files.iter().flat_map(|f| f.symbols.iter().cloned()).collect();
-        let (cross, cross_report, unresolved) = pal_core::cross_file_edges(&inputs, &all, at);
+        let (cross, cross_report, unresolved) = pal_core::cross_file_edges_in(&inputs, &all, at, project);
         report.cross = cross_report;
         report.unresolved = unresolved.len();
         if !cross.is_empty() {

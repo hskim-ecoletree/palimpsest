@@ -54,6 +54,12 @@ pub struct LedgerReport {
     /// 싣고 있으므로(F04) **재파싱 없이** 만들어진다 — 적중한 파일도 엣지를 산출한다.
     #[serde(skip)]
     pub stitches: Vec<FileStitch>,
+    /// TS 해소 재료 — 파일 목록 · tsconfig · `package.json` 의 `type`. **표에는 안 나온다.**
+    ///
+    /// **답이 선 트리에서 읽는다.** 워킹트리의 설정으로 커밋된 소스를 풀면 `--at` 의 답과
+    /// 기본 답이 같은 지정자에 다른 파일을 댄다.
+    #[serde(skip)]
+    pub ts_project: pal_core::TsProject,
     /// 깨져서 격리된 엔트리의 자리 몇 — **수는 `cache.corrupt` 가 전부 잰다.**
     ///
     /// 비어 있는 것이 정상 상태다. 비어 있지 않으면 화면에 뜬다.
@@ -227,8 +233,21 @@ pub fn compute(
         }
     }
 
+    // ── TS 해소 재료 — 트리의 파일 목록과, **같은 트리에서** 읽은 설정 파일.
+    //    읽는 곳이 트리에 따라 갈리는 것은 위 소스 읽기와 같은 까닭이다.
+    let 객체: BTreeMap<&str, _> = files.iter().map(|(p, b)| (p.as_str(), *b)).collect();
+    let ts_project = pal_core::TsProject::build(files.iter().map(|(p, _)| p.as_str().to_owned()), |path| {
+        let blob = 객체.get(path)?;
+        let bytes = if tree.is_committed() {
+            repo.read_blob(*blob).ok()?
+        } else {
+            repo.read_worktree_file(&RepoPath::new(path)).ok()?
+        };
+        String::from_utf8(bytes).ok()
+    });
+
     let ledger = assemble(repo_id, tree, manifest.as_ref(), entries, version, worktree.base);
-    Ok(LedgerReport { ledger, cache: stats, identity, corrupt, symbols, stitches, worktree })
+    Ok(LedgerReport { ledger, cache: stats, identity, corrupt, symbols, stitches, ts_project, worktree })
 }
 
 /// 센 것을 대장으로 조립한다. **정책이 없다** — 세는 일은 위에서 끝났다.
@@ -529,6 +548,12 @@ fn stitch_of(
         edges,
         imports: g.imports.clone(),
         pending,
+        // 재수출까지 — 파일 간 해소가 「재수출을 지나는 이름」을 가르는 데 쓴다.
+        export_names: match &g.exports {
+            Slot::Built(set) => set.names.clone(),
+            Slot::NotBuilt => Vec::new(),
+        },
+        star_export: matches!(&g.exports, Slot::Built(set) if !set.star_from.is_empty()),
     })
 }
 

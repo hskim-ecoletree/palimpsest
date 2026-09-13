@@ -105,11 +105,12 @@ pub fn attach(index: &Path, report: &LedgerReport, how: How) -> Result<Attached>
         How::Stitching => {
             let p = Projection::open(index).context("2층을 열지 못했다")?;
             let r = p
-                .stitch(
+                .stitch_in(
                     &built_for,
                     &report.stitches,
                     PROVISIONAL_STITCH_BATCH,
                     &report.ledger.snapshot,
+                    &report.ts_project,
                 )
                 .context("2층을 세우지 못했다")?;
             cross = Some(r.cross.clone());

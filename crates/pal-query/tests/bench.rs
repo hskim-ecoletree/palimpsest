@@ -95,6 +95,8 @@ fn 그래프(n: usize) -> Vec<FileStitch> {
             // 그것이 측정 대상에 섞인다.
             imports: Slot::NotBuilt,
             pending: Vec::new(),
+            export_names: Vec::new(),
+            star_export: false,
             symbols,
         });
     }

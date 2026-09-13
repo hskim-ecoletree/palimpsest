@@ -34,7 +34,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{ImportedItem, PendingImportRef, RepoPath, Snapshot, SymbolId, SymbolNode};
+use crate::{ImportedItem, PendingImportRef, RepoPath, Snapshot, SymbolId, SymbolNode, TsProject, TsResolution};
 
 /// 파일 **경계를 넘은** 참조 엣지 하나.
 ///
@@ -77,6 +77,13 @@ pub struct CrossFileInput {
     pub imports: Vec<ImportedItem>,
     /// 1 층이 못 푼 임포트 참조.
     pub pending: Vec<PendingImportRef>,
+    /// 이 파일이 **이름으로 내보내는 것 전부** — 재수출(`export { a } from '…'`)까지.
+    ///
+    /// 대상 파일에 그 이름의 선언이 없을 때 **「재수출을 지나는 이름」인지 「없는 이름」인지**
+    /// 가르는 데 쓴다. 따라가서 원 정의까지 잇지는 않는다.
+    pub export_names: Vec<String>,
+    /// `export * from '…'` 가 있는가 — 있으면 선언 없는 이름도 그리로 지날 수 있다.
+    pub star_export: bool,
 }
 
 /// 짝을 못 지은 까닭. **수만 세면 무엇이 막혔는지 모른다.**
@@ -111,6 +118,18 @@ pub enum UnresolvedReason {
     NoSymbol,
     /// 후보가 둘 이상이라 **안 골랐다.**
     Ambiguous,
+    /// **맨 지정자**(패키지 이름) — 설치된 패키지인지 워크스페이스인지 가리지 않았다.
+    ///
+    /// ★ `OutsideRepo` 로 적지 않는다 (2026-09-13). 워크스페이스 패키지는 저장소 안이라
+    /// 「저장소 밖」은 거짓이다.
+    BareSpecifier,
+    /// 대상 파일에 그 이름의 선언이 없고 **그 파일이 그 이름을 재수출한다**(`export … from` ·
+    /// `export *`). 따라가서 원 정의까지 잇지 않는다.
+    ThroughReexport,
+    /// 가져오는 파일의 tsconfig 를 끝까지 못 읽어서(패키지 `extends` 등) 별칭인지 모른다.
+    ConfigIncomplete,
+    /// 가져오는 파일의 해소 모드(`moduleResolution: classic`)를 맞추지 않는다.
+    UnsupportedMode,
 }
 
 impl UnresolvedReason {
@@ -125,6 +144,10 @@ impl UnresolvedReason {
             Self::NoSymbolAtCrateRoot => "no_symbol_at_crate_root",
             Self::NoSymbol => "no_symbol",
             Self::Ambiguous => "ambiguous",
+            Self::BareSpecifier => "bare_specifier",
+            Self::ThroughReexport => "through_reexport",
+            Self::ConfigIncomplete => "config_incomplete",
+            Self::UnsupportedMode => "unsupported_mode",
         }
     }
 }
@@ -498,6 +521,21 @@ pub fn cross_file_edges(
     symbols: &[SymbolNode],
     at: &Snapshot,
 ) -> (Vec<CrossFileEdge>, CrossFileReport, Vec<UnresolvedRef>) {
+    cross_file_edges_in(files, symbols, at, &TsProject::default())
+}
+
+/// [`cross_file_edges`] 에 **TS 해소 재료**를 함께 준다.
+///
+/// 가져오는 파일이 TS 면 지정자를 [`TsProject::resolve`] 로 펴고, 아니면 Rust 의 규칙으로
+/// 편다 — **Rust 갈래는 이 재료를 안 본다.** 재료가 비어 있으면(파일 목록 없음) 입력과
+/// 심볼의 파일 목록으로 파일의 실재를 잰다.
+#[must_use]
+pub fn cross_file_edges_in(
+    files: &[CrossFileInput],
+    symbols: &[SymbolNode],
+    at: &Snapshot,
+    project: &TsProject,
+) -> (Vec<CrossFileEdge>, CrossFileReport, Vec<UnresolvedRef>) {
     let paths: BTreeSet<&str> = symbols.iter().map(|s| s.path.as_str()).collect();
     let crates = crates_of(&paths);
     // (파일, 이름) → 그 이름의 심볼들. 유일성 판정에 개수가 필요하고, **담은 것**이
@@ -540,7 +578,19 @@ pub fn cross_file_edges(
     //
     // ⚠ **`crates_of` 와 같은 자를 쓴다** — 그쪽이 뿌리로 인정한 파일만 뿌리다.
     // 접미사만 보면 크레이트가 아닌 디렉터리의 `lib.rs` 도 뿌리가 된다.
-    let 심볼_없음 = |target: &str| {
+    // TS 대상에서 선언이 없을 때 재수출인지 가르는 자리.
+    let 재수출: BTreeMap<&str, 내보냄<'_>> = files
+        .iter()
+        .map(|f| (f.path.as_str(), (f.export_names.as_slice(), f.star_export)))
+        .collect();
+    let 입력_경로: BTreeSet<&str> = files.iter().map(|f| f.path.as_str()).collect();
+    let 심볼_없음 = |target: &str, name: &str| {
+        if is_ts(target) {
+            let 지난다 = 재수출
+                .get(target)
+                .is_some_and(|(names, star)| *star || names.iter().any(|n| n == name));
+            return if 지난다 { UnresolvedReason::ThroughReexport } else { UnresolvedReason::NoSymbol };
+        }
         let 뿌리 = target
             .strip_suffix("/lib.rs")
             .or_else(|| target.strip_suffix("/main.rs"))
@@ -584,59 +634,95 @@ pub fn cross_file_edges(
                 continue;
             };
 
-            // 저장소 밖인가 — 첫 세그먼트가 크레이트도 접두도 아니면서 형제 모듈로도
-            // 안 읽히는 것은 아래 `NoTargetFile` 이 잡는다. 여기서 거르는 것은 **알려진
-            // 밖**이다: 크레이트 목록에 없는 이름으로 시작하고 그 이름이 접두가 아닌 것.
-            let head = item.module.split("::").next().unwrap_or("");
-            let 접두 = matches!(head, "crate" | "self" | "super");
-            let 우리것 = 접두 || crates.iter().any(|c| c.name == head) || head.is_empty();
+            // ★ **TS 는 지정자를 TypeScript 의 규칙으로 편다** (2026-09-13). 아래 Rust 규칙에
+            //   넣으면 `./fs` 의 첫 세그먼트가 크레이트가 아니어서 전부 「저장소 밖」이 됐다
+            //   — 남의 TS 저장소에서 파일 간 해소 `0/11010`.
+            let ts_target: String;
+            let target: &str = if is_ts(from_path) {
+                let 파일있나 = |x: &str| paths.contains(x) || 입력_경로.contains(x);
+                let resolved = project.resolve(from_path, &item.module, &파일있나);
+                attempts.push(Attempt {
+                    step: AttemptStep::ModulePath,
+                    tried: vec![item.module.clone()],
+                    found: usize::from(matches!(resolved, TsResolution::File(_))),
+                });
+                ts_target = match resolved {
+                    TsResolution::File(f) => f,
+                    other => {
+                        let why = match other {
+                            TsResolution::OutsideRepo => UnresolvedReason::OutsideRepo,
+                            TsResolution::Bare => UnresolvedReason::BareSpecifier,
+                            TsResolution::ConfigIncomplete => UnresolvedReason::ConfigIncomplete,
+                            TsResolution::UnsupportedMode => UnresolvedReason::UnsupportedMode,
+                            TsResolution::NotFound | TsResolution::File(_) => UnresolvedReason::NoTargetFile,
+                        };
+                        miss_shared(&mut report, b, why);
+                        unresolved.push(UnresolvedRef {
+                            site: p.from,
+                            name: item.name.clone(),
+                            reason: why,
+                            attempts,
+                            at: at.clone(),
+                        });
+                        continue;
+                    }
+                };
+                ts_target.as_str()
+            } else {
+                // 저장소 밖인가 — 첫 세그먼트가 크레이트도 접두도 아니면서 형제 모듈로도
+                // 안 읽히는 것은 아래 `NoTargetFile` 이 잡는다. 여기서 거르는 것은 **알려진
+                // 밖**이다: 크레이트 목록에 없는 이름으로 시작하고 그 이름이 접두가 아닌 것.
+                let head = item.module.split("::").next().unwrap_or("");
+                let 접두 = matches!(head, "crate" | "self" | "super");
+                let 우리것 = 접두 || crates.iter().any(|c| c.name == head) || head.is_empty();
 
-            let (일차, 이차) =
-                module_candidates(from_path, &item.module, &crates, item.inline_depth);
-            let 훑는다 = |cs: &[String]| {
-                let mut v: Vec<&str> =
-                    cs.iter().filter_map(|c| paths.get(c.as_str()).copied()).collect();
-                v.sort();
-                v.dedup();
-                v
-            };
-            let mut hit = 훑는다(&일차);
-            let mut 본_후보 = 일차.clone();
-            if hit.is_empty() {
-                hit = 훑는다(&이차);
-                본_후보.extend(이차.iter().cloned());
-            }
-            attempts.push(Attempt {
-                step: AttemptStep::ModulePath,
-                tried: 본_후보,
-                found: hit.len(),
-            });
-            let target = match hit.as_slice() {
-                [one] => *one,
-                [] => {
-                    let why =
-                        if 우리것 { UnresolvedReason::NoTargetFile } else { UnresolvedReason::OutsideRepo };
-                    miss_shared(&mut report, b, why);
-                    unresolved.push(UnresolvedRef {
-                        site: p.from,
-                        name: item.name.clone(),
-                        reason: why,
-                        attempts,
-                        at: at.clone(),
-                    });
-                    continue;
+                let (일차, 이차) =
+                    module_candidates(from_path, &item.module, &crates, item.inline_depth);
+                let 훑는다 = |cs: &[String]| {
+                    let mut v: Vec<&str> =
+                        cs.iter().filter_map(|c| paths.get(c.as_str()).copied()).collect();
+                    v.sort();
+                    v.dedup();
+                    v
+                };
+                let mut hit = 훑는다(&일차);
+                let mut 본_후보 = 일차.clone();
+                if hit.is_empty() {
+                    hit = 훑는다(&이차);
+                    본_후보.extend(이차.iter().cloned());
                 }
-                _ => {
-                    miss_shared(&mut report, b, UnresolvedReason::Ambiguous);
-                    unresolved.push(UnresolvedRef {
-                        site: p.from,
-                        name: item.name.clone(),
-                        reason: UnresolvedReason::Ambiguous,
-                        attempts,
-                        at: at.clone(),
-                    });
-                    continue;
-                }
+                attempts.push(Attempt {
+                    step: AttemptStep::ModulePath,
+                    tried: 본_후보,
+                    found: hit.len(),
+                });
+                match hit.as_slice() {
+                    [one] => *one,
+                    [] => {
+                        let why =
+                            if 우리것 { UnresolvedReason::NoTargetFile } else { UnresolvedReason::OutsideRepo };
+                        miss_shared(&mut report, b, why);
+                        unresolved.push(UnresolvedRef {
+                            site: p.from,
+                            name: item.name.clone(),
+                            reason: why,
+                            attempts,
+                            at: at.clone(),
+                        });
+                        continue;
+                    }
+                    _ => {
+                        miss_shared(&mut report, b, UnresolvedReason::Ambiguous);
+                        unresolved.push(UnresolvedRef {
+                            site: p.from,
+                            name: item.name.clone(),
+                            reason: UnresolvedReason::Ambiguous,
+                            attempts,
+                            at: at.clone(),
+                        });
+                        continue;
+                    }
+                    }
             };
 
             // ── ⓐ **임포트한 이름 자체.** 별칭은 여기서 원본으로 돌아간다.
@@ -645,14 +731,21 @@ pub fn cross_file_edges(
             //    `Root` 를 가리키는 것도 `make` 를 가리키는 것도 참이다. 앞 판은 꼬리가
             //    머리를 **대체**했고, 그래서 `use` 로 들여온 타입이 경로 호출로만 쓰이면
             //    그 타입으로 가는 엣지가 통째로 사라졌다(2026-09-09 실측: `Root`·`Origin`).
-            let a_hits = by_name.get(&(target, item.name.as_str()));
+            // TS 는 **최상위 선언이 먼저**다 — `import { run }` 은 같은 파일의 메서드 `run` 이
+            // 아니라 모듈의 `run` 을 부른다. 최상위가 없을 때만 전부를 본다.
+            let a_hits: Option<Vec<(SymbolId, &[String])>> =
+                by_name.get(&(target, item.name.as_str())).map(|v| {
+                    let top: Vec<(SymbolId, &[String])> =
+                        v.iter().filter(|(_, c)| c.is_empty()).copied().collect();
+                    if is_ts(target) && !top.is_empty() { top } else { v.clone() }
+                });
             let mut a_attempts = attempts.clone();
             a_attempts.push(Attempt {
                 step: AttemptStep::TargetSymbol,
                 tried: vec![format!("{target}#{}", item.name)],
-                found: a_hits.map_or(0, Vec::len),
+                found: a_hits.as_ref().map_or(0, Vec::len),
             });
-            match a_hits.map(Vec::as_slice) {
+            match a_hits.as_deref() {
                 Some([(one, _)]) => {
                     edges.push(CrossFileEdge { from: p.from, to: *one, at: at.clone() });
                     report.a_edges += 1;
@@ -668,7 +761,7 @@ pub fn cross_file_edges(
                     });
                 }
                 None => {
-                    let why = 심볼_없음(target);
+                    let why = 심볼_없음(target, &item.name);
                     miss(&mut report, false, why);
                     unresolved.push(UnresolvedRef {
                         site: p.from,
@@ -690,7 +783,7 @@ pub fn cross_file_edges(
                 found: b_hits.map_or(0, Vec::len),
             });
             let Some(hits) = b_hits else {
-                let why = 심볼_없음(target);
+                let why = 심볼_없음(target, want);
                 miss(&mut report, b, why);
                 unresolved.push(UnresolvedRef {
                     site: p.from,
@@ -748,4 +841,12 @@ pub fn cross_file_edges(
     unresolved.retain(|u| 본것.insert((u.site, u.name.clone())));
 
     (edges, report, unresolved)
+}
+
+/// 파일 하나가 내보내는 이름 전부와 `export *` 여부.
+type 내보냄<'a> = (&'a [String], bool);
+
+/// 이 경로가 TypeScript 소스인가 — `.d.ts` 도 든다.
+fn is_ts(path: &str) -> bool {
+    [".ts", ".tsx", ".mts", ".cts"].iter().any(|e| path.ends_with(e))
 }

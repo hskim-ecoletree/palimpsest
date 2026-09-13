@@ -19,6 +19,7 @@ mod cascade;
 mod chain;
 mod coord;
 mod cross_file;
+mod ts_module;
 mod derived;
 mod entity;
 mod doctor;
@@ -121,8 +122,9 @@ pub use schema::{
 };
 pub use cross_file::{
     Attempt, AttemptStep, CrossFileEdge, CrossFileInput, CrossFileReport, UnresolvedReason,
-    UnresolvedRef, cross_file_edges,
+    UnresolvedRef, cross_file_edges, cross_file_edges_in,
 };
+pub use ts_module::{TsConfig, TsModuleResolution, TsProject, TsResolution};
 pub use projection::{
     FileNode, FileRow, FileRefs, PendingImportRef, RefCounts, ReferenceEdge, file_edges,
 };

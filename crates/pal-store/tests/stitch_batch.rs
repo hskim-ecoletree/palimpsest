@@ -58,6 +58,8 @@ fn 파일치(i: usize) -> FileStitch {
         // 「안 만듦」과 빈 짝으로 둔다 — 값을 지어내면 그것이 이 시험의 모집단이 된다.
         imports: Slot::NotBuilt,
         pending: Vec::new(),
+        export_names: Vec::new(),
+        star_export: false,
         symbols: vec![a, b],
     }
 }
