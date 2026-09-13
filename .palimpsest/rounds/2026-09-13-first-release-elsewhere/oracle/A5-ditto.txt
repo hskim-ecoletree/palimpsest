@@ -1,0 +1,132 @@
+<!-- A5 — ditto 복제본 aded7ce · 2층은 `pal touch resolveRepoRootForCreate` 가 세웠다 -->
+```
+  ※ 파일 간 해소 — ⓐ `cross-file-import` 7116/11010 · ⓑ `path-resolution` 0/0 (선 것/짝)
+  ※ ⓐ 가 못 선 까닭 — bare_specifier 2309 · no_symbol 32 · outside_repo 1456 · through_reexport 97
+  ※ 못 선 까닭의 성격 — 안 하기로 정한 자리와 원리상 풀 수 없는 자리를 가릅니다
+```
+
+
+■ pal export --format cypher
+
+  산출      3926614 바이트
+            File           491건
+            Symbol         4578건
+            REFERENCES     4601건
+            REFERENCES_ACROSS 5003건
+            UnresolvedRef  2024건
+            REFERS_UNRESOLVED 2024건
+
+  못 산출한 라벨 14개 — 0 건이 아닙니다
+            Actor          2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            Binding        2층에 안 삽니다 — 의도 저장소 (intent.redb · R-21 로 파일이 갈려 있다)
+            Change         2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            Defect         2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            Journey        아직 안 만들었습니다 — F19 가 만듭니다
+            NarrativeItem  2층에 안 삽니다 — 이 빌드의 2층에 없다
+            NarrativeRefusal 2층에 안 삽니다 — 이 빌드의 2층에 없다
+            AUTHORED_BY    2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            BOUND_TO       2층에 안 삽니다 — 의도 저장소 (intent.redb · R-21 로 파일이 갈려 있다)
+            FOLLOWS        2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            INTRODUCED_BY  2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            MANIFESTS_AT   2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            RESOLVED_BY    2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            TOUCHES        2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+
+■ 이 답의 근거
+  Snapshot  ditto-a5@aded7ce+worktree
+  2층       심볼 4578 색인됨
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 이 빌드에 없음 effects · judgment
+  이관      2451건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 2451건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  **안 남았습니다** — 2층에 읽기 전용으로 붙어 남기지 못했습니다
+  크기      약 702 토큰 **이상** (잰 것: 2811 바이트 · 가정: 4 바이트/토큰)
+
+# TypeScript 컴파일러 대조 — ditto-a5
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `aded7ce7`
+- 모드: unresolved · recall
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 5003 · 불일치 **0**
+
+## A5 ⑵ — `outside_repo` 로 남은 못 푼 참조
+
+- TS 파일의 `outside_repo` 1052 · 그중 TypeScript 가 저장소 안 파일로 푸는 것 **0**
+
+## A5 ⑷ — 재현율
+
+- 모집단(TypeScript 가 저장소 안으로 풀고 · 대상이 그 이름을 선언하고 · 선언 안에서 참조되는 이름 임포트) **2915** · pal 엣지가 빠진 것 **59**
+- 모집단 밖 — 대상이 그 이름을 선언하지 않는다(재수출로만 진다): 71
+- 모집단 밖 — 참조가 파일 최상위에만 있다: 216
+- 모집단 밖 — 참조가 없다: 10
+  - src/acg/boundary/codeql-edges.ts:11 · `~/core/codeql/relations` · RelationDeps → src/core/codeql/relations.ts
+  - src/acg/boundary/codeql-edges.ts:11 · `~/core/codeql/relations` · renderEdgeQuery → src/core/codeql/relations.ts
+  - src/acg/boundary/codeql-edges.ts:11 · `~/core/codeql/relations` · runRelationQuery → src/core/codeql/relations.ts
+  - src/acg/boundary/codeql-edges.ts:12 · `~/core/codeql/runner` · BuildMode → src/core/codeql/runner.ts
+  - src/acg/boundary/codeql-edges.ts:12 · `~/core/codeql/runner` · CodeqlLanguage → src/core/codeql/runner.ts
+  - src/acg/boundary/codeql-edges.ts:13 · `./boundary` · DependencyEdge → src/acg/boundary/boundary.ts
+  - src/acg/boundary/codeql-edges.ts:13 · `./boundary` · EdgeAnalyzer → src/acg/boundary/boundary.ts
+  - src/acg/icl/compile.ts:26 · `./static-check` · staticCheck → src/acg/icl/static-check.ts
+  - src/acg/icl/static-check.ts:11 · `./ast` · IclProgram → src/acg/icl/ast.ts
+  - src/acg/impact/codeql-analyzer.ts:17 · `~/acg/boundary/boundary` · globToRegExp → src/acg/boundary/boundary.ts
+  - src/acg/impact/codeql-analyzer.ts:18 · `~/core/codeql/relations` · RelationDeps → src/core/codeql/relations.ts
+  - src/acg/impact/codeql-analyzer.ts:18 · `~/core/codeql/relations` · relationQueries → src/core/codeql/relations.ts
+  - src/acg/impact/codeql-analyzer.ts:18 · `~/core/codeql/relations` · renderQuery → src/core/codeql/relations.ts
+  - src/acg/impact/codeql-analyzer.ts:18 · `~/core/codeql/relations` · runRelationQuery → src/core/codeql/relations.ts
+  - src/acg/impact/codeql-analyzer.ts:24 · `~/core/codeql/runner` · BuildMode → src/core/codeql/runner.ts
+  - src/acg/impact/codeql-analyzer.ts:24 · `~/core/codeql/runner` · CodeqlLanguage → src/core/codeql/runner.ts
+  - src/acg/impact/codeql-analyzer.ts:25 · `~/schemas/acg-architecture-spec` · AcgInternalPackage → src/schemas/acg-architecture-spec.ts
+  - src/acg/impact/codeql-analyzer.ts:26 · `./impact-graph` · AnalyzerResult → src/acg/impact/impact-graph.ts
+  - src/acg/impact/codeql-analyzer.ts:26 · `./impact-graph` · ImpactAnalyzer → src/acg/impact/impact-graph.ts
+  - src/cli/commands/architecture.ts:5 · `~/acg/boundary/codeql-edges` · CodeqlEdgeAnalyzer → src/acg/boundary/codeql-edges.ts
+  - src/cli/commands/boundary.ts:4 · `~/acg/boundary/codeql-edges` · CodeqlEdgeAnalyzer → src/acg/boundary/codeql-edges.ts
+  - src/cli/commands/impact.ts:3 · `~/acg/impact/codeql-analyzer` · CodeqlImpactAnalyzer → src/acg/impact/codeql-analyzer.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · BodyQueryResult → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · MemoryNodeNotFoundError → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · MemoryProjectionAbsentError → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · explainNode → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · queryBodies → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · queryNeighbors → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · querySymbolBrief → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · readFreshness → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · readPullUsage → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · recordPullQuery → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · runAudit → src/core/memory-query.ts
+  - src/cli/commands/memory.ts:29 · `~/core/memory-query` · shortestPath → src/core/memory-query.ts
+  - src/cli/commands/mode.ts:3 · `~/core/mode-doctor` · collectModeReport → src/core/mode-doctor.ts
+  - src/cli/commands/mode.ts:3 · `~/core/mode-doctor` · formatModeHuman → src/core/mode-doctor.ts
+  - src/cli/commands/release.ts:5 · `~/core/mode-doctor` · isDittoSourceRepo → src/core/mode-doctor.ts
+  - src/core/memory-query.ts:18 · `../acg/boundary/boundary` · globToRegExp → src/acg/boundary/boundary.ts
+  - src/core/memory-query.ts:19 · `./ditto-paths` · dittoDir → src/core/ditto-paths.ts
+  - src/core/memory-query.ts:19 · `./ditto-paths` · localDir → src/core/ditto-paths.ts
+  - src/core/memory-query.ts:20 · `./fs` · ensureDir → src/core/fs.ts
+  - src/core/memory-query.ts:21 · `./memory-measure` · extractInvariants → src/core/memory-measure.ts
+  - src/core/memory-query.ts:21 · `./memory-measure` · extractRejectedAlternatives → src/core/memory-measure.ts
+  - src/core/memory-query.ts:22 · `./memory-project` · Freshness → src/core/memory-project.ts
+  - src/core/memory-query.ts:22 · `./memory-project` · memoryStatus → src/core/memory-project.ts
+  - src/core/memory-query.ts:23 · `./memory-reduce` · reduceEvents → src/core/memory-reduce.ts
+  - src/core/memory-query.ts:24 · `./memory-store` · MemoryEventStore → src/core/memory-store.ts
+  - src/core/memory-query.ts:24 · `./memory-store` · MemoryProjectionStore → src/core/memory-store.ts
+  - src/core/memory-query.ts:24 · `./memory-store` · MemorySourceStore → src/core/memory-store.ts
+  - src/core/memory-query.ts:24 · `./memory-store` · ServingGraph → src/core/memory-store.ts
+  - src/core/memory-warmstart.ts:33 · `./memory-query` · DecisionBrief → src/core/memory-query.ts
+  - src/core/memory-warmstart.ts:33 · `./memory-query` · queryDecisionBriefs → src/core/memory-query.ts
+  - src/core/memory-warmstart.ts:33 · `./memory-query` · queryNeighbors → src/core/memory-query.ts
+  - src/core/mode-doctor.ts:29 · `./build-stamp` · computeSourceStamp → src/core/build-stamp.ts
+  - src/core/mode-doctor.ts:29 · `./build-stamp` · readEmbeddedStamp → src/core/build-stamp.ts
+  - src/hooks/rebuilt/session-start.ts:2 · `~/core/mode-doctor` · collectModeReport → src/core/mode-doctor.ts
+  - src/hooks/rebuilt/session-start.ts:2 · `~/core/mode-doctor` · formatModeBanner → src/core/mode-doctor.ts
+  - src/hooks/session-start.ts:2 · `~/core/mode-doctor` · collectModeReport → src/core/mode-doctor.ts
+  - src/hooks/session-start.ts:2 · `~/core/mode-doctor` · formatModeBanner → src/core/mode-doctor.ts
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 2806 · .js 대응 0 · 명시 .ts 0 · 디렉터리 index 0 · 별칭 2197 · 상속 별칭 0
+- 대상 확장자: .ts 5003 · .tsx 0 · .d.ts 0
+- 모드: bundler 5003 · nodenext 0
+- **표본 0 인 가지**: .js 대응 · 명시 .ts · 디렉터리 index · 상속 별칭 · .tsx · .d.ts · nodenext
+
+node $R/oracle/ts-oracle.mjs --repo=$S/ditto-a5 --pal=$P --unresolved --recal  11.13s user 0.63s system 146% cpu 8.002 total

@@ -102,7 +102,8 @@ for d in a1 a2-1 a2-2 a2-3 a2-4 a2-6 collide nodenext; do
   set +e
   node "$HERE/ts-oracle.mjs" --repo="$WORK/$d" --pal="$PAL" | tee "$WORK/$d.report"
   rc=${PIPESTATUS[0]}; set -e
-  grep -E "^- (지정자|대상 확장자|모드): " "$WORK/$d.report" >> "$WORK/branches.txt" || true
+  # 가지 표본 줄만 — 머리의 「- 모드: 정밀도만」 도 같은 머리라 숫자로 끝나는 줄만 집는다.
+  grep -E "^- (지정자|대상 확장자|모드): .* [0-9]+$" "$WORK/$d.report" >> "$WORK/branches.txt" || true
   echo "rc=$rc"; total=$((total + rc))
 done
 

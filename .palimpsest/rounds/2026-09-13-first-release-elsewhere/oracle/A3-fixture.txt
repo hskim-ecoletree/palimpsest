@@ -1,0 +1,179 @@
+
+################ 픽스처 a1
+# TypeScript 컴파일러 대조 — a1
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `3e97381`
+- 모드: 정밀도만
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 7 · 불일치 **0**
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 3 · .js 대응 1 · 명시 .ts 1 · 디렉터리 index 1 · 별칭 1 · 상속 별칭 0
+- 대상 확장자: .ts 7 · .tsx 0 · .d.ts 0
+- 모드: bundler 7 · nodenext 0
+- **표본 0 인 가지**: 상속 별칭 · .tsx · .d.ts · nodenext
+
+rc=0
+
+################ 픽스처 a2-1
+# TypeScript 컴파일러 대조 — a2-1
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `45690ab`
+- 모드: 정밀도만
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 1 · 불일치 **0**
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 0 · .js 대응 0 · 명시 .ts 0 · 디렉터리 index 0 · 별칭 1 · 상속 별칭 0
+- 대상 확장자: .ts 1 · .tsx 0 · .d.ts 0
+- 모드: bundler 1 · nodenext 0
+- **표본 0 인 가지**: 확장자 없음 · .js 대응 · 명시 .ts · 디렉터리 index · 상속 별칭 · .tsx · .d.ts · nodenext
+
+rc=0
+
+################ 픽스처 a2-2
+# TypeScript 컴파일러 대조 — a2-2
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `e399047`
+- 모드: 정밀도만
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 1 · 불일치 **0**
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 0 · .js 대응 0 · 명시 .ts 0 · 디렉터리 index 0 · 별칭 0 · 상속 별칭 1
+- 대상 확장자: .ts 1 · .tsx 0 · .d.ts 0
+- 모드: bundler 1 · nodenext 0
+- **표본 0 인 가지**: 확장자 없음 · .js 대응 · 명시 .ts · 디렉터리 index · 별칭 · .tsx · .d.ts · nodenext
+
+rc=0
+
+################ 픽스처 a2-3
+# TypeScript 컴파일러 대조 — a2-3
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `166daf2`
+- 모드: 정밀도만
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 1 · 불일치 **0**
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 0 · .js 대응 0 · 명시 .ts 0 · 디렉터리 index 0 · 별칭 1 · 상속 별칭 0
+- 대상 확장자: .ts 1 · .tsx 0 · .d.ts 0
+- 모드: bundler 1 · nodenext 0
+- **표본 0 인 가지**: 확장자 없음 · .js 대응 · 명시 .ts · 디렉터리 index · 상속 별칭 · .tsx · .d.ts · nodenext
+
+rc=0
+
+################ 픽스처 a2-4
+# TypeScript 컴파일러 대조 — a2-4
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `b0df2ca`
+- 모드: 정밀도만
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 1 · 불일치 **0**
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 0 · .js 대응 0 · 명시 .ts 0 · 디렉터리 index 0 · 별칭 1 · 상속 별칭 0
+- 대상 확장자: .ts 1 · .tsx 0 · .d.ts 0
+- 모드: bundler 1 · nodenext 0
+- **표본 0 인 가지**: 확장자 없음 · .js 대응 · 명시 .ts · 디렉터리 index · 상속 별칭 · .tsx · .d.ts · nodenext
+
+rc=0
+
+################ 픽스처 a2-6
+# TypeScript 컴파일러 대조 — a2-6
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `607a986`
+- 모드: 정밀도만
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 1 · 불일치 **0**
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 0 · .js 대응 0 · 명시 .ts 0 · 디렉터리 index 0 · 별칭 0 · 상속 별칭 1
+- 대상 확장자: .ts 1 · .tsx 0 · .d.ts 0
+- 모드: bundler 1 · nodenext 0
+- **표본 0 인 가지**: 확장자 없음 · .js 대응 · 명시 .ts · 디렉터리 index · 별칭 · .tsx · .d.ts · nodenext
+
+rc=0
+
+################ 픽스처 collide
+# TypeScript 컴파일러 대조 — collide
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `7a4a1e8`
+- 모드: 정밀도만
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 7 · 불일치 **0**
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 5 · .js 대응 1 · 명시 .ts 0 · 디렉터리 index 1 · 별칭 0 · 상속 별칭 0
+- 대상 확장자: .ts 5 · .tsx 1 · .d.ts 1
+- 모드: bundler 7 · nodenext 0
+- **표본 0 인 가지**: 명시 .ts · 별칭 · 상속 별칭 · nodenext
+
+rc=0
+
+################ 픽스처 nodenext
+# TypeScript 컴파일러 대조 — nodenext
+
+- pal: `pal 0.0.0+db6c366564e3`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `d263f63`
+- 모드: 정밀도만
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 1 · 불일치 **0**
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 0 · .js 대응 1 · 명시 .ts 0 · 디렉터리 index 0 · 별칭 0 · 상속 별칭 0
+- 대상 확장자: .ts 1 · .tsx 0 · .d.ts 0
+- 모드: bundler 0 · nodenext 1
+- **표본 0 인 가지**: 확장자 없음 · 명시 .ts · 디렉터리 index · 별칭 · 상속 별칭 · .tsx · .d.ts · bundler
+
+rc=0
+
+################ 합산 — 가지별 표본(픽스처 전체)
+- 확장자 없음 8 · .js 대응 3 · 명시 .ts 1 · 디렉터리 index 2 · 별칭 4 · 상속 별칭 2 · .ts 18 · .tsx 1 · .d.ts 1 · bundler 19 · nodenext 1
+- **합산 표본 0 인 가지**: 없음
+
+################ A3-a — 음성 대조(엣지 하나의 대상 파일을 바꿔 넣는다 · 불일치 ≥ 1 이어야 한다)
+- 잰 엣지 7 · 불일치 **1**
+  - src/user/use.ts → src/user/sib.ts#fromAlias — TypeScript: src/alias/target.ts
+rc=1
+
+합계 rc(불일치 있는 픽스처 수) = 0
