@@ -474,10 +474,22 @@ def 좌표만(s, 파일들=None):
     for c in 후보:
         if not 좌표같은가(c):
             continue
+        # ⚠ **절대경로 모양은 옛 규칙대로 받는다** — 드라이브 문자(`C:\…`)는 `:` 로 자르기
+        #   전에 가른다. `xtask` 는 그 좌표를 「저장소 밖 절대경로」 면제의 수에 넣는다.
+        #   트리에 대면 저장소 안 파일을 절대로 적은 첫 좌표를 버리고 뒤의 엉뚱한 후보를
+        #   고른다(실측: 끝난 회차에서 `/Users/…/SKILL.md` → `plan-v3.md`).
+        if 절대경로_모양(c):
+            return c if re.match(r"^[A-Za-z]:[\\/]", c) else c.split(":")[0]
         c = c.split(":")[0]
         if 파일들 is None or 트리에_있나(c, 파일들):
             return c
     return "(경로 없음)"
+
+
+def 절대경로_모양(s):
+    """`xtask` 의 `저장소_밖_절대경로` 와 같은 자 — 유닉스 · 홈 · 드라이브 · UNC."""
+    return (s.startswith("/") or s.startswith("~") or s.startswith("\\\\")
+            or bool(re.match(r"^[A-Za-z]:[\\/]", s)))
 
 
 def main(argv):
