@@ -1,0 +1,6 @@
+# ditto 원본 상태 — 회차 착수 쪽 박제 (2026-09-13T11:44:19Z)
+HEAD aded7ce7f88feb3c03238c5f9760f3a2ade4a6c1
+porcelain_sha256 375061156434a9dd76a68c63d437172a8107fdc7f09ec8b312e7c139665fdf53
+porcelain_lines 278
+palimpsest_dir_listing_sha256 cf6cd3d58da697562b1e7be1346baa64f4f46d4b005e2eaa8bc6617c967e3e9c
+node_modules_entries 16
