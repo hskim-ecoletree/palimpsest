@@ -1,0 +1,40 @@
+# 승인 — 화면이 안내한 명령을 그대로 돌렸다
+
+- 출처: `effect/03-touch/01-mcpServersFromToml.txt` 의 「승인:」 줄
+- 복제본 HEAD 전: 5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971 · src tests scripts 변경 0
+
+```
+$ pal narrative --approve decision/01M2DGDF5NKRYMNKZHVR4AE1CN --pick 5a7663897b43
+코드 좌표에 결박된 사실과 의도를 산출하는 상태 관리자 — 호스트 없이도 동작한다
+
+Usage: pal <COMMAND>
+
+Commands:
+  symbols    파일 하나의 최상위 심볼을 산출한다
+  bind       조각 하나를 좌표에 손으로 건다 — **사람이 넣는 자리**
+  radius     있는 결박의 **반경만 바꾼다** — 낡음 판정을 보존한다
+  narrative  문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다**
+  defect     수정 커밋 하나에서 결함을 소급 결박한다 — **못 담은 것도 헤아린다**
+  plan       계획 문서를 읽고 지금 스냅샷에 대 본다 — **이탈은 안 잰다**
+  deviation  계획과 실제의 갈림 — **넷이고 ★ 못 잰 것이 분리돼 있다**
+  touch      좌표 하나를 만진다 — **빈 답도 정직하게 산출한다**
+  doctor     저장된 그래프가 자기 규칙을 지키는지 본다 — **기본은 표본이고 전수는 명시적이다**
+  install    이 프로젝트에 palimpsest 를 놓는다 — **대상 바깥은 안 건드린다**
+  update     놓은 것을 갱신한다 — **사람이 고친 것은 밟지 않고 보고한다**
+  uninstall  놓은 것을 걷어낸다 — **매니페스트에 적힌 것만**
+  hook       하네스의 훅이 부르는 자리 — **표준입력으로 페이로드를 받는다**
+  round      회차의 조건과 verification 상태를 읽는다 — 명령을 실행하지 않는다
+  intent     의도 저장소를 JSONL 로 내고 되읽는다 — **재구축 불가한 것의 유일한 복구 경로**
+  cache      1층 캐시를 본다 — **`prune` 이 닿는 곳은 `cache/` 뿐이다**
+  query      이름 붙은 질의 하나를 돌린다 — **답이 응답 묶음을 지고 나온다**
+  export     2층을 우리 밖 도구가 읽는 형식으로 출력한다 — **못 산출한 라벨을 함께 적는다**
+  ledger     저장소 하나의 관측 범위 대장을 산출한다 — **무엇을 보았고 무엇을 보지 않았는가**
+  help       Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+rc=2
+```
+
+- 복제본 HEAD 뒤: 5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971 · src tests scripts 변경 0

@@ -1,0 +1,16 @@
+
+■ symbol.callers  CODEX_PROFILE_SANDBOX_FLAGS
+
+  fun        buildCodexSpawnArgs      src/core/hosts/codex.ts:231
+
+■ 이 답의 근거
+  Snapshot  ditto-effect@5ec95eb+worktree
+  2층       심볼 4578 색인됨
+  범위      미해소 18 · 범위 밖 1979 파일 · 최저 등급 L2 · identity exact
+  생략      없음 (명시)
+  이관      2470건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 2470건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 353 토큰 **이상** (잰 것: 1412 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 이 빌드에 없음 effects · judgment
+

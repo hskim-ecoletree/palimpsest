@@ -1,0 +1,18 @@
+# 승인 — 화면이 안내한 명령을 그대로 돌렸다
+
+- 출처: `effect/03-touch/01-mcpServersFromToml.txt` 의 「승인:」 줄 — `shlex` 로 낱말만 갈랐다(고치지 않았다)
+- ⚠ 첫 시도는 **실행 하네스의 결함**이었다: zsh 가 따옴표 없는 변수를 낱말로 안 쪼개 `pal` 이 인자 없이 불렸다(`04-approve-harness-error.txt`). `pal` 의 결함이 아니다 — 같은 안내를 시험 `pending_and_pick` 의 `b2` 가 그대로 돌려 통과한다.
+- 복제본 HEAD 전 5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971 · src tests scripts 변경 0
+
+```
+$ pal narrative --approve decision/01M2DGDF5NKRYMNKZHVR4AE1CN --pick 5a7663897b43
+
+승인했습니다 — **새 `asserted` 결박이 생겼고 제안은 그대로 남습니다.**
+  개체    decision/01M2DGDF5NKRYMNKZHVR4AE1CN
+  좌표    5a7663897b4303999f3b6d1f24d8407d84ca42bb348e163b4f2539f5409802fd
+  걸린 것 span
+  결박    [7b659c1cd259934c]
+rc=0
+```
+
+- 복제본 HEAD 뒤 5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971 · src tests scripts 변경 0 — 승인은 코드를 안 바꾼다
