@@ -275,35 +275,55 @@ fn 반경별_벤치와_선형성() {
     println!("    ③ closure(2)   {closure배:.2}배   (기록만 — 차수와 k 의 함수다)");
     println!();
 
-    // ── ④ 넷째 팔 — 두 `changed` 크기에서 ────────────────────────────────
-    let dir = std::env::temp_dir().join(format!("pal-f09-watch-{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&dir);
-    std::fs::create_dir_all(&dir).expect("임시 자리");
-    let p = Projection::open(&dir.join("index.redb")).expect("2층");
-    let files = 그래프(크게);
-    p.stitch("bench", &files, 1_000, &스냅샷()).expect("스티칭");
-    let 대상: Vec<SymbolId> = files.iter().map(|f| f.symbols[0].id).collect();
-    let (store, 감시된) = 의도_저장소(&dir, &p, &대상);
-    println!("  ④ WATCH 색인 대 전수 훑기 — 결박 {결박수} 건 · 감시된 좌표 {}", 감시된.len());
-    println!();
+    // ── ④ 넷째 팔 — **두 규모 × 두 `changed` 크기** ───────────────────────
+    //
+    // ★★ **규모를 둘로 넓힌 자리다** ⟨정정 2026-09-13 · 독립 리뷰 R2 · 발견 11⟩.
+    //   앞 판은 ④ 를 **크게 한 곳**에서만 돌렸고, 그래서 조건 `E1` 이 요구한
+    //   「두 규모」가 ①②③ 에만 서 있었다. 산출은 10 행이었고 문면은 16 을 적었다.
+    //
+    //   ⚠ **①②③ 에는 `changed` 축이 원리상 없다** — 반경을 펴는 일은 「무엇이
+    //   바뀌었나」를 입력으로 받지 않는다. 그러므로 곱 16 은 **형태가 안 서는 수**이고,
+    //   서는 것은 **①②③ × 두 규모(6) + ④-가·④-나 × 두 규모 × 두 `changed`(8) = 14** 다.
+    //   그 사실을 조건 문면에 갈아 적고 여기서 8 을 실제로 돈다.
+    let 넷째 = |n: usize| -> (f64, f64, usize, usize, usize) {
+        let dir = std::env::temp_dir().join(format!("pal-f09-watch-{n}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("임시 자리");
+        let p = Projection::open(&dir.join("index.redb")).expect("2층");
+        let files = 그래프(n);
+        p.stitch("bench", &files, 1_000, &스냅샷()).expect("스티칭");
+        let 대상: Vec<SymbolId> = files.iter().map(|f| f.symbols[0].id).collect();
+        let (store, 감시된) = 의도_저장소(&dir, &p, &대상);
+        println!("  ④ 규모 {n} — WATCH 색인 대 전수 훑기 · 결박 {결박수} 건 · 감시된 좌표 {}", 감시된.len());
+        println!();
+        let 작은k = 1usize;
+        let 큰k = 감시된.len();
+        let (색인_작, 전수_작, 답_작) = 색인_대_전수(&dir, &store, &감시된, 작은k);
+        let (색인_큰, 전수_큰, 답_큰) = 색인_대_전수(&dir, &store, &감시된, 큰k);
+        let _ = std::fs::remove_dir_all(&dir);
+        println!();
+        (배(색인_작, 전수_작), 배(색인_큰, 전수_큰), 답_작, 답_큰, 큰k)
+    };
+    let (이득_작_소, 이득_큰_소, _, _, 큰k_소) = 넷째(작게);
+    let (이득_작, 이득_큰, 답_작, 답_큰, 큰k) = 넷째(크게);
     let 작은k = 1usize;
-    let 큰k = 감시된.len();
-    let (색인_작, 전수_작, 답_작) = 색인_대_전수(&dir, &store, &감시된, 작은k);
-    let (색인_큰, 전수_큰, 답_큰) = 색인_대_전수(&dir, &store, &감시된, 큰k);
-    println!();
-    let 이득_작 = 배(색인_작, 전수_작);
-    let 이득_큰 = 배(색인_큰, 전수_큰);
     println!("  ④ 색인이 전수보다 몇 배 빠른가 — **`changed` 크기가 판정을 뒤집는다**");
-    println!("    changed {작은k:>5} (닿는 결박 {답_작:>4}) → {이득_작:.3}배");
-    println!("    changed {큰k:>5} (닿는 결박 {답_큰:>4}) → {이득_큰:.3}배");
+    println!("    규모 {작게} · changed {작은k:>5}                      → {이득_작_소:.3}배");
+    println!("    규모 {작게} · changed {큰k_소:>5}                      → {이득_큰_소:.3}배");
+    println!("    규모 {크게} · changed {작은k:>5} (닿는 결박 {답_작:>4}) → {이득_작:.3}배");
+    println!("    규모 {크게} · changed {큰k:>5} (닿는 결박 {답_큰:>4}) → {이득_큰:.3}배");
     let 건너뛰나 = (이득_작 > 1.0) != (이득_큰 > 1.0);
+    let 건너뛰나_소 = (이득_작_소 > 1.0) != (이득_큰_소 > 1.0);
+    println!(
+        "    ⚠ 규모 {작게} 에서도 두 비가 1 을 건너뛰나 — **{}**",
+        if 건너뛰나_소 { "그렇다" } else { "아니다" }
+    );
     println!(
         "    두 비가 1 을 건너뛰나 — **{}**{}",
         if 건너뛰나 { "그렇다" } else { "아니다" },
         if 건너뛰나 { "  ← 부하 선택이 합격선을 정한다. 게이트에 결함으로 적는다" } else { "" }
     );
     println!();
-    let _ = std::fs::remove_dir_all(&dir);
 
     // ── 합격선 — **절대 시간이 아니다** ──────────────────────────────────
     //

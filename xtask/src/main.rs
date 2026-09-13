@@ -632,6 +632,7 @@ fn check(root: &Path) -> Result<()> {
         ("예산 상수 단일 위치", check_budget_constants(root)),
         ("벗어나는 경로 부재", check_no_escape_hatch(root)),
         ("앵커는 신고받지 않는다", check_anchor_is_measured(root)),
+        ("결박을 저장하는 경로가 예산을 지난다", check_budget_on_write_paths(root)),
         ("낡음이 생성기를 안 부른다", check_no_regeneration(root)),
         ("인입이 자연어 유사도를 안 쓴다", check_no_similarity(root)),
         ("승격이 원본을 안 고친다", check_promotion_is_not_in_place(root)),
@@ -2095,6 +2096,71 @@ fn check_anchor_is_measured(root: &Path) -> Result<String> {
         );
     }
     Ok(format!("`WatchEntry` 생성 자리 {}개 · 등록된 자리 {}개", sites.len(), WATCH_ENTRY_SITES.len()))
+}
+
+// ── 검사 12-나 — 결박을 저장하는 경로가 예산을 지난다 (옛 F09 §3) ────────────────
+//
+// > **런타임에 조용히 느려지는 대신 저장 시점에 거부한다.** 반경을 넓히면 감시 집합이
+// > 커지고, 커진 집합은 낡음 판정마다 훑어진다 — 그 비용을 **쓰는 순간에** 막는다.
+//
+// # 왜 시험이 아니라 검사인가 — **RED 가 원리상 도달 불가다**
+//
+// 조건 `B5` 는 *"보존 경로가 `check_budget` 을 부르는지를 **시험으로** 잰다"* 를 요구했고,
+// 독립 리뷰 R2 가 **그 시험이 저장소에 0 건**임을 잡았다(해악도 거짓신호 · 발견 5).
+// 그런데 시험으로는 못 잡는다: 거부선이 `PROVISIONAL_WATCH_PRODUCT_MAX`(1_000_000)이고
+// 그것을 넘기려면 `결박 수 × 감시 크기 > 10^6` 이라 **픽스처가 원리상 못 닿는다**
+// (결박 1,001 건 × 감시 1,000 = WatchEntry 백만 행). 그것이 `CA1-03` 이 이름 붙인
+// *"GREEN 이 도달 불가"* 의 거울상이다 — **RED 가 도달 불가**다.
+//
+// 그래서 재는 자를 바꾼다: **호출이 사라지면 빨개지는 자**다. 모집단은
+// `intent.record(` 를 부르는 파일(= 결박을 정본에 쓰는 경로 전부)이고, 술어는
+// **같은 파일이 `check_budget` 을 부른다**다. 지우면 그 파일이 모집단에 남은 채
+// 술어를 잃으므로 **이 검사가 발화한다** — 그것이 RED 의 관측 가능한 형태다.
+//
+// ⚠ **경로 목록을 손으로 베끼지 않는다.** 모집단을 `grep` 으로 산출하므로 새 쓰기 경로가
+// 생기면 **그것도 같이 잰다** — 베껴 두면 새 경로가 조용히 빠진다(`03-shortest-path.md`
+// 가 검사 모집단에 대해 적은 것과 같은 자다).
+
+fn check_budget_on_write_paths(root: &Path) -> Result<String> {
+    let mut 쓰는_파일: Vec<(String, bool)> = Vec::new();
+    for dir in ["crates/pal-cli/src", "crates/pal-core/src", "crates/pal-query/src"] {
+        for file in rust_sources(&root.join(dir))? {
+            let text = std::fs::read_to_string(&file)?;
+            let 씀 = text
+                .lines()
+                .any(|l| l.split("//").next().unwrap_or("").contains("intent.record("));
+            if !씀 {
+                continue;
+            }
+            let 예산 = text
+                .lines()
+                .any(|l| l.split("//").next().unwrap_or("").contains("check_budget("));
+            쓰는_파일.push((상대_경로(root, &file), 예산));
+        }
+    }
+
+    // **하한이다.** 모집단이 0 이면 이 검사가 아무것도 안 세고 있다 — 저장 API 의 이름이
+    // 바뀐 것이고, 그러면 *"예산을 지난다"* 가 검사되지 않는다.
+    if 쓰는_파일.is_empty() {
+        bail!(
+            "`intent.record(` 를 부르는 파일이 하나도 없다 — 이 검사는 아무것도 안 세고 \
+             있다. 저장 API 의 이름이 바뀌었으면 이 검사의 모집단을 같이 옮겨라"
+        );
+    }
+
+    let 빠진: Vec<&String> = 쓰는_파일.iter().filter(|(_, b)| !b).map(|(f, _)| f).collect();
+    if !빠진.is_empty() {
+        bail!(
+            "결박을 정본에 쓰는데 **저장 시점 예산을 안 지나는** 경로가 있다 — 옛 F09 §3 이 \
+             *\"런타임에 조용히 느려지는 대신 저장 시점에 거부한다\"* 로 정한 자리다:\n    {}",
+            빠진.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n    ")
+        );
+    }
+    Ok(format!(
+        "결박을 쓰는 경로 {}개 · 예산을 안 지나는 것 0개 ({})",
+        쓰는_파일.len(),
+        쓰는_파일.iter().map(|(f, _)| f.as_str()).collect::<Vec<_>>().join(" · ")
+    ))
 }
 
 // ── 검사 13 — 낡음이 생성기를 안 부른다 (옛 F09 §4.1) ──────────────────────────

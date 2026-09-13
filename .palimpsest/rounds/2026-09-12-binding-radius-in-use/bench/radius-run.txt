@@ -2,7 +2,13 @@
 
 > 회차 `2026-09-12-binding-radius-in-use` · 2026-09-13
 > 명령: `cargo test -p pal-cli --release --test radius_bench -- --ignored --nocapture`
-> HEAD: `47a0014` · 종료값 **0**
+> HEAD: `4080346` · 종료값 **0**
+>
+> ★★ **두 번째 실행이다** ⟨정정 2026-09-13 · 독립 리뷰 R2 · 발견 11⟩. 첫 실행(`47a0014`)은
+> ④ 팔을 **규모 8000 한 곳**에서만 돌려 산출이 10 행이었고, 조건 `E1` 의 문면은 16 을
+> 적고 있었다. **④ 를 두 규모로 넓혀 다시 돌렸다** — 지금 14 행이다.
+> ⚠ **비율은 이 실행의 값이다** — 첫 실행의 3.84·3.87·4.02 와 다르다(같은 기계, 다른 실행).
+> 절대 시간이 합격선이 아니므로 그것이 판정을 안 움직인다(`E2`).
 >
 > ⚠⚠ **CI 는 이것을 안 돌린다.** `cargo xtask test` 의 축이 `--all-targets` 와 `--doc`
 > 둘뿐이고 `--ignored` 가 없다(`xtask/src/main.rs:384-387`). 소유자 결정 ⟨2026-09-13⟩ 이
@@ -12,9 +18,38 @@
 > **그러므로 「아무도 안 돌림」이 이 회차에 대해 거짓이다** — 이 파일이 수를 진다.
 > 남는 것은 **회귀 탐지 공백** 하나이고 그것은 기록된 경계다.
 
+## 비를 다시 계산한다 — `bench/radius.tsv` 의 `두규모의비` 열과 대조 (`E2` ⑶)
+
+| 팔 | 규모 2000 (ms) | 규모 8000 (ms) | 8000/2000 | 표의 값 |
+|---|--:|--:|--:|--:|
+| ① symbol | 0.0382 | 0.1321 | **3.46** | 3.46 |
+| ② callers | 0.5782 | 2.0740 | **3.59** | 3.59 |
+| ③ closure(2) | 2.0650 | 7.4340 | **3.60** | 3.60 |
+| ④-가 색인 · changed 1 | 0.0108 | 0.0098 | **0.91** | 0.91 |
+| ④-나 전수 · changed 1 | 1.2450 | 1.2480 | **1.00** | 1.00 |
+| ④-가 색인 · changed 801 | 1.7440 | 1.6690 | **0.96** | 0.96 |
+| ④-나 전수 · changed 801 | 1.1080 | 1.0980 | **0.99** | 0.99 |
+
+★★ **④ 의 네 비가 전부 1 근처인 것이 이 실행이 새로 말해 주는 것이다.** ①②③ 은 노드 4 배에
+3.5 배쯤 자라는데 ④ 의 두 팔은 **규모에 거의 둔감하다** — 까닭은 ④ 의 모집단이 투영이 아니라
+**의도 저장소(결박 200 건 · 감시된 좌표 801)**이고 그 수를 규모가 안 건드리기 때문이다.
+**그러므로 ④ 에서 판정을 정하는 축은 규모가 아니라 `changed` 다**(`E3` ⑵ 가 그것을 진다).
+
+## 두 비가 1 을 건너뛰나 (`E3` ⑵ 의 재현)
+
+| 규모 | changed 1 | changed 801 | 1 을 건너뛰나 |
+|--:|--:|--:|---|
+| 2000 | 114.892배 | 0.636배 | **그렇다** |
+| 8000 | 126.898배 | 0.658배 | **그렇다** |
+
+**두 규모에서 다 뒤집힌다** — 부하 선택이 합격선을 정한다는 사실이 규모에 의존하지 않는다.
+
 ## 전 출력
 
 ```
+   Compiling pal-cli v0.0.0 (/Users/incognito/dev/projects/palimpsest/crates/pal-cli)
+    Finished `release` profile [optimized] target(s) in 7.20s
+     Running tests/radius_bench.rs (target/release/deps/radius_bench-df034cc216e25012)
 
 running 1 test
 
@@ -30,38 +65,48 @@ running 1 test
   회차 3 · 최솟값 · 규모 2000 → 8000 (4배) · 결박 200 건
 
   규모 2000 — 심볼 2000 · 파일 500
-    ① symbol 반경                  min   37.750µs · max/min 1.09배 · 산출 500
-    ② callers 반경                 min  583.333µs · max/min 1.04배 · 산출 2499
-    ③ closure(2) 반경              min    2.202ms · max/min 1.03배 · 산출 4494
+    ① symbol 반경                  min   38.208µs · max/min 1.02배 · 산출 500
+    ② callers 반경                 min  578.208µs · max/min 1.01배 · 산출 2499
+    ③ closure(2) 반경              min    2.065ms · max/min 1.10배 · 산출 4494
 
   규모 8000 — 심볼 8000 · 파일 2000
-    ① symbol 반경                  min  145.042µs · max/min 1.01배 · 산출 2000
-    ② callers 반경                 min    2.259ms · max/min 1.02배 · 산출 9999
-    ③ closure(2) 반경              min    8.854ms · max/min 1.03배 · 산출 17994
+    ① symbol 반경                  min  132.084µs · max/min 1.01배 · 산출 2000
+    ② callers 반경                 min    2.074ms · max/min 1.01배 · 산출 9999
+    ③ closure(2) 반경              min    7.434ms · max/min 1.07배 · 산출 17994
 
   반경이 무엇을 늘리나 — 감시 집합 크기의 합
     규모 2000: {"① symbol 반경": 500, "② callers 반경": 2499, "③ closure(2) 반경": 4494}
     규모 8000: {"① symbol 반경": 2000, "② callers 반경": 9999, "③ closure(2) 반경": 17994}
 
   선형성 — 노드 4배에 대해
-    ① symbol       3.84배   (선: 8배 이내 — 대상 수가 4 배다)
-    ② callers      3.87배   (선: 8배 이내)
-    ③ closure(2)   4.02배   (기록만 — 차수와 k 의 함수다)
+    ① symbol       3.46배   (선: 8배 이내 — 대상 수가 4 배다)
+    ② callers      3.59배   (선: 8배 이내)
+    ③ closure(2)   3.60배   (기록만 — 차수와 k 의 함수다)
 
-  ④ WATCH 색인 대 전수 훑기 — 결박 200 건 · 감시된 좌표 801
+  ④ 규모 2000 — WATCH 색인 대 전수 훑기 · 결박 200 건 · 감시된 좌표 801
 
-    ④-가 WATCH 색인 조회 (changed 1)  min   18.625µs · max/min 6.27배 · 산출 1
-    ④-나 전수 훑기      (changed 1)   min    1.605ms · max/min 1.70배 · 산출 1
-    ④-가 WATCH 색인 조회 (changed 801) min    1.956ms · max/min 1.22배 · 산출 200
-    ④-나 전수 훑기      (changed 801) min    1.118ms · max/min 1.18배 · 산출 200
+    ④-가 WATCH 색인 조회 (changed 1)  min   10.833µs · max/min 3.83배 · 산출 1
+    ④-나 전수 훑기      (changed 1)   min    1.245ms · max/min 1.47배 · 산출 1
+    ④-가 WATCH 색인 조회 (changed 801) min    1.744ms · max/min 1.24배 · 산출 200
+    ④-나 전수 훑기      (changed 801) min    1.108ms · max/min 1.06배 · 산출 200
+
+  ④ 규모 8000 — WATCH 색인 대 전수 훑기 · 결박 200 건 · 감시된 좌표 801
+
+    ④-가 WATCH 색인 조회 (changed 1)  min    9.833µs · max/min 3.64배 · 산출 1
+    ④-나 전수 훑기      (changed 1)   min    1.248ms · max/min 1.19배 · 산출 1
+    ④-가 WATCH 색인 조회 (changed 801) min    1.669ms · max/min 1.16배 · 산출 200
+    ④-나 전수 훑기      (changed 801) min    1.098ms · max/min 1.01배 · 산출 200
 
   ④ 색인이 전수보다 몇 배 빠른가 — **`changed` 크기가 판정을 뒤집는다**
-    changed     1 (닿는 결박    1) → 86.157배
-    changed   801 (닿는 결박  200) → 0.572배
+    규모 2000 · changed     1                      → 114.892배
+    규모 2000 · changed   801                      → 0.636배
+    규모 8000 · changed     1 (닿는 결박    1) → 126.898배
+    규모 8000 · changed   801 (닿는 결박  200) → 0.658배
+    ⚠ 규모 2000 에서도 두 비가 1 을 건너뛰나 — **그렇다**
     두 비가 1 을 건너뛰나 — **그렇다**  ← 부하 선택이 합격선을 정한다. 게이트에 결함으로 적는다
 
 test 반경별_벤치와_선형성 ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.62s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.96s
 
 ```
