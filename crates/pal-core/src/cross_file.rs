@@ -697,7 +697,7 @@ pub fn cross_file_edges_in(
                     found: hit.len(),
                 });
                 match hit.as_slice() {
-                    [one] => *one,
+                    [one] => one,
                     [] => {
                         let why =
                             if 우리것 { UnresolvedReason::NoTargetFile } else { UnresolvedReason::OutsideRepo };
