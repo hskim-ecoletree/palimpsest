@@ -69,9 +69,16 @@ DITTO = (Path.home() / "dev/projects/ditto", "aded7ce7f88f", "ditto")
 최소_질의 = 6
 최소_노드 = 100
 최소_변형 = 6
-# `ditto` 에서 F05 가 관측한 값. **대조값이자 하한이다.**
-DITTO_노드 = 4578
-DITTO_엣지 = 4601
+# `ditto` 에서 관측한 값. **대조값이자 하한이다.**
+#
+# ⚠ **움직였고, 움직인 까닭이 둘이다** (회차 `2026-09-13-first-release-elsewhere`). F05 는 4578·4601 이었다.
+#   - 노드 +78 · 같은 파일 안 참조 +81 — 1급 언어로 인식된 소스를 NUL 바이트 하나로 `binary` 삼지 않게
+#     분류 ② 를 고쳤다(`ba0a983`). binary 였던 TS 다섯이 partial 로 추출된다. 기호 골든도 같은 78 행을 받았다.
+#   - 엣지에 파일 간 참조 5082 가 더해졌다 — TS 지정자를 파일로 펴는 해소가 섰다(`f953a0c`). 착수 때 ditto 의
+#     파일 간 해소는 `0/11010` 이었다. `graph.dump` 의 엣지는 같은 파일 안(`REFERENCES`)과 파일 간
+#     (`REFERENCES_ACROSS`)을 함께 싣는다.
+DITTO_노드 = 4656
+DITTO_엣지 = 4682 + 5082
 # 토큰 추정의 허용 오차 — 자기 자신을 못 세는 만큼만 어긋나야 한다.
 토큰_오차 = 0.10
 # 단조를 재려면 두 답이 이만큼 갈려야 한다. 비슷한 둘로 재면 우연히 성립한다.
@@ -255,8 +262,12 @@ def 호스트_없는_코어(r: 결과) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def pal(repo: Path, args: list[str], index: Path, rev: str) -> subprocess.CompletedProcess:
+    # ⚠ **캐시 자리도 방 안에 둔다** (회차 `2026-09-13-first-release-elsewhere`). 안 주면 1층 캐시가
+    #   코퍼스 저장소 자신의 `.palimpsest/cache` 에 쓰인다 — 추출기 버전이 바뀐 날 남의 저장소에 파일
+    #   2,451 개가 더해졌다(`G2` 반증). 인덱스와 같은 임시 디렉터리를 쓴다.
     return subprocess.run(
-        [str(BIN), *args, "--repo", str(repo), "--index", str(index), "--at", rev],
+        [str(BIN), *args, "--repo", str(repo), "--index", str(index), "--at", rev,
+         "--cache-dir", str(index.parent / "cache")],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -296,6 +307,7 @@ def 코퍼스(r: 결과) -> None:
             [
                 str(BIN), "export", "--format", "cypher",
                 "--repo", str(repo), "--index", str(index), "--at", rev,
+                "--cache-dir", str(index.parent / "cache"),
                 "--out", str(out), "--json",
             ],
             cwd=ROOT, capture_output=True, text=True,
@@ -305,17 +317,21 @@ def 코퍼스(r: 결과) -> None:
             return
         보고 = json.loads(p.stdout)["answer"]
         산출한 = {c["label"]: c["count"] for c in 보고["exported"]}
-        if 산출한.get("Symbol") != 노드 or 산출한.get("REFERENCES") != 엣지:
+        # `graph.dump` 의 엣지 = 같은 파일 안 참조 + 파일 간 참조 — 내보내기는 둘을 다른 라벨에 싣는다.
+        참조_합 = (산출한.get("REFERENCES") or 0) + (산출한.get("REFERENCES_ACROSS") or 0)
+        if 산출한.get("Symbol") != 노드 or 참조_합 != 엣지:
             r.fail(
                 "③ 내보내기 건수",
-                f"Symbol {산출한.get('Symbol')} · REFERENCES {산출한.get('REFERENCES')} "
+                f"Symbol {산출한.get('Symbol')} · REFERENCES {산출한.get('REFERENCES')} + "
+                f"REFERENCES_ACROSS {산출한.get('REFERENCES_ACROSS')} "
                 f"— `graph.dump` 는 {노드}·{엣지}",
             )
         else:
             사유 = {m["why"] for m in 보고["missing"]}
             r.ok(
                 "③ 내보내기",
-                f"{이름} Symbol {산출한['Symbol']} · REFERENCES {산출한['REFERENCES']} · "
+                f"{이름} Symbol {산출한['Symbol']} · REFERENCES {산출한['REFERENCES']} + "
+                f"REFERENCES_ACROSS {산출한.get('REFERENCES_ACROSS', 0)} · "
                 f"못 산출한 라벨 {len(보고['missing'])}개 (사유 {len(사유)}갈래)",
             )
 

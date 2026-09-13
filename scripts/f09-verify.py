@@ -261,6 +261,29 @@ def 이층_상태(repo: Path, box: Path) -> tuple[int, int, bool]:
     return len(a["nodes"]), len(a["edges"]), env["projection"]["built_for_this_snapshot"]
 
 
+def 통째로_파싱된_파일(repo: Path, box: Path) -> set[str]:
+    """대장에서 상태가 `parsed` 인 파일의 경로. `ledger` 는 `--index`·`--intent` 를 안 받아 `pal()` 을 안 거친다."""
+    p = run([str(BIN), "ledger", str(repo), "--cache-dir", str(box / "cache"), "--json"])
+    if p.returncode != 0:
+        raise SystemExit(f"대장을 못 만들었다: {p.stderr[-400:]}")
+    out: set[str] = set()
+
+    def 걷는다(v) -> None:
+        if isinstance(v, dict):
+            if "path" in v and isinstance(v.get("state"), dict) and "parsed" in v["state"]:
+                out.add(v["path"])
+            for x in v.values():
+                걷는다(x)
+        elif isinstance(v, list):
+            for x in v:
+                걷는다(x)
+
+    걷는다(json.loads(p.stdout))
+    if not out:
+        raise SystemExit("통째로 파싱된 파일이 하나도 없다 — 대장의 모양이 바뀌었나")
+    return out
+
+
 def 심볼_고르기(repo: Path, box: Path, n: int, 파일_안에서: set[str] | None = None) -> list[str]:
     """**우리가 고르지 않는다** — `symbol_id` 사전순으로 정렬해 균등 간격으로 뽑는다.
 
@@ -313,7 +336,13 @@ def 합성_변형(tmp: Path, skip_prettier: bool) -> None:
 
     for 이름, 함수 in 변형들:
         repo, box = 사본(tmp, f"fmt-{이름.replace('@', '')}", DITTO, DITTO_PIN)
-        결박_걸기(repo, box, 심볼_고르기(repo, box, MIN_BINDINGS), MIN_BINDINGS)
+        # ⚠ **표본은 통째로 파싱된 파일에서만 뽑는다** (회차 `2026-09-13-first-release-elsewhere`).
+        #   분류 ② 가 1급 언어의 문자열 안 NUL 로 `binary` 삼지 않게 바뀐 뒤(`ba0a983`) ditto 의 TS 다섯이
+        #   `partial` 로 추출된다. 그 파일의 결박은 포매팅과 무관하게 **처음부터** `undeterminable{partial_parse}`
+        #   라 이 대조(「포매팅이 stale 을 만드나」)가 재려는 것이 아니다. 그 다섯은 전에 `binary` 라 심볼이
+        #   없었으므로, 이 걸러내기는 표본의 모집단을 **바뀌기 전과 같게** 되돌린다 — 넓히지도 좁히지도 않는다.
+        파싱된 = 통째로_파싱된_파일(repo, box)
+        결박_걸기(repo, box, 심볼_고르기(repo, box, MIN_BINDINGS, 파일_안에서=파싱된), MIN_BINDINGS)
 
         걸린 = 결박들(repo, box)
         # **하한** — 결박이 없으면 「stale 0」이 공짜다.

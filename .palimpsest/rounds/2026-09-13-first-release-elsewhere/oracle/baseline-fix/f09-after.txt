@@ -1,0 +1,72 @@
+HEAD 66108c5 · 작업 트리 scripts 수정(f06 캐시 격리 · f06 ③ 대조값 · f09 ① 표본)
+F09 — 결박과 낡음
+
+① 합성 포매팅 변형에서 `stale` 0 — **진행 불가 조건**
+② ★ 의미를 바꾸면 반드시 `stale` — ①의 짝
+③⑥ `Undeterminable` — `Live` 로 안 새고, 지배하지도 않는다
+④ ★ `Orphaned` ≠ `Stale` — 지우면 사라짐 · 고치면 낡음
+⑤ 실 이력 · ditto(exact) · 반경 symbol — 거짓 양성률 상한 10%
+      3b1e8563..6f298c8e  3656b7e8  orphaned  —                          tests/core/charter-region.test.ts                    | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  70566199  orphaned  —                          tests/cli/push-gate-hook-provenance.test.ts          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  75b07766  orphaned  —                          tests/cli/prism-cli.test.ts                          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  83acbda6  orphaned  —                          tests/core/autopilot-approval-artifact.test.ts       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  c05bda51  orphaned  —                          tests/acg/fitness-injected-provider.test.ts          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  c5060762  orphaned  —                          tests/scripts/check-npx-distribution.test.ts         | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  d4aeffd7  orphaned  —                          tests/core/land-commit.test.ts                       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  d7935ead  orphaned  —                          tests/core/provisioner.test.ts                       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  dc57271e  orphaned  —                          tests/cli/autopilot-loop-cli.test.ts                 | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  dc978e1d  orphaned  —                          tests/integration/coverage-depth-dial.test.ts        | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+⑤ 실 이력 · portal(ordinal) · 반경 symbol — 거짓 양성률 상한 10%
+      e46c2b8c..6be0dfb9  4106a5a6  stale     ProcessMetadata4Service    d/automation/servicetask/model/dto/ServiceTaskDto.kt | refactor: V2 키워드 제거 및 V1 ServiceInterface 삭제
+      e46c2b8c..6be0dfb9  63194427  orphaned  —                          tomation/serviceinf/model/dto/ServiceInterfaceDto.kt | refactor: V2 키워드 제거 및 V1 ServiceInterface 삭제
+      e46c2b8c..6be0dfb9  829464dd  orphaned  —                          tomation/serviceinf/model/dto/ServiceInterfaceDto.kt | refactor: V2 키워드 제거 및 V1 ServiceInterface 삭제
+      e46c2b8c..6be0dfb9  aec3fb38  orphaned  —                          omation/serviceinf/model/dto/InterfaceVariableDto.kt | refactor: V2 키워드 제거 및 V1 ServiceInterface 삭제
+      17efa32e..4d661868  0949191a  stale     PermissionListResponse     e/boxwood/permission/model/dto/PermissionResponse.kt | feat: 리소스 권한 관리 (프로세스)
+      4d661868..32c03627  a044bc6a  stale     PermissionController       oxwood/permission/controller/PermissionController.kt | refactor: 리소스 권한 관리 최적화(1)
+      0abea7d3..16ac7749  4d7c2dfe  stale     AuthenticatedUser          o/ecoletree/boxwood/auth/core/model/dto/Responses.kt | fix: companyId 제약 조건 제거
+      0abea7d3..16ac7749  8d5edfa7  stale     UserPasswordPolicyService  xwood/user/service/impl/UserPasswordPolicyService.kt | fix: companyId 제약 조건 제거
+      0abea7d3..16ac7749  bc556eb7  stale     ExternalCredentialController ation/credentials/controller/CredentialController.kt | fix: companyId 제약 조건 제거
+      0abea7d3..16ac7749  e63feb66  stale     MembershipTypeController   od/group/base/controller/MembershipTypeController.kt | fix: companyId 제약 조건 제거
+⑤ 실 이력 · ditto(exact) · 반경 callers — 거짓 양성률 상한 30%
+      3b1e8563..6f298c8e  3656b7e8  orphaned  —                          tests/core/charter-region.test.ts                    | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  70566199  orphaned  —                          tests/cli/push-gate-hook-provenance.test.ts          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  75b07766  orphaned  —                          tests/cli/prism-cli.test.ts                          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  83acbda6  orphaned  —                          tests/core/autopilot-approval-artifact.test.ts       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  c05bda51  orphaned  —                          tests/acg/fitness-injected-provider.test.ts          | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  c5060762  orphaned  —                          tests/scripts/check-npx-distribution.test.ts         | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  d4aeffd7  orphaned  —                          tests/core/land-commit.test.ts                       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  d7935ead  orphaned  —                          tests/core/provisioner.test.ts                       | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  dc57271e  orphaned  —                          tests/cli/autopilot-loop-cli.test.ts                 | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+      3b1e8563..6f298c8e  dc978e1d  orphaned  —                          tests/integration/coverage-depth-dial.test.ts        | chore(rebuild): 옛 src 계층 테스트 전부 제거 — tests/ 
+⑤ 실 이력 · portal(ordinal) · 반경 callers — 거짓 양성률 상한 30%
+      e46c2b8c..6be0dfb9  4106a5a6  stale     ProcessMetadata4Service    d/automation/servicetask/model/dto/ServiceTaskDto.kt | refactor: V2 키워드 제거 및 V1 ServiceInterface 삭제
+      e46c2b8c..6be0dfb9  63194427  orphaned  —                          tomation/serviceinf/model/dto/ServiceInterfaceDto.kt | refactor: V2 키워드 제거 및 V1 ServiceInterface 삭제
+      e46c2b8c..6be0dfb9  829464dd  orphaned  —                          tomation/serviceinf/model/dto/ServiceInterfaceDto.kt | refactor: V2 키워드 제거 및 V1 ServiceInterface 삭제
+      e46c2b8c..6be0dfb9  aec3fb38  orphaned  —                          omation/serviceinf/model/dto/InterfaceVariableDto.kt | refactor: V2 키워드 제거 및 V1 ServiceInterface 삭제
+      17efa32e..4d661868  0949191a  stale     PermissionListResponse     e/boxwood/permission/model/dto/PermissionResponse.kt | feat: 리소스 권한 관리 (프로세스)
+      4d661868..32c03627  a044bc6a  stale     PermissionController       oxwood/permission/controller/PermissionController.kt | refactor: 리소스 권한 관리 최적화(1)
+      0abea7d3..16ac7749  4d7c2dfe  stale     AuthenticatedUser          o/ecoletree/boxwood/auth/core/model/dto/Responses.kt | fix: companyId 제약 조건 제거
+      0abea7d3..16ac7749  8d5edfa7  stale     UserPasswordPolicyService  xwood/user/service/impl/UserPasswordPolicyService.kt | fix: companyId 제약 조건 제거
+      0abea7d3..16ac7749  bc556eb7  stale     ExternalCredentialController ation/credentials/controller/CredentialController.kt | fix: companyId 제약 조건 제거
+      0abea7d3..16ac7749  e63feb66  stale     MembershipTypeController   od/group/base/controller/MembershipTypeController.kt | fix: companyId 제약 조건 제거
+⑦ 반경별 감시 집합 — **넓히면 커져야 한다**
+
+  ok    ① prettier@3  — 결박 20 · 바뀐 파일 496 · stale **0** (상한 0) · 2층 노드 4656/엣지 9764
+  ok    ① 들여쓰기  — 결박 20 · 바뀐 파일 491 · stale **0** (상한 0) · 2층 노드 4656/엣지 9764
+  ok    ① 개행  — 결박 20 · 바뀐 파일 481 · stale **0** (상한 0) · 2층 노드 4656/엣지 9764
+  ok    ① 주석  — 결박 20 · 바뀐 파일 496 · stale **0** (상한 0) · 2층 노드 4656/엣지 9764
+  ok    ① 후행 공백  — 결박 20 · 바뀐 파일 496 · stale **0** (상한 0) · 2층 노드 4656/엣지 9764
+  ok    ② 의미 변경  — 결박 14 · 본문 14개 변형 (겹침 0 · 문법이 안 맞는 종류 {'variable': 5, 'type_alias': 1}) · 갈래 {'stale': 13, 'undeterminable': 1} · stale 13/13 = **100.0%** (하한 90%) · 변형이 훼손한 파일의 결박 1건은 분모 밖
+  ok    ⑥ 비율 상한  — 결박 20 · 판정 불가 0 = **0.0%** (상한 15%) · 감시 등급 {'ordinal': 20}
+  ok    ⑥ ★ ordinal 을 안 뭉갰다  — ordinal 감시 원소 20개인데 판정 불가 0.0% — 비교가 돌았다
+  ok    ③ 판정 불가가 `fresh` 로 안 샌다  — 2층이 이 스냅샷 것인가 False · 판정 불가 20/20 · 사유 ['projection_stale'] · **`fresh` 로 샌 것 0** (상한 0)
+  ok    ④ 둘이 갈린다  — 결박 20 · 지운 파일 9 · 고친 본문 8 · 갈래 {'fresh': 3, 'stale': 8, 'orphaned': 9}
+  ok    ⑤ ditto(exact)/symbol 표본  — 커밋 119개 훑음 · 바뀐 파일의 심볼에 결박 · 표본 10 · stale 0 · orphaned 10 — **거짓 양성 판정은 게이트에 목록으로** (상한 10%)
+  ok    ⑤ portal(ordinal)/symbol 표본  — 커밋 119개 훑음 · 바뀐 파일의 심볼에 결박 · 표본 10 · stale 7 · orphaned 3 — **거짓 양성 판정은 게이트에 목록으로** (상한 10%)
+  ok    ⑤ ditto(exact)/callers 표본  — 커밋 119개 훑음 · 바뀐 파일의 심볼에 결박 · 표본 10 · stale 0 · orphaned 10 — **거짓 양성 판정은 게이트에 목록으로** (상한 30%)
+  ok    ⑤ portal(ordinal)/callers 표본  — 커밋 119개 훑음 · 바뀐 파일의 심볼에 결박 · 표본 10 · stale 7 · orphaned 3 — **거짓 양성 판정은 게이트에 목록으로** (상한 30%)
+  ok    ⑦ 반경을 넓히면 커진다  — symbol 20 · callers 45 · closure:2 70 · closure:3 87
+  ok    ⑥ ★ 비율 하한 (사유가 실제로 산출된다)  — 코퍼스에서 난 사유 ['partial_parse', 'projection_stale'] — 2개 (하한 2)
+
+어긋남 0 · 대조 불가 0
+rc=0
