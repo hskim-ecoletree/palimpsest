@@ -1,0 +1,45 @@
+
+■ 설치 — <scratch>/ditto-effect
+  놓았다                   .claude/pal/INSTRUCTIONS.md
+  놓았다                   .claude/agents/pal-orchestrator.md
+  놓았다                   .claude/commands/pal/touch.md
+  놓았다                   .claude/commands/pal/plan.md
+  놓았다                   .claude/commands/pal/doctor.md
+  놓았다                   .claude/commands/pal/ledger.md
+  놓았다                   .claude/skills/pal-round/SKILL.md
+  놓았다                   .claude/agents/pal-premortem-sweeper.md
+  놓았다                   .claude/agents/pal-independent-reviewer.md
+  놓았다                   .claude/agents/pal-decision-opponent.md
+  놓았다                   .claude/agents/pal-decision-synthesizer.md
+  놓았다                   .claude/agents/pal-debate-designer.md
+  놓았다                   .claude/agents/pal-decision-proposer.md
+  놓았다                   .claude/agents/pal-debate-referee.md
+  놓았다                   .claude/agents/pal-debate-reporter.md
+  놓았다                   .claude/agents/pal-condition-auditor.md
+  놓았다                   .claude/skills/pal-round/bin/dashboard.py
+  놓았다                   .claude/skills/pal-round/bin/record.py
+  훅 등록                  SubagentStop  ·  pal hook SubagentStop
+  훅 등록                  Stop  ·  pal hook Stop
+  ⚠ 훅이 아직 안 뜬다          `PATH` 어디에도 `pal` 이 없다 — 등록은 그 이름을 가리키므로 지금은 훅이 안 뜬다(그리고 그 실패는 침묵한다). `~/dev/projects/palimpsest/target/release/pal` 을 `PATH` 에 넣으십시오
+  병합                    .claude/settings.json  (더한 키: agent)
+  블록                    CLAUDE.md
+  블록                    .gitignore
+  매니페스트                 .claude/pal/manifest.json  ·  pal 0.0.0+db6c366564e3
+
+  복제본 변경:  M .claude/settings.json
+  복제본 변경:  M .gitignore
+  복제본 변경:  M CLAUDE.md
+  복제본 변경: ?? .claude/agents/pal-condition-auditor.md
+  복제본 변경: ?? .claude/agents/pal-debate-designer.md
+  복제본 변경: ?? .claude/agents/pal-debate-referee.md
+  복제본 변경: ?? .claude/agents/pal-debate-reporter.md
+  복제본 변경: ?? .claude/agents/pal-decision-opponent.md
+  복제본 변경: ?? .claude/agents/pal-decision-proposer.md
+  복제본 변경: ?? .claude/agents/pal-decision-synthesizer.md
+  복제본 변경: ?? .claude/agents/pal-independent-reviewer.md
+  복제본 변경: ?? .claude/agents/pal-orchestrator.md
+  복제본 변경: ?? .claude/agents/pal-premortem-sweeper.md
+  복제본 변경: ?? .claude/commands/
+  복제본 변경: ?? .claude/pal/
+  복제본 변경: ?? .claude/skills/pal-round/
+설치 산출을 복제본에 커밋했다: 5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971
