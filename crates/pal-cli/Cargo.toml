@@ -40,6 +40,7 @@ process-wrap.workspace = true
 [dev-dependencies]
 pal-intent.workspace = true
 filetime.workspace = true
+regex.workspace = true
 
 [lints]
 workspace = true

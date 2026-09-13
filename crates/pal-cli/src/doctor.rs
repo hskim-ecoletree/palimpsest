@@ -607,9 +607,9 @@ fn print_screen(envelope: &Envelope<Diagnosis>) {
     println!("  생략      {}", if e.elision.is_none() { "없음 (명시)" } else { "있음" });
     crate::evidence::print(e);
     println!(
-        "  능력      {} · 미구축 {}",
+        "  능력      {} · 이 빌드에 없음 {}",
         e.capabilities.built.join(" · "),
-        e.capabilities.not_built.iter().map(|c| c.feature).collect::<Vec<_>>().join(" · ")
+        e.capabilities.not_built.iter().map(|c| c.what).collect::<Vec<_>>().join(" · ")
     );
     println!();
 }

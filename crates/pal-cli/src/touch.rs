@@ -257,7 +257,7 @@ pub fn 한_줄_found(r: &pal_core::TouchResult) -> String {
 fn 수(v: &Capable<Vec<BoundItem>>) -> String {
     match v {
         Capable::Present(items) => items.len().to_string(),
-        Capable::NotBuilt { capability } => format!("(미구축 {})", capability.feature),
+        Capable::NotBuilt { capability } => format!("(이 빌드에 {} 능력이 없습니다)", capability.what),
     }
 }
 
@@ -309,16 +309,14 @@ fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::Cross
     println!("  2층       심볼 {} 색인됨", e.projection.symbols_indexed);
     match &e.projection.matches_worktree {
         Capable::Present(v) => println!("  워킹트리  {}", if *v { "일치" } else { "다름" }),
-        Capable::NotBuilt { capability } => println!(
-            "  워킹트리  (이 빌드는 워킹트리 상태를 모릅니다 — {} 미구축)", capability.feature),
+        Capable::NotBuilt { .. } => println!("  워킹트리  (이 빌드는 워킹트리 상태를 모릅니다)"),
     }
     // **모른다는 것도 화면에 성립한다.** 산출에만 있고 화면에 없으면 사람은 그 공백을 못 본다.
     match &e.projection.rebuild {
         Capable::Present(RebuildState::Rebuilding) =>
             println!("  재구축    진행 중 — 이 답은 열린 스냅샷 위에 섰습니다"),
         Capable::Present(RebuildState::Settled) => println!("  재구축    아님"),
-        Capable::NotBuilt { capability } => println!(
-            "  재구축    (이 빌드는 재구축 중인지 모릅니다 — {} 미구축)", capability.feature),
+        Capable::NotBuilt { .. } => println!("  재구축    (이 빌드는 재구축 중인지 모릅니다)"),
     }
     println!("  생략      {}", if e.elision.is_none() {
         "없음 (명시)".to_owned()
@@ -326,9 +324,9 @@ fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::Cross
         format!("{}건 — 상한을 넘어 생략했습니다", e.elision.dropped())
     });
     crate::evidence::print(e);
-    println!("  능력      {} · 미구축 {}",
+    println!("  능력      {} · 이 빌드에 없음 {}",
              e.capabilities.built.join(" · "),
-             e.capabilities.not_built.iter().map(|c| c.feature).collect::<Vec<_>>().join(" · "));
+             e.capabilities.not_built.iter().map(|c| c.what).collect::<Vec<_>>().join(" · "));
     println!();
 }
 
@@ -463,7 +461,7 @@ fn print_facts(
     println!("■ 이 심볼이 하는 것");
     match value {
         Capable::NotBuilt { capability } => println!(
-            "  (이 빌드에는 {} 능력이 없습니다 — {} 미구축)", capability.what, capability.feature),
+            "  (이 빌드에는 {} 능력이 없습니다)", capability.what),
         Capable::Present(f) => {
             println!("  호출자 {} · 피호출자 {}", f.callers, f.callees);
             // ★ **라벨이 「호출자」인데 담는 것은 호출만이 아니다.**
@@ -485,7 +483,13 @@ fn print_facts(
             //   그 0 이 **「아무도 안 부른다」로 읽힌다.**
             println!(
                 "  ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 \
-타입 추론이 필요해 **이 회차의 범위 밖**입니다. 능력 부재가 아니라 안 하기로 정한 자리입니다"
+타입 추론이 필요합니다. 능력이 없는 것이 아니라 **안 하기로 정한 자리입니다**"
+            );
+            // ★ **호출자 수는 하한이다** (2026-09-13). 파일 최상위의 참조(등록 줄 따위)는
+            //   엣지의 출발 심볼이 없어 원리상 안 들고, 문자열로 찾는 자리는 참조가 아니다.
+            //   이 줄이 없으면 그 수가 「여기를 바꾸면 깨지는 곳 전부」로 읽힌다.
+            println!(
+                "  ※ **호출자 수는 하한입니다** — 파일 최상위의 참조와 문자열로 찾는 자리는 세지 않습니다"
             );
             print_cross(cross);
         }
@@ -537,16 +541,23 @@ fn print_cross(cross: Option<&pal_core::CrossFileReport>) {
 /// **비율로** 적어 뒀고(*"340 중 298"*), 값이 움직이자 그 문장이 거짓이 됐다. 그래서
 /// 갈래를 **회계 열쇠**로 올리고 화면은 열쇠와 문의 대응만 찍는다.
 fn print_transfer() {
-    println!("  ※ 못 선 몫이 가는 문 — 이 회차가 안 세우기로 정한 자리와 못 세우는 자리를 가릅니다");
-    println!("      ⚠ 갈래 하나는 **아직 안 갈렸습니다** — 그 자리는 문이 아니라 「미측정」을 적습니다");
-    for (열쇠, 문) in [
-        ("outside_repo", "**경계** — 저장소 밖(`std::*` 등)이라 원리상 못 섭니다"),
-        ("no_symbol_at_crate_root", "`A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다"),
-        ("no_symbol", "**갈래가 아직 안 갈렸습니다** — `#133`(L2)로 갈 몫과 이 회차의 구현 여지가 섞여 있고 그 크기는 **미측정**입니다"),
-        ("no_target_file", "**이 회차의 구현** — 모듈 경로를 파일로 못 폈습니다"),
-        ("ambiguous", "**후보 생성의 모호** — 모듈 경로가 여러 파일로 읽힙니다. 하나를 고르면 조용한 오답이라 **안 고르는 것이 설계입니다**"),
+    // ★ **이 저장소의 작업 기록 이름을 안 싣는다** (2026-09-13). 앞 판은 문을 조건 ID ·
+    //   이슈 번호 · 「이 회차」로 불렀고, 남의 저장소 사용자에게 그 이름은 뜻이 없다.
+    //   가르는 것은 둘이다 — **안 하기로 정한 자리**와 **원리상 풀 수 없는 자리**. 두 문구는
+    //   시험이 그대로 단언한다(`cross_file_references` 의 `e4`).
+    println!("  ※ 못 선 까닭의 성격 — 안 하기로 정한 자리와 원리상 풀 수 없는 자리를 가릅니다");
+    for (열쇠, 뜻) in [
+        ("outside_repo", "저장소 밖(표준 라이브러리 · 런타임 모듈)입니다 — **원리상 풀 수 없는 자리입니다**"),
+        ("bare_specifier", "패키지 이름입니다 — 설치된 패키지인지 워크스페이스인지 가리지 않았습니다. **안 하기로 정한 자리입니다**"),
+        ("through_reexport", "재수출을 지나는 이름입니다 — 원 정의까지 따라가지 않습니다. **안 하기로 정한 자리입니다**"),
+        ("no_symbol_at_crate_root", "크레이트 뿌리의 재수출을 지나는 이름입니다 — 원 정의까지 따라가지 않습니다. **안 하기로 정한 자리입니다**"),
+        ("unsupported_mode", "이 파일의 모듈 해소 모드(`classic`)를 맞추지 않습니다 — **안 하기로 정한 자리입니다**"),
+        ("config_incomplete", "설정 파일(`tsconfig` 의 `extends` 등)을 끝까지 못 읽어 별칭인지 모릅니다"),
+        ("no_symbol", "대상 파일에 그 이름의 선언이 없습니다 — 열거형 변형 · 연관 상수처럼 심볼로 안 서는 이름이 여기 듭니다"),
+        ("no_target_file", "모듈 경로를 저장소의 파일로 못 폈습니다"),
+        ("ambiguous", "후보가 여럿입니다 — 하나를 고르면 조용한 오답이라 **고르지 않습니다**"),
     ] {
-        println!("      `{열쇠}` → {문}");
+        println!("      `{열쇠}` → {뜻}");
     }
 }
 
@@ -594,7 +605,7 @@ fn slot<T>(title: &str, value: &Capable<T>) {
     println!("■ {title}");
     match value {
         Capable::NotBuilt { capability } => {
-            println!("  (이 빌드에는 {} 능력이 없습니다 — {} 미구축)", capability.what, capability.feature);
+            println!("  (이 빌드에는 {} 능력이 없습니다)", capability.what);
         }
         Capable::Present(_) => println!("  (있음)"),
     }

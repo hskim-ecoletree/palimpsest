@@ -1,0 +1,29 @@
+# A1 RED — 같은 픽스처를 착수 바이너리에 댄다
+
+- 바이너리: `pal 0.0.0+6ee9eb30f2dc` (워크트리 `6ee9eb3` 에서 빌드)
+- 픽스처: `crates/pal-cli/tests/ts_cross_file.rs` 의 `a1_…` 과 같은 파일 여덟(스크래치에 다시 떴다)
+
+## `pal touch 씀` 의 파일 간 줄
+```
+  호출자 0 · 피호출자 0
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조·구조체 리터럴·경로 머리도 셉니다
+  ※ 파일 간 해소 — ⓐ `cross-file-import` 0/10 · ⓑ `path-resolution` 0/0 (선 것/짝)
+  ※ ⓐ 가 못 선 까닭 — outside_repo 10
+■ 내가 모르는 것
+  10 건
+  · fromSib — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · fromA — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · fromC — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · fromX — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · fromY — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · fromDir — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · fromAlias — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · readFileSync — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · z — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · gone — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+```
+
+## `씀` 에서 나가는 엣지 중 양 끝 파일이 다른 것 (`graph.dump`)
+```
+파일 간 엣지 0 []
+```

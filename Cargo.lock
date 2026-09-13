@@ -1417,6 +1417,7 @@ dependencies = [
  "pal-store",
  "process-wrap",
  "rayon",
+ "regex",
  "rustix",
  "serde",
  "serde_json",

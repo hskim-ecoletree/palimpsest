@@ -428,9 +428,9 @@ fn lines(e: &Envelope<ExportReport>) -> Vec<String> {
     o.push(format!("  Snapshot  {}", e.snapshot));
     o.push(format!("  2층       심볼 {} 색인됨", e.projection.symbols_indexed));
     o.push(format!(
-        "  능력      {} · 미구축 {}",
+        "  능력      {} · 이 빌드에 없음 {}",
         e.capabilities.built.join(" · "),
-        e.capabilities.not_built.iter().map(|c: &CapabilityId| c.feature).collect::<Vec<_>>().join(" · ")
+        e.capabilities.not_built.iter().map(|c: &CapabilityId| c.what).collect::<Vec<_>>().join(" · ")
     ));
     o
 }

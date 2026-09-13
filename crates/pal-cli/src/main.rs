@@ -186,7 +186,7 @@ enum Command {
         #[arg(long)]
         dry_run: bool,
     },
-    /// 문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
+    /// 문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다**
     ///
     /// 인자 없이 부르면 3분류를 산출한다. `--approve` 는 사람의 승인이고 `--refuse` 는
     /// 거부이며 **둘 다 기록된다.**
@@ -238,7 +238,7 @@ enum Command {
         /// 의도 저장소 위치. 기본값은 `<저장소>/.palimpsest/intent.redb`
         #[arg(long)]
         intent: Option<PathBuf>,
-        /// 한 구역이 싣는 결박의 상한. 기본값은 자리표시 10 (옛 F11 §3.3)
+        /// 한 구역이 싣는 결박의 상한. 기본값은 자리표시 10
         ///
         /// **낡은 것은 이 상한에 안 걸린다** — 낡은 것이 안 보이면 이 명령이 존재할
         /// 이유가 없다. 잘린 수는 `elision` 에 실린다.
@@ -317,7 +317,7 @@ enum Command {
         #[command(subcommand)]
         what: IntentCommand,
     },
-    /// 1층 캐시를 본다 — **`prune` 이 닿는 곳은 `cache/` 뿐이다**(R-21)
+    /// 1층 캐시를 본다 — **`prune` 이 닿는 곳은 `cache/` 뿐이다**
     Cache {
         #[command(subcommand)]
         what: CacheCommand,
@@ -355,7 +355,7 @@ enum Command {
         ///
         /// 스티칭을 안 하므로 2층이 이 스냅샷에 대해 **이미 서 있어야** 하고,
         /// 아니면 답이 낡는다(그 사실이 응답 묶음에 실린다). **질의 로그를 못 남기고**
-        /// 그것도 응답 묶음에 실린다 — 조용히 빠지면 F17 이 미조회를 과대 계상한다.
+        /// 그것도 응답 묶음에 실린다 — 조용히 빠지면 조회하지 않은 것이 부풀려진다.
         #[arg(long)]
         read_only: bool,
         /// 사람이 읽는 화면 대신 JSON 으로 출력한다
@@ -400,7 +400,7 @@ enum Command {
         json: bool,
         /// 대장이 아니라 **좌표를 붙인 심볼 전부**를 한 줄에 하나씩 JSON 으로 출력한다.
         ///
-        /// 옛 F03 §6.3 의 골든(`(symbol_id, body_digest)` 스냅샷)이 읽는 표면이다.
+        /// 골든 스냅샷(`(symbol_id, body_digest)`)이 읽는 표면이다.
         /// **줄 단위인 이유**: 골든의 일은 *"얼마나 움직였는가"* 를 보이는 것이고,
         /// 한 덩어리 JSON 은 한 심볼이 움직여도 전체가 달라 보인다. 줄로 내면
         /// `diff` 가 곧 움직인 것의 목록이다.
@@ -797,9 +797,9 @@ fn symbols(path: &Path, json: bool, graph: bool) -> Result<()> {
                 println!("{}", serde_json::to_string_pretty(&not_built)?);
             } else {
                 println!(
-                    "  (이 빌드에 {} 추출 능력이 없습니다 — {} 미구축)",
+                    "  (이 빌드에 {} 추출 능력이 없습니다 — {})",
                     language.name(),
-                    capability.feature
+                    capability.what
                 );
             }
         }

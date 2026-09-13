@@ -1,0 +1,89 @@
+# D1 RED — 같은 모집단을 착수 바이너리로 떠서 같은 검사 함수에 댄다
+
+- 바이너리: `pal 0.0.0+6ee9eb30f2dc` (워크트리 `6ee9eb3`)
+- 픽스처·모집단: `crates/pal-cli/tests/user_vocabulary.rs` 의 `d1_…` 과 같다(화면 17개 · `--json` 곁 파일로 사용자 내용을 지운다)
+- 검사: `PAL_VOCAB_SCAN=<파일들> cargo test -p pal-cli --test user_vocabulary -- --ignored d1_scan` — **`D1` 과 같은 함수**
+- 판정: 실패(rc 101)가 RED 다
+- ⚠ **「걸린 자리」 수는 패턴별로 센 것이다** — 등록한 패턴 가운데 조건 ID(`[A-KM-Z][0-9]+`)와 기능 코드(`F[0-9]{2}`)가 겹쳐 `F13` 같은 기능 코드는 두 번 세어진다. RED 의 판정은 수가 아니라 **1 이상인가**다.
+
+```
+걸린 자리 64
+
+thread 'd1_scan_주어진_출력_파일을_같은_함수로_잰다' (50824058) panicked at crates/pal-cli/tests/user_vocabulary.rs:250:5:
+작업 기록 어휘가 64곳 남았다:
+[01-help.txt] 「조건 ID」 `F10` — narrative  문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
+[01-help.txt] 「기능 코드」 `F10` — narrative  문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
+[01-help.txt] 「규칙 ID」 `R-21` — cache      1층 캐시를 본다 — **`prune` 이 닿는 곳은 `cache/` 뿐이다**(R-21)
+[03-help-ledger.txt] 「조건 ID」 `F03` — 옛 F03 §6.3 의 골든(`(symbol_id, body_digest)` 스냅샷)이 읽는 표면이다. **줄 단위인 이유**: 골든의 일은 *"얼마나 움직였는가"* 를 보이는 것이고, 한 덩어리 JSON 은 한 심볼이 움직여도 전체가 달라 보인다. 줄로 내면 `diff` 가 곧 움직인 것의 목록이다.
+[03-help-ledger.txt] 「기능 코드」 `F03` — 옛 F03 §6.3 의 골든(`(symbol_id, body_digest)` 스냅샷)이 읽는 표면이다. **줄 단위인 이유**: 골든의 일은 *"얼마나 움직였는가"* 를 보이는 것이고, 한 덩어리 JSON 은 한 심볼이 움직여도 전체가 달라 보인다. 줄로 내면 `diff` 가 곧 움직인 것의 목록이다.
+[03-help-ledger.txt] 「문서 절」 `§` — 옛 F03 §6.3 의 골든(`(symbol_id, body_digest)` 스냅샷)이 읽는 표면이다. **줄 단위인 이유**: 골든의 일은 *"얼마나 움직였는가"* 를 보이는 것이고, 한 덩어리 JSON 은 한 심볼이 움직여도 전체가 달라 보인다. 줄로 내면 `diff` 가 곧 움직인 것의 목록이다.
+[04-help-narrative.txt] 「조건 ID」 `F10` — 문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
+[04-help-narrative.txt] 「기능 코드」 `F10` — 문서를 코드 좌표에 건다 — **아무것도 승인하지 않는다** (F10)
+[05-help-touch.txt] 「조건 ID」 `F11` — 한 구역이 싣는 결박의 상한. 기본값은 자리표시 10 (옛 F11 §3.3)
+[05-help-touch.txt] 「기능 코드」 `F11` — 한 구역이 싣는 결박의 상한. 기본값은 자리표시 10 (옛 F11 §3.3)
+[05-help-touch.txt] 「문서 절」 `§` — 한 구역이 싣는 결박의 상한. 기본값은 자리표시 10 (옛 F11 §3.3)
+[06-help-query.txt] 「조건 ID」 `F17` — 스티칭을 안 하므로 2층이 이 스냅샷에 대해 **이미 서 있어야** 하고, 아니면 답이 낡는다(그 사실이 응답 묶음에 실린다). **질의 로그를 못 남기고** 그것도 응답 묶음에 실린다 — 조용히 빠지면 F17 이 미조회를 과대 계상한다.
+[06-help-query.txt] 「기능 코드」 `F17` — 스티칭을 안 하므로 2층이 이 스냅샷에 대해 **이미 서 있어야** 하고, 아니면 답이 낡는다(그 사실이 응답 묶음에 실린다). **질의 로그를 못 남기고** 그것도 응답 묶음에 실린다 — 조용히 빠지면 F17 이 미조회를 과대 계상한다.
+[08-ledger.txt] 「이슈 번호」 ``#79` — ↑ **겹친 자리의 심볼 전원**입니다(첫 선언 포함) — `#79` 본문의 `ordinal>0` 보다 큽니다
+[08-ledger.txt] 「조건 ID」 `F21` — provider  (이 빌드에 provider 포트가 없습니다 — F21 미구축)
+[08-ledger.txt] 「기능 코드」 `F21` — provider  (이 빌드에 provider 포트가 없습니다 — F21 미구축)
+[08-ledger.txt] 「조건 ID」 `F16` — 조달      (이 빌드에 관측 수용이 없습니다 — F16 미구축)
+[08-ledger.txt] 「기능 코드」 `F16` — 조달      (이 빌드에 관측 수용이 없습니다 — F16 미구축)
+[13-touch-found.txt] 「이 회차」 `이 회차` — ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 타입 추론이 필요해 **이 회차의 범위 밖**입니다. 능력 부재가 아니라 안 하기로 정한 자리입니다
+[13-touch-found.txt] 「회차의 범위」 `회차의 범위` — ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 타입 추론이 필요해 **이 회차의 범위 밖**입니다. 능력 부재가 아니라 안 하기로 정한 자리입니다
+[13-touch-found.txt] 「이 회차」 `이 회차` — ※ 못 선 몫이 가는 문 — 이 회차가 안 세우기로 정한 자리와 못 세우는 자리를 가릅니다
+[13-touch-found.txt] 「잠근 축」 `잠근 축` — `no_symbol_at_crate_root` → `A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다
+[13-touch-found.txt] 「조건 ID」 `A5` — `no_symbol_at_crate_root` → `A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다
+[13-touch-found.txt] 「조건 ID」 `A5-a` — `no_symbol_at_crate_root` → `A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다
+[13-touch-found.txt] 「이 회차」 `이 회차` — `no_symbol` → **갈래가 아직 안 갈렸습니다** — `#133`(L2)로 갈 몫과 이 회차의 구현 여지가 섞여 있고 그 크기는 **미측정**입니다
+[13-touch-found.txt] 「이슈 번호」 ``#133` — `no_symbol` → **갈래가 아직 안 갈렸습니다** — `#133`(L2)로 갈 몫과 이 회차의 구현 여지가 섞여 있고 그 크기는 **미측정**입니다
+[13-touch-found.txt] 「이 회차」 `이 회차` — `no_target_file` → **이 회차의 구현** — 모듈 경로를 파일로 못 폈습니다
+[13-touch-found.txt] 「조건 ID」 `F13` — (이 빌드에는 effects 능력이 없습니다 — F13 미구축)
+[13-touch-found.txt] 「기능 코드」 `F13` — (이 빌드에는 effects 능력이 없습니다 — F13 미구축)
+[13-touch-found.txt] 「조건 ID」 `F15` — (이 빌드에는 judgment 능력이 없습니다 — F15 미구축)
+[13-touch-found.txt] 「기능 코드」 `F15` — (이 빌드에는 judgment 능력이 없습니다 — F15 미구축)
+[13-touch-found.txt] 「조건 ID」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[13-touch-found.txt] 「조건 ID」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[13-touch-found.txt] 「기능 코드」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[13-touch-found.txt] 「기능 코드」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[14-touch-ambiguous.txt] 「조건 ID」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[14-touch-ambiguous.txt] 「조건 ID」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[14-touch-ambiguous.txt] 「기능 코드」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[14-touch-ambiguous.txt] 「기능 코드」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[15-touch-unknown.txt] 「조건 ID」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[15-touch-unknown.txt] 「조건 ID」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[15-touch-unknown.txt] 「기능 코드」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[15-touch-unknown.txt] 「기능 코드」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[16-touch-reasons.txt] 「이 회차」 `이 회차` — ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 타입 추론이 필요해 **이 회차의 범위 밖**입니다. 능력 부재가 아니라 안 하기로 정한 자리입니다
+[16-touch-reasons.txt] 「회차의 범위」 `회차의 범위` — ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 타입 추론이 필요해 **이 회차의 범위 밖**입니다. 능력 부재가 아니라 안 하기로 정한 자리입니다
+[16-touch-reasons.txt] 「이 회차」 `이 회차` — ※ 못 선 몫이 가는 문 — 이 회차가 안 세우기로 정한 자리와 못 세우는 자리를 가릅니다
+[16-touch-reasons.txt] 「잠근 축」 `잠근 축` — `no_symbol_at_crate_root` → `A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다
+[16-touch-reasons.txt] 「조건 ID」 `A5` — `no_symbol_at_crate_root` → `A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다
+[16-touch-reasons.txt] 「조건 ID」 `A5-a` — `no_symbol_at_crate_root` → `A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다
+[16-touch-reasons.txt] 「이 회차」 `이 회차` — `no_symbol` → **갈래가 아직 안 갈렸습니다** — `#133`(L2)로 갈 몫과 이 회차의 구현 여지가 섞여 있고 그 크기는 **미측정**입니다
+[16-touch-reasons.txt] 「이슈 번호」 ``#133` — `no_symbol` → **갈래가 아직 안 갈렸습니다** — `#133`(L2)로 갈 몫과 이 회차의 구현 여지가 섞여 있고 그 크기는 **미측정**입니다
+[16-touch-reasons.txt] 「이 회차」 `이 회차` — `no_target_file` → **이 회차의 구현** — 모듈 경로를 파일로 못 폈습니다
+[16-touch-reasons.txt] 「조건 ID」 `F13` — (이 빌드에는 effects 능력이 없습니다 — F13 미구축)
+[16-touch-reasons.txt] 「기능 코드」 `F13` — (이 빌드에는 effects 능력이 없습니다 — F13 미구축)
+[16-touch-reasons.txt] 「조건 ID」 `F15` — (이 빌드에는 judgment 능력이 없습니다 — F15 미구축)
+[16-touch-reasons.txt] 「기능 코드」 `F15` — (이 빌드에는 judgment 능력이 없습니다 — F15 미구축)
+[16-touch-reasons.txt] 「조건 ID」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[16-touch-reasons.txt] 「조건 ID」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[16-touch-reasons.txt] 「기능 코드」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[16-touch-reasons.txt] 「기능 코드」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+[17-query-ambiguous.txt] 「조건 ID」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 미구축 F13 · F15
+[17-query-ambiguous.txt] 「조건 ID」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 미구축 F13 · F15
+[17-query-ambiguous.txt] 「기능 코드」 `F13` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 미구축 F13 · F15
+[17-query-ambiguous.txt] 「기능 코드」 `F15` — 능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 미구축 F13 · F15
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+d1_scan_주어진_출력_파일을_같은_함수로_잰다 --- FAILED
+
+failures:
+
+failures:
+    d1_scan_주어진_출력_파일을_같은_함수로_잰다
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.81s
+
+error: test failed, to rerun pass `-p pal-cli --test user_vocabulary`
+```
