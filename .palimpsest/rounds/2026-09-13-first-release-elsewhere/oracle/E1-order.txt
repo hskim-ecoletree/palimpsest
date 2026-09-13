@@ -1,0 +1,20 @@
+# E1 — 걸음 순서
+
+- seal `effect/00-seal.md` → `fc974c811d38`
+- install `effect/01-install.txt` → `a1eb48503977`
+- touch `effect/03-touch/head.txt` → `3d25dce47ca6`
+- readnote `effect/04-readnote.md` → `c43f159bf52d`
+- change `effect/05-change.txt` → `1c9e2f435e6d`
+- delta `effect/06-delta.md` → `b2e220532de5`
+
+## 이웃 쌍
+  ✓ fc974c811d38d13d2b020252b8ea1dfb994aaf7a → a1eb4850397781de306e4ed16fc1f6bff43343ac
+  ✓ a1eb4850397781de306e4ed16fc1f6bff43343ac → 3d25dce47ca67c8583a9765134e8d4f7d45b6d7b
+  ✓ 3d25dce47ca67c8583a9765134e8d4f7d45b6d7b → c43f159bf52d004ae4fcc5c76c5be89d13be8bba
+  ✓ c43f159bf52d004ae4fcc5c76c5be89d13be8bba → 1c9e2f435e6d64ac6b738ab4b4926324dd14f727
+  ✓ 1c9e2f435e6d64ac6b738ab4b4926324dd14f727 → b2e220532de5e95fb09c39010d2e2bc0b09bdc99
+
+## 앵커
+  ✓ 변경 A 의 부모가 touch 때 HEAD 이고 그때 변경이 0 이다
+
+## 판정: 통과

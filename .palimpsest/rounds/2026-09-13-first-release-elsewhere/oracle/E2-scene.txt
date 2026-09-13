@@ -1,0 +1,21 @@
+# E2 — 장면 넷
+
+## ⑴ 승인 대기 → 화면의 명령으로 승인 → 걸린 것
+- 승인 전 대기 1 · 조각 `.ditto/knowledge/adr/ADR-0003-toml-parser.md · 결정 · 후보 3곳` · 결정 문서인가 True
+- 안내된 명령과 돌린 명령이 같은가 True · 승인 성공 True
+- 승인 뒤 걸린 것 1 · 판정 줄 True · 본문에 심볼 이름 True
+- **선다**
+
+## ⑵ 다른 파일의 호출자
+- 2 건: 05-codexHostAdapter ← discoverCodexAgents src/cli/commands/setup.ts:258 · 05-codexHostAdapter ← writeCodexSurfaceCatalog src/core/setup.ts:291
+- **선다**
+
+## ⑶ 동명 후보를 지목해 부른 호출
+- 5 건: 06-loadInstructions-pick · 07-loadPermissions-pick · 08-loadMcpServers-pick · 09-loadSurfaceInventory-pick · 10-spawnRun-pick
+- **선다**
+
+## ⑷ 금지 패턴 — `D1` 과 같은 함수
+- 잰 화면 19 · 걸린 자리 0 · rc 0
+- **선다**
+
+## 판정: 통과 — ⑴ ✓ · ⑵ ✓ · ⑶ ✓ · ⑷ ✓
