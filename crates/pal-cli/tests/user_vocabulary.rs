@@ -133,7 +133,7 @@ fn d1a_사용자_내용을_지워도_pal_이_쓴_문구는_걸린다() {
 #[test]
 fn d1a_제품_낱말과_해시와_등급은_안_걸린다() {
     // 선이 넓으면 검사가 제품 용어까지 지우라고 요구한다 — 소유자의 선은 작업 기록 어휘다.
-    let 화면 = "회차를 연다 · L2 exact · L0 unavailable · UTF-8 · ditto@aded7ce+worktree#335e5bc23a81 · body eace1ea25a2d · p95";
+    let 화면 = "회차를 연다 · L2 exact · L0 unavailable · UTF-8 · repo@aded7ce+worktree#335e5bc23a81 · body eace1ea25a2d · p95";
     let 걸림 = 걸린_것(화면, &[]);
     assert!(걸림.is_empty(), "걸리면 안 되는 것이 걸렸다: {걸림:?}");
 }

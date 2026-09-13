@@ -3,7 +3,7 @@
 //! # 왜 따로 있나
 //!
 //! [`crate::cross_file_edges`] 의 모듈 경로 펴기는 Rust 의 규칙(`crate`·`self`·`super`·
-//! 크레이트 이름)만 안다. TS 의 지정자는 `./fs` · `~/core/fs` 같은 **경로 문자열**이라
+//! 크레이트 이름)만 안다. TS 의 지정자는 `./fs` · `@app/core/fs` 같은 **경로 문자열**이라
 //! 그 규칙에 넣으면 첫 세그먼트가 크레이트가 아니어서 전부 「저장소 밖」으로 셌다
 //! (2026-09-13 실측: 남의 TS 저장소에서 파일 간 해소 `0/11010`, 저장소 안 지정자 1,701).
 //!
@@ -539,13 +539,13 @@ mod tests {
     #[test]
     fn paths_별칭은_jsonc_와_baseurl_을_읽고_가장_긴_접두가_이긴다() {
         let p = 프로젝트(&[
-            ("tsconfig.json", "{ // 주석\n \"compilerOptions\": { \"baseUrl\": \".\", /* 블록 */ \"paths\": { \"~/*\": [\"./src/*\"], \"~/core/*\": [\"./core/*\"], }, }, }"),
+            ("tsconfig.json", "{ // 주석\n \"compilerOptions\": { \"baseUrl\": \".\", /* 블록 */ \"paths\": { \"@app/*\": [\"./src/*\"], \"@app/core/*\": [\"./core/*\"], }, }, }"),
             ("src/fs.ts", ""),
             ("core/fs.ts", ""),
         ]);
-        assert_eq!(편다(&p, "src/a.ts", "~/fs"), 파일("src/fs.ts"));
-        assert_eq!(편다(&p, "src/a.ts", "~/core/fs"), 파일("core/fs.ts"));
-        assert_eq!(편다(&p, "src/a.ts", "~/nothing"), TsResolution::NotFound, "맞은 별칭의 파일이 없다");
+        assert_eq!(편다(&p, "src/a.ts", "@app/fs"), 파일("src/fs.ts"));
+        assert_eq!(편다(&p, "src/a.ts", "@app/core/fs"), 파일("core/fs.ts"));
+        assert_eq!(편다(&p, "src/a.ts", "@app/nothing"), TsResolution::NotFound, "맞은 별칭의 파일이 없다");
     }
 
     #[test]

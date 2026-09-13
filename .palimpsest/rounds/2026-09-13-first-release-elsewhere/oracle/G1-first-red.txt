@@ -1,0 +1,13 @@
+# G1 — ditto 결합 금지
+
+- 범위: `git diff 6ee9eb3..1d7b3b8 -- crates/ xtask/` 의 더한 줄
+- 걸린 줄 **4**
+  +            ("tsconfig.json", r#"{"compilerOptions":{"moduleResolution":"bundler","baseUrl":".","paths":{"~/*":["./src/*"]}}}"#),
+  +    let 화면 = "회차를 연다 · L2 exact · L0 unavailable · UTF-8 · ditto@aded7ce+worktree#335e5bc23a81 · body eace1ea25a2d · p95";
+  +/// 남의 TS 저장소(ditto)의 가장 긴 사슬은 **1** 겹이었다.
+  +            ("tsconfig.json", "{ // 주석\n \"compilerOptions\": { \"baseUrl\": \".\", /* 블록 */ \"paths\": { \"~/*\": [\"./src/*\"], \"~/core/*\": [\"./core/*\"], }, }, }"),
+
+## 음성 대조 — 같은 명령에 `+ // ditto` 한 줄을 심는다
+- 걸린 줄 **5** (본 셈 + 1 이어야 한다)
+
+## 판정: 반증

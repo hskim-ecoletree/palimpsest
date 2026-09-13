@@ -85,7 +85,7 @@ fn a1_지정자_여섯_꼴이_다른_파일의_심볼로_가는_엣지가_된다
     let root = 저장소(
         "a1",
         &[
-            ("tsconfig.json", r#"{"compilerOptions":{"moduleResolution":"bundler","baseUrl":".","paths":{"~/*":["./src/*"]}}}"#),
+            ("tsconfig.json", r#"{"compilerOptions":{"moduleResolution":"bundler","baseUrl":".","paths":{"@app/*":["./src/*"]}}}"#),
             ("src/a.ts", "export function fromA() { return 1; }\n"),
             ("src/b/c.ts", "export function fromC() { return 2; }\n"),
             ("src/x.ts", "export function fromX() { return 3; }\n"),
@@ -101,7 +101,7 @@ fn a1_지정자_여섯_꼴이_다른_파일의_심볼로_가는_엣지가_된다
                  import { fromX } from '../x.js';\n\
                  import { fromY } from '../y.ts';\n\
                  import { fromDir } from '../dir';\n\
-                 import { fromAlias } from '~/alias/target';\n\
+                 import { fromAlias } from '@app/alias/target';\n\
                  import { readFileSync } from 'node:fs';\n\
                  import { z } from 'zod';\n\
                  import { gone } from './missing';\n\
