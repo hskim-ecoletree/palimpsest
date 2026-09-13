@@ -86,8 +86,7 @@
 **반경이 처음으로 쓰였다.** *"이 결정이 아직 유효한가"* 가 **좌표 하나의 본문**에서
 **그것을 부르는 코드**까지로 넓어졌고, 그 결과로 **낡음 5 건이 새로 드러났다** — 같은
 코드·같은 커밋인데 반경이 넓어져서 보인 것이다.
-판정은 회차 `2026-09-12-binding-radius-in-use` 의 게이트가 진다 —
-`docs/gates/binding-radius-in-use.md` (그 회차가 끝날 때 놓인다).
+판정: [`docs/gates/binding-radius-in-use.md`](../gates/binding-radius-in-use.md).
 
 ★ **`C6` 행이 적은 두 미구축의 소속이 갈렸다.**
 

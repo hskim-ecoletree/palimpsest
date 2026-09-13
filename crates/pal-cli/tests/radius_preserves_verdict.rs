@@ -217,6 +217,76 @@ fn pal_bind_재호출은_여섯을_안_보존하고_stale_을_지운다() {
     let _ = std::fs::remove_dir_all(&repo);
 }
 
+/// ★★ **조건 `A3-a` 의 음성 대조** — 기준 시점을 **HEAD** 로 읽으면 `Fresh` 가 난다.
+///
+/// # 이 시험이 없으면 `A3` 이 측정이 아니라 문서 조건이다
+///
+/// `A3` 은 *"새 감시 원소의 `digest` 를 `bound_at` 의 base 커밋에서 읽는다"* 를 재고,
+/// 그 증거로 *"넓히면 `Stale` 이 난다"* 를 쓴다. **그런데 HEAD 에서 읽어도 `Stale` 이
+/// 난다면 그 증거가 아무것도 안 가른다.**
+///
+/// 이 시험이 그 갈래를 붙든다 — **같은 픽스처·같은 반경인데 기준 시점만 다른 두 경로**를
+/// 나란히 돌린다. `pal bind --radius callers` 는 감시 집합을 HEAD 에서 펴고 **기준값도
+/// HEAD 에서** 읽으므로 새 원소가 **반드시 `fresh`** 다.
+///
+/// | 경로 | 새 원소의 기준 | 판정 |
+/// |---|---|---|
+/// | `pal radius --to callers` | `bound_at` 의 base 커밋 | **`stale`** |
+/// | `pal bind --radius callers` | HEAD | **`fresh`** |
+///
+/// **두 줄이 갈리는 것이 `A3` 이 재는 것의 전부다.**
+#[test]
+fn 기준을_head_로_읽으면_fresh_가_난다() {
+    // ── 두 저장소를 같은 모양으로 세운다 ─────────────────────────────────
+    let 그대로 = 저장소("radius-baseline-neg-base");
+    let headit = 저장소("radius-baseline-neg-head");
+
+    let 준비 = |repo: &std::path::Path| -> String {
+        pal(repo, &["bind", "도움", "--note", "이 함수의 계약"]);
+        let id = 결박(repo)["id"].as_str().expect("id").to_owned();
+        // 결박한 **뒤에** 호출자를 고친다.
+        std::fs::write(
+            repo.join("delta.ts"),
+            "export function 도움() { return 1 }\nexport function 부름() { return 도움() + 7 }\n",
+        )
+        .expect("delta.ts");
+        git(repo, &["add", "-A"]);
+        git(repo, &[
+            "-c", "user.email=t@example.com", "-c", "user.name=t",
+            "commit", "-qm", "호출자를 고친다",
+        ]);
+        id
+    };
+    let id_base = 준비(&그대로);
+    let _id_head = 준비(&headit);
+
+    // ── ① base 커밋 기준 — `stale` 이 나야 한다 ──────────────────────────
+    pal(&그대로, &["radius", &id_base, "--to", "callers"]);
+    let 판정_base = 판정(&그대로);
+    assert_eq!(
+        판정_base["status"]["code"]["freshness"], "stale",
+        "base 커밋 기준인데 stale 이 아니다 — `A3` 이 재는 쪽이 무너진다\n{판정_base}"
+    );
+
+    // ── ② HEAD 기준 — `fresh` 가 나야 한다 ───────────────────────────────
+    //
+    // `pal bind` 재호출은 감시 집합을 HEAD 에서 펴고 **기준값도 HEAD 에서** 읽는다.
+    pal(&headit, &["bind", "도움", "--note", "이 함수의 계약", "--radius", "callers"]);
+    let 판정_head = 판정(&headit);
+    assert_eq!(
+        판정_head["radius"], "callers",
+        "HEAD 쪽이 callers 로 안 넓혀졌다 — 두 경로가 같은 반경이어야 비교가 성립한다"
+    );
+    assert_eq!(
+        판정_head["status"]["code"]["freshness"], "fresh",
+        "★ HEAD 기준인데 fresh 가 아니다 — 그러면 기준 시점 선택이 판정에 아무 차이도 \
+         안 만들고, `A3` 은 측정이 아니라 문서 조건이다\n{판정_head}"
+    );
+
+    let _ = std::fs::remove_dir_all(&그대로);
+    let _ = std::fs::remove_dir_all(&headit);
+}
+
 /// ★ **조건 `A4`** — 보존 경로는 결박을 **새로 만들지 못한다.**
 #[test]
 fn 없는_결박을_지목하면_실패한다() {

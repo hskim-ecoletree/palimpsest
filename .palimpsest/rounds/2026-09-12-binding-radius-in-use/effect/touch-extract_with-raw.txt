@@ -1,0 +1,78 @@
+
+  extract_with  ·  palimpsest@f1e8cdb+worktree#da1a66a46cf6
+  fun · crates/pal-extract/src/rust.rs:333 · identity ordinal · body bef1d0fe217a
+
+■ 이 좌표에 걸린 것 (0)
+  아직 없습니다.
+■ 이 좌표를 지켜보는 것 (2)
+  [1cf63ec5e0e9937a] 최신 상태 아님(stale) ← 2 개가 변했습니다  ·  callers 반경 · 감시 2
+      ↳ 걸린 자리  표면  ·  crates/pal-extract/src/rust.rs:417
+      회차 2026-09-07-rust-scope-references — `pub` 의 뜻은 「최상위 + 정확히 `pub`」 하나다
+      
+      `crates/pal-cli/src/ledger.rs` 의 `stitch_of` 가 `n.container.is_empty()` 로 **최상위만**
+      EXPORTS 로 옮긴다. 그러므로 `ExportSet` 이 중첩 `pub` 을 담으면 `export_digest` 와
+      EXPORTS 가 **서로 다른 모집단**을 재고, 그 어긋남은 화면 어디에도 안 나온다.
+      
+      `pub(crate)`·`pub(super)`·`pub(in …)` 도 안 담는다 — `ExportSet` 의 뜻이 *"밖에 노출하는
+      것"* 인데 크레이트 안 가시성은 그 뜻과 다르다.
+      
+      이 규칙을 넓히면 `a13_pub_의_뜻은_최상위_pub_하나다` 가 빨개진다.
+      
+      이슈 #130 · 조건 A13
+  [c201c01b6b0aff9a] 최신 상태 아님(stale) ← 1 개가 변했습니다  ·  callers 반경 · 감시 5
+      ↳ 걸린 자리  recovery_sites  ·  crates/pal-extract/src/parse.rs:360
+      이 결정이 적용되지 않는 자리
+      부재가 아닌 것에는 쓰지 않는다. F02-2 가 「입자 부재」(조상 없는 익명 함수의 변경)를
+      `recovery_sites` 에 담을지 판단하면서 안 담기로 했다 — 회복 지점은 "문법이 이 바이트를
+      못 읽었다" 이고 입자 부재는 바이트를 완벽히 읽었는데 담을 심볼이 없는 것이다.
+      종류가 다른 부재를 한 목록에 담으면 이 ADR 이 막으려는 것을 그대로 저지른다.
+      이유의 수가 늘어나는 것 자체가 관측 대상이다. 셋째 이유가 필요해지면 그때 "칸이어야
+      하는 것 아닌가" 를 다시 묻는다.
+■ 이 심볼이 하는 것
+  호출자 1 · 피호출자 8
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조·구조체 리터럴·경로 머리도 셉니다
+  ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 타입 추론이 필요해 **이 회차의 범위 밖**입니다. 능력 부재가 아니라 안 하기로 정한 자리입니다
+  ※ 파일 간 해소 — ⓐ `cross-file-import` 1878/5972 · ⓑ `path-resolution` 289/1114 (선 것/짝)
+  ※ ⓐ 가 못 선 까닭 — ambiguous 214 · no_symbol 682 · no_symbol_at_crate_root 2027 · outside_repo 1171
+  ※ ⓑ 가 못 선 까닭 — ambiguous 14 · no_symbol 154 · no_symbol_at_crate_root 367 · outside_repo 290
+  ※ 못 선 몫이 가는 문 — 이 회차가 안 세우기로 정한 자리와 못 세우는 자리를 가릅니다
+      ⚠ 갈래 하나는 **아직 안 갈렸습니다** — 그 자리는 문이 아니라 「미측정」을 적습니다
+      `outside_repo` → **경계** — 저장소 밖(`std::*` 등)이라 원리상 못 섭니다
+      `no_symbol_at_crate_root` → `A5`·`A5-a` — 재수출 경유는 잠근 축1 의 **밖**입니다
+      `no_symbol` → **갈래가 아직 안 갈렸습니다** — `#133`(L2)로 갈 몫과 이 회차의 구현 여지가 섞여 있고 그 크기는 **미측정**입니다
+      `no_target_file` → **이 회차의 구현** — 모듈 경로를 파일로 못 폈습니다
+      `ambiguous` → **후보 생성의 모호** — 모듈 경로가 여러 파일로 읽힙니다. 하나를 고르면 조용한 오답이라 **안 고르는 것이 설계입니다**
+■ 내가 모르는 것
+  13 건
+  · FileGraph — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · HashMap — outside_repo · 지난 걸음 import_item(1→1) module_path(8→0)
+  · LocalIx — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · build — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · Symbol — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · BodyDigest — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · of_normalized — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · Language — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · Span — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · Capable — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · Present — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · LanguageId — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+  · new — no_symbol_at_crate_root · 지난 걸음 import_item(1→1) module_path(4→1) target_symbol(1→0)
+■ 효과
+  (이 빌드에는 effects 능력이 없습니다 — F13 미구축)
+■ 판정
+  (이 빌드에는 judgment 능력이 없습니다 — F15 미구축)
+
+■ 이 답의 근거
+  Snapshot  palimpsest@f1e8cdb+worktree
+  대장      parsed 145 · partial 0 · unsupported 898 · unrecognized 374 / 1418 파일
+            결박 불가 언어 7개 — 그 파일들에는 좌표가 없습니다
+  2층       심볼 3371 색인됨
+  워킹트리  일치
+  재구축    아님
+  생략      없음 (명시)
+  이관      1418건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 1418건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 3203 토큰 **이상** (잰 것: 12812 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 미구축 F13 · F15
+
