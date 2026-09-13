@@ -172,6 +172,14 @@ say('');
 
 // ── ⑥ A5 ⑵ — `outside_repo` 인데 TypeScript 가 저장소 안으로 푸는 것 ───────────
 const 위반 = [];
+const 꼴위반 = [];
+// 조건 문면의 꼴 — 지정자가 `./` · `../` 이거나 그 파일에 걸린 tsconfig `paths` 의 열쇠에 맞는다.
+// ⚠ TypeScript 가 푸는가와 **다른 술어다**: 꼴은 상대·별칭인데 TypeScript 도 못 푸는 지정자(없는 파일)가
+//   `outside_repo` 로 남으면 여기서만 걸린다.
+function 별칭에_맞나(file, spec) {
+  const paths = configFor(file).options.paths || {};
+  return Object.keys(paths).some((k) => (k.endsWith('*') ? spec.startsWith(k.slice(0, -1)) : spec === k));
+}
 if (args.unresolved) {
   const cy = sh(pal, ['export', '--format', 'cypher']);
   const re = /CREATE \(:UnresolvedRef \{site: "([^"]+)", name: "((?:[^"\\]|\\.)*)", reason: "([a-z_]+)"/g;
@@ -186,12 +194,17 @@ if (args.unresolved) {
     for (const imp of importsOf(site.path).filter((i) => i.names.some((n) => n.imported === name))) {
       const target = resolve(site.path, imp);
       if (target) 위반.push(`${site.path} · \`${imp.spec}\` · ${name} → TypeScript: ${target}`);
+      if (imp.spec.startsWith('./') || imp.spec.startsWith('../') || 별칭에_맞나(site.path, imp.spec)) {
+        꼴위반.push(`${site.path} · \`${imp.spec}\` · ${name}`);
+      }
     }
   }
   say('## A5 ⑵ — `outside_repo` 로 남은 못 푼 참조');
   say('');
   say(`- TS 파일의 \`outside_repo\` ${셈} · 그중 TypeScript 가 저장소 안 파일로 푸는 것 **${위반.length}**`);
   for (const v of 위반.slice(0, 50)) say(`  - ${v}`);
+  say(`- 그중 지정자가 \`./\` · \`../\` · tsconfig 별칭 꼴인 것(조건 문면) **${꼴위반.length}**`);
+  for (const v of 꼴위반.slice(0, 50)) say(`  - ${v}`);
   say('');
 }
 
