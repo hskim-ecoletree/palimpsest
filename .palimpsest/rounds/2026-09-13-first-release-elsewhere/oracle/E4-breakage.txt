@@ -1,0 +1,14 @@
+# E4 — 깨질 곳의 대조
+
+- typescript `5.9.3` · 복제본 `ditto-effect`
+- tsc 전 오류 0 · A 뒤 오류 4 · 새 오류 4
+- P(새 오류 파일) src/cli/commands/setup.ts · src/core/hosts/index.ts · src/core/setup.ts
+- C(호출자 파일) src/cli/commands/setup.ts · src/core/hosts/codex.ts · src/core/setup.ts
+- D(지운 파일) src/core/hosts/codex.ts
+- **P∩C** src/cli/commands/setup.ts · src/core/setup.ts
+- **P∖(C∪D)** src/core/hosts/index.ts
+
+## src/core/hosts/index.ts
+- 2:34 TS2307 · ImportDeclaration · **최상위** · Cannot find module './codex' or its corresponding type declarations.
+
+## 판정 — P∖(C∪D) 에서 오류 자리가 선언 안인 것 **0** (0 이어야 한다)

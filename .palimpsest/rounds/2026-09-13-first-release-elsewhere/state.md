@@ -49,6 +49,9 @@
 
 ## 실패한 접근
 
+- **화면이 안내한 명령을 zsh 변수로 쪼개 돌렸다** — 이 셸(zsh)은 따옴표 없는 `$변수` 를 낱말로 안 쪼갠다. 명령 한 줄이 인자 하나가 돼 `pal` 이 인자 없이 불렸다(`effect/04-approve-harness-error.txt`). 안내된 명령은 **`shlex.split` 으로 갈라** 돌린다.
+- **ditto 의 `.gitignore` 는 `node_modules` 링크를 무시하지 않는다** — 효과 복제본에서 `git add -A` 를 쓰지 않는다. 경로를 지정해 커밋한다.
+
 - **스냅샷의 화면 표기로 「같은 스냅샷인가」를 가렸다** — `Snapshot` 의 `Display` 는 `repo@abc1234+worktree` 로 **워킹트리 요약을 버린다.** 추적 파일을 고쳐도 같은 문자열이라 승인 대기 목록이 낡았는데도 실렸다(시험 `b3` 가 잡았다). 열쇠는 직렬화 값(`tree_digest` 포함)이다 — `pending::열쇠`.
 
 - **레코드를 손으로 파싱했다** — 규약은 `extract.py` 를 요구한다(기계 칸이 갈려 `cargo xtask check` 가 빨개졌다). 원 반환문의 레코드는 **언제나** `python3 .claude/skills/round/bin/extract.py <출처> <라운드> <raw> <기존 findings.jsonl>` 로 뽑고 판단 칸만 사람이 얹는다.
