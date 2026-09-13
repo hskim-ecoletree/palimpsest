@@ -1,0 +1,39 @@
+# E2 ⑵ 를 조건 문면대로 — 「그 출력들에서 `호출자` 에 다른 파일의 참조 ≥ 1」
+
+> `effect/` 의 `touch` 출력(사람 화면 `03-touch/NN-*.txt` · `04-touch-after-approve.txt` 와 `--json` 표준출력 `*.json.txt`)만 읽는다. 질의 출력 `04-callers/` 는 읽지 않는다 — 앞 오라클 `E2-scene.py:55` 는 ⑵ 를 거기서 뽑았다.
+
+## 호출자 줄
+
+- `effect/03-touch/01-mcpServersFromToml.txt` — 호출자 1 · 피호출자 5
+- `effect/03-touch/02-scanCodexPluginRoot.txt` — 호출자 1 · 피호출자 5
+- `effect/03-touch/03-codexPluginRoots.txt` — 호출자 1 · 피호출자 1
+- `effect/03-touch/04-scanProjectCodexAgents.txt` — 호출자 1 · 피호출자 2
+- `effect/03-touch/05-codexHostAdapter.txt` — 호출자 2 · 피호출자 1
+- `effect/03-touch/06-loadInstructions-pick.txt` — 호출자 0 · 피호출자 1
+- `effect/03-touch/06-loadInstructions.txt` — (호출자 줄 없음 — 후보 화면)
+- `effect/03-touch/07-loadPermissions-pick.txt` — 호출자 0 · 피호출자 3
+- `effect/03-touch/07-loadPermissions.txt` — (호출자 줄 없음 — 후보 화면)
+- `effect/03-touch/08-loadMcpServers-pick.txt` — 호출자 0 · 피호출자 3
+- `effect/03-touch/08-loadMcpServers.txt` — (호출자 줄 없음 — 후보 화면)
+- `effect/03-touch/09-loadSurfaceInventory-pick.txt` — 호출자 0 · 피호출자 5
+- `effect/03-touch/09-loadSurfaceInventory.txt` — (호출자 줄 없음 — 후보 화면)
+- `effect/03-touch/10-spawnRun-pick.txt` — 호출자 0 · 피호출자 2
+- `effect/03-touch/10-spawnRun.txt` — (호출자 줄 없음 — 후보 화면)
+- `effect/03-touch/11-CODEX_PROFILE_SANDBOX_FLAGS.txt` — 호출자 1 · 피호출자 1
+- `effect/03-touch/12-CODEX_PROFILE_UNVERIFIED.txt` — 호출자 1 · 피호출자 1
+- `effect/03-touch/13-buildCodexSpawnArgs.txt` — 호출자 1 · 피호출자 3
+- `effect/04-touch-after-approve.txt` — 호출자 1 · 피호출자 5
+
+## 봉인 파일 밖 경로가 나오는 자리 — 무엇의 경로인가
+
+- `effect/03-touch/06-loadInstructions.txt:4` — `method     loadInstructions         src/core/hosts/claude-code.ts:137  지목 6c2113e74c23`
+- `effect/03-touch/07-loadPermissions.txt:4` — `method     loadPermissions          src/core/hosts/claude-code.ts:150  지목 b118d2b0fd46`
+- `effect/03-touch/08-loadMcpServers.txt:4` — `method     loadMcpServers           src/core/hosts/claude-code.ts:186  지목 1aab09ce9141`
+- `effect/03-touch/09-loadSurfaceInventory.txt:4` — `method     loadSurfaceInventory     src/core/hosts/claude-code.ts:248  지목 7caba57db2f1`
+- `effect/03-touch/10-spawnRun.txt:4` — `method     spawnRun                 src/core/hosts/claude-code.ts:289  지목 f8cb4d533483`
+- `effect/04-touch-after-approve.txt:9` — `자체 `parseTomlSubset`은 제거. 대신 `src/core/hosts/shared.ts`에 `parseToml(text): Record<string, unknown>` wrapper 한 `
+
+- 봉인 파일 밖 경로 등장 12 곳(사람 화면과 --json 합). 사람 화면의 것은 위에 전부 적었다 — 동명 후보 목록 줄과 결정 본문 줄이다
+- `--json` 에 호출자 목록(배열)이 실린 파일 0 — `facts.present.callers` 는 수다
+
+## 판정: 반증 — `touch` 출력은 호출자의 **수**만 싣고 호출자가 어느 파일에 있는지는 싣지 않는다. 「다른 파일의 참조」가 그 출력들에서 서지 않는다
