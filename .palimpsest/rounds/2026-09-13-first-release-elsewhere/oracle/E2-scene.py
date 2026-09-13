@@ -20,7 +20,8 @@ fx = Path(sys.argv[1]).resolve()
 repo = Path(sys.argv[2]).resolve()
 # ⚠ **절대 경로다** — `cargo test` 는 크레이트 디렉터리에서 시험을 돌려서 상대 경로를 못 찾는다.
 seal_file = "src/core/hosts/codex.ts"
-touch = sorted((fx / "03-touch").glob("[0-9][0-9]-*.txt"))
+touch = sorted(p for p in (fx / "03-touch").glob("[0-9][0-9]-*.txt") if not p.name.endswith(".json.txt"))
+# ⚠ `--json` 표준출력(`*.json.txt`)은 사람 화면이 아니다 — 이름을 옮긴 뒤 같은 glob 에 걸린다(`a4cd368`)
 out = ["# E2 — 장면 넷", ""]
 ok = {}
 
@@ -50,15 +51,20 @@ out += [
     "",
 ]
 
-# ⑵
-다른_파일 = []
-for f in sorted((fx / "04-callers").glob("*.txt")):
-    for l in f.read_text(encoding="utf-8").splitlines():
-        mm = re.match(r"^\s{2}\S+\s+(\S+)\s+(\S+):(\d+)\s*$", l)
-        if mm and mm.group(2) != seal_file:
-            다른_파일.append(f"{f.stem} ← {mm.group(1)} {mm.group(2)}:{mm.group(3)}")
-ok["⑵"] = len(다른_파일) >= 1
-out += ["## ⑵ 다른 파일의 호출자", f"- {len(다른_파일)} 건: " + " · ".join(다른_파일), f"- **{'선다' if ok['⑵'] else '안 선다'}**", ""]
+# ⑵ — ⟨개정 p2⟩ 증인 심볼 규칙(`oracle/callers_rule.py`)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import json as _json
+from callers_rule import 읽기 as _읽기, 표 as _표
+_변이 = _json.loads(os.environ.get("E2_MUTATE", "{}"))
+_행 = _읽기(fx, _변이)
+증인 = [r for r in _행 if (r["수"] or 0) >= 1 and r["규칙"] and r["다른_파일"]]
+못채움 = [r["nn"] for r in _행 if not r["규칙"] and (r["수"] or 0) >= 1]
+ok["⑵"] = len(증인) >= 1
+out += ["## ⑵ 다른 파일의 호출자 — 증인 심볼 규칙(⟨개정 p2⟩)", *_표(_행), "",
+        f"- 변이: `{_변이}`" if _변이 else "- 변이: 없음",
+        f"- 증인 {len(증인)}: " + (" · ".join(f"{r['nn']} {r['이름']}" for r in 증인) or "없음"),
+        f"- 수 ≥ 1 인데 규칙을 못 채운 심볼(이름으로만 적는다 · 증인을 안 뒤집는다): {', '.join(못채움) or '없음'}",
+        f"- **{'선다' if ok['⑵'] else '안 선다'}**", ""]
 
 # ⑶
 지목 = []
@@ -71,7 +77,22 @@ ok["⑶"] = len(지목) >= 1
 out += ["## ⑶ 동명 후보를 지목해 부른 호출", f"- {len(지목)} 건: " + " · ".join(지목), f"- **{'선다' if ok['⑶'] else '안 선다'}**", ""]
 
 # ⑷
-files = [str(p) for p in touch] + [str(fx / "04-touch-after-approve.txt")]
+# ⚠ `d1_scan` 은 화면 옆의 `<파일>.json` 을 같은 호출의 `--json` 으로 읽어 사용자 내용을 지운다.
+#   효과 산출은 sunset 트리거를 피하려고 `NN.json.txt` 로 이름을 옮겼다(`a4cd368`) — 그 이름으로는 짝을 못 찾아
+#   남의 저장소 경로(`.ditto/knowledge/adr/ADR-0003-…`)가 `pal` 문구로 잡힌다. 그래서 회차 밖 임시 디렉터리에
+#   화면과 짝을 옛 이름(`NN.txt` · `NN.txt.json`)으로 복사해 넘긴다. 내용은 바이트 그대로다.
+import shutil
+import tempfile
+_짝_dir = Path(tempfile.mkdtemp(prefix="e2-vocab-"))
+files = []
+for _p in list(touch) + [fx / "04-touch-after-approve.txt"]:
+    _dst = _짝_dir / _p.name
+    shutil.copyfile(_p, _dst)
+    _j = _p.with_name(_p.name.replace(".txt", ".json.txt"))
+    if _j.exists():
+        shutil.copyfile(_j, _dst.with_name(_dst.name + ".json"))
+    files.append(str(_dst))
+_짝_수 = sum(1 for f in files if Path(f + ".json").exists())
 env = dict(os.environ, PAL_VOCAB_SCAN=":".join(files))
 r = subprocess.run(
     ["cargo", "test", "-q", "-p", "pal-cli", "--test", "user_vocabulary", "--", "--ignored", "--nocapture", "d1_scan"],
@@ -81,7 +102,7 @@ r = subprocess.run(
 ok["⑷"] = r.returncode == 0
 out += [
     "## ⑷ 금지 패턴 — `D1` 과 같은 함수",
-    f"- 잰 화면 {len(files)} · 걸린 자리 {걸린_자리.group(1) if 걸린_자리 else '(못 읽음)'} · rc {r.returncode}",
+    f"- 잰 화면 {len(files)} · `--json` 짝을 붙인 화면 {_짝_수} · 걸린 자리 {걸린_자리.group(1) if 걸린_자리 else '(못 읽음)'} · rc {r.returncode}",
     f"- **{'선다' if ok['⑷'] else '안 선다'}**",
     "",
 ]

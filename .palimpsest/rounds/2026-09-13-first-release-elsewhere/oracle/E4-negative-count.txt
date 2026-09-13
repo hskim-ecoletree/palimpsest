@@ -1,0 +1,5 @@
+<!-- E4 음성 대조 ① — 증인 05 의 touch 수를 3 으로 바꿔 넣는다 · 대조 불가여야 한다 · 복제본 워크트리 ditto-effect-at-A HEAD 898a479c8f55af5ecc41796b6672f25c61a814e7 · porcelain(src tests scripts) [0 줄] · 저장소 HEAD 403d589 -->
+# E4 — 깨질 곳의 대조
+
+## 판정 — **대조 불가** — 수 ≥ 1 인 봉인 심볼이 읽기 규칙을 못 채웠다(변이 {"count":{"05":3}})
+rc=2

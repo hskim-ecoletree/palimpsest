@@ -1,4 +1,4 @@
-<!-- E2 — ⟨개정 p2⟩ 뒤 재실행 · ⑷ 의 --json 짝 복원 뒤 · 저장소 HEAD 403d589 · 작업 트리 crates 변경: [ 1 file changed, 1 insertion(+), 1 deletion(-)] — 종료 기준선의 f22-4 변이 시험이 doctor.rs 를 잠시 바꿔 둔 동안 돌았다(d1_scan 은 doctor 를 안 부른다) -->
+<!-- E2 ⑵ 음성 대조 ① — 증인 05 의 touch 수를 3 으로 바꿔 넣는다(E2_MUTATE) · 증인을 잃어야 한다 · 작업 트리 crates 변경: [ 1 file changed, 1 insertion(+), 1 deletion(-)] — 종료 기준선의 f22-4 변이 시험이 doctor.rs 를 잠시 바꿔 둔 동안 돌았다(d1_scan 은 doctor 를 안 부른다) -->
 # E2 — 장면 넷
 
 ## ⑴ 승인 대기 → 화면의 명령으로 승인 → 걸린 것
@@ -14,7 +14,7 @@
 | 02 | `scanCodexPluginRoot` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
 | 03 | `codexPluginRoots` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
 | 04 | `scanProjectCodexAgents` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
-| 05 | `codexHostAdapter` | 아니오 | 예 | 2 | 2 | 예 | 채움 | discoverCodexAgents src/cli/commands/setup.ts:258 · writeCodexSurfaceCatalog src/core/setup.ts:291 |
+| 05 | `codexHostAdapter` | 아니오 | 예 | 3 | 2 | 예 | 못 채움 | discoverCodexAgents src/cli/commands/setup.ts:258 · writeCodexSurfaceCatalog src/core/setup.ts:291 |
 | 06 | `loadInstructions` | 예 | 예 | 0 | 0 | 예 | 채움 | — |
 | 07 | `loadPermissions` | 예 | 예 | 0 | 0 | 예 | 채움 | — |
 | 08 | `loadMcpServers` | 예 | 예 | 0 | 0 | 예 | 채움 | — |
@@ -24,10 +24,10 @@
 | 12 | `CODEX_PROFILE_UNVERIFIED` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
 | 13 | `buildCodexSpawnArgs` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
 
-- 변이: 없음
-- 증인 1: 05 codexHostAdapter
-- 수 ≥ 1 인데 규칙을 못 채운 심볼(이름으로만 적는다 · 증인을 안 뒤집는다): 없음
-- **선다**
+- 변이: `{'count': {'05': 3}}`
+- 증인 0: 없음
+- 수 ≥ 1 인데 규칙을 못 채운 심볼(이름으로만 적는다 · 증인을 안 뒤집는다): 05
+- **안 선다**
 
 ## ⑶ 동명 후보를 지목해 부른 호출
 - 5 건: 06-loadInstructions-pick · 07-loadPermissions-pick · 08-loadMcpServers-pick · 09-loadSurfaceInventory-pick · 10-spawnRun-pick
@@ -37,5 +37,5 @@
 - 잰 화면 19 · `--json` 짝을 붙인 화면 19 · 걸린 자리 0 · rc 0
 - **선다**
 
-## 판정: 통과 — ⑴ ✓ · ⑵ ✓ · ⑶ ✓ · ⑷ ✓
-rc=0
+## 판정: 반증 — ⑴ ✓ · ⑵ ✗ · ⑶ ✓ · ⑷ ✓
+rc=1

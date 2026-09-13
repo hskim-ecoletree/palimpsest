@@ -17,10 +17,11 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => {
   const [k, ...v] = a.replace(/^--/, '').split('=');
-  return [k, v.join('=')];
+  return [k, v.length ? v.join('=') : true];
 }));
 const ts = createRequire(import.meta.url)(args.typescript || path.join(process.env.HOME, 'dev/projects/ditto/node_modules/typescript'));
 const root = path.resolve(args.repo);
@@ -36,12 +37,32 @@ const beforeKeys = new Set(before.map((e) => `${e.file}|${e.line}|${e.col}|${e.c
 const 새오류 = after.filter((e) => !beforeKeys.has(`${e.file}|${e.line}|${e.col}|${e.code}`));
 const P = new Set(새오류.map((e) => e.file));
 
+// ⟨개정 p2⟩ C = 봉인 심볼들의 `touch` 가 **센** 호출자의 파일 집합. 읽기 규칙은 `oracle/callers_rule.py` 하나가 진다.
+//   --effect=<effect 디렉터리> 를 주면 규칙으로 뽑는다(수 ≥ 1 인 심볼 하나라도 규칙을 못 채우면 대조 불가).
+//   --mutate='<json>' 은 음성 대조용 변이 · --c-empty 는 C 를 비운다(옛 문면 읽기의 재현).
+//   --callers=<디렉터리> 만 주면 옛 방식(질의 출력 전부)이다 — 판정에 쓰지 않는다.
 const C = new Set();
-for (const f of fs.readdirSync(args.callers)) {
-  for (const l of fs.readFileSync(path.join(args.callers, f), 'utf8').split('\n')) {
-    const m = l.match(/^\s{2}\S+\s+\S+\s+(\S+):\d+\s*$/);
-    if (m) C.add(m[1]);
+let C_출처 = '';
+if (args['c-empty']) {
+  C_출처 = 'C 를 비웠다(--c-empty)';
+} else if (args.effect) {
+  const py = spawnSync('python3', [path.join(path.dirname(new URL(import.meta.url).pathname), 'callers_rule.py'), args.effect, args.mutate || '{}', '--c'], { encoding: 'utf8' });
+  if (py.status !== 0) throw new Error(py.stderr);
+  const 줄 = py.stdout.split('\n').filter(Boolean);
+  if (줄[0] === '__대조불가__') {
+    console.log('# E4 — 깨질 곳의 대조\n\n## 판정 — **대조 불가** — 수 ≥ 1 인 봉인 심볼이 읽기 규칙을 못 채웠다(변이 ' + (args.mutate || '없음') + ')');
+    process.exit(2);
   }
+  줄.forEach((x) => C.add(x));
+  C_출처 = '읽기 규칙(`callers_rule.py`) · 변이 ' + (args.mutate || '없음');
+} else {
+  for (const f of fs.readdirSync(args.callers)) {
+    for (const l of fs.readFileSync(path.join(args.callers, f), 'utf8').split('\n')) {
+      const m = l.match(/^\s{2}\S+\s+\S+\s+(\S+):\d+\s*$/);
+      if (m) C.add(m[1]);
+    }
+  }
+  C_출처 = '옛 방식 — 질의 출력 전부(판정에 쓰지 않는다)';
 }
 const D = new Set([args.deleted]);
 
@@ -55,7 +76,7 @@ say('');
 say(`- typescript \`${ts.version}\` · 복제본 \`${path.basename(root)}\``);
 say(`- tsc 전 오류 ${before.length} · A 뒤 오류 ${after.length} · 새 오류 ${새오류.length}`);
 say(`- P(새 오류 파일) ${[...P].sort().join(' · ') || '없음'}`);
-say(`- C(호출자 파일) ${[...C].sort().join(' · ') || '없음'}`);
+say(`- C(호출자 파일) ${[...C].sort().join(' · ') || '없음'} — ${C_출처}`);
 say(`- D(지운 파일) ${[...D].join(' · ')}`);
 const PC = [...P].filter((f) => C.has(f)).sort();
 const rest = [...P].filter((f) => !C.has(f) && !D.has(f)).sort();

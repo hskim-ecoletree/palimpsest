@@ -1,0 +1,15 @@
+| NN | 심볼 | 지목(-pick) | 한 심볼 답 | touch 수 | 목록 줄 | 같은 스냅샷 | 규칙 | 다른 파일 호출자 |
+|---|---|---|---|---|---|---|---|---|
+| 01 | `mcpServersFromToml` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
+| 02 | `scanCodexPluginRoot` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
+| 03 | `codexPluginRoots` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
+| 04 | `scanProjectCodexAgents` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
+| 05 | `codexHostAdapter` | 아니오 | 예 | 2 | 2 | 예 | 채움 | discoverCodexAgents src/cli/commands/setup.ts:258 · writeCodexSurfaceCatalog src/core/setup.ts:291 |
+| 06 | `loadInstructions` | 예 | 예 | 0 | 0 | 예 | 채움 | — |
+| 07 | `loadPermissions` | 예 | 예 | 0 | 0 | 예 | 채움 | — |
+| 08 | `loadMcpServers` | 예 | 예 | 0 | 0 | 예 | 채움 | — |
+| 09 | `loadSurfaceInventory` | 예 | 예 | 0 | 0 | 예 | 채움 | — |
+| 10 | `spawnRun` | 예 | 예 | 0 | 0 | 예 | 채움 | — |
+| 11 | `CODEX_PROFILE_SANDBOX_FLAGS` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
+| 12 | `CODEX_PROFILE_UNVERIFIED` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |
+| 13 | `buildCodexSpawnArgs` | 아니오 | 예 | 1 | 1 | 예 | 채움 | — |

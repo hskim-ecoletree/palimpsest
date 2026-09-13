@@ -1,0 +1,23 @@
+<!-- E4 음성 대조 ③ — 같은 워크트리에서 C 를 비운다(옛 문면 읽기 재현) · 선언 안 1 이어야 한다 · 복제본 워크트리 ditto-effect-at-A HEAD 898a479c8f55af5ecc41796b6672f25c61a814e7 · porcelain(src tests scripts) [0 줄] · 저장소 HEAD 403d589 -->
+# E4 — 깨질 곳의 대조
+
+- typescript `5.9.3` · 복제본 `ditto-effect-at-A`
+- tsc 전 오류 0 · A 뒤 오류 4 · 새 오류 4
+- P(새 오류 파일) src/cli/commands/setup.ts · src/core/hosts/index.ts · src/core/setup.ts
+- C(호출자 파일) 없음 — C 를 비웠다(--c-empty)
+- D(지운 파일) src/core/hosts/codex.ts
+- **P∩C** 없음
+- **P∖(C∪D)** src/cli/commands/setup.ts · src/core/hosts/index.ts · src/core/setup.ts
+
+## src/cli/commands/setup.ts
+- 8:34 TS2307 · ImportDeclaration · **최상위** · Cannot find module '~/core/hosts/codex' or its corresponding type declarations.
+- 262:50 TS7006 · FunctionDeclaration · **선언 안** · Parameter 's' implicitly has an 'any' type.
+
+## src/core/hosts/index.ts
+- 2:34 TS2307 · ImportDeclaration · **최상위** · Cannot find module './codex' or its corresponding type declarations.
+
+## src/core/setup.ts
+- 7:34 TS2307 · ImportDeclaration · **최상위** · Cannot find module './hosts/codex' or its corresponding type declarations.
+
+## 판정 — P∖(C∪D) 에서 오류 자리가 선언 안인 것 **1** (0 이어야 한다)
+rc=1
