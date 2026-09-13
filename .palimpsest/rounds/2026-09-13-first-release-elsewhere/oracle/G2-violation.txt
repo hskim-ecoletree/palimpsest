@@ -1,0 +1,20 @@
+# G2 — 원본 불가침 · 종료 쪽
+
+## 무엇이 일어났나
+- `scripts/f06-verify.py` ③ 이 원본 `~/dev/projects/ditto` 에 `pal query graph.dump` · `pal export` 를 붙이면서 `--cache-dir` 를 안 줬다(예전부터의 결함). 이 회차가 `EXTRACTOR_REV` 를 올려(`ba0a983`) 캐시 열쇠가 바뀌었고, 그 스크립트를 다시 돌리자 원본의 `.palimpsest/cache` 에 새 열쇠의 항목이 쓰였다.
+- 착수 쪽 박제(2026-09-13 20:44 KST) 뒤에 바뀐 파일: **2451** 개 · 시각 분포 `2451 09-14 08:26;`. 전부 `.bin` 캐시 항목이고 **더해진 것**이다. `index.redb` 는 `1786811668 4214784`(mtime·크기) 그대로다. git 추적 파일 porcelain 도 착수와 같다.
+
+## 소유자 결정 · 한 것
+- 소유자: *「더해진 파일만 지운다」* (2026-09-14)
+- 지운 목록은 `oracle/G2-deleted-cache-files.txt`(한 줄에 경로 하나)에 남겼다. 전체 캐시 파일 수 9804 → 7353 · 기준 시각 뒤에 남은 파일 0 · `index.redb` 뒤 `1786811668 4214784`
+- **디렉터리 시각은 되돌리지 않았다** — 되돌리는 것은 박제를 맞추는 조작이다.
+
+## 판정 — 반증
+`oracle/G2-ditto-origin-before.txt` 와 `oracle/G2-ditto-origin-after.txt` 를 댄다:
+```diff
+4c4
+< palimpsest_dir_listing_sha256 cf6cd3d58da697562b1e7be1346baa64f4f46d4b005e2eaa8bc6617c967e3e9c
+---
+> palimpsest_dir_listing_sha256 0e07cb089b8f37cec768640d5bedc1c4cb59256fea33fe4be46f7f935de8493a
+```
+HEAD · porcelain 해시 · `node_modules` 항목 수는 같다. `.palimpsest/` 목록 해시가 다르다 — 더해졌다 지워진 캐시 항목이 남긴 디렉터리 시각 때문이다.
