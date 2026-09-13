@@ -1,0 +1,1479 @@
+HEAD 6145849ea44d
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running `target/debug/xtask test`
+■ 시험 — 그리고 남는 실패가 등록된 외침과 같은지 본다
+
+running 100 tests
+test cache::tests::크기는_내림이다 ... ok
+test cache::tests::뿌리는_언제나_cache_다 ... ok
+test hook::policy::tests::반복_회차는_같은_페이로드에서도_통과한다 ... ok
+test hook::policy::tests::우리_사건이_아니면_보지도_않는다 ... ok
+test hook::policy::tests::모르는_형태는_전부_통과한다 ... ok
+test hook::policy::tests::돌려준_말이_비면_차단한다 ... ok
+test install::casing::tests::대소문자만_다르면_찾아낸다 ... ok
+test install::casing::tests::없으면_조용하다 ... ok
+test install::blocks::tests::우리가_만든_파일은_통째로_사라진다 ... ok
+test install::blocks::tests::두_번_더해도_블록은_하나다 ... ok
+test install::child::tests::끝나는_자식은_출력을_그대로_산출한다 ... ok
+test install::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test install::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test install::eol::tests::맞추면_왕복한다 ... ok
+test install::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test install::eol::tests::첫_줄바꿈이_정한다 ... ok
+test install::casing::tests::다른_이름은_안_걸린다 ... ok
+test install::exe::tests::없는_자리는_안_열린다 ... ok
+test install::casing::tests::정확히_같은_이름은_안_걸린다 ... ok
+test install::exe::tests::지금_도는_것은_열린다 ... ok
+test install::blocks::tests::손으로_고친_블록은_거부한다 ... ok
+test install::hooks::catalog_tests::등록과_dispatch는_같은_catalog의_양방향_집합이다 ... ok
+test install::hooks::tests::남의_기계에서_온_경로도_그대로_되읽힌다 ... ok
+test install::hooks::tests::남이_심은_항목은_안_되읽힌다 ... ok
+test install::hooks::tests::갱신이_옛_형태를_빼고_새_형태를_건다 ... ok
+test install::hooks::tests::두_번째_계획은_비어_있다 ... ok
+test install::hooks::tests::남의_등록은_왕복해도_그대로다 ... ok
+test install::hooks::tests::등록_문자열에_기계_고유의_값이_없다 ... ok
+test install::hooks::tests::빈_인자_배열은_거절한다 ... ok
+test install::hooks::tests::모양이_다르면_멈춘다 ... ok
+test install::hooks::tests::설정에_실리는_모양이_exec_form_이다 ... ok
+test install::hooks::tests::옛_형태를_종류로_가른다 ... ok
+test install::hooks::tests::우리가_만든_항목만_되읽힌다 ... ok
+test install::hooks::tests::옮겨_가면_옛_등록을_뺀다 ... ok
+test install::hooks::tests::우리가_만든_훅_키만_사라진다 ... ok
+test install::hooks::tests::우리만_있던_사건_자리는_통째로_사라진다 ... ok
+test install::hooks::tests::인자가_다르면_다른_등록이다 ... ok
+test install::hooks::tests::제거가_옛_형태도_걷어낸다 ... ok
+test install::ignore::tests::부정_패턴이_그_경로를_가리키는지_본다 ... ok
+test install::ignore::tests::부정_패턴을_알아본다 ... ok
+test install::ignore::tests::패턴_안의_콜론을_안_자른다 ... ok
+test install::ignore::tests::후행_슬래시를_붙인다 ... ok
+test install::inside::tests::안쪽_경로는_안_끊는다 ... ok
+test install::inside::tests::절대_경로와_상위_참조를_글자로_끊는다 ... ok
+test install::layout::tests::발행하지_않는다는_전제 ... ok
+test install::manifest::tests::git_디렉터리는_어떤_종류로도_막힌다 ... ok
+test install::layout::tests::놓는_것은_전부_되돌릴_수_있다 ... ok
+test install::layout::tests::놓는_것의_부모를_전부_만들_수_있다 ... ok
+test install::manifest::tests::경로를_하나도_안_빠뜨린다 ... ok
+test install::manifest::tests::sha_가_다르면_바뀐_것으로_잰다 ... ok
+test install::manifest::tests::나중에_생긴_파일이_걸린다 ... ok
+test install::manifest::tests::대상_안의_남의_자리는_막힌다 ... ok
+test install::manifest::tests::사용자_수정_뒤에_또_바뀌면_말한다 ... ok
+test install::manifest::tests::사용자_수정이라도_없으면_걸린다 ... ok
+test install::manifest::tests::양방향을_갈라_잰다 ... ok
+test install::manifest::tests::양쪽이_같으면_차집합이_비어_있다 ... ok
+test install::manifest::tests::우리가_본_사용자_파일은_고장이_아니다 ... ok
+test install::manifest::tests::우리가_놓는_자리는_전부_통과한다 ... ok
+test install::exe::tests::실행_비트가_없으면_안_열린다 ... ok
+test install::blocks::tests::사용자가_나중에_만든_파일을_안_지운다 ... ok
+test install::blocks::tests::우리_블록_밖의_같은_줄은_남는다 ... ok
+test install::sha256::tests::공개_시험_벡터 ... ok
+test install::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test install::sha256::tests::패딩_경계 ... ok
+test install::winpath::tests::평범한_경로는_그대로다 ... ok
+test label::tests::두_조각이_안_뒤바뀐다 ... ok
+test label::tests::신선도_토큰이_serde_와_같다 ... ok
+test label::tests::원_표기가_코어_토큰과_같다 ... ok
+test ledger::tests::check_ledger_pair_는_순서에_취약하지_않다 ... ok
+test ledger::tests::같은_컨테이너의_오버로드는_여전히_순서로_갈린다 ... ok
+test ledger::tests::불변식_e_컨테이너가_같은_이름을_가른다 ... ok
+test install::settings::tests::사용자_키가_전부_살아_있다 ... ok
+test ledger::tests::불변식_g_파일을_옮기면_정체성만_바뀐다 ... ok
+test ledger::tests::불변식_f_컨테이너_순서를_바꿔도_정체성이_그대로다 ... ok
+test ledger::tests::순서로_가린_것과_등급이_낮은_것이_갈린다 ... ok
+test ledger::tests::재선언은_한_좌표로_뭉개지지_않고_후보로_남는다 ... ok
+test ledger::tests::최상위_선언은_체인이_빈다 ... ok
+test ledger::tests::체인이_없으면_순서가_정체성을_흔든다 ... ok
+test ledger::tests::컨테이너가_다르면_ordinal_이_다시_0_이다 ... ok
+test ledger::tests::포함_관계에_순환이_있어도_멈춘다 ... ok
+test ledger::tests::합이_분모와_같다 ... ok
+test round::ledger::tests::digest_changes_for_each_field_and_handles_korean ... ok
+test install::blocks::tests::lf_기록으로_crlf_실물을_걷는다 ... ok
+test round::ledger::tests::locked_digest_vector ... ok
+test install::settings::tests::깨진_json_은_줄과_까닭을_적는다 ... ok
+test install::settings::tests::최상위가_배열이면_거부한다 ... ok
+test round::ledger::tests::crlf_has_the_same_schema_result ... ok
+test round::verify::tests::drain_read_error는_정상_eof가_아니다 ... ok
+test version::tests::커밋이_다르면_버전이_갈린다 ... ok
+test version::tests::커밋이_없으면_패키지_버전_하나다 ... ok
+test version::tests::커밋이_있으면_패키지_버전이_남는다 ... ok
+test install::settings::tests::우리가_만든_파일은_비면_사라진다 ... ok
+test install::settings::tests::없던_키만_더하고_왕복하면_값이_돌아온다 ... ok
+test install::blocks::tests::마커가_남을_거면_안_걷는다 ... ok
+test round::ledger::tests::schema_two_requires_projected_digest_but_schema_one_stays_readable ... ok
+test round::ledger::tests::numeric_type_boundaries_are_rejected_outside_i32_and_u64 ... ok
+test round::ledger::tests::string_line_and_file_limits_fail_closed_at_the_upper_edge ... ok
+test round::ledger::tests::duplicate_fields_schema_and_blank_or_partial_lines_are_rejected ... ok
+test install::blocks::tests::왕복하면_바이트가_같다 ... ok
+test install::child::tests::상한을_넘긴_자식은_죽인다 ... ok
+
+test result: ok. 100 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+
+
+running 11 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test bind_는_엣지를_지우지_않는다 ... ok
+test 쓰기로_물으면_스티칭이_다시_돌아_증상이_가려진다 ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.03s
+
+
+running 14 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 결박이_없어도_응답묶음을_지고_빈_목록으로_답한다 ... ok
+test 파생_저장소의_부재가_결박_0_건으로_안_읽힌다 ... ok
+test 판정_불가가_fresh_로_새지_않는다 ... ok
+test 반경이_넓어지면_감시_집합이_커진다 ... ok
+test 방향_넷이_서로를_막는다 ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.48s
+
+
+running 11 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 죽은_임시_파일만_지운다_어린_것은_안_지운다 ... ok
+test 격리_방에_처분이_생기고_기본은_안_지운다 ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+
+
+running 13 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 목록은_저장소_없이_성립한다 ... ok
+test 카탈로그의_이름이_표면에_그대로_성립한다 ... ok
+test 답하는_것과_못_만든_것이_함께_서고_모양이_다르다 ... ok
+test 모르는_이름은_응답묶음_없이_1_이고_못_찾은_이름은_응답묶음과_함께_0_이다 ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+
+running 25 tests
+test a2_임포트_참조가_locals_로_안_샌다 ... ok
+test a3_형제_크레이트_평평_경로와_깊은_경로가_각각_엣지가_된다 ... ok
+test b4_참조_자리에_잇는_엣지가_등록돼_있다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test a1_임포트한_이름이_다른_파일의_심볼을_가리킨다 ... ok
+test b1_unresolved_ref_가_사전_등록된_네_칸_그대로_있다 ... ok
+test b2_attempts_가_빈_배열이_아니다 ... ok
+test a4_별칭은_원본을_가리키고_중첩_목록도_엣지가_된다 ... ok
+test a6_후보가_유일하지_않으면_엣지가_아니다 ... ok
+test a3_균일_경로와_접두가_각각_엣지가_된다 ... ok
+test a7_경로_호출의_꼬리가_대상_파일에서만_찾아진다 ... ok
+test a5_재수출만_지나는_이름은_엣지가_아니다 ... ok
+test b3_화면이_능력_부재_대신_값을_찍는다 ... ok
+test e4_화면이_능력_축_셋을_가르고_회계를_찍는다 ... ok
+test 못_푼_참조의_키가_유일하다 ... ok
+test 인라인_mod_안의_super_가_한_칸_높게_안_풀린다 ... ok
+test 파생_저장소가_없으면_화면이_0_건이라_안_적는다 ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.96s
+
+
+running 15 tests
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 이관과_생략이_같은_사건을_두_번_세지_않는다 ... ok
+test 응답묶음을_안_지는_표면은_목록으로_서고_응답묶음인_척하지_않는다 ... ok
+test 이관한_것이_어디로_갔는지_함께_실린다 ... ok
+test 토큰_추정이_실제_크기를_따라간다 ... ok
+test 응답묶음을_지는_표면_전부가_아홉을_진다 ... ok
+test 능력_목록은_안_뭉개진다 ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.79s
+
+
+running 11 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test 병기가_얹히면_판정기가_잡는다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test cypher_산출에_한글이_없다 ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
+
+
+running 5 tests
+test 차단은_exit_0_에_결정_json_이다 ... ok
+test 부르면_표준오류에_흔적이_남는다 ... ok
+test 반복_회차에서는_절대_차단하지_않는다 ... ok
+test 공백이_든_경로가_따옴표_없이_돈다 ... ok
+test 모르는_입력에서_조용히_통과한다 ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+
+running 16 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test 읽기_전용은_없는_2층에_조용히_안_붙는다 ... ok
+test 산출과_근거가_다른_줄기로_간다 ... ok
+test 내보내기의_라벨이_스키마에서_오고_못_산출한_것을_적는다 ... ok
+test 읽기_전용_여럿이_동시에_붙고_쓰기는_배타다 ... ok
+test 로그_줄이_실제로_늘고_읽기_전용에서는_안_는다 ... ok
+test 관측_0_건에서_여섯이_전부_답한다 ... ok
+test 비대화_경로가_전_질의에_닿는다 ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.21s
+
+
+running 50 tests
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test git_이_없으면_1단계에서_멈춘다 ... ok
+test 대소문자만_다른_이름이_있으면_어디서나_멈춘다 ... ok
+test 깨진_설정이면_한_바이트도_안_쓴다 ... ok
+test 긴_경로에서_라이프사이클이_전부_성립한다 ... ok
+test 갱신은_고친_것을_밟지_않고_말한다 ... ok
+test 끝_개행_없음과_널_바이트가_살아_있다 ... ok
+test 나중에_생긴_파일이_대조에_걸린다 ... ok
+test 동시_설치_여덟이_블록을_하나만_만든다 ... ok
+test 동시_설치가_되돌리기_기록을_안_잃는다 ... ok
+test 두_번째_설치가_같은_상태를_산출한다 ... ok
+test 리소스를_하나도_못_찾으면_실패한다 ... ok
+test 갱신_뒤에_진단이_빨개지지_않는다 ... ok
+test 모드가_살아_있다 ... ok
+test 매니페스트가_실물과_양방향으로_맞는다 ... ok
+test 미리_못_보는_실패도_기록을_남긴다 ... ok
+test 설치가_없으면_잔여로_산출한다 ... ok
+test 사용자가_되살린_경로를_안_뒤집는다 ... ok
+test 쓰기_불가_디렉터리에서_거짓_성공하지_않는다 ... ok
+test 아직_아무것도_못_놓은_잔해도_걷어낸다 ... ok
+test 쓸_수_없는_자리는_미리_끊는다 ... ok
+test 유효한_utf8_이_아닌_경로에서도_라이프사이클이_성립한다 ... ok
+test 설치는_설정의_키와_값을_하나도_안_잃는다 ... ok
+test 손으로_고친_블록이_있으면_아무것도_안_지운다 ... ok
+test 심링크가_살고_그_대상에_쓰인다 ... ok
+test 사용자_수정_뒤에도_내용을_계속_본다 ... ok
+test 왕복하면_사용자_파일이_바이트로_같다 ... ok
+test 저장소가_아니면_gitignore_를_안_만든다 ... ok
+test 이미_덮인_경로는_안_더한다 ... ok
+test 설치는_기존_파일을_안_밟는다 ... ok
+test 이미_최신이면_아무것도_안_한다 ... ok
+test 우리가_놓은_이름_위에서는_다시_설치된다 ... ok
+test 제거가_설정_키의_사용자_수정도_말한다 ... ok
+test 정상이면_다섯이_전부_초록이다 ... ok
+test 제거는_사용자_수정을_말하고_지운다 ... ok
+test 추적_중이면_파일_경로에서도_말한다 ... ok
+test 진단이_에이전트_디렉터리의_남의_것을_보여준다 ... ok
+test 제거가_잃은_것을_블록으로_말한다 ... ok
+test 제거하면_설치_전으로_돌아간다 ... ok
+test 화면에_verbatim_접두사가_안_샌다 ... ok
+test 되살린_디렉터리_경로도_안_뒤집는다 ... ok
+test 고장_다섯을_각각_지목한다 ... ok
+
+test result: ok. 50 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.76s
+
+
+running 15 tests
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 밖을_가리키는_심링크에는_안_쓴다 ... ok
+test 안을_가리키는_심링크는_살린다 ... ok
+test 매니페스트가_적은_밖의_블록을_안_고친다 ... ok
+test 매니페스트가_적은_밖의_디렉터리를_안_지운다 ... ok
+test 진단이_대상_밖을_안_읽는다 ... ok
+test 매니페스트가_적은_밖의_파일을_안_지운다 ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.20s
+
+
+running 12 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test crlf_설정도_crlf_로_되쓴다 ... ok
+test crlf_파일에_넣은_블록도_crlf_다 ... ok
+test autocrlf_클론에서_설치_진단_갱신_제거가_전부_성립한다 ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.05s
+
+
+running 21 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 설치가_없으면_훅_검사가_잔여다 ... ok
+test 갱신이_옛_형태를_새_형태로_옮긴다 ... ok
+test stop은_등록되지만_설치만으로_정책이_켜지지_않는다 ... ok
+test 등록된_명령이_돌고_차단을_산출한다 ... ok
+test 제거가_옛_형태도_걷어낸다 ... ok
+test 남의_훅은_왕복해도_그대로다 ... ok
+test 실행_파일이_옮겨_가도_등록이_안_흔들린다 ... ok
+test 두_번_설치해도_훅이_하나다 ... ok
+test 진단이_대상_밖_실행_파일을_초록으로_안_산출한다 ... ok
+test 진단이_남이_심은_항목을_안_돌린다 ... ok
+test 진단이_옛_형태를_지목한다 ... ok
+test 진단이_등록된_훅을_실제로_돌려본다 ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.20s
+
+
+running 23 tests
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 매니페스트가_적은_안의_남의_디렉터리를_안_지운다 ... ok
+test 끊을_때_어느_플랫폼도_침묵하지_않는다 ... ok
+test 매니페스트의_항목_수가_무기가_되지_않는다 ... ok
+test 설치가_하드링크를_끊고_밖을_안_고친다 ... ok
+test 매니페스트가_적은_안의_남의_블록을_안_건드린다 ... ok
+test 상한_안의_큰_매니페스트도_빠르게_걷힌다 ... ok
+test 잠금이_파이프면_세_경로가_전부_안_매달린다 ... ok
+test 제거가_하드링크를_통해_밖을_안_고친다 ... ok
+test 매니페스트가_적은_안의_남의_파일을_안_지운다 ... ok
+test 진단이_매니페스트의_문자열을_실행하지_않는다 ... ok
+test 진단이_조상의_매니페스트를_찾아가지_않는다 ... ok
+test 일반_파일이_아닌_자리에서_매달리지_않고_실패한다 ... ok
+test 설치도_오염된_매니페스트를_거부한다 ... ok
+test 파이프가_있으면_매달리지_않고_실패한다 ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.73s
+
+
+running 18 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 못_지운_디렉터리를_말한다 ... ok
+test 갱신이_잠긴_프로젝트를_그냥_지나치지_않는다 ... ok
+test 제거는_깊은_것부터_지운다 ... ok
+test 걷어내도_마커가_남으면_제거가_성공을_안_산출한다 ... ok
+test 중간에서_실패한_제거가_이어서_끝난다 ... ok
+test 블록을_고쳐도_문구대로_하면_빠져나온다 ... ok
+test 기록_없는_마커_위에는_한_바이트도_안_쓴다 ... ok
+test 죽은_잠금은_다음_실행을_안_막는다 ... ok
+test 산_잠금은_기다린다 ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.94s
+
+
+running 2 tests
+test 세_경로_어디서도_대상_바깥을_안_건드린다 ... ok
+test 진단도_대상_바깥을_안_건드린다 ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+
+
+running 13 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test 깨진_의도_저장소를_조용히_빈_채로_열지_않는다 ... ok
+test 읽기만_하는_명령이_의도_저장소를_안_건드린다 ... ok
+test 읽기는_더하기이지_바꿔치기가_아니다 ... ok
+test 내보내고_지우고_읽으면_값이_그대로다 ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.62s
+
+
+running 11 tests
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test narrative_unbound_는_읽기로도_돈다 ... ok
+test 읽기_경로는_의도_저장소를_안_불린다 ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.73s
+
+
+running 14 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test c1a_어느_후보에도_안_맞는_지목은_고르지_않는다 ... ok
+test b1_touch_가_승인_대기_조각을_경로_앵커_후보_수_승인_명령과_함께_싣는다 ... ok
+test b2_화면이_안내한_명령을_그대로_돌리면_통한다 ... ok
+test b3_목록이_없거나_낡으면_0_을_안_찍는다 ... ok
+test c1_후보_화면의_지목_문자열을_그대로_주면_하나가_나온다 ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.89s
+
+
+running 10 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test prune_은_cache_밖의_바이트를_하나도_안_바꾼다 ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+
+
+running 13 tests
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test 예산을_낮추면_생략이_정확한_사유와_상한으로_실린다 ... ok
+test 범위는_질의마다_다른_값이다 ... ok
+test 질의_로그가_쌓이고_재구축이_지우지_않는다 ... ok
+test 모든_질의가_응답묶음을_지고_나온다 ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.93s
+
+
+running 1 test
+test 반경별_벤치와_선형성 ... ignored, 규모 벤치다 — `--release -- --ignored` 로 돈다
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 14 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 없는_결박을_지목하면_실패한다 ... ok
+test 반경만_바뀌고_여섯이_보존된다 ... ok
+test pal_bind_재호출은_여섯을_안_보존하고_stale_을_지운다 ... ok
+test 새_감시_원소의_기준은_bound_at_의_base_커밋이다 ... ok
+test 기준을_head_로_읽으면_fresh_가_난다 ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.91s
+
+
+running 10 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 이층을_지워도_일층과_의도로_같은_것이_남는다 ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
+
+
+running 28 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test process_helper ... ok
+test intent밖에_주입한_oracle은_승인과_실행_모두_거부된다 ... ok
+test append실패는_재실행하지_않고_partial_line은_invalid다 ... ok
+test 같은_size_mtime의_tracked변조도_승인을_무효화한다 ... ok
+test 같은_oracle재실행은_새_current_evidence를_append한다 ... ok
+test approval_record변조와_stale_projected_evidence는_fail_closed다 ... ok
+test schema3은_canonical_profile과_완전한_report만_finalization에_쓴다 ... ok
+test exit_zero_no_expect와_nonzero_marker는_둘다_unmet이다 ... ok
+test 미승인_oracle과_변경된_path_cwd_shell_budget은_spawn전에_거부된다 ... ok
+test 과거_evidence를_negative_control로_재분류하면_stale이다 ... ok
+test 명시적_oracle_store와_default_finalization_store를_같이_쓴다 ... ok
+test depth1_shallow_clone에서_approve와_stop_activation이_서고_deepen과_local_commit뒤에도_유지된다 ... ok
+test 실행중_oracle이나_projected_tree변화는_evidence없이_폐기된다 ... ok
+test 종료직전_전수대상이나_event가_실행중_바뀌면_seal하지_않는다 ... ok
+test 실행된_현재_negative_control없이는_주조건도_met이_아니다 ... ok
+test 종료직전_전수재실행은_이미_met인_command와_정반합_finding을_같이_닫는다 ... ok
+test 열린_금지역실패와_구형_findings는_complete_checkpoint를_거부한다 ... ok
+test evidence_append가_reader파일상한을_넘기기_전에_거부된다 ... ok
+test timeout_output_cap과_descendant는_bounded_cleanup된다 ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.93s
+
+
+running 15 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 설치본의_record_가_스키마를_산출한다 ... ok
+test record_conditions는_rust_json과_exit을_그대로_전달한다 ... ok
+test 설치본의_계기판이_돈다 ... ok
+test record_conditions는_pal_bin이_없으면_path의_pal을_쓴다 ... ok
+test 계기판이_레코드가_없으면_못_셌다고_말한다 ... ok
+test 계기판이_빈_범위에서_칸을_안_삼킨다 ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s
+
+
+running 25 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test conditions_json은_전환전_python_golden과_같다 ... ok
+test active_round가_없으면_정상_outcome이다 ... ok
+test met은_exit_zero와_expect_match를_함께_요구한다 ... ok
+test status는_oracle을_실행하지_않고_입력을_바꾸지_않는다 ... ok
+test active_round는_새_원장이_있는_유일한_비종료_회차다 ... ok
+test 불가능한_전이는_구조오류다 ... ok
+test terminal은_verification과_분리되고_서로_배타다 ... ok
+test 사람출력도_같은_상태를_전부_보인다 ... ok
+test oracle은_intent_id의_부분집합이고_미등록은_남는다 ... ok
+test evidence가_없으면_pending이고_실패관측은_unmet이다 ... ok
+test 원장만_있고_intent가_없어도_resolve_error다 ... ok
+test 명시_round의_디렉터리와_intent_부재는_resolve_error다 ... ok
+test 원장이_없으면_unregistered이고_명령은_성공한다 ... ok
+test 현재_oracle_뒤의_evidence만_유효하고_digest가_다르면_stale이다 ... ok
+test unknown_schema_kind_mode_field는_안정된_code로_거부된다 ... ok
+test schema3의_명시적_정반합만_command와_같은_aggregate에_들어간다 ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+
+running 23 tests
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test corrupt_progress와_trailing_partial_crlf를_보수적으로_판정한다 ... ok
+test reentry와_unknown은_항상_먼저_통과하고_active_malformed는_차단한다 ... ok
+test stop_store는_hook이_되읽는_environment_or_default_한자리뿐이다 ... ok
+test 등록과_activation은_분리되고_disable은_즉시_복구한다 ... ok
+test schema3의_정반합_finding_전수재검증_checkpoint만_complete다 ... ok
+test regression과_진동은_progress_reset이_아니다 ... ok
+test unregistered_unmet_stale_없는회차_terminal충돌을_모두_차단하고_folded는_통과한다 ... ok
+test replay는_한번만_세고_여섯_무진행에서_truthful_handoff로_끝난다 ... ok
+test 동시_session은_원자적으로_여섯에서_멈춘다 ... ok
+test 손상된_active_round는_block하고_손상_activation도_disable된다 ... ok
+test 필수_heading만_있고_본문이_빈_report와_folded는_차단한다 ... ok
+test 의미_진행만_counter를_reset하고_complete만_통과한다 ... ok
+test 긴_transcript도_streaming_hash해_자기_상한을_죽이지_않는다 ... ok
+test 죽은_process의_lock은_재사용되고_uninstall은_activation을_남기지_않는다 ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.80s
+
+
+running 11 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test rust_의_내보내기가_최상위_pub_만_담는다 ... ok
+test rust_참조가_2층까지_도착하고_화면이_답한다 ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
+
+
+running 13 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test 응답묶음이_재구축_상태와_스냅샷을_값으로_싣는다 ... ok
+test 파일_내_엣지가_스코프_해소와_일치한다 ... ok
+test kotlin_의_참조는_0_이_아니라_안_만듦이다 ... ok
+test 파일_노드와_내보내기가_실제로_찬다 ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.66s
+
+
+running 16 tests
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 못_찾으면_가까운_이름을_내고_하나를_고르지_않는다 ... ok
+test 감시_집합_밖의_좌표에서는_안_뜬다 ... ok
+test 두_표면이_같은_답을_내고_로그를_남긴다 ... ok
+test 시간은_표준오류로_가고_답은_두_번_돌려도_같다 ... ok
+test 다른_좌표에_걸린_규칙이_이_좌표에서_뜬다 ... ok
+test 낡은_것은_상한에_걸려도_실린다 ... ok
+test 상한을_넘으면_자르고_그_수를_싣는다 ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.66s
+
+
+running 18 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test a2_1_주석과_꼬리_쉼표가_있는_tsconfig_를_읽는다 ... ok
+test a2_3_baseurl_없는_paths_는_설정_파일의_자리를_기준으로_편다 ... ok
+test a2a_패키지_extends_에서만_오는_별칭은_저장소_밖이_아니라_못_읽음이다 ... ok
+test a2_2_저장소_안_extends_사슬로_온_paths_를_읽는다 ... ok
+test a2_4_하위_디렉터리의_더_가까운_tsconfig_가_이긴다 ... ok
+test a2_6_상속된_paths_는_그것을_정의한_설정의_자리를_기준으로_편다 ... ok
+test a4_재수출_배럴로_펴지는_임포트는_재수출을_지나는_이름이다 ... ok
+test a1_지정자_여섯_꼴이_다른_파일의_심볼로_가는_엣지가_된다 ... ok
+test a2_5_tsconfig_는_답이_선_트리에서_읽는다 ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.10s
+
+
+running 14 tests
+test d1_scan_주어진_출력_파일을_같은_함수로_잰다 ... ignored, PAL_VOCAB_SCAN 을 준 사람만 돌린다
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test d1a_제품_낱말과_해시와_등급은_안_걸린다 ... ok
+test d1a_사용자_내용을_지워도_pal_이_쓴_문구는_걸린다 ... ok
+test d1a_심은_문자열은_띄어_쓴_꼴과_조사가_붙은_꼴_둘_다_걸린다 ... ok
+test d1_장면_명령의_사람_화면에_작업_기록_어휘가_없다 ... ok
+
+test result: ok. 13 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 5.84s
+
+
+running 1 test
+test 버전에_커밋이_실려_있다 ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 253 tests
+test attributes::tests::못_세운_패턴은_버리지_않고_잰다 ... ok
+test attributes::tests::주석과_빈_줄은_규칙이_아니다 ... ok
+test attributes::tests::하위_gitattributes_는_자기_아래에만_건다 ... ok
+test attributes::tests::깊은_디렉터리가_이긴다 ... ok
+test attributes::tests::뒤_규칙이_이긴다 ... ok
+test attributes::tests::linguist_언어를_읽는다 ... ok
+test attributes::tests::미지정_속성은_앞의_판정을_지우지_않는다 ... ok
+test attributes::tests::코퍼스의_gitattributes_를_그대로_읽는다 ... ok
+test binding::tests::같은_것을_두_번_걸면_같은_결박이다 ... ok
+test binding::tests::사라진_것은_변한_것이_아니다 ... ok
+test binding::tests::두_축이_독립이다 ... ok
+test binding::tests::변하면_낡고_무엇이_켰는지_실린다 ... ok
+test binding::tests::감시_원소가_사라진_것과_대상이_사라진_것은_다른_사건이다 ... ok
+test binding::tests::사라진_감시_원소가_변한_것을_가린다 ... ok
+test binding::tests::못_보는_것이_있으면_나머지가_그대로여도_fresh_가_아니다 ... ok
+test binding::tests::미결박은_승인할_것이_없다 ... ok
+test binding::tests::손으로_건_것은_승격이_아니다 ... ok
+test binding::tests::사유가_여럿이면_정해진_순서의_첫째다 ... ok
+test binding::tests::승격은_새_결박을_낳고_원본은_안_변한다 ... ok
+test binding::tests::안_변하면_살아_있다 ... ok
+test binding::tests::시각은_판정에_안_들어간다 ... ok
+test binding::tests::후보_밖의_좌표는_승인할_수_없다 ... ok
+test binding::tests::판정_불가는_fresh_로_새지_않는다 ... ok
+test binding::tests::후보가_여럿이면_사람이_고른_것만_승인된다 ... ok
+test binding::저장된_옛_표기::새_토큰은_읽힌다 ... ok
+test binding::두_축의_와이어::겹치면_발화한다 ... ok
+test binding::저장된_옛_표기::옛_토큰은_읽기에서_거부된다 ... ok
+test binding::tests::with_radius_는_옛_digest_를_지킨다 ... ok
+test binding::tests::승격_경로가_둘뿐이다 ... ok
+test binding::tests::with_radius_의_감시_순서가_결정론적이다 ... ok
+test binding::tests::with_radius_는_감시_집합을_줄이지_않는다 ... ok
+test catalog::tests::이름을_받는_질의만_모호할_수_있다 ... ok
+test catalog::tests::코드의_선언이_전부를_덮는다 ... ok
+test binding::두_축의_와이어::두_축의_토큰_집합은_서로소다 ... ok
+test chain::tests::빈_분모는_과반이_아니다 ... ok
+test chain::tests::신뢰도는_상한과_하한을_함께_말한다 ... ok
+test chain::tests::여정은_값을_만들_수_없다 ... ok
+test chain::tests::요약은_담기지_않은_것을_잰다 ... ok
+test cascade::tests::낡은_것이_없으면_전부_live_다 ... ok
+test coord::tests::같은_심볼은_같은_아이디다 ... ok
+test cascade::tests::자기가_낡은_것과_입력이_낡은_것은_다른_등급이다 ... ok
+test cascade::tests::예산에_걸리면_멈추지_않고_잔여를_산출한다 ... ok
+test cascade::tests::입력이_낡으면_파생물은_stale_derived_다 ... ok
+test coord::tests::본문_요약은_경로를_모른다 ... ok
+test coord::tests::성분_경계가_없으면_다른_심볼이_하나가_된다 ... ok
+test coord::tests::순서가_다르면_다른_심볼이다 ... ok
+test coord::tests::순서로_가른_심볼은_정체성_등급이_묶인다 ... ok
+test coord::tests::파일을_옮기면_아이디가_바뀐다 ... ok
+test coord::tests::요약은_16진_왕복을_견딘다 ... ok
+test derived::tests::대상_집합이_다르면_다른_노드다 ... ok
+test derived::tests::같은_종류_다른_엔진도_다른_노드다 ... ok
+test derived::tests::목록의_경계가_없으면_다른_집합이_하나가_된다 ... ok
+test derived::tests::대상의_순서는_정체성을_바꾸지_않는다 ... ok
+test derived::tests::같은_대상의_판정_셋이_세_노드로_성립한다 ... ok
+test derived::tests::네임스페이스가_코드_좌표와의_충돌을_막는다 ... ok
+test derived::tests::라벨이_다르면_다른_노드다 ... ok
+test catalog::tests::모르는_필드는_거부된다 ... ok
+test catalog::tests::선택_인자는_거부된다 ... ok
+test derived::tests::본문만_다른_둘은_한_노드다 ... ok
+test catalog::tests::카탈로그를_읽는다 ... ok
+test derived::tests::생산자만_달라도_다른_노드다 ... ok
+test derived::tests::아이디는_16진_왕복을_견딘다 ... ok
+test derived::tests::출처만_달라도_다른_노드다 ... ok
+test derived::tests::재현_입력만_달라도_다른_노드다 ... ok
+test doctor::tests::c2_불변식_1_이_라벨별_몫을_가른다 ... ok
+test doctor::tests::불변식_6_잔여가_실재하는_좌표에_결박된다 ... ok
+test doctor::tests::불변식_2_필수_속성이_있다 ... ok
+test doctor::tests::불변식_3_생산자가_출처와_정합한다 ... ok
+test doctor::tests::불변식_4_inferred_는_근거를_싣는다 ... ok
+test doctor::tests::불변식_7_색인이_가리키는_결박이_의도_저장소에_있다 ... ok
+test doctor::tests::담을_수_없는_불변식은_위반_0_이_아니라_능력_부재다 ... ok
+test doctor::tests::불변식_1_엣지의_양_끝_노드가_존재한다 ... ok
+test doctor::tests::c4a_파일_간_엣지의_한쪽_끝이_없으면_불변식_1_의_위반이_정확히_1_이다 ... ok
+test doctor::tests::불변식_5_잘린_후보에는_미해소_참조가_붙는다 ... ok
+test doctor::tests::스키마가_자랐는데_뷰가_말하지_않으면_구멍으로_실린다 ... ok
+test entity::tests::개체의_이름은_종류와_id_를_함께_산출한다 ... ok
+test doctor::tests::성한_그래프에서_여덟이_전부_모집단을_갖는다 ... ok
+test entity::tests::스물여섯자이고_왕복한다 ... ok
+test entity::tests::미등록_종류를_조용히_버리지_않는다 ... ok
+test doctor::tests::성한_그래프에서는_위반이_0_이다 ... ok
+test entity::tests::모르는_글자는_조용히_0_이_되지_않는다 ... ok
+test doctor::tests::전수는_잔여를_남기지_않는다 ... ok
+test entity::tests::코어가_다섯을_등록하고_팩이_더한다 ... ok
+test envelope::tests::같은_사유는_합쳐지고_같은_상한은_두_번_안_실린다 ... ok
+test envelope::tests::능력_집합은_미구축을_기능번호와_함께_싣는다 ... ok
+test envelope::tests::사유_넷과_상한_넷이_서로_다른_값이다 ... ok
+test envelope::tests::자른_것에는_사유와_건수가_붙는다 ... ok
+test envelope::tests::자른_것이_없어도_명시된다 ... ok
+test doctor::tests::인스턴스_출처가_선언과_다르면_잡힌다 ... ok
+test doctor::tests::불변식_8_live_노드의_입력에_stale_이_없다 ... ok
+test envelope::tests::재구축_자리는_settled_로_고정되지_않는다 ... ok
+test file_graph::tests::missing_은_비율을_올리지_않는다 ... ok
+test file_graph::tests::비율은_삼킨_넓이지_자리의_수가_아니다 ... ok
+test file_graph::tests::빈_소스는_비율이_0_이다 ... ok
+test file_graph::tests::안_만든_export_는_빈_집합이_아니라_notbuilt_다 ... ok
+test file_graph::tests::최상위만_뽑은_그래프는_포함_관계가_없다 ... ok
+test doctor::tests::표본_밖은_이상_없음이_아니라_잔여다 ... ok
+test file_graph::tests::포함_관계는_부모를_가리킨다 ... ok
+test file_graph::tests::회복_지점이_없으면_성한_파일이다 ... ok
+test glob::tests::가운데의_이중별은_깊이를_넘는다 ... ok
+test glob::tests::단일별은_세그먼트를_넘지_않는다 ... ok
+test glob::tests::디렉터리_패턴은_그_아래를_건다 ... ok
+test glob::tests::문자_클래스는_조용히_넘기지_않고_거부한다 ... ok
+test glob::tests::물음표는_한_글자다 ... ok
+test glob::tests::별이_여럿인_패턴이_되돌아간다 ... ok
+test glob::tests::슬래시_없는_패턴은_이름에_댄다 ... ok
+test glob::tests::슬래시가_있으면_경로_전체에_댄다 ... ok
+test graph::tests::계약_등급은_추론에서만_성립한다 ... ok
+test graph::tests::관측은_존재를_주장하고_추론은_못_한다 ... ok
+test graph::tests::기계_기록만_어느_출처와도_어긋나지_않는다 ... ok
+test graph::tests::생산자_여섯이_표기_왕복을_견딘다 ... ok
+test graph::tests::생산자와_출처의_대응은_하나씩이다 ... ok
+test graph::tests::출처_넷이_이름_왕복을_견딘다 ... ok
+test graph::tests::해소_등급_셋은_추론에서만_막힌다 ... ok
+test graph::왕복_파서를_진_표시_함수::병기를_얹으면_판정기가_잡는다 ... ok
+test graph::왕복_파서를_진_표시_함수::질의_이름이_왕복한다 ... ok
+test graph::왕복_파서를_진_표시_함수::출처가_왕복한다 ... ok
+test graph::왕복_파서를_진_표시_함수::해소_등급이_왕복한다 ... ok
+test judgment::tests::결박_좌표가_여럿이면_전부_남는다 ... ok
+test judgment::tests::사유_어휘가_사람이_읽는_이름을_진다 ... ok
+test judgment::tests::잔여는_좌표_없이_만들_수_없다 ... ok
+test language::tests::이름으로도_전부_찾힌다 ... ok
+test language::tests::이름은_대소문자를_안_가린다 ... ok
+test language::tests::확장자와_이름이_같은_집합을_본다 ... ok
+test ledger::tests::등급이_정체성을_정한다 ... ok
+test ledger::tests::일곱_칸이_비어도_전부_보고된다 ... ok
+test ledger::tests::제외는_규칙별로_세어진다 ... ok
+test ledger::tests::칸의_합은_언제나_파일_총수다 ... ok
+test manifest::tests::빈_식별자를_거부한다 ... ok
+test manifest::tests::f01_문서의_예시를_그대로_읽는다 ... ok
+test manifest::tests::규칙_id_와_함께_제외된다 ... ok
+test manifest::tests::걸리지_않는_파일은_범위_안이다 ... ok
+test manifest::tests::저장소가_없으면_거부한다 ... ok
+test manifest::tests::다른_저장소의_규칙은_걸리지_않는다 ... ok
+test manifest::tests::세우지_못하는_패턴은_거부한다 ... ok
+test manifest::tests::제외_규칙이_없어도_선언은_선언이다 ... ok
+test narrative::tests::강한_신호가_약한_것을_이긴다 ... ok
+test narrative::tests::거리_있는_신호는_확정을_낼_수_없다 ... ok
+test narrative::tests::거리가_둘로_갈리고_명제가_전부_적혀_있다 ... ok
+test narrative::tests::계단식의_순서가_이름과_함께_고정된다 ... ok
+test narrative::tests::대장에_없는_경로는_아무것도_안_산출한다 ... ok
+test narrative::tests::동점을_약한_신호로_깨지_않는다 ... ok
+test narrative::tests::동점이면_확정하지_않는다 ... ok
+test narrative::tests::디렉터리_근접성은_더_이상_후보를_안_산출한다 ... ok
+test narrative::tests::붙어_있는_주석이_가장_강하다 ... ok
+test narrative::tests::뺀_신호의_날것은_아무것도_안_건다 ... ok
+test narrative::tests::산문은_식별자가_아니다 ... ok
+test narrative::tests::신호가_없으면_미결박이다 ... ok
+test narrative::tests::유일한_스팬도_확정하지_않는다 ... ok
+test narrative::tests::컨테이너는_꼬리로_맞춘다 ... ok
+test entity::tests::이름이_회차마다_다르다 ... ok
+test narrative::tests::프론트매터가_경로와_이름을_함께_읽는다 ... ok
+test plan::tests::계획한_자리를_끝내_안_만들면_미구현이다 ... ok
+test plan::tests::넓은_패턴은_거부된다 ... ok
+test plan::tests::아직_없는_경로는_pending_이다 ... ok
+test plan::tests::변경이_0_이면_이탈률이_정의되지_않는다 ... ok
+test plan::tests::신규로_명시한_것은_pending_이고_좌표가_생기면_bound_다 ... ok
+test plan::tests::넷이_각각_성립한다 ... ok
+test plan::tests::여럿으로_해소되면_고르지_않는다 ... ok
+test plan::tests::추가와_삭제가_변경에_들어간다 ... ok
+test plan::tests::이름이_기준선에_없으면_후보가_아니다 ... ok
+test plan::tests::항목이_없는_계획은_거부된다 ... ok
+test plan::tests::포매팅만_바뀌면_변경_심볼이_0_이고_본문이_바뀌면_1_이다 ... ok
+test projection::tests::같은_쌍이_여러_번이면_참조는_여럿이고_쌍은_하나다 ... ok
+test doctor::tests::후보가_상한을_넘으면_잡힌다 ... ok
+test projection::tests::겹치는_심볼에서는_가장_안쪽이_출발점이다 ... ok
+test projection::tests::모호한_참조는_엣지가_아니다 ... ok
+test projection::tests::안_만든_추출기의_참조_수는_0_이_아니라_notbuilt_다 ... ok
+test projection::tests::여덟_갈래의_합이_전체다 ... ok
+test projection::tests::여섯_갈래가_전부_갈린다 ... ok
+test projection::tests::자리가_어긋나면_엣지를_하나도_안_산출한다 ... ok
+test projection::tests::자리가_어긋나면_조용히_넘기지_않는다 ... ok
+test projection::tests::재귀는_선언_거르기에_안_걸린다 ... ok
+test projection::tests::저장_왕복이_항등이다 ... ok
+test query_log::tests::같은_인자는_같은_요약이고_다른_인자는_다르다 ... ok
+test query_log::tests::이름은_되읽힌다 ... ok
+test query_log::tests::직렬화된_이름이_표면_이름과_같다 ... ok
+test query_log::tests::질의_이름_여섯이_서로_다르다 ... ok
+test radius::tests::k_를_올리면_집합이_커진다 ... ok
+test radius::tests::감시_집합은_절대_비지_않는다 ... ok
+test radius::tests::기본_반경은_대상_하나다 ... ok
+test radius::tests::손잡이를_읽고_모르는_것은_거부한다 ... ok
+test radius::tests::순환이_있어도_멈춘다 ... ok
+test radius::tests::예산은_저장_시점에_거부하고_넉넉하면_거부하지_않는다 ... ok
+test radius::tests::파일_반경은_그_파일의_심볼_전부다 ... ok
+test rebind::batch_tests::빈_묶음은_승인할_것이_없다 ... ok
+test radius::tests::폐포_1홉이_직접_호출자와_같다 ... ok
+test rebind::batch_tests::신호_셋이_전부_맞으면_승인한다 ... ok
+test rebind::batch_tests::신호가_약하면_묶음_전체를_거부한다 ... ok
+test rebind::batch_tests::후보가_여럿이면_고르지_않고_거부한다 ... ok
+test rebind::tests::살아_있는_좌표는_제안하지_않는다 ... ok
+test rebind::tests::신호_셋이_후보를_좁히고_그_이유가_값으로_남는다 ... ok
+test rebind::tests::옮긴_심볼이_후보로_나온다 ... ok
+test rebind::tests::후보가_없으면_빈_목록이다 ... ok
+test repo::tests::길이가_다른_16진은_거부된다 ... ok
+test repo::tests::디렉터리의_점은_파일_확장자가_아니다 ... ok
+test repo::tests::스냅샷은_집합이고_비어_있을_수_없다 ... ok
+test repo::tests::이름은_16진_왕복을_견딘다 ... ok
+test repo::tests::점으로_시작하는_이름은_확장자가_없다 ... ok
+test repo::tests::트리참조는_딛고_선_커밋을_안다 ... ok
+test repo::tests::파일시스템_경로는_구분자를_한쪽으로_모은다 ... ok
+test repo::tests::한_저장소의_지금은_둘일_수_없다 ... ok
+test repo::tests::확장자는_마지막_점_뒤다 ... ok
+test schema::tests::다중도가_왕복한다 ... ok
+test schema::tests::노드의_필드_이름은_키와_속성과_실린_엣지의_합이다 ... ok
+test schema::tests::기계_기록은_어느_출처에서도_거부되지_않는다 ... ok
+test schema::tests::모르는_키는_거부된다 ... ok
+test schema::tests::선택_필드는_적을_수_없다 ... ok
+test schema::tests::성한_스키마는_읽힌다 ... ok
+test schema::왕복_파서를_진_표시_함수::네_변형이_자기_토큰으로_되돌아온다 ... ok
+test schema::tests::생산자_여섯_각각이_어긋난_출처에서_거부된다 ... ok
+test schema::tests::자리만_만든_노드는_만드는_기능을_적어야_한다 ... ok
+test schema::왕복_파서를_진_표시_함수::병기가_얹힌_꼴은_파서를_못_지난다 ... ok
+test schema::tests::없는_라벨을_가리키는_엣지는_거부된다 ... ok
+test scope::tests::tdz_는_해소되지_않고_바깥으로_나가지도_않는다 ... ok
+test schema::tests::등급이_설_수_없는_출처와_짝지어지면_거부된다 ... ok
+test scope::tests::동명_아이템이_둘이면_해소하지_않는다 ... ok
+test scope::tests::두_이름_공간이_갈린다 ... ok
+test scope::tests::섀도잉_규칙에는_tdz_가_없다 ... ok
+test scope::tests::섀도잉_규칙은_보이는_것_중_가장_뒤를_쓴다 ... ok
+test schema::tests::추론으로_설_수_있는데_근거를_안_받으면_거부된다 ... ok
+test scope::tests::서로_다른_impl_스코프의_동명_메서드는_서로를_안_본다 ... ok
+test scope::tests::안에_있는가는_자기_자신을_포함한다 ... ok
+test entity::tests::시각이_실리고_시간순으로_정렬된다 ... ok
+test scope::tests::안쪽이_바깥쪽을_가린다 ... ok
+test scope::tests::파일_밖의_이름은_실패가_아니다 ... ok
+test schema::tests::출처가_섞인_노드는_로딩에서_거부된다 ... ok
+test scope::tests::함수_경계를_지나면_뒤에_선_이름도_해소된다 ... ok
+test scope::tests::해소율의_분모는_파일_밖을_빼고_잰다 ... ok
+test schema::tests::공통_넷_각각이_없으면_엣지가_등록되지_않는다 ... ok
+test scope::tests::호이스팅된_이름은_뒤에_선언돼도_해소된다 ... ok
+test touch::tests::값이_있는_자리는_그대로_실린다 ... ok
+test touch::tests::미구축_자리는_빈_배열로_직렬화되지_않는다 ... ok
+test traverse::tests::같은_노드로_가는_두_엣지는_깊이_초과를_둘로_세지_않는다 ... ok
+test traverse::tests::경로_곱만_낮추면_탐색이_멈추고_남은_대기열이_세어진다 ... ok
+test traverse::tests::깊이만_낮추면_깊이만_걸린다 ... ok
+test traverse::tests::넉넉하면_생략이_0_이다 ... ok
+test traverse::tests::노드_상한만_낮추면_노드_상한만_걸린다 ... ok
+test traverse::tests::멈출_때_대기열에_남은_것이_건수에_들어간다 ... ok
+test traverse::tests::생략은_쌓인다 ... ok
+test traverse::tests::유일_해소는_경로_곱을_안_올린다 ... ok
+test traverse::tests::이미_본_노드는_깊이_초과로_안_세어진다 ... ok
+test traverse::tests::후보_상한만_낮추면_그_가지만_버리고_탐색은_계속된다 ... ok
+test ts_module::tests::classic_은_맞추지_않는다고_말한다 ... ok
+test ts_module::tests::baseurl_없는_paths_는_정의한_설정의_자리가_기준이고_상속돼도_그렇다 ... ok
+test ts_module::tests::nodenext_의_esm_파일은_확장자_없는_상대_경로를_안_편다 ... ok
+test ts_module::tests::뿌리의_파일도_경로_계산이_맞다 ... ok
+test ts_module::tests::가장_가까운_tsconfig_가_이긴다 ... ok
+test ts_module::tests::상대_경로는_확장자_없이도_ts_로_펴지고_디렉터리는_index_로_간다 ... ok
+test ts_module::tests::저장소_밖과_맨_지정자와_없는_파일을_가른다 ... ok
+test ts_module::tests::paths_별칭은_jsonc_와_baseurl_을_읽고_가장_긴_접두가_이긴다 ... ok
+test ts_module::tests::패키지_extends_아래의_맨_지정자는_저장소_밖이_아니라_못_읽음이다 ... ok
+test ts_module::tests::확장자_순서가_typescript_와_같다 ... ok
+
+test result: ok. 253 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 163 tests
+test classify::tests::널바이트는_바이너리다 ... ok
+test classify::tests::강등된_파일은_포함_관계도_버린다 ... ok
+test classify::tests::error_가_파일을_삼키면_partial_이_아니라_강등이다 ... ok
+test classify::tests::아는_언어와_모르는_언어가_갈린다 ... ok
+test classify::tests::깨끗한_코틀린은_parsed_다 ... ok
+test classify::tests::강등은_비율이지_자리의_수가_아니다 ... ok
+test classify::tests::추출기가_없는_것과_문법이_못_읽은_것은_다른_이유다 ... ok
+test classify::tests::크기_상한은_규칙_아이디와_함께_기록된다 ... ok
+test classify::tests::템플릿_문자열_안_널바이트는_바이너리가_아니다 ... ok
+test cached::tests::회복_자리가_실린다 ... ok
+test cached::tests::자리가_어긋나면_조용히_넘기지_않는다 ... ok
+test cached::tests::kotlin_그래프가_왕복한다 ... ok
+test cached::tests::typescript_그래프가_왕복한다 ... ok
+test classify::tests::포함_관계가_분류와_함께_나온다 ... ok
+test extractor::tests::능력과_등급이_같은_표를_본다 ... ok
+test extractor::tests::미구축_언어는_자기_기능_번호를_싣는다 ... ok
+test extractor::tests::추출기는_자기_언어를_말한다 ... ok
+test narrative::tests::같은_헤딩이_두_번이면_앵커가_갈린다 ... ok
+test narrative::tests::들여쓴_코드도_펜스다 ... ok
+test narrative::tests::머리말도_조각이다 ... ok
+test narrative::tests::빈_문서는_빈_목록이다 ... ok
+test narrative::tests::조각화가_결정적이다 ... ok
+test narrative::tests::펜스_안의_경로를_모으고_url_은_안_모은다 ... ok
+test narrative::tests::펜스_안의_백틱은_인라인_스팬이_아니다 ... ok
+test narrative::tests::펜스_안의_샵은_헤딩이_아니다 ... ok
+test narrative::tests::프론트매터가_본문에_안_섞이고_좌표를_산출한다 ... ok
+test narrative::tests::프론트매터의_목록_형태도_읽는다 ... ok
+test narrative::tests::헤딩이_경계다 ... ok
+test parse::marked_comment_tests::doc_주석_연속은_한_조각이다 ... ok
+test parse::marked_comment_tests::문자열_안의_표식은_주석이_아니다 ... ok
+test parse::marked_comment_tests::빈_줄로_갈리면_안_붙는다 ... ok
+test classify::tests::홑따옴표_문자열_안_널바이트는_바이너리가_아니다 ... ok
+test parse::marked_comment_tests::빈_줄은_주석_블록도_가른다 ... ok
+test parse::marked_comment_tests::빈_줄이_doc_합치기를_끊는다 ... ok
+test parse::marked_comment_tests::빈_줄이_없으면_그대로_붙는다 ... ok
+test parse::marked_comment_tests::속성을_건너뛰고_선언에_붙는다 ... ok
+test parse::marked_comment_tests::주석_블록_전체가_같은_선언에_붙는다 ... ok
+test parse::marked_comment_tests::주석_수집이_요약을_안_건드린다 ... ok
+test parse::marked_comment_tests::주석이_심볼이_서는_자리에_붙는다 ... ok
+test parse::marked_comment_tests::코틀린도_빈_줄로_갈리면_안_붙는다 ... ok
+test parse::marked_comment_tests::파일_끝의_주석은_좌표가_없다 ... ok
+test parse::marked_comment_tests::표식_있는_주석만_모은다 ... ok
+test parse::marked_comment_tests::합치기가_다른_두_언어에_안_닿는다 ... ok
+test parse::tests::성한_소스는_자리가_없다 ... ok
+test parse::tests::자리는_개수가_아니라_범위를_싣는다 ... ok
+test parse::tests::자리는_소스_순서다 ... ok
+test parse::tests::중첩_오류는_하나의_자리다 ... ok
+test plan::tests::검증_줄이_있으면_stated_다 ... ok
+test plan::tests::명시가_스팬을_이긴다 ... ok
+test plan::tests::백틱_없는_경로와_식별자도_잡는다 ... ok
+test plan::tests::세_형태를_전부_산출한다 ... ok
+test plan::tests::인입이_결정적이다 ... ok
+test plan::tests::체크박스가_있으면_체크박스가_항목이다 ... ok
+test plan::tests::프론트매터의_기준선을_읽고_본문의_것은_안_읽는다 ... ok
+test plan::tests::한_낱말_소문자는_좌표가_아니다 ... ok
+test plan::tests::항목이_없으면_거부한다 ... ok
+test plan::tests::헤딩_조각이_항목이고_첫_조각은_기획이다 ... ok
+test recognize::tests::대문자_확장자도_1급으로_인식한다 ... ok
+test recognize::tests::모르는_것은_모른다고_한다 ... ok
+test recognize::tests::모르는_인터프리터는_모른다 ... ok
+test recognize::tests::선언이_셔뱅도_이긴다 ... ok
+test recognize::tests::선언이_확장자를_이긴다 ... ok
+test recognize::tests::셔뱅이_확장자_없는_스크립트를_잡는다 ... ok
+test recognize::tests::이름으로만_아는_것도_있다 ... ok
+test recognize::tests::일급_언어는_따로_잡힌다 ... ok
+test recognize::tests::추출기가_없어도_언어는_인식된다 ... ok
+test rust::tests::a10_타입_이름이_값_자리에서도_해소된다 ... ok
+test rust::tests::a11_use_네_갈래가_각각_무엇을_담나 ... ok
+test rust::tests::a12_exports_는_정렬_중복제거_뒤에_요약된다 ... ok
+test rust::tests::a13_pub_의_뜻은_최상위_pub_하나다 ... ok
+test rust::tests::a14_지역_이름이_묶인다 ... ok
+test rust::tests::a14_지역이_자기_초기화식을_안_가린다 ... ok
+test rust::tests::a15_속성_안의_이름은_참조가_아니다 ... ok
+test rust::tests::a16_impl_메서드_이름이_모듈_스코프로_안_올라간다 ... ok
+test rust::tests::a17_cfg_쌍둥이는_엣지를_안_만든다 ... ok
+test rust::tests::a1_스코프_사슬이_성립한다 ... ok
+test rust::tests::a2_impl_이_스코프를_연다 ... ok
+test rust::tests::a2_갈래의_합이_참조_수와_같다 ... ok
+test rust::tests::a2_같은_이름의_지역변수는_임포트로_안_세어진다 ... ok
+test rust::tests::a2_임포트가_없으면_임포트_갈래가_0_이다 ... ok
+test rust::tests::a2_임포트한_이름의_참조가_locals_로_안_샌다 ... ok
+test rust::tests::a3_잠근_축1_의_임포트_형태_넷이_모듈과_항목으로_갈린다 ... ok
+test rust::tests::a3_평범한_호출이_엣지가_된다 ... ok
+test rust::tests::a4_매크로_안_호출이_엣지가_된다 ... ok
+test rust::tests::a4_별칭과_중첩_목록에서_원본_이름과_실모듈이_안_사라진다 ... ok
+test rust::tests::a5_매크로_안_멤버_이름은_참조가_아니다 ... ok
+test rust::tests::a6_매크로_안_경로_꼬리는_참조가_아니다 ... ok
+test rust::tests::a6_매크로_안_구조체_리터럴_필드도_참조가_아니다 ... ok
+test rust::tests::a7_매크로_밖_경로_꼬리도_참조가_아니다 ... ok
+test rust::tests::a8_use_절_안의_이름은_참조가_아니다 ... ok
+test rust::tests::a9_필드_식별자는_참조가_아니다 ... ok
+test rust::tests::b3_세_자리가_전부_present_이고_비지_않았다 ... ok
+test rust::tests::c1_rust_는_l1_로_잠겨_있다 ... ok
+test rust::tests::cfg_test_도_잰다 ... ok
+test rust::tests::impl_대상이_벗겨진다 ... ok
+test rust::tests::impl_이_타입보다_앞에_있어도_붙는다 ... ok
+test rust::tests::같은_이름의_함수는_impl_대상이_아니다 ... ok
+test rust::tests::동명_타입이_모듈마다_있어도_제_것에_붙는다 ... ok
+test rust::tests::매크로는_정의만_잰다 ... ok
+test rust::tests::모듈_밖의_동명_타입에_안_붙는다 ... ok
+test rust::tests::본문_없는_trait_시그니처는_안_잰다 ... ok
+test rust::tests::속성은_span_에_안_든다 ... ok
+test rust::tests::외부_타입_impl_은_안_붙는다 ... ok
+test rust::tests::종류_열이_다_성립한다 ... ok
+test rust::tests::중첩을_본다 ... ok
+test rust::tests::함수_안은_안_본다 ... ok
+test classify::tests::심볼은_분류와_함께_나온다 ... ok
+test shell::tests::껍데기는_추출기의_상수와_같다 ... ok
+test shell::tests::능력_축은_결정적이고_모든_1급_언어를_적는다 ... ok
+test rust::tests::항목이_정렬_중복제거_뒤에_나온다 ... ok
+test shell::tests::능력_축은_자리를_구별한다 ... ok
+test shell::tests::추출기가_없는_언어는_껍데기가_없다 ... ok
+test typescript::tests::export_를_떼면_export_집합이_바뀐다 ... ok
+test typescript::tests::d5_이름_임포트가_없는_것과_이_빌드가_안_만드는_것이_다른_값이다 ... ok
+test typescript::tests::값과_타입_이름_공간이_갈린다 ... ok
+test typescript::tests::import_이름은_지우지_않는다 ... ok
+test typescript::tests::객체_리터럴의_키는_지우지_않는다 ... ok
+test typescript::tests::구조_분해는_이름_있는_바인딩이_아니다 ... ok
+test typescript::tests::객체_리터럴의_화살표는_심볼이_아니다 ... ok
+test typescript::tests::깨진_소스도_건진다 ... ok
+test classify::tests::생성물은_증거가_둘일_때만이다 ... ok
+test typescript::tests::따옴표_종류는_요약을_바꾸지_않는다 ... ok
+test classify::tests::변수명은_지우지_않는다 ... ok
+test typescript::tests::메서드는_클래스에_담긴다 ... ok
+test typescript::tests::동적_import_는_리터럴_인자만_담는다 ... ok
+test typescript::tests::별_재수출은_이름이_아니라_모듈로_남는다 ... ok
+test typescript::tests::그룹_괄호는_지워지고_트리_모양은_남는다 ... ok
+test typescript::tests::별칭이_있으면_밖으로_나가는_이름은_별칭이다 ... ok
+test typescript::tests::보간이_없는_템플릿은_문자열과_같다 ... ok
+test typescript::tests::보간이_있는_템플릿은_벗기지_않는다 ... ok
+test typescript::tests::불변식_c_섀도잉은_다른_선언으로_해소된다 ... ok
+test typescript::tests::불변식_b_ordinal_은_지역_이름을_지우지_않는다 ... ok
+test typescript::tests::문자열_내용은_여전히_요약을_바꾼다 ... ok
+test typescript::tests::블록_스코프의_const_는_모듈_스코프가_아니다 ... ok
+test typescript::tests::불변식_a_exact_는_지역_이름을_지운다 ... ok
+test typescript::tests::심볼인_이름은_지우지_않는다 ... ok
+test typescript::tests::심볼_목록은_export_와_무관하다 ... ok
+test typescript::tests::이름_없는_기본_내보내기는_심볼이_아니다 ... ok
+test typescript::tests::불변식_d_의미가_바뀌면_두_등급_모두에서_요약이_바뀐다 ... ok
+test typescript::tests::익명_함수는_독립_심볼이_아니다 ... ok
+test typescript::tests::익명은_가장_가까운_조상의_요약에_포함된다 ... ok
+test typescript::tests::의미가_바뀌면_요약이_바뀐다 ... ok
+test typescript::tests::자리_번호는_선언_순서이고_참조_순서가_아니다 ... ok
+test typescript::tests::제네릭은_선언_하나가_심볼_하나고_인스턴스화는_심볼이_아니다 ... ok
+test typescript::tests::일곱_종류를_뽑는다 ... ok
+test typescript::tests::주석과_포매팅은_요약을_바꾸지_않는다 ... ok
+test typescript::tests::정규형이_문서에_적힌_그대로다 ... ok
+test typescript::tests::지역의_자리는_구별된다 ... ok
+test typescript::tests::중첩된_심볼도_바깥_지역을_지운다 ... ok
+test typescript::tests::축약이_아닌_자리의_같은_이름은_여전히_지워진다 ... ok
+test typescript::tests::파라미터_목록의_주석은_선언이_아니다 ... ok
+test typescript::tests::타입_파라미터_이름은_exact_에서_지워진다 ... ok
+test typescript::tests::함수_안의_지역_변수는_심볼이_아니다 ... ok
+test typescript::tests::호이스팅과_tdz_가_갈린다 ... ok
+test typescript::tests::희소_배열의_자리는_후행_쉼표가_아니다 ... ok
+test typescript::tests::후행_쉼표는_요약을_바꾸지_않는다 ... ok
+test classify::tests::최상위만_보는_추출기는_포함_관계가_빈다 ... ok
+test classify::tests::회복이_있으면_partial_이다 ... ok
+test typescript::tests::스코프는_kotlin_이_아니라_typescript_에만_성립한다 ... ok
+test classify::tests::토큰_경계가_지켜진다 ... ok
+test parse::marked_comment_tests::코틀린도_심볼이_서는_자리에_붙는다 ... ok
+test classify::tests::의미가_바뀌면_요약이_바뀐다 ... ok
+test classify::tests::포매팅과_주석은_요약을_바꾸지_않는다 ... ok
+
+test result: ok. 163 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s
+
+
+running 3 tests
+test 모든_변형이_적어도_한_씨앗을_바꾼다 ... ok
+test digest_changes_on_semantic_edit ... ok
+test digest_stable_under_formatting ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test round_condition::tests::id_contract ... ok
+test round_condition::tests::fences_nested_boxes_and_inline_tags_match_the_contract ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test 별칭_사슬이_한_바퀴_돌아도_멈춘다 ... ok
+test 별칭은_파생층을_지워도_남는다 ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test 사종_벤치와_선형성 ... ignored, 규모 벤치다 — `--release -- --ignored` 로 돈다
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 17 tests
+test cache::tests::손상은_빗나감과_따로_세되_총계에는_들어간다 ... ok
+test cache::tests::추출기_버전이_바뀌면_다른_키다 ... ok
+test cache::tests::blob_이_바뀌면_다른_키다 ... ok
+test cache::tests::선언된_언어가_다르면_다른_키다 ... ok
+test cache::tests::능력_축이_바뀌면_다른_키다 ... ok
+test cache::tests::같은_blob_이라도_경로가_다르면_다른_키다 ... ok
+test cache::tests::통계는_전부를_잰다 ... ok
+test cache::tests::없는_것은_손상이_아니다 ... ok
+test projection::행_형식_판::읽기로_붙는_길이_하나다 ... ok
+test cache::tests::넣은_것이_나온다 ... ok
+test cache::tests::깨진_것은_미스가_아니라_사건이고_바이트가_남는다 ... ok
+test projection::행_형식_판::안_세운_2층은_판을_안_묻는다 ... ok
+test projection::행_형식_판::옛_판은_읽기로_안_열린다 ... ok
+test projection::행_형식_판::판이_같으면_열린다 ... ok
+test cache::tests::축출은_격리_방과_임시_파일을_건드리지_않는다 ... ok
+test cache::tests::예산이_넉넉하면_한_건도_안_지운다 ... ok
+test cache::tests::축출은_실제로_파일을_줄이고_보고가_실물과_맞는다 ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+
+
+running 1 test
+test 재구축_중의_질의는_부분_갱신을_보지_않는다 ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.67s
+
+
+running 3 tests
+test 파일이_없어도_교체가_성립한다 ... ok
+test 스티칭은_옛_세대를_남기지_않는다 ... ok
+test 배치가_실제로_나뉜다 ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+
+running 66 tests
+test budget_tests::예산이_밖에서_태어나면_잡힌다 ... ok
+test budget_tests::예산이_아닌_것은_안_잡는다 ... ok
+test 기각_표_헤더_시험::다른_절의_표는_안_잰다 ... ok
+test 기각_표_헤더_시험::불릿_절에는_헤더가_없다 ... ok
+test budget_tests::소문자_이름은_상수가_아니다 ... ok
+test budget_tests::이름을_주석과_함께_읽지_않는다 ... ok
+test 기각_표_헤더_시험::샾_헤더도_뺀다 ... ok
+test 기각_표_헤더_시험::문구가_달라도_헤더를_뺀다 ... ok
+test 기계_토큰_시험::주석과_바깥_문자열은_안_본다 ... ok
+test 기계_토큰_시험::serde_속성의_한국어도_잡는다 ... ok
+test 기계_토큰_시험::깨끗하면_침묵한다 ... ok
+test 기계_토큰_시험::한국어를_섞으면_발화한다 ... ok
+test 어색한_표현_시험::기계_표식은_안_잡는다 ... ok
+test 어색한_표현_시험::다른_낱말은_안_잡는다 ... ok
+test 어색한_표현_시험::교정한_문장에는_침묵한다 ... ok
+test 어색한_표현_시험::일반_한국어는_안_잡는다 ... ok
+test 어색한_표현_시험::접다의_둘째_활용형_묶음도_잡는다 ... ok
+test 어색한_표현_시험::여덟_패턴이_각각_발화한다 ... ok
+test 어색한_표현_시험::표지는_목록에_있는_파일에서만_들린다 ... ok
+test 어색한_표현_시험::펜스_안은_표지를_듣는_파일에서만_빠진다 ... ok
+test 어색한_표현_시험::한_줄_표지는_그_줄만_뺀다 ... ok
+test 완성_장면_시험::번호_없는_절은_장면이_아니다 ... ok
+test 완성_장면_시험::소제목이_빠진_절이_모집단에_남는다 ... ok
+test 완성_장면_시험::장면이_없으면_모집단이_비고_그것이_실패다 ... ok
+test 외침_판정_tests::rc가_0이어도_보고가_없으면_초록이_아니다 ... ok
+test 어색한_표현_시험::활용형이_갈려도_같은_동사를_잡는다 ... ok
+test 외침_판정_tests::같으면_조용하다 ... ok
+test 외침_판정_tests::등록_안_된_실패가_걸린다 ... ok
+test 외침_판정_tests::등록된_외침이_그대로_나면_rc가_실패여도_초록이다 ... ok
+test 외침_판정_tests::등록은_원리상_불가능한_것만_담는다 ... ok
+test 외침_판정_tests::승격됐는데_등록이_남으면_걸린다 ... ok
+test 외침_판정_tests::시험_보고가_있는지_본다 ... ok
+test 외침_판정_tests::실패한_이름만_뽑는다 ... ok
+test 외침_판정_tests::어느_플랫폼에도_안_재지는_것이_없다 ... ok
+test 외침_판정_tests::이름이_안_났는데_rc가_실패면_걸린다 ... ok
+test 외침_판정_tests::축이_사라지면_걸린다 ... ok
+test 외침_판정_tests::컴파일이_서지_못하면_초록이_아니다 ... ok
+test 외침_판정_tests::통과만_있으면_비어_있다 ... ok
+test 요구하는_자리_시험::기각은_원리상_못_잰다 ... ok
+test 요구하는_자리_시험::기각은_출처가_무엇이든_못_잰다 ... ok
+test 요구하는_자리_시험::리뷰_정정은_좌표를_요구한다 ... ok
+test 요구하는_자리_시험::범위밖은_계획_문서를_요구한다 ... ok
+test 요구하는_자리_시험::사전부검은_계획_문서를_요구한다 ... ok
+test 요구하는_자리_시험::선언_밖_처분은_못_잰다 ... ok
+test 요구하는_자리_시험::선언을_고치면_답이_바뀐다 ... ok
+test 요구하는_자리_시험::좌표가_없거나_밖이면_못_잰다 ... ok
+test 원문순서_대조_시험::역사_id는_대조하지_않고_기계칸과_빠진행을_가른다 ... ok
+test 절이_섰나_시험::데이터가_있으면_성립한다 ... ok
+test 요구하는_자리_시험::처분자리가_적히면_그것이_이긴다 ... ok
+test 절이_섰나_시험::없음이_명시되면_성립한다 ... ok
+test 절이_섰나_시험::절이_비면_걸린다 ... ok
+test 절이_섰나_시험::절이_없으면_걸린다 ... ok
+test 종료_보고_시험::서술문은_안_잡는다 ... ok
+test 종료_보고_시험::표준_검산_줄을_잡는다 ... ok
+test 좌표_면제_시험::저장소_밖_절대경로를_가른다 ... ok
+test 최근_끝난_시험::시각이_같으면_사전순_최대를_고른다 ... ok
+test 최근_끝난_시험::최근에_끝난_것은_사전순이_아니라_커밋_시각으로_고른다 ... ok
+test 최근_끝난_시험::커밋_시각이_없는_회차는_가장_최근으로_본다 ... ok
+test 펜스_시험::절이_달라도_표는_전부_잰다 ... ok
+test 펜스_시험::펜스_안을_비운다 ... ok
+test 펜스_시험::펜스_안의_예시는_항이_아니다 ... ok
+test 종료와_선언_목록_시험::형식이전_종료는_정확한_회차와_표지만_받는다 ... ok
+test 종료와_선언_목록_시험::빚_목록은_비어도_하한은_필수다 ... ok
+test 좌표_면제_시험::무시된_파생물만_면제하고_추적_중인_좌표는_삼키지_않는다 ... ok
+test 최근_끝난_시험::종료_커밋_시각은_report_md_의_커밋_시각을_읽는다 ... ok
+test 좌표_면제_시험::기준커밋에_있다가_지워진_좌표만_면제한다 ... ok
+
+test result: ok. 66 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+
+   Compiling pal-cli v0.0.0 (~/dev/projects/palimpsest/crates/pal-cli)
+   Compiling pal-extract v0.0.0 (~/dev/projects/palimpsest/crates/pal-extract)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 35s
+     Running unittests src/main.rs (target/debug/deps/pal-d5f2ff530324d9e5)
+     Running tests/bind_preserves_edges.rs (target/debug/deps/bind_preserves_edges-0ad702e4d9e7de84)
+     Running tests/binding_status.rs (target/debug/deps/binding_status-ec2b002a016f304c)
+     Running tests/cache_hygiene.rs (target/debug/deps/cache_hygiene-d051785c564f2792)
+     Running tests/catalog_surface.rs (target/debug/deps/catalog_surface-ab9b0f5a6511f465)
+     Running tests/cross_file_references.rs (target/debug/deps/cross_file_references-7350691b345555b0)
+     Running tests/envelope_two_layer.rs (target/debug/deps/envelope_two_layer-41384a37fa2188f4)
+     Running tests/export_ascii.rs (target/debug/deps/export_ascii-e9f2506fcf325292)
+     Running tests/hook.rs (target/debug/deps/hook-5ec31ad6f936bdfd)
+     Running tests/host_free.rs (target/debug/deps/host_free-4a4840e021c005f0)
+     Running tests/install.rs (target/debug/deps/install-6a1a1e2e114badc6)
+     Running tests/install_boundary.rs (target/debug/deps/install_boundary-6cc8bd2f5f5dc9be)
+     Running tests/install_eol.rs (target/debug/deps/install_eol-03794e2d907e72a3)
+     Running tests/install_hooks.rs (target/debug/deps/install_hooks-dce2d19820f58bcc)
+     Running tests/install_hostile.rs (target/debug/deps/install_hostile-1b827716b86edffa)
+     Running tests/install_recovery.rs (target/debug/deps/install_recovery-d34f8ef1d4553c3a)
+     Running tests/install_stays_inside.rs (target/debug/deps/install_stays_inside-622c821939d175de)
+     Running tests/intent_jsonl.rs (target/debug/deps/intent_jsonl-9d2664ecb9c0ee1a)
+     Running tests/narrative_read_only.rs (target/debug/deps/narrative_read_only-7a9e9020ccad5424)
+     Running tests/pending_and_pick.rs (target/debug/deps/pending_and_pick-e5e6a03845684ded)
+     Running tests/prune_boundary.rs (target/debug/deps/prune_boundary-77327490f5bb5b83)
+     Running tests/query_envelope.rs (target/debug/deps/query_envelope-5365c0a5931d5a9b)
+     Running tests/radius_bench.rs (target/debug/deps/radius_bench-95128a35411662d6)
+     Running tests/radius_preserves_verdict.rs (target/debug/deps/radius_preserves_verdict-1e482a94972e6843)
+     Running tests/rebuild_equivalence.rs (target/debug/deps/rebuild_equivalence-34ce05b74080e815)
+     Running tests/round_approve_verify.rs (target/debug/deps/round_approve_verify-88e9fba0d660e986)
+     Running tests/round_scripts_run.rs (target/debug/deps/round_scripts_run-7c8fbbe4b90f7f54)
+     Running tests/round_status.rs (target/debug/deps/round_status-910f4f13b5e2a55b)
+     Running tests/round_stop.rs (target/debug/deps/round_stop-290a485e335cc7b6)
+     Running tests/rust_references.rs (target/debug/deps/rust_references-8337952b427e8c4a)
+     Running tests/stitching.rs (target/debug/deps/stitching-8a3dcbfb1c420fa7)
+     Running tests/touch_recall.rs (target/debug/deps/touch_recall-4f51b84863c0483c)
+     Running tests/ts_cross_file.rs (target/debug/deps/ts_cross_file-8c5d1bdb29522312)
+     Running tests/user_vocabulary.rs (target/debug/deps/user_vocabulary-db0c671d016205f6)
+     Running tests/version_is_in_the_binary.rs (target/debug/deps/version_is_in_the_binary-a499efc4f9585d39)
+     Running unittests src/lib.rs (target/debug/deps/pal_core-375579fdb580697d)
+     Running unittests src/lib.rs (target/debug/deps/pal_extract-662af4e2f4821fe3)
+     Running tests/normalize_props.rs (target/debug/deps/normalize_props-37b309d56200d178)
+     Running unittests examples/coord_collisions.rs (target/debug/examples/coord_collisions-e11ed2799837a736)
+     Running unittests examples/count_marked.rs (target/debug/examples/count_marked-3f4e7937a3f4fa38)
+     Running unittests examples/scope_variants.rs (target/debug/examples/scope_variants-31f844c62f13aee0)
+     Running unittests src/lib.rs (target/debug/deps/pal_git-02655cc99042d726)
+     Running unittests src/lib.rs (target/debug/deps/pal_intent-eb9b989ea430f422)
+     Running tests/survives_wipe.rs (target/debug/deps/survives_wipe-ed67a4e8932764c3)
+     Running unittests src/lib.rs (target/debug/deps/pal_query-4e8168261dc995ba)
+     Running tests/bench.rs (target/debug/deps/bench-025af106531b0ed9)
+     Running unittests src/lib.rs (target/debug/deps/pal_store-8befc3cc280c33e3)
+     Running tests/isolation.rs (target/debug/deps/isolation-daefe5bacb7e5e4b)
+     Running tests/stitch_batch.rs (target/debug/deps/stitch_batch-804a26a339ff27bb)
+     Running unittests src/main.rs (target/debug/deps/xtask-2c21fc23194ccb63)
+
+running 1 test
+test crates/pal-core/src/coord.rs - coord::SymbolIdentity (line 177) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test crates/pal-core/src/binding.rs - binding::Binding (line 103) - compile fail ... ok
+test crates/pal-core/src/coord.rs - coord::SymbolIdentity (line 161) - compile fail ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.95s
+
+all doctests ran in 47.71s; merged doctests compilation took 34.75s
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+   Doc-tests pal_core
+   Doc-tests pal_extract
+   Doc-tests pal_git
+   Doc-tests pal_intent
+   Doc-tests pal_query
+   Doc-tests pal_store
+
+시험 통과 — 이 플랫폼에는 안 재지는 것이 없다
+rc=0
