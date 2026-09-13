@@ -2117,18 +2117,49 @@ fn check_anchor_is_measured(root: &Path) -> Result<String> {
 // **같은 파일이 `check_budget` 을 부른다**다. 지우면 그 파일이 모집단에 남은 채
 // 술어를 잃으므로 **이 검사가 발화한다** — 그것이 RED 의 관측 가능한 형태다.
 //
+// ⚠⚠ **술어가 파일 단위라는 것이 이 검사의 남은 한계다** ⟨독립 리뷰 R3 발견 23 · 미관⟩.
+// 한 파일이 아무 곳에서든 `check_budget(` 을 부르면 그 파일의 모든 쓰기 자리가 통과한다.
+// 지금은 헛되지 않다 — `narrative.rs` 의 두 쓰기(`:420`·`:505`)가 같은 함수의 `:584` 를 둘 다
+// 지난다. 그러나 앞으로 같은 파일에 예산을 안 지나는 쓰기가 생기면 **조용히 통과한다.**
+// 자리 단위로 재려면 호출 그래프가 필요하고 그것은 이 검사의 규모가 아니다.
+//
 // ⚠ **경로 목록을 손으로 베끼지 않는다.** 모집단을 `grep` 으로 산출하므로 새 쓰기 경로가
 // 생기면 **그것도 같이 잰다** — 베껴 두면 새 경로가 조용히 빠진다(`03-shortest-path.md`
 // 가 검사 모집단에 대해 적은 것과 같은 자다).
 
+/// 예산을 안 지나도 되는 쓰기 자리 — **`(파일, 왜)`**. 검사 12 의 `WATCH_ENTRY_SITES` 와
+/// 같은 형태다. **면제는 이름이 붙어야 면제다** — 안 붙이면 그것은 모집단의 구멍이다.
+const 예산을_안_지나도_되는_쓰기: &[(&str, &str)] = &[
+    // ⚠⚠ **`import_jsonl` 은 예산을 안 지나고, 그것이 등록된 위험이다.**
+    //
+    //   `store.rs` 의 `self.record(&b)` 는 **저장 API 자신의 내부 호출**이고, 정본 JSONL 을
+    //   되짚는 경로다. 이 회차의 잠긴 의도가 `## 작업 규율` 4 에서 그 문을 위험으로 적었고
+    //   (`PM2-03` — *"`import_jsonl` 이 좌표 실재성도 digest 출처도 검사하지 않는다"*),
+    //   예산도 같은 목록에 든다. **여기에 예산을 넣는 것은 이 회차의 축이 아니다** —
+    //   반경의 축이고 저 문은 결박 **문면·인입**의 축이다. 그래서 이름을 붙여 면제하고
+    //   이슈로 세운다(**#153**).
+    //
+    //   ★ **이 면제가 있어야 검사의 모집단을 여섯 디렉터리로 넓힐 수 있다.** 안 붙이면
+    //   넓히는 순간 빨개지고, 빨개지는 것을 피해 모집단을 좁히면 **선언이 거짓**이 된다 —
+    //   독립 리뷰 R3 이 그것을 금지역으로 잡았다(발견 12).
+    ("crates/pal-intent/src/store.rs", "`import_jsonl` 의 되짚기 — 저장 API 자신이고 예산 부재가 **#153** 으로 섰다"),
+];
+
 fn check_budget_on_write_paths(root: &Path) -> Result<String> {
     let mut 쓰는_파일: Vec<(String, bool)> = Vec::new();
-    for dir in ["crates/pal-cli/src", "crates/pal-core/src", "crates/pal-query/src"] {
+    // **검사 12 와 같은 여섯 디렉터리다.** 셋만 훑으면 `pal-intent` 자신의 쓰기 경로가
+    // 모집단에서 빠지고, 그러면 *"쓰는 경로 전부"* 라는 선언이 거짓이 된다 —
+    // 독립 리뷰 R3 이 격리 사본에 탐침 둘을 심어 그것을 실측했다(발견 12).
+    for dir in ["crates/pal-core/src", "crates/pal-cli/src", "crates/pal-query/src",
+                "crates/pal-store/src", "crates/pal-intent/src", "crates/pal-extract/src"] {
         for file in rust_sources(&root.join(dir))? {
             let text = std::fs::read_to_string(&file)?;
+            // ★ **`.record(&` 로 잰다 — `intent.record(` 가 아니다.** 수신자 이름으로 재면
+            //   `self.record(&b)`·`store.record(&b)` 가 조용히 빠진다. 선언
+            //   (`pub fn record(&self, …)`)은 앞에 `.` 가 없어 안 걸린다.
             let 씀 = text
                 .lines()
-                .any(|l| l.split("//").next().unwrap_or("").contains("intent.record("));
+                .any(|l| l.split("//").next().unwrap_or("").contains(".record(&"));
             if !씀 {
                 continue;
             }
@@ -2143,23 +2174,35 @@ fn check_budget_on_write_paths(root: &Path) -> Result<String> {
     // 바뀐 것이고, 그러면 *"예산을 지난다"* 가 검사되지 않는다.
     if 쓰는_파일.is_empty() {
         bail!(
-            "`intent.record(` 를 부르는 파일이 하나도 없다 — 이 검사는 아무것도 안 세고 \
-             있다. 저장 API 의 이름이 바뀌었으면 이 검사의 모집단을 같이 옮겨라"
+            "`.record(&` 를 부르는 파일이 하나도 없다 — 이 검사는 아무것도 안 세고 있다. \
+             저장 API 의 이름이 바뀌었으면 이 검사의 모집단을 같이 옮겨라"
         );
     }
 
-    let 빠진: Vec<&String> = 쓰는_파일.iter().filter(|(_, b)| !b).map(|(f, _)| f).collect();
+    let 면제 = |f: &str| 예산을_안_지나도_되는_쓰기.iter().any(|(x, _)| *x == f);
+    let 빠진: Vec<&String> = 쓰는_파일
+        .iter()
+        .filter(|(f, b)| !b && !면제(f))
+        .map(|(f, _)| f)
+        .collect();
     if !빠진.is_empty() {
         bail!(
-            "결박을 정본에 쓰는데 **저장 시점 예산을 안 지나는** 경로가 있다 — 옛 F09 §3 이 \
-             *\"런타임에 조용히 느려지는 대신 저장 시점에 거부한다\"* 로 정한 자리다:\n    {}",
+            "결박을 쓰는데 **저장 시점 예산을 안 지나는** 경로가 있다 — 옛 F09 §3 이 \
+             *\"런타임에 조용히 느려지는 대신 저장 시점에 거부한다\"* 로 정한 자리다. \
+             예산을 부르거나, 안 부르는 까닭을 `예산을_안_지나도_되는_쓰기` 에 이름으로 등록해라:\n    {}",
             빠진.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n    ")
         );
     }
     Ok(format!(
-        "결박을 쓰는 경로 {}개 · 예산을 안 지나는 것 0개 ({})",
+        "결박을 쓰는 경로 {}개 · 예산을 지난다 {}개 · 등록된 면제 {}개 ({})",
         쓰는_파일.len(),
-        쓰는_파일.iter().map(|(f, _)| f.as_str()).collect::<Vec<_>>().join(" · ")
+        쓰는_파일.iter().filter(|(_, b)| *b).count(),
+        예산을_안_지나도_되는_쓰기.len(),
+        쓰는_파일
+            .iter()
+            .map(|(f, b)| if *b { f.clone() } else { format!("{f} ⟨면제⟩") })
+            .collect::<Vec<_>>()
+            .join(" · ")
     ))
 }
 
