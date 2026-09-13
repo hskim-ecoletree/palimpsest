@@ -71,7 +71,7 @@ pub use typescript::TypeScriptExtractor;
 ///    다시 채우는 값은 이미 재고 있다. 상시 비용이 아니다
 ///
 /// **비대칭은 남고, 남는다는 사실을 적는 것이 여기서 지는 몫이다** —
-/// `ditto` 골든(4,578 줄)이 **안 움직이는 것**이 그 비대칭의 관측 장치다
+/// TypeScript 기호 골든이 **문법 교체에서 안 움직이는 것**이 그 비대칭의 관측 장치다
 /// (`[g50.pass]` ④ · `scripts/f03-3-verify.py`).
 ///
 /// [ADR-0004]: ../../../docs/adr/0004-cache-key-covers-every-input-that-decides-the-output.md
@@ -196,8 +196,23 @@ pub const GRAMMAR_REV: &str = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e";
 /// ⚠ **`body_digest` 는 여기서도 안 움직인다.** 임포트 항목의 좌표는 심볼 요약의
 /// 입력이 아니다.
 ///
+/// # `f09-import-sites` → `f10-nul-source` (2026-09-14 · 회차 `2026-09-13-first-release-elsewhere`)
+///
+/// 아홉째다. **분류 ② 가 바뀌었다** — NUL 바이트가 있어도 1급 언어로 인식된 파일은
+/// `binary` 로 적지 않고 추출로 보낸다(`classify.rs`). 문자열 안 NUL 을 구분자로 쓰는
+/// 실코드가 `binary{nul_byte}` 로 대장 밖에 있었다.
+///
+/// 안 올리면 **옛 캐시 항목이 옛 분류를 되살린다.** 캐시는 분류 결과([`FileOutcome`])를 담고
+/// 그 키에 분류 규칙이 없어서, 데워진 캐시에서만 그 파일이 계속 `binary` 로 남는다 —
+/// 같은 커밋이 캐시 상태에 따라 다른 답을 주고, 그 어긋남은 화면 어디에도 안 나온다.
+///
+/// ⚠ **이미 추출되던 파일의 `body_digest` 는 안 움직인다.** 바뀌는 것은 `binary` 였던 파일이
+/// 새로 심볼을 싣는 것뿐이다 — TypeScript 기호 골든은 새 행만 늘고 기존 행은 그대로여야 한다.
+///
+/// ⚠ **`scripts/f04-verify.py:188` 의 리터럴도 같이 움직인다** — 앞 승급들과 같다.
+///
 /// [`FileOutcome`]: crate::FileOutcome
-pub const EXTRACTOR_REV: &str = "f09-import-sites";
+pub const EXTRACTOR_REV: &str = "f10-nul-source";
 
 #[must_use]
 pub const fn version() -> ExtractorVersion {

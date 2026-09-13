@@ -145,7 +145,7 @@ impl ExclusionRuleId {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BinaryReason {
-    /// 내용에 NUL 바이트가 있다. git 이 쓰는 것과 같은 판정이다.
+    /// 내용에 NUL 바이트가 있고 1급 언어로 인식되지 않았다.
     NulByte,
 }
 

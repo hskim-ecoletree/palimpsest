@@ -1,0 +1,28 @@
+# X7 RED — 규칙을 고치기 전 바이너리로 픽스처 둘을 돌린 출력 (HEAD 7f6467ad16bb + 시험만 더함)
+```
+classify::tests::템플릿_문자열_안_널바이트는_바이너리가_아니다 --- FAILED
+... 8/19
+classify::tests::홑따옴표_문자열_안_널바이트는_바이너리가_아니다 --- FAILED
+..........
+failures:
+
+---- classify::tests::템플릿_문자열_안_널바이트는_바이너리가_아니다 stdout ----
+
+thread 'classify::tests::템플릿_문자열_안_널바이트는_바이너리가_아니다' (52250332) panicked at crates/pal-extract/src/classify.rs:313:13:
+partial 이 아니다: Binary { reason: NulByte }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- classify::tests::홑따옴표_문자열_안_널바이트는_바이너리가_아니다 stdout ----
+
+thread 'classify::tests::홑따옴표_문자열_안_널바이트는_바이너리가_아니다' (52250337) panicked at crates/pal-extract/src/classify.rs:313:13:
+partial 이 아니다: Binary { reason: NulByte }
+
+
+failures:
+    classify::tests::템플릿_문자열_안_널바이트는_바이너리가_아니다
+    classify::tests::홑따옴표_문자열_안_널바이트는_바이너리가_아니다
+
+test result: FAILED. 17 passed; 2 failed; 0 ignored; 0 measured; 144 filtered out; finished in 0.78s
+
+error: test failed, to rerun pass `-p pal-extract --lib`
+```

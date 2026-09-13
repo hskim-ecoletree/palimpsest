@@ -7,7 +7,8 @@
 //! 순서가 곧 규칙이다:
 //!
 //! 1. **크기** — 상한을 넘으면 읽지 않는다. `Excluded{oversize}` 이고 **규칙 ID 가 붙는다**
-//! 2. **바이너리** — NUL 바이트. git 이 쓰는 것과 같은 판정이다
+//! 2. **바이너리** — NUL 바이트가 있고 **1급 언어로 인식되지 않을 때만.** 1급 언어의 소스는
+//!    문자열 안에 NUL 을 가질 수 있어 추출로 보낸다 — git 의 앞부분 판정과는 다른 판정이다
 //! 3. **생성물** — 경로 패턴과 파일 머리 표식이 **둘 다** 있을 때만
 //! 4. **언어 인식** — 모르면 `Unrecognized`, 알지만 추출기가 없으면
 //!    `Unsupported{NoExtractor}`. `declared` 는 `.gitattributes` 의 `linguist-language`
@@ -128,8 +129,17 @@ pub fn classify(
         return plain(FileState::Excluded { rule: ExclusionRuleId::new("oversize") });
     }
 
-    // ② 바이너리
-    if source.contains(&0) {
+    // ② 바이너리 — **1급 언어로 인식된 소스는 NUL 하나로 `binary` 가 되지 않는다**
+    //
+    // 문자열 안 NUL(키 조립 구분자)을 가진 실코드가 있다. 그 파일을 `binary` 로 적으면 심볼과
+    // 파일 간 엣지가 대장 밖으로 빠지고, 호출자 화면은 그 사실을 말하지 않는다. 문법이 회복을
+    // 거치면 ⑤ 가 `Partial` 로 적는다.
+    if source.contains(&0)
+        && !matches!(
+            recognize(path.extension(), path.file_name(), declared, source),
+            Recognition::FirstClass(_)
+        )
+    {
         return plain(FileState::Binary { reason: BinaryReason::NulByte });
     }
 
@@ -293,6 +303,38 @@ mod tests {
     #[test]
     fn 널바이트는_바이너리다() {
         assert!(matches!(분류("a.png", b"\x89PNG\x00\x01"), FileState::Binary { .. }));
+    }
+
+    /// 문자열 안의 NUL 은 소스의 일부다 — **1급 언어로 인식된 파일은 그것으로 `binary` 가 되지 않는다.**
+    ///
+    /// 구분자로 NUL 을 쓰는 코드(키 조립 · 해시 입력)가 실물에 있고, 그 파일을 `binary` 로 적으면
+    /// 심볼과 파일 간 엣지가 대장 밖으로 빠진다. TypeScript 문법은 문자열 안 NUL 에서 회복을 거치므로
+    /// 상태는 `Parsed` 가 아니라 `Partial` 이고, **그래프는 실린다.**
+    fn 문자열_안_널(따옴표_줄: &str) {
+        let mut src = String::new();
+        for i in 0..20 {
+            src.push_str(&format!("export function f{i}(a: string): string {{ return a; }}\n"));
+        }
+        src.push_str("export function keyOf(a: string, b: string): string {\n");
+        src.push_str(따옴표_줄);
+        src.push_str("}\n");
+        let out = classify(&RepoPath::new("src/key.ts"), src.as_bytes(), OVERSIZE_BYTES, None).unwrap();
+        let FileState::Partial { recovery_sites, .. } = out.state else {
+            panic!("partial 이 아니다: {:?}", out.state);
+        };
+        assert!(recovery_sites > 0, "회복 자리가 산출에 안 남았다");
+        let 심볼 = format!("{:?}", out.graph.symbols());
+        assert!(심볼.contains("keyOf"), "그래프가 안 실렸다");
+    }
+
+    #[test]
+    fn 템플릿_문자열_안_널바이트는_바이너리가_아니다() {
+        문자열_안_널("  return `${a}\u{0}${b}`;\n");
+    }
+
+    #[test]
+    fn 홑따옴표_문자열_안_널바이트는_바이너리가_아니다() {
+        문자열_안_널("  return a + '\u{0}' + b;\n");
     }
 
     #[test]
