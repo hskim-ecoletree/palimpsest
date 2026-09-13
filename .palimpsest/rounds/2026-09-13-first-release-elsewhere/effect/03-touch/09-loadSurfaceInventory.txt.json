@@ -1,0 +1,123 @@
+{
+  "answer": {
+    "candidates": [
+      {
+        "body": "fbd5844deddd5998b6fae2771f84fd0066aa8b4c61e7fd962d84c26e29ddd807",
+        "container": [
+          "claudeCodeHostAdapter"
+        ],
+        "id": "7caba57db2f18fbe084f101bb389d8e9697e3c2b732751c41f79eae2c5687be7",
+        "identity": "exact",
+        "kind": "method",
+        "name": "loadSurfaceInventory",
+        "path": "src/core/hosts/claude-code.ts",
+        "span": {
+          "byte_end": 8943,
+          "byte_start": 7310,
+          "line_end": 287,
+          "line_start": 248
+        }
+      },
+      {
+        "body": "4ec508081c729da0c9fd7b14e3df41306115b6f2a26c400da5927088ad28bf71",
+        "container": [
+          "codexHostAdapter"
+        ],
+        "id": "670f4e2135d0ebccd25ae5b2b846a2b4b10762222fc60bb590a397afc25ebf0b",
+        "identity": "exact",
+        "kind": "method",
+        "name": "loadSurfaceInventory",
+        "path": "src/core/hosts/codex.ts",
+        "span": {
+          "byte_end": 7565,
+          "byte_start": 6524,
+          "line_end": 200,
+          "line_start": 185
+        }
+      }
+    ],
+    "name": "loadSurfaceInventory",
+    "outcome": "ambiguous"
+  },
+  "capabilities": {
+    "built": [
+      "ledger.snapshot",
+      "symbol.resolve",
+      "symbol.contains",
+      "symbol.callers",
+      "symbol.reaches",
+      "graph.dump",
+      "binding.status",
+      "narrative.unbound",
+      "binding.touch",
+      "plan.deviation",
+      "symbol.references"
+    ],
+    "not_built": [
+      {
+        "feature": "F13",
+        "what": "effects"
+      },
+      {
+        "feature": "F15",
+        "what": "judgment"
+      }
+    ]
+  },
+  "coverage": {
+    "identity": "exact",
+    "lowest_grade": "l2",
+    "out_of_scope_files": 1979,
+    "unresolved": 55
+  },
+  "elision": {
+    "limits_hit": [],
+    "truncated": []
+  },
+  "fold": {
+    "folded": [
+      {
+        "count": 2470,
+        "unfolded_by": "ledger.snapshot",
+        "what": "ledger"
+      }
+    ]
+  },
+  "ledger": {
+    "files_total": 2470,
+    "parsed": 491,
+    "partial": 0,
+    "unbindable_languages": 10,
+    "unrecognized": 14,
+    "unsupported": 1951
+  },
+  "log": {
+    "status": "recorded"
+  },
+  "projection": {
+    "built_for_this_snapshot": true,
+    "matches_worktree": {
+      "present": true
+    },
+    "rebuild": {
+      "present": "settled"
+    },
+    "symbols_indexed": 4578
+  },
+  "snapshot": [
+    [
+      "ditto-effect",
+      {
+        "worktree": {
+          "base": "5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971",
+          "tree_digest": "4fa7cd4c83dd4932b23e80206744725e8b87dfd9953f35b935258b62e2cd9fbe"
+        }
+      }
+    ]
+  ],
+  "tokens": {
+    "approx_tokens": 462,
+    "bytes_per_token": 4,
+    "serialized_bytes": 1849
+  }
+}

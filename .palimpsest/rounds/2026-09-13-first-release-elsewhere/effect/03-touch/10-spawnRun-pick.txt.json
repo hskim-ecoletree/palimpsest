@@ -1,0 +1,232 @@
+{
+  "answer": {
+    "bindings": {
+      "present": []
+    },
+    "effects": {
+      "not_built": {
+        "capability": {
+          "feature": "F13",
+          "what": "effects"
+        }
+      }
+    },
+    "facts": {
+      "present": {
+        "callees": 2,
+        "callers": 0
+      }
+    },
+    "judgments": {
+      "not_built": {
+        "capability": {
+          "feature": "F15",
+          "what": "judgment"
+        }
+      }
+    },
+    "outcome": "found",
+    "store": {
+      "canonical": {
+        "state": "absent"
+      },
+      "path": "./.palimpsest/intent.redb",
+      "present": true
+    },
+    "symbol": {
+      "body": "36d4e9b58089a8f77ff8d7f4bd76abc007a651328f21a80886e368172629d740",
+      "container": [
+        "codexHostAdapter"
+      ],
+      "id": "3ff124dabed14c17b90e9e048e51a9befe920056e57d95daff2a7de0fad3b68a",
+      "identity": "ordinal",
+      "kind": "method",
+      "name": "spawnRun",
+      "path": "src/core/hosts/codex.ts",
+      "span": {
+        "byte_end": 7849,
+        "byte_start": 7570,
+        "line_end": 212,
+        "line_start": 202
+      }
+    },
+    "target": {
+      "extractor": {
+        "extractor": "f09-import-sites",
+        "grammar": "acb96307d816618bd60e1e4d2fa3eaa793e97a2e"
+      },
+      "repo": "ditto-effect",
+      "symbol": "3ff124dabed14c17b90e9e048e51a9befe920056e57d95daff2a7de0fad3b68a",
+      "tree": {
+        "worktree": {
+          "base": "5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971",
+          "tree_digest": "4fa7cd4c83dd4932b23e80206744725e8b87dfd9953f35b935258b62e2cd9fbe"
+        }
+      }
+    },
+    "unresolved": {
+      "present": []
+    },
+    "watching": {
+      "present": []
+    }
+  },
+  "capabilities": {
+    "built": [
+      "ledger.snapshot",
+      "symbol.resolve",
+      "symbol.contains",
+      "symbol.callers",
+      "symbol.reaches",
+      "graph.dump",
+      "binding.status",
+      "narrative.unbound",
+      "binding.touch",
+      "plan.deviation",
+      "symbol.references"
+    ],
+    "not_built": [
+      {
+        "feature": "F13",
+        "what": "effects"
+      },
+      {
+        "feature": "F15",
+        "what": "judgment"
+      }
+    ]
+  },
+  "coverage": {
+    "identity": "ordinal",
+    "lowest_grade": "l2",
+    "out_of_scope_files": 1979,
+    "unresolved": 55
+  },
+  "elision": {
+    "limits_hit": [],
+    "truncated": []
+  },
+  "fold": {
+    "folded": [
+      {
+        "count": 2470,
+        "unfolded_by": "ledger.snapshot",
+        "what": "ledger"
+      }
+    ]
+  },
+  "ledger": {
+    "files_total": 2470,
+    "parsed": 491,
+    "partial": 0,
+    "unbindable_languages": 10,
+    "unrecognized": 14,
+    "unsupported": 1951
+  },
+  "log": {
+    "status": "recorded"
+  },
+  "pending": {
+    "entries": [
+      {
+        "anchor": "5-코드-분해-무슨-코드가-무슨-효과를-내는가",
+        "approve_item": "decision/01M2DGDNK8P3JB9HK66QTC6K62",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "docs/features/run.md",
+        "spread": 16
+      },
+      {
+        "anchor": "2-어댑터-표면",
+        "approve_item": "decision/01M2DGDST5JNMWFDABDPXBQ17J",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "reports/design/contracts/host-adapter-contract.md",
+        "spread": 4
+      },
+      {
+        "anchor": "8-mock-경계",
+        "approve_item": "decision/01M2DGDSV2A3YQQ55TWYHDAJKG",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "reports/design/contracts/host-adapter-contract.md",
+        "spread": 3
+      },
+      {
+        "anchor": "c1-공통-core-host별-surface-adapter가-가능한가",
+        "approve_item": "decision/01M2DGDV89NQTNXRG8VAA6CE6Z",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "reports/design/dual-host-surface-adapter-plan.md",
+        "spread": 7
+      },
+      {
+        "anchor": "c9-큰-모든-runtime-추상화는-지금-만들지-않는다",
+        "approve_item": "decision/01M2DGDV9FZZD2D1PEHW388R1M",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "reports/design/dual-host-surface-adapter-plan.md",
+        "spread": 4
+      },
+      {
+        "anchor": "v03-provider-wrapper-and-context-packet-next",
+        "approve_item": "decision/01M2DGDXX2CYENW42X7GMCR7TF",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "reports/harnesses/ditto-application-plan.md",
+        "spread": 5
+      },
+      {
+        "anchor": "현재-구현에-대한-판정",
+        "approve_item": "decision/01M2DGDYE4AAVD83XTQA5Y67WC",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "reports/harnesses/ditto-omx-reset-plan.md",
+        "spread": 4
+      },
+      {
+        "anchor": "의도-대비-구현-상태",
+        "approve_item": "decision/01M2DGDYKBJP7JJP4JS1PKJTPR",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "reports/harnesses/ditto-phase3-review.md",
+        "spread": 5
+      },
+      {
+        "anchor": "경로-b-ditto-자체-provider-spawn-직접-cli",
+        "approve_item": "decision/01M2DGE1XM1M737S174QWMBBC9",
+        "approve_pick": "3ff124dabed1",
+        "class": "candidates",
+        "path": "reports/research/rebuild-codex-crosscheck-seam.md",
+        "spread": 3
+      }
+    ],
+    "state": "present"
+  },
+  "projection": {
+    "built_for_this_snapshot": true,
+    "matches_worktree": {
+      "present": true
+    },
+    "rebuild": {
+      "present": "settled"
+    },
+    "symbols_indexed": 4578
+  },
+  "snapshot": [
+    [
+      "ditto-effect",
+      {
+        "worktree": {
+          "base": "5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971",
+          "tree_digest": "4fa7cd4c83dd4932b23e80206744725e8b87dfd9953f35b935258b62e2cd9fbe"
+        }
+      }
+    ]
+  ],
+  "tokens": {
+    "approx_tokens": 541,
+    "bytes_per_token": 4,
+    "serialized_bytes": 2164
+  }
+}

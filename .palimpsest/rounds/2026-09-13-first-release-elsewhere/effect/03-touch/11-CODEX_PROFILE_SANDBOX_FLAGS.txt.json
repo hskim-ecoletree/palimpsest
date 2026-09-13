@@ -1,0 +1,157 @@
+{
+  "answer": {
+    "bindings": {
+      "present": []
+    },
+    "effects": {
+      "not_built": {
+        "capability": {
+          "feature": "F13",
+          "what": "effects"
+        }
+      }
+    },
+    "facts": {
+      "present": {
+        "callees": 1,
+        "callers": 1
+      }
+    },
+    "judgments": {
+      "not_built": {
+        "capability": {
+          "feature": "F15",
+          "what": "judgment"
+        }
+      }
+    },
+    "outcome": "found",
+    "store": {
+      "canonical": {
+        "state": "absent"
+      },
+      "path": "./.palimpsest/intent.redb",
+      "present": true
+    },
+    "symbol": {
+      "body": "5dba3bcc35231754494324bd2e523a8d77e1503fa9857c66e7100cfeaee38b42",
+      "container": [],
+      "id": "4c59961d851f93ef1fbacd56c5695f28cc9fb084ef16a30d114db32a3eb8e511",
+      "identity": "exact",
+      "kind": "variable",
+      "name": "CODEX_PROFILE_SANDBOX_FLAGS",
+      "path": "src/core/hosts/codex.ts",
+      "span": {
+        "byte_end": 8168,
+        "byte_start": 7861,
+        "line_end": 221,
+        "line_start": 215
+      }
+    },
+    "target": {
+      "extractor": {
+        "extractor": "f09-import-sites",
+        "grammar": "acb96307d816618bd60e1e4d2fa3eaa793e97a2e"
+      },
+      "repo": "ditto-effect",
+      "symbol": "4c59961d851f93ef1fbacd56c5695f28cc9fb084ef16a30d114db32a3eb8e511",
+      "tree": {
+        "worktree": {
+          "base": "5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971",
+          "tree_digest": "4fa7cd4c83dd4932b23e80206744725e8b87dfd9953f35b935258b62e2cd9fbe"
+        }
+      }
+    },
+    "unresolved": {
+      "present": []
+    },
+    "watching": {
+      "present": []
+    }
+  },
+  "capabilities": {
+    "built": [
+      "ledger.snapshot",
+      "symbol.resolve",
+      "symbol.contains",
+      "symbol.callers",
+      "symbol.reaches",
+      "graph.dump",
+      "binding.status",
+      "narrative.unbound",
+      "binding.touch",
+      "plan.deviation",
+      "symbol.references"
+    ],
+    "not_built": [
+      {
+        "feature": "F13",
+        "what": "effects"
+      },
+      {
+        "feature": "F15",
+        "what": "judgment"
+      }
+    ]
+  },
+  "coverage": {
+    "identity": "exact",
+    "lowest_grade": "l2",
+    "out_of_scope_files": 1979,
+    "unresolved": 18
+  },
+  "elision": {
+    "limits_hit": [],
+    "truncated": []
+  },
+  "fold": {
+    "folded": [
+      {
+        "count": 2470,
+        "unfolded_by": "ledger.snapshot",
+        "what": "ledger"
+      }
+    ]
+  },
+  "ledger": {
+    "files_total": 2470,
+    "parsed": 491,
+    "partial": 0,
+    "unbindable_languages": 10,
+    "unrecognized": 14,
+    "unsupported": 1951
+  },
+  "log": {
+    "status": "recorded"
+  },
+  "pending": {
+    "entries": [],
+    "state": "present"
+  },
+  "projection": {
+    "built_for_this_snapshot": true,
+    "matches_worktree": {
+      "present": true
+    },
+    "rebuild": {
+      "present": "settled"
+    },
+    "symbols_indexed": 4578
+  },
+  "snapshot": [
+    [
+      "ditto-effect",
+      {
+        "worktree": {
+          "base": "5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971",
+          "tree_digest": "4fa7cd4c83dd4932b23e80206744725e8b87dfd9953f35b935258b62e2cd9fbe"
+        }
+      }
+    ]
+  ],
+  "tokens": {
+    "approx_tokens": 540,
+    "bytes_per_token": 4,
+    "serialized_bytes": 2163
+  }
+}

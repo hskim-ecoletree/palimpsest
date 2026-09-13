@@ -1,0 +1,123 @@
+{
+  "answer": {
+    "candidates": [
+      {
+        "body": "49038137a05be24eae53cd473346c4dab12dd12b1a024b1894a4e7390fd84ec6",
+        "container": [
+          "claudeCodeHostAdapter"
+        ],
+        "id": "f8cb4d533483c595966efcfdc3dd80acd773c0917e63264931ce08472148d278",
+        "identity": "ordinal",
+        "kind": "method",
+        "name": "spawnRun",
+        "path": "src/core/hosts/claude-code.ts",
+        "span": {
+          "byte_end": 9233,
+          "byte_start": 8948,
+          "line_end": 299,
+          "line_start": 289
+        }
+      },
+      {
+        "body": "36d4e9b58089a8f77ff8d7f4bd76abc007a651328f21a80886e368172629d740",
+        "container": [
+          "codexHostAdapter"
+        ],
+        "id": "3ff124dabed14c17b90e9e048e51a9befe920056e57d95daff2a7de0fad3b68a",
+        "identity": "ordinal",
+        "kind": "method",
+        "name": "spawnRun",
+        "path": "src/core/hosts/codex.ts",
+        "span": {
+          "byte_end": 7849,
+          "byte_start": 7570,
+          "line_end": 212,
+          "line_start": 202
+        }
+      }
+    ],
+    "name": "spawnRun",
+    "outcome": "ambiguous"
+  },
+  "capabilities": {
+    "built": [
+      "ledger.snapshot",
+      "symbol.resolve",
+      "symbol.contains",
+      "symbol.callers",
+      "symbol.reaches",
+      "graph.dump",
+      "binding.status",
+      "narrative.unbound",
+      "binding.touch",
+      "plan.deviation",
+      "symbol.references"
+    ],
+    "not_built": [
+      {
+        "feature": "F13",
+        "what": "effects"
+      },
+      {
+        "feature": "F15",
+        "what": "judgment"
+      }
+    ]
+  },
+  "coverage": {
+    "identity": "ordinal",
+    "lowest_grade": "l2",
+    "out_of_scope_files": 1979,
+    "unresolved": 55
+  },
+  "elision": {
+    "limits_hit": [],
+    "truncated": []
+  },
+  "fold": {
+    "folded": [
+      {
+        "count": 2470,
+        "unfolded_by": "ledger.snapshot",
+        "what": "ledger"
+      }
+    ]
+  },
+  "ledger": {
+    "files_total": 2470,
+    "parsed": 491,
+    "partial": 0,
+    "unbindable_languages": 10,
+    "unrecognized": 14,
+    "unsupported": 1951
+  },
+  "log": {
+    "status": "recorded"
+  },
+  "projection": {
+    "built_for_this_snapshot": true,
+    "matches_worktree": {
+      "present": true
+    },
+    "rebuild": {
+      "present": "settled"
+    },
+    "symbols_indexed": 4578
+  },
+  "snapshot": [
+    [
+      "ditto-effect",
+      {
+        "worktree": {
+          "base": "5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971",
+          "tree_digest": "4fa7cd4c83dd4932b23e80206744725e8b87dfd9953f35b935258b62e2cd9fbe"
+        }
+      }
+    ]
+  ],
+  "tokens": {
+    "approx_tokens": 454,
+    "bytes_per_token": 4,
+    "serialized_bytes": 1819
+  }
+}

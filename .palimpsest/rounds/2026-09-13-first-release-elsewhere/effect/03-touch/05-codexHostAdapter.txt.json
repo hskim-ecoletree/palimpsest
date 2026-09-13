@@ -1,0 +1,166 @@
+{
+  "answer": {
+    "bindings": {
+      "present": []
+    },
+    "effects": {
+      "not_built": {
+        "capability": {
+          "feature": "F13",
+          "what": "effects"
+        }
+      }
+    },
+    "facts": {
+      "present": {
+        "callees": 1,
+        "callers": 2
+      }
+    },
+    "judgments": {
+      "not_built": {
+        "capability": {
+          "feature": "F15",
+          "what": "judgment"
+        }
+      }
+    },
+    "outcome": "found",
+    "store": {
+      "canonical": {
+        "state": "absent"
+      },
+      "path": "./.palimpsest/intent.redb",
+      "present": true
+    },
+    "symbol": {
+      "body": "370ad8f775160666162dca2070724589aac65c18dfd9eedb451356906e23879c",
+      "container": [],
+      "id": "71a6da9d1e2b0d0f481c519ee4c3c09495ae31cf4c7fb00f6a35cc4fdec414a7",
+      "identity": "ordinal",
+      "kind": "variable",
+      "name": "codexHostAdapter",
+      "path": "src/core/hosts/codex.ts",
+      "span": {
+        "byte_end": 7852,
+        "byte_start": 3566,
+        "line_end": 213,
+        "line_start": 102
+      }
+    },
+    "target": {
+      "extractor": {
+        "extractor": "f09-import-sites",
+        "grammar": "acb96307d816618bd60e1e4d2fa3eaa793e97a2e"
+      },
+      "repo": "ditto-effect",
+      "symbol": "71a6da9d1e2b0d0f481c519ee4c3c09495ae31cf4c7fb00f6a35cc4fdec414a7",
+      "tree": {
+        "worktree": {
+          "base": "5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971",
+          "tree_digest": "4fa7cd4c83dd4932b23e80206744725e8b87dfd9953f35b935258b62e2cd9fbe"
+        }
+      }
+    },
+    "unresolved": {
+      "present": []
+    },
+    "watching": {
+      "present": []
+    }
+  },
+  "capabilities": {
+    "built": [
+      "ledger.snapshot",
+      "symbol.resolve",
+      "symbol.contains",
+      "symbol.callers",
+      "symbol.reaches",
+      "graph.dump",
+      "binding.status",
+      "narrative.unbound",
+      "binding.touch",
+      "plan.deviation",
+      "symbol.references"
+    ],
+    "not_built": [
+      {
+        "feature": "F13",
+        "what": "effects"
+      },
+      {
+        "feature": "F15",
+        "what": "judgment"
+      }
+    ]
+  },
+  "coverage": {
+    "identity": "ordinal",
+    "lowest_grade": "l2",
+    "out_of_scope_files": 1979,
+    "unresolved": 18
+  },
+  "elision": {
+    "limits_hit": [],
+    "truncated": []
+  },
+  "fold": {
+    "folded": [
+      {
+        "count": 2470,
+        "unfolded_by": "ledger.snapshot",
+        "what": "ledger"
+      }
+    ]
+  },
+  "ledger": {
+    "files_total": 2470,
+    "parsed": 491,
+    "partial": 0,
+    "unbindable_languages": 10,
+    "unrecognized": 14,
+    "unsupported": 1951
+  },
+  "log": {
+    "status": "recorded"
+  },
+  "pending": {
+    "entries": [
+      {
+        "anchor": "9-진행-상태-잔여-2026-06-14-갱신-권위-있는-현재-상태",
+        "approve_item": "decision/01M2DGDVBJ0Y511W0S5K3N72JM",
+        "approve_pick": "71a6da9d1e2b",
+        "class": "candidates",
+        "path": "reports/design/dual-host-surface-adapter-plan.md",
+        "spread": 7
+      }
+    ],
+    "state": "present"
+  },
+  "projection": {
+    "built_for_this_snapshot": true,
+    "matches_worktree": {
+      "present": true
+    },
+    "rebuild": {
+      "present": "settled"
+    },
+    "symbols_indexed": 4578
+  },
+  "snapshot": [
+    [
+      "ditto-effect",
+      {
+        "worktree": {
+          "base": "5ec95eb2f6c6575a366a3e7bab4a3c0b09b8c971",
+          "tree_digest": "4fa7cd4c83dd4932b23e80206744725e8b87dfd9953f35b935258b62e2cd9fbe"
+        }
+      }
+    ]
+  ],
+  "tokens": {
+    "approx_tokens": 539,
+    "bytes_per_token": 4,
+    "serialized_bytes": 2156
+  }
+}
