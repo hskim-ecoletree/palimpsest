@@ -20,7 +20,15 @@
 | 완수 조건 | **29 개**(A10 · B5 · C2 · D3 · E4 · F3 · G2) · 형식오류 0 |
 | 원본 박제 | `oracle/G2-ditto-origin-before.txt` — `G2` 의 「전」 |
 | 승인 | **받았다** ⟨2026-09-13⟩ — *「전부 승인」* · `approval.md` |
-| 루프 | 여기서부터 — ㈀ TS 모듈 해소 |
+| ㈀ TS 모듈 해소 | **커밋했다** — `f953a0c` · 규칙 준수 수정 `b8eeb1d` · ditto 복제본 `0/11010` → `7116/11010` · 시험 `ts_cross_file` · RED `oracle/A1-red.txt` |
+| ㈃ 사용자 화면 어휘 | **커밋했다** — `9db40b7` · 시험 `user_vocabulary`(패턴은 `regex` 로 등록 그대로) · RED `oracle/D1-red.txt`(패턴별 64) |
+| ㈁ 승인 대기 · ㈂ 동명 고르기 | **쓰는 중** — `pal-cli/src/pending.rs`(`.palimpsest/narrative-pending.json` · 파생물) · `touch`/`query --pick` · 시험 `pending_and_pick` |
+| ㈄ 효과 · 오라클 `A3`·`A5`·`B4`·`E1`·`E2`·`E4` · `A6` · `F`·`G` | 그 뒤 |
+
+## 착수 바이너리
+
+`A1`·`B2`·`D1` 의 RED 와 `A6` ⑵ 가 쓴다 — 스크래치 워크트리 `wt-start`(`6ee9eb3`)에서 빌드한 `target/release/pal`(`pal 0.0.0+6ee9eb30f2dc`).
+세션이 바뀌면 `git worktree add --detach <스크래치>/wt-start 6ee9eb3` 뒤 `cargo build --release -p pal-cli` 로 다시 뜬다.
 
 ## 실행 순서 — 사전부검 R2 가 못 박았다
 
@@ -40,6 +48,8 @@
 - **ditto 에 대한 결박을 이 저장소의 `.palimpsest/intent/` 에 쓰지 않는다.**
 
 ## 실패한 접근
+
+- **스냅샷의 화면 표기로 「같은 스냅샷인가」를 가렸다** — `Snapshot` 의 `Display` 는 `repo@abc1234+worktree` 로 **워킹트리 요약을 버린다.** 추적 파일을 고쳐도 같은 문자열이라 승인 대기 목록이 낡았는데도 실렸다(시험 `b3` 가 잡았다). 열쇠는 직렬화 값(`tree_digest` 포함)이다 — `pending::열쇠`.
 
 - **레코드를 손으로 파싱했다** — 규약은 `extract.py` 를 요구한다(기계 칸이 갈려 `cargo xtask check` 가 빨개졌다). 원 반환문의 레코드는 **언제나** `python3 .claude/skills/round/bin/extract.py <출처> <라운드> <raw> <기존 findings.jsonl>` 로 뽑고 판단 칸만 사람이 얹는다.
 - **추출기의 첫 수정이 절대경로 좌표를 버렸다** — 끝난 회차 전부에 옛·새 판을 대 보고서야 드러났다. 추출기를 고치면 끝난 회차 전부에 대 본다.

@@ -29,6 +29,8 @@ use crate::touch;
 pub struct Args<'a> {
     pub name: &'a str,
     pub arg: Option<&'a str>,
+    /// 후보가 여럿일 때 사람이 지목한 하나.
+    pub pick: Option<&'a str>,
     pub list: bool,
     pub repo: &'a Path,
     pub rev: Option<&'a str>,
@@ -192,6 +194,7 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
         deviation: 이탈(query, a.repo, a.rev, cache_dir)?,
         bound: &bound,
         binding_max: pal_core::PROVISIONAL_TOUCH_BINDING_MAX,
+        pick: a.pick,
         extractor: pal_extract::version(),
         // **낡음을 재는 자의 낡음** — 대장이 이미 들고 있다(F01).
         //
@@ -325,7 +328,7 @@ fn print_screen(q: &NamedQuery, e: &Envelope<QueryResult>) {
         }
         QueryResult::Ambiguous { name, candidates } => {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
-            print_symbols(candidates);
+            touch::print_candidates(candidates);
         }
         QueryResult::Unknown { name, near } => {
             println!("  `{name}` 을 이 스냅샷에서 찾지 못했습니다.");

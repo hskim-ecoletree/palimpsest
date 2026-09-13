@@ -69,7 +69,6 @@ fn 걸린_것(화면: &str, 사용자_내용: &[String]) -> Vec<(String, String,
 /// `--json` 산출에서 **사용자 저장소의 내용**만 뽑는다 — 이 키들의 문자열 값.
 fn 사용자_내용(json: &serde_json::Value) -> Vec<String> {
     const 키: &[&str] = &["path", "anchor", "name", "body", "note", "target"];
-    let mut out = Vec::new();
     fn 걷는다(v: &serde_json::Value, out: &mut Vec<String>) {
         match v {
             serde_json::Value::Object(m) => {
@@ -84,6 +83,7 @@ fn 사용자_내용(json: &serde_json::Value) -> Vec<String> {
             _ => {}
         }
     }
+    let mut out = Vec::new();
     걷는다(json, &mut out);
     out
 }
@@ -194,6 +194,8 @@ fn d1_장면_명령의_사람_화면에_작업_기록_어휘가_없다() {
     }
     잰다("install", &["install"], None);
     잰다("ledger", &["ledger"], Some(&["ledger", "--json"]));
+    // 목록을 만들기 **전** — 승인 대기 구역이 「아직 만들지 않았다」를 싣는다.
+    잰다("touch 목록 없음", &["touch", "onlyA"], Some(&["touch", "onlyA", "--json"]));
     잰다("narrative 인입", &["narrative"], Some(&["narrative", "--json"]));
 
     // 승인·거부 — 개체와 좌표는 `--json` 에서 뜬다.
@@ -217,7 +219,14 @@ fn d1_장면_명령의_사람_화면에_작업_기록_어휘가_없다() {
     잰다("touch 후보 여럿", &["touch", "shared"], Some(&["touch", "shared", "--json"]));
     잰다("touch 못 찾음", &["touch", "nothingHere"], Some(&["touch", "nothingHere", "--json"]));
     잰다("touch 파일 간 까닭", &["touch", "user"], Some(&["touch", "user", "--json"]));
-    잰다("query 후보 여럿", &["query", "symbol.resolve", "shared"], Some(&["query", "symbol.resolve", "shared", "--json"]));
+    잰다("query 후보 여럿", &["query", "symbol.callers", "shared"], Some(&["query", "symbol.callers", "shared", "--json"]));
+    잰다("touch 지목", &["touch", "shared", "--pick", "0000000000"], Some(&["touch", "shared", "--pick", "0000000000", "--json"]));
+    // 코드가 바뀐 뒤 — 승인 대기 구역이 「이 스냅샷의 것이 아니다」를 싣는다. **맨 끝에 둔다.**
+    let 파일 = root.join("src/a/one.ts");
+    let mut 본문 = std::fs::read_to_string(&파일).expect("읽기");
+    본문.push_str("export function later() { return 3; }\n");
+    std::fs::write(&파일, 본문).expect("쓰기");
+    잰다("touch 목록 낡음", &["touch", "onlyA"], Some(&["touch", "onlyA", "--json"]));
 
     let mut 전부 = Vec::new();
     for (이름, 화면, 내용) in &화면들 {

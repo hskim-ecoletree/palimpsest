@@ -94,6 +94,8 @@ pub struct Args<'a> {
     pub index: Option<PathBuf>,
     pub intent: Option<PathBuf>,
     pub name: &'a str,
+    /// 후보가 여럿일 때 사람이 지목한 하나 — 후보 화면이 싣는 지목 문자열.
+    pub pick: Option<&'a str>,
     /// 한 구역이 싣는 결박의 상한. `None` 이면 자리표시.
     pub binding_max: Option<usize>,
     /// 걸린 시간을 **표준오류**로 출력한다 — `elapsed_micros=<n>`.
@@ -116,7 +118,7 @@ pub struct Args<'a> {
 /// 저장소·캐시·2층·의도 저장소 중 하나에 닿지 못하면.
 pub fn run(a: Args) -> Result<()> {
     let Args { repo: repo_path, rev, cache_dir, index: index_path, intent: intent_path, name,
-               binding_max, timing, json } = a;
+               pick, binding_max, timing, json } = a;
     let 프로세스_시작 = std::time::Instant::now();
     // 대장을 먼저 만든다. **답의 근거가 먼저 서야 답이 나간다.**
     let report = ledger::compute(repo_path, rev, cache_dir)?;
@@ -178,6 +180,7 @@ pub fn run(a: Args) -> Result<()> {
         deviation: pal_query::DeviationInput::NotAsked,
         bound: &bound,
         binding_max: binding_max.unwrap_or(PROVISIONAL_TOUCH_BINDING_MAX),
+        pick,
         extractor: pal_extract::version(),
         intent_store,
         detector: pal_core::DetectorReport {
@@ -197,10 +200,26 @@ pub fn run(a: Args) -> Result<()> {
 
     let envelope = pal_query::touch(&ctx, name).context("질의가 실패했다")?;
 
+    // ★ **승인 대기** (2026-09-13) — 찾았을 때만 묻는다. `pal narrative` 가 남긴 목록을 읽고
+    //   이미 승인·거부된 조각은 뺀다.
+    let 대기 = match &envelope.answer {
+        TouchAnswer::Found(r) => Some(crate::pending::읽는다(
+            repo_path,
+            &crate::pending::열쇠(&report.ledger.snapshot)?,
+            r.symbol.id,
+            &intent,
+        )?),
+        _ => None,
+    };
+
     if json {
-        println!("{}", serde_json::to_string_pretty(&envelope)?);
+        let mut v = serde_json::to_value(&envelope)?;
+        if let (Some(d), serde_json::Value::Object(m)) = (&대기, &mut v) {
+            m.insert("pending".to_owned(), serde_json::to_value(d)?);
+        }
+        println!("{}", serde_json::to_string_pretty(&v)?);
     } else {
-        print_screen(&envelope, attached.cross.as_ref());
+        print_screen(&envelope, attached.cross.as_ref(), 대기.as_ref());
     }
 
     // **두 시계를 둘 다 산출한다** — 합격선은 질의 시간에만 걸리고(`[f11.pass]` ⑦),
@@ -262,7 +281,11 @@ fn 수(v: &Capable<Vec<BoundItem>>) -> String {
 }
 
 /// 옛 `how-it-works §2.3` 의 화면 (그 문서는 2026-08-18 에 지웠다 — `docs/plan/disposal-map.md`).
-fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::CrossFileReport>) {
+fn print_screen(
+    envelope: &Envelope<TouchAnswer>,
+    cross: Option<&pal_core::CrossFileReport>,
+    대기: Option<&crate::pending::대기>,
+) {
     println!();
     match &envelope.answer {
         TouchAnswer::Unknown { name, near } => {
@@ -274,9 +297,7 @@ fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::Cross
         TouchAnswer::Ambiguous { name, candidates } => {
             println!("  `{name}` 의 후보가 {}건입니다. 하나를 고르지 않습니다.", candidates.len());
             println!();
-            for c in candidates {
-                println!("  {:<10} {:<24} {}:{}", c.kind.name(), c.name, c.path, c.span.line_start);
-            }
+            print_candidates(candidates);
         }
         TouchAnswer::Found(r) => {
             println!("  {}  ·  {}", r.symbol.name, r.target);
@@ -288,6 +309,9 @@ fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::Cross
             // ★ **다른 구역이다.** *"내 코드에 걸린 결정"* 과 *"남의 코드에 걸렸는데
             // 나를 지켜보는 결정"* 은 고치러 갈 자리가 다르다.
             print_bindings("이 좌표를 지켜보는 것", &r.watching, &envelope.elision, &r.store);
+            if let Some(d) = 대기 {
+                crate::pending::화면(d);
+            }
             print_facts(&r.facts, cross);
             print_unresolved(&r.unresolved);
             slot("효과", &r.effects);
@@ -334,6 +358,21 @@ fn print_screen(envelope: &Envelope<TouchAnswer>, cross: Option<&pal_core::Cross
 ///
 /// 빈 목록과 목록이 있는 것은 **다른 답**이다. 앞은 *"가까운 것도 없다"* 이고 그것은
 /// 이 스냅샷에 대한 사실이다.
+/// 동명 후보들 — 후보마다 **지목 문자열**을 싣고 지목하는 방법을 한 줄 적는다.
+///
+/// ★ **지목 문자열은 짧은 해시다** (2026-09-13). 같은 문자열이 `pal narrative --pick` 에도
+/// 그대로 통해야 한 장면에 좌표를 부르는 방법이 둘이 안 된다.
+pub fn print_candidates(candidates: &[pal_core::SymbolNode]) {
+    for c in candidates {
+        println!(
+            "  {:<10} {:<24} {}:{}  지목 {}",
+            c.kind.name(), c.name, c.path, c.span.line_start, c.id.short()
+        );
+    }
+    println!();
+    println!("  하나를 지목하려면 같은 명령에 --pick <지목> 을 붙이십시오");
+}
+
 pub fn print_near(near: &[pal_core::NearName], elision: &Elision) {
     println!();
     println!("■ 이것을 뜻했습니까 ({})", near.len());

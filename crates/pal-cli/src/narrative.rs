@@ -159,6 +159,9 @@ pub fn run(a: Args) -> Result<()> {
 
     // **쓰기 표면이다** — 위에서 `IntentStore::open`(쓰기)으로 열었다 ([#129]).
     let got = ingest(a.repo, &report, &attached.projection, &intent, 민팅::한다)?;
+    // ★ **승인 대기 목록을 남긴다** (2026-09-13). `pal touch` 는 인입을 안 돌리므로 좌표마다
+    //   「이 좌표를 가리키는 승인 안 된 조각」을 여기서 읽는다 — 파생물이고 다시 만들 수 있다.
+    crate::pending::쓴다(a.repo, &crate::pending::열쇠(&report.ledger.snapshot)?, &got.proposals)?;
 
     match a.what {
         What::Ingest => 화면(&got, a.json),
@@ -639,8 +642,15 @@ fn 화면(got: &Ingested, json: bool) -> Result<()> {
     println!("  이력 창 {} 커밋 · 창 밖에서 마지막으로 바뀐 문서 {}", got.history_window, got.outside_window);
     println!("  **그 문서들에는 「같은 커밋」 신호가 없습니다** — 없는 것이지 0 이 아닙니다.");
     println!();
-    println!("  **아무것도 승인하지 않았습니다.** `inferred` 는 사람의 승인으로만");
-    println!("  `asserted` 가 됩니다 — `pal narrative approve <개체>`.");
+    println!("  **아무것도 승인하지 않았습니다.** `inferred` 는 사람의 승인으로만 `asserted` 가 됩니다.");
+    println!("  좌표마다 승인할 조각은 `pal touch <이름>` 의 「승인 대기」가 싣습니다.");
+    // ★ **안내하는 명령은 그대로 돌아야 한다** (2026-09-13). 앞 판은 없는 하위 명령
+    //   (`pal narrative approve <개체>`)을 안내했다. 자리표시 대신 **실제 조각 하나**로 적는다.
+    if let Some((item, pick)) =
+        got.proposals.iter().find_map(|p| p.choices().first().map(|c| (p.item.to_display(), c.short())))
+    {
+        println!("  승인하는 명령 — 예: pal narrative --approve {item} --pick {pick}");
+    }
     println!();
     Ok(())
 }

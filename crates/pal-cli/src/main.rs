@@ -25,6 +25,7 @@ mod intent;
 mod label;
 mod ledger;
 mod narrative;
+mod pending;
 mod plan;
 mod query;
 mod round;
@@ -250,6 +251,9 @@ enum Command {
         /// 사람이 읽는 화면 대신 JSON 으로 출력한다
         #[arg(long)]
         json: bool,
+        /// 후보가 여럿일 때 **하나를 지목한다** — 후보 화면이 싣는 지목 문자열(짧은 해시)
+        #[arg(long)]
+        pick: Option<String>,
     },
     /// 저장된 그래프가 자기 규칙을 지키는지 본다 — **기본은 표본이고 전수는 명시적이다**
     Doctor {
@@ -361,6 +365,9 @@ enum Command {
         /// 사람이 읽는 화면 대신 JSON 으로 출력한다
         #[arg(long)]
         json: bool,
+        /// 후보가 여럿일 때 **하나를 지목한다** — 후보 화면이 싣는 지목 문자열(짧은 해시)
+        #[arg(long)]
+        pick: Option<String>,
     },
     /// 2층을 우리 밖 도구가 읽는 형식으로 출력한다 — **못 산출한 라벨을 함께 적는다**
     Export {
@@ -636,9 +643,9 @@ fn main() -> Result<()> {
         }
         Command::Plan(a) => plan::plan(&계획_인자(&a)),
         Command::Deviation(a) => plan::deviation(&계획_인자(&a)),
-        Command::Touch { name, repo, at, cache_dir, index, intent, binding_max, timing, json } =>
+        Command::Touch { name, repo, at, cache_dir, index, intent, binding_max, timing, json, pick } =>
             touch::run(touch::Args { repo: &repo, rev: at.as_deref(), cache_dir, index, intent,
-                                     name: &name, binding_max, timing, json }),
+                                     name: &name, pick: pick.as_deref(), binding_max, timing, json }),
         Command::Doctor { repo, at, cache_dir, index, intent, full, sample, install, json } => {
             let scope = if full {
                 pal_core::DoctorScope::Full
@@ -722,9 +729,11 @@ fn main() -> Result<()> {
             node_max,
             read_only,
             json,
+            pick,
         } => query::run(&query::Args {
             name: &name,
             arg: arg.as_deref(),
+            pick: pick.as_deref(),
             list,
             repo: &repo,
             rev: at.as_deref(),

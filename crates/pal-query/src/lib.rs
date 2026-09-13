@@ -368,6 +368,11 @@ pub struct QueryCtx<'a> {
     /// [`Budget`] 에 안 넣었다. 그 넷은 **탐색** 예산이고 이것은 **싣는 수**다.
     /// ⚠ **낡은 것은 이 상한을 안 탄다**(옛 F11 §3.3) — 그 비대칭이 이 기능의 요구다.
     pub binding_max: usize,
+    /// 이름이 여럿에 맞을 때 **사람이 지목한 하나** — 후보 화면이 싣는 지목 문자열(짧은 해시)이나 전체 ID.
+    ///
+    /// **맞는 후보가 정확히 하나일 때만 고른다.** 안 맞으면 후보를 다시 돌려준다 — 지목이
+    /// 틀렸을 때 조용히 하나를 고르면 그것이 조용한 오답이다.
+    pub pick: Option<&'a str>,
     /// 추출기 버전 — **좌표의 성분이다**(stack §5.1).
     ///
     /// **부르는 쪽이 지고 온다** — 이 크레이트는 파서를 모른다.
@@ -548,7 +553,7 @@ fn run(
             Ok(QueryResult::Symbols { symbols })
         }
         NamedQuery::SymbolContains { name } => {
-            let start = match unique(p, name, accessed, elision)? {
+            let start = match unique(p, name, ctx.pick, accessed, elision)? {
                 Ok(s) => s,
                 Err(other) => return Ok(other),
             };
@@ -563,7 +568,7 @@ fn run(
             Ok(QueryResult::Symbols { symbols: out })
         }
         NamedQuery::SymbolCallers { name } => {
-            let start = match unique(p, name, accessed, elision)? {
+            let start = match unique(p, name, ctx.pick, accessed, elision)? {
                 Ok(s) => s,
                 Err(other) => return Ok(other),
             };
@@ -578,7 +583,7 @@ fn run(
             Ok(QueryResult::Symbols { symbols: out })
         }
         NamedQuery::SymbolReaches { name } => {
-            let start = match unique(p, name, accessed, elision)? {
+            let start = match unique(p, name, ctx.pick, accessed, elision)? {
                 Ok(s) => s,
                 Err(other) => return Ok(other),
             };
@@ -606,11 +611,26 @@ fn run(
 fn unique(
     p: &Projection,
     name: &str,
+    pick: Option<&str>,
     accessed: &mut Vec<SymbolId>,
     elision: &mut Elision,
 ) -> Result<Result<SymbolNode, QueryResult>, QueryError> {
     let mut found = p.resolve_name(name)?;
     accessed.extend(found.iter().map(|s| s.id));
+    if let Some(pick) = pick
+        && !found.is_empty()
+    {
+        let 맞은: Vec<usize> = found
+            .iter()
+            .enumerate()
+            .filter(|(_, s)| s.id.to_string() == pick || s.id.short() == pick)
+            .map(|(i, _)| i)
+            .collect();
+        return Ok(match 맞은.as_slice() {
+            [i] => Ok(found.swap_remove(*i)),
+            _ => Err(QueryResult::Ambiguous { name: name.to_owned(), candidates: found }),
+        });
+    }
     match found.len() {
         0 => Ok(Err(QueryResult::Unknown {
             name: name.to_owned(),
@@ -804,7 +824,7 @@ fn touch_result(
     accessed: &mut Vec<SymbolId>,
 ) -> Result<QueryResult, QueryError> {
     let p = ctx.projection;
-    let symbol = match unique(p, name, accessed, elision)? {
+    let symbol = match unique(p, name, ctx.pick, accessed, elision)? {
         Ok(s) => s,
         // **없다는 뜻이 아니다**(`Unknown` · 근접 후보가 함께 실린다) ·
         // **하나를 고르지 않는다**(`Ambiguous`). 둘 다 실패가 아니라 답이다.
