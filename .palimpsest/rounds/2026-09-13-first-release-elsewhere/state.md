@@ -12,8 +12,16 @@
 | 착수 첫 걸음 | **닫혔다** — `G5` 는 런 0 (이벤트는 있음 · Actions enabled) · `NEXT-E` 둘 지움(그 회차는 철회) · `pal` 빌드 · 관측 재현(`baseline/`) |
 | 인터뷰 | **닫혔다** — 상한 2 소진 · 범주 다섯 열림 · `interview/r1.md`·`r2.md` |
 | 기준선 스물넷 | 러너가 돈다 → `baseline/runner-pre.md` |
-| 사전부검 | 여기서부터 |
-| 완수 조건 · 조건 설계 평가 · 승인 | 그 뒤 |
+| 사전부검 R1 | **닫혔다** — 11 항 · 처리 방침 `e6ad3f2` · 레코드 `fab0306` |
+| 사전부검 R2 | 돈다 — 브리프 `premortem/brief-r2.md`(R1 표지를 벗긴 여섯 절) → `premortem/r2-raw.md` |
+| 완수 조건 | **초안이 섰다** — 25 개 · 형식오류 0 · R2 를 받아 고친다 |
+| 조건 설계 평가 · 승인 | 그 뒤. 감사자에게 줄 절은 스크래치의 `extract-sections.py` 로 뜬다(원문·목적 기여·완수 조건·차선책·범위 밖·상한) |
+
+## 오라클 전제 — 실측했다
+
+- **TypeScript 컴파일러 대조**: `node` 가 `~/dev/projects/ditto/node_modules/typescript`(5.9.3)를 불러 `ts.resolveModuleName` 이
+  `./shared` → `src/core/hosts/shared.ts` · `~/core/fs` → `src/core/fs.ts` · `node:fs` → 못 풂 을 냈다.
+- **ditto 타입 검사**: 새 사본에 원본 `node_modules` 를 링크로 걸고 `node_modules/.bin/tsc --noEmit` → 오류 0 · rc 0 · 3.8 초(`aded7ce`).
 
 ## 작업 규율
 
