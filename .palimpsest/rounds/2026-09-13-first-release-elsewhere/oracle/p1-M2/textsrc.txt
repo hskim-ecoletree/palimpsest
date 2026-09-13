@@ -1,0 +1,65 @@
+
+■ pal export --format cypher
+
+  산출      3990569 바이트
+            File           496건
+            Symbol         4656건
+            REFERENCES     4682건
+            REFERENCES_ACROSS 5082건
+            UnresolvedRef  2022건
+            REFERS_UNRESOLVED 2022건
+
+  못 산출한 라벨 14개 — 0 건이 아닙니다
+            Actor          2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            Binding        2층에 안 삽니다 — 의도 저장소 (intent.redb · R-21 로 파일이 갈려 있다)
+            Change         2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            Defect         2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            Journey        아직 안 만들었습니다 — F19 가 만듭니다
+            NarrativeItem  2층에 안 삽니다 — 이 빌드의 2층에 없다
+            NarrativeRefusal 2층에 안 삽니다 — 이 빌드의 2층에 없다
+            AUTHORED_BY    2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            BOUND_TO       2층에 안 삽니다 — 의도 저장소 (intent.redb · R-21 로 파일이 갈려 있다)
+            FOLLOWS        2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            INTRODUCED_BY  2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            MANIFESTS_AT   2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            RESOLVED_BY    2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+            TOUCHES        2층에 안 삽니다 — `pal defect` 가 계산만 하고 저장하지 않는다
+
+■ 이 답의 근거
+  Snapshot  ditto-m2-textsrc@aded7ce+worktree
+  2층       심볼 4656 색인됨
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · 이 빌드에 없음 effects · judgment
+  이관      2451건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 2451건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  **안 남았습니다** — 2층에 읽기 전용으로 붙어 남기지 못했습니다
+  크기      약 704 토큰 **이상** (잰 것: 2819 바이트 · 가정: 4 바이트/토큰)
+
+# TypeScript 컴파일러 대조 — ditto-m2-textsrc
+
+- pal: `pal 0.0.0+1d7b3b8a9dcb`
+- typescript: `5.9.3` (~/dev/projects/ditto/node_modules/typescript)
+- 저장소 HEAD: `aded7ce7`
+- 모드: unresolved · recall
+
+## 정밀도 — 파일 간 엣지의 대상 파일
+
+- 잰 엣지 5082 · 불일치 **0**
+
+## A5 ⑵ — `outside_repo` 로 남은 못 푼 참조
+
+- TS 파일의 `outside_repo` 1081 · 그중 TypeScript 가 저장소 안 파일로 푸는 것 **0**
+
+## A5 ⑷ — 재현율
+
+- 모집단(TypeScript 가 저장소 안으로 풀고 · 대상이 그 이름을 선언하고 · 선언 안에서 참조되는 이름 임포트) **2915** · pal 엣지가 빠진 것 **0**
+- 모집단 밖 — 대상이 그 이름을 선언하지 않는다(재수출로만 진다): 71
+- 모집단 밖 — 참조가 파일 최상위에만 있다: 216
+- 모집단 밖 — 참조가 없다: 10
+
+## 가지별 표본 — 정밀도에서 일치한 임포트
+
+- 지정자: 확장자 없음 2840 · .js 대응 0 · 명시 .ts 0 · 디렉터리 index 0 · 별칭 2242 · 상속 별칭 0
+- 대상 확장자: .ts 5082 · .tsx 0 · .d.ts 0
+- 모드: bundler 5082 · nodenext 0
+- **표본 0 인 가지**: .js 대응 · 명시 .ts · 디렉터리 index · 상속 별칭 · .tsx · .d.ts · nodenext
+
