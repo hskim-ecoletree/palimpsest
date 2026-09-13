@@ -64,7 +64,7 @@ pub use budget::{
     PROVISIONAL_QUARANTINE_BUDGET_BYTES, PROVISIONAL_STITCH_BATCH,
     PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES, PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS,
     PROVISIONAL_STRAY_TMP_MAX_AGE_SECS, PROVISIONAL_TOUCH_BINDING_MAX,
-    PROVISIONAL_TRAVERSAL_DEPTH,
+    PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_TS_EXTENDS_DEPTH_MAX,
     PROVISIONAL_VIEW_NODE_MAX, PROVISIONAL_WATCH_PRODUCT_MAX, SHEBANG_SCAN_BYTES,
     ROUND_VERIFICATION_FILE_MAX_BYTES, ROUND_VERIFICATION_LINE_MAX_BYTES,
     ROUND_VERIFICATION_STRING_MAX_BYTES, ROUND_STOP_EVENT_HISTORY_MAX,
@@ -124,7 +124,7 @@ pub use cross_file::{
     Attempt, AttemptStep, CrossFileEdge, CrossFileInput, CrossFileReport, UnresolvedReason,
     UnresolvedRef, cross_file_edges, cross_file_edges_in,
 };
-pub use ts_module::{TsConfig, TsModuleResolution, TsProject, TsResolution};
+pub use ts_module::{TsProject, TsResolution};
 pub use projection::{
     FileNode, FileRow, FileRefs, PendingImportRef, RefCounts, ReferenceEdge, file_edges,
 };

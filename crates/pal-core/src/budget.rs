@@ -151,6 +151,15 @@ pub const DEFAULT_CACHE_BUDGET_BYTES: u64 = 2 * 1024 * 1024 * 1024;
 /// **옛 자리**: `pal_cli::ledger` — 그리고 **옛 목록에 아예 없었다.**
 pub const EXTRACT_CHUNK: usize = 256;
 
+/// `tsconfig.json` 의 `extends` 사슬을 **몇 겹까지** 따라가나 (회차 `2026-09-13-first-release-elsewhere`).
+///
+/// # 자리표시다 — 순환은 따로 막는다
+///
+/// 순환은 본 파일 집합이 끊는다. 이 값은 병적으로 긴 사슬을 끊는 손실 제한이고, 넘으면
+/// 그 설정을 「다 못 읽었다」로 적는다 — 조용히 자르지 않는다. 실측으로 정한 값이 아니다:
+/// 남의 TS 저장소(ditto)의 가장 긴 사슬은 **1** 겹이었다.
+pub const PROVISIONAL_TS_EXTENDS_DEPTH_MAX: usize = 16;
+
 /// 화면에 자리까지 적는 손상 엔트리의 수.
 ///
 /// **수는 전부 세고 자리는 몇 개만 적는다.** 997 줄짜리 표 위에 손상 목록이 다 실리면

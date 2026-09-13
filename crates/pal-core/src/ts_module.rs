@@ -38,7 +38,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 /// `compilerOptions.moduleResolution` — **TypeScript 가 기본값을 고르는 규칙까지 옮긴다.**
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum TsModuleResolution {
+enum TsModuleResolution {
     /// `node` · `node10` — 확장자 없는 지정자와 디렉터리 `index` 를 푼다.
     #[default]
     Node10,
@@ -72,18 +72,21 @@ impl TsModuleResolution {
 }
 
 /// 한 `tsconfig.json` 을 `extends` 까지 합친 것.
+///
+/// ⚠ **이 모듈 안에서만 쓴다.** `base_url` 의 `None` 은 「`baseUrl` 을 안 적었다」 한 뜻뿐이고
+/// 이 모듈 안에서만 읽힌다 — 공개하면 「안 만듦」과 갈리지 않는 선택 필드가 된다(ADR-0005).
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct TsConfig {
+struct TsConfig {
     /// `baseUrl` — 저장소 상대 경로로 이미 폈다.
-    pub base_url: Option<String>,
+    base_url: Option<String>,
     /// `paths` — `(패턴, 대체들)`. 대체는 **기준 자리를 이미 붙인** 저장소 상대 경로다.
     ///
     /// 기준 자리는 `baseUrl` 이 있으면 그것이고, 없으면 **`paths` 를 정의한 설정 파일의
     /// 자리**다 — 상속된 `paths` 를 자식의 자리로 풀면 틀린다(TypeScript 규칙).
-    pub paths: Vec<(String, Vec<String>)>,
-    pub resolution: TsModuleResolution,
+    paths: Vec<(String, Vec<String>)>,
+    resolution: TsModuleResolution,
     /// `extends` 사슬을 끝까지 못 읽었다 — 패키지 · 없는 파일 · 파싱 실패 · 순환.
-    pub incomplete: bool,
+    incomplete: bool,
 }
 
 /// 지정자 하나를 편 결과.
@@ -113,8 +116,6 @@ pub struct TsProject {
     module_scopes: BTreeMap<String, bool>,
 }
 
-/// `extends` 사슬의 깊이 상한 — 순환은 따로 막고, 이것은 병적인 사슬을 끊는다.
-const EXTENDS_DEPTH_MAX: usize = 16;
 
 impl TsProject {
     /// 트리의 파일 목록과 **그 트리에서 읽는 함수**로 세운다.
@@ -299,7 +300,7 @@ fn collect(
     seen: &mut BTreeSet<String>,
     raw: &mut Raw,
 ) {
-    if depth > EXTENDS_DEPTH_MAX || !seen.insert(path.to_owned()) {
+    if depth > crate::PROVISIONAL_TS_EXTENDS_DEPTH_MAX || !seen.insert(path.to_owned()) {
         raw.incomplete = true;
         return;
     }
