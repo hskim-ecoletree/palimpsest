@@ -1,0 +1,22 @@
+<!-- E4 를 조건 문면대로 다시 잰 산출 — C = 「봉인 심볼들의 touch 가 호출자로 낸 파일 집합」. touch 화면과 --json 은 호출자 수만 싣고 파일을 안 싣는다(effect/03-touch/05-codexHostAdapter.txt:13 · 05-codexHostAdapter.json.txt 의 facts.present.callers). 그래서 C 는 빈 집합이다. 복제본은 변경 A(898a479) 워크트리. 같은 워크트리에 effect/04-callers(질의 출력)를 C 로 준 대조 실행은 oracle/E4-breakage.txt 와 머리 3 줄 밖이 같았다. -->
+# E4 — 깨질 곳의 대조
+
+- typescript `5.9.3` · 복제본 `ditto-effect-at-A`
+- tsc 전 오류 0 · A 뒤 오류 4 · 새 오류 4
+- P(새 오류 파일) src/cli/commands/setup.ts · src/core/hosts/index.ts · src/core/setup.ts
+- C(호출자 파일) 없음
+- D(지운 파일) src/core/hosts/codex.ts
+- **P∩C** 없음
+- **P∖(C∪D)** src/cli/commands/setup.ts · src/core/hosts/index.ts · src/core/setup.ts
+
+## src/cli/commands/setup.ts
+- 8:34 TS2307 · ImportDeclaration · **최상위** · Cannot find module '~/core/hosts/codex' or its corresponding type declarations.
+- 262:50 TS7006 · FunctionDeclaration · **선언 안** · Parameter 's' implicitly has an 'any' type.
+
+## src/core/hosts/index.ts
+- 2:34 TS2307 · ImportDeclaration · **최상위** · Cannot find module './codex' or its corresponding type declarations.
+
+## src/core/setup.ts
+- 7:34 TS2307 · ImportDeclaration · **최상위** · Cannot find module './hosts/codex' or its corresponding type declarations.
+
+## 판정 — P∖(C∪D) 에서 오류 자리가 선언 안인 것 **1** (0 이어야 한다)
