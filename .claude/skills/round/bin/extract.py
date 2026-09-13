@@ -418,23 +418,65 @@ def 좌표같은가(s):
     return ("/" in s and " " not in s) or bool(re.search(확장자, s))
 
 
-def 좌표만(s):
+def 반환문_트리(raw):
+    """좌표를 댈 파일 목록 — **그 반환문이 처음 들어온 커밋의 트리**다.
+
+    ★ **왜 커밋에 묶나** (2026-09-13 · 회차 `first-release-elsewhere`). 앞 판은 모양만
+    보고 첫 후보를 골랐고, 그래서 `~/` · `live/stale` · `codex.ts`(남의 저장소 경로)
+    같은 **이 저장소에 없는 좌표**가 레코드의 `경로` 가 됐다. 지금 워킹트리에 대면
+    파일이 나중에 생기거나 지워질 때마다 산출이 흔들린다 — 반환문이 들어온 커밋은
+    한 번 정해지면 안 움직인다.
+
+    커밋되기 전이면 git 이 보는 워킹트리 목록(추적 + 무시 안 된 새 파일)을 댄다 —
+    반환문은 규약상 레코드와 **같은 커밋**에 실리므로 그 목록이 곧 그 커밋의 트리다.
+    git 을 못 부르면 `None` — 모양만 보는 앞 판의 규칙으로 돌아간다.
+    """
+    def git(*a):
+        r = subprocess.run(["git", *a], capture_output=True, text=True, encoding="utf-8")
+        return r.stdout if r.returncode == 0 else None
+    top = git("-C", os.path.dirname(os.path.abspath(raw)), "rev-parse", "--show-toplevel")
+    if top is None:
+        return None
+    top = top.strip()
+    rel = os.path.relpath(os.path.abspath(raw), top).replace(os.sep, "/")
+    커밋들 = (git("-C", top, "log", "--diff-filter=A", "--format=%H", "--", rel) or "").split()
+    if 커밋들:
+        목록 = git("-C", top, "ls-tree", "-r", "--name-only", 커밋들[-1])
+    else:
+        목록 = git("-C", top, "ls-files", "--cached", "--others", "--exclude-standard")
+    return None if 목록 is None else set(목록.splitlines())
+
+
+def 트리에_있나(좌표, 파일들):
+    """`xtask` 의 `좌표가_실재하는가` 와 같은 자 — 그대로 · 디렉터리 · 경로 경계의 접미."""
+    c = 좌표.rstrip("/")
+    if not c:
+        return False
+    return (c in 파일들
+            or any(f.startswith(c + "/") for f in 파일들)
+            or any(f.endswith("/" + c) for f in 파일들))
+
+
+def 좌표만(s, 파일들=None):
     """「어디가 걸리나」에서 **첫 좌표 하나**만.
 
     ★ **백틱 안을 먼저 본다.** 이 칸은 산문과 좌표가 섞여 있고, 앞 판은 첫
     낱말을 집어 「커밋」·「네」·「잠근」 같은 **산문 조각을 좌표로 적었다**(실측).
     좌표는 언제나 백틱 안에 있다.
+
+    ★ `파일들` 을 주면 **그 트리에 있는 첫 후보**를 고르고, 하나도 없으면
+    `(경로 없음)` 이다 — 모양만 좌표인 것을 좌표로 적지 않는다.
     """
     if not s:
         return "(경로 없음)"
-    for 안 in re.findall(r"`([^`]+)`", s):
-        안 = 안.strip()
-        if 좌표같은가(안):
-            return 안.split(":")[0]
-    for 낱말 in re.split(r"[\s·,]+", 정규화(s)):
-        낱말 = 낱말.strip("(),;").rstrip(".")
-        if 좌표같은가(낱말):
-            return 낱말.split(":")[0]
+    후보 = [안.strip() for 안 in re.findall(r"`([^`]+)`", s)]
+    후보 += [낱말.strip("(),;").rstrip(".") for 낱말 in re.split(r"[\s·,]+", 정규화(s))]
+    for c in 후보:
+        if not 좌표같은가(c):
+            continue
+        c = c.split(":")[0]
+        if 파일들 is None or 트리에_있나(c, 파일들):
+            return c
     return "(경로 없음)"
 
 
@@ -468,6 +510,7 @@ def main(argv):
     if 출처 not in 접두표:
         raise SystemExit(f"모르는 출처다: {출처!r} — 아는 것은 {sorted(접두표)} 다")
     접두 = 접두표[출처]
+    파일들 = 반환문_트리(경로)
     산출 = []
     for i, d in enumerate(항, 1):
         산출.append({
@@ -477,7 +520,7 @@ def main(argv):
             "모집단": d.get("모집단", ""),
             "유효성": d.get("유효성", ""),
             "해악도": d.get("해악도", ""),
-            "경로": 좌표만(d.get("경로", "")),
+            "경로": 좌표만(d.get("경로", ""), 파일들),
             "요약": d.get("요약", ""),
             # ★ 리뷰어가 **어느 조건에 걸리나**를 직접 적는다 — 그것도 기계 칸이다.
             #   앞 판은 별칭만 있고 뽑지 않아 그 키의 소비자가 0 이었다(독립 리뷰 R2).

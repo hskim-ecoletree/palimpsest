@@ -4111,6 +4111,7 @@ fn check_round_records(root: &Path) -> Result<String> {
     let mut 좌표_해소_실패 = Vec::new();
     let mut 좌표_면제 = 0usize;
     let mut 무시_면제 = 0usize;
+    let mut 이력_면제 = 0usize;
     let mut 총_행 = 0usize;
     let mut 예외_행 = 0usize;
     for p in 레코드들.iter().copied() {
@@ -4185,7 +4186,19 @@ fn check_round_records(root: &Path) -> Result<String> {
                     } else if 저장소가_무시하는가(root, 경로) {
                         무시_면제 += 1;
                     } else if !좌표가_실재하는가(root, 경로) {
-                        좌표_해소_실패.push(format!("{상대}:{}: `{경로}` 가 없다", i + 1));
+                        // ★★ **뒤에 지워진 좌표는 거짓이 아니다.** (2026-09-13 · 회차
+                        //   `first-release-elsewhere`) 착수 재료 `NEXT-E-prompt.md` 를 규약대로
+                        //   지우자 그것을 가리키던 **닫힌 옛 행 넷**이 빨개졌다. 그 행들은 고칠 수
+                        //   없는 기록이고(고치면 증거 위조다), 위 주석이 적은 대로 **드리프트는
+                        //   `기준커밋` 이 설명한다** — 그 커밋의 트리에 있었으면 좌표였다.
+                        //   ⚠ **면제하되 수를 판정문에 싣는다.** 기준커밋이 없거나 그 트리에도
+                        //   없으면 여전히 실패다 — 한 번도 없던 좌표를 삼키지 않는다.
+                        let 기준 = v.get("기준커밋").and_then(|x| x.as_str());
+                        if 기준.is_some_and(|sha| 기준커밋에_있었나(root, sha, 경로)) {
+                            이력_면제 += 1;
+                        } else {
+                            좌표_해소_실패.push(format!("{상대}:{}: `{경로}` 가 없다", i + 1));
+                        }
                     }
                 }
             }
@@ -4381,7 +4394,7 @@ fn check_round_records(root: &Path) -> Result<String> {
     }
     Ok(format!(
         "산출 {}개 · 레코드 {}행 · 예외표 {예외_행}행 · 좌표 면제 {좌표_면제}행 \
-         (저장소 밖 절대경로) · {무시_면제}행 (git 이 뺀 파생물) · **손으로 채운 칸 — 진행 중 {진행중_손_전사} · 끝난 회차 {손_전사}(보고만) \
+         (저장소 밖 절대경로) · {무시_면제}행 (git 이 뺀 파생물) · {이력_면제}행 (기준커밋에는 있었고 뒤에 지워졌다) · **손으로 채운 칸 — 진행 중 {진행중_손_전사} · 끝난 회차 {손_전사}(보고만) \
          [갈린 칸 {갈린_칸} · 빠진 행 {빠진_행}]** · \
          검산 {} · 검산 면제 {} · \
          파이썬 `{파이썬}`",
@@ -5820,7 +5833,42 @@ fn 저장소가_무시하는가(root: &Path, 경로: &str) -> bool {
 
 #[cfg(test)]
 mod 좌표_면제_시험 {
-    use super::{저장소_밖_절대경로, 저장소가_무시하는가};
+    use super::{기준커밋에_있었나, 저장소_밖_절대경로, 저장소가_무시하는가};
+
+    /// ★ **음성 대조 — 이력 면제가 넓으면 검사가 죽은 가지가 된다.** (2026-09-13)
+    ///
+    /// 셋을 못 박는다: **기준커밋에 있다가 지워진 좌표는 면제 · 한 번도 없던 좌표는 면제
+    /// 아님 · 기준커밋이 이 저장소에 없으면 면제 아님.**
+    #[test]
+    fn 기준커밋에_있다가_지워진_좌표만_면제한다() {
+        use std::fs;
+        let 뿌리 =
+            std::env::temp_dir().join(format!("pal-xtask-history-coord-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&뿌리);
+        fs::create_dir_all(뿌리.join("docs")).unwrap();
+        let git = |인자: &[&str]| -> String {
+            let 결과 = std::process::Command::new("git").arg("-C").arg(&뿌리).args(인자).output();
+            let 결과 = 결과.unwrap_or_else(|e| panic!("git {인자:?} 를 못 불렀다: {e}"));
+            assert!(결과.status.success(), "git {인자:?} 가 실패했다 — 이 검사는 git 을 요구한다");
+            String::from_utf8_lossy(&결과.stdout).trim().to_owned()
+        };
+        git(&["init", "-q"]);
+        fs::write(뿌리.join("NEXT-X.md"), "착수 재료").unwrap();
+        fs::write(뿌리.join("docs/keep.md"), "남는다").unwrap();
+        git(&["add", "-A"]);
+        git(&["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "첫"]);
+        let 첫 = git(&["rev-parse", "--short", "HEAD"]);
+        fs::remove_file(뿌리.join("NEXT-X.md")).unwrap();
+        git(&["add", "-A"]);
+        git(&["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "지움"]);
+
+        assert!(기준커밋에_있었나(&뿌리, &첫, "NEXT-X.md"));
+        assert!(기준커밋에_있었나(&뿌리, &첫, "keep.md"), "접미 매칭이 같은 자여야 한다");
+        assert!(!기준커밋에_있었나(&뿌리, &첫, "never-there.md"));
+        assert!(!기준커밋에_있었나(&뿌리, "0000000", "NEXT-X.md"));
+
+        let _ = fs::remove_dir_all(&뿌리);
+    }
 
     /// ★ **세 OS 가 같은 답을 내야 한다.** 이 자는 파일시스템을 안 만지고 문자열만
     /// 본다 — `Path::is_absolute` 는 플랫폼마다 다르므로 안 쓴다(ADR-0023).
@@ -5886,6 +5934,31 @@ mod 좌표_면제_시험 {
 
         let _ = fs::remove_dir_all(&뿌리);
     }
+}
+
+/// 그 행의 `기준커밋` 트리에 좌표가 있었나 — [`좌표가_실재하는가`] 와 **같은 자**로 잰다.
+///
+/// 경로째로 · 디렉터리로 · 경로 경계의 접미로. git 을 못 부르거나 커밋이 없으면
+/// `false` 다 — **모르면 면제하지 않는다.**
+fn 기준커밋에_있었나(root: &Path, sha: &str, 경로: &str) -> bool {
+    let Ok(out) = std::process::Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["ls-tree", "-r", "--name-only", sha])
+        .output()
+    else {
+        return false;
+    };
+    if !out.status.success() {
+        return false;
+    }
+    let c = 경로.trim_end_matches('/');
+    if c.is_empty() {
+        return false;
+    }
+    String::from_utf8_lossy(&out.stdout).lines().any(|f| {
+        f == c || f.starts_with(&format!("{c}/")) || f.ends_with(&format!("/{c}"))
+    })
 }
 
 /// 좌표가 실재하는가 — 경로째로 있거나, **끝이 맞는 파일이 저장소에 있거나.**
