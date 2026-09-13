@@ -1,0 +1,28 @@
+# F1 — #135 에 TS 몫이 섰다는 코멘트
+
+- 단 코멘트: https://github.com/hskim-ecoletree/palimpsest/issues/135#issuecomment-5657189371
+- 확인 명령: `gh issue view 135 --comments` 의 마지막 코멘트(2026-09-13T23:57:35Z)
+
+```
+작성 2026-09-13T23:57:36Z
+## TypeScript 몫이 섰다 — 회차 `2026-09-13-first-release-elsewhere`
+
+남의 TS 저장소(ditto 복제본 `aded7ce`)에서 파일 간 해소를 TypeScript 컴파일러와 댔다.
+
+| 잰 것 | 착수 | 종료 |
+|---|---|---|
+| `cross-file-import` 선 것 / 짝 | `0/11010` (전부 「저장소 밖」) | `7116/11010` |
+| 선 엣지의 대상 파일 — TypeScript 와 불일치 | — | **0** (잰 엣지 5082) |
+| `outside_repo` 로 남은 것 중 TypeScript 가 저장소 안으로 푸는 것 · 지정자가 `./` · `../` · 별칭 꼴인 것 | — | **0** · **0** |
+| 재현율 — TypeScript 가 푸는 저장소 안 이름 임포트 중 `pal` 엣지가 빠진 것 | 59 (NUL 바이트가 든 TS 파일 다섯이 `binary`) | **0** (모집단 2915) |
+
+- 게이트: `docs/gates/first-release-elsewhere.md` (`A5`)
+- 산출: `.palimpsest/rounds/2026-09-13-first-release-elsewhere/oracle/A5-ditto.txt` · `A5-2-shape.txt` · `p1-X/`
+- 재현율 59 → 0 은 분류 규칙 변경(`ba0a983` · 1급 언어로 인식된 소스는 NUL 하나로 `binary` 가 안 된다 · `EXTRACTOR_REV` 승급)으로 닫았다.
+
+**이 이슈는 열어 둔다** — 남은 반증은 앞 회차 `2026-09-08-cross-file-references` 의 재수출 경유 조건 둘(Rust 축)이다. TS 의 재수출 경유 이름은 따라가지 않되 「재수출을 지나는 이름」 까닭으로 적는다.
+
+```
+
+## 판정
+통과 — 코멘트가 A5 의 수와 게이트 경로를 싣는다
