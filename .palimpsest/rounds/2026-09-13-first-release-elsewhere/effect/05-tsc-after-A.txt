@@ -1,0 +1,4 @@
+src/cli/commands/setup.ts(8,34): error TS2307: Cannot find module '~/core/hosts/codex' or its corresponding type declarations.
+src/cli/commands/setup.ts(262,50): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/core/hosts/index.ts(2,34): error TS2307: Cannot find module './codex' or its corresponding type declarations.
+src/core/setup.ts(7,34): error TS2307: Cannot find module './hosts/codex' or its corresponding type declarations.
