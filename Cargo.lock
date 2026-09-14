@@ -1402,7 +1402,7 @@ checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
 name = "pal-cli"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "blake3",
@@ -1429,7 +1429,7 @@ dependencies = [
 
 [[package]]
 name = "pal-core"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "serde",
@@ -1439,7 +1439,7 @@ dependencies = [
 
 [[package]]
 name = "pal-extract"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "brokk-tree-sitter-kotlin",
  "pal-core",
@@ -1455,7 +1455,7 @@ dependencies = [
 
 [[package]]
 name = "pal-git"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "gix",
@@ -1466,7 +1466,7 @@ dependencies = [
 
 [[package]]
 name = "pal-intent"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "pal-core",
  "postcard",
@@ -1478,7 +1478,7 @@ dependencies = [
 
 [[package]]
 name = "pal-query"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "pal-core",
  "pal-store",
@@ -1489,7 +1489,7 @@ dependencies = [
 
 [[package]]
 name = "pal-store"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "blake3",
  "pal-core",
@@ -2378,7 +2378,7 @@ checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
 
 [[package]]
 name = "xtask"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "anyhow",
  "pal-core",

@@ -96,10 +96,12 @@ jobs:
           out="pal-${{ matrix.target }}"
           mkdir -p "$out"
           cp "target/${{ matrix.target }}/release/${{ matrix.bin }}" "$out/"
-          # ⚠ **저장소에 `README.md` 도 `LICENSE` 도 없다**(실측 2026-08-17). 없는 것을
-          # 복사하는 줄을 두면 그 줄이 조용히 아무것도 안 하고, 그러면 아카이브에
-          # **바이너리 하나만** 들어간 채로 「README 를 넣었다」고 믿게 된다.
-          # 대신 **받는 사람이 지금 필요한 것**을 여기서 만든다.
+          # ★ **루트 `README.md` 와 라이선스 둘을 싣는다**(회차 2026-09-14-first-release).
+          # 앞 판은 *"저장소에 README 도 LICENSE 도 없다"* 로 적고 안 실었다 — 이제 있다.
+          # `cp` 가 없는 파일에서 **실패하게** 둔다(`set -e`). 조용히 빠지면 아카이브에
+          # 바이너리 하나만 든 채로 「README 를 넣었다」고 믿게 된다.
+          cp README.md LICENSE-MIT LICENSE-APACHE "$out/"
+          # 아래 `README.txt` 는 **이 플랫폼에서 놓는 법**만 짧게 싣는다 — 쓰는 법의 정본은 README.md 다.
           # ⚠ here-doc 본문은 **이 블록의 들여쓰기에 딱 맞춘다.** YAML 이 블록 공통
           # 들여쓰기를 떼므로 셸에는 왼쪽에 붙은 채로 간다 — `sed` 로 들여쓰기를 떼는
           # 후처리는 안 쓴다(GNU 와 BSD 의 `-i` 문법이 갈려서 그 자체가 플랫폼 축이다).
@@ -112,11 +114,13 @@ jobs:
             ★ 이름을 바꾸지 마십시오 — 훅 등록이 PATH 의 이름 'pal' 을 가리킵니다.
             유닉스에서는 실행 비트도 필요합니다:  chmod +x pal
 
-          쓰기
+          쓰기 — 자세한 걸음은 같이 든 README.md
             pal install            이 프로젝트에 놓는다
             pal doctor --install   여섯 검사를 본다   <- 놓은 뒤 반드시 한 번
             pal update             놓은 것을 갱신한다
             pal uninstall          놓은 것을 걷어낸다 (매니페스트에 적힌 것만)
+            pal narrative          문서를 코드 좌표에 대 본다 (아무것도 승인하지 않는다)
+            pal touch <심볼>       코드를 만지기 전에 걸린 결정과 호출자 자리를 본다
 
           이 빌드가 요구하는 것
             git 이 PATH 에 있어야 합니다. .gitignore 등재를 git 에게 물어서
@@ -169,6 +173,14 @@ jobs:
       - name: 줄바꿈을 실사용자 환경과 같게 맞춘다 (Windows)
         if: runner.os == 'Windows'
         run: git config --global core.autocrlf true
+
+      # ★ **받은 바이너리로 제품의 장면을 한 번 돈다**(회차 2026-09-14-first-release · 사전부검 R1 ⑧).
+      # 아래 라이프사이클은 install·doctor·update·uninstall 만 지나고 `touch` 는 안 지났다 —
+      # 그러면 릴리스 바이너리에서 핵심 장면이 한 번도 안 돈다. 결박이 실제로 있는 저장소가
+      # 필요해서 이 저장소를 받는다. ⚠ 디렉터리 이름을 저장소 이름과 같게 둔다.
+      - uses: actions/checkout@v4
+        with:
+          path: palimpsest
 
       - uses: actions/download-artifact@v4
         with:
@@ -253,6 +265,24 @@ jobs:
           fi
           echo
           echo "✔ Rust 툴체인 없이 받아서 install·doctor·update·uninstall 을 완주했다"
+
+      - name: ★ 받은 바이너리의 touch 가 걸린 결정을 싣는다
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$PWD/shim:$PWD/bin:$PATH"
+          cd palimpsest
+          "${{ matrix.bin }}" intent import .palimpsest/intent/bindings.jsonl
+          "${{ matrix.bin }}" touch TsProject --json > ../touch.json
+          # ⚠ **빈 답도 성공 종료다** — 「아직 없습니다」로 통과하면 이 걸음은 아무것도 안 잰다.
+          # 그래서 걸린 결정의 **수**를 본다. 판정은 ASCII 키로 한다(`ci.yml` 의 같은 주석).
+          n=$(jq '.answer.bindings.present | length' ../touch.json | tr -d '\r')
+          echo "걸린 결정 $n"
+          if [ "${n:-0}" -lt 1 ]; then
+            echo "받은 바이너리의 touch 가 결박이 있는 심볼에서 걸린 결정 0 을 냈다" >&2
+            exit 1
+          fi
+          echo "✔ 받은 바이너리로 touch 가 걸린 결정을 실었다"
 
   # ───────────────────────────────────────────────────────────────────────────
   # 릴리스 — **위 둘이 다 선 뒤에만 산출한다**
