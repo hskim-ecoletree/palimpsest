@@ -61,6 +61,10 @@ attrs = [
   # **변했는가**에 답하는 값. 정체성(`id`)과 다른 축이다 — 합치면 이동 감지와
   # 포매팅 무시 중 하나를 잃는다(옛 F03 §2).
   { name = "body",     type = "digest",             producer = "extractor", required = true },
+  # **선언 밖 장식**(Rust 앞 형제 속성 · 메서드 수신자)이 변했는가 — `body` 가 못 보는 축(#77).
+  # `body` 에 섞지 않는다: 섞으면 이미 선 결박의 기준값이 옛 규칙 값이라 코드 변화 없이 뒤집힌다.
+  # 장식이 선언 안에 있는 언어(TypeScript · Kotlin)는 빈 장식의 요약이다.
+  { name = "decor",    type = "digest",             producer = "extractor", required = true },
   { name = "span",     type = "span",               producer = "extractor", required = true },
   # **언어 단위가 아니라 심볼 단위다** — R-22.
   { name = "identity", type = "enum:IdentityGrade", producer = "extractor", required = true },

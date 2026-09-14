@@ -51,6 +51,8 @@ pub struct SymbolNode {
     pub kind: SymbolKind,
     /// **변했는가**에 답하는 값. 정체성(`id`)과 다른 축이다.
     pub body: BodyDigest,
+    /// **선언 밖 장식**(속성·수신자)이 변했는가 — [`crate::Symbol::decor`] 그대로. `body` 와 다른 축이다.
+    pub decor: BodyDigest,
     pub span: Span,
     /// 이 심볼의 정체성을 얼마나 믿을 수 있는가. **언어 단위가 아니라 심볼 단위다**([R-22]).
     pub identity: IdentityGrade,
@@ -120,6 +122,10 @@ pub enum BoundItem {
         radius: String,
         /// 감시 집합의 크기. 반경 이름만으로는 `files:3` 이 몇 개를 지켜보는지 모른다.
         watch: usize,
+        /// 감시 원소 중 **속성·수신자 기준값이 없는** 것의 수 — 옛 판 결박이다(#77).
+        ///
+        /// 0 이 아니면 그만큼은 속성·수신자 변경에 `stale` 이 안 붙는다. 화면이 그것을 말한다.
+        decor_unwatched: usize,
         /// 언제 걸었나 — **표시용이다. 앵커가 아니다**(옛 F09 §6).
         ///
         /// 낡음 판정은 이 값을 안 읽는다. **정렬은 읽는다** — 정렬은 화면의 일이고

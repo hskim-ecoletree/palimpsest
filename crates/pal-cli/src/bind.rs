@@ -105,7 +105,12 @@ pub fn run(a: Args) -> Result<()> {
             // 빠뜨리지 않는다**: 빠뜨리면 감시 집합이 줄고 그만큼 덜 지켜본다.
             bail!("`{s}` 를 2층에서 읽지 못했다 — 반경을 펴는 중에 투영이 갈렸다");
         };
-        watch.push(WatchEntry { symbol: s, digest: 실물.body });
+        // 장식(속성·수신자)도 **같은 자리에서 같은 투영이 잰 값**이다(#77).
+        watch.push(WatchEntry {
+            symbol: s,
+            digest: 실물.body,
+            decor: pal_core::DecorBaseline::Recorded(실물.decor),
+        });
     }
 
     let intent = IntentStore::open(&touch::intent_file(repo_path, intent_path))

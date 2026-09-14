@@ -142,6 +142,7 @@ mod tests {
             name: name.to_owned(),
             kind: SymbolKind::Function,
             body: BodyDigest::of_normalized(body.as_bytes()),
+            decor: BodyDigest::of_normalized(b""),
             span: Span { byte_start: 0, byte_end: 1, line_start: 1, line_end: 1 },
             identity: crate::ledger::IdentityGrade::Exact,
         }

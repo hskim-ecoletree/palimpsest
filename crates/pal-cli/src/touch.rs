@@ -433,7 +433,7 @@ fn print_bindings(
         return;
     }
     for item in items {
-        let BoundItem::Note { binding, note, status, radius, watch, at, .. } = item;
+        let BoundItem::Note { binding, note, status, radius, watch, decor_unwatched, at, .. } = item;
         // **병기는 `label` 이 진다** — `pal-core` 의 `name()` 에 얹으면 그것이 그대로
         // 와이어로 나간다(`label` 모듈 머리 · ADR-0033).
         let 병기 = crate::label::신선도(&status.code).병기();
@@ -451,6 +451,13 @@ fn print_bindings(
         // **반경을 함께 싣는다** — *"이 결정은 `symbol` 반경에서 fresh"* 는 *"이 결정은
         // 유효하다"* 와 다른 문장이다(옛 F09 §3).
         println!("  [{}] {mark}  ·  {radius} 반경 · 감시 {watch}", binding.as_str());
+        // ★ **안 보는 축을 말한다**(#77) — 옛 판 결박은 속성·수신자 기준값이 없어 그 변경에
+        // `stale` 이 안 붙는다. 말하지 않으면 위의 `fresh` 가 그 축까지 본 `fresh` 로 읽힌다.
+        if *decor_unwatched > 0 {
+            println!(
+                "      ⚠ 속성·수신자 변경은 감시 안 함 — 감시 {watch} 개 중 {decor_unwatched} 개가 옛 판 결박이라 기준값이 없습니다 (다시 걸면 섭니다)"
+            );
+        }
         // ★ **어디에 걸렸는지가 다음 행동을 정한다.**
         if let BoundTarget::Elsewhere { symbol, place } = at {
             match place {

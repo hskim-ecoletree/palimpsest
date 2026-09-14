@@ -49,6 +49,104 @@ pub struct WatchEntry {
     pub symbol: SymbolId,
     /// **결박할 때의** 본문 요약. 현재 값과 비교한다.
     pub digest: BodyDigest,
+    /// **결박할 때의** 선언 밖 장식(속성·수신자) 요약 — [`crate::Symbol::decor`] 의 그때 값.
+    ///
+    /// `#[serde(default)]` 는 **판 2 까지의 JSONL** 을 읽는 자리다 — 그 판에는 이 칸이
+    /// 없고, 없는 것은 [`DecorBaseline::Unrecorded`] 가 정확한 값이다(#77).
+    #[serde(default)]
+    pub decor: DecorBaseline,
+}
+
+/// 감시 원소 하나의 **선언 밖 장식 기준값** — 있거나, **옛 판이라 안 적혔다** (#77).
+///
+/// # 왜 [`WatchEntry::digest`] 에 섞지 않고 축을 따로 두나
+///
+/// Rust 의 속성(`#[derive]` · `#[cfg]` …)은 선언 마디 **앞 형제**이고, 수신자의 `&` 는
+/// 정규화가 벗긴다. 둘을 본문 요약에 섞으면 **이미 선 결박의 기준값이 옛 규칙의 값**이라
+/// 코드가 안 바뀌었는데 `stale` 로 뒤집힌다 — 착수 때 이 저장소 결박 42 중 20 이 그 자리였다.
+/// 뒤집힘도 **사실이 아닌 것을 사실로** 적는 것이다(반대 방향).
+///
+/// 그래서 본문 요약은 **바이트로 그대로** 두고 장식은 이 축이 진다.
+///
+/// # `Unrecorded` 는 **비교하지 않는다** — 그리고 그 사실이 산출에 실린다
+///
+/// 기준값이 없는 축을 [`UndeterminableReason`] 으로 올리면 `evaluate` 의 ② 가 ③ 앞에서
+/// 반환하므로 옛 결박이 **전부 판정 불가**가 된다 — 본문이 변한 `stale` 까지 덮는다.
+/// 그래서 그 축만 안 대고, 안 댄 원소 수를 [`BindingReport::decor_unwatched`] 가 싣는다.
+/// **조용히 안 보는 것이 아니라 안 본다고 말한다.**
+///
+/// # `Option<BodyDigest>` 가 아닌 이유
+///
+/// `None` 이 *"장식이 없다"* 인지 *"옛 판이라 모른다"* 인지 구별되지 않는다(ADR-0005).
+/// 장식이 없는 심볼은 **빈 장식의 요약**을 `Recorded` 로 진다 — 없는 것과 모르는 것이 갈린다.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DecorBaseline {
+    /// 결박 시점에 기계가 대상 좌표에서 읽은 장식 요약.
+    Recorded(BodyDigest),
+    /// **옛 판(JSONL 2 이하 · 옛 `intent.redb`)이라 안 적혔다.** 이 축은 비교하지 않는다.
+    #[default]
+    Unrecorded,
+}
+
+impl DecorBaseline {
+    /// 지금 값과 대어 **변했다고 말할 수 있는가.** 기준값이 없으면 말할 수 없다.
+    #[must_use]
+    pub fn changed(self, now: BodyDigest) -> bool {
+        matches!(self, Self::Recorded(then) if then != now)
+    }
+
+    /// 이 원소가 장식 축을 **안 보는가.**
+    #[must_use]
+    pub const fn unwatched(self) -> bool {
+        matches!(self, Self::Unrecorded)
+    }
+}
+
+/// **판 2 까지의 감시 원소** — 장식 기준값이 없다. 옛 `intent.redb` 되살리기 전용.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct LegacyWatchEntry {
+    pub symbol: SymbolId,
+    pub digest: BodyDigest,
+}
+
+/// **판 2 까지의 결박 모양** — postcard 는 자리 기반이라 칸이 하나 붙으면 옛 바이트를
+/// 새 타입으로 못 읽는다. 그래서 옛 모양을 **그대로** 적어 두고 [`Binding`] 으로 올린다.
+///
+/// 이 타입이 `pal-core` 에 있는 까닭은 [`Binding`] 이 `#[non_exhaustive]` 라서다 —
+/// 올리기가 좌표를 지어내지 않고 **읽은 것을 그대로** 옮기므로 그 강제를 안 깬다.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct LegacyBinding {
+    pub id: BindingId,
+    pub subject: EntityId,
+    pub target: SymbolId,
+    pub note: String,
+    pub bound_at: Snapshot,
+    pub bound_at_time: BoundTime,
+    pub radius: Radius,
+    pub watch: Vec<LegacyWatchEntry>,
+    pub promoted_by: PromotedBy,
+}
+
+impl From<LegacyBinding> for Binding {
+    fn from(b: LegacyBinding) -> Self {
+        Self {
+            id: b.id,
+            subject: b.subject,
+            target: b.target,
+            note: b.note,
+            bound_at: b.bound_at,
+            bound_at_time: b.bound_at_time,
+            radius: b.radius,
+            watch: b
+                .watch
+                .into_iter()
+                // **옛 판에는 장식 기준값이 없다** — 지어내지 않는다.
+                .map(|w| WatchEntry { symbol: w.symbol, digest: w.digest, decor: DecorBaseline::Unrecorded })
+                .collect(),
+            promoted_by: b.promoted_by,
+        }
+    }
 }
 
 /// 결박한 코드의 커밋 시각 — **표시용이다. 앵커가 아니다.**
@@ -431,16 +529,21 @@ impl Binding {
     /// 열거를 늘려야 한다"* 로 세운 것을 반경 변경이 우회하지 않는다.
     #[must_use]
     pub fn with_radius(self, radius: Radius, 넓힌_감시: Vec<WatchEntry>) -> Self {
-        let 옛: std::collections::BTreeMap<SymbolId, BodyDigest> =
-            self.watch.iter().map(|w| (w.symbol, w.digest)).collect();
+        // **장식 기준값도 옛 값을 지킨다**(#77) — 옛 판 결박의 `Unrecorded` 를 새로 읽은
+        // 값으로 덮으면 *"그때의 장식"* 이 아니라 *"넓힌 날의 장식"* 이 기준이 된다.
+        let 옛: std::collections::BTreeMap<SymbolId, (BodyDigest, DecorBaseline)> =
+            self.watch.iter().map(|w| (w.symbol, (w.digest, w.decor))).collect();
         let mut watch: Vec<WatchEntry> = 넓힌_감시
             .into_iter()
             // **옛 원소면 옛 값을 쓴다.** 부르는 쪽이 무엇을 읽어 왔든 여기서 덮인다.
-            .map(|w| WatchEntry { symbol: w.symbol, digest: *옛.get(&w.symbol).unwrap_or(&w.digest) })
+            .map(|w| {
+                let (digest, decor) = 옛.get(&w.symbol).copied().unwrap_or((w.digest, w.decor));
+                WatchEntry { symbol: w.symbol, digest, decor }
+            })
             .collect();
-        for (symbol, digest) in 옛 {
+        for (symbol, (digest, decor)) in 옛 {
             if !watch.iter().any(|w| w.symbol == symbol) {
-                watch.push(WatchEntry { symbol, digest });
+                watch.push(WatchEntry { symbol, digest, decor });
             }
         }
         // 결정론적 순서 — 같은 입력에서 같은 정본 JSONL 이 나온다(`A5` 의 재현).
@@ -528,8 +631,10 @@ impl UndeterminableReason {
 /// [R16]: ../../../docs/evidence-map.md
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Now {
-    /// 요약이 있다. **비교한다.**
-    Digest(BodyDigest),
+    /// 요약이 있다. **비교한다** — 본문과 선언 밖 장식(#77) 둘 다.
+    ///
+    /// 장식은 [`WatchEntry::decor`] 가 `Recorded` 일 때만 댄다([`DecorBaseline`] 머리).
+    Digest { body: BodyDigest, decor: BodyDigest },
     /// 좌표가 사라졌다.
     Gone,
     /// **비교할 값이 없다** — 사유와 함께.
@@ -662,8 +767,12 @@ impl BindingStatus {
 
         for w in &binding.watch {
             match now(w.symbol) {
-                Now::Digest(d) if d != w.digest => changed.push(w.symbol),
-                Now::Digest(_) => {}
+                // **장식은 기준값이 있을 때만 댄다**(#77 · [`DecorBaseline`]) — 옛 판 결박을
+                // 없는 기준값과 대면 코드가 안 바뀌었는데 `stale` 로 뒤집힌다.
+                Now::Digest { body, decor } if body != w.digest || w.decor.changed(decor) => {
+                    changed.push(w.symbol);
+                }
+                Now::Digest { .. } => {}
                 Now::Gone => gone.push(w.symbol),
                 Now::Undeterminable(r) => 못_봄.push((r, w.symbol)),
             }
@@ -902,7 +1011,7 @@ mod tests {
             ),
             bound_at_time: BoundTime::Committed { epoch_secs: 1_700_000_000 },
             radius: r,
-            watch: watch.iter().map(|(s, d)| WatchEntry { symbol: *s, digest: *d }).collect(),
+            watch: watch.iter().map(|(s, d)| WatchEntry { symbol: *s, digest: *d, decor: DecorBaseline::Unrecorded }).collect(),
         })
     }
 
@@ -910,11 +1019,74 @@ mod tests {
         BindingStatus::evaluate(b, Lineage::Current, now).code
     }
 
+    /// 본문 요약만 대는 지금 — 장식은 빈 장식이다. 옛 시험들이 장식 축과 무관하게 잰다.
+    fn 요약(d: BodyDigest) -> Now {
+        Now::Digest { body: d, decor: BodyDigest::of_normalized(b"") }
+    }
+
+    /// ★ **#77 — 기준값이 있는 장식이 변하면 `Stale` 이다.** 본문이 같아도.
+    #[test]
+    fn 기록된_장식이_변하면_stale() {
+        let s = 심볼("f");
+        let d = BodyDigest::of_normalized(b"x");
+        let 그때 = BodyDigest::of_normalized(b"#[derive(Debug)]");
+        let 지금 = BodyDigest::of_normalized(b"#[derive(Debug, Clone)]");
+        let mut b = 결박(s, d);
+        b.watch[0].decor = DecorBaseline::Recorded(그때);
+        assert_eq!(상태(&b, |_| Now::Digest { body: d, decor: 그때 }), CodeFreshness::Fresh);
+        assert_eq!(
+            상태(&b, |_| Now::Digest { body: d, decor: 지금 }),
+            CodeFreshness::Stale { triggered_by: vec![s] },
+            "장식이 변했는데 stale 이 아니다 — #77 이 그대로다"
+        );
+    }
+
+    /// ★ **#77 반대 방향 — 기준값이 없는 장식은 안 댄다.** 옛 판 결박이 뒤집히지 않고,
+    /// **판정 불가로도 안 올라간다** — 올라가면 본문이 변한 `Stale` 까지 덮인다.
+    #[test]
+    fn 기록_안_된_장식은_안_대고_본문_낡음을_덮지_않는다() {
+        let s = 심볼("f");
+        let d = BodyDigest::of_normalized(b"x");
+        let b = 결박(s, d);
+        assert!(b.watch[0].decor.unwatched(), "시험 픽스처가 옛 판 결박이 아니다");
+        let 아무_장식 = BodyDigest::of_normalized(b"#[must_use]");
+        assert_eq!(
+            상태(&b, |_| Now::Digest { body: d, decor: 아무_장식 }),
+            CodeFreshness::Fresh,
+            "기준값이 없는 장식과 대어 뒤집혔다 — 반대 방향의 거짓이다"
+        );
+        assert_eq!(
+            상태(&b, |_| Now::Digest { body: BodyDigest::of_normalized(b"y"), decor: 아무_장식 }),
+            CodeFreshness::Stale { triggered_by: vec![s] },
+            "본문이 변했는데 stale 이 아니다 — 장식 축이 본문 낡음을 덮었다"
+        );
+    }
+
+    /// `with_radius` 는 옛 원소의 **장식 기준값도** 지킨다 — `Unrecorded` 를 새로 읽은 값으로 안 덮는다.
+    #[test]
+    fn with_radius_는_옛_장식_기준값을_지킨다() {
+        let a = 심볼("a");
+        let b = 심볼("b");
+        let d = BodyDigest::of_normalized(b"x");
+        let 옛 = 결박(a, d);
+        let 새값 = DecorBaseline::Recorded(BodyDigest::of_normalized(b"#[cfg(x)]"));
+        let 넓힌 = 옛.with_radius(
+            crate::Radius::Callers,
+            vec![
+                WatchEntry { symbol: a, digest: d, decor: 새값 },
+                WatchEntry { symbol: b, digest: d, decor: 새값 },
+            ],
+        );
+        let 장식 = |s: SymbolId| 넓힌.watch.iter().find(|w| w.symbol == s).map(|w| w.decor);
+        assert_eq!(장식(a), Some(DecorBaseline::Unrecorded), "옛 원소의 장식 기준값이 덮였다");
+        assert_eq!(장식(b), Some(새값), "새 원소의 장식 기준값이 안 섰다");
+    }
+
     #[test]
     fn 안_변하면_살아_있다() {
         let s = 심볼("f");
         let d = BodyDigest::of_normalized(b"x");
-        assert_eq!(상태(&결박(s, d), |_| Now::Digest(d)), CodeFreshness::Fresh);
+        assert_eq!(상태(&결박(s, d), |_| 요약(d)), CodeFreshness::Fresh);
     }
 
     #[test]
@@ -922,7 +1094,7 @@ mod tests {
         let s = 심볼("f");
         let d = BodyDigest::of_normalized(b"x");
         let CodeFreshness::Stale { triggered_by } =
-            상태(&결박(s, d), |_| Now::Digest(BodyDigest::of_normalized(b"y")))
+            상태(&결박(s, d), |_| 요약(BodyDigest::of_normalized(b"y")))
         else {
             panic!("stale 이 아니다");
         };
@@ -975,7 +1147,7 @@ mod tests {
         let d = BodyDigest::of_normalized(b"x");
         let 결박 = 결박_반경(a, &[(a, d), (b, d)], crate::Radius::Callers);
         let code = 상태(&결박, |s| {
-            if s == b { Now::Undeterminable(UndeterminableReason::PartialParse) } else { Now::Digest(d) }
+            if s == b { Now::Undeterminable(UndeterminableReason::PartialParse) } else { 요약(d) }
         });
         assert_eq!(
             code,
@@ -994,12 +1166,12 @@ mod tests {
 
         // 대상이 사라지면 Orphaned — 다른 원소가 어떻든.
         assert!(matches!(
-            상태(&결박, |s| if s == a { Now::Gone } else { Now::Digest(d) }),
+            상태(&결박, |s| if s == a { Now::Gone } else { 요약(d) }),
             CodeFreshness::Orphaned { .. }
         ));
         // 대상이 아닌 원소가 사라지면 판정 불가.
         assert_eq!(
-            상태(&결박, |s| if s == b { Now::Gone } else { Now::Digest(d) }),
+            상태(&결박, |s| if s == b { Now::Gone } else { 요약(d) }),
             CodeFreshness::Undeterminable {
                 reason: UndeterminableReason::WatchMemberGone,
                 at: vec![b],
@@ -1033,13 +1205,13 @@ mod tests {
         // ① 원소가 사라지지 않았으면 **`Stale` 이다** — 이 하한이 없으면 아래 주장이
         //    「원래 Stale 이 아니었다」와 구별되지 않는다.
         assert_eq!(
-            상태(&결박, |s| if s == a { Now::Digest(새) } else { Now::Digest(옛) }),
+            상태(&결박, |s| if s == a { 요약(새) } else { 요약(옛) }),
             CodeFreshness::Stale { triggered_by: vec![a] },
             "대상이 변했는데 Stale 이 아니다 — 이 시험의 ②가 무엇을 가리는지 말할 수 없게 된다"
         );
 
         // ② 대상이 **같은 방식으로** 변했는데 원소 하나가 사라지면 — **가려진다.**
-        let 가려진 = 상태(&결박, |s| if s == b { Now::Gone } else { Now::Digest(새) });
+        let 가려진 = 상태(&결박, |s| if s == b { Now::Gone } else { 요약(새) });
         assert_eq!(
             가려진,
             CodeFreshness::Undeterminable {
@@ -1071,7 +1243,7 @@ mod tests {
         // 부르는 쪽이 **대상까지 HEAD 값으로** 읽어 왔다고 하자 — 흔한 실수다.
         let 넓힌 = 결박.clone().with_radius(
             crate::Radius::Callers,
-            vec![WatchEntry { symbol: a, digest: 새 }, WatchEntry { symbol: b, digest: 새 }],
+            vec![WatchEntry { symbol: a, digest: 새, decor: DecorBaseline::Unrecorded }, WatchEntry { symbol: b, digest: 새, decor: DecorBaseline::Unrecorded }],
         );
 
         let 대상_값 = 넓힌.watch.iter().find(|w| w.symbol == a).expect("대상이 감시에 있다").digest;
@@ -1102,7 +1274,7 @@ mod tests {
         // `symbol` 로 되돌리면 부르는 쪽이 대상 하나만 들고 온다.
         let 좁힌 = 넓은.clone().with_radius(
             crate::Radius::Symbol,
-            vec![WatchEntry { symbol: a, digest: d }],
+            vec![WatchEntry { symbol: a, digest: d, decor: DecorBaseline::Unrecorded }],
         );
         assert_eq!(좁힌.radius, crate::Radius::Symbol, "선언된 반경은 좁아진다");
         assert_eq!(
@@ -1123,17 +1295,17 @@ mod tests {
         let 하나 = 결박.clone().with_radius(
             crate::Radius::Callers,
             vec![
-                WatchEntry { symbol: c, digest: d },
-                WatchEntry { symbol: a, digest: d },
-                WatchEntry { symbol: b, digest: d },
+                WatchEntry { symbol: c, digest: d, decor: DecorBaseline::Unrecorded },
+                WatchEntry { symbol: a, digest: d, decor: DecorBaseline::Unrecorded },
+                WatchEntry { symbol: b, digest: d, decor: DecorBaseline::Unrecorded },
             ],
         );
         let 둘 = 결박.with_radius(
             crate::Radius::Callers,
             vec![
-                WatchEntry { symbol: b, digest: d },
-                WatchEntry { symbol: c, digest: d },
-                WatchEntry { symbol: a, digest: d },
+                WatchEntry { symbol: b, digest: d, decor: DecorBaseline::Unrecorded },
+                WatchEntry { symbol: c, digest: d, decor: DecorBaseline::Unrecorded },
+                WatchEntry { symbol: a, digest: d, decor: DecorBaseline::Unrecorded },
             ],
         );
         assert_eq!(하나.watch, 둘.watch, "입력 순서가 산출을 바꿨다 — 재현이 성립하지 않는다");
@@ -1148,7 +1320,7 @@ mod tests {
         let 결박 = 결박_반경(a, &[(a, d), (b, d)], crate::Radius::Callers);
         let code = 상태(&결박, |s| {
             if s == a {
-                Now::Digest(d)
+                요약(d)
             } else if s == b {
                 Now::Undeterminable(UndeterminableReason::PartialParse)
             } else {
@@ -1175,7 +1347,7 @@ mod tests {
 
         let 조합 = |lineage: Lineage, 변했나: bool| {
             BindingStatus::evaluate(&b, lineage, |_| {
-                Now::Digest(if 변했나 { BodyDigest::of_normalized(b"y") } else { d })
+                요약(if 변했나 { BodyDigest::of_normalized(b"y") } else { d })
             })
         };
 
@@ -1361,8 +1533,8 @@ mod tests {
         늦은.bound_at_time = BoundTime::Committed { epoch_secs: 1 };
         let mut 이른 = 결박(s, d);
         이른.bound_at_time = BoundTime::Worktree;
-        assert_eq!(상태(&늦은, |_| Now::Digest(d)), 상태(&이른, |_| Now::Digest(d)));
-        assert_eq!(상태(&늦은, |_| Now::Digest(d)), CodeFreshness::Fresh);
+        assert_eq!(상태(&늦은, |_| 요약(d)), 상태(&이른, |_| 요약(d)));
+        assert_eq!(상태(&늦은, |_| 요약(d)), CodeFreshness::Fresh);
     }
 }
 
@@ -1490,6 +1662,11 @@ pub struct BindingReport {
     pub radius: String,
     /// 감시 집합의 크기. **`callers` 인데 1 이면 이웃이 없었다는 뜻이고 그것이 보인다.**
     pub watch: usize,
+    /// 감시 원소 중 **속성·수신자 기준값이 없는** 것의 수([`DecorBaseline::Unrecorded`] · #77).
+    ///
+    /// 0 이 아니면 그만큼은 속성·수신자 변경에 `stale` 이 안 붙는다 — 옛 판 결박이다.
+    /// [`Self::watch_grades`] 와 같은 자리다: **닫히지 않는 것을 선언으로 싣는다.**
+    pub decor_unwatched: usize,
     /// 감시 원소의 정체성 등급 분포 — `{"exact": 3, "ordinal": 1}`.
     pub watch_grades: std::collections::BTreeMap<&'static str, usize>,
     pub status: BindingStatus,

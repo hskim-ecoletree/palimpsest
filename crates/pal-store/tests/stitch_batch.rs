@@ -39,6 +39,7 @@ fn 파일치(i: usize) -> FileStitch {
         name: name.to_owned(),
         kind: SymbolKind::Function,
         body: BodyDigest::of_normalized(name.as_bytes()),
+        decor: BodyDigest::of_normalized(b""),
         span: Span { byte_start: 0, byte_end: 1, line_start: 1, line_end: 1 },
         identity: IdentityGrade::Exact,
     };

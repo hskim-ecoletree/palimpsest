@@ -582,7 +582,12 @@ fn 결박한다(
         let Some(실물) = projection.symbol(s).context("2층을 읽지 못했다")? else {
             bail!("`{s}` 를 2층에서 읽지 못했다 — 반경을 펴는 중에 투영이 갈렸다");
         };
-        watch.push(pal_core::WatchEntry { symbol: s, digest: 실물.body });
+        watch.push(pal_core::WatchEntry {
+            symbol: s,
+            digest: 실물.body,
+            // 장식(속성·수신자)도 **투영이 잰 값**이다 — 제안이 지고 오지 않는다(#77).
+            decor: pal_core::DecorBaseline::Recorded(실물.decor),
+        });
     }
     pal_core::check_budget(1, watch.len()).map_err(|e| anyhow::anyhow!("{e}"))?;
     pal_core::Binding::promote(

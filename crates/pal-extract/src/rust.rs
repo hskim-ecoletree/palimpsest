@@ -315,6 +315,77 @@ fn 원문(node: Node<'_>, source: &[u8]) -> String {
     node.utf8_text(source).unwrap_or_default().to_owned()
 }
 
+/// 선언 **밖**의 장식 — 앞 형제 속성들과 메서드 수신자 — 의 정규형 (#77).
+///
+/// # 무엇이 들어가나
+///
+/// | 조각 | 왜 [`normalize`] 가 못 봤나 |
+/// |---|---|
+/// | 앞 형제 `attribute_item` 들(`#[derive]` · `#[cfg]` · `#[serde(…)]` · `#[must_use]`) | 선언 마디 **밖**이다. span 을 넓히면 서술물 자리 맵이 갈린다(#66) |
+/// | `self_parameter` 의 **모든** 잎 토큰 | `&` 가 맨 앞 자식이라 [`crate::parse`] 의 선행 구분자 규칙이 벗긴다 — `&self` 와 `self` 가 같아진다 |
+///
+/// # 속성은 [`normalize`] 로 — 주석·공백은 여전히 안 움직인다(ADR-0007)
+///
+/// 속성 사이·안의 주석은 건너뛴다. 안 건너뛰면 `/// doc` 한 줄을 속성과 선언 사이에 넣는 것만으로
+/// 속성이 끊겨 요약이 움직인다. **다른 마디**(빈 줄은 마디가 아니다)를 만나면 멈춘다.
+///
+/// # 수신자는 원문 토큰으로 — **벗기지 않는 것이 요점이다**
+///
+/// 선행 구분자 규칙은 TypeScript 타입의 `| A | B` 를 위해 생겼고 **두 언어가 한 규칙을 따른다**
+/// (모듈 머리). 그 규칙을 Rust 에서만 끄면 본문 요약이 움직여 이미 선 결박이 뒤집힌다.
+/// 그래서 규칙은 그대로 두고, **수신자만 이 축에서 벗기지 않고 싣는다.**
+///
+/// 두 조각 사이에 표식을 둔다 — 없으면 *"속성 끝 토큰 + 수신자 없음"* 과 *"수신자"* 가 섞일 수 있다.
+fn 장식(node: Node<'_>, source: &[u8]) -> Vec<u8> {
+    /// 속성 조각과 수신자 조각을 가르는 표식. **정규형에 안 나오는 바이트다**
+    /// (`parse` 의 표식 0x1a · 0x1c · 0x1d · 0x1e · 0x1f 와 겹치지 않는다).
+    const 수신자_표식: u8 = 0x1b;
+
+    let mut 속성들 = Vec::new();
+    let mut 앞 = node.prev_sibling();
+    while let Some(p) = 앞 {
+        match p.kind() {
+            "attribute_item" => 속성들.push(p),
+            k if k.contains("comment") => {}
+            _ => break,
+        }
+        앞 = p.prev_sibling();
+    }
+    let mut out = Vec::new();
+    for a in 속성들.iter().rev() {
+        out.extend(normalize(*a, source));
+    }
+
+    let 수신자 = node.child_by_field_name("parameters").and_then(|ps| {
+        let mut cursor = ps.walk();
+        let found = ps.named_children(&mut cursor).find(|c| c.kind() == "self_parameter");
+        found
+    });
+    if let Some(r) = 수신자 {
+        out.push(수신자_표식);
+        잎_토큰(r, source, &mut out);
+    }
+    out
+}
+
+/// 마디 아래 잎 토큰을 **벗기지 않고** 모은다 — 주석만 버린다.
+fn 잎_토큰(node: Node<'_>, source: &[u8], out: &mut Vec<u8>) {
+    if node.kind().contains("comment") {
+        return;
+    }
+    if node.child_count() == 0 {
+        out.extend_from_slice(&source[node.byte_range()]);
+        out.push(0x1f);
+        return;
+    }
+    let mut cursor = node.walk();
+    let kids: Vec<Node<'_>> = node.children(&mut cursor).collect();
+    drop(cursor);
+    for k in kids {
+        잎_토큰(k, source, out);
+    }
+}
+
 /// 선언들을 소스 순서로 + **파싱이 성했는가**.
 ///
 /// # Errors
@@ -356,6 +427,9 @@ pub fn extract_with(source: &[u8], rules: RustScopeRules) -> Result<FileGraph, E
             name: c.name.clone(),
             kind: c.kind,
             body: BodyDigest::of_normalized(&normalize(c.node, source)),
+            // **본문과 다른 축이다**(#77) — 속성은 앞 형제라 위 정규형에 안 들고, 수신자의
+            // `&` 는 정규화가 벗긴다. 본문에 섞으면 이미 선 결박이 코드 변화 없이 뒤집힌다.
+            decor: BodyDigest::of_normalized(&장식(c.node, source)),
             // **L1 이라 심볼 단위로도 `ordinal` 이다.** 스코프 체인이 서도 그대로다 —
             // `body_digest` 가 지역 이름을 지우기 시작하면 결박 25 건이 통째로 `stale`
             // 이 되고, 이 회차는 그것을 안 하기로 했다(`C1`·`C2`).
@@ -851,6 +925,7 @@ mod tests {
                 name: s.name.clone(),
                 kind: s.kind,
                 body: s.body,
+                decor: s.decor,
                 span: s.span,
                 identity: s.identity,
             })
@@ -902,6 +977,7 @@ mod tests {
                 name: s.name.clone(),
                 kind: s.kind,
                 body: s.body,
+                decor: s.decor,
                 span: s.span,
                 identity: s.identity,
             })

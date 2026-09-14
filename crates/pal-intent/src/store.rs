@@ -15,14 +15,65 @@
 
 use std::path::Path;
 
-use pal_core::{Binding, BindingId, EntityId, Refusal, SymbolId};
+use pal_core::{Binding, BindingId, EntityId, LegacyBinding, Refusal, SymbolId};
 use redb::{
     Database, MultimapTableDefinition, ReadOnlyDatabase, ReadableDatabase, ReadableMultimapTable,
     ReadableTable, ReadableTableMetadata, TableDefinition,
 };
 
-/// 결박 실체.
-const BINDING: TableDefinition<&str, Vec<u8>> = TableDefinition::new("binding");
+/// 결박 실체 — **판 3 모양**(감시 원소가 장식 기준값을 진다 · #77).
+const BINDING: TableDefinition<&str, Vec<u8>> = TableDefinition::new("binding.v3");
+
+/// 결박 실체 — **판 2 까지의 모양. 읽기만 한다** (#77).
+///
+/// # 왜 표를 가르나 — postcard 는 자리 기반이다
+///
+/// [`pal_core::WatchEntry`] 에 칸이 하나 붙었다. 옛 바이트를 새 타입으로 풀면 **멎거나, 더
+/// 나쁘게는 어긋난 채 풀린다** — 다음 원소의 첫 바이트가 새 칸의 열거 태그로 읽힌다. 그리고
+/// 이 파일은 **재생 불가능한 유일한 데이터**라([R-21]) *"지우고 JSONL 에서 다시"* 가 답이 아니다 —
+/// 내보내기 뒤에 건 결박이 여기에만 있을 수 있다.
+///
+/// 그래서 **모양마다 표가 따로다.** 새 쓰기는 [`BINDING`] 에만 가고, 읽기는 새 표를 먼저 보고
+/// 없으면 이 표를 [`LegacyBinding`] 으로 풀어 올린다. **옛 표를 지우거나 고쳐 쓰는 경로가 없다** —
+/// 같은 id 가 새 표에 다시 적히면 새 표가 이긴다.
+///
+/// [R-21]: ../../../docs/plan/00-risks.md#r-21
+const BINDING_LEGACY: TableDefinition<&str, Vec<u8>> = TableDefinition::new("binding");
+
+/// id 하나 — **새 표를 먼저 보고, 없으면 옛 표를 올린다.**
+fn 결박_하나(read: &redb::ReadTransaction, id: &str) -> Result<Option<Binding>, IntentError> {
+    if let Ok(t) = read.open_table(BINDING) {
+        if let Some(v) = t.get(id).map_err(|e| IntentError::Transaction(e.to_string()))? {
+            return postcard::from_bytes(&v.value())
+                .map(Some)
+                .map_err(|e| IntentError::Decode(e.to_string()));
+        }
+    }
+    if let Ok(t) = read.open_table(BINDING_LEGACY) {
+        if let Some(v) = t.get(id).map_err(|e| IntentError::Transaction(e.to_string()))? {
+            return postcard::from_bytes::<LegacyBinding>(&v.value())
+                .map(|b| Some(Binding::from(b)))
+                .map_err(|e| IntentError::Decode(format!("옛 판(2) 결박 `{id}`: {e}")));
+        }
+    }
+    Ok(None)
+}
+
+/// 두 표의 결박 id 합집합 — **정렬돼 있다**(`BTreeSet` · [`BindingId`] 의 순서가 문자열 순서다).
+fn 결박_id들(
+    read: &redb::ReadTransaction,
+) -> Result<std::collections::BTreeSet<String>, IntentError> {
+    let mut ids = std::collections::BTreeSet::new();
+    for def in [BINDING, BINDING_LEGACY] {
+        let Ok(t) = read.open_table(def) else { continue };
+        for row in t.iter().map_err(|e| IntentError::Transaction(e.to_string()))? {
+            let (k, _) =
+                row.map_err(|e: redb::StorageError| IntentError::Transaction(e.to_string()))?;
+            ids.insert(k.value().to_owned());
+        }
+    }
+    Ok(ids)
+}
 
 /// 대상 심볼 → 결박들. **역방향 색인** — `touch` 가 이것을 읽는다.
 const BOUND_BY: MultimapTableDefinition<&[u8], &str> = MultimapTableDefinition::new("bound_by");
@@ -240,7 +291,7 @@ impl IntentStore {
     /// 읽기가 실패하거나 값을 풀지 못하면.
     pub fn bindings_watching(&self, changed: &[SymbolId]) -> Result<Vec<Binding>, IntentError> {
         let Some(read) = self.read()? else { return Ok(Vec::new()) };
-        let (Ok(watch), Ok(t)) = (read.open_multimap_table(WATCH), read.open_table(BINDING)) else {
+        let Ok(watch) = read.open_multimap_table(WATCH) else {
             return Ok(Vec::new());
         };
         let mut ids: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
@@ -256,14 +307,8 @@ impl IntentStore {
         }
         let mut out = Vec::new();
         for id in ids {
-            if let Some(v) = t
-                .get(id.as_str())
-                .map_err(|e| IntentError::Transaction(e.to_string()))?
-            {
-                out.push(
-                    postcard::from_bytes(&v.value())
-                        .map_err(|e| IntentError::Decode(e.to_string()))?,
-                );
+            if let Some(b) = 결박_하나(&read, id.as_str())? {
+                out.push(b);
             }
         }
         out.sort_by(|a: &Binding, b: &Binding| a.id.cmp(&b.id));
@@ -313,8 +358,7 @@ impl IntentStore {
     /// 읽기가 실패하면.
     pub fn bound_to(&self, target: SymbolId) -> Result<Vec<Binding>, IntentError> {
         let Some(read) = self.read()? else { return Ok(Vec::new()) };
-        let (Ok(idx), Ok(t)) = (read.open_multimap_table(BOUND_BY), read.open_table(BINDING))
-        else {
+        let Ok(idx) = read.open_multimap_table(BOUND_BY) else {
             return Ok(Vec::new());
         };
 
@@ -324,13 +368,8 @@ impl IntentStore {
             .map_err(|e| IntentError::Transaction(e.to_string()))?;
         for id in ids {
             let id = id.map_err(|e| IntentError::Transaction(e.to_string()))?;
-            if let Some(v) =
-                t.get(id.value()).map_err(|e| IntentError::Transaction(e.to_string()))?
-            {
-                out.push(
-                    postcard::from_bytes(&v.value())
-                        .map_err(|e| IntentError::Decode(e.to_string()))?,
-                );
+            if let Some(b) = 결박_하나(&read, id.value())? {
+                out.push(b);
             }
         }
         out.sort_by(|a: &Binding, b: &Binding| a.id.cmp(&b.id));
@@ -343,17 +382,7 @@ impl IntentStore {
     /// 읽기가 실패하면.
     pub fn get(&self, id: &BindingId) -> Result<Option<Binding>, IntentError> {
         let Some(read) = self.read()? else { return Ok(None) };
-        let Ok(t) = read.open_table(BINDING) else {
-            return Ok(None);
-        };
-        let got =
-            t.get(id.as_str()).map_err(|e| IntentError::Transaction(e.to_string()))?;
-        match got {
-            None => Ok(None),
-            Some(v) => Ok(Some(
-                postcard::from_bytes(&v.value()).map_err(|e| IntentError::Decode(e.to_string()))?,
-            )),
-        }
+        결박_하나(&read, id.as_str())
     }
 
     /// 결박 전부. **`doctor` 가 그래프를 세우려면 하나가 아니라 전부가 필요하다.**
@@ -368,18 +397,11 @@ impl IntentStore {
     /// 읽기가 실패하거나 값을 풀지 못하면.
     pub fn all(&self) -> Result<Vec<Binding>, IntentError> {
         let Some(read) = self.read()? else { return Ok(Vec::new()) };
-        let Ok(t) = read.open_table(BINDING) else {
-            return Ok(Vec::new());
-        };
         let mut out = Vec::new();
-        let range = t.iter().map_err(|e| IntentError::Transaction(e.to_string()))?;
-        for row in range {
-            let (_, v) = row.map_err(|e: redb::StorageError| {
-                IntentError::Transaction(e.to_string())
-            })?;
-            let binding: Binding = postcard::from_bytes(&v.value())
-                .map_err(|e| IntentError::Decode(e.to_string()))?;
-            out.push(binding);
+        for id in 결박_id들(&read)? {
+            if let Some(b) = 결박_하나(&read, &id)? {
+                out.push(b);
+            }
         }
         out.sort_by(|a: &Binding, b: &Binding| a.id.cmp(&b.id));
         Ok(out)
@@ -499,11 +521,8 @@ impl IntentStore {
         // **파일이 없으면 0 이고 그것이 정확한 값이다** — 아직 아무도 안 걸었다.
         // 깨진 경우는 여기 못 온다(`open_read_only` 가 오류를 일으킨다).
         let Some(read) = self.read()? else { return Ok(0) };
-        let Ok(t) = read.open_table(BINDING) else {
-            return Ok(0);
-        };
-        let n: u64 = t.len().map_err(|e: redb::StorageError| IntentError::Transaction(e.to_string()))?;
-        Ok(usize::try_from(n).unwrap_or(usize::MAX))
+        // **두 표의 합집합이다**(#77) — 옛 표에 남은 결박을 빼면 건수가 조용히 준다.
+        Ok(결박_id들(&read)?.len())
     }
 }
 
@@ -602,10 +621,19 @@ use serde::{Deserialize, Serialize};
 ///
 /// **판 1 을 읽을 수 있어야 한다.** 못 읽으면 그것은 유실이고, 이 저장소에서
 /// **재생 불가능한 유일한 데이터**다([R-21]). 올리는 규칙은 [`올린다`] 에 있다.
-pub const JSONL_SCHEMA_VERSION: u32 = 2;
+///
+/// # 2 → 3 (#77 · 2026-09-14)
+///
+/// 감시 원소가 `decor`([`pal_core::DecorBaseline`]) — 결박 시점의 속성·수신자 요약 — 를 싣는다.
+/// **판 2 파일은 그 칸이 없고, 없는 것은 `unrecorded` 가 정확한 값이다**(`#[serde(default)]`).
+/// 그 결박은 속성·수신자 축을 비교하지 않고 화면이 그 사실을 말한다.
+///
+/// **판을 올리는 까닭** — 안 올리면 옛 빌드가 판 3 파일을 판 2 로 읽고 `decor` 를 **조용히 버린다**
+/// (`serde` 는 모르는 칸을 무시한다). 그 파일을 다시 내보내면 기준값이 사라진다.
+pub const JSONL_SCHEMA_VERSION: u32 = 3;
 
 /// 이 빌드가 **읽을 수 있는** 판들. 내보내기는 언제나 최신이다.
-pub const READABLE_SCHEMA_VERSIONS: &[u32] = &[1, 2];
+pub const READABLE_SCHEMA_VERSIONS: &[u32] = &[1, 2, 3];
 
 /// JSONL 한 줄.
 ///

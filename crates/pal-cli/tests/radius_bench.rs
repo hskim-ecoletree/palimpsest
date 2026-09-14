@@ -93,6 +93,7 @@ fn 그래프(n: usize) -> Vec<FileStitch> {
             name: format!("s{f}_{i}"),
             kind: SymbolKind::Function,
             body: BodyDigest::of_normalized(format!("s{f}_{i}").as_bytes()),
+            decor: BodyDigest::of_normalized(b""),
             span: Span { byte_start: i, byte_end: i + 1, line_start: 1, line_end: 1 },
             identity: IdentityGrade::Exact,
         };
@@ -197,7 +198,7 @@ fn 의도_저장소(dir: &std::path::Path, p: &Projection, 대상: &[SymbolId]) 
             .map(|s| {
                 let body = p.symbol(s).expect("조회").map_or(BodyDigest::of_normalized(b""), |x| x.body);
                 감시된.push(s);
-                WatchEntry { symbol: s, digest: body }
+                WatchEntry { symbol: s, digest: body, decor: pal_core::DecorBaseline::Recorded(BodyDigest::of_normalized(b"")) }
             })
             .collect();
         let b = Binding::new(NewBinding {

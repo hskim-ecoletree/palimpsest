@@ -793,7 +793,7 @@ fn 결박_상태(ctx: &QueryCtx, b: &Binding) -> BindingStatus {
         Ok(Some(n)) if ctx.partial_files.contains(&n.path) => {
             Now::Undeterminable(UndeterminableReason::PartialParse)
         }
-        Ok(Some(n)) => Now::Digest(n.body),
+        Ok(Some(n)) => Now::Digest { body: n.body, decor: n.decor },
         Ok(None) => Now::Gone,
         // **읽기 실패를 「사라졌다」로 적지 않는다.** 못 읽은 것과 없는 것은 다른
         // 사건이고, 뭉개면 저장 오류가 `Orphaned` 로 나가 사람이 코드를 고치러 간다.
@@ -828,6 +828,7 @@ fn binding_reports(ctx: &QueryCtx, accessed: &mut Vec<SymbolId>) -> Vec<BindingR
             target: b.target,
             radius: b.radius.name(),
             watch: b.watch.len(),
+            decor_unwatched: b.watch.iter().filter(|w| w.decor.unwatched()).count(),
             watch_grades: grades,
             status,
             bound_at: b.bound_at.clone(),
@@ -929,6 +930,7 @@ fn bound_item(
         status: 결박_상태(ctx, b),
         radius: b.radius.name(),
         watch: b.watch.len(),
+        decor_unwatched: b.watch.iter().filter(|w| w.decor.unwatched()).count(),
         bound_at_time: b.bound_at_time,
         at,
     }

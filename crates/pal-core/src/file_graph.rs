@@ -487,6 +487,7 @@ mod tests {
             kind: SymbolKind::Class,
             span: Span { byte_start: 0, byte_end: 1, line_start: 1, line_end: 1 },
             body: BodyDigest::of_normalized(name.as_bytes()),
+            decor: BodyDigest::of_normalized(b""),
             identity: crate::IdentityGrade::Ordinal,
         }
     }
