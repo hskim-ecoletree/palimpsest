@@ -396,3 +396,4 @@
 | 8 | 판 `p2-caller-sites` 실패 — 승인 전제 「조건을 약하게 고치지 않는다」 아래에서 `E2` ⑵ · `E4` 의 C 문면을 고치는 것을 정정으로 받는가 | *「정정으로 받는다」* ⟨2026-09-14⟩ |
 | 9 | push 한 `701acb5` 의 CI 가 `windows-latest` 에서만 빨갛다(`pal radius` 가 연 `intent.redb` 를 워킹트리 스캔이 다시 읽다 잠김 · 원인은 앞 회차 `ee93b35`) — 원문 「push 한 번」을 넘어 고치고 다시 push 하는가 | *「고치고 한 번 더 push」* ⟨2026-09-14⟩ — `oracle/F2-ci-701acb5.txt` |
 | 10 | CI 결과를 두 원장에 옮기는 전사 커밋이 새 마지막 SHA 가 된다 — 그 커밋을 push 하는가 | *「로컬에 두고 push 안 함」* ⟨2026-09-14⟩ |
+| 11 | 두 번째 push `4398134` 의 CI 도 `windows-latest` 빨강(`1bcdc93` 이 원장 하나만 옮겼다 · base 원장에서 `index.redb` 잠금). 고친 `3f69ccd` 는 macOS 에서 원리상 못 잰다 — 세 번째 push 를 어떻게 하는가 | *「브랜치 PR 로 Windows CI 먼저」* ⟨2026-09-14⟩ — `oracle/F2-ci-4398134.txt` |
