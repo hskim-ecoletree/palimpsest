@@ -1,0 +1,116 @@
+# A6 ⑴ — `cargo xtask test` · 최종 커밋
+
+- HEAD `5b4a37f` · 2026-09-14T00:38:17Z 끝
+- `test result` 줄 합: 통과 1124 · 실패 0 · 무시 3 · rc=0
+- `cross_file_references`:      Running tests/cross_file_references.rs (target/debug/deps/cross_file_references-7350691b345555b0)
+
+```
+     Running `target/debug/xtask test`
+test result: ok. 100 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.42s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.27s
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.71s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.63s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.96s
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.34s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.62s
+test result: ok. 50 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.50s
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.13s
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.17s
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.71s
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.95s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.58s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.91s
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.01s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.52s
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.83s
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.84s
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 28.85s
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.18s
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.70s
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.78s
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.13s
+test result: ok. 13 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 5.80s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+test result: ok. 253 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 163 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.77s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.60s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
+test result: ok. 66 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+     Running unittests src/main.rs (target/debug/deps/pal-d5f2ff530324d9e5)
+     Running tests/bind_preserves_edges.rs (target/debug/deps/bind_preserves_edges-0ad702e4d9e7de84)
+     Running tests/binding_status.rs (target/debug/deps/binding_status-ec2b002a016f304c)
+     Running tests/cache_hygiene.rs (target/debug/deps/cache_hygiene-d051785c564f2792)
+     Running tests/catalog_surface.rs (target/debug/deps/catalog_surface-ab9b0f5a6511f465)
+     Running tests/cross_file_references.rs (target/debug/deps/cross_file_references-7350691b345555b0)
+     Running tests/envelope_two_layer.rs (target/debug/deps/envelope_two_layer-41384a37fa2188f4)
+     Running tests/export_ascii.rs (target/debug/deps/export_ascii-e9f2506fcf325292)
+     Running tests/hook.rs (target/debug/deps/hook-5ec31ad6f936bdfd)
+     Running tests/host_free.rs (target/debug/deps/host_free-4a4840e021c005f0)
+     Running tests/install.rs (target/debug/deps/install-6a1a1e2e114badc6)
+     Running tests/install_boundary.rs (target/debug/deps/install_boundary-6cc8bd2f5f5dc9be)
+     Running tests/install_eol.rs (target/debug/deps/install_eol-03794e2d907e72a3)
+     Running tests/install_hooks.rs (target/debug/deps/install_hooks-dce2d19820f58bcc)
+     Running tests/install_hostile.rs (target/debug/deps/install_hostile-1b827716b86edffa)
+     Running tests/install_recovery.rs (target/debug/deps/install_recovery-d34f8ef1d4553c3a)
+     Running tests/install_stays_inside.rs (target/debug/deps/install_stays_inside-622c821939d175de)
+     Running tests/intent_jsonl.rs (target/debug/deps/intent_jsonl-9d2664ecb9c0ee1a)
+     Running tests/narrative_read_only.rs (target/debug/deps/narrative_read_only-7a9e9020ccad5424)
+     Running tests/pending_and_pick.rs (target/debug/deps/pending_and_pick-e5e6a03845684ded)
+     Running tests/prune_boundary.rs (target/debug/deps/prune_boundary-77327490f5bb5b83)
+     Running tests/query_envelope.rs (target/debug/deps/query_envelope-5365c0a5931d5a9b)
+     Running tests/radius_bench.rs (target/debug/deps/radius_bench-95128a35411662d6)
+     Running tests/radius_preserves_verdict.rs (target/debug/deps/radius_preserves_verdict-1e482a94972e6843)
+     Running tests/rebuild_equivalence.rs (target/debug/deps/rebuild_equivalence-34ce05b74080e815)
+     Running tests/round_approve_verify.rs (target/debug/deps/round_approve_verify-88e9fba0d660e986)
+     Running tests/round_scripts_run.rs (target/debug/deps/round_scripts_run-7c8fbbe4b90f7f54)
+     Running tests/round_status.rs (target/debug/deps/round_status-910f4f13b5e2a55b)
+     Running tests/round_stop.rs (target/debug/deps/round_stop-290a485e335cc7b6)
+     Running tests/rust_references.rs (target/debug/deps/rust_references-8337952b427e8c4a)
+     Running tests/stitching.rs (target/debug/deps/stitching-8a3dcbfb1c420fa7)
+     Running tests/touch_recall.rs (target/debug/deps/touch_recall-4f51b84863c0483c)
+     Running tests/ts_cross_file.rs (target/debug/deps/ts_cross_file-8c5d1bdb29522312)
+     Running tests/user_vocabulary.rs (target/debug/deps/user_vocabulary-db0c671d016205f6)
+     Running tests/version_is_in_the_binary.rs (target/debug/deps/version_is_in_the_binary-a499efc4f9585d39)
+     Running unittests src/lib.rs (target/debug/deps/pal_core-375579fdb580697d)
+     Running unittests src/lib.rs (target/debug/deps/pal_extract-662af4e2f4821fe3)
+     Running tests/normalize_props.rs (target/debug/deps/normalize_props-37b309d56200d178)
+     Running unittests examples/coord_collisions.rs (target/debug/examples/coord_collisions-e11ed2799837a736)
+     Running unittests examples/count_marked.rs (target/debug/examples/count_marked-3f4e7937a3f4fa38)
+     Running unittests examples/scope_variants.rs (target/debug/examples/scope_variants-31f844c62f13aee0)
+     Running unittests src/lib.rs (target/debug/deps/pal_git-02655cc99042d726)
+     Running unittests src/lib.rs (target/debug/deps/pal_intent-eb9b989ea430f422)
+     Running tests/survives_wipe.rs (target/debug/deps/survives_wipe-ed67a4e8932764c3)
+     Running unittests src/lib.rs (target/debug/deps/pal_query-4e8168261dc995ba)
+     Running tests/bench.rs (target/debug/deps/bench-025af106531b0ed9)
+     Running unittests src/lib.rs (target/debug/deps/pal_store-8befc3cc280c33e3)
+     Running tests/isolation.rs (target/debug/deps/isolation-daefe5bacb7e5e4b)
+     Running tests/stitch_batch.rs (target/debug/deps/stitch_batch-804a26a339ff27bb)
+     Running unittests src/main.rs (target/debug/deps/xtask-2c21fc23194ccb63)
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.73s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+```

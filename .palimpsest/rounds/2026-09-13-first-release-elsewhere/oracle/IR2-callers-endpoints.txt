@@ -1,0 +1,7 @@
+# touch 호출자 수 = `symbol.callers` 줄 수 — 그 전제를 잰다
+
+- 바이너리 `pal 0.0.0+5b4a37f08e8b` · ditto 새 복제본 `aded7ce` · `pal query graph.dump --json`
+- 전제: `touch` 는 `p.callers(id).len()`(`crates/pal-query/src/lib.rs:839`), 질의는 같은 `p.callers(id)` 에서 `p.symbol(id)` 가 없는 id 를 거른다(`:576`). 두 수는 **엣지 끝이 전부 심볼 표에 있을 때** 같다.
+- 노드 4656 · 엣지 9764 · 출발이 심볼 표에 없는 엣지 **0** · 도착이 없는 엣지 **0**
+
+## 판정: 전제가 선다 — 이 스냅샷에서 두 수가 갈리는 엣지가 없다
