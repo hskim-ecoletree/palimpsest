@@ -1,0 +1,14 @@
+pal --version
+pal install
+pal doctor --install
+pal narrative
+pal touch codexHostAdapter
+pal narrative --approve decision/01M2G5MYTZW0G8J86QX6K763DB --pick cbd4e6567928
+pal touch codexHostAdapter
+mkdir -p .palimpsest/intent
+pal intent export --out .palimpsest/intent/bindings.jsonl
+git add .palimpsest/manifest.toml .palimpsest/intent/bindings.jsonl
+git add <있는 파일만> (README 에서 어긋남 — deviation.txt)
+git commit -m palimpsest 선언과 결박
+pal intent import .palimpsest/intent/bindings.jsonl
+pal touch codexHostAdapter

@@ -1,0 +1,20 @@
+$ pal narrative  (cwd ditto)
+
+■ 서술물 인입
+  문서 316 · 조각 4903 · 새 개체 4903
+  결박됨 137 · 후보 있음 1024 · 미결박 3742
+
+■ 무엇이 걸었나
+  attached               137
+  fenced-path            13
+  span                   1011
+
+■ 이 인입이 못 본 것
+  이력 창 400 커밋 · 창 밖에서 마지막으로 바뀐 문서 166
+  **그 문서들에는 「같은 커밋」 신호가 없습니다** — 없는 것이지 0 이 아닙니다.
+
+  **아무것도 승인하지 않았습니다.** `inferred` 는 사람의 승인으로만 `asserted` 가 됩니다.
+  좌표마다 승인할 조각은 `pal touch <이름>` 의 「승인 대기」가 싣습니다.
+  승인하는 명령 — 예: pal narrative --approve decision/01M2G5MF76YRT9TBCJZH1JMBFR --pick 24a8b5f65c67
+
+rc=0

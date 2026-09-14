@@ -1,0 +1,8 @@
+commit e6e4ecbdd59003c09402842d1e3ea9ec319ac120
+Author: walk <walk@example.invalid>
+Date:   Mon Sep 14 23:38:14 2026 +0900
+
+    palimpsest 선언과 결박
+
+ .palimpsest/intent/bindings.jsonl | 2 ++
+ 1 file changed, 2 insertions(+)

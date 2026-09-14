@@ -1,0 +1,5 @@
+$ pal intent import .palimpsest/intent/bindings.jsonl  (cwd ditto-teammate)
+결박 1 · 별칭 0 · 이미 있던 것 0
+
+  **바꿔치기가 아니라 더하기다** — 파일에 없던 결박은 그대로 남아 있습니다.
+rc=0

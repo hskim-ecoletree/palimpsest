@@ -1,0 +1,2 @@
+# 준비(README 밖): git clone ~/dev/projects/ditto ditto
+# 준비(README 밖): git clone ditto ditto-teammate

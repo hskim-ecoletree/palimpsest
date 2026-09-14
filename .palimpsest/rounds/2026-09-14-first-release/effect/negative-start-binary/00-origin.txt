@@ -1,0 +1,2 @@
+# 원본 HEAD(착수 전)
+aded7ce7f88feb3c03238c5f9760f3a2ade4a6c1

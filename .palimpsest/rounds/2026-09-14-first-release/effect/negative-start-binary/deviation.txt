@@ -1,0 +1,3 @@
+README 의 git add 줄이 rc!=0 — 있는 파일만 더한다:
+  없음 .palimpsest/manifest.toml
+  더함 .palimpsest/intent/bindings.jsonl

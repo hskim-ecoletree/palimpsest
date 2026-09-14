@@ -1,0 +1,3 @@
+$ git add .palimpsest/manifest.toml .palimpsest/intent/bindings.jsonl  (cwd ditto)
+fatal: pathspec '.palimpsest/manifest.toml' did not match any files
+rc=128

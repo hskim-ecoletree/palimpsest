@@ -1,0 +1,9 @@
+$ pal narrative --approve decision/01M2G5MYTZW0G8J86QX6K763DB --pick cbd4e6567928  (cwd ditto)
+
+승인했습니다 — **새 `asserted` 결박이 생겼고 제안은 그대로 남습니다.**
+  개체    decision/01M2G5MYTZW0G8J86QX6K763DB
+  좌표    cbd4e65679288b8af40add09882a9a05b5637b071ab8417431088eb893704ee1
+  걸린 것 span
+  결박    [1312f72b47bc57ae]
+
+rc=0
