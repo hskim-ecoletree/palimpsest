@@ -1,0 +1,92 @@
+# A2 RED — 구현 전에 새 시험을 댄 출력
+#
+# 트리: 7e3091bff5c5ffac1b2814f131bbcacaf2463a38 — crates · xtask · Cargo.* 가 착수 커밋 ec92b89 와 같다
+#       (확인: 'git diff --stat ec92b89 HEAD -- crates xtask Cargo.toml Cargo.lock' 가 빈 출력)
+# 더한 것: crates/pal-cli/tests/rust_decor_stale.rs 하나
+# 명령: cargo test -p pal-cli --test rust_decor_stale -- --test-threads 4
+#
+# 읽는 법
+#   a2_1 ~ a2_5 = 조건 A2 의 ⑴ ~ ⑸. 각각 stale 단언(:95)에서 left "fresh" 로 실패 = RED.
+#   a2a_1       = 음성 대조 A2-a ⑴. 착수에서도 통과한다(속성을 아예 안 보므로). 구현 뒤에도 통과해야 뜻이 선다.
+#   옛_판_결박… = 갈래 ㉡ 의 드러냄. 착수에는 decor_unwatched 칸이 없어 실패한다.
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 21.81s
+     Running tests/rust_decor_stale.rs (target/debug/deps/rust_decor_stale-10c4d7fe8c01937c)
+
+running 16 tests
+test a2_1_derive_인자가_바뀌면_stale ... FAILED
+test a2_3_serde_rename_값이_바뀌면_stale ... FAILED
+test a2_4_must_use_유무가_바뀌면_stale ... FAILED
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test a2_2_cfg_인자가_바뀌면_stale ... FAILED
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test 옛_판_결박은_속성_축을_안_보고_그_사실을_싣는다 ... FAILED
+test a2_5_수신자_참조_self_가_값_self_로_바뀌면_stale ... FAILED
+test a2a_1_속성_안의_주석과_공백만_바꾸면_fresh ... ok
+
+failures:
+
+---- a2_1_derive_인자가_바뀌면_stale stdout ----
+
+thread 'a2_1_derive_인자가_바뀌면_stale' (57297410) panicked at crates/pal-cli/tests/rust_decor_stale.rs:95:5:
+assertion `left == right` failed: ★ `#[derive(Debug)]` → `#[derive(Debug, Clone)]` 를 커밋했는데 결박이 stale 이 아니다 — 사실이 아닌 것을 사실로 낸다
+  left: "fresh"
+ right: "stale"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- a2_3_serde_rename_값이_바뀌면_stale stdout ----
+
+thread 'a2_3_serde_rename_값이_바뀌면_stale' (57297412) panicked at crates/pal-cli/tests/rust_decor_stale.rs:95:5:
+assertion `left == right` failed: ★ `#[serde(rename = "one")]` → `#[serde(rename = "two")]` 를 커밋했는데 결박이 stale 이 아니다 — 사실이 아닌 것을 사실로 낸다
+  left: "fresh"
+ right: "stale"
+
+---- a2_4_must_use_유무가_바뀌면_stale stdout ----
+
+thread 'a2_4_must_use_유무가_바뀌면_stale' (57297413) panicked at crates/pal-cli/tests/rust_decor_stale.rs:95:5:
+assertion `left == right` failed: ★ `#[must_use]
+pub struct` → `pub struct` 를 커밋했는데 결박이 stale 이 아니다 — 사실이 아닌 것을 사실로 낸다
+  left: "fresh"
+ right: "stale"
+
+---- a2_2_cfg_인자가_바뀌면_stale stdout ----
+
+thread 'a2_2_cfg_인자가_바뀌면_stale' (57297411) panicked at crates/pal-cli/tests/rust_decor_stale.rs:95:5:
+assertion `left == right` failed: ★ `#[cfg(feature = "a")]` → `#[cfg(feature = "b")]` 를 커밋했는데 결박이 stale 이 아니다 — 사실이 아닌 것을 사실로 낸다
+  left: "fresh"
+ right: "stale"
+
+---- 옛_판_결박은_속성_축을_안_보고_그_사실을_싣는다 stdout ----
+
+thread '옛_판_결박은_속성_축을_안_보고_그_사실을_싣는다' (57299722) panicked at crates/pal-cli/tests/rust_decor_stale.rs:161:5:
+assertion `left == right` failed: 새 결박이 속성 축을 안 본다
+  left: None
+ right: Some(0)
+
+---- a2_5_수신자_참조_self_가_값_self_로_바뀌면_stale stdout ----
+
+thread 'a2_5_수신자_참조_self_가_값_self_로_바뀌면_stale' (57299599) panicked at crates/pal-cli/tests/rust_decor_stale.rs:95:5:
+assertion `left == right` failed: ★ `pub fn read(&self)` → `pub fn read(self)` 를 커밋했는데 결박이 stale 이 아니다 — 사실이 아닌 것을 사실로 낸다
+  left: "fresh"
+ right: "stale"
+
+
+failures:
+    a2_1_derive_인자가_바뀌면_stale
+    a2_2_cfg_인자가_바뀌면_stale
+    a2_3_serde_rename_값이_바뀌면_stale
+    a2_4_must_use_유무가_바뀌면_stale
+    a2_5_수신자_참조_self_가_값_self_로_바뀌면_stale
+    옛_판_결박은_속성_축을_안_보고_그_사실을_싣는다
+
+test result: FAILED. 10 passed; 6 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.99s
+
+error: test failed, to rerun pass `-p pal-cli --test rust_decor_stale`
+EXIT 101
