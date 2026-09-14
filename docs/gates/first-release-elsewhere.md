@@ -1,7 +1,7 @@
 # 게이트 — 첫 릴리스를 남의 저장소에서 세운다
 
 **회차** `2026-09-13-first-release-elsewhere` · **이슈** [#135](https://github.com/hskim-ecoletree/palimpsest/issues/135)(TS 몫)
-**착수** `6ee9eb3` · **판정일** 2026-09-13
+**착수** `6ee9eb3` · **판정일** 2026-09-14
 
 > 잠긴 의도 [`intent.md`](../../.palimpsest/rounds/2026-09-13-first-release-elsewhere/intent.md) ·
 > 종료 보고 [`report.md`](../../.palimpsest/rounds/2026-09-13-first-release-elsewhere/report.md) ·
@@ -78,7 +78,7 @@
 | `E2` | `oracle/E2-scene.txt` — ⑴ ⑵ ⑶ ⑷ 전부 선다. ⑵ 는 **⟨개정 p2⟩ 뒤** 증인 심볼 규칙(`oracle/callers_rule.py` · `oracle/callers-rule-table.txt`)으로 증인 `05 codexHostAdapter` 가 선다 · 음성 대조 `oracle/E2-negative-count.txt`(수를 바꿔 넣으면 증인 0). 옛 문면대로는 반증이었다 — `oracle/E2-literal-touch.txt` |
 | `E3` | **대조 불가** — 판 `e3-effect`(`dialectic/r2-raw.md`) 상한 뒤 소유자 결정(`intent.md ## 승격` 4~6) |
 | `E4` | `oracle/E4-breakage.txt` — **⟨개정 p2⟩ 뒤** 같은 읽기 규칙으로 뽑은 C · A 워크트리(`898a479` · 변경 0)에서 선언 안 0. 음성 대조 셋: C 를 비우면 선언 안 1(`oracle/E4-negative-c-empty.txt`) · 수를 바꾸거나 목록 줄을 지우면 대조 불가(`oracle/E4-negative-count.txt` · `oracle/E4-negative-drop-line.txt`). 옛 문면대로는 반증이었다 — `oracle/E4-literal-touch-c.txt` |
-| `F1` | `oracle/F1-comment.txt` — `#135` 코멘트가 `A5` 의 수와 게이트 경로를 싣는다(`gh issue view 135 --comments`) |
+| `F1` | `oracle/F1-comment.txt` — `#135` 코멘트가 최종 바이너리의 `A5` 수(`7199/11099` · `oracle/A5-touch-final.txt`)와 게이트 경로를 싣는다. 첫 판은 NUL 규칙 전 바이너리의 `7116/11010` 과 착수 칸의 재현율 59 를 섞어 적어 독립 리뷰 R1 뒤 편집했다 |
 | `F4` | `oracle/F4-g5.txt` — `total_count 0` → 종료 보고에 `G5` · `Actions` 줄 |
 | `G1` | `oracle/G1-coupling.txt` — 더한 줄 0 · 음성 대조 1(첫 측정 `oracle/G1-first-red.txt` 는 4) |
 | `G2` | **반증** — `oracle/G2-violation.txt`. `scripts/f06-verify.py` 가 원본 ditto 에 캐시 자리를 안 주고 `pal` 을 붙여, `EXTRACTOR_REV` 승급 뒤 재실행에서 원본 `.palimpsest/cache` 에 항목 2,451 개가 더해졌다. 소유자 결정으로 더해진 파일만 지웠고(`oracle/G2-deleted-cache-files.txt`) 디렉터리 시각은 되돌리지 않았다 — 목록 해시가 착수(`oracle/G2-ditto-origin-before.txt`)와 뒤(`oracle/G2-ditto-origin-after.txt`)에서 다르다. HEAD · porcelain · `node_modules` 는 같다 |
@@ -87,9 +87,9 @@
 
 없다. `extends` 사슬 · CI 가 뜨지 않음 · 표본 400 · ADR 후보 대체 모두 발동하지 않았다.
 
-### 개정 셋 — 조건의 글자를 무엇으로 바꿨나
+### 개정 둘 — 무엇을 왜 바꿨나
 
-`intent.md ## 개정` 이 진다. `A5` ⑷ 는 **글자를 안 바꾸고 제품을 고쳤다**. `E2` ⑵ · `E4` 는 호출자 집합을 「`touch` 가 **센** 호출자」로 **정정**했다 — ⚠ 그 읽기 규칙은 두 결과(질의 출력으로 잰 통과 · 문면대로 잰 반증)를 **다 본 뒤** 썼다. 사전 등록이 아니다.
+`intent.md ## 개정` 이 진다. 줄은 둘이다 — `p1` **확대**와 `p2` **정정**. `A5` ⑷ 는 **글자를 안 바꾸고 제품을 고쳤다**(`p1`). `E2` ⑵ · `E4` 는 호출자 집합을 「`touch` 가 **센** 호출자」로 **정정**했다 — ⚠ 그 읽기 규칙은 두 결과(질의 출력으로 잰 통과 · 문면대로 잰 반증)를 **다 본 뒤** 썼다. 사전 등록이 아니다.
 
 ## 효과
 
@@ -105,9 +105,19 @@
   효과 실행에서 호출자 파일은 안내 없는 `pal query symbol.callers` 가 댔다(`effect/04-readnote.md`). 소유자가 「수가 의도」라고 답했고
   자리를 싣는 것은 `#156` 으로 뗐다.
 
+### 첫 릴리스가 섰나
+
+**섰다 — 한 갈래를 뺀 채로.** 원문의 줄 「설치 → 코드를 만지려는 순간 → 걸린 결정과 깨질 곳을 받는다」 가운데
+설치 · `touch` 를 부르는 순간 · **걸린 결정**(승인 대기 → 승인 → `■ 이 좌표에 걸린 것` 이 ADR 본문과 판정을 싣는다) ·
+파일 경계를 넘는 호출자 **수** · 동명 지목 · 회차 어휘 0 은 남의 저장소 복제본에서 섰다(`E1` · `E2`).
+**깨질 곳의 자리는 화면에서 서지 않았다** — 위 효과의 마지막 줄 · `#156`. 화면 몫의 효과는 대조 불가다(`E3`).
+버전 태그와 릴리스 바이너리는 원문이 안 요구해 만들지 않았다.
+
 ### 결박
 
 `crates/pal-core/src/ts_module.rs` `TsProject` · `crates/pal-extract/src/lib.rs` `EXTRACTOR_REV` · `crates/pal-cli/src/pending.rs` `열쇠` — 커밋 `66108c5`. 그래프 — `pal doctor` 불변식 위반 0.
+
+⚠ **정정** — `TsProject` 결박의 메모(`bindings.jsonl` `af9b0a700c051f7c`)는 「선 것 7116」을 적었다. 그것은 NUL 규칙 전 바이너리의 값이고, 최종 바이너리에서는 `7199/11099` 다(`oracle/A5-touch-final.txt`). 결박 원장은 덧붙이기만 하는 원장이라 그 줄을 고치지 않고 여기 적는다.
 
 ### ditto 기호 골든이 움직였다
 

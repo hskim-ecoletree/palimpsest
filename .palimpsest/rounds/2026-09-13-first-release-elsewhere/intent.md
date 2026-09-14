@@ -122,7 +122,7 @@
 | `pal narrative` 소요 | **26.7 초**(벽시계) | `time` |
 | 회차 내부 어휘가 나오는 사용자 화면 문자열 | `touch.rs:488`·`:540`·`:544-546` · `ledger.rs:693`(`#79`)·`:833-834`(`F21`·`F16 미구축`) · `touch`/`query`/`doctor`/`export` 의 `미구축 F13 · F15` · `plan.rs:266`·`:288`(`옛 F12`) · `defect.rs:389`·`:416` · `main.rs:800` | `grep` (전수가 아니다 — 조건이 전수를 잰다) |
 | 앞 회차 `G5` | push 두 번(`a7e5a05` `08:52:48Z` · `6ee9eb3` `09:12:03Z`)이 이벤트에 있고 **런 0** · `[skip ci]` 없음 · Actions `enabled` · 워크플로 `active` · 사용량 API 는 `user` 스코프가 없어 못 봄 | `gh api` |
-| `cargo xtask check` · 기준선 스물넷 | ⟨기준선 러너가 `baseline/runner-pre.md` 에 적는다⟩ | `baseline-runner` |
+| `cargo xtask check` · 기준선 스물넷 | 준비 칸 `cargo xtask check` FAIL 2(「회차 레코드」 · 「완수 조건 설계 평가」) · 스물넷의 어긋남과 대조 불가는 `baseline/runner-pre.md` 의 표가 진다 ⟨채움 2026-09-14 · 독립 리뷰 R1⟩ | `baseline-runner` |
 
 ## 계획
 

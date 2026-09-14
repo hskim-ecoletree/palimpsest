@@ -19,6 +19,8 @@
 | 핀 넷 | 착수와 같다 · S0 코퍼스 `~/dev/projects/boxwood` → 1122 성립 |
 | ditto 원본에 쓰는 스크립트 | 없음. 스물넷은 `git show`·`archive`·`ls-tree`·`log` 를 쓰거나 임시 디렉터리에 `clone --local` 을 만든다. 그래서 건너뛴 항목이 없다 |
 
+> ⚠ **정정(2026-09-14 · 독립 리뷰 R1)** — 위 칸 「ditto 원본에 쓰는 스크립트 없음」은 **거짓이었다.** `scripts/f06-verify.py` ③ 이 원본에 `pal query graph.dump` · `pal export` 를 `--cache-dir` 없이 붙여 원본의 `.palimpsest/cache` 에 캐시 항목 2451 개를 더했다(08:26). `git status --porcelain` 는 그 디렉터리를 안 보므로 「전후가 같다」가 그것을 못 잡았다. 경위 · 소유자 결정 · 지운 목록은 `oracle/G2-violation.txt` 가 지고, 스크립트는 `be2ccb5` 가 캐시를 격리했다. 이 칸은 러너의 박제라 고치지 않고 이 줄을 더한다.
+
 ## ⚠ 오염 고지 — 도는 동안 HEAD 가 움직였다
 
 다른 세션이 실행 중 다섯 번 커밋했다: `254505e`·`403d589`(07:45) · `eb9c936`·`4f4a176`(07:52) · `da01784`(08:02).
