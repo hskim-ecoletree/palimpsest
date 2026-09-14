@@ -1,0 +1,17 @@
+# PR #157 의 CI — 고친 커밋을 main 전에 Windows 에서 잰다
+
+- 조회: `gh run view 34802282312` (2026-09-14T03:35:17Z)
+- 런 `34802282312` · event pull_request · head `51de0e8`(브랜치 `fix/radius-windows-lock`) · 결과 **success**
+
+## 잡
+```
+놓는다 · ubuntu-latest · success
+windows-latest · success
+놓는다 · windows-latest · success
+macos-latest · success
+ubuntu-latest · success
+받는다 · ubuntu-latest → windows-latest · success
+받는다 · windows-latest → ubuntu-latest · success
+```
+
+## 판정: `windows-latest` 초록 — `radius_preserves_verdict` 가 Windows 에서 통과한 첫 런이다. 이것은 `F2` 가 아니다(F2 는 main 에 올린 마지막 push 의 SHA 를 본다)

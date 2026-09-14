@@ -53,11 +53,15 @@
 
 `#135` 는 열어 둔다 — TS 몫이 섰다는 코멘트를 달았다(`F1`). 첫 판이 NUL 규칙 전 수(`7116/11010`)와 착수 칸의 재현율 59 를 섞어 적어 `7199/11099` 로 편집했다. 남은 반증은 Rust 재수출 경유 조건이다.
 
-### push 가 둘이 됐다 — 까닭
+### push 가 한 번을 넘었다 — 까닭
 
 원문은 push 한 번이었다. 첫 push(`701acb5`)의 CI 가 **`windows-latest` 에서만 빨갰다**(`oracle/F2-ci-701acb5.txt`) — `pal radius` 가 의도 저장소를 먼저 열고 워킹트리를 읽어서, 그 파일이 git 에 추적되면 Windows 가 같은 프로세스의 두 번째 읽기를 잠금으로 막았다(os error 33). 시험은 앞 회차 `ee93b35` 가 더했고 그 회차의 push 에는 CI 런이 0 이라 아무도 못 봤다. `pal install` 은 그 파일을 `.gitignore` 에 넣지만 설치 없이 쓰면 걸린다.
 
-소유자 답(`intent.md ## 승격` 9 · 10): *「고치고 한 번 더 push」* · 전사 커밋은 *「로컬에 두고 push 안 함」*. 워킹트리를 먼저 읽도록 순서를 바꿨고(`pal bind` 와 같은 순서) 두 번째 push 의 마지막 SHA 가 `F2` 를 판정한다. 그 판정을 두 원장에 옮기는 커밋은 로컬에 있다.
+소유자 답(`intent.md ## 승격` 9 · 10): *「고치고 한 번 더 push」* · 전사 커밋은 *「로컬에 두고 push 안 함」*.
+
+**첫 수정 `1bcdc93` 은 불완전했다.** HEAD 원장 계산만 의도 저장소 앞으로 옮겼는데 `ledger::compute` 는 `--at` 을 줘도 워킹트리를 읽고(`crates/pal-cli/src/ledger.rs:92`), `pal radius` 는 base 커밋 원장을 한 번 더 계산한다. 두 번째 push(`4398134`)의 CI 가 그 자리에서 `index.redb` 잠금으로 또 빨갰다(`oracle/F2-ci-4398134.txt` · `MS3-02`). macOS 에는 이 잠금이 없어 로컬에서는 빨강도 초록도 원리상 못 본다 — 그것을 알면서 CI 로 재기 전에 main 에 올렸다.
+
+`3f69ccd` 가 원장 둘을 `.redb` 를 하나도 안 연 채로 계산하게 고쳤다. 소유자 답(`## 승격` 11) *「브랜치 PR 로 Windows CI 먼저」* 로 [#157](https://github.com/hskim-ecoletree/palimpsest/pull/157) 의 `windows-latest` 에서 먼저 재고, 초록이면 main 에 올린 마지막 push 의 SHA 가 `F2` 를 판정한다. 그 판정을 두 원장에 옮기는 커밋은 로컬에 있다.
 
 ### 앞 회차 `G5` · `Actions`
 

@@ -5,7 +5,7 @@
 ★ **새 컨텍스트가 받는 것은 「`intent.md` 전문 + 이 파일의 요약」이다.** 직전 산출물을
 시드로 받지 마라.
 
-## 지금 단계 — **종료 걸음. 첫 push 의 CI 가 Windows 에서 빨갰고 고쳐서 두 번째 push 를 한다**
+## 지금 단계 — **종료 걸음. push 두 번이 Windows 에서 빨갰고, 고친 커밋을 PR #157 의 CI 로 먼저 잰다**
 
 | 단계 | 상태 |
 |---|---|
@@ -19,8 +19,9 @@
 | `A6` | **닫혔다** — `cargo xtask test` 1124 통과 · Rust 파일 간 엣지 1319 = 1319(HEAD `5b4a37f`) |
 | `report.md` | **섰다** — `96bfcb7` 뒤 R2 정정 반영 |
 | 독립 리뷰 | **R1 · R2 처분** — 상한 4. R1 정정 10 · 기각 19 / R2 는 원장 `IR2-*` |
-| push | 첫 push `701acb5` — CI `windows-latest` 빨강(`oracle/F2-ci-701acb5.txt` · `pal radius` 의 의도 저장소 잠금 · 앞 회차 코드). 소유자 답 `## 승격` 9 · 10 |
-| 남은 것 | `radius.rs` 순서 수정 커밋 · 두 번째 push · 그 SHA 의 CI 로 `F2` 판정 · 전사 커밋은 로컬(push 안 함) |
+| push | `701acb5` · `4398134` 둘 다 CI `windows-latest` 빨강(`oracle/F2-ci-701acb5.txt` · `oracle/F2-ci-4398134.txt`). 첫 수정 `1bcdc93` 은 HEAD 원장만 옮겨 불완전했다(`MS3-02`) · `3f69ccd` 가 원장 둘을 `.redb` 없이 계산 · 소유자 답 `## 승격` 9 · 10 · 11 |
+| PR | [#157](https://github.com/hskim-ecoletree/palimpsest/pull/157) draft · 브랜치 `fix/radius-windows-lock` · head `51de0e8` · CI 런 `34802282312` |
+| 남은 것 | PR CI 가 초록이면 main 에 push(세 번째) · 그 SHA 의 CI 로 `F2` · 전사는 스크래치 `close/f2-transcribe.py` 로 하고 커밋은 로컬. 빨강이면 main 은 그대로 두고 원인을 더 판다 |
 
 ## 착수 바이너리
 
@@ -67,3 +68,4 @@
 - **보고의 원인 문장을 기록 없이 적었다** — `G5` 런 0 의 원인을 「push 된 적이 없어서」로 적었는데 같은 회차의 착수 관측이 push 를 적고 있었다(`IR2-06` 금지역). 원인 문장은 그것을 대는 산출 줄이 있을 때만 쓴다.
 - **「최종 바이너리」 산출을 코드 수정 전에 떴다** — 이름이 산출 시점을 앞질렀다(`IR2-08`). 최종이라 부르는 산출은 머리에 `pal --version` 을 싣는다.
 - **계기판을 PATH 에 `pal` 없이 불렀다** — `dashboard.py` 는 `pal round conditions` 를 부른다. `PATH="$PWD/target/release:$PATH"` 로 부른다.
+- **macOS 에서 못 보는 Windows 결함의 수정을 CI 로 재기 전에 main 에 올렸다** — 첫 수정이 원장 계산 하나만 옮겨 두 번째 push 도 빨갰다(`MS3-02`). 로컬에서 원리상 못 재는 수정은 브랜치 PR 의 CI 로 먼저 잰다.
