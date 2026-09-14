@@ -47,7 +47,7 @@
 | #127 (설계) | `ledger.snapshot`(`0 · L0`)과 `graph.dump`(`13404 · L1`)의 차이는 **결함이 아니다** — `coverage_of` 가 질의가 만진 파일에서 세고 게이트 `[f05.3.pass]` ⑤ 가 *"질의마다 다른 값"* 을 요구한다 | `02-unresolved-two-paths.txt` |
 | #77 ① | `TsProject` 의 `#[derive(...)]` 만 바꿔 커밋 → **`최신 상태(fresh)`** 로 남는다 | `03-derive-change.txt` |
 | #77 ② | Rust 에서 `&self` 와 `self` 수신자만 다른 메서드의 요약값이 **같다** — `is_leading_separator` 가 맨 앞 `&` 를 벗긴다(사전부검 R1 실측). 소유권이 바뀌어도 `fresh` 다 | 사전부검 `premortem/r1-raw.md` |
-| #77 (규모) | 착수 결박 42 = `fresh` 28 · `stale` 14. **`fresh` 이면서 속성 또는 `self` 수신자를 진 Rust 심볼을 감시하는 결박 20.** 요약 규칙만 그냥 바꾸면 이 결박들이 코드 변화 없이 뒤집힌다 | `05-binding-status-start.json` |
+| #77 (규모) | 착수 결박 42 = `fresh` 28 · `stale` 14. **`fresh` 이면서 속성 또는 `self` 수신자를 진 Rust 심볼을 감시하는 결박 20.** 요약 규칙만 그냥 바꾸면 이 결박들이 코드 변화 없이 뒤집힌다 | `05-binding-status-start.json.txt` |
 | #139 | 이슈 본문의 실측 — 도착이 `mod` 선언인 파일 간 엣지 58 중 **2**(`crates/pal-query/src/lib.rs` · `crates/pal-query/tests/bench.rs` → `crates/pal-core/src/lib.rs` 의 사적 `mod traverse;`)가 재수출에 가린 사적 모듈을 가리킨다 | RED 는 `A3` 의 픽스처 시험이 착수 커밋에서 진다 |
 | 릴리스 | `gh release list` 는 `v0.0.0-f24.1`(2026-08-16) 하나 · 릴리스 워크플로 마지막 실행 2026-08-16(`workflow_dispatch` · 태그로 돈 적 없음) · **루트 `README.md` · `LICENSE` 없음**(`Cargo.toml:21` 은 `MIT OR Apache-2.0` 을 선언) | — |
 
@@ -61,7 +61,7 @@
    설계라 이슈에 답한다. `ledger.snapshot` ↔ `graph.dump` 의 차이도 설계라고 답한다.
 2. **#77 ①②** — Rust 선언 앞의 `attribute_item` 형제와 `self` 수신자의 `&` 가 **변했는가** 에 들어가게 한다. span 은 안 넓힌다.
    TypeScript·Kotlin 의 요약값은 바이트로 안 바뀐다.
-   ★ **이미 선 결박의 판정이 코드 변화 없이 뒤집히면 안 된다**(착수 판정 `05-binding-status-start.json`). 갈래는 루프에서 고른다 —
+   ★ **이미 선 결박의 판정이 코드 변화 없이 뒤집히면 안 된다**(착수 판정 `05-binding-status-start.json.txt`). 갈래는 루프에서 고른다 —
    ㉠ 결박 시점 스냅샷에서 새 규칙으로 요약을 다시 계산해 대 본다 · ㉡ 속성·수신자를 요약과 다른 축으로 두고, 그 축 없이 선 결박에는
    「속성은 감시 안 함」을 드러낸다. **어느 쪽이든 결과를 `A2-b` 가 잰다.**
 3. **#139** — **스키마를 안 바꾸는 쪽을 본선으로 한다**: 파일 간 해소가 크레이트 경계를 넘는 임포트에서 대상 `mod` 선언이 **사적**이면
