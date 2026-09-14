@@ -1,0 +1,33 @@
+# B2 RED — 구현 전에 돌린 시험의 실패
+
+명령    cargo test -p pal-cli --test caller_places
+HEAD    ec92b899478d31533b4026a0eb2750242bba713f  (crates/ 는 착수 커밋과 같다 · 시험 파일 crates/pal-cli/tests/caller_places.rs 만 더했다)
+rustc   1.94.1 (e408947bf 2026-03-25) (Homebrew)
+결과    exit=101 · test result: FAILED. 9 passed; 1 failed
+
+⚠ RED 뒤에 시험 이름과 화면 낱말을 바꿨다 — `cargo xtask check` 의 「어색한 표현 부재」가 「접다」 활용형을 잡았다.
+   시험 이름  b2_호출자가_상한보다_많으면_자리를_싣고_(접다 활용형)_것을_그대로_펴는_명령을_안내한다
+           → b2_호출자가_상한보다_많으면_자리를_싣고_나머지를_그대로_펴는_명령을_안내한다
+   안내 줄을 뽑는 표지  「펴려면: 」 → 「전부 보려면: 」
+   RED 가 진 단언(⑴ 실린 수 = 상한)은 바뀌지 않았다 — 그 단언은 표지와 무관하고, 착수 화면에는 자리 줄이 0 이다.
+
+## 실패 단언 발췌 (RED 때의 출력)
+
+thread '...' panicked at crates/pal-cli/tests/caller_places.rs:133:5:
+assertion `left == right` failed: ["touch", "hub"] — 실린 자리 수가 상한과 다르다:
+  ...
+■ 이 심볼이 하는 것
+  호출자 7 · 피호출자 0
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — ...
+  ※ **`x.foo()` 는 아직 안 셉니다** — ...
+  ※ **호출자 수는 하한입니다** — ...
+  ...
+
+  left: 0
+ right: 5
+
+## 읽는 법
+
+`hub` 는 호출자 7 을 적으면서 **자리(경로:줄)를 한 줄도 안 싣고**, 나머지 수와 펴는 명령도 없다.
+⑴ 이 첫 단언(실린 수 = 상한 5)에서 진다 — 착수 관측 `baseline/01-touch-dir-palimpsest.txt` 의
+「호출자 2 · 피호출자 1 — 자리도 펴는 질의 안내도 없다」와 같은 형태다.

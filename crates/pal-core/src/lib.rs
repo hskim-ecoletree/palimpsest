@@ -64,6 +64,7 @@ pub use budget::{
     PROVISIONAL_QUARANTINE_BUDGET_BYTES, PROVISIONAL_STITCH_BATCH,
     PROVISIONAL_ROUND_ORACLE_OUTPUT_BYTES, PROVISIONAL_ROUND_ORACLE_TIMEOUT_SECS,
     PROVISIONAL_STRAY_TMP_MAX_AGE_SECS, PROVISIONAL_TOUCH_BINDING_MAX,
+    PROVISIONAL_TOUCH_CALLER_PLACE_MAX,
     PROVISIONAL_TRAVERSAL_DEPTH, PROVISIONAL_TS_EXTENDS_DEPTH_MAX,
     PROVISIONAL_VIEW_NODE_MAX, PROVISIONAL_WATCH_PRODUCT_MAX, SHEBANG_SCAN_BYTES,
     ROUND_VERIFICATION_FILE_MAX_BYTES, ROUND_VERIFICATION_LINE_MAX_BYTES,
@@ -144,7 +145,8 @@ pub use slot::{ShellMismatch, Slot};
 pub use symbol::{Span, Symbol, SymbolKind};
 pub use traverse::{Step, traverse};
 pub use touch::{
-    BoundItem, BoundTarget, EffectSet, JudgmentSummary, NearKind, NearName, SymbolFacts,
+    BoundItem, BoundTarget, CallerPlace, CallerPlaces, EffectSet, JudgmentSummary, NearKind,
+    NearName, SymbolFacts,
     SymbolNode, TargetPlace, TouchAnswer, TouchResult, near_kind, 낡았나,
     정렬_열쇠,
 };

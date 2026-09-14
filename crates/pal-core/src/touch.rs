@@ -243,6 +243,34 @@ pub fn 낡았나(item: &BoundItem) -> bool {
 pub struct SymbolFacts {
     pub callers: usize,
     pub callees: usize,
+    /// ★ **호출자의 자리** — 「여기를 바꾸면 어디가 깨지나」를 따라갈 곳.
+    ///
+    /// [`Self::callers`] 는 그대로 수다 — 소비자가 그 칸의 형에 기대고 있어서 자리를 거기
+    /// 섞지 않고 새 칸으로 둔다. 수만 있으면 사람이 그 수를 어디서 확인할지 모른다.
+    pub caller_places: CallerPlaces,
+}
+
+/// 호출자 자리 — **앞 몇 곳만 싣고, 나머지는 수와 그것을 전부 돌려주는 질의로 싣는다.**
+///
+/// 싣지 않은 몫은 값이 있고 다른 질의가 갖고 있다 — 「안 봤다」가 아니다. 그래서 수와 함께
+/// **어느 질의가 펴는지**를 이름으로 싣는다(응답 묶음의 `Fold` 와 같은 규율).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct CallerPlaces {
+    /// 실은 자리 — **경로 순, 같은 파일 안에서는 선언 순.** `symbol.callers` 의 순서와 같다.
+    pub shown: Vec<CallerPlace>,
+    /// 싣지 않은 자리 수.
+    pub more: usize,
+    /// 전부를 돌려주는 질의. **문자열이 아니라 이름이다** — 표면이 이 이름으로 명령을 만든다.
+    pub unfolded_by: crate::QueryName,
+}
+
+/// 호출자 하나의 자리 — **그 호출자 심볼의 선언** 위치.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct CallerPlace {
+    pub path: RepoPath,
+    /// 1 부터.
+    pub line: u32,
+    pub name: String,
 }
 
 /// 내가 모르는 것 — **F08 이 채운다.**
@@ -341,7 +369,15 @@ mod tests {
 
     #[test]
     fn 값이_있는_자리는_그대로_실린다() {
-        let v: Capable<SymbolFacts> = Capable::Present(SymbolFacts { callers: 9, callees: 14 });
+        let v: Capable<SymbolFacts> = Capable::Present(SymbolFacts {
+            callers: 9,
+            callees: 14,
+            caller_places: CallerPlaces {
+                shown: Vec::new(),
+                more: 9,
+                unfolded_by: crate::QueryName::SymbolCallers,
+            },
+        });
         let json = serde_json::to_string(&v).unwrap();
         assert!(json.contains("\"callers\":9"), "{json}");
     }

@@ -221,7 +221,22 @@ pub fn run(a: Args) -> Result<()> {
         }
         println!("{}", serde_json::to_string_pretty(&v)?);
     } else {
-        print_screen(&envelope, attached.cross.as_ref(), 대기.as_ref());
+        // ★ **나머지 호출자를 펴는 명령** — 사람이 친 이름 그대로, 이름이 여럿에 맞으면 지목까지.
+        //   지목이 없으면 그 명령이 후보 화면으로 떨어지고, 그러면 「그대로 쳐서 펴진다」가 거짓이다.
+        let 펴기 = 펴는_재료 {
+            name,
+            pick: match &envelope.answer {
+                TouchAnswer::Found(r)
+                    if projection.resolve_name(name).context("이름을 다시 해소하지 못했다")?.len() > 1 =>
+                {
+                    Some(r.symbol.id.short())
+                }
+                _ => None,
+            },
+            repo: repo_path,
+            rev,
+        };
+        print_screen(&envelope, attached.cross.as_ref(), 대기.as_ref(), &펴기);
     }
 
     // **두 시계를 둘 다 산출한다** — 합격선은 질의 시간에만 걸리고(`[f11.pass]` ⑦),
@@ -282,11 +297,40 @@ fn 수(v: &Capable<Vec<BoundItem>>) -> String {
     }
 }
 
+/// 나머지 호출자를 펴는 명령의 재료 — **사람이 친 그대로** 다시 칠 수 있어야 한다.
+struct 펴는_재료<'a> {
+    /// 사람이 친 이름. 심볼 이름이 아니라 **질의에 준 문자열**이다 — 그래야 같은 해소를 지난다.
+    name: &'a str,
+    /// 그 이름에 후보가 둘 이상일 때만 — 찾은 심볼의 지목 문자열(짧은 해시).
+    pick: Option<String>,
+    repo: &'a Path,
+    rev: Option<&'a str>,
+}
+
+/// 그대로 쳐서 펴지는 명령 한 줄. **질의 이름은 카탈로그의 이름에서 온다** — 여기 적지 않는다.
+///
+/// ⚠ **따옴표로 감싸지 않는다** — 이름이나 경로에 공백이 있으면 셸에서 그대로 안 돈다.
+///   식별자에는 공백이 없고, 경로는 `--repo` 를 준 사람만 이 줄에 실린다.
+fn 펴는_명령(q: pal_core::QueryName, 펴기: &펴는_재료) -> String {
+    let mut 낱말 = vec!["pal".to_owned(), "query".to_owned(), q.name().to_owned(), 펴기.name.to_owned()];
+    if let Some(p) = &펴기.pick {
+        낱말.extend(["--pick".to_owned(), p.clone()]);
+    }
+    if 펴기.repo != Path::new(".") {
+        낱말.extend(["--repo".to_owned(), 펴기.repo.display().to_string()]);
+    }
+    if let Some(rev) = 펴기.rev {
+        낱말.extend(["--at".to_owned(), rev.to_owned()]);
+    }
+    낱말.join(" ")
+}
+
 /// 옛 `how-it-works §2.3` 의 화면 (그 문서는 2026-08-18 에 지웠다 — `docs/plan/disposal-map.md`).
 fn print_screen(
     envelope: &Envelope<TouchAnswer>,
     cross: Option<&pal_core::CrossFileReport>,
     대기: Option<&crate::pending::대기>,
+    펴기: &펴는_재료,
 ) {
     println!();
     match &envelope.answer {
@@ -314,7 +358,7 @@ fn print_screen(
             if let Some(d) = 대기 {
                 crate::pending::화면(d);
             }
-            print_facts(&r.facts, cross);
+            print_facts(&r.facts, cross, 펴기);
             print_unresolved(&r.unresolved);
             slot("효과", &r.effects);
             slot("판정", &r.judgments);
@@ -560,6 +604,7 @@ pub fn 다른_식별자(
 fn print_facts(
     value: &Capable<pal_core::SymbolFacts>,
     cross: Option<&pal_core::CrossFileReport>,
+    펴기: &펴는_재료,
 ) {
     println!("■ 이 심볼이 하는 것");
     match value {
@@ -567,6 +612,22 @@ fn print_facts(
             "  (이 빌드에는 {} 능력이 없습니다)", capability.what),
         Capable::Present(f) => {
             println!("  호출자 {} · 피호출자 {}", f.callers, f.callees);
+            // ★ **수만 있으면 사람이 그 수를 어디서 확인할지 모른다.** 앞 몇 곳을 `경로:줄` 로
+            //   싣고, 나머지는 **그대로 쳐서 펴지는 명령**을 적는다.
+            let 자리 = &f.caller_places;
+            if !자리.shown.is_empty() {
+                println!("  호출자 자리 — 앞 {}곳 · 경로:줄", 자리.shown.len());
+                for c in &자리.shown {
+                    println!("    {}:{}  {}", c.path, c.line, c.name);
+                }
+                if 자리.more > 0 {
+                    println!(
+                        "  … 그 밖 {}곳 — 전부 보려면: {}",
+                        자리.more,
+                        펴는_명령(자리.unfolded_by, 펴기)
+                    );
+                }
+            }
             // ★ **라벨이 「호출자」인데 담는 것은 호출만이 아니다.**
             //   실측(2026-09-08 · Rust 엣지 4,258): 타입 참조 1,198 · 호출·매크로
             //   3,843 · 그 밖 1,598. **엣지의 상당수가 호출이 아니다.**
