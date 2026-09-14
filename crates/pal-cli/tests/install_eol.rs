@@ -99,7 +99,9 @@ fn autocrlf_클론에서_설치_진단_갱신_제거가_전부_성립한다() {
     // ── `core.autocrlf` 를 켠 클론 ────────────────────────────────────────────
     let dst = base.join("dst");
     let out = Command::new("git")
-        .args(["clone", "-q", "-c", "core.autocrlf=true"])
+        // ⚠ `--no-hardlinks` — 로컬 경로 클론의 하드링크가 한 번씩 `fatal: hardlink different from source` 로
+        // 죽었다(2026-09-14 · CI 런 34861122337 macos). 재는 것은 줄바꿈이지 하드링크가 아니다.
+        .args(["clone", "-q", "--no-hardlinks", "-c", "core.autocrlf=true"])
         .arg(&src)
         .arg(&dst)
         .output()

@@ -218,5 +218,6 @@
 |---|---|---|---|
 | 1 | `D1-a` ⑴ 의 「같은 절차」 — 착수 바이너리에서는 README 의 `git add .palimpsest/manifest.toml .palimpsest/intent/bindings.jsonl` 줄이 매니페스트가 없어 rc≠0 이라, **있는 파일만 더하고** 그 어긋남을 `effect/negative-start-binary/deviation.txt` 에 적는다 | 정정 | 글자 그대로 밟으면 결박이 안 넘어가 「결박을 안 넘겨서 0」이 되고 대조가 **항등식**이다. 있는 파일만 더하면 결박이 넘어간 채로 식별자 차이만 남는다 — 대조가 재는 양이 늘었다 |
 | 2 | 앞 회차 장치 `crates/pal-cli/tests/user_vocabulary.rs` 의 「기능 절」 패턴 `\[f[0-9]{2}` → `\[f[0-9]{2}(?:[^0-9a-f]|$)` | 정정 | 승인 화면의 결박 ID(16진수)가 `[f48…` 로 시작하면 걸려 CI 가 한 번씩만 빨갰다(런 34859001054 ubuntu · `F1` 을 막는다). `[f11 는` · `[f24]` · `[f05.3.pass]` 는 그대로 걸린다 — 재는 대상은 줄지 않고 거짓 양성만 빠진다. 대가 `[f11a]` 는 시험 주석에 적었다 |
+| 3 | 시험 `install_eol.rs` · `repo_identity.rs` 와 `scripts/interop-receive.sh` 의 로컬 경로 `git clone` 에 `--no-hardlinks` | 정정 | 하드링크 클론이 한 번씩 `fatal: hardlink different from source` 로 죽어 CI 가 흔들렸다(런 34861122337 macos · `F1` 을 막는다 · 같은 오류가 효과 걸음 스크립트에서도 났다). 재는 것(줄바꿈 왕복 · 식별자)은 그대로다 |
 
 ## 승격

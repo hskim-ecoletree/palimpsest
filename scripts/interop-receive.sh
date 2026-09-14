@@ -28,7 +28,8 @@ rm -rf "$WORK"
 
 # ★ **clone 으로 받는다.** 파일 복사가 아니라 git 이 워킹트리 바이트를 정하게 한다 —
 # 그것이 `core.autocrlf` 가 실제로 걸리는 자리이고 이 측정의 대상이다.
-git clone -q "$GOT" "$WORK"
+# ⚠ `--no-hardlinks` — 로컬 경로 클론의 하드링크가 한 번씩 `hardlink different from source` 로 죽는다.
+git clone -q --no-hardlinks "$GOT" "$WORK"
 cd "$WORK"
 git config user.email t@e
 git config user.name t

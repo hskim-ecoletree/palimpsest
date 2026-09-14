@@ -95,7 +95,8 @@ fn 클론한다(방: &Path, 원래: &Path, 이름: &str) -> PathBuf {
     let 클론 = 방.join(이름);
     git(
         방,
-        &["clone", "-q", &원래.display().to_string(), &클론.display().to_string()],
+        // ⚠ `--no-hardlinks` — 로컬 경로 클론의 하드링크가 한 번씩 죽는다(`install_eol.rs` 의 같은 주석).
+        &["clone", "-q", "--no-hardlinks", &원래.display().to_string(), &클론.display().to_string()],
     );
     클론
 }
