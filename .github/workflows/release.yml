@@ -40,6 +40,11 @@ on:
 
 permissions:
   contents: write
+  # ★ **같은 런의 아티팩트를 받으려면 `actions: read` 가 필요하다.** `permissions` 를 명시하면
+  # 적지 않은 범위는 막힌다 — 2026-09-14 수동 런 34856889486 의 「툴체인 없이」 셋이 전부
+  # `download-artifact` 에서 `(403) Forbidden` 으로 죽었다. `ci.yml` 은 선언이 없어 기본 토큰(read)으로
+  # 같은 걸음이 섰다. 2026-08-16 에는 이 선언 없이 섰으므로 GitHub 쪽 요구가 바뀐 것으로 본다(추정).
+  actions: read
 
 env:
   CARGO_TERM_COLOR: always
