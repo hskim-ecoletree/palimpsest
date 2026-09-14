@@ -1,0 +1,31 @@
+# F2 — push 한 SHA `701acb5` 의 CI
+
+- 조회: `gh run view 34794318087` (2026-09-14T02:46:57Z)
+- 런 `34794318087` · event push · 결과 **failure**
+
+## 잡
+```
+macos-latest · success · 
+ubuntu-latest · success · 
+놓는다 · windows-latest · success · 
+놓는다 · ubuntu-latest · success · 
+windows-latest · failure · cargo xtask test
+받는다 · ubuntu-latest → windows-latest · success · 
+받는다 · windows-latest → ubuntu-latest · success · 
+```
+
+## 실패 자리 (windows-latest · cargo xtask test)
+```
+[1m[91merror[0m: test failed, to rerun pass `-p pal-cli --test radius_preserves_verdict`
+test 새_감시_원소의_기준은_bound_at_의_base_커밋이다 ... FAILED
+test 기준을_head_로_읽으면_fresh_가_난다 ... FAILED
+pal ["radius", "3fb2a628a4009762", "--to", "callers"]
+stderr: Error: 워킹트리를 읽지 못했다
+    워킹트리를 읽지 못했다: .\.palimpsest/intent.redb: The process cannot access the file because another process has locked a portion of the file. (os error 33)
+pal ["radius", "287a986c9475e36a", "--to", "callers"]
+stderr: Error: 워킹트리를 읽지 못했다
+    워킹트리를 읽지 못했다: .\.palimpsest/intent.redb: The process cannot access the file because another process has locked a portion of the file. (os error 33)
+test result: FAILED. 15 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.59s
+```
+
+## 판정: 반증 — 마지막 초록은 `1276b8f`(2026-09-12). 실패한 시험은 `ee93b35`(앞 회차)가 더했고 그 회차의 push 는 CI 런이 0 이었다

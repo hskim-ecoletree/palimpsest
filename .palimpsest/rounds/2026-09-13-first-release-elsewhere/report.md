@@ -53,6 +53,12 @@
 
 `#135` 는 열어 둔다 — TS 몫이 섰다는 코멘트를 달았다(`F1`). 첫 판이 NUL 규칙 전 수(`7116/11010`)와 착수 칸의 재현율 59 를 섞어 적어 `7199/11099` 로 편집했다. 남은 반증은 Rust 재수출 경유 조건이다.
 
+### push 가 둘이 됐다 — 까닭
+
+원문은 push 한 번이었다. 첫 push(`701acb5`)의 CI 가 **`windows-latest` 에서만 빨갰다**(`oracle/F2-ci-701acb5.txt`) — `pal radius` 가 의도 저장소를 먼저 열고 워킹트리를 읽어서, 그 파일이 git 에 추적되면 Windows 가 같은 프로세스의 두 번째 읽기를 잠금으로 막았다(os error 33). 시험은 앞 회차 `ee93b35` 가 더했고 그 회차의 push 에는 CI 런이 0 이라 아무도 못 봤다. `pal install` 은 그 파일을 `.gitignore` 에 넣지만 설치 없이 쓰면 걸린다.
+
+소유자 답(`intent.md ## 승격` 9 · 10): *「고치고 한 번 더 push」* · 전사 커밋은 *「로컬에 두고 push 안 함」*. 워킹트리를 먼저 읽도록 순서를 바꿨고(`pal bind` 와 같은 순서) 두 번째 push 의 마지막 SHA 가 `F2` 를 판정한다. 그 판정을 두 원장에 옮기는 커밋은 로컬에 있다.
+
 ### 앞 회차 `G5` · `Actions`
 
 `G5` 는 앞 회차의 CI 확인 갈래다. 앞 회차의 착수 커밋 `6ee9eb3` 에 붙은 CI 런이 **0** 이다(`oracle/F4-g5.txt` · `total_count 0`). 저장소 `Actions` 는 `enabled: true · allowed_actions: all` 이고, `6ee9eb3` 은 main 에 **push 됐다**(PushEvent `2026-09-13T09:12:03Z`) · 워크플로는 `on: push: branches: [main]` 에 경로 필터가 없다. **push 는 됐는데 런이 0 이다 — 원인은 기록으로 못 댔다**(사용량 API 는 `user` 스코프가 없어 못 봤다). 소유자가 볼 자리는 계정의 **Billing · Actions 사용량**과 저장소의 Actions 탭이다. ⚠ 이 줄의 첫 판은 「push 로 올라간 적이 없어서다」라고 거짓 원인을 적었다(독립 리뷰 R2).

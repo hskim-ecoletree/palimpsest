@@ -126,6 +126,12 @@ pub fn run(a: Args) -> Result<Report> {
         bail!("반경 `{radius}` 를 모른다 — 아는 것은 {} 다", Radius::NAMES.join(" · "));
     };
 
+    // ★ **워킹트리를 먼저 읽고 의도 저장소를 뒤에 연다** — `pal bind` 와 같은 순서다.
+    //   의도 저장소가 저장소 안에 있고 git 이 그 파일을 추적하면, 워킹트리 스캔이 그 파일을
+    //   다시 읽는다. Windows 는 이 프로세스가 연 파일의 잠긴 구간을 못 읽게 막아서(os error 33)
+    //   명령이 죽었다 — CI `windows-latest` 에서 `radius_preserves_verdict` 둘이 그랬다.
+    let head = ledger::compute(repo_path, None, cache_dir.clone())?;
+
     let intent = IntentStore::open(&touch::intent_file(repo_path, intent_path))
         .context("의도 저장소를 열지 못했다")?;
     let id = BindingId::new(id);
@@ -139,7 +145,6 @@ pub fn run(a: Args) -> Result<Report> {
     };
 
     // ── HEAD 의 투영 — 여기서 반경을 편다 ────────────────────────────────────
-    let head = ledger::compute(repo_path, None, cache_dir.clone())?;
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
     let head_attached = attach::attach(&index, &head, attach::How::Stitching)?;
     let head_p = &head_attached.projection;
