@@ -69,6 +69,7 @@ fn 그래프(n: usize) -> Vec<FileStitch> {
             name: format!("s{f}_{i}"),
             kind: SymbolKind::Function,
             body: BodyDigest::of_normalized(format!("s{f}_{i}").as_bytes()),
+            decor: BodyDigest::of_normalized(b""),
             span: Span { byte_start: i, byte_end: i + 1, line_start: 1, line_end: 1 },
             identity: IdentityGrade::Exact,
         };

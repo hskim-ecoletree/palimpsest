@@ -178,6 +178,7 @@ fn 한_판(
                 name: s.name.clone(),
                 kind: s.kind,
                 body: s.body,
+                decor: s.decor,
                 span: s.span,
                 identity: s.identity,
             })

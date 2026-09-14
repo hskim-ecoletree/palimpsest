@@ -433,6 +433,14 @@ fn print_bindings(
             .collect::<Vec<_>>()
             .join(" · ");
         println!("      반경 {} · 감시 {} 개 · 등급 {{{등급}}}", b.radius, b.watch);
+        // ★ **안 보는 축을 말한다**(#77) — 옛 판 결박은 속성·수신자 기준값이 없어 그 변경에
+        // `stale` 이 안 켜진다. 말하지 않으면 위의 `fresh` 가 그 축까지 본 `fresh` 로 읽힌다.
+        if b.decor_unwatched > 0 {
+            println!(
+                "      ⚠ 속성·수신자 변경은 감시 안 함 — 감시 {} 개 중 {} 개가 옛 판 결박이라 기준값이 없습니다 (다시 걸면 섭니다)",
+                b.watch, b.decor_unwatched
+            );
+        }
         println!("      {}  ·  {}", b.subject, 시각(b.bound_at_time));
         for line in b.note.lines() {
             println!("      {line}");

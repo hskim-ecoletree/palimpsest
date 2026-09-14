@@ -133,6 +133,7 @@ pub fn extract_detailed(source: &[u8]) -> Result<FileGraph, ExtractError> {
             name: name.to_owned(),
             kind,
             body: BodyDigest::of_normalized(&normalize(decl_node, source)),
+            decor: BodyDigest::of_normalized(b""),
             // **L1 이라 심볼 단위로도 `ordinal` 이다.** 스코프가 없으므로 어느 이름이
             // 지역인지 모르고, 모르면 지우지 않는다 — 그것이 R-22 의 요구다.
             // TypeScript 가 L2 로 오를 때 **이 팔이 딸려 오르면 안 된다**(`grade_of` 의

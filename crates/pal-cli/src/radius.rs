@@ -202,10 +202,12 @@ pub fn run(a: Args) -> Result<Report> {
         }
         // 옛 원소는 `with_radius` 가 옛 값으로 덮는다 — 여기서 읽은 값은 안 쓰인다.
         // 그래도 **읽어서 넣는다**: 그래야 그 함수의 보존이 실제로 일했는지 시험이 잰다.
-        let base_body: Option<BodyDigest> =
-            base_p.symbol(s).context("2층을 읽지 못했다")?.map(|n| n.body);
-        let digest = match base_body {
-            Some(d) => d,
+        // 장식(속성·수신자 · #77)도 **같은 base 커밋에서** 읽는다 — 본문과 기준 시점이 갈리면
+        // 한 원소가 두 시점에 선다.
+        let base_값: Option<(BodyDigest, BodyDigest)> =
+            base_p.symbol(s).context("2층을 읽지 못했다")?.map(|n| (n.body, n.decor));
+        let (digest, decor) = match base_값 {
+            Some(v) => v,
             None => {
                 // base 커밋에 없던 좌표다 — 기준값이 원리상 없다.
                 if !옛_원소.contains(&s) {
@@ -214,10 +216,10 @@ pub fn run(a: Args) -> Result<Report> {
                 let Some(실물) = head_p.symbol(s).context("2층을 읽지 못했다")? else {
                     bail!("`{s}` 를 2층에서 읽지 못했다 — 반경을 펴는 중에 투영이 갈렸다");
                 };
-                실물.body
+                (실물.body, 실물.decor)
             }
         };
-        넓힌.push(WatchEntry { symbol: s, digest });
+        넓힌.push(WatchEntry { symbol: s, digest, decor: pal_core::DecorBaseline::Recorded(decor) });
     }
 
     let 옛반경 = 옛.radius.name();

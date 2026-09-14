@@ -53,6 +53,7 @@
 | `Symbol` | `name` | `string` | `extractor` | 예 |
 | `Symbol` | `kind` | `enum:SymbolKind` | `extractor` | 예 |
 | `Symbol` | `body` | `digest` | `extractor` | 예 |
+| `Symbol` | `decor` | `digest` | `extractor` | 예 |
 | `Symbol` | `span` | `span` | `extractor` | 예 |
 | `Symbol` | `identity` | `enum:IdentityGrade` | `extractor` | 예 |
 | `UnresolvedRef` | `reason` | `enum:UnresolvedReason` | `extractor` | 예 |

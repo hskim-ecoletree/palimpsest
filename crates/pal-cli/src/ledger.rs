@@ -449,6 +449,7 @@ pub(crate) fn nodes_of(
             name: s.name.clone(),
             kind: s.kind,
             body: s.body,
+            decor: s.decor,
             span: s.span,
             // 언어 등급이 아니라 **심볼**의 것이다 — R-22. 둘 중 낮은 쪽을 쓴다.
             //
@@ -884,6 +885,7 @@ mod tests {
             kind,
             span: Span { byte_start: at, byte_end: at + 1, line_start: 1, line_end: 1 },
             body: BodyDigest::of_normalized(name.as_bytes()),
+            decor: BodyDigest::of_normalized(b""),
             identity: IdentityGrade::Exact,
         }
     }

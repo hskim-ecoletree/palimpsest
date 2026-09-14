@@ -527,6 +527,7 @@ mod tests {
             kind,
             span: Span { byte_start: from, byte_end: to, line_start: 1, line_end: 1 },
             body: BodyDigest::of_normalized(name.as_bytes()),
+            decor: BodyDigest::of_normalized(b""),
             identity: crate::IdentityGrade::Exact,
         }
     }
@@ -555,6 +556,7 @@ mod tests {
                 name: s.name.clone(),
                 kind: s.kind,
                 body: s.body,
+                decor: s.decor,
                 span: s.span,
                 identity: s.identity,
             })

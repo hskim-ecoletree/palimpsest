@@ -134,7 +134,9 @@ const META_FORMAT: &str = "row_format";
 /// 올려야 하고, 그것을 재는 자는 없다 — 재려면 행의 모양을 기계가 알아야 하는데
 /// postcard 는 그것을 안 싣는다. **그 사실을 여기 적는 것이 이 장치가 강제하는 것과
 /// 강제하지 못하는 것의 경계다.**
-pub const ROW_FORMAT_REV: &str = "f09-imported-and-unresolved";
+///
+/// `f09-imported-and-unresolved` → `f11-symbol-decor` (#77) — [`SymbolNode`] 에 `decor` 가 붙었다.
+pub const ROW_FORMAT_REV: &str = "f11-symbol-decor";
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProjectionError {

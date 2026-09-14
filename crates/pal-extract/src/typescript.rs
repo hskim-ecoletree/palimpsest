@@ -179,6 +179,8 @@ impl<'a, 't> Walk<'a, 't> {
                     name: p.name.clone(),
                     kind: p.kind,
                     body: digest_of(&scoped, p.node, self.source, identity),
+                    // **데코레이터는 선언 마디 안이라 `body` 가 이미 본다** — 선언 밖 장식이 없다(#77).
+                    decor: pal_core::BodyDigest::of_normalized(b""),
                     span,
                     identity,
                 }

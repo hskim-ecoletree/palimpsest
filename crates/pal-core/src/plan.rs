@@ -999,6 +999,7 @@ mod tests {
             name: name.to_owned(),
             kind: SymbolKind::Function,
             body: BodyDigest::of_normalized(&[body]),
+            decor: BodyDigest::of_normalized(b""),
             span: Span { line_start: 1, line_end: 2, byte_start: 0, byte_end: 1 },
             identity: IdentityGrade::Exact,
         }

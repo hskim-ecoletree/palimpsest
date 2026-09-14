@@ -211,8 +211,23 @@ pub const GRAMMAR_REV: &str = "acb96307d816618bd60e1e4d2fa3eaa793e97a2e";
 ///
 /// ⚠ **`scripts/f04-verify.py:188` 의 리터럴도 같이 움직인다** — 앞 승급들과 같다.
 ///
+/// # `f10-nul-source` → `f11-decor` (2026-09-14 · #77 · 회차 `2026-09-14-first-release` 의 `A2`)
+///
+/// 열째다. **[`pal_core::Symbol`] 에 [`decor`](pal_core::Symbol::decor) 가 붙었다** — Rust 선언
+/// 앞 형제 속성과 메서드 수신자의 요약이다. 둘 다 `body_digest` 가 못 봐서 `#[derive]` 인자를
+/// 바꾸거나 `&self` 를 `self` 로 바꿔도 결박이 `fresh` 로 남았다.
+///
+/// 안 올리면 **옛 캐시 항목이 `decor` 없이 되살아난다.** postcard 는 자리 기반이라 칸이 하나 붙은
+/// 타입으로 옛 바이트를 읽으면 디코드가 어긋나거나 멎는다 — 데워진 캐시에서만 답이 갈린다.
+///
+/// ⚠ **`body_digest` 는 한 바이트도 안 움직인다** — 세 언어 모두. 장식을 본문에 섞지 않고 축을
+/// 따로 둔 까닭이 그것이다: 섞으면 이미 선 결박의 기준값이 옛 규칙 값이라 코드 변화 없이 뒤집힌다
+/// (착수 때 이 저장소 결박 42 중 20). TypeScript·Kotlin 의 `decor` 는 빈 장식의 요약이다.
+///
+/// ⚠ **`scripts/f04-verify.py:188` 의 리터럴도 같이 움직인다.**
+///
 /// [`FileOutcome`]: crate::FileOutcome
-pub const EXTRACTOR_REV: &str = "f10-nul-source";
+pub const EXTRACTOR_REV: &str = "f11-decor";
 
 #[must_use]
 pub const fn version() -> ExtractorVersion {
