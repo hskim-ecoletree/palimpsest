@@ -66,7 +66,7 @@
 | `A3-a` | 같은 산출의 `--corrupt` 절 — 불일치 1 |
 | `A4` | 시험 `ts_cross_file::a4_재수출_배럴로_펴지는_임포트는_재수출을_지나는_이름이다` |
 | `A5` | `oracle/A5-ditto.txt`(커밋된 바이너리 `ba0a983` · 새 복제본) — ⑴ 선 것 > 0 · ⑵ 0(꼴 셈도 0: `oracle/A5-2-shape.txt`) · ⑶ 불일치 0 · ⑷ 2915 중 빠진 것 0. 착수 규칙에서는 59 였고 판 `p1-binary-nul` 의 확대(`intent.md ## 개정` · `## 승격` 1~3)로 **제품을 고쳐** 닫았다 — `oracle/p1-X/`(데워진 캐시 · 음성 대조 · 골든 · f04 줄 판정) |
-| `A6` | ⑴ `oracle/A6-xtask-test.txt` — `cargo xtask test` 통과 1124 · 실패 0(HEAD `5b4a37f`) ⑵ `oracle/A6-rust.txt` — 착수 바이너리와 `pal 0.0.0+5b4a37f08e8b` 의 파일 간 엣지 집합 1319 = 1319 · 한쪽에만 0 · 음성 대조(앞 커밋 `1276b8f`) 1294 로 다르다. 그 뒤 크레이트 변경(`c9e31a3`)은 시험 두 개뿐이고 마지막 커밋의 시험 전량은 `F2` 의 CI 가 진다 |
+| `A6` | ⑴ `oracle/A6-xtask-test.txt` — `cargo xtask test` 통과 1124 · 실패 0(HEAD `5b4a37f`) ⑵ `oracle/A6-rust.txt` — 착수 바이너리와 `pal 0.0.0+5b4a37f08e8b` 의 파일 간 엣지 집합 1319 = 1319 · 한쪽에만 0 · 음성 대조(앞 커밋 `1276b8f`) 1294 로 다르다. 그 뒤 크레이트를 고친 커밋은 넷이다 — `c9e31a3`(시험 둘) · `1bcdc93` · `3f69ccd` · `51de0e8`(`radius.rs` Windows 잠금 수정). ⑴ 의 최종 판은 `067c7c4` CI 의 `cargo xtask test`(세 OS success)가 진다 |
 | `A7` | 시험 `cross_file_references` 의 「호출자 수는 하한입니다」 단언 |
 | `B1` · `B1-a` · `B2` · `B3` | 시험 `pending_and_pick::b1` · `b2` · `b3`(B1-a 는 b1 안의 `lonely` 음성 대조) · RED `oracle/B2-red.txt` |
 | `B4` | `oracle/B4-timing.txt`(규칙 변경 뒤 바이너리) — 표본 ①·② p95 2.2 ms < 500 ms · 표본 ② 대기 구역 50/50 · 후보 화면 0 |
@@ -80,16 +80,16 @@
 | `F1` | `oracle/F1-comment.txt` — `#135` 코멘트가 `A5` 수(`7199/11099` · `oracle/A5-touch-final.txt` — `pal 0.0.0+5b4a37f08e8b` · 새 복제본)와 게이트 경로를 싣는다. 첫 판은 NUL 규칙 전 바이너리의 `7116/11010` 과 착수 칸의 재현율 59 를 섞어 적어 독립 리뷰 R1 뒤 편집했다 |
 | `F2` | `oracle/F2-ci-067c7c4.txt` — main 에 올린 마지막 push 의 SHA `067c7c4` · 런 `34803197814` `success`. 앞의 두 push `701acb5` · `4398134` 는 `windows-latest` 빨강(`oracle/F2-ci-701acb5.txt` · `oracle/F2-ci-4398134.txt`) · 고친 커밋은 PR #157 에서 먼저 쟀다 · 소유자 답 `intent.md ## 승격` 9 · 10 · 11. 이 전사 커밋은 push 하지 않았다 |
 | `F4` | `oracle/F4-g5.txt` — `total_count 0` → 종료 보고에 `G5` · `Actions` 줄 |
-| `G1` | `oracle/G1-coupling.txt` — `6ee9eb3..c9e31a3` 더한 줄 0 · 음성 대조 1(첫 측정 `oracle/G1-first-red.txt` 는 4) |
+| `G1` | `oracle/G1-coupling.txt` — `6ee9eb3..264d967` 더한 줄 0 · 음성 대조 1(첫 측정 `oracle/G1-first-red.txt` 는 4) |
 | `G2` | **반증** — `oracle/G2-violation.txt`. `scripts/f06-verify.py` 가 원본 ditto 에 캐시 자리를 안 주고 `pal` 을 붙여, `EXTRACTOR_REV` 승급 뒤 재실행에서 원본 `.palimpsest/cache` 에 항목 2,451 개가 더해졌다. 소유자 결정으로 더해진 파일만 지웠고(`oracle/G2-deleted-cache-files.txt`) 디렉터리 시각은 되돌리지 않았다 — 목록 해시가 착수(`oracle/G2-ditto-origin-before.txt`)와 뒤(`oracle/G2-ditto-origin-after.txt`)에서 다르다. HEAD · porcelain · `node_modules` 는 같다 |
 
 ### 차선책 — 등록된 넷 중 쓴 것
 
 없다. `extends` 사슬 · CI 가 뜨지 않음 · 표본 400 · ADR 후보 대체 모두 발동하지 않았다.
 
-### 개정 둘 — 무엇을 왜 바꿨나
+### 개정 넷 — 무엇을 왜 바꿨나
 
-`intent.md ## 개정` 이 진다. 줄은 둘이다 — `p1` **확대**와 `p2` **정정**. `A5` ⑷ 는 **글자를 안 바꾸고 제품을 고쳤다**(`p1`). `E2` ⑵ · `E4` 는 호출자 집합을 「`touch` 가 **센** 호출자」로 **정정**했다 — ⚠ 그 읽기 규칙은 두 결과(질의 출력으로 잰 통과 · 문면대로 잰 반증)를 **다 본 뒤** 썼다. 사전 등록이 아니다.
+`intent.md ## 개정` 이 진다. 줄은 넷이다 — `p1` **확대** · `p2` **정정** · `F2` 를 판정하는 SHA 의 **정정**(소유자 답 `## 승격` 10 이 따라 정한 읽기) · §11 ③ (가)→(나) **전환**([#158](https://github.com/hskim-ecoletree/palimpsest/issues/158) · `## 승격` 12). 뒤의 둘은 독립 리뷰 R3 이 개정 줄 없음을 잡아 적었다. `A5` ⑷ 는 **글자를 안 바꾸고 제품을 고쳤다**(`p1`). `E2` ⑵ · `E4` 는 호출자 집합을 「`touch` 가 **센** 호출자」로 **정정**했다 — ⚠ 그 읽기 규칙은 두 결과(질의 출력으로 잰 통과 · 문면대로 잰 반증)를 **다 본 뒤** 썼다. 사전 등록이 아니다.
 
 ## 효과
 
@@ -107,7 +107,7 @@
 
 ### 첫 릴리스가 섰나
 
-**섰다 — 한 갈래를 뺀 채로.** 원문의 줄 「설치 → 코드를 만지려는 순간 → 걸린 결정과 깨질 곳을 받는다」 가운데
+**깨질 곳의 자리를 뺀 채로 섰다.** 원문의 줄 「설치 → 코드를 만지려는 순간 → 걸린 결정과 깨질 곳을 받는다」 가운데
 설치 · `touch` 를 부르는 순간 · **걸린 결정**(승인 대기 → 승인 → `■ 이 좌표에 걸린 것` 이 ADR 본문과 판정을 싣는다) ·
 파일 경계를 넘는 호출자 **수** · 동명 지목 · 회차 어휘 0 은 남의 저장소 복제본에서 섰다(`E1` · `E2`).
 **깨질 곳의 자리는 화면에서 서지 않았다** — 위 효과의 마지막 줄 · `#156`. 화면 몫의 효과는 대조 불가다(`E3`).

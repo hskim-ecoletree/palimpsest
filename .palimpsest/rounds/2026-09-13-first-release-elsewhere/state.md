@@ -20,7 +20,7 @@
 | `report.md` | **섰다** — `96bfcb7` 뒤 R2 정정 반영 |
 | 독립 리뷰 | **R1 · R2 처분** — 상한 4. R1 정정 10 · 기각 19 / R2 는 원장 `IR2-*` |
 | push | `701acb5` · `4398134` 둘 다 CI `windows-latest` 빨강(`oracle/F2-ci-701acb5.txt` · `oracle/F2-ci-4398134.txt`). 첫 수정 `1bcdc93` 은 HEAD 원장만 옮겨 불완전했다(`MS3-02`) · `3f69ccd` 가 원장 둘을 `.redb` 없이 계산 · 소유자 답 `## 승격` 9 · 10 · 11 |
-| PR | [#157](https://github.com/hskim-ecoletree/palimpsest/pull/157) draft · 브랜치 `fix/radius-windows-lock` · head `51de0e8` · CI 런 `34802282312` |
+| PR | [#157](https://github.com/hskim-ecoletree/palimpsest/pull/157) **병합됨**(`067c7c4` push 로 main 이 head `51de0e8` 을 품어 2026-09-14T03:36:40Z 자동 병합) · 브랜치 `fix/radius-windows-lock` 은 원격에 남아 있다 · CI 런 `34802282312` success |
 | `F2` | **닫혔다** — PR #157 CI 초록(`oracle/F2-pr157-51de0e8.txt`) 뒤 main 세 번째 push `067c7c4` · 런 `34803197814` success(`oracle/F2-ci-067c7c4.txt`). 이 전사 커밋은 소유자 답 10 대로 push 하지 않았다 |
 | 남은 것 | 없음 |
 
