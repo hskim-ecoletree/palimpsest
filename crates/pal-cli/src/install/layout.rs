@@ -214,7 +214,23 @@ pub const DIRS: &[&str] = &[
     ".claude/skills",
     ".claude/skills/pal-round",
     ".claude/skills/pal-round/bin",
+    // 저장소 선언을 두는 자리([`PROJECT_MANIFEST`]). 결박 정본도 여기 있어서 대개 이미 있다 —
+    // **없던 것만** 우리가 만든 것으로 적힌다.
+    PROJECT_DIR,
 ];
+
+/// `pal` 이 대상 저장소에 두는 자리.
+pub const PROJECT_DIR: &str = ".palimpsest";
+
+/// ★ **저장소 선언** — `[[repo]] id` 가 여기 산다. 대장이 읽는 자리와 같은 파일이다.
+///
+/// 우리가 **없을 때만** 적는다. 있으면 그것이 사람의 선언이고 바이트로 안 건드린다.
+/// `OWNED_FILES` 에 안 넣는다 — 그 목록은 **통째로 우리 것**이라 검증이 훑고, 사람이 먼저 쓴
+/// 선언까지 「안 적힌 것」으로 잰다.
+pub const PROJECT_MANIFEST: &str = ".palimpsest/manifest.toml";
+
+/// 결박의 **커밋된 정본** — 선언할 식별자를 여기서 읽는다(쓰지 않는다).
+pub const INTENT_CANONICAL: &str = ".palimpsest/intent/bindings.jsonl";
 
 /// **매니페스트가 있는 집** — 나머지보다 먼저 세운다.
 ///
@@ -289,6 +305,12 @@ fn 첫_조각(rel: &str) -> &str {
 pub fn 놓을_수_있는_파일인가(rel: &str) -> bool {
     OWNED_FILES.contains(&rel)
         || OWNED_DIRS.iter().any(|d| rel.strip_prefix(d).is_some_and(|r| r.starts_with('/')))
+}
+
+/// **우리가 적을 수 있는 저장소 선언**인가 — 그 파일 하나.
+#[must_use]
+pub fn 선언_파일인가(rel: &str) -> bool {
+    rel == PROJECT_MANIFEST
 }
 
 /// **우리가 만들 수 있는 디렉터리**인가.

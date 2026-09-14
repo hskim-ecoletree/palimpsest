@@ -484,7 +484,7 @@ fn 제거하면_설치_전으로_돌아간다() {
     }
 }
 
-/// 매니페스트가 소유를 선언한 경로 전부 — 파일 · 블록 · 설정 · 자기 자신.
+/// 매니페스트가 소유를 선언한 경로 전부 — 파일 · 블록 · 설정 · 저장소 선언 · 자기 자신.
 fn 매니페스트_경로들(root: &Path) -> Vec<String> {
     let m = 값(&root.join(".claude/pal/manifest.json"));
     let mut out = vec![m["manifest_path"].as_str().expect("manifest_path").to_owned()];
@@ -493,8 +493,11 @@ fn 매니페스트_경로들(root: &Path) -> Vec<String> {
             out.push(e["path"].as_str().expect("path").to_owned());
         }
     }
-    if let Some(s) = m["settings"].as_object() {
-        out.push(s["path"].as_str().expect("path").to_owned());
+    // 하나짜리 항목들 — **없으면 안 적었다**(`null`).
+    for key in ["settings", "declaration"] {
+        if let Some(s) = m[key].as_object() {
+            out.push(s["path"].as_str().expect("path").to_owned());
+        }
     }
     out
 }

@@ -578,7 +578,8 @@ fn run(
                     out.push(n);
                 }
             }
-            out.sort_by(|a, b| a.path.cmp(&b.path).then(a.span.byte_start.cmp(&b.span.byte_start)));
+            // `touch` 가 싣는 호출자 자리와 **같은 순서**다 — 화면의 앞 몇 곳이 여기의 앞 몇 곳이다.
+            out.sort_by(자리_순서);
             accessed.extend(out.iter().map(|s| s.id));
             Ok(QueryResult::Symbols { symbols: out })
         }
@@ -865,13 +866,45 @@ fn touch_result(
     // 그리고 **낡은 것은 상한을 안 탄다**(옛 F11 §3.3).
     회상(&mut here, ctx.binding_max, elision);
     회상(&mut watching, ctx.binding_max, elision);
+    let 부르는 = p.callers(symbol.id)?;
     let facts = SymbolFacts {
-        callers: p.callers(symbol.id)?.len(),
+        callers: 부르는.len(),
         callees: p.callees(symbol.id)?.len(),
+        caller_places: 호출자_자리(p, &부르는)?,
     };
     Ok(QueryResult::Touch {
         result: Box::new(조립(ctx, symbol, here, watching, facts)?),
     })
+}
+
+/// 호출자 자리 — **`symbol.callers` 와 같은 순서로 앞 몇 곳.**
+///
+/// 순서가 같아야 화면이 실은 앞 몇 곳이 펴는 질의의 앞 몇 곳과 같다. 그래서 순서를
+/// [`자리_순서`] 한 자리에서 두 질의가 함께 쓴다.
+fn 호출자_자리(
+    p: &Projection,
+    부르는: &[SymbolId],
+) -> Result<pal_core::CallerPlaces, QueryError> {
+    let mut 노드 = Vec::with_capacity(부르는.len());
+    for id in 부르는 {
+        if let Some(n) = p.symbol(*id)? {
+            노드.push(n);
+        }
+    }
+    노드.sort_by(자리_순서);
+    let 상한 = pal_core::PROVISIONAL_TOUCH_CALLER_PLACE_MAX;
+    let more = 노드.len().saturating_sub(상한);
+    let shown = 노드
+        .into_iter()
+        .take(상한)
+        .map(|n| pal_core::CallerPlace { path: n.path, line: n.span.line_start, name: n.name })
+        .collect();
+    Ok(pal_core::CallerPlaces { shown, more, unfolded_by: QueryName::SymbolCallers })
+}
+
+/// 자리 순서 — **경로, 같은 파일 안에서는 선언 바이트 위치.** 결정적이어야 두 번 돌린 답이 같다.
+fn 자리_순서(a: &SymbolNode, b: &SymbolNode) -> std::cmp::Ordering {
+    a.path.cmp(&b.path).then(a.span.byte_start.cmp(&b.span.byte_start))
 }
 
 /// `BOUND_BY` 와 `WATCH` 를 각각 읽고 **가른다.**

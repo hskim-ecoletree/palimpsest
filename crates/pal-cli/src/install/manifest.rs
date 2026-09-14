@@ -181,6 +181,14 @@ pub struct Manifest {
     pub files: Vec<FileEntry>,
     pub blocks: Vec<BlockEntry>,
     pub settings: Option<SettingsEntry>,
+    /// ★ **우리가 적은 저장소 선언**(`.palimpsest/manifest.toml`). 없으면 우리가 안 적었다 —
+    /// 이미 있던 선언이거나, 식별자를 하나로 못 정해 안 적은 것이다. **어느 쪽이든 제거가
+    /// 걷을 것이 없다**는 행동이 같으므로 이유를 값으로 안 싣는다(`settings` 와 같은 판단).
+    ///
+    /// **`#[serde(default)]` 이라 옛 매니페스트는 전부 「안 적었다」로 읽힌다** — 그때는 실제로
+    /// 안 적었다.
+    #[serde(default)]
+    pub declaration: Option<DeclarationEntry>,
     /// **우리가 만든** 디렉터리. 순서는 안 믿는다 — 제거는 **깊은 것부터** 본다.
     pub created_dirs: Vec<Rel>,
     /// ★ **제거가 시작됐다.** `uninstall` 이 첫 걸음을 떼기 전에 참으로 적고, 걷은
@@ -210,6 +218,16 @@ pub enum 종류 {
     블록,
     /// 대상 설정 파일 — 우리가 더한 키만 뺀다.
     설정,
+    /// 저장소 선언 — **커밋되기 전이고 우리가 적은 바이트 그대로일 때만** 지운다.
+    선언,
+}
+
+/// 우리가 적은 저장소 선언 하나.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DeclarationEntry {
+    pub path: Rel,
+    /// **우리가 적은 바이트의 sha256.** 실물이 이것과 다르면 사람이 고친 것이고 제거가 안 지운다.
+    pub sha256: String,
 }
 
 impl Manifest {
@@ -226,6 +244,7 @@ impl Manifest {
         out.extend(self.files.iter().map(|f| (종류::파일, &f.path)));
         out.extend(self.blocks.iter().map(|b| (종류::블록, &b.path)));
         out.extend(self.settings.iter().map(|s| (종류::설정, &s.path)));
+        out.extend(self.declaration.iter().map(|d| (종류::선언, &d.path)));
         out.extend(self.created_dirs.iter().map(|r| (종류::디렉터리, r)));
         out
     }
@@ -295,6 +314,7 @@ pub fn 우리_자리인가(종류: 종류, rel: &Rel) -> Result<()> {
         self::종류::디렉터리 => layout::만들_수_있는_디렉터리인가(s),
         self::종류::블록 => layout::블록을_넣을_수_있는_파일인가(s),
         self::종류::설정 => layout::설정_파일인가(s),
+        self::종류::선언 => layout::선언_파일인가(s),
     };
     if !된다 {
         bail!(
@@ -520,6 +540,10 @@ mod tests {
                 hooks_key_created: false,
                 created: false,
             }),
+            declaration: Some(super::DeclarationEntry {
+                path: Rel::new(&format!("{표식}선언")),
+                sha256: "0".repeat(64),
+            }),
             created_dirs: vec![Rel::new(&format!("{표식}만든디렉터리"))],
             removing: false,
         };
@@ -568,6 +592,14 @@ mod tests {
             우리_자리인가(super::종류::블록, &Rel::new(b)).unwrap_or_else(|e| panic!("{b}: {e}"));
         }
         우리_자리인가(super::종류::설정, &Rel::new(layout::SETTINGS)).expect("설정");
+        우리_자리인가(super::종류::선언, &Rel::new(layout::PROJECT_MANIFEST)).expect("선언");
+        // **짝** — 선언 종류로 남의 파일을 적으면 막힌다.
+        for 남의것 in ["README.md", ".palimpsest/intent/bindings.jsonl", ".claude/settings.json"] {
+            assert!(
+                우리_자리인가(super::종류::선언, &Rel::new(남의것)).is_err(),
+                "`{남의것}` 을 우리 선언 자리로 읽었다"
+            );
+        }
     }
 
     /// ★ **대상 안이어도 우리 자리가 아니면 막힌다.** `Root::join` 은 여기를 못 본다.
@@ -602,7 +634,7 @@ mod tests {
         use super::우리_자리인가;
 
         for 종류 in
-            [super::종류::파일, super::종류::디렉터리, super::종류::블록, super::종류::설정]
+            [super::종류::파일, super::종류::디렉터리, super::종류::블록, super::종류::설정, super::종류::선언]
         {
             for rel in [".git", ".git/config", ".git/hooks/pre-commit"] {
                 assert!(우리_자리인가(종류, &Rel::new(rel)).is_err(), "{종류:?} {rel}");

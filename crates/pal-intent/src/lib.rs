@@ -35,7 +35,7 @@ mod store;
 pub mod round_condition;
 
 pub use store::{
-    ImportReport, IntentError, IntentLine, IntentStore, JSONL_SCHEMA_VERSION,
+    ImportReport, IntentError, IntentLine, IntentStore, JSONL_SCHEMA_VERSION, bound_repos,
 };
 
 /// 이 크레이트가 지키는 계약. 문서가 아니라 검사가 이것을 강제한다(`cargo xtask check`).

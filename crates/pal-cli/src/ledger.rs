@@ -122,10 +122,7 @@ pub fn compute(
 
     // **저장소 식별자는 선언이 정본이다** ([R-08]). 경로에서 유도한 이름은 저장소를
     // 옮기면 바뀌고, 그러면 결박이 가리키는 좌표가 통째로 흔들린다.
-    let repo_id = manifest
-        .as_ref()
-        .and_then(|m| m.repos.first())
-        .map_or_else(|| RepoId::new(repo_name(repo_path)), |r| r.id.clone());
+    let repo_id = 식별자(manifest.as_ref(), repo_path);
     // 엣지가 지는 **공통 넷의 넷째**다. 덩어리를 돌기 전에 한 번 만든다.
     let snapshot = Snapshot::single(repo_id.clone(), tree);
     let mut stats = CacheStats::default();
@@ -594,6 +591,24 @@ fn read_attributes(repo: &GixRepo, at: &TreeRef) -> Result<Attributes> {
         found.push((dir, String::from_utf8_lossy(&raw).into_owned()));
     }
     Ok(Attributes::parse(&found))
+}
+
+/// 이 저장소의 식별자 — **선언이 있으면 선언, 없으면 디렉터리 이름.**
+///
+/// ★ **규칙이 한 자리다.** 대장([`compute`])과 `pal defect` 가 이것을 지난다 — 한쪽이
+/// 디렉터리 이름을 직접 쓰면 선언이 있는 저장소에서 두 명령이 다른 좌표를 만든다.
+///
+/// # Errors
+/// 매니페스트가 있는데 깨졌으면 — 없는 것으로 삼키지 않는다([`load_manifest`]).
+pub(crate) fn repo_id(repo_path: &Path) -> Result<RepoId> {
+    Ok(식별자(load_manifest(repo_path)?.as_ref(), repo_path))
+}
+
+/// 이미 읽은 매니페스트로 식별자를 정한다.
+fn 식별자(manifest: Option<&Manifest>, repo_path: &Path) -> RepoId {
+    manifest
+        .and_then(|m| m.repos.first())
+        .map_or_else(|| RepoId::new(repo_name(repo_path)), |r| r.id.clone())
 }
 
 /// 디렉터리 이름을 저장소 식별자로 쓴다.

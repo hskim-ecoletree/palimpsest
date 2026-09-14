@@ -135,13 +135,15 @@ pub fn run(a: Args) -> Result<()> {
     // 세우는 파생물이고 `.gitignore` 가 지운다. 그 부재가 답에 실려야 빈 목록이
     // 「0 건」으로 안 읽힌다.
     let 의도_자리 = intent_file(repo_path, intent_path);
-    let intent_store = pal_core::IntentStorePresence::of(
-        의도_자리.exists(),
-        의도_자리.display().to_string(),
-        intent_canonical(repo_path),
-    );
+    let 있었나 = 의도_자리.exists();
     let intent =
         IntentStore::open_read_only(&의도_자리).context("의도 저장소를 열지 못했다")?;
+    let intent_store = pal_core::IntentStorePresence::of(
+        있었나,
+        의도_자리.display().to_string(),
+        intent_canonical(repo_path),
+        다른_식별자(&report, &intent)?,
+    );
     let bound = IntentIndex(&intent);
 
     let counts = report.ledger.counts();
@@ -219,7 +221,22 @@ pub fn run(a: Args) -> Result<()> {
         }
         println!("{}", serde_json::to_string_pretty(&v)?);
     } else {
-        print_screen(&envelope, attached.cross.as_ref(), 대기.as_ref());
+        // ★ **나머지 호출자를 펴는 명령** — 사람이 친 이름 그대로, 이름이 여럿에 맞으면 지목까지.
+        //   지목이 없으면 그 명령이 후보 화면으로 떨어지고, 그러면 「그대로 쳐서 펴진다」가 거짓이다.
+        let 펴기 = 펴는_재료 {
+            name,
+            pick: match &envelope.answer {
+                TouchAnswer::Found(r)
+                    if projection.resolve_name(name).context("이름을 다시 해소하지 못했다")?.len() > 1 =>
+                {
+                    Some(r.symbol.id.short())
+                }
+                _ => None,
+            },
+            repo: repo_path,
+            rev,
+        };
+        print_screen(&envelope, attached.cross.as_ref(), 대기.as_ref(), &펴기);
     }
 
     // **두 시계를 둘 다 산출한다** — 합격선은 질의 시간에만 걸리고(`[f11.pass]` ⑦),
@@ -280,11 +297,40 @@ fn 수(v: &Capable<Vec<BoundItem>>) -> String {
     }
 }
 
+/// 나머지 호출자를 펴는 명령의 재료 — **사람이 친 그대로** 다시 칠 수 있어야 한다.
+struct 펴는_재료<'a> {
+    /// 사람이 친 이름. 심볼 이름이 아니라 **질의에 준 문자열**이다 — 그래야 같은 해소를 지난다.
+    name: &'a str,
+    /// 그 이름에 후보가 둘 이상일 때만 — 찾은 심볼의 지목 문자열(짧은 해시).
+    pick: Option<String>,
+    repo: &'a Path,
+    rev: Option<&'a str>,
+}
+
+/// 그대로 쳐서 펴지는 명령 한 줄. **질의 이름은 카탈로그의 이름에서 온다** — 여기 적지 않는다.
+///
+/// ⚠ **따옴표로 감싸지 않는다** — 이름이나 경로에 공백이 있으면 셸에서 그대로 안 돈다.
+///   식별자에는 공백이 없고, 경로는 `--repo` 를 준 사람만 이 줄에 실린다.
+fn 펴는_명령(q: pal_core::QueryName, 펴기: &펴는_재료) -> String {
+    let mut 낱말 = vec!["pal".to_owned(), "query".to_owned(), q.name().to_owned(), 펴기.name.to_owned()];
+    if let Some(p) = &펴기.pick {
+        낱말.extend(["--pick".to_owned(), p.clone()]);
+    }
+    if 펴기.repo != Path::new(".") {
+        낱말.extend(["--repo".to_owned(), 펴기.repo.display().to_string()]);
+    }
+    if let Some(rev) = 펴기.rev {
+        낱말.extend(["--at".to_owned(), rev.to_owned()]);
+    }
+    낱말.join(" ")
+}
+
 /// 옛 `how-it-works §2.3` 의 화면 (그 문서는 2026-08-18 에 지웠다 — `docs/plan/disposal-map.md`).
 fn print_screen(
     envelope: &Envelope<TouchAnswer>,
     cross: Option<&pal_core::CrossFileReport>,
     대기: Option<&crate::pending::대기>,
+    펴기: &펴는_재료,
 ) {
     println!();
     match &envelope.answer {
@@ -312,7 +358,7 @@ fn print_screen(
             if let Some(d) = 대기 {
                 crate::pending::화면(d);
             }
-            print_facts(&r.facts, cross);
+            print_facts(&r.facts, cross, 펴기);
             print_unresolved(&r.unresolved);
             slot("효과", &r.effects);
             slot("판정", &r.judgments);
@@ -429,6 +475,12 @@ fn print_bindings(
             }
             return;
         }
+        // ★ **대 보지도 못한 것을 「0 건」으로 적지 않는다.** 결박이 다른 저장소 식별자에
+        // 섰으면 이 좌표와 해시부터 다르다 — 빈 목록은 값이 아니라 식별자 어긋남이다.
+        if store.other_repo.bindings > 0 {
+            print_other_repo(&store.other_repo);
+            return;
+        }
         println!("  아직 없습니다.");
         return;
     }
@@ -481,6 +533,62 @@ fn print_bindings(
     if 자른 > 0 {
         println!("  … 그 밖 {자른}건 — **잘렸습니다. 낡은 것은 잘리지 않습니다**");
     }
+    // 실린 것이 있어도 **안 보인 몫이 있다는 사실**은 말한다 — 수가 전부로 읽히지 않게.
+    let o = &store.other_repo;
+    if o.bindings > 0 {
+        println!(
+            "  ※ 이 밖에 결박 {}건이 다른 저장소 식별자({})에 걸려 있어 여기서 대 보지 못했습니다",
+            o.bindings,
+            식별자_목록(o)
+        );
+    }
+}
+
+/// 다른 저장소 식별자에 선 결박 — **빈 목록 자리에 「아직 없습니다」 대신 찍는다.**
+fn print_other_repo(o: &pal_core::OtherRepoBindings) {
+    println!(
+        "  **「0 건」이 아닐 수 있습니다** — 결박 {}건이 다른 저장소 식별자({})에 걸려 있어 \
+이 좌표와 대 보지 못했습니다.",
+        o.bindings,
+        식별자_목록(o)
+    );
+    println!(
+        "  지금 저장소 식별자는 `{}` 입니다 — 식별자는 좌표의 성분이라, 다르면 같은 코드도 다른 좌표입니다.",
+        o.current.as_str()
+    );
+    if let [하나] = o.repos.as_slice() {
+        println!(
+            "  맞추려면 — `.palimpsest/manifest.toml` 에 `[[repo]] id = \"{}\"` 를 선언하십시오",
+            하나.as_str()
+        );
+    }
+}
+
+fn 식별자_목록(o: &pal_core::OtherRepoBindings) -> String {
+    o.repos.iter().map(|r| format!("`{}`", r.as_str())).collect::<Vec<_>>().join(" · ")
+}
+
+/// 지금 식별자와 **다른 식별자에 선 결박**의 수를 얻는다 — `touch` 와 `query` 가 같이 쓴다.
+///
+/// ⚠ **결박 전수를 읽는다.** 좌표 하나에 답하는 질의가 O(전체 결박)을 지는 자리다. 그래도
+/// 여기서 세는 까닭은, 이것을 안 세면 식별자가 어긋난 저장소에서 **모든** 조회가 거짓 0 을
+/// 내기 때문이다 — 싸게 틀리는 것보다 비싸게 맞는 쪽을 골랐다.
+///
+/// # Errors
+/// 결박을 읽지 못하면.
+pub fn 다른_식별자(
+    report: &ledger::LedgerReport,
+    intent: &IntentStore,
+) -> Result<pal_core::OtherRepoBindings> {
+    let current = report
+        .ledger
+        .snapshot
+        .entries()
+        .next()
+        .map(|(r, _)| r.clone())
+        .context("스냅샷에 저장소가 없다")?;
+    let 전부 = intent.all().context("결박을 읽지 못했다")?;
+    Ok(pal_core::OtherRepoBindings::count(current, &전부))
 }
 
 /// 이 심볼이 하는 것 — **수를 산출한다. `(있음)` 은 아무것도 안 말한다.**
@@ -503,6 +611,7 @@ fn print_bindings(
 fn print_facts(
     value: &Capable<pal_core::SymbolFacts>,
     cross: Option<&pal_core::CrossFileReport>,
+    펴기: &펴는_재료,
 ) {
     println!("■ 이 심볼이 하는 것");
     match value {
@@ -510,6 +619,22 @@ fn print_facts(
             "  (이 빌드에는 {} 능력이 없습니다)", capability.what),
         Capable::Present(f) => {
             println!("  호출자 {} · 피호출자 {}", f.callers, f.callees);
+            // ★ **수만 있으면 사람이 그 수를 어디서 확인할지 모른다.** 앞 몇 곳을 `경로:줄` 로
+            //   싣고, 나머지는 **그대로 쳐서 펴지는 명령**을 적는다.
+            let 자리 = &f.caller_places;
+            if !자리.shown.is_empty() {
+                println!("  호출자 자리 — 앞 {}곳 · 경로:줄", 자리.shown.len());
+                for c in &자리.shown {
+                    println!("    {}:{}  {}", c.path, c.line, c.name);
+                }
+                if 자리.more > 0 {
+                    println!(
+                        "  … 그 밖 {}곳 — 전부 보려면: {}",
+                        자리.more,
+                        펴는_명령(자리.unfolded_by, 펴기)
+                    );
+                }
+            }
             // ★ **라벨이 「호출자」인데 담는 것은 호출만이 아니다.**
             //   실측(2026-09-08 · Rust 엣지 4,258): 타입 참조 1,198 · 호출·매크로
             //   3,843 · 그 밖 1,598. **엣지의 상당수가 호출이 아니다.**
