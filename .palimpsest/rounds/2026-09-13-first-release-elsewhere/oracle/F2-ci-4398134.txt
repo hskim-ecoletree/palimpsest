@@ -1,0 +1,29 @@
+# F2 — 두 번째 push 의 마지막 SHA `4398134` 의 CI
+
+- 조회: `gh run view 34800818710` (2026-09-14T03:07:09Z)
+- 런 `34800818710` · event push · 결과 **failure**
+
+## 잡
+```
+놓는다 · ubuntu-latest · success
+ubuntu-latest · success
+놓는다 · windows-latest · success
+macos-latest · success
+windows-latest · failure
+받는다 · ubuntu-latest → windows-latest · success
+받는다 · windows-latest → ubuntu-latest · success
+```
+
+## 실패 자리 (windows-latest · cargo xtask test)
+```
+windows-latest	cargo xtask test	2026-09-14T03:05:22.1288153Z [1m[91merror[0m: test failed, to rerun pass `-p pal-cli --test radius_preserves_verdict`
+windows-latest	cargo xtask test	2026-09-14T03:05:22.1587273Z test 새_감시_원소의_기준은_bound_at_의_base_커밋이다 ... FAILED
+windows-latest	cargo xtask test	2026-09-14T03:05:22.1588414Z test 기준을_head_로_읽으면_fresh_가_난다 ... FAILED
+windows-latest	cargo xtask test	2026-09-14T03:05:22.1590828Z stderr: Error: base 커밋 `2dc77ea` 의 원장을 못 세웠다
+windows-latest	cargo xtask test	2026-09-14T03:05:22.1592151Z     1: 워킹트리를 읽지 못했다: .\.palimpsest/index.redb: The process cannot access the file because another process has locked a portion of the file. (os error 33)
+windows-latest	cargo xtask test	2026-09-14T03:05:22.1625415Z stderr: Error: base 커밋 `2dc77ea` 의 원장을 못 세웠다
+windows-latest	cargo xtask test	2026-09-14T03:05:22.1626562Z     1: 워킹트리를 읽지 못했다: .\.palimpsest/index.redb: The process cannot access the file because another process has locked a portion of the file. (os error 33)
+windows-latest	cargo xtask test	2026-09-14T03:05:22.1654518Z test result: FAILED. 15 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.04s
+```
+
+## 판정: 반증 — `1bcdc93` 의 순서 바꿈은 첫 원장 계산만 옮겼다. base 커밋 원장(`ledger::compute(.., Some(base))`)도 워킹트리를 읽고(`crates/pal-cli/src/ledger.rs:92` — `--at` 이어도 잰다), 그때 이 프로세스가 `index.redb` · `intent.redb` 를 열고 있다

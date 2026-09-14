@@ -126,32 +126,40 @@ pub fn run(a: Args) -> Result<Report> {
         bail!("반경 `{radius}` 를 모른다 — 아는 것은 {} 다", Radius::NAMES.join(" · "));
     };
 
-    // ★ **워킹트리를 먼저 읽고 의도 저장소를 뒤에 연다** — `pal bind` 와 같은 순서다.
-    //   의도 저장소가 저장소 안에 있고 git 이 그 파일을 추적하면, 워킹트리 스캔이 그 파일을
-    //   다시 읽는다. Windows 는 이 프로세스가 연 파일의 잠긴 구간을 못 읽게 막아서(os error 33)
-    //   명령이 죽었다 — CI `windows-latest` 에서 `radius_preserves_verdict` 둘이 그랬다.
+    // ★ **원장 둘을 `.redb` 를 하나도 안 연 채로 센다** — `pal bind` 와 같은 원리다.
+    //   `ledger::compute` 는 `--at` 을 줘도 워킹트리를 잰다(`matches_worktree`). 의도 저장소나
+    //   2층이 저장소 안에 있고 git 이 그 파일을 추적하면, 스캔이 그 파일을 다시 읽는다.
+    //   Windows 는 이 프로세스가 연 파일의 잠긴 구간을 못 읽게 막는다(os error 33).
+    //   실측(CI `windows-latest`): 첫 판은 의도 저장소를 먼저 열어 HEAD 원장에서 죽었고,
+    //   HEAD 원장만 앞으로 옮긴 둘째 판은 base 원장에서 `index.redb` 로 죽었다.
     let head = ledger::compute(repo_path, None, cache_dir.clone())?;
 
-    let intent = IntentStore::open(&touch::intent_file(repo_path, intent_path))
-        .context("의도 저장소를 열지 못했다")?;
+    let intent_file = touch::intent_file(repo_path, intent_path);
     let id = BindingId::new(id);
-    // **없는 결박은 여기서 멈춘다.** 이 명령은 결박을 만들지 못한다 — 그것이 `pal bind` 다.
-    let Some(옛) = intent.get(&id).context("의도 저장소를 읽지 못했다")? else {
-        bail!(
-            "결박 `{}` 이 없다 — `pal radius` 는 있는 결박의 반경만 바꾼다. \
-             새로 걸려면 `pal bind <이름> --note <조각>` 이다",
-            id.as_str()
-        );
+    let 옛 = {
+        let intent = IntentStore::open(&intent_file).context("의도 저장소를 열지 못했다")?;
+        // **없는 결박은 여기서 멈춘다.** 이 명령은 결박을 만들지 못한다 — 그것이 `pal bind` 다.
+        let Some(옛) = intent.get(&id).context("의도 저장소를 읽지 못했다")? else {
+            bail!(
+                "결박 `{}` 이 없다 — `pal radius` 는 있는 결박의 반경만 바꾼다. \
+                 새로 걸려면 `pal bind <이름> --note <조각>` 이다",
+                id.as_str()
+            );
+        };
+        옛
+        // 여기서 의도 저장소를 닫는다 — base 원장이 워킹트리를 읽기 전에.
     };
+
+    // ── `bound_at` 의 base 커밋 · 그 원장 ─────────────────────────────────────
+    let base = base_commit(&옛.bound_at, &head)?;
+    let base_hex = base.to_hex();
+    let base_report = ledger::compute(repo_path, Some(&base_hex), cache_dir)
+        .with_context(|| format!("base 커밋 `{}` 의 원장을 못 세웠다", &base_hex[..7]))?;
 
     // ── HEAD 의 투영 — 여기서 반경을 편다 ────────────────────────────────────
     let index = index_path.unwrap_or_else(|| repo_path.join(".palimpsest/index.redb"));
     let head_attached = attach::attach(&index, &head, attach::How::Stitching)?;
     let head_p = &head_attached.projection;
-
-    // ── `bound_at` 의 base 커밋 ──────────────────────────────────────────────
-    let base = base_commit(&옛.bound_at, &head)?;
-    let base_hex = base.to_hex();
 
     // ── base 커밋의 투영 — **별도 색인에 붙인다** ────────────────────────────
     //
@@ -159,8 +167,6 @@ pub fn run(a: Args) -> Result<Report> {
     // 갈아 끼워지고, 그러면 **다음 질의에서 판정 불가가 나온다**
     // (`UndeterminableReason::ProjectionStale`). 읽으러 가는 것이 정본을 움직이면 안 된다.
     let base_index = 임시_색인(repo_path, &base_hex);
-    let base_report = ledger::compute(repo_path, Some(&base_hex), cache_dir)
-        .with_context(|| format!("base 커밋 `{}` 의 원장을 못 세웠다", &base_hex[..7]))?;
     let base_attached = attach::attach(&base_index, &base_report, attach::How::Stitching)
         .with_context(|| format!("base 커밋 `{}` 의 2층을 못 세웠다", &base_hex[..7]))?;
     let base_p = &base_attached.projection;
@@ -222,6 +228,8 @@ pub fn run(a: Args) -> Result<Report> {
     let 감시후 = 새.watch.len();
 
     // ── 저장 시점의 예산 — 건수는 안 늘어난다(있는 결박이다) ────────────────
+    // 원장 둘을 다 센 뒤라 다시 열어도 워킹트리 스캔과 안 겹친다.
+    let intent = IntentStore::open(&intent_file).context("의도 저장소를 열지 못했다")?;
     let 건수 = intent.count().unwrap_or(0);
     check_budget(건수, 새.watch.len()).map_err(|e| anyhow::anyhow!("{e}"))?;
 
