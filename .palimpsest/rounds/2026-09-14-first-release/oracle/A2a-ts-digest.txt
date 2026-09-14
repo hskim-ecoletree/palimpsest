@@ -1,0 +1,16 @@
+# A2-a ⑵ — TypeScript 요약값이 착수 바이너리의 `pal symbols` 산출과 바이트로 같은가
+#
+# /Users/incognito/dev/projects/palimpsest/target/release/pal → pal 0.0.0+ec92b899478d
+# /Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-a616a4afd77046313/target/release/pal → pal 0.0.0+fe70606417be
+# 대는 칸: 심볼마다 (name · kind · span · body). 착수 산출에는 decor 칸이 없으므로 새 산출의 decor 는 대조 밖이다.
+# 스크립트: /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a77/ts_compare.py
+
+## 픽스처 — corpus/tasks/f03-normalize-seeds.ts · pal-cli 시험 픽스처의 TS 넷(alpha · beta · delta · binding_status 의 a.ts)
+  픽스처: 파일 5 · 심볼 14 · body 다른 것 0 · 산출 실패 0 · 새 산출의 decor 가 파일 안에서 갈린 심볼 0
+
+## 추가 모집단 — ditto 의 추적 .ts/.tsx 전부(읽기만 · `pal symbols` 는 파일을 읽을 뿐 쓰지 않는다) · /Users/incognito/dev/projects/ditto
+  ditto@aded7ce: 파일 496 · 심볼 4656 · body 다른 것 0 · 산출 실패 0 · 새 산출의 decor 가 파일 안에서 갈린 심볼 0
+  ditto porcelain 전후 같음: True
+
+## 결론
+  body 다른 것: 픽스처 0/14 · ditto 0/4656 → A2-a ⑵ 충족

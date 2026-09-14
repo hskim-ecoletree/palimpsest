@@ -1,0 +1,80 @@
+# A2-b — 착수 바이너리 대 새 바이너리의 결박 판정 (일회성 오라클)
+#
+# 트리: 이 저장소를 두 벌 클론해 ec92b89 로 체크아웃 — /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start/palimpsest · /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/new/palimpsest (git status --porcelain 0 줄 · 디렉터리 이름 = 결박이 선 저장소 식별자 `palimpsest` — 다른 이름이면 #159 로 SymbolId 가 전부 갈린다)
+# 캐시·인덱스·의도 저장소는 바이너리마다 따로 · 전부 클론 밖(스크래치)
+# 스크립트: /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/oracle.py
+
+$ /Users/incognito/dev/projects/palimpsest/target/release/pal --version
+  → pal 0.0.0+ec92b899478d
+$ /Users/incognito/dev/projects/palimpsest/target/release/pal intent import .palimpsest/intent/bindings.jsonl --repo /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start/palimpsest --intent /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start-intent/intent.redb
+$ /Users/incognito/dev/projects/palimpsest/target/release/pal query binding.status --repo /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start/palimpsest --cache-dir /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start-cache --index /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start-index/index.redb --intent /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start-intent/intent.redb --json
+$ /Users/incognito/dev/projects/palimpsest/target/release/pal query graph.dump --repo /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start/palimpsest --cache-dir /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start-cache --index /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start-index/index.redb --intent /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/start-intent/intent.redb --json
+  → start 클론 porcelain 줄 0
+$ /Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-a616a4afd77046313/target/release/pal --version
+  → pal 0.0.0+fe70606417be
+$ /Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-a616a4afd77046313/target/release/pal intent import .palimpsest/intent/bindings.jsonl --repo /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/new/palimpsest --intent /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/new-intent/intent.redb
+$ /Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-a616a4afd77046313/target/release/pal query binding.status --repo /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/new/palimpsest --cache-dir /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/new-cache --index /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/new-index/index.redb --intent /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/65229f0f-1130-4082-b843-446162f0cfb4/scratchpad/a2b/new-intent/intent.redb --json
+  → new 클론 porcelain 줄 0
+
+## ⑴ 결박 수
+  착수 42 · 새 42 · 착수 판정 파일(baseline/05) 42 · id 집합 같음 True
+  이 오라클의 착수 판정 = baseline/05 판정 (id 마다): True
+  착수 분포 {'fresh': 28, 'stale': 14} · 새 분포 {'fresh': 28, 'stale': 14}
+
+## ⑵ 모집단 — 착수 fresh 이고 속성 또는 self 수신자를 진 Rust 심볼을 감시하는 결박
+  수 = 20   (합격선 ≥ 20)   — 원문 텍스트로 셌다: 선언 앞 줄의 `#[…]`(주석·빈 줄 건너뜀 · 여러 줄 속성 포함) · 함수 서명의 `(self` / `(&self` / `(&mut self` / `(mut self`
+
+  결박             착수     새       감시  decor_unwatched  모집단  감시 심볼(속성 · 수신자)
+  1cc70cc19ef92186  fresh    fresh       1                1  예      Elision(1속성)
+  1cf63ec5e0e9937a  stale    stale       2                2          -
+  2e1f321e4f3f366f  fresh    fresh       1                1          -
+  389ce29274d77a47  fresh    fresh       1                1  예      introduced(1속성·(self))
+  39b92bd51bbc82c6  stale    stale       1                1          resolve_shadowing(0속성·( &self,)
+  3a3cb89428ed320b  stale    stale       2                2          -
+  3d9979946eb321de  stale    stale      78               78          확장자는_마지막_점_뒤다(1속성) | symbols_in(0속성·(&self,) | 안_만든_추출기의_참조_수는_0_이_아니라_notbuilt_다(1속성) | 파일시스템_경로는_구분자를_한쪽으로_모은다(1속성) | resolve_pattern(1속성) | 대장에_없는_경로는_아무것도_안
+  4065e80475cf1c72  stale    stale       1                1          -
+  45d8808585ee0d50  fresh    fresh      11               11  예      대기_사유(1속성) | 정체성_등급(1속성) | 추출_등급(1속성) | 미해소_사유(1속성) | 가까움(1속성) | 신선도(1속성) | 두_조각이_안_뒤바뀐다(1속성) | 잔여_사유(1속성) | 판정_불가_사유(1속성) | 파일_상태(1속성)
+  45de93aa97981d00  fresh    fresh       1                1          -
+  4841643fa986aecb  fresh    fresh       1                1  예      CodeFreshness(2속성)
+  49714573e0fa654c  stale    stale       1                1          -
+  5b9331b398e8ff23  fresh    fresh       1                1  예      row_format_matches(0속성·(&self))
+  5e6bbbac89053565  stale    stale      25               25          순서로_가른_심볼은_정체성_등급이_묶인다(1속성) | 재귀는_선언_거르기에_안_걸린다(1속성) | Symbol(1속성) | SymbolNode(1속성) | 겹치는_심볼에서는_가장_안쪽이_출발점이다(1속성) | 대상_집합이_다르면_다른_노드다(1속성) | Discriminator(1속성)
+  6192ba6df5242980  fresh    fresh       1                1          -
+  6968674d8aa1bc2f  fresh    fresh       6                6  예      ConfirmingSignal(2속성) | Classification(2속성) | resolve(1속성) | 거리_있는_신호는_확정을_낼_수_없다(1속성)
+  6c0e8ea521d0b2ac  fresh    fresh       1                1  예      coverage_gaps(0속성·(&self))
+  6c6e402d958fc5e1  fresh    fresh       1                1  예      with_radius(1속성·(self,)
+  746a7761356136d8  fresh    fresh       2                2          -
+  7793c31caa5c4bc2  fresh    fresh       1                1  예      IdentityTally(1속성)
+  819fb73f9caf7f22  fresh    fresh       1                1  예      아이템_자리(0속성·(self,)
+  822ebf9b8071c799  fresh    fresh      12               12  예      resolve_pattern(1속성) | 넓은_패턴은_거부된다(1속성) | PlanBindingState(2속성) | unmeasurable_why(1속성·(&self)) | promoted_from_pending(1속성·(&self)) | expected_coords(1속성·(&sel
+  82d726bad31e77f6  fresh    fresh       1                1  예      duration_micros(1속성·(self))
+  8597d886cb7afc70  stale    stale       2                2          -
+  91cdc3add647a3f7  stale    stale       1                1          -
+  969991a119d4c1ef  fresh    fresh       1                1          -
+  a47cd21ca1fbc524  fresh    fresh       1                1  예      UndeterminableReason(2속성)
+  a5b4ba095bf405f7  fresh    fresh       1                1  예      등록은_원리상_불가능한_것만_담는다(1속성)
+  af9b0a700c051f7c  fresh    fresh       1                1  예      TsProject(1속성)
+  b52057859bf405eb  fresh    fresh       1                1          -
+  bd71eaa617e123bc  fresh    fresh       1                1  예      ConfirmingSignal(2속성)
+  c201c01b6b0aff9a  stale    stale       5                5          recovery_sites(1속성)
+  cbd70e3e8dfca3ba  stale    stale       1                1          패턴_순회(0속성·( &self,)
+  cc2cee65c3c176ab  fresh    fresh       1                1  예      grade_of(2속성)
+  ce25c6f23f0a8992  stale    stale       3                3          민팅(1속성)
+  d716d09163a6d0ab  stale    stale      18               18          Envelope(1속성) | new(2속성) | 자른_것이_없어도_명시된다(1속성) | 같은_노드로_가는_두_엣지는_깊이_초과를_둘로_세지_않는다(1속성) | 유일_해소는_경로_곱을_안_올린다(1속성) | 같은_사유는_합쳐지고_같은_상한은_두_번_안_실린다(1속성) | 멈출_때_대기열에
+  ddb749e489242cab  fresh    fresh       1                1  예      exact(1속성)
+  e3baa46390859ef3  stale    stale       1                1          cross_file_edges(1속성)
+  e64fd4f5378c5f20  fresh    fresh       1                1          -
+  f4ba084c7a3838be  fresh    fresh       1                1          -
+  fcd48a9033fd1fb0  fresh    fresh       1                1  예      files(0속성·(&self))
+  fd4efc1eaea040c4  fresh    fresh       1                1  예      unread(1속성·(&self))
+
+## ⑶ 판정이 달라진 결박
+  이동 0 · stale→fresh 0
+  설명 안 되는 이동 = 0
+
+## 드러냄 — 새 바이너리가 옛 판 결박에 「속성·수신자 감시 안 함」을 싣는가
+  decor_unwatched == watch 인 결박 42 / 42  (판 2 JSONL 을 들였으므로 전부여야 한다)
+
+## 결론
+  ⑴ 42 = 42: True · ⑵ 모집단 20 ≥ 20: True · ⑶ 설명 안 되는 이동 0 · stale→fresh 0 → A2-b 충족
+  바이너리: 착수 `pal 0.0.0+ec92b899478d` · 새 `pal 0.0.0+fe70606417be`
