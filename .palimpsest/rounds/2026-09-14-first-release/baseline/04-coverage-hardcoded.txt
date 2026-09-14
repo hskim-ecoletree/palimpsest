@@ -1,0 +1,10 @@
+# #127 RED — 스크래치 클론 pal/ · pal 0.0.0+ec92b899478d
+== doctor --help 의 json
+34:      --json
+== doctor --json 의 coverage
+{"coverage": {"unresolved": 0, "out_of_scope_files": 1504, "lowest_grade": "l0", "identity": "ordinal"}}
+['answer', 'snapshot', 'projection', 'coverage', 'capabilities', 'ledger', 'elision', 'fold', 'log', 'tokens', 'install']
+== export --help
+20:      --format <FORMAT>
+== graph.dump --json 의 coverage
+{'unresolved': 13404, 'out_of_scope_files': 1504, 'lowest_grade': 'l1', 'identity': 'ordinal'}

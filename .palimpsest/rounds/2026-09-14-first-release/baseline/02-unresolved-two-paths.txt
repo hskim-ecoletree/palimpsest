@@ -1,0 +1,4 @@
+== ledger.snapshot
+9:  범위      미해소 0 · 범위 밖 1504 파일 · 최저 등급 L0 · identity ordinal
+== graph.dump
+9:  범위      미해소 13404 · 범위 밖 1504 파일 · 최저 등급 L1 · identity ordinal

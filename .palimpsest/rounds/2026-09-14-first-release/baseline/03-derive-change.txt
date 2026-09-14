@@ -1,0 +1,20 @@
+struct at crates/pal-core/src/ts_module.rs:111
+
+/// 저장소 하나의 TS 해소 재료 — 파일 목록 · tsconfig · `package.json` 의 `type`.
+#[derive(Debug, Clone, Default)]
+pub struct TsProject {
+derive line 110
+#[derive(Default, Debug, Clone, Default)]
+== touch TsProject after derive change
+
+  TsProject  ·  palimpsest@d2b5246+worktree#c059fff3b284
+  struct · crates/pal-core/src/ts_module.rs:111 · identity ordinal · body a0a91401da4a
+
+■ 이 좌표에 걸린 것 (1)
+  [af9b0a700c051f7c] 최신 상태(fresh)  ·  symbol 반경 · 감시 1
+      회차 2026-09-13-first-release-elsewhere — **TS 의 지정자는 경로 문자열이고, 그것을 파일로 펴는 규칙은 TypeScript 가 정한 대로다.**
+      
+      `TsProject` 가 tsconfig(JSONC · 저장소 안 `extends` 사슬 · `paths`/`baseUrl` · `moduleResolution`)와 `package.json` 의 `type` 을 읽어 지정자를 파일로 편다. **특정 저장소에 맞춘 갈래가 없다** — 시험 고정물도 선행 저장소의 별칭 꼴을 안 쓴다(`G1`).
+      
+      **왜 이 꼴인가** — 착수 때 남의 TS 저장소에서 파일 간 해소가 `0/11010` 이고 전부 「저장소 밖」이었다. 지금 같은 복제본에서 선 것 7116 · TypeScript 컴파일러와 대상 파일 불일치 0 · 재현율 빠진 것 0(모집단 2915)이다.
+      
