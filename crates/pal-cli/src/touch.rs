@@ -452,7 +452,7 @@ fn print_bindings(
         // 유효하다"* 와 다른 문장이다(옛 F09 §3).
         println!("  [{}] {mark}  ·  {radius} 반경 · 감시 {watch}", binding.as_str());
         // ★ **안 보는 축을 말한다**(#77) — 옛 판 결박은 속성·수신자 기준값이 없어 그 변경에
-        // `stale` 이 안 켜진다. 말하지 않으면 위의 `fresh` 가 그 축까지 본 `fresh` 로 읽힌다.
+        // `stale` 이 안 붙는다. 말하지 않으면 위의 `fresh` 가 그 축까지 본 `fresh` 로 읽힌다.
         if *decor_unwatched > 0 {
             println!(
                 "      ⚠ 속성·수신자 변경은 감시 안 함 — 감시 {watch} 개 중 {decor_unwatched} 개가 옛 판 결박이라 기준값이 없습니다 (다시 걸면 섭니다)"
