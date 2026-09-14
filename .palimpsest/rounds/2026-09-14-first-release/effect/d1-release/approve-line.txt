@@ -1,0 +1,1 @@
+승인 줄: narrative --approve decision/01M2G8J1K4YJ04EHNZY6Z0D5T1 --pick cbd4e6567928

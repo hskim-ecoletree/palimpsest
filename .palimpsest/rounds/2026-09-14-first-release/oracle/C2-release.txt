@@ -1,0 +1,36 @@
+# C2 오라클 — 2026-09-14T15:29:16Z
+
+## ⑴ 태그 없는 workflow_dispatch 런
+- 첫 시도 34856889486(7894f54) — 「툴체인 없이」 셋이 download-artifact 403 · 권한 고침 f16ab51
+  7894f54 workflow_dispatch conclusion failure
+- 판정 런 34859015942
+  e80ca14 workflow_dispatch conclusion success
+    success 세운다 · x86_64-apple-darwin
+    success 세운다 · x86_64-pc-windows-msvc
+    success 세운다 · x86_64-unknown-linux-gnu
+    success 세운다 · aarch64-apple-darwin
+    success 툴체인 없이 · aarch64-apple-darwin
+    success 툴체인 없이 · x86_64-pc-windows-msvc
+    success 툴체인 없이 · x86_64-unknown-linux-gnu
+    skipped 릴리스를 산출한다
+
+## ⑵ 태그 v0.1.0 런 34861114858
+  e80ca14 push v0.1.0 conclusion success
+    success 세운다 · x86_64-apple-darwin
+    success 세운다 · x86_64-pc-windows-msvc
+    success 세운다 · aarch64-apple-darwin
+    success 세운다 · x86_64-unknown-linux-gnu
+    success 툴체인 없이 · aarch64-apple-darwin
+    success 툴체인 없이 · x86_64-pc-windows-msvc
+    success 툴체인 없이 · x86_64-unknown-linux-gnu
+    success 릴리스를 산출한다
+- 태그가 가리키는 커밋: e80ca14 · 그 커밋의 CI 런 34859001054 attempt 2 success(ubuntu attempt 1 은 어휘 시험 거짓 양성 — 개정 2)
+
+## ⑶ 릴리스 자산
+  v0.1.0 draft=false pre=false https://github.com/hskim-ecoletree/palimpsest/releases/tag/v0.1.0
+    pal-aarch64-apple-darwin.tar.gz 5742095
+    pal-x86_64-apple-darwin.tar.gz 6005903
+    pal-x86_64-pc-windows-msvc.zip 5318354
+    pal-x86_64-unknown-linux-gnu.tar.gz 6359328
+    SHA256SUMS 394
+- SHA256SUMS 대조와 아카이브 목록: oracle/C1-archive.txt · 받은 바이너리의 --version: effect/d1-release-download.txt

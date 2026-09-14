@@ -1,0 +1,48 @@
+# C1 오라클 — 릴리스 v0.1.0 자산 넷의 목록 · 2026-09-14T15:28:37Z
+download rc=0
+## SHA256SUMS 대조
+pal-aarch64-apple-darwin.tar.gz: OK
+pal-x86_64-apple-darwin.tar.gz: OK
+pal-x86_64-pc-windows-msvc.zip: OK
+pal-x86_64-unknown-linux-gnu.tar.gz: OK
+rc=0
+## pal-x86_64-unknown-linux-gnu.tar.gz
+pal-x86_64-unknown-linux-gnu/
+pal-x86_64-unknown-linux-gnu/LICENSE-MIT
+pal-x86_64-unknown-linux-gnu/README.txt
+pal-x86_64-unknown-linux-gnu/pal
+pal-x86_64-unknown-linux-gnu/README.md
+pal-x86_64-unknown-linux-gnu/LICENSE-APACHE
+  든다  README.md
+  든다  LICENSE-MIT
+  든다  LICENSE-APACHE
+## pal-aarch64-apple-darwin.tar.gz
+pal-aarch64-apple-darwin/
+pal-aarch64-apple-darwin/LICENSE-APACHE
+pal-aarch64-apple-darwin/pal
+pal-aarch64-apple-darwin/README.md
+pal-aarch64-apple-darwin/README.txt
+pal-aarch64-apple-darwin/LICENSE-MIT
+  든다  README.md
+  든다  LICENSE-MIT
+  든다  LICENSE-APACHE
+## pal-x86_64-apple-darwin.tar.gz
+pal-x86_64-apple-darwin/
+pal-x86_64-apple-darwin/LICENSE-APACHE
+pal-x86_64-apple-darwin/pal
+pal-x86_64-apple-darwin/README.md
+pal-x86_64-apple-darwin/README.txt
+pal-x86_64-apple-darwin/LICENSE-MIT
+  든다  README.md
+  든다  LICENSE-MIT
+  든다  LICENSE-APACHE
+## pal-x86_64-pc-windows-msvc.zip
+pal-x86_64-pc-windows-msvc/
+pal-x86_64-pc-windows-msvc/LICENSE-APACHE
+pal-x86_64-pc-windows-msvc/LICENSE-MIT
+pal-x86_64-pc-windows-msvc/pal.exe
+pal-x86_64-pc-windows-msvc/README.md
+pal-x86_64-pc-windows-msvc/README.txt
+  든다  README.md
+  든다  LICENSE-MIT
+  든다  LICENSE-APACHE

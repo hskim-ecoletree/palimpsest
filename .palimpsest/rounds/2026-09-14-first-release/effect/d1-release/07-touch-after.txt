@@ -1,0 +1,76 @@
+$ pal touch codexHostAdapter  (cwd ditto)
+
+  codexHostAdapter  ·  ditto@aded7ce+worktree#cbd4e6567928
+  variable · src/core/hosts/codex.ts:102 · identity ordinal · body 370ad8f77516
+
+■ 이 좌표에 걸린 것 (1)
+  [1312f72b47bc57ae] 최신 상태(fresh)  ·  symbol 반경 · 감시 1
+      9. 진행 상태 / 잔여 (2026-06-14 갱신, 권위 있는 현재 상태)
+      §3 현재상태표·§5 milestone 서술보다 이 절이 우선한다. dialectic-1(`wi_260613afv/reviews/dialectic-1.json`)·verify·dogfooding 결과를 추적되는 위치로 승격(#7).
+      구현·검증됨
+      M1~M4 Codex surface: `codexHostAdapter`, host-aware `io`(repoRoot), apply_patch 경로 추출(`envelope`), PreToolUse 게이트/PostToolUse evidence, agent→TOML projection(15개).
+      OBJ-1 [critical] 수정 — 배포 `dist/codex-plugin/hooks/hooks.json`의 `ditto hook` 명령에 `--host codex` 부착(build-codex-plugin `injectCodexHost`). 이전엔 미부착으로 apply_patch 안전게이트가 실 Codex에서 미발화(false-green). repo `hooks/hooks.json`(Claude)은 byte-identical. seam 테스트 `tests/host/codex/applypatch-deploy-seam.surface.test.ts`.
+      OBJ-5 [high] 수정 — `loadSurfaceInventory`가 비공식 `.codex/plugins` 스캔 제거, 공식 plugin-root만. 공식 발견 경로는 `.agents/plugins/marketplace.json`(+ `~/.agents/plugins/` + legacy `.claude-plugin/marketplace.json`).
+      OBJ-7 [med] 수정 — agent name 중복 시 build가 fail-loud(silent overwrite 방지).
+      OBJ-9 [med] 수정 — PreCompact `from_context`가 host-aware(claude-code 하드코딩 제거).
+      OBJ-2/3/6 [doc] 해소 — §3 현재상태표 정정(위 정정 박스), 본 절로 동기화.
+      M5 setup 수정·검증
+      M5 source-mode 버그 수정 — source tree 자체에도 `.codex-plugin/plugin.json`이 있어 `ditto setup --host codex`가 `dist/codex-plugin` 대신 repo root 전체를 plugin으로 복사하던 문제를 수정했다. `resolveCodexPluginRoot`는 sibling/build artifact(`dist/codex-plugin`)를 우선하고, source root는 `.codex/agents`가 있는 빌드 산출물일 때만 plugin root로 본다.
+      M5 fail-loud 추가 — Codex plugin artifact에 `.codex/agents/*.toml`이 없으면 `agentsInstalled=0`으로 조용히 통과하지 않고 `codex custom agents not found ...; run build:codex-plugin first`로 실패한다.
+      M5 positional target 수정 — `ditto setup --host codex <target>`가 `<target>`을 무시하고 cwd를 대상으로 삼던 문제를 수정했다. `--dir`와 positional target 모두 지원한다.
+      검증: `tests/cli/setup-command.test.ts`, `tests/core/setup.test.ts`, 실제 임시 repo source-mode 설치. 실제 설치 결과는 project `.codex/agents` 15개, plugin copy 35 files.
+      Codex 트랙 (실 바이너리 검증 결과 — 2026-06-14 Codex CLI 0.139.0)
+      환경 — `codex update` 후 `codex-cli 0.139.0`; `codex doctor`는 17 ok, 1 idle, 0 warn/fail. features는 hooks/multi_agent/plugins enabled.
+      OBJ-10 plugin·skill load 통과 — `codex plugin list --json`에서 `ditto@ditto-local` installed/enabled 확인. `codex debug prompt-input`에서 11개 DITTO skill(`ditto:autopilot`, `ditto:deep-interview`, `ditto:dialectic`, `ditto:dialectic-review`, `ditto:e2e`, `ditto:e2e-author`, `ditto:handoff`, `ditto:knowledge-update`, `ditto:memory-graph`, `ditto:tech-spec`, `ditto:verify`)이 실제 prompt surface에 로드됨.
+      OBJ-10 hook 발화: TUI 통과 / `exec` 불발 — `codex exec` 0.139.0은 user-level·project-local 최소 echo hook(`UserPromptSubmit`, `PreToolUse`)과 plugin-bundled DITTO hook을 모두 발화하지 않았다. 반면 interactive TUI에서는 같은 최소 echo hook이 발화했고, DITTO plugin-bundled PreToolUse가 `apply_patch config/.env` secret 편집을 차단했다. transcript: `~/.codex/sessions/2026/06/14/rollout-2026-06-14T00-07-38-019ec186-34bd-7a93-a69f-a31bc746e9f5.jsonl`; 대상 파일은 생성되지 않음.
+      OBJ-8 custom-agent 로드 통과 — project `.codex/agents/*.toml` 15개 모두 interactive TUI runtime spawn으로 확인했다. 각 agent는 `CUSTOM_AGENT_OK <name>`을 반환했다. transcript: `~/.codex/sessions/2026/06/14/rollout-2026-06-14T01-17-42-019ec1c6-5b37-7ac0-84e3-25ecc6e930b0.jsonl`. 단, project trust와 model config가 실제 config에 있어야 하며, file existence만으로는 통과 증거가 아니다.
+      층위④ skill dogfooding 완료 — Codex 호스트에서 11개 skill을 발화했다. PASS: `dialectic`, `dialectic-review`, `autopilot`, `deep-interview`, `verify`, `tech-spec`, `knowledge-update`, `memory-graph`, `handoff`. PARTIAL: `e2e-author`(digest 결정론성은 PASS, web journey authoring은 web UI 부재로 미수행). N/A: `e2e`(web UI 없음). `memory-graph`는 `code_drift` freshness caveat를 동반한다.
+      OBJ-4 정리 — plugin hook command의 plugin-root env 경로는 TUI hook 실발화로 검증됐다. skill/agent 본문은 실제 plugin cache/project 파일에서 로드되어 `ditto` CLI를 PATH로 실행했으므로, skill text 안의 `${CLAUDE_PLUGIN_ROOT}` 리터럴 확장을 일반 보장으로 주장하지 않는다.
+      남은 분류 — DITTO repo 체크리스트의 미검증 항목은 닫혔다. 단, `codex exec` hook 비발화는 Codex 0.139.0 런타임 모드별 실패로 재현됐으므로 hook 실증 수단은 interactive TUI로 제한한다.
+      참고: 재현 방법은 `reports/design/dual-host-test-methods.md`.
+■ 이 좌표를 지켜보는 것 (0)
+  아직 없습니다.
+■ 승인 대기 — 이 좌표를 가리키는 문서 조각 (0)
+  없습니다
+■ 이 심볼이 하는 것
+  호출자 2 · 피호출자 1
+  호출자 자리 — 앞 2곳 · 경로:줄
+    src/cli/commands/setup.ts:258  discoverCodexAgents
+    src/core/setup.ts:291  writeCodexSurfaceCatalog
+  ※ 「호출자·피호출자」는 **참조 엣지**입니다 — 호출뿐 아니라 타입 참조처럼 호출이 아닌 참조도 셉니다
+  ※ **`x.foo()` 는 아직 안 셉니다** — 멤버 해소(`member-resolution`)는 타입 추론이 필요합니다. 능력이 없는 것이 아니라 **안 하기로 정한 자리입니다**
+  ※ **호출자 수는 하한입니다** — 파일 최상위의 참조와 문자열로 찾는 자리는 세지 않습니다
+  ※ 파일 간 해소 — ⓐ `cross-file-import` 7199/11099 · ⓑ `path-resolution` 0/0 (선 것/짝)
+  ※ ⓐ 가 못 선 까닭 — bare_specifier 2309 · outside_repo 1494 · through_reexport 97
+  ※ 못 선 까닭의 성격 — 안 하기로 정한 자리와 원리상 풀 수 없는 자리를 가릅니다
+      `outside_repo` → 저장소 밖(표준 라이브러리 · 런타임 모듈)입니다 — **원리상 풀 수 없는 자리입니다**
+      `bare_specifier` → 패키지 이름입니다 — 설치된 패키지인지 워크스페이스인지 가리지 않았습니다. **안 하기로 정한 자리입니다**
+      `through_reexport` → 재수출을 지나는 이름입니다 — 원 정의까지 따라가지 않습니다. **안 하기로 정한 자리입니다**
+      `no_symbol_at_crate_root` → 패키지 뿌리 파일의 재수출을 지나는 이름입니다 — 원 정의까지 따라가지 않습니다. **안 하기로 정한 자리입니다**
+      `unsupported_mode` → 이 파일의 모듈 해소 모드를 맞추지 않습니다 — **안 하기로 정한 자리입니다**
+      `config_incomplete` → 설정 파일을 끝까지 못 읽어 별칭인지 모릅니다
+      `no_symbol` → 대상 파일에 그 이름의 선언이 없습니다 — 열거형 멤버처럼 심볼로 안 서는 이름이 여기 듭니다
+      `no_target_file` → 모듈 경로를 저장소의 파일로 못 폈습니다
+      `ambiguous` → 후보가 여럿입니다 — 하나를 고르면 조용한 오답이라 **고르지 않습니다**
+■ 내가 모르는 것
+  없음 — 이 좌표에서 못 푼 참조가 0 건입니다
+■ 효과
+  (이 빌드에는 effects 능력이 없습니다)
+■ 판정
+  (이 빌드에는 judgment 능력이 없습니다)
+
+■ 이 답의 근거
+  Snapshot  ditto@aded7ce+worktree
+  대장      parsed 491 · partial 5 · unsupported 1932 · unrecognized 14 / 2451 파일
+            결박 불가 언어 10개 — 그 파일들에는 좌표가 없습니다
+  2층       심볼 4656 색인됨
+  워킹트리  일치
+  재구축    아님
+  생략      없음 (명시)
+  이관      2451건 — 본체를 다른 질의로 옮겼습니다. 생략된 것이 아닙니다
+            ledger 2451건 → `ledger.snapshot` 로 조회할 수 있습니다
+  질의 로그  남았습니다
+  크기      약 2004 토큰 **이상** (잰 것: 8017 바이트 · 가정: 4 바이트/토큰)
+  능력      ledger.snapshot · symbol.resolve · symbol.contains · symbol.callers · symbol.reaches · graph.dump · binding.status · narrative.unbound · binding.touch · plan.deviation · symbol.references · 이 빌드에 없음 effects · judgment
+
+rc=0

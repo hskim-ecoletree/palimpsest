@@ -179,34 +179,34 @@
 
 ### A — 틀린 사실을 내지 않는다
 
-- [ ] **A1** ⟨결정론적⟩ 픽스처 저장소에서 `pal doctor --json` 과 `pal export` 응답 묶음의 `coverage.unresolved` · `coverage.lowest_grade` 가 **같은 인덱스의 `pal query graph.dump --json` 의 값과 같다.** `crates/pal-cli/src/doctor.rs` · `export.rs` 에 `unresolved: 0,` 과 `lowest_grade: ExtractGrade::L0,` 문자열이 0. **오라클**: `crates/pal-cli/tests/` 통합 시험 + `grep`. **RED**: `baseline/04-coverage-hardcoded.txt`.
-- [ ] **A1-a** ⟨결정론적⟩ 음성 대조 — 같은 시험이 픽스처의 `graph.dump` 값이 **`unresolved ≥ 1` 이고 `lowest_grade ≠ l0`** 임을 먼저 단언한다(하드코딩과 바이트로 같을 수 없게). 그리고 `crates/pal-cli/tests/query_envelope.rs` 의 `범위는_질의마다_다른_값이다` 가 고치지 않은 채 통과한다.
-- [ ] **A2** ⟨결정론적⟩ Rust 픽스처에서 결박을 건 뒤 ⑴ `#[derive]` 인자 ⑵ `#[cfg]` 인자 ⑶ `#[serde(rename)]` 값 ⑷ `#[must_use]` 유무 ⑸ 메서드 수신자 `&self` → `self` 를 **각각** 바꿔 커밋하면 그 결박이 `stale` 이다(다섯 갈래 각각 단언). **RED**: `baseline/03-derive-change.txt`(`fresh`) · ⑸ 는 같은 시험을 착수 커밋에 대면 `fresh`.
-- [ ] **A2-a** ⟨결정론적⟩ 음성 대조 — ⑴ 같은 픽스처에서 속성 안의 주석·공백만 바꾸면 `fresh` 로 남는다(ADR-0007) ⑵ TypeScript 픽스처의 모든 심볼 요약값이 착수 바이너리의 `pal symbols` 산출과 바이트로 같다(다른 것 0).
-- [ ] **A2-b** ⟨결정론적⟩ `ec92b89` 를 체크아웃한 이 저장소 클론에서 착수 바이너리와 새 바이너리의 `pal query binding.status --json` 을 결박 ID 로 댄다. ⑴ 두 쪽 결박 수가 42 = 42 ⑵ 착수에서 `fresh` 이고 속성 또는 `self` 수신자를 진 Rust 심볼을 감시하는 결박이 **20 이상**(오라클이 먼저 센다) ⑶ **판정이 달라진 결박마다** 그 감시 심볼의 속성 줄 또는 수신자가 결박의 `bound_at` 기준 커밋과 `ec92b89` 사이에 달랐다 — 설명되지 않는 이동 0 · `stale` → `fresh` 0. **오라클**: `oracle/A2b-verdicts.txt`.
-- [ ] **A3** ⟨결정론적⟩ 크레이트 둘짜리 픽스처 — 크레이트 `a` 의 `lib.rs` 가 사적 `mod traverse;` 와 `pub use traverse::traverse;`, 크레이트 `b` 가 `use a::traverse;` 로 부른다 — 에서 `b` 로부터 사적 `mod traverse` 선언으로 가는 파일 간 엣지가 **0** 이고 그 참조가 못 푼 참조로 까닭과 함께 나온다. **RED**: 같은 시험을 착수 커밋 해소기에 대면 그 엣지가 1 이상이라 실패한다(`oracle/A3-red.txt`).
-- [ ] **A3-a** ⟨결정론적⟩ 음성 대조 — ⑴ 같은 픽스처의 크레이트 `a` 안에서 `traverse` 모듈을 부르는 참조의 엣지는 **남는다** ⑵ 이 저장소 `ec92b89` 트리 전수에서 착수 바이너리 대비 **사라진 파일 간 엣지가 정확히 둘** — `crates/pal-query/src/lib.rs` → `crates/pal-core/src/lib.rs` `mod traverse` · `crates/pal-query/tests/bench.rs` → 같은 선언 — 이고, 새로 생긴 파일 간 엣지 0(`oracle/A3-repo-diff.txt`).
+- [x] **A1** ⟨결정론적⟩ 픽스처 저장소에서 `pal doctor --json` 과 `pal export` 응답 묶음의 `coverage.unresolved` · `coverage.lowest_grade` 가 **같은 인덱스의 `pal query graph.dump --json` 의 값과 같다.** `crates/pal-cli/src/doctor.rs` · `export.rs` 에 `unresolved: 0,` 과 `lowest_grade: ExtractGrade::L0,` 문자열이 0. **오라클**: `crates/pal-cli/tests/` 통합 시험 + `grep`. **RED**: `baseline/04-coverage-hardcoded.txt`.  · 통과 ⟨전사 2026-09-15⟩
+- [x] **A1-a** ⟨결정론적⟩ 음성 대조 — 같은 시험이 픽스처의 `graph.dump` 값이 **`unresolved ≥ 1` 이고 `lowest_grade ≠ l0`** 임을 먼저 단언한다(하드코딩과 바이트로 같을 수 없게). 그리고 `crates/pal-cli/tests/query_envelope.rs` 의 `범위는_질의마다_다른_값이다` 가 고치지 않은 채 통과한다.  · 통과 ⟨전사 2026-09-15⟩
+- [x] **A2** ⟨결정론적⟩ Rust 픽스처에서 결박을 건 뒤 ⑴ `#[derive]` 인자 ⑵ `#[cfg]` 인자 ⑶ `#[serde(rename)]` 값 ⑷ `#[must_use]` 유무 ⑸ 메서드 수신자 `&self` → `self` 를 **각각** 바꿔 커밋하면 그 결박이 `stale` 이다(다섯 갈래 각각 단언). **RED**: `baseline/03-derive-change.txt`(`fresh`) · ⑸ 는 같은 시험을 착수 커밋에 대면 `fresh`.  · 통과 ⟨전사 2026-09-15⟩
+- [x] **A2-a** ⟨결정론적⟩ 음성 대조 — ⑴ 같은 픽스처에서 속성 안의 주석·공백만 바꾸면 `fresh` 로 남는다(ADR-0007) ⑵ TypeScript 픽스처의 모든 심볼 요약값이 착수 바이너리의 `pal symbols` 산출과 바이트로 같다(다른 것 0).  · 통과 ⟨전사 2026-09-15⟩
+- [x] **A2-b** ⟨결정론적⟩ `ec92b89` 를 체크아웃한 이 저장소 클론에서 착수 바이너리와 새 바이너리의 `pal query binding.status --json` 을 결박 ID 로 댄다. ⑴ 두 쪽 결박 수가 42 = 42 ⑵ 착수에서 `fresh` 이고 속성 또는 `self` 수신자를 진 Rust 심볼을 감시하는 결박이 **20 이상**(오라클이 먼저 센다) ⑶ **판정이 달라진 결박마다** 그 감시 심볼의 속성 줄 또는 수신자가 결박의 `bound_at` 기준 커밋과 `ec92b89` 사이에 달랐다 — 설명되지 않는 이동 0 · `stale` → `fresh` 0. **오라클**: `oracle/A2b-verdicts.txt`.  · 통과 ⟨전사 2026-09-15⟩
+- [x] **A3** ⟨결정론적⟩ 크레이트 둘짜리 픽스처 — 크레이트 `a` 의 `lib.rs` 가 사적 `mod traverse;` 와 `pub use traverse::traverse;`, 크레이트 `b` 가 `use a::traverse;` 로 부른다 — 에서 `b` 로부터 사적 `mod traverse` 선언으로 가는 파일 간 엣지가 **0** 이고 그 참조가 못 푼 참조로 까닭과 함께 나온다. **RED**: 같은 시험을 착수 커밋 해소기에 대면 그 엣지가 1 이상이라 실패한다(`oracle/A3-red.txt`).  · 통과 ⟨전사 2026-09-15⟩
+- [x] **A3-a** ⟨결정론적⟩ 음성 대조 — ⑴ 같은 픽스처의 크레이트 `a` 안에서 `traverse` 모듈을 부르는 참조의 엣지는 **남는다** ⑵ 이 저장소 `ec92b89` 트리 전수에서 착수 바이너리 대비 **사라진 파일 간 엣지가 정확히 둘** — `crates/pal-query/src/lib.rs` → `crates/pal-core/src/lib.rs` `mod traverse` · `crates/pal-query/tests/bench.rs` → 같은 선언 — 이고, 새로 생긴 파일 간 엣지 0(`oracle/A3-repo-diff.txt`).  · 통과 ⟨전사 2026-09-15⟩
 
 ### B — 팀원에게 거짓 0 을 안 내고, 깨질 곳의 자리를 싣는다
 
-- [ ] **B1** ⟨결정론적⟩ 결박을 가진 픽스처 저장소에서 `pal install` 뒤 `.palimpsest/manifest.toml` 이 `[[repo]] id` 를 지고, 그것을 커밋한 저장소를 **다른 디렉터리 이름**으로 클론해 의도를 들인 `touch` 의 `걸린 것` 수가 원래 이름과 같다. **오라클**: 통합 시험. **RED**: `baseline/01-touch-dir-pal.txt`(`(0)`).
-- [ ] **B1-a** ⟨결정론적⟩ 음성 대조 네 갈래 — ⑴ 매니페스트가 **없는** 저장소를 다른 이름으로 클론하면 `touch` 가 「아직 없습니다」를 **안 내고** 다른 식별자에 걸린 결박 수(1 이상)를 낸다 ⑵ 매니페스트가 이미 있으면 `pal install` 이 그 파일을 바이트로 안 바꾼다 ⑶ 결박이 `palimpsest` 로 선 저장소를 `pal/` 에서 install 하면 매니페스트 id 가 `palimpsest` 다 ⑷ install 이 만든 매니페스트를 커밋하지 않고 `uninstall` 하면 `git status --porcelain` 이 비고, 커밋한 뒤 `uninstall` 하면 매니페스트가 남는다.
-- [ ] **B2** ⟨결정론적⟩ 호출자가 **표시 상한보다 많은** 심볼과 **동명 후보가 둘 이상**인 심볼을 가진 픽스처에서, 시험이 **손으로 박은 기대 자리 집합**(`경로:줄`)과 댄다 — ⑴ `touch` 사람 화면이 싣는 자리가 그 집합의 부분이고 수가 상한과 같다 ⑵ 접힌 수 = 기대 집합 크기 − 실린 수 ⑶ 화면이 안내한 명령을 **그대로 실행**한 `--json` 의 자리 집합 = 기대 집합. 두 심볼 각각. **RED**: `baseline/01-touch-dir-palimpsest.txt`(자리 0).
+- [x] **B1** ⟨결정론적⟩ 결박을 가진 픽스처 저장소에서 `pal install` 뒤 `.palimpsest/manifest.toml` 이 `[[repo]] id` 를 지고, 그것을 커밋한 저장소를 **다른 디렉터리 이름**으로 클론해 의도를 들인 `touch` 의 `걸린 것` 수가 원래 이름과 같다. **오라클**: 통합 시험. **RED**: `baseline/01-touch-dir-pal.txt`(`(0)`).  · 통과 ⟨전사 2026-09-15⟩
+- [x] **B1-a** ⟨결정론적⟩ 음성 대조 네 갈래 — ⑴ 매니페스트가 **없는** 저장소를 다른 이름으로 클론하면 `touch` 가 「아직 없습니다」를 **안 내고** 다른 식별자에 걸린 결박 수(1 이상)를 낸다 ⑵ 매니페스트가 이미 있으면 `pal install` 이 그 파일을 바이트로 안 바꾼다 ⑶ 결박이 `palimpsest` 로 선 저장소를 `pal/` 에서 install 하면 매니페스트 id 가 `palimpsest` 다 ⑷ install 이 만든 매니페스트를 커밋하지 않고 `uninstall` 하면 `git status --porcelain` 이 비고, 커밋한 뒤 `uninstall` 하면 매니페스트가 남는다.  · 통과 ⟨전사 2026-09-15⟩
+- [x] **B2** ⟨결정론적⟩ 호출자가 **표시 상한보다 많은** 심볼과 **동명 후보가 둘 이상**인 심볼을 가진 픽스처에서, 시험이 **손으로 박은 기대 자리 집합**(`경로:줄`)과 댄다 — ⑴ `touch` 사람 화면이 싣는 자리가 그 집합의 부분이고 수가 상한과 같다 ⑵ 접힌 수 = 기대 집합 크기 − 실린 수 ⑶ 화면이 안내한 명령을 **그대로 실행**한 `--json` 의 자리 집합 = 기대 집합. 두 심볼 각각. **RED**: `baseline/01-touch-dir-palimpsest.txt`(자리 0).  · 통과 ⟨전사 2026-09-15⟩
 
 ### C — 받는 길
 
-- [ ] **C1** ⟨결정론적⟩ 루트 `README.md` · `LICENSE-MIT` · `LICENSE-APACHE` 가 있고, README 가 받기(자산 이름 넷) · `pal install` · `pal narrative` · 승인 · `pal touch` · 지원 언어(TypeScript · Rust)를 싣는다. **README 명령 줄 ↔ `D1` 이 실제로 친 `pal`·`git` 명령**(스크래치 준비용 `git clone` 원본 · 자산 받기 제외)을 **양방향**으로 대 빠진 것 0(`oracle/C1-readme-vs-d1.txt`). 릴리스 자산 넷을 풀어 본 목록에 `README.md` · `LICENSE-MIT` · `LICENSE-APACHE` 가 든다(`oracle/C1-archive.txt`).
-- [ ] **C2** ⟨결정론적⟩ ⑴ 태그 없는 `workflow_dispatch` 런이 `success` 다 ⑵ 그 뒤 태그 `v0.1.0` 의 런이 `success` 다 — 세운다 넷 · 툴체인 없이 셋(받은 바이너리로 이 저장소 체크아웃에 의도를 들인 `touch` 가 `걸린 것` 1 이상 · install 왕복의 빈 `porcelain` 포함) · 산출 ⑶ 릴리스에 자산 넷과 `SHA256SUMS` 가 있고 받은 바이너리의 `--version` 이 `0.1.0` 을 싣는다. **RED**: 착수 때 릴리스는 `v0.0.0-f24.1` 하나.
+- [x] **C1** ⟨결정론적⟩ 루트 `README.md` · `LICENSE-MIT` · `LICENSE-APACHE` 가 있고, README 가 받기(자산 이름 넷) · `pal install` · `pal narrative` · 승인 · `pal touch` · 지원 언어(TypeScript · Rust)를 싣는다. **README 명령 줄 ↔ `D1` 이 실제로 친 `pal`·`git` 명령**(스크래치 준비용 `git clone` 원본 · 자산 받기 제외)을 **양방향**으로 대 빠진 것 0(`oracle/C1-readme-vs-d1.txt`). 릴리스 자산 넷을 풀어 본 목록에 `README.md` · `LICENSE-MIT` · `LICENSE-APACHE` 가 든다(`oracle/C1-archive.txt`).  · 통과 ⟨전사 2026-09-15⟩
+- [x] **C2** ⟨결정론적⟩ ⑴ 태그 없는 `workflow_dispatch` 런이 `success` 다 ⑵ 그 뒤 태그 `v0.1.0` 의 런이 `success` 다 — 세운다 넷 · 툴체인 없이 셋(받은 바이너리로 이 저장소 체크아웃에 의도를 들인 `touch` 가 `걸린 것` 1 이상 · install 왕복의 빈 `porcelain` 포함) · 산출 ⑶ 릴리스에 자산 넷과 `SHA256SUMS` 가 있고 받은 바이너리의 `--version` 이 `0.1.0` 을 싣는다. **RED**: 착수 때 릴리스는 `v0.0.0-f24.1` 하나.  · 통과 ⟨전사 2026-09-15⟩
 
 ### D — 효과
 
-- [ ] **D1** ⟨결정론적⟩ 새 ditto 복제본에서 **`C2` 의 릴리스 자산**(빌드한 것이 아님)으로 README 걸음을 밟는다 — 승인한 심볼의 `touch` 가 `걸린 것 ≥ 1` · 호출자 자리 1 줄 이상을 싣는다. 매니페스트와 `bindings.jsonl` 을 그 복제본에 커밋하고 그것을 **다른 디렉터리 이름으로 클론**한 `touch` 가 같은 `걸린 것` 수(1 이상)를 낸다. 친 명령 전부와 산출은 `effect/`.
-- [ ] **D1-a** ⟨결정론적⟩ 음성 대조 — ⑴ 같은 절차를 **`pal install` 부터 착수 바이너리로** 밟으면 둘째 클론의 `touch` 가 `걸린 것 (0)` 이다(`effect/negative-start-binary.txt`) ⑵ ditto 원본의 HEAD · `git status --porcelain` · `.palimpsest/` 목록 해시가 착수와 같다(금지역 데이터_손실).
+- [x] **D1** ⟨결정론적⟩ 새 ditto 복제본에서 **`C2` 의 릴리스 자산**(빌드한 것이 아님)으로 README 걸음을 밟는다 — 승인한 심볼의 `touch` 가 `걸린 것 ≥ 1` · 호출자 자리 1 줄 이상을 싣는다. 매니페스트와 `bindings.jsonl` 을 그 복제본에 커밋하고 그것을 **다른 디렉터리 이름으로 클론**한 `touch` 가 같은 `걸린 것` 수(1 이상)를 낸다. 친 명령 전부와 산출은 `effect/`.  · 통과 ⟨전사 2026-09-15⟩
+- [x] **D1-a** ⟨결정론적⟩ 음성 대조 — ⑴ 같은 절차를 **`pal install` 부터 착수 바이너리로** 밟으면 둘째 클론의 `touch` 가 `걸린 것 (0)` 이다(`effect/negative-start-binary.txt`) ⑵ ditto 원본의 HEAD · `git status --porcelain` · `.palimpsest/` 목록 해시가 착수와 같다(금지역 데이터_손실).  · 통과 ⟨전사 2026-09-15⟩
 
 ### E — 처분
 
-- [ ] **E1** ⟨결정론적⟩ `triage.md` 의 R3 39 건이 전부 닫혔고 건마다 사유 코멘트(철회 사유 ② · 더 먼저인 것은 첫 릴리스 · 이 회차 경로)가 있다. R1 5 건은 **고친 커밋**을 가리키는 코멘트와 함께 닫혔다 — #127 코멘트는 ②의 근거로 `baseline/06-doctor-full.txt` 를, ③의 근거로 ADR-0007 을 싣는다. R2 20 건은 열려 있다. **오라클**: `gh` 조회 `oracle/E1-issues.txt`.
-- [ ] **E2** ⟨결정론적⟩ 사용 기록 이슈가 섰고 그 본문이 ⑴ 대상 ditto ⑵ 작업마다 적을 세 칸(하려던 것 · 화면이 말한 것 · 달라진 것 — 없음·틀림·시끄러움 포함) ⑶ 판정 문장을 싣는다. `scripts/frontier.sh` 가 그 번호를 `← 순서표의 1 번` 으로 산출하고, `docs/plan/03-shortest-path.md` 가 끝의 정의(사용 기록)와 릴리스 뒤 순서(언어 확장 Kotlin · Java · JavaScript · Python)를 싣는다. **오라클**: `oracle/E2-docs.txt`(이슈 본문 · `frontier.sh` 산출 · 두 문서의 해당 줄).
+- [x] **E1** ⟨결정론적⟩ `triage.md` 의 R3 39 건이 전부 닫혔고 건마다 사유 코멘트(철회 사유 ② · 더 먼저인 것은 첫 릴리스 · 이 회차 경로)가 있다. R1 5 건은 **고친 커밋**을 가리키는 코멘트와 함께 닫혔다 — #127 코멘트는 ②의 근거로 `baseline/06-doctor-full.txt` 를, ③의 근거로 ADR-0007 을 싣는다. R2 20 건은 열려 있다. **오라클**: `gh` 조회 `oracle/E1-issues.txt`.  · 통과 ⟨전사 2026-09-15⟩
+- [x] **E2** ⟨결정론적⟩ 사용 기록 이슈가 섰고 그 본문이 ⑴ 대상 ditto ⑵ 작업마다 적을 세 칸(하려던 것 · 화면이 말한 것 · 달라진 것 — 없음·틀림·시끄러움 포함) ⑶ 판정 문장을 싣는다. `scripts/frontier.sh` 가 그 번호를 `← 순서표의 1 번` 으로 산출하고, `docs/plan/03-shortest-path.md` 가 끝의 정의(사용 기록)와 릴리스 뒤 순서(언어 확장 Kotlin · Java · JavaScript · Python)를 싣는다. **오라클**: `oracle/E2-docs.txt`(이슈 본문 · `frontier.sh` 산출 · 두 문서의 해당 줄).  · 통과 ⟨전사 2026-09-15⟩
 
 ### F — 회귀
 

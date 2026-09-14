@@ -1,0 +1,2 @@
+$ git add .palimpsest/manifest.toml .palimpsest/intent/bindings.jsonl  (cwd ditto)
+rc=0

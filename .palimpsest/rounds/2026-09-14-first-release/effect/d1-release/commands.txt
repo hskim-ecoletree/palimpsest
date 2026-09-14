@@ -1,0 +1,13 @@
+pal --version
+pal install
+pal doctor --install
+pal narrative
+pal touch codexHostAdapter
+pal narrative --approve decision/01M2G8J1K4YJ04EHNZY6Z0D5T1 --pick cbd4e6567928
+pal touch codexHostAdapter
+mkdir -p .palimpsest/intent
+pal intent export --out .palimpsest/intent/bindings.jsonl
+git add .palimpsest/manifest.toml .palimpsest/intent/bindings.jsonl
+git commit -m palimpsest 선언과 결박
+pal intent import .palimpsest/intent/bindings.jsonl
+pal touch codexHostAdapter

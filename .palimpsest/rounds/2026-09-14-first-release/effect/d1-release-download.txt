@@ -1,0 +1,22 @@
+# D1 — 릴리스 자산 받기 · 2026-09-14T15:28:31Z
+$ gh release view v0.1.0
+v0.1.0 draft=false pre=false https://github.com/hskim-ecoletree/palimpsest/releases/tag/v0.1.0
+  asset pal-aarch64-apple-darwin.tar.gz 5742095
+  asset pal-x86_64-apple-darwin.tar.gz 6005903
+  asset pal-x86_64-pc-windows-msvc.zip 5318354
+  asset pal-x86_64-unknown-linux-gnu.tar.gz 6359328
+  asset SHA256SUMS 394
+$ gh release download v0.1.0 -p pal-aarch64-apple-darwin.tar.gz -p SHA256SUMS
+rc=0
+$ shasum -a 256 -c (자산 한 줄)
+shasum: standard input: no properly formatted SHA checksum lines found
+rc=1
+total 43880
+drwxr-xr-x  7 incognito  wheel       224  9월 15 00:24 .
+drwxr-xr-x  5 incognito  wheel       160  9월 15 00:28 ..
+-rw-r--r--  1 incognito  wheel      9723  9월 15 00:24 LICENSE-APACHE
+-rw-r--r--  1 incognito  wheel      1023  9월 15 00:24 LICENSE-MIT
+-rwxr-xr-x  1 incognito  wheel  22435696  9월 15 00:24 pal
+-rw-r--r--  1 incognito  wheel      4277  9월 15 00:24 README.md
+-rw-r--r--  1 incognito  wheel      1123  9월 15 00:24 README.txt
+pal 0.1.0+e80ca144101d

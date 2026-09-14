@@ -1,0 +1,2 @@
+$ mkdir -p .palimpsest/intent  (cwd ditto)
+rc=0

@@ -1,0 +1,6 @@
+# D1-a ⑵ — ditto 원본 뒤 스냅샷 · 2026-09-14T15:29:04Z
+HEAD aded7ce7f88feb3c03238c5f9760f3a2ade4a6c1
+porcelain sha256 375061156434a9dd76a68c63d437172a8107fdc7f09ec8b312e7c139665fdf53
+porcelain lines 278
+.palimpsest listing sha256 b8135b5a16632fde6c9075330a8b4d32ff8479db6f6d26819e74a535e5d5f9c3
+.palimpsest entries 7612
