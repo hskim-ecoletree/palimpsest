@@ -285,3 +285,36 @@ fn a4_재수출_배럴로_펴지는_임포트는_재수출을_지나는_이름�
     assert_eq!(파일_간_대상(&p), 대상(&[("own", "src/mixed/index.ts")]), "배럴의 자기 선언은 엣지다");
     let _ = std::fs::remove_dir_all(&root);
 }
+
+/// **화면의 설명문이 한 언어의 뜻을 싣지 않는다** (회차 계획 ㈀ 「문구는 언어 중립이다」).
+///
+/// 이관표와 참조 엣지 단서는 언어를 안 가리고 같은 문장을 찍는다. 그 문장이 Rust 의 이름
+/// (크레이트 뿌리 · 구조체 리터럴 · 연관 상수)이나 TypeScript 의 이름(`tsconfig` · `classic`)을
+/// 실으면 다른 언어의 사용자는 자기 저장소에 없는 것을 읽는다. 열쇠(`no_symbol_at_crate_root`
+/// 따위)는 회계 이름이라 그대로 둔다 — 여기서 재는 것은 뜻을 푼 문장이다.
+#[test]
+fn 화면의_설명문은_한_언어의_이름을_싣지_않는다() {
+    let root = 저장소(
+        "neutral",
+        &[
+            ("src/a.ts", "export function fromA() { return 1; }\n"),
+            (
+                "src/use.ts",
+                "import { fromA } from './a';\nimport { gone } from './missing';\n\
+                 export function 씀() { return fromA() + gone(); }\n",
+            ),
+        ],
+    );
+    let 화면 = pal(&root, &["touch", "씀"]);
+    assert!(화면.contains("못 선 까닭의 성격"), "이관표가 안 찍혀 이 시험이 아무것도 안 잰다:\n{화면}");
+    let 설명: String = 화면
+        .lines()
+        .filter(|l| l.contains("※") || l.contains("` →"))
+        .map(|l| l.split_once("` →").map_or(l, |(_, 뜻)| 뜻))
+        .collect::<Vec<_>>()
+        .join("\n");
+    for 이름 in ["크레이트", "구조체", "연관 상수", "열거형 변형", "tsconfig", "classic"] {
+        assert!(!설명.contains(이름), "설명문이 한 언어의 이름 {이름} 을 싣는다:\n{설명}");
+    }
+    let _ = std::fs::remove_dir_all(&root);
+}
