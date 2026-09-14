@@ -126,7 +126,7 @@ pub fn run(a: Args) -> Result<Report> {
         bail!("반경 `{radius}` 를 모른다 — 아는 것은 {} 다", Radius::NAMES.join(" · "));
     };
 
-    // ★ **원장 둘을 `.redb` 를 하나도 안 연 채로 센다** — `pal bind` 와 같은 원리다.
+    // ★ **원장 둘을 `.redb` 를 하나도 안 연 채로 계산한다** — `pal bind` 와 같은 원리다.
     //   `ledger::compute` 는 `--at` 을 줘도 워킹트리를 잰다(`matches_worktree`). 의도 저장소나
     //   2층이 저장소 안에 있고 git 이 그 파일을 추적하면, 스캔이 그 파일을 다시 읽는다.
     //   Windows 는 이 프로세스가 연 파일의 잠긴 구간을 못 읽게 막는다(os error 33).
