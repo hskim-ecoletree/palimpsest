@@ -279,7 +279,7 @@ jobs:
           n=$(jq '.answer.bindings.present | length' ../touch.json | tr -d '\r')
           echo "걸린 결정 $n"
           if [ "${n:-0}" -lt 1 ]; then
-            echo "받은 바이너리의 touch 가 결박이 있는 심볼에서 걸린 결정 0 을 냈다" >&2
+            echo "받은 바이너리의 touch 에서 결박이 있는 심볼의 걸린 결정이 0 이다" >&2
             exit 1
           fi
           echo "✔ 받은 바이너리로 touch 가 걸린 결정을 실었다"
