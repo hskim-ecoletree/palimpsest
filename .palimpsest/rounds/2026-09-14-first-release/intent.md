@@ -210,7 +210,7 @@
 
 ### F — 회귀
 
-- [ ] **F1** ⟨결정론적⟩ `cargo xtask check` · `cargo xtask test` 가 로컬에서 통과하고, **코드(`crates/` · `xtask/` · `.github/` · `Cargo.*`)를 바꾼 마지막 커밋을 담은 push** 의 SHA 에 CI 런 `success`(세 OS).
+- [x] **F1** ⟨결정론적⟩ `cargo xtask check` · `cargo xtask test` 가 로컬에서 통과하고, **코드(`crates/` · `xtask/` · `.github/` · `Cargo.*`)를 바꾼 마지막 커밋을 담은 push** 의 SHA 에 CI 런 `success`(세 OS).  · 통과 ⟨전사 2026-09-15⟩
 
 ## 개정
 

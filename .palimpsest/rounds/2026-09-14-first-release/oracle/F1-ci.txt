@@ -1,0 +1,23 @@
+# F1 오라클 — 2026-09-14T15:41:23Z
+
+## 코드(crates/ · xtask/ · .github/ · Cargo.*)를 바꾼 마지막 커밋
+b0e8bb2 fix(test): 로컬 경로 git clone 에 --no-hardlinks — 하드링크 클론이 한 번씩 「hardlink different from source」 로 죽어 CI 가 흔들렸다
+
+## 그 커밋을 담은 push 의 CI 런
+34862470231 b0e8bb2 push attempt 1 conclusion success
+  success ubuntu-latest
+  success macos-latest
+  success 놓는다 · ubuntu-latest
+  success 놓는다 · windows-latest
+  success windows-latest
+  success 받는다 · ubuntu-latest → windows-latest
+  success 받는다 · windows-latest → ubuntu-latest
+
+## 앞선 빨강 — 흔들림 둘과 회귀 하나(전부 처리됐다)
+34854953489 2de539e attempt 1 conclusion cancelled
+34855698372 c25eff1 attempt 1 conclusion cancelled
+34859001054 e80ca14 attempt 2 conclusion success
+34861122337 53ec056 attempt 1 conclusion failure
+- 34854953489 · 34855698372 — doctor --full 위반 3,586(스키마 Symbol.decor ↔ 검사 뷰) · 고침 06f6b96
+- 34859001054 — ubuntu 어휘 시험 거짓 양성(결박 ID [f48…) · attempt 2 success · 고침 53ec056(개정 2)
+- 34861122337 — macos 하드링크 클론 흔들림 · 고침 b0e8bb2(개정 3)

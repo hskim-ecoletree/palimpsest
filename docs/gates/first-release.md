@@ -44,12 +44,12 @@
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A1-a A2 A2-a A2-b A3 A3-a B1 B1-a B2 C1 C2 D1 D1-a E1 E2 |
+| 통과 | A1 A1-a A2 A2-a A2-b A3 A3-a B1 B1-a B2 C1 C2 D1 D1-a E1 E2 F1 |
 | 반증 | — |
 | 대조불가 | — |
-| 미측정 | F1 |
+| 미측정 | — |
 
-**검산** — 통과 16 · 반증 0 · 대조불가 0 · 미측정 1 = 17
+**검산** — 통과 17 · 반증 0 · 대조불가 0 · 미측정 0 = 17
 
 ### 근거 표
 
@@ -71,7 +71,7 @@
 | `D1-a` | ⑴ `effect/negative-start-binary.txt` — 착수 바이너리 · 결박 1 을 들이고도 `(0)` · README `git add` 한 줄 어긋남(개정 1) ⑵ `effect/origin-before.txt` = `effect/origin-after.txt`(HEAD · porcelain · `.palimpsest/` 목록 해시) |
 | `E1` | `oracle/E1-issues.txt` — R1 5 닫힘(completed)·코멘트 · R2 20 열림 · R3 39 닫힘(not planned)·코멘트 · #127 코멘트가 `baseline/06-doctor-full.txt` · ADR-0007 을 싣는다 |
 | `E2` | `oracle/E2-docs.txt` — #160 본문에 대상 · 세 칸 · 판정 문장(9/9) · `frontier.sh` 첫 줄 `#160 ← 순서표의 1 번` · 최단 경로 §4.3 의 끝의 정의와 언어 확장 순서 |
-| `F1` | **미측정** — 코드를 바꾼 마지막 커밋(로컬 클론 `--no-hardlinks`)을 담은 push 의 CI 대기. 앞의 둘은 흔들림으로 빨갰다: 런 34859001054 ubuntu(어휘 시험 거짓 양성 · 개정 2) · 34861122337 macos(하드링크 클론 · 개정 3) |
+| `F1` | `oracle/F1-ci.txt` — 코드를 바꾼 마지막 커밋 `b0e8bb2` 를 담은 push 의 CI 런 34862470231 attempt 1 success(세 OS · 상호운용 넷) · 로컬 `cargo xtask check` 29/29(깨끗한 클론 `b0e8bb2`) · 로컬 `cargo xtask test` rc 0 · 통과 1184(깨끗한 클론 `e7423e2`). 앞선 빨강 넷은 전부 처리했다: 34854953489 · 34855698372 `doctor --full` 회귀(고침 `06f6b96`) · 34859001054 ubuntu 어휘 시험 거짓 양성(개정 2) · 34861122337 macos 하드링크 클론(개정 3) |
 
 ### 차선책 — 등록된 셋 중 쓴 것
 
