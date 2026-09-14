@@ -116,7 +116,7 @@ jobs:
 
           쓰기 — 자세한 걸음은 같이 든 README.md
             pal install            이 프로젝트에 놓는다
-            pal doctor --install   여섯 검사를 본다   <- 놓은 뒤 반드시 한 번
+            pal doctor --install   설치 검사를 본다   <- 놓은 뒤 반드시 한 번
             pal update             놓은 것을 갱신한다
             pal uninstall          놓은 것을 걷어낸다 (매니페스트에 적힌 것만)
             pal narrative          문서를 코드 좌표에 대 본다 (아무것도 승인하지 않는다)
