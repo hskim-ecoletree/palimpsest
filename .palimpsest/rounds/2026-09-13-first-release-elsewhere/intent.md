@@ -367,7 +367,7 @@
 ### F — 마무리
 
 - [x] **F1** ⟨결정론적⟩ `#135` 에 **TS 몫이 섰다는 코멘트**가 `A5` 의 수와 이 회차 게이트 경로를 싣고 달린다 — `gh issue view 135 --comments`.  · 통과 ⟨전사 2026-09-14⟩
-- [ ] **F2** ⟨결정론적⟩ **회차의 마지막 커밋 SHA 에 `conclusion=success` CI 런이 붙어 있다** — `gh run list --commit <sha>`.
+- [x] **F2** ⟨결정론적⟩ **회차의 마지막 커밋 SHA 에 `conclusion=success` CI 런이 붙어 있다** — `gh run list --commit <sha>`.  · 통과 ⟨전사 2026-09-14⟩
 - [x] **F4** ⟨결정론적⟩ **앞 회차 `G5`** — 회차를 닫기 전에 `gh api "repos/hskim-ecoletree/palimpsest/actions/runs?head_sha=<6ee9eb3 전체>"` 와 `gh api repos/hskim-ecoletree/palimpsest/actions/permissions` 를 `oracle/F4-g5.txt` 에 남긴다. **판정은 `total_count` 에 묶인다** ⟨CA2-10⟩ — `> 0` 이면 `6ee9eb3` 뒤에 `docs/gates/binding-radius-in-use.md` 를 고친 커밋이 있다(`git log 6ee9eb3..HEAD -- docs/gates/binding-radius-in-use.md` 가 비지 않는다) · `= 0` 이면 이 회차 `report.md` 에 `G5` 와 `Actions` 를 함께 담은 줄이 있다. **RED**: 착수 시점엔 `report.md` 도 그 커밋도 없다.  · 통과 ⟨전사 2026-09-14⟩
 
 ### G — 범위 규칙의 금지 둘 ⟨CA2-16⟩

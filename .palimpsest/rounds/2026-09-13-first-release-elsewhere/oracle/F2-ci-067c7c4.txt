@@ -1,0 +1,17 @@
+# F2 — main 에 올린 마지막 push 의 SHA `067c7c4` 의 CI
+
+- 조회: `gh run view 34803197814` (2026-09-14T03:50:47Z) · `gh run list --commit 067c7c4d0124f4d6ca167a9bd4767c496ea8be5f`
+- 런 `34803197814` · event push · 시작 2026-09-14T03:36:41Z · 끝 2026-09-14T03:49:55Z · 결과 **success**
+
+## 잡
+```
+놓는다 · windows-latest · success
+놓는다 · ubuntu-latest · success
+ubuntu-latest · success
+windows-latest · success
+macos-latest · success
+받는다 · windows-latest → ubuntu-latest · success
+받는다 · ubuntu-latest → windows-latest · success
+```
+
+## 판정: 통과 — 앞의 두 push `701acb5` · `4398134` 는 `windows-latest` 빨강이었다(`oracle/F2-ci-701acb5.txt` · `oracle/F2-ci-4398134.txt`). 고친 커밋은 PR #157 의 CI 로 먼저 쟀다(`intent.md ## 승격` 9 · 10 · 11)
