@@ -1,0 +1,34 @@
+# A3 RED — 시험을 착수 커밋의 해소기에 댄다
+
+회차 2026-09-14-first-release · 조건 A3 · A3-a ⑴
+HEAD      ec92b899478d31533b4026a0eb2750242bba713f  (crates/ 는 착수 커밋 그대로 · 시험 파일만 더함)
+rustc     1.94.1 (rustup 없음)
+명령      cargo test -p pal-cli --test cross_file_references -- --test-threads=1
+exit      101
+
+## 픽스처 (crates/pal-cli/tests/cross_file_references.rs 의 `저장소_사적_mod_재수출`)
+
+crates/a/src/lib.rs       mod traverse; / pub mod inner; / pub use traverse::traverse;
+crates/a/src/traverse.rs  pub fn traverse() {}
+crates/a/src/inner.rs     use crate::traverse; / pub fn 안에서_부름() { traverse::traverse(); }
+crates/b/src/lib.rs       use a::traverse; / pub fn 밖에서_부름() { traverse(); }
+
+## 결과 발췌
+
+test a3_균일_경로와_접두가_각각_엣지가_된다 ... ok
+test a3_크레이트_경계를_넘는_use_가_사적_mod_선언에_엣지를_안_잇는다 ... FAILED
+test a3_형제_크레이트_평평_경로와_깊은_경로가_각각_엣지가_된다 ... ok
+test a3a_크레이트_안에서_traverse_모듈을_부르는_엣지는_남는다 ... ok
+
+thread 'a3_크레이트_경계를_넘는_use_가_사적_mod_선언에_엣지를_안_잇는다' panicked at crates/pal-cli/tests/cross_file_references.rs:736:5:
+assertion `left == right` failed: 크레이트 `b` 가 크레이트 `a` 의 **사적** `mod traverse` 에 엣지 1 개를 이었다
+  left: 1
+ right: 0
+
+test result: FAILED. 26 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out
+
+## 읽기
+
+- A3 : 착수 해소기에서 b → 사적 `mod traverse` 선언 엣지가 **1** 이라 실패한다 — 조건의 RED 문면 그대로.
+- A3-a ⑴ : 같은 착수 해소기에서 통과한다 — 음성 대조가 착수 때도 참이고, 고친 뒤에도 참이어야 한다.
+  (고친 뒤의 결과는 커밋 뒤 시험 실행으로 확인한다.)

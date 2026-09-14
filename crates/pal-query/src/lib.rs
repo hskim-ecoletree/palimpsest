@@ -661,7 +661,36 @@ fn under(parent: &SymbolNode, s: &SymbolNode) -> bool {
 /// **스코프 체인이 없는 파일은 셀 수 없다** — 그 사실은 파일 노드가 [`Capable`] 로
 /// 지고 있고, 여기서는 **셀 수 있는 것만 더한다.**
 fn coverage_of(ctx: &QueryCtx, accessed: &[SymbolId]) -> Result<Coverage, QueryError> {
-    let p = ctx.projection;
+    coverage_over(ctx.projection, accessed, ctx.out_of_scope_files)
+}
+
+/// **그래프 전체를 만지는 명령**의 범위 — `graph.dump` 와 **같은 모집단 · 같은 규칙**.
+///
+/// # 왜 [`coverage_of`] 의 「질의마다 다른 값」에 어긋나지 않나 (#127 ①)
+///
+/// 그 규칙은 *"만진 좌표에서 헤아린다"* 이고, `pal doctor` · `pal export` 가 만지는 좌표는
+/// 그래프 전체다 — 그러면 전 그래프의 값이 **그 답의 성질**이다. 두 표면은 질의 실행기를
+/// 안 지나고 응답 묶음을 직접 세우는데, 그 자리가 `unresolved 0 · lowest_grade L0` 을
+/// 손으로 박아 **「못 본 것이 0」이라는 거짓**이 나갔다(착수 실측: 같은 인덱스의 `graph.dump`
+/// 는 `13404 · l1`).
+///
+/// # Errors
+/// 2층을 읽지 못하면.
+pub fn whole_graph_coverage(p: &Projection, out_of_scope_files: usize) -> Result<Coverage, QueryError> {
+    // `graph.dump` 가 `accessed` 에 싣는 것과 **같은 목록**이다 — 모집단을 따로 세면
+    // 같은 인덱스에서 두 값이 갈릴 수 있다.
+    let (nodes, _) = p.dump()?;
+    let ids: Vec<SymbolId> = nodes.iter().map(|n| n.id).collect();
+    coverage_over(p, &ids, out_of_scope_files)
+}
+
+/// [`coverage_of`] 의 몸통 — **만진 좌표를 부르는 쪽이 준다.** 규칙이 한 자리에 있게
+/// 떼어 둔 것이고, 부르는 문은 [`coverage_of`] 와 [`whole_graph_coverage`] 둘이다.
+fn coverage_over(
+    p: &Projection,
+    accessed: &[SymbolId],
+    out_of_scope_files: usize,
+) -> Result<Coverage, QueryError> {
     let mut paths: BTreeSet<RepoPath> = BTreeSet::new();
     let mut identity = IdentityGrade::Exact;
     for id in accessed {
@@ -683,7 +712,7 @@ fn coverage_of(ctx: &QueryCtx, accessed: &[SymbolId]) -> Result<Coverage, QueryE
 
     Ok(Coverage {
         unresolved,
-        out_of_scope_files: ctx.out_of_scope_files,
+        out_of_scope_files,
         // **닿은 파일이 없으면 `L0` 이다** — 아무것도 안 봤다는 뜻이고, 그것이 정확하다.
         lowest_grade: lowest.unwrap_or(ExtractGrade::L0),
         // 아무 심볼도 안 만졌으면 이 답이 선 정체성은 가장 낮은 것이다.

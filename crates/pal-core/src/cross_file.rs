@@ -108,7 +108,14 @@ pub enum UnresolvedReason {
     /// 경계인지**를 못 말한다 — 앞 판이 이 자리에 산문으로 적어 둔 비율(340 중 298)은
     /// 값이 움직이는 순간 거짓이 됐다. 그래서 산문을 **회계 열쇠로 바꾼다.**
     ///
+    /// ★ **심볼이 있어도 여기 드는 모양이 하나 있다** (2026-09-14 · #139). 다른 크레이트에서
+    /// 들여온 이름이 뿌리 파일의 **사적 선언**과 같고 그 이름이 같은 파일의 `pub use` 로
+    /// 재수출될 때다 — `mod traverse;` + `pub use traverse::{Step, traverse};`. 크레이트
+    /// 밖에서 보이는 것은 재수출된 항목이고 사적 선언이 아니므로 **같은 문**이다. 뿌리가
+    /// 아닌 파일에서 같은 모양은 [`ThroughReexport`] 로 간다.
+    ///
     /// [`NoSymbol`]: Self::NoSymbol
+    /// [`ThroughReexport`]: Self::ThroughReexport
     NoSymbolAtCrateRoot,
     /// 대상 파일에 그 이름의 심볼이 없고 **그 파일은 크레이트 뿌리가 아니다.**
     ///
@@ -584,6 +591,18 @@ pub fn cross_file_edges_in(
         .map(|f| (f.path.as_str(), (f.export_names.as_slice(), f.star_export)))
         .collect();
     let 입력_경로: BTreeSet<&str> = files.iter().map(|f| f.path.as_str()).collect();
+    // 파일마다 **인라인 `mod` 밖의 `use` 가 들여온 이름** — 크레이트 밖 임포트에서 대상 선언이
+    // 재수출 이름에 가려졌는지 가르는 데 쓴다(아래 ⓐ · #139).
+    //
+    // ⚠ 함수 본문 안의 `use` 도 겹이 0 이라 여기 든다. 그러면 가림이 넓게 걸려 참인 엣지가
+    // 못 푼 참조로 갈 수는 있어도 **거짓 엣지는 안 생긴다.** 크레이트 뿌리 파일에서 그 모양은 드물다.
+    let 최상위_들임: BTreeMap<&str, BTreeSet<&str>> = files
+        .iter()
+        .map(|f| {
+            let names = f.imports.iter().filter(|i| i.inline_depth == 0).map(|i| i.local.as_str());
+            (f.path.as_str(), names.collect())
+        })
+        .collect();
     let 심볼_없음 = |target: &str, name: &str| {
         if is_ts(target) {
             let 지난다 = 재수출
@@ -745,7 +764,43 @@ pub fn cross_file_edges_in(
                 tried: vec![format!("{target}#{}", item.name)],
                 found: a_hits.as_ref().map_or(0, Vec::len),
             });
+            // ★ **크레이트 밖에서는 공개인 것만 보인다** (2026-09-14 · #139).
+            //
+            //    `crates/pal-core/src/lib.rs` 의 `mod traverse;` 는 사적이고 같은 파일의
+            //    `pub use traverse::{Step, traverse};` 가 **같은 이름**을 내보낸다. 다른 크레이트의
+            //    `use pal_core::traverse;` 가 들여오는 것은 재수출된 함수인데, 대상 파일에서 그
+            //    이름의 심볼은 사적 `mod` 하나뿐이라 거짓 엣지가 섰다(실측 2 건).
+            //
+            //    ⚠ **`export_names` 로는 못 가린다.** 최상위 `pub` 선언의 이름과 `pub use` 의 이름을
+            //    한 집합으로 정렬·중복 제거해 싣기 때문에, 사적 `mod` 가 재수출 이름 덕에 공개로
+            //    보인다. 가르는 칸을 1 층에 더하면 캐시 모양이 바뀌어 `EXTRACTOR_REV` 가 움직인다.
+            //    그래서 **이미 오는 재료로** 가린다 — 대상 파일의 최상위 `use` 가 같은 이름을
+            //    들여오면 그 이름은 재수출을 지나는 것이고, 선언이 `pub` 인지는 증명되지 않으므로
+            //    잇지 않는다. 같은 크레이트 안에서는 사적 선언도 보이므로 이 가림을 안 건다.
+            //
+            //    ⚠ 대가 — `pub mod n;` 과 `pub use n::n;` 이 함께 있으면 참인 모듈 엣지도 못 선
+            //    참조로 간다. **거짓 엣지 대신 까닭을 진 못 푼 참조**로 가는 쪽을 골랐다.
+            let 뿌리 = |x: &str| crate_root_of(x, &crates).map(|c| c.root.as_str());
+            let 재수출이_가린다 = !is_ts(from_path)
+                && 뿌리(from_path) != 뿌리(target)
+                && 최상위_들임.get(target).is_some_and(|names| names.contains(item.name.as_str()));
             match a_hits.as_deref() {
+                Some([(_, c)]) if 재수출이_가린다 && c.is_empty() => {
+                    // 뿌리 파일이면 뿌리 재수출의 문, 아니면 재수출의 문이다 — 둘 다 **안 따라가기로
+                    // 정한 자리**이고, 새 까닭을 만들면 저장된 회계의 열쇠가 늘어난다.
+                    let why = match 심볼_없음(target, &item.name) {
+                        UnresolvedReason::NoSymbol => UnresolvedReason::ThroughReexport,
+                        other => other,
+                    };
+                    miss(&mut report, false, why);
+                    unresolved.push(UnresolvedRef {
+                        site: p.from,
+                        name: item.name.clone(),
+                        reason: why,
+                        attempts: a_attempts,
+                        at: at.clone(),
+                    });
+                }
                 Some([(one, _)]) => {
                     edges.push(CrossFileEdge { from: p.from, to: *one, at: at.clone() });
                     report.a_edges += 1;

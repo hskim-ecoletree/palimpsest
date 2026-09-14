@@ -28,9 +28,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use pal_core::{
-    Anchor, BINDING_INDEX_KIND, Capable, CapabilityId, CapabilitySet, Coord, Coverage,
-    DERIVED_KIND, Diagnosis, DoctorScope, Elision, Envelope, ExtractGrade, GraphSchema,
-    GraphView, IdentityGrade, InvariantOutcome, LedgerRef, NodeInstance, NodeKey, Producer,
+    Anchor, BINDING_INDEX_KIND, Capable, CapabilityId, CapabilitySet, Coord,
+    DERIVED_KIND, Diagnosis, DoctorScope, Elision, Envelope, GraphSchema,
+    GraphView, InvariantOutcome, LedgerRef, NodeInstance, NodeKey, Producer,
     Fold, FoldedPart, LogStatus, NotRecorded, Provenance, ProjectionFreshness, QueryName,
     RESIDUAL_KIND, ResolutionGrade, SCOPE_REDUCTION_KIND,
     Snapshot, SymbolNode,
@@ -182,14 +182,17 @@ pub fn run(args: Args) -> Result<()> {
             built_for_this_snapshot: true,
             symbols_indexed: indexed,
         },
-        Coverage {
-            unresolved: 0,
-            out_of_scope_files: report.ledger.counts().values().sum::<usize>()
+        // ★ **검사는 그래프 전체를 만지므로 전 그래프의 범위를 싣는다** (#127 ①).
+        //   앞 판은 여기에 `0 · L0` 을 손으로 박았고 같은 인덱스의 그래프 덤프 질의는 `13404 · l1`
+        //   이었다. 질의마다 다른 값이라는 규칙은 *"만진 좌표에서 헤아린다"* 이고 이 명령의 만진
+        //   좌표가 전부라서 예외가 아니다 — 규칙은 `pal_query` 한 자리에 있다.
+        pal_query::whole_graph_coverage(
+            &attached.projection,
+            report.ledger.counts().values().sum::<usize>()
                 - report.ledger.counts().get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
                 - report.ledger.counts().get(&pal_core::Bucket::Partial).copied().unwrap_or(0),
-            lowest_grade: ExtractGrade::L0,
-            identity: IdentityGrade::Ordinal,
-        },
+        )
+        .context("2층에서 범위를 세지 못했다")?,
         capabilities(),
         LedgerRef::of(&report.ledger),
         // 검사가 생략하는 것은 없다 — 표본은 **잔여**로 나가고 그것이 생략과 다른 것이다.

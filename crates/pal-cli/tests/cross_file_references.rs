@@ -663,3 +663,100 @@ fn 못_푼_참조의_키가_유일하다() {
         .collect();
     assert!(중복.is_empty(), "키 `(site, name)` 이 중복이다: {중복:?}");
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// #139 — **크레이트 경계를 넘는 `use` 가 사적 `mod` 선언에 엣지를 잇던 자리**
+//
+// 회차 `2026-09-14-first-release` 의 `A3`·`A3-a` ⑴.
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// #139 의 **실물 모양**을 심는다 — `crates/pal-core/src/lib.rs` 의 `mod traverse;` 와
+/// `pub use traverse::{Step, traverse};` 가 원형이다.
+///
+/// ⚠ **사적 `mod` 와 재수출된 함수가 같은 이름이다.** 이름만 대면 재수출 이름 때문에
+/// 사적 `mod` 가 공개로 보인다 — 그 겹침이 이 픽스처의 요점이다.
+///
+/// | 파일 | 무엇을 심었나 |
+/// |---|---|
+/// | `crates/a/src/lib.rs` | 사적 `mod traverse;` + `pub use traverse::traverse;` |
+/// | `crates/a/src/traverse.rs` | 원 정의 `pub fn traverse` |
+/// | `crates/a/src/inner.rs` | **크레이트 안**에서 `traverse` 모듈을 부른다 — `A3-a` ⑴ |
+/// | `crates/b/src/lib.rs` | **다른 크레이트**에서 `use a::traverse;` 로 부른다 — `A3` |
+fn 저장소_사적_mod_재수출(tag: &str) -> PathBuf {
+    let root = std::env::temp_dir().join(format!("pal-privmod-{tag}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(root.join("crates/a/src")).expect("임시 저장소");
+    std::fs::create_dir_all(root.join("crates/b/src")).expect("임시 저장소");
+    let w = |p: &str, s: &str| std::fs::write(root.join(p), s).expect("쓰기");
+
+    w("crates/a/src/lib.rs", "mod traverse;\npub mod inner;\npub use traverse::traverse;\n");
+    w("crates/a/src/traverse.rs", "pub fn traverse() {}\n");
+    w("crates/a/src/inner.rs",
+      "use crate::traverse;\n\
+       pub fn 안에서_부름() { traverse::traverse(); }\n");
+    w("crates/b/src/lib.rs",
+      "use a::traverse;\n\
+       pub fn 밖에서_부름() { traverse(); }\n");
+
+    git(&root, &["init", "-q"]);
+    git(&root, &["add", "-A"]);
+    git(&root, &["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-qm", "첫 커밋"]);
+    root
+}
+
+/// 그 픽스처의 사적 `mod traverse` 선언 — **하나여야 한다.** 둘이거나 없으면 픽스처가
+/// 실물 모양이 아니고 아래 단언이 무엇을 재는지 모른다.
+fn 사적_mod(p: &Projection) -> pal_core::SymbolId {
+    let 선언: Vec<_> = p
+        .symbols_of(&RepoPath::new("crates/a/src/lib.rs"))
+        .expect("심볼")
+        .into_iter()
+        .filter(|s| s.name == "traverse" && s.kind == pal_core::SymbolKind::Module)
+        .collect();
+    assert_eq!(선언.len(), 1, "`mod traverse` 선언이 하나가 아니다: {선언:?}");
+    선언[0].id
+}
+
+fn 하나(p: &Projection, name: &str) -> pal_core::SymbolId {
+    let v = p.resolve_name(name).expect("이름");
+    assert_eq!(v.len(), 1, "`{name}` 이 하나가 아니다: {v:?}");
+    v[0].id
+}
+
+#[test]
+fn a3_크레이트_경계를_넘는_use_가_사적_mod_선언에_엣지를_안_잇는다() {
+    let repo = 저장소_사적_mod_재수출("a3");
+    pal(&repo, &["touch", "밖에서_부름", "--json"]);
+    let p = 투영(&repo);
+    let 선언 = 사적_mod(&p);
+    let 밖 = 하나(&p, "밖에서_부름");
+
+    // ① **엣지 0** — 다른 크레이트에서 사적 모듈 선언으로 가는 파일 간 엣지.
+    let 간다 = p.callees(밖).expect("정방향").into_iter().filter(|id| *id == 선언).count();
+    assert_eq!(간다, 0, "크레이트 `b` 가 크레이트 `a` 의 **사적** `mod traverse` 에 엣지 {간다} 개를 이었다");
+
+    // ② **못 푼 참조로 까닭과 함께** — 사라진 엣지가 조용히 사라지면 그것도 거짓 0 이다.
+    //    대상이 크레이트 뿌리이고 그 이름은 재수출을 지나므로 뿌리 재수출의 문으로 간다.
+    let 못푼: Vec<_> =
+        못푼참조(&p).into_iter().filter(|u| u.site == 밖 && u.name == "traverse").collect();
+    assert_eq!(못푼.len(), 1, "그 참조가 못 푼 참조로 안 나온다: {못푼:?}");
+    assert_eq!(
+        못푼[0].reason.as_str(),
+        "no_symbol_at_crate_root",
+        "까닭이 뿌리 재수출의 문이 아니다: {못푼:?}"
+    );
+}
+
+#[test]
+fn a3a_크레이트_안에서_traverse_모듈을_부르는_엣지는_남는다() {
+    // `A3-a` ⑴ — **음성 대조.** 사적 `mod` 로 가는 엣지를 통째로 버리는 구현이 `A3` 를
+    // 통과한다. 크레이트 안에서는 사적 모듈이 보이므로 이 엣지는 참이고 남아야 한다.
+    let repo = 저장소_사적_mod_재수출("a3a");
+    pal(&repo, &["touch", "안에서_부름", "--json"]);
+    let p = 투영(&repo);
+    let 선언 = 사적_mod(&p);
+    let 안 = 하나(&p, "안에서_부름");
+
+    let 간다 = p.callees(안).expect("정방향").into_iter().filter(|id| *id == 선언).count();
+    assert!(간다 >= 1, "크레이트 `a` 안의 `traverse` 모듈 참조가 선언에 안 이어졌다 — 참인 엣지를 버렸다");
+}

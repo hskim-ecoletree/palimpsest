@@ -32,7 +32,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use pal_core::{
-    Capable, CapabilityId, Coverage, Elision, Envelope, ExtractGrade, Fold, FoldedPart,
+    Capable, CapabilityId, Elision, Envelope, ExtractGrade, Fold, FoldedPart,
     GraphSchema, IdentityGrade, LedgerRef, LogStatus, NodeStatus, NotRecorded,
     ProjectionFreshness, QueryName, RebuildState,
 };
@@ -138,7 +138,7 @@ pub fn run(a: Args) -> Result<()> {
         None => print!("{text}"),
     }
 
-    let envelope = envelope(&report, &projection, out_report);
+    let envelope = envelope(&report, &projection, out_report)?;
     if a.json {
         println!("{}", serde_json::to_string_pretty(&envelope)?);
     } else if a.out.is_some() {
@@ -361,15 +361,20 @@ fn envelope(
     report: &ledger::LedgerReport,
     projection: &Projection,
     answer: ExportReport,
-) -> Envelope<ExportReport> {
+) -> Result<Envelope<ExportReport>> {
     let counts = report.ledger.counts();
     let out_of_scope = counts.values().sum::<usize>()
         - counts.get(&pal_core::Bucket::Parsed).copied().unwrap_or(0)
         - counts.get(&pal_core::Bucket::Partial).copied().unwrap_or(0);
     let mut fold = Fold::none();
     fold.push(FoldedPart::Ledger, report.ledger.total(), QueryName::LedgerSnapshot);
+    // ★ **내보내기는 그래프 전체를 만지므로 전 그래프의 범위를 싣는다** (#127 ①).
+    //   앞 판은 `0 · L0` 을 손으로 박았다. 질의마다 다른 값이라는 규칙은 *"만진 좌표에서
+    //   헤아린다"* 이고 이 명령의 만진 좌표가 전부라서 예외가 아니다 — 규칙은 `pal_query` 한 자리에 있다.
+    let coverage = pal_query::whole_graph_coverage(projection, out_of_scope)
+        .context("2층에서 범위를 세지 못했다")?;
 
-    Envelope::new(
+    Ok(Envelope::new(
         answer,
         report.ledger.snapshot.clone(),
         ProjectionFreshness {
@@ -388,12 +393,7 @@ fn envelope(
                 .is_some_and(|s| s == report.ledger.snapshot.to_string()),
             symbols_indexed: projection.count().unwrap_or(0),
         },
-        Coverage {
-            unresolved: 0,
-            out_of_scope_files: out_of_scope,
-            lowest_grade: ExtractGrade::L0,
-            identity: IdentityGrade::Ordinal,
-        },
+        coverage,
         pal_query::capabilities(),
         LedgerRef::of(&report.ledger),
         // 내보내기는 **전부를 산출한다** — 자르지 않는다. 그래서 명시적으로 없음이다.
@@ -401,7 +401,7 @@ fn envelope(
         fold,
         // ★ 읽기 전용으로 붙었으므로 못 남긴다. **조용히 안 남기지 않는다.**
         LogStatus::NotRecorded { why: NotRecorded::ReadOnlyAttach },
-    )
+    ))
 }
 
 fn lines(e: &Envelope<ExportReport>) -> Vec<String> {
