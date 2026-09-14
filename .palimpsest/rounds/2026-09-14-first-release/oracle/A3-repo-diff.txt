@@ -1,0 +1,51 @@
+# A3-a ⑵ — 이 저장소 ec92b89 트리 전수의 파일 간 엣지 대조
+
+회차 2026-09-14-first-release · 조건 A3-a ⑵
+날짜 2026-09-14
+
+## 두 바이너리
+
+착수  /Users/incognito/dev/projects/palimpsest/target/release/pal
+      --version  pal 0.0.0+ec92b899478d
+      sha256     b876a076546ae948e1c146ad83d1d79b8d4318dad070af210bb3d06d23ec4b79
+새것  <워크트리>/target/release/pal  (cargo build --release -p pal-cli · crates/ = ec92b89 + #127 ① · #139 수정, 커밋 전 빌드)
+      --version  pal 0.0.0+ec92b899478d   ← 판 표기는 HEAD 에서 오고 빌드 때 HEAD 가 ec92b89 였다. 둘은 sha256 으로 갈린다
+      sha256     e578d43a5caa006b369bcdad77d636e8a2ca3562bb5010faf4cb0cf423f86ba6
+
+## 대상
+
+git clone /Users/incognito/dev/projects/palimpsest <스크래치>/a3/palimpsest
+git -C <스크래치>/a3/palimpsest checkout ec92b89
+색인·캐시는 클론 안에 바이너리마다 따로 — .pal-start/ · .pal-new/ — 이고 `--at ec92b89` 로 커밋 트리를 읽는다(그 디렉터리들이 워킹트리를 흔들지 않게).
+
+## 명령
+
+<착수> query graph.dump --json --repo <클론> --at ec92b89 --index <클론>/.pal-start/index.redb --cache-dir <클론>/.pal-start/cache > dump-start.json
+<새것> query graph.dump --json --repo <클론> --at ec92b89 --index <클론>/.pal-new/index.redb   --cache-dir <클론>/.pal-new/cache   > dump-new.json
+python3 diff.py dump-start.json dump-new.json
+
+- 파일 간 엣지의 정의: graph.dump 의 엣지 중 양 끝 노드의 path 가 다른 것. (출발 path, 출발 container::name, 출발 kind, 도착 path, 도착 container::name, 도착 kind) 로 바꿔 집합으로 댄다.
+- 분류는 새 해소기가 아니라 잠긴 의도 A3-a ⑵ 의 **고정 목록 둘**로 한다(diff.py 의 EXPECTED_GONE).
+- 두 산출 모두 elision 이 비었다 — 자른 것이 없는 전량이다.
+
+## 산출 (diff.py 그대로)
+
+착수  snapshot=[['palimpsest', {'committed': 'ec92b899478d31533b4026a0eb2750242bba713f'}]] nodes=3475 edges=6194 파일간=1338 elision={"truncated": [], "limits_hit": []}
+새것  snapshot=[['palimpsest', {'committed': 'ec92b899478d31533b4026a0eb2750242bba713f'}]] nodes=3475 edges=6192 파일간=1336 elision={"truncated": [], "limits_hit": []}
+사라진 파일 간 엣지 2
+  - ('crates/pal-query/src/lib.rs', 'run', 'function', 'crates/pal-core/src/lib.rs', 'traverse', 'module')
+  - ('crates/pal-query/tests/bench.rs', '한_규모', 'function', 'crates/pal-core/src/lib.rs', 'traverse', 'module')
+새로 생긴 파일 간 엣지 0
+
+판정 재료: 사라진 것 == 고정 목록 둘 (각 1 엣지) → True
+판정 재료: 새로 생긴 것 0 → True
+음성 대조: 착수 쪽에 고정 목록 둘이 실제로 있다 → True
+참고: 도착이 module 인 파일 간 엣지 — 착수 57 · 새것 55
+
+## 읽기
+
+- 사라진 파일 간 엣지가 **정확히 둘**이고 둘 다 고정 목록의 것이다: pal-query/src/lib.rs → pal-core/src/lib.rs `mod traverse` ·
+  pal-query/tests/bench.rs → 같은 선언.
+- 새로 생긴 파일 간 엣지 **0**. 노드 수는 같다(3475 = 3475) — 추출이 안 움직였다.
+- 참고 줄의 57 은 잠긴 의도가 인용한 이슈 본문의 58 과 1 다르다. 이 대조는 (출발 심볼, 도착 심볼) 집합이고 이슈 본문의 셈법은
+  이 파일이 재지 않았다. 조건 문면은 58 을 쓰지 않으므로 판정 재료가 아니다.
