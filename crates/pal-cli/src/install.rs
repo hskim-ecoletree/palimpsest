@@ -48,10 +48,12 @@ pub use doctor::{Check, checks, print};
 use inside::{Rel, Root};
 use layout::{
     AGENT_KEY, AGENT_VALUE, CLAUDE_DIR, DERIVED, DIRS, IGNORE_FILE, IGNORE_MARKERS,
-    IMPORT_LINE, LOCK, MANIFEST, MANIFEST_HOME, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD,
-    ROOT_INSTRUCTION_FILE, SETTINGS,
+    IMPORT_LINE, INTENT_CANONICAL, LOCK, MANIFEST, MANIFEST_HOME, MD_MARKERS, OWNED_DIRS,
+    OWNED_FILES, PAYLOAD, PROJECT_MANIFEST, ROOT_INSTRUCTION_FILE, SETTINGS,
 };
-use manifest::{BlockEntry, FileEntry, Manifest, Origin, Roots, SettingsEntry, 자리들};
+use manifest::{
+    BlockEntry, DeclarationEntry, FileEntry, Manifest, Origin, Roots, SettingsEntry, 자리들,
+};
 
 /// 잠금을 기다리는 시간(밀리초)과 간격.
 ///
@@ -328,6 +330,9 @@ pub fn install(target: &Path) -> Result<()> {
             files: Vec::new(),
             blocks: 이전.as_ref().map(|m| m.blocks.clone()).unwrap_or_default(),
             settings: 이전.as_ref().and_then(|m| m.settings.clone()),
+            // **옛 기록을 지고 시작한다** — 선언 걸음 전에 죽어도 먼젓번에 적은 선언을
+            // 제거가 되돌릴 수 있어야 한다(`blocks`·`settings` 와 같은 판단).
+            declaration: 이전.as_ref().and_then(|m| m.declaration.clone()),
             created_dirs,
             // 설치는 제거 중이 아니다. 앞선 제거가 걸린 채로 남았어도 이 설치가
             // 그 상태를 덮으므로 여기서 거짓으로 되돌린다.
@@ -347,10 +352,150 @@ pub fn install(target: &Path) -> Result<()> {
     기록.m.settings = 설정_병합(&settings_path, &read, 이전.as_ref(), &mut report)?;
     기록.적는다()?;
     블록_넣기(&root, 이전.as_ref(), &mut 기록, &mut report)?;
+    선언_쓰기(&root, &mut 기록, &mut report)?;
 
     report.say("매니페스트", &format!("{MANIFEST}  ·  pal {}", 기록.m.pal_version));
     report.print(&format!("설치 — {root}"));
     Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 저장소 선언 — **식별자를 디렉터리 이름에 묶지 않는다**
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 저장소 식별자는 좌표의 해시 성분이다(`SymbolId::compute`). 선언이 없으면 대장이 디렉터리
+// 이름을 쓰고, 같은 커밋을 **다른 이름으로 받은 팀원**에게서 결박이 하나도 안 걸린다.
+// 그래서 설치가 선언을 적는다 — 커밋되면 팀이 같은 식별자를 나눈다.
+
+/// 식별자를 **어디서 정했는가.**
+enum 정함 {
+    /// 이 값을 적는다 — 까닭과 함께.
+    적는다 { id: String, 까닭: String },
+    /// **하나로 못 정했다 — 안 적는다.** 까닭을 화면에 싣는다.
+    안_적는다 { 까닭: String },
+}
+
+/// ★ **값은 결박이 선 식별자를 따른다.** 결박이 없을 때만 디렉터리 이름이다.
+///
+/// 디렉터리 이름부터 보면 `palimpsest` 로 결박을 쌓은 저장소를 `pal/` 에서 설치하는 순간
+/// `pal` 을 **선언으로 굳힌다** — 추정이던 틀린 값이 사실이 된다.
+///
+/// # 식별자가 여럿이면 고르지 않는다
+///
+/// 정본의 결박이 둘 이상의 식별자에 갈려 있으면 어느 쪽이 「이 저장소」인지 코드에서
+/// 유도되지 않는다. 하나를 고르면 나머지 결박이 조용히 안 걸리고, 디렉터리 이름을 적으면
+/// **전부** 안 걸린다. 그래서 **안 적고 말한다** — 설치 자체는 막지 않는다. 선언이 없는
+/// 저장소는 지금도 돌고, `touch` 가 어긋난 수를 드러낸다.
+///
+/// 정본을 못 읽거나 못 풀 때도 같다 — 못 읽은 것에서 식별자를 추정하지 않는다.
+fn 식별자를_정한다(root: &Root) -> Result<정함> {
+    let 이름 = crate::ledger::repo_name(root.path());
+    let 정본 = root.join(&Rel::new(INTENT_CANONICAL))?;
+    if !정본.exists() {
+        return Ok(정함::적는다 { id: 이름, 까닭: "결박 정본이 없어 디렉터리 이름".to_owned() });
+    }
+    let text = match guard::읽는다(&정본).map(String::from_utf8) {
+        Ok(Ok(t)) => t,
+        Ok(Err(e)) => {
+            return Ok(정함::안_적는다 {
+                까닭: format!("{INTENT_CANONICAL} 이 UTF-8 이 아니다({e}) — 식별자를 추정하지 않는다"),
+            });
+        }
+        Err(e) => {
+            return Ok(정함::안_적는다 {
+                까닭: format!("{INTENT_CANONICAL} 을 못 읽었다({e:#}) — 식별자를 추정하지 않는다"),
+            });
+        }
+    };
+    let 갈래 = match pal_intent::bound_repos(&text) {
+        Ok(m) => m,
+        Err(e) => {
+            return Ok(정함::안_적는다 {
+                까닭: format!("{INTENT_CANONICAL} 을 못 풀었다({e}) — 식별자를 추정하지 않는다"),
+            });
+        }
+    };
+    Ok(match 갈래.len() {
+        0 => 정함::적는다 { id: 이름, 까닭: "결박이 없어 디렉터리 이름".to_owned() },
+        1 => {
+            let (id, n) = 갈래.into_iter().next().expect("하나다");
+            정함::적는다 { id: id.as_str().to_owned(), 까닭: format!("결박 {n}건이 선 식별자") }
+        }
+        _ => 정함::안_적는다 {
+            까닭: format!(
+                "결박이 식별자 {}개에 갈려 있다({}) — 하나를 고르지 않는다. 손으로 선언하십시오",
+                갈래.len(),
+                갈래.iter().map(|(r, n)| format!("`{}` {n}건", r.as_str())).collect::<Vec<_>>().join(" · ")
+            ),
+        },
+    })
+}
+
+/// 선언을 **없을 때만** 적는다. 있으면 바이트로 안 건드린다.
+///
+/// ★ **적고 나서 쓴다**(기록이 앞선다) — 쓰고 적기 전에 죽으면 제거가 그 파일을 모른다.
+fn 선언_쓰기(root: &Root, 기록: &mut Journal, report: &mut Report) -> Result<()> {
+    let rel = Rel::new(PROJECT_MANIFEST);
+    let path = root.join(&rel)?;
+    // `exists()` 는 끊긴 링크를 「없다」로 읽는다 — 그 자리에 쓰면 링크 너머에 쓴다.
+    if path.symlink_metadata().is_ok() {
+        if 기록.m.declaration.as_ref().is_some_and(|d| d.path == rel) {
+            report.say("이미 있음", PROJECT_MANIFEST);
+        } else {
+            report.say("건드리지 않음", &format!("{PROJECT_MANIFEST}  (이미 있다 — 그 선언을 따른다)"));
+        }
+        return Ok(());
+    }
+    match 식별자를_정한다(root)? {
+        정함::안_적는다 { 까닭 } => {
+            // 옛 기록이 가리키던 파일이 이미 없으니 걷을 것도 없다.
+            기록.m.declaration = None;
+            기록.적는다()?;
+            report.say("⚠ 선언 안 씀", &format!("{PROJECT_MANIFEST}  ({까닭})"));
+        }
+        정함::적는다 { id, 까닭 } => {
+            let body = 선언_본문(&id);
+            기록.m.declaration =
+                Some(DeclarationEntry { path: rel, sha256: sha256::내용(body.as_bytes()) });
+            기록.적는다()?;
+            guard::쓴다(&path, body.as_bytes())?;
+            report.say("선언", &format!("{PROJECT_MANIFEST}  (저장소 식별자 `{id}` — {까닭})"));
+        }
+    }
+    Ok(())
+}
+
+/// 선언 본문 — **사람이 읽고 커밋할 파일이다.** 까닭을 주석으로 싣는다.
+fn 선언_본문(id: &str) -> String {
+    format!(
+        "# palimpsest 저장소 선언 — `pal install` 이 적었다.\n\
+         #\n\
+         # `id` 는 코드 좌표의 성분이다. 디렉터리 이름을 따르면 다른 이름으로 받은 사본에서\n\
+         # 결박이 하나도 안 걸린다. 커밋해서 팀이 같은 값을 나누십시오.\n\
+         [[repo]]\n\
+         id = \"{}\"\n\
+         path = \".\"\n",
+        toml_문자열(id)
+    )
+}
+
+/// TOML 기본 문자열 안에 넣을 수 있게 — 따옴표·역슬래시·제어 문자만 벗긴다.
+fn toml_문자열(s: &str) -> String {
+    use std::fmt::Write as _;
+
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            // `String` 에 쓰는 것은 실패하지 않는다.
+            c if c.is_control() => {
+                let _ = write!(out, "\\u{:04X}", u32::from(c));
+            }
+            c => out.push(c),
+        }
+    }
+    out
 }
 
 /// **기록이 걸음마다 앞선다** — 매 변경 뒤에 매니페스트를 다시 쓴다.
@@ -1101,6 +1246,13 @@ pub fn uninstall(target: &Path) -> Result<()> {
         return Err(e);
     }
 
+    // **파일 다음, 디렉터리 전.** `.palimpsest/` 를 비워야 그 디렉터리를 걷을 수 있다.
+    if let Some(d) = m.declaration.clone() {
+        선언_걷기(&root, &자리, &d, &mut report)?;
+        m.declaration = None;
+        manifest::write(&manifest_path, &m)?;
+    }
+
     std::fs::remove_file(&manifest_path)
         .with_context(|| format!("지우지 못했다: {}", manifest_path.display()))?;
     report.say("지웠다", MANIFEST);
@@ -1215,6 +1367,38 @@ fn 파일_하나_걷기(자리: &manifest::Places, f: &FileEntry, report: &mut R
     } else {
         report.say("지웠다", f.path.as_str());
     }
+    Ok(())
+}
+
+/// 우리가 적은 저장소 선언을 걷는다 — ★ **커밋된 뒤에는 사용자의 선언이다.**
+///
+/// # 왜 커밋 여부로 가르는가
+///
+/// 설치 전으로 되돌리는 것이 제거의 일이고(`S2 == S0`), 커밋 전이면 그 파일은 아직 우리가
+/// 놓은 잔해다. **커밋되면 그것은 팀이 나누는 선언이 된다** — 지우면 다른 이름으로 받은
+/// 팀원의 좌표가 통째로 흔들리고, 그 삭제가 다음 커밋에 조용히 실린다. 그래서 안 지우고
+/// 말한다. 우리가 적은 뒤 사람이 고친 것도 같은 까닭으로 남긴다.
+fn 선언_걷기(
+    root: &Root,
+    자리: &manifest::Places,
+    d: &DeclarationEntry,
+    report: &mut Report,
+) -> Result<()> {
+    let path = 자리.자리(&d.path)?;
+    if !path.exists() {
+        report.say("이미 없음", d.path.as_str());
+        return Ok(());
+    }
+    if ignore::tracked(root, d.path.as_str())? {
+        report.say("남겼다", &format!("{}  (커밋된 선언이다 — 사용자의 것으로 둔다)", d.path));
+        return Ok(());
+    }
+    if sha256::내용(&guard::읽는다(path)?) != d.sha256 {
+        report.say("남겼다", &format!("{}  (우리가 적은 뒤 사람이 고쳤다)", d.path));
+        return Ok(());
+    }
+    std::fs::remove_file(path).with_context(|| format!("지우지 못했다: {}", path.display()))?;
+    report.say("지웠다", d.path.as_str());
     Ok(())
 }
 

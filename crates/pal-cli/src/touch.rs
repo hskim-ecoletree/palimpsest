@@ -135,13 +135,15 @@ pub fn run(a: Args) -> Result<()> {
     // 세우는 파생물이고 `.gitignore` 가 지운다. 그 부재가 답에 실려야 빈 목록이
     // 「0 건」으로 안 읽힌다.
     let 의도_자리 = intent_file(repo_path, intent_path);
-    let intent_store = pal_core::IntentStorePresence::of(
-        의도_자리.exists(),
-        의도_자리.display().to_string(),
-        intent_canonical(repo_path),
-    );
+    let 있었나 = 의도_자리.exists();
     let intent =
         IntentStore::open_read_only(&의도_자리).context("의도 저장소를 열지 못했다")?;
+    let intent_store = pal_core::IntentStorePresence::of(
+        있었나,
+        의도_자리.display().to_string(),
+        intent_canonical(repo_path),
+        다른_식별자(&report, &intent)?,
+    );
     let bound = IntentIndex(&intent);
 
     let counts = report.ledger.counts();
@@ -429,6 +431,12 @@ fn print_bindings(
             }
             return;
         }
+        // ★ **대 보지도 못한 것을 「0 건」으로 적지 않는다.** 결박이 다른 저장소 식별자에
+        // 섰으면 이 좌표와 해시부터 다르다 — 빈 목록은 값이 아니라 식별자 어긋남이다.
+        if store.other_repo.bindings > 0 {
+            print_other_repo(&store.other_repo);
+            return;
+        }
         println!("  아직 없습니다.");
         return;
     }
@@ -474,6 +482,62 @@ fn print_bindings(
     if 자른 > 0 {
         println!("  … 그 밖 {자른}건 — **잘렸습니다. 낡은 것은 잘리지 않습니다**");
     }
+    // 실린 것이 있어도 **안 보인 몫이 있다는 사실**은 말한다 — 수가 전부로 읽히지 않게.
+    let o = &store.other_repo;
+    if o.bindings > 0 {
+        println!(
+            "  ※ 이 밖에 결박 {}건이 다른 저장소 식별자({})에 걸려 있어 여기서 대 보지 못했습니다",
+            o.bindings,
+            식별자_목록(o)
+        );
+    }
+}
+
+/// 다른 저장소 식별자에 선 결박 — **빈 목록 자리에 「아직 없습니다」 대신 찍는다.**
+fn print_other_repo(o: &pal_core::OtherRepoBindings) {
+    println!(
+        "  **「0 건」이 아닐 수 있습니다** — 결박 {}건이 다른 저장소 식별자({})에 걸려 있어 \
+이 좌표와 대 보지 못했습니다.",
+        o.bindings,
+        식별자_목록(o)
+    );
+    println!(
+        "  지금 저장소 식별자는 `{}` 입니다 — 식별자는 좌표의 성분이라, 다르면 같은 코드도 다른 좌표입니다.",
+        o.current.as_str()
+    );
+    if let [하나] = o.repos.as_slice() {
+        println!(
+            "  맞추려면 — `.palimpsest/manifest.toml` 에 `[[repo]] id = \"{}\"` 를 선언하십시오",
+            하나.as_str()
+        );
+    }
+}
+
+fn 식별자_목록(o: &pal_core::OtherRepoBindings) -> String {
+    o.repos.iter().map(|r| format!("`{}`", r.as_str())).collect::<Vec<_>>().join(" · ")
+}
+
+/// 지금 식별자와 **다른 식별자에 선 결박**의 수를 얻는다 — `touch` 와 `query` 가 같이 쓴다.
+///
+/// ⚠ **결박 전수를 읽는다.** 좌표 하나에 답하는 질의가 O(전체 결박)을 지는 자리다. 그래도
+/// 여기서 세는 까닭은, 이것을 안 세면 식별자가 어긋난 저장소에서 **모든** 조회가 거짓 0 을
+/// 내기 때문이다 — 싸게 틀리는 것보다 비싸게 맞는 쪽을 골랐다.
+///
+/// # Errors
+/// 결박을 읽지 못하면.
+pub fn 다른_식별자(
+    report: &ledger::LedgerReport,
+    intent: &IntentStore,
+) -> Result<pal_core::OtherRepoBindings> {
+    let current = report
+        .ledger
+        .snapshot
+        .entries()
+        .next()
+        .map(|(r, _)| r.clone())
+        .context("스냅샷에 저장소가 없다")?;
+    let 전부 = intent.all().context("결박을 읽지 못했다")?;
+    Ok(pal_core::OtherRepoBindings::count(current, &전부))
 }
 
 /// 이 심볼이 하는 것 — **수를 산출한다. `(있음)` 은 아무것도 안 말한다.**

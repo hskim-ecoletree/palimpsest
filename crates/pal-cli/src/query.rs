@@ -121,13 +121,15 @@ pub fn answer(a: &Args, query: &NamedQuery) -> Result<Envelope<QueryResult>> {
     //
     // **그래서 존재 여부를 열기 전에 재서 답에 싣는다.**
     let intent_path = touch::intent_file(a.repo, a.intent.clone());
-    let intent_store = pal_core::IntentStorePresence::of(
-        intent_path.exists(),
-        intent_path.display().to_string(),
-        touch::intent_canonical(a.repo),
-    );
+    let 있었나 = intent_path.exists();
     let intent = IntentStore::open_read_only(&intent_path)
         .context("의도 저장소를 열지 못했다")?;
+    let intent_store = pal_core::IntentStorePresence::of(
+        있었나,
+        intent_path.display().to_string(),
+        touch::intent_canonical(a.repo),
+        touch::다른_식별자(&report, &intent)?,
+    );
     // ⚠ **`binding.status` 만 전수가 필요하다** — 그 질의의 답이 결박 전부다.
     // 다른 질의에서 전수를 들면 좌표 하나에 답하는 데 O(전체 결박)을 산출한다(옛 F11 §3.1).
     let bindings = if matches!(query, NamedQuery::BindingStatus) {

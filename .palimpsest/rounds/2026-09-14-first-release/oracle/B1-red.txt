@@ -1,0 +1,49 @@
+# B1 · B1-a RED — 구현 전에 돌린 시험의 실패
+
+명령    cargo test -p pal-cli --test repo_identity
+HEAD    ec92b899478d31533b4026a0eb2750242bba713f  (crates/ 는 착수 커밋과 같다 · 시험 파일 crates/pal-cli/tests/repo_identity.rs 만 더했다)
+rustc   1.94.1 (e408947bf 2026-03-25) (Homebrew)
+결과    exit=101 · test result: FAILED. 10 passed; 4 failed
+
+⚠ 시험 이름 둘을 RED 뒤에 바꿨다 — `cargo xtask check` 의 「어색한 표현 부재」가 이름의 「낸다」를 잡았다.
+   단언은 그대로다.
+   b1_install_이_식별자를_선언하고_다른_이름의_클론이_같은_수를_낸다
+     → b1_install_이_식별자를_선언하고_다른_이름의_클론이_같은_수를_보인다
+   b1a_1_선언이_없는_저장소를_다른_이름으로_클론하면_아직_없습니다를_안_낸다
+     → b1a_1_선언이_없는_저장소를_다른_이름으로_클론해도_아직_없습니다가_안_나온다
+   아래 발췌는 RED 를 돌린 때의 이름 그대로다.
+
+## 시험별
+
+| 조건 | 시험 (지금 이름) | 착수 코드에서 |
+|---|---|---|
+| B1 | b1_install_이_식별자를_선언하고_다른_이름의_클론이_같은_수를_보인다 | FAILED — install 이 매니페스트를 안 만든다 |
+| B1-a ⑴ | b1a_1_선언이_없는_저장소를_다른_이름으로_클론해도_아직_없습니다가_안_나온다 | FAILED — 「아직 없습니다」를 사실로 적는다 |
+| B1-a ⑵ | b1a_2_매니페스트가_이미_있으면_install_이_바이트로_안_바꾼다 | ok — 음성 대조. 착수 코드는 매니페스트를 아예 안 건드리므로 통과가 맞다. 고친 뒤에도 통과해야 한다 |
+| B1-a ⑶ | b1a_3_결박이_palimpsest_로_선_저장소를_pal_에서_install_하면_id_가_palimpsest_다 | FAILED — 매니페스트 없음 |
+| B1-a ⑷ | b1a_4_커밋_전이면_uninstall_이_되돌리고_커밋_뒤면_매니페스트가_남는다 | FAILED — 전제(install 이 매니페스트를 만든다)에서 진다 |
+
+## 실패 단언 발췌 (RED 때의 출력)
+
+---- b1a_1_선언이_없는_저장소를_다른_이름으로_클론하면_아직_없습니다를_안_낸다 stdout ----
+panicked at crates/pal-cli/tests/repo_identity.rs:207:5:
+다른 식별자에 걸린 결박이 있는데 「아직 없습니다」를 사실로 냈다:
+■ 이 좌표에 걸린 것 (0)
+  아직 없습니다.
+
+---- b1a_4_커밋_전이면_uninstall_이_되돌리고_커밋_뒤면_매니페스트가_남는다 stdout ----
+panicked at crates/pal-cli/tests/repo_identity.rs:281:5:
+전제 — install 이 매니페스트를 만들어야 이 대조가 무언가를 잰다
+
+---- b1_install_이_식별자를_선언하고_다른_이름의_클론이_같은_수를_낸다 stdout ----
+panicked at crates/pal-cli/tests/repo_identity.rs:130:29:
+/var/folders/…/T/pal-repoid-b1-14980/origin-name 에 매니페스트가 없다: No such file or directory (os error 2)
+
+---- b1a_3_결박이_palimpsest_로_선_저장소를_pal_에서_install_하면_id_가_palimpsest_다 stdout ----
+panicked at crates/pal-cli/tests/repo_identity.rs:130:29:
+/var/folders/…/T/pal-repoid-b1a-3-14980/pal 에 매니페스트가 없다: No such file or directory (os error 2)
+
+## 읽는 법
+
+착수 관측 `baseline/01-touch-dir-pal.txt`(`(0)`)과 같은 형태가 픽스처에서 선다 — 매니페스트가 없어
+식별자가 디렉터리 이름이고, 다른 이름의 클론에서 결박이 하나도 안 걸리는데 화면은 그것을 0 건으로 적는다.

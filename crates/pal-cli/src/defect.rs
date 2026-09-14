@@ -57,7 +57,9 @@ pub fn run(rev: &str, repo_path: &Path, budget: usize) -> Result<DefectReport> {
     let fix = git.resolve_commit(rev).with_context(|| format!("커밋을 찾지 못했다: {rev}"))?;
     let meta = git.commit(fix).context("커밋을 읽지 못했다")?;
 
-    let repo_id = pal_core::RepoId::new(ledger::repo_name(repo_path));
+    // ★ **대장과 같은 규칙으로 정한다** — 매니페스트가 선언했으면 그 값이다. 디렉터리 이름을
+    // 직접 쓰면 선언이 있는 저장소에서 이 명령만 다른 좌표를 만든다.
+    let repo_id = ledger::repo_id(repo_path)?;
     let at = Snapshot::single(repo_id.clone(), TreeRef::Committed(fix));
     let change_id = ChangeId::new(fix.to_hex());
 

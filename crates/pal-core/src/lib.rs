@@ -49,7 +49,7 @@ mod view;
 
 pub use binding::{
     Binding, BindingId, BindingReport, BindingStatus, BoundTime, CodeFreshness,
-    CanonicalSource, IntentStorePresence,
+    CanonicalSource, IntentStorePresence, OtherRepoBindings,
     DetectorReport, Lineage, NewBinding, Now, PromotedBy, PromotionSite,
     UndeterminableReason, WatchEntry,
 };

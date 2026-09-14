@@ -574,10 +574,15 @@ fn 지금_항목_수(root: &Path) -> usize {
     let m = 값(&매니페스트_자리(root));
     // 구현(`manifest::Manifest::경로들`)이 세는 **일곱 갈래를 전부** 잰다.
     // ⚠ 앞 판(이 시험의 첫 수정)은 셋만 셌고 그것도 베낀 것이었다 — 두 번 물렸다.
-    let 배열: usize = ["files", "blocks", "settings", "created_dirs"]
+    let 배열: usize = ["files", "blocks", "created_dirs"]
         .iter()
         .map(|k| m[k].as_array().map_or(0, Vec::len))
         .sum();
+    // `settings` · `declaration` 은 배열이 아니라 **하나짜리 항목**이다 — 있으면 경로 하나.
+    // ⚠ 앞 판은 `settings` 를 배열로 셌고 그래서 늘 0 이었다.
+    let 하나짜리: usize =
+        ["settings", "declaration"].iter().map(|k| usize::from(m[k].is_object())).sum();
+    let 배열 = 배열 + 하나짜리;
     let 뿌리: usize = ["dirs", "files"]
         .iter()
         .map(|k| m["roots"][k].as_array().map_or(0, Vec::len))

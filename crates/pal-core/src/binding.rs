@@ -1424,6 +1424,40 @@ pub struct IntentStorePresence {
     /// 막는다 — `None` 이 「없음」인지 「안 봤다」인지 안 갈리기 때문이고, 그 갈리지
     /// 않음이 정확히 이 타입이 고치려는 병이다.
     pub canonical: CanonicalSource,
+    /// ★ **지금 저장소 식별자와 다른 식별자에 선 결박** — 이 좌표와 대 보지도 못한 것.
+    ///
+    /// 저장소 식별자는 좌표의 해시 성분이다([`crate::SymbolId::compute`]). 매니페스트가 없으면
+    /// 식별자가 디렉터리 이름이라, 같은 커밋을 **다른 이름으로 받으면** 결박이 전부 다른 좌표를
+    /// 가리키고 조회가 빈 목록을 돌려준다. 그 빈 목록은 *"아무것도 안 걸렸다"* 가 아니라
+    /// **"대 볼 수 없었다"** 다 — [`Self::present`] 가 가르는 부재와 같은 종류의 거짓 0 이다.
+    pub other_repo: OtherRepoBindings,
+}
+
+/// 지금 식별자와 **다른 저장소 식별자에 선 결박**의 수와 그 식별자들.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct OtherRepoBindings {
+    /// 이 답이 쓴 저장소 식별자.
+    pub current: crate::RepoId,
+    /// `bound_at` 에 지금 식별자가 없는 결박 수.
+    pub bindings: usize,
+    /// 그 결박들이 선 식별자 — 정렬·중복 제거.
+    pub repos: Vec<crate::RepoId>,
+}
+
+impl OtherRepoBindings {
+    /// 결박 전부를 훑어 수를 얻는다. **결박 id 순이든 아니든 같은 값이 나온다.**
+    #[must_use]
+    pub fn count(current: crate::RepoId, all: &[Binding]) -> Self {
+        let mut repos = std::collections::BTreeSet::new();
+        let mut bindings = 0;
+        for b in all {
+            if b.bound_at.tree_of(&current).is_none() {
+                bindings += 1;
+                repos.extend(b.bound_at.entries().map(|(r, _)| r.clone()));
+            }
+        }
+        Self { current, bindings, repos: repos.into_iter().collect() }
+    }
 }
 
 /// 결박 정본이 그 자리에 있었나 — **「없다」와 「안 봤다」를 가른다.**
@@ -1451,8 +1485,13 @@ impl IntentStorePresence {
     /// **명시적으로 부른다.** 기본값을 두지 않는 것이 요점이다 — 안 채우면 이 칸이
     /// 조용히 `true` 가 되고 그것이 바로 고치려던 침묵이다.
     #[must_use]
-    pub fn of(present: bool, path: impl Into<String>, canonical: CanonicalSource) -> Self {
-        Self { present, path: path.into(), canonical }
+    pub fn of(
+        present: bool,
+        path: impl Into<String>,
+        canonical: CanonicalSource,
+        other_repo: OtherRepoBindings,
+    ) -> Self {
+        Self { present, path: path.into(), canonical, other_repo }
     }
 
     /// **빈 목록을 「0 건」으로 읽으면 안 되는 자리인가.** 파생 저장소가 없는데 정본이

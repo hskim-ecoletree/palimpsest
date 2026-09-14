@@ -633,6 +633,72 @@ pub struct ImportReport {
     pub already_present: usize,
 }
 
+/// 머리 줄에서 **판**을 읽는다. 없거나 모르는 판이면 거부한다.
+///
+/// **읽는 자리가 둘이어도 규칙은 하나다** — [`IntentStore::import_jsonl`] 과 [`bound_repos`]
+/// 가 이 함수를 함께 지난다. 따로 적으면 두 파서가 갈린다.
+fn 판(head: Option<&str>) -> Result<u32, IntentError> {
+    let head = head.ok_or_else(|| {
+        IntentError::Decode("빈 파일이다 — 머리 줄이 없으면 판을 알 수 없다".to_owned())
+    })?;
+    match serde_json::from_str::<IntentLine>(head) {
+        Ok(IntentLine::Header { schema_version })
+            if READABLE_SCHEMA_VERSIONS.contains(&schema_version) =>
+        {
+            Ok(schema_version)
+        }
+        Ok(IntentLine::Header { schema_version }) => Err(IntentError::Decode(format!(
+            "판이 다르다 — 파일 {schema_version} · 이 빌드가 읽는 것 {READABLE_SCHEMA_VERSIONS:?}"
+        ))),
+        _ => Err(IntentError::Decode(
+            "첫 줄이 머리가 아니다 — 판을 모르고 읽으면 조용히 잘못 읽는다".to_owned(),
+        )),
+    }
+}
+
+/// 머리 뒤의 한 줄. **판마다 읽는 모양이 다르다** — 새 모양으로 옛 파일을 읽으려 하면
+/// `serde` 가 *"필드가 없다"* 로 멈추고, 그 멈춤이 곧 유실이다.
+fn 한_줄(version: u32, line: &str, 줄: usize) -> Result<IntentLine, IntentError> {
+    let parsed: IntentLine = if version == 1 {
+        let v1: IntentLineV1 = serde_json::from_str(line)
+            .map_err(|e| IntentError::Decode(format!("{줄}번째 줄 (판 1): {e}")))?;
+        올린다(v1, 줄)?
+    } else {
+        serde_json::from_str(line).map_err(|e| IntentError::Decode(format!("{줄}번째 줄: {e}")))?
+    };
+    if matches!(parsed, IntentLine::Header { .. }) {
+        return Err(IntentError::Decode(format!("{줄}번째 줄에 머리가 또 있다")));
+    }
+    Ok(parsed)
+}
+
+/// 정본 JSONL 의 결박이 **어느 저장소 식별자에 섰는가** — 식별자마다 결박 수. 쓰지 않고 읽기만 한다.
+///
+/// `pal install` 이 매니페스트의 `[[repo]] id` 를 정하는 재료다. 식별자는 좌표의 해시 성분이라
+/// ([`pal_core::SymbolId::compute`]) 결박이 선 식별자와 다른 값을 선언하면 그 결박이 하나도 안
+/// 걸린다. 그래서 디렉터리 이름이 아니라 **결박의 `bound_at` 이 딛고 선 저장소**의 수를 얻는다.
+///
+/// ⚠ **별칭(`Alias` 줄)은 따라가지 않는다.** 결박의 좌표는 별칭이 아니라 결박 시점의 식별자로
+/// 계산됐고, 선언이 맞춰야 하는 것도 그 값이다.
+///
+/// # Errors
+/// 머리가 없거나 판이 다르거나 줄을 풀지 못하면.
+pub fn bound_repos(
+    text: &str,
+) -> Result<std::collections::BTreeMap<pal_core::RepoId, usize>, IntentError> {
+    let mut lines = text.lines().filter(|l| !l.trim().is_empty());
+    let version = 판(lines.next())?;
+    let mut out = std::collections::BTreeMap::new();
+    for (n, line) in lines.enumerate() {
+        if let IntentLine::Binding(b) = 한_줄(version, line, n + 2)? {
+            for (repo, _) in b.bound_at.entries() {
+                *out.entry(repo.clone()).or_insert(0) += 1;
+            }
+        }
+    }
+    Ok(out)
+}
+
 impl IntentStore {
     /// 전부를 JSONL 로. **결박 id 순 → 별칭 옛 이름 순** — 같은 저장소가 같은 파일을 산출한다.
     ///
@@ -669,44 +735,13 @@ impl IntentStore {
     /// 머리가 없거나 판이 다르거나, 줄을 풀지 못하거나, 쓰기가 실패하면.
     pub fn import_jsonl(&self, text: &str) -> Result<ImportReport, IntentError> {
         let mut lines = text.lines().filter(|l| !l.trim().is_empty());
-        let head = lines.next().ok_or_else(|| {
-            IntentError::Decode("빈 파일이다 — 머리 줄이 없으면 판을 알 수 없다".to_owned())
-        })?;
-        let version = match serde_json::from_str::<IntentLine>(head) {
-            Ok(IntentLine::Header { schema_version })
-                if READABLE_SCHEMA_VERSIONS.contains(&schema_version) =>
-            {
-                schema_version
-            }
-            Ok(IntentLine::Header { schema_version }) => {
-                return Err(IntentError::Decode(format!(
-                    "판이 다르다 — 파일 {schema_version} · 이 빌드가 읽는 것 {READABLE_SCHEMA_VERSIONS:?}"
-                )));
-            }
-            _ => {
-                return Err(IntentError::Decode(
-                    "첫 줄이 머리가 아니다 — 판을 모르고 읽으면 조용히 잘못 읽는다".to_owned(),
-                ));
-            }
-        };
+        let version = 판(lines.next())?;
 
         let mut report = ImportReport { schema_version: version, ..ImportReport::default() };
         for (n, line) in lines.enumerate() {
-            let 줄 = n + 2;
-            // **판마다 읽는 모양이 다르다.** 새 모양으로 옛 파일을 읽으려 하면
-            // `serde` 가 *"필드가 없다"* 로 멈추고, 그 멈춤이 곧 유실이다.
-            let parsed: IntentLine = if version == 1 {
-                let v1: IntentLineV1 = serde_json::from_str(line)
-                    .map_err(|e| IntentError::Decode(format!("{줄}번째 줄 (판 1): {e}")))?;
-                올린다(v1, 줄)?
-            } else {
-                serde_json::from_str(line)
-                    .map_err(|e| IntentError::Decode(format!("{줄}번째 줄: {e}")))?
-            };
-            match parsed {
-                IntentLine::Header { .. } => {
-                    return Err(IntentError::Decode(format!("{줄}번째 줄에 머리가 또 있다")));
-                }
+            match 한_줄(version, line, n + 2)? {
+                // 둘째 머리는 [`한_줄`] 이 이미 거부했다.
+                IntentLine::Header { .. } => unreachable!("한_줄 이 머리를 거부한다"),
                 IntentLine::Binding(b) => {
                     if self.get(&b.id)?.is_some() {
                         report.already_present += 1;
