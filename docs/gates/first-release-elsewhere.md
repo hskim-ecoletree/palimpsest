@@ -75,7 +75,7 @@
 | `D1` · `D1-a` | 시험 `user_vocabulary::d1_장면_명령의_사람_화면에_작업_기록_어휘가_없다` · `d1a_*` 셋 · RED `oracle/D1-red.txt` |
 | `D2` | 시험 `cross_file_references` 두 문자열 단언 · 한 커밋 `oracle/D2-commit.txt`(`9db40b7`) |
 | `E1` | `oracle/E1-order.txt` — 여섯 산출 진조상 순서 · 앵커 · `--self-test` 음성 대조 셋 |
-| `E2` | `oracle/E2-scene.txt` — ⑴ ⑵ ⑶ ⑷ 전부 선다. ⑵ 는 **⟨개정 p2⟩ 뒤** 증인 심볼 규칙(`oracle/callers_rule.py` · `oracle/callers-rule-table.txt`)으로 증인 `05 codexHostAdapter` 가 선다 · 음성 대조 `oracle/E2-negative-count.txt`(수를 바꿔 넣으면 증인 0). 옛 문면대로는 반증이었다 — `oracle/E2-literal-touch.txt` |
+| `E2` | `oracle/E2-scene.txt` — ⑴ ⑵ ⑶ ⑷ 전부 성립한다. ⑵ 는 **⟨개정 p2⟩ 뒤** 증인 심볼 규칙(`oracle/callers_rule.py` · `oracle/callers-rule-table.txt`)으로 증인 `05 codexHostAdapter` 가 성립한다 · 음성 대조 `oracle/E2-negative-count.txt`(수를 바꿔 넣으면 증인 0). 옛 문면대로는 반증이었다 — `oracle/E2-literal-touch.txt` |
 | `E3` | **대조 불가** — 판 `e3-effect`(`dialectic/r2-raw.md`) 상한 뒤 소유자 결정(`intent.md ## 승격` 4~6) |
 | `E4` | `oracle/E4-breakage.txt` — **⟨개정 p2⟩ 뒤** 같은 읽기 규칙으로 뽑은 C · A 워크트리(`898a479` · 변경 0)에서 선언 안 0. 음성 대조 셋: C 를 비우면 선언 안 1(`oracle/E4-negative-c-empty.txt`) · 수를 바꾸거나 목록 줄을 지우면 대조 불가(`oracle/E4-negative-count.txt` · `oracle/E4-negative-drop-line.txt`). 옛 문면대로는 반증이었다 — `oracle/E4-literal-touch-c.txt` |
 | `F1` | `oracle/F1-comment.txt` — `#135` 코멘트가 최종 바이너리의 `A5` 수(`7199/11099` · `oracle/A5-touch-final.txt`)와 게이트 경로를 싣는다. 첫 판은 NUL 규칙 전 바이너리의 `7116/11010` 과 착수 칸의 재현율 59 를 섞어 적어 독립 리뷰 R1 뒤 편집했다 |
