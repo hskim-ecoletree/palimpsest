@@ -76,8 +76,24 @@ pal narrative --approve <개체> --pick <짧은 해시>   # touch 화면이 싣�
 pal touch <심볼 이름>                                # ■ 이 좌표에 걸린 것 (1)
 ```
 
-결박은 `.palimpsest/intent/bindings.jsonl` 에 덧붙여집니다. 팀과 나누려면 커밋하고, 받은 쪽은
-`pal intent import .palimpsest/intent/bindings.jsonl` 로 들입니다.
+## 5. 팀과 나누기
+
+승인한 결박은 `.palimpsest/intent.redb` 에 쌓입니다. 이 파일은 무시 목록에 들어 있어 커밋되지 않으므로,
+팀과 나누려면 JSONL 로 내보내 저장소 식별자 선언과 함께 커밋합니다:
+
+```bash
+mkdir -p .palimpsest/intent
+pal intent export --out .palimpsest/intent/bindings.jsonl
+git add .palimpsest/manifest.toml .palimpsest/intent/bindings.jsonl
+git commit -m "palimpsest 선언과 결박"
+```
+
+받은 쪽은 들인 뒤 부릅니다 — 다른 디렉터리 이름으로 클론해도 같은 결박을 받습니다:
+
+```bash
+pal intent import .palimpsest/intent/bindings.jsonl
+pal touch <심볼 이름>
+```
 
 ## 라이선스
 

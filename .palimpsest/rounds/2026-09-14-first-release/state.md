@@ -37,6 +37,8 @@
 ## 실패한 접근
 
 - `doctor --full` 을 `timeout` 으로 감싸 돌렸다 — macOS 에 `timeout` 이 없어 rc 127. 감싸지 않고 돌린다.
+- **병합 검증을 `cargo xtask test`·`check` 로만 했다** — CI 의 `pal doctor full 구조 판정`(`cargo run -q -p pal-cli -- doctor --full --json | node scripts/check-round-doctor.mjs`)은 그 둘에 없다. ㈏ 가 `[node.Symbol]` 에 필수 `decor` 를 더하고 `doctor` 뷰가 안 실어 CI 런 `34854953489`(`2de539e`)의 ubuntu·macos 가 빨갰다. 고침 `06f6b96`. **push 전에 이 걸음을 `palimpsest` 이름 클론에서 함께 돌린다.**
+- **공유 걸음을 결박 내보내기 없이 쟀다** — 승인은 `intent.redb`(무시되는 파생물)에만 쓰고 `bindings.jsonl` 을 안 만든다. 그래서 팀원 클론이 착수·새 바이너리 둘 다 `(0)` 이었고 음성 대조가 무효였다. 걸음에 `pal intent export --out .palimpsest/intent/bindings.jsonl` 을 넣었다. README 의 「결박은 `bindings.jsonl` 에 덧붙여집니다」는 사실이 아니었다 — 고친다.
 
 ## 구현 입력
 
