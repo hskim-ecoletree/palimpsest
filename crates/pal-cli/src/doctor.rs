@@ -234,8 +234,10 @@ fn build_view(
 
     // ── 심볼 — **이 빌드에서 값이 실제로 서는 유일한 노드다** ────────────────
     //
-    // 속성 여섯은 `schema/graph.toml` 의 `[node.Symbol]` 그대로이고 전부
-    // `extractor` 다. 인스턴스가 그것을 실제로 싣고 있는지가 불변식 ②③ 이다.
+    // 속성은 `schema/graph.toml` 의 `[node.Symbol]` 그대로이고 전부 `extractor` 다.
+    // 인스턴스가 그것을 실제로 싣고 있는지가 불변식 ②③ 이다. ⚠ **수를 여기 안 적는다** —
+    // 앞 판이 「여섯」이라 적은 채 칸이 일곱이 됐고, 여덟째(`decor`)를 스키마에만 더하자
+    // CI 의 `doctor --full` 이 심볼 전부(3,586)를 필수 속성 누락으로 헤아렸다.
     let mut nodes: Vec<NodeInstance> = symbols
         .iter()
         .map(|s| {
@@ -252,6 +254,8 @@ fn build_view(
             .with_attr("name", Producer::Extractor)
             .with_attr("kind", Producer::Extractor)
             .with_attr("body", Producer::Extractor)
+            // 속성·수신자 축(#77) — 본문 요약과 다른 축이다.
+            .with_attr("decor", Producer::Extractor)
             .with_attr("span", Producer::Extractor)
             .with_attr("identity", Producer::Extractor)
         })
