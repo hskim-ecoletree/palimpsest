@@ -1,0 +1,17 @@
+# E1 음성 대조 — `E1-order.sh --self-test`
+
+- 2026-09-14T00:45:57Z · HEAD `5b4a37f`
+
+```
+## 음성 대조 ① 두 산출이 한 커밋
+  ✓ 462cbaf43e1b7ea089ac8f8d2a72420b5f19660e → 5b4a37f08e8b0bed3d4d5127fedb37edac276dd6
+  ✗ 5b4a37f08e8b0bed3d4d5127fedb37edac276dd6 = 5b4a37f08e8b0bed3d4d5127fedb37edac276dd6 — 한 커밋에 들었다
+  → 걸렸다
+## 음성 대조 ② porcelain 이 비지 않음
+  ✗ touch 때 src·tests·scripts 변경이 1 줄이다
+  → 걸렸다
+## 음성 대조 ③ 부모가 다름
+  ✗ 변경 A 의 부모 bbb ≠ touch 때 HEAD aaa
+  → 걸렸다
+rc=0
+```

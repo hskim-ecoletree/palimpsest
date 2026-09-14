@@ -337,6 +337,20 @@ mod tests {
         문자열_안_널("  return a + '\u{0}' + b;\n");
     }
 
+    /// **1급 확장자를 단 비소스 파일** — NUL 규칙이 확장자를 믿으므로 `binary` 로 안 적힌다.
+    /// 대신 문법이 못 읽어 **거짓 심볼 없이** 추출기 밖으로 떨어진다. 그 사실을 박는다 —
+    /// 갈래가 `parsed`·`partial` 로 바뀌면 이진 조각이 심볼로 들어온다.
+    #[test]
+    fn 확장자만_ts_인_이진_파일은_심볼_없이_추출기_밖이다() {
+        let 이진: &[u8] = b"G@\x00\x10\x00\xb0\x0d\x00\x01\xc1\x00\x00\xe1\x00\xf0\x00\x1b\xe1\x00\xf0\x00\xff\xff\xff\xff";
+        let state = 분류("src/stream.ts", 이진);
+        assert!(!matches!(state, FileState::Binary { .. }), "확장자가 1급인데 binary 로 적혔다 — NUL 규칙이 바뀌었다");
+        assert!(
+            matches!(state, FileState::Unsupported { .. }),
+            "이진 조각이 추출기 안으로 들어왔다: {state:?}"
+        );
+    }
+
     #[test]
     fn 크기_상한은_규칙_아이디와_함께_기록된다() {
         // **조용히 사라지지 않는다** — 나중에 "범위가 줄어서 사라진 것"과 구별되어야 한다.

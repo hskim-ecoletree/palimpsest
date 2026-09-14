@@ -51,11 +51,20 @@ fn 걸린_것(화면: &str, 사용자_내용: &[String]) -> Vec<(String, String,
     let mut 내용: Vec<&String> = 사용자_내용.iter().filter(|s| !s.is_empty()).collect();
     // 긴 것부터 — 짧은 것이 긴 것의 조각을 먼저 지우면 긴 것이 안 지워진다.
     내용.sort_by_key(|s| std::cmp::Reverse(s.len()));
-    for s in 내용 {
+    for s in &내용 {
         남은 = 남은.replace(s.as_str(), " ");
     }
+    // ★ **여러 줄 값은 줄째로 맞춘다.** 화면은 본문을 들여쓰기로 줄마다 찍어서 통째 치환이
+    //   안 맞는다. 조각을 부분 문자열로 지우면 짧은 본문 줄(`A5` 따위)이 `pal` 문구까지
+    //   지워 거짓 초록이 되므로, **들여쓰기를 뺀 화면 줄 전체가 본문 한 줄과 같을 때만** 뺀다.
+    let 본문_줄: std::collections::HashSet<&str> = 내용
+        .iter()
+        .filter(|s| s.contains('\n'))
+        .flat_map(|s| s.lines().map(str::trim))
+        .filter(|l| !l.is_empty())
+        .collect();
     let mut out = Vec::new();
-    for 줄 in 남은.lines() {
+    for 줄 in 남은.lines().filter(|l| !본문_줄.contains(l.trim())) {
         for (이름, 식) in 금지_패턴 {
             let re = Regex::new(식).expect("등록한 패턴이 regex 문법이 아니다");
             for m in re.find_iter(줄) {
@@ -259,4 +268,18 @@ fn d1_scan_주어진_출력_파일을_같은_함수로_잰다() {
     }
     println!("걸린 자리 {}", 전부.len());
     assert!(전부.is_empty(), "작업 기록 어휘가 {}곳 남았다:\n{}", 전부.len(), 전부.join("\n"));
+}
+
+/// **여러 줄 본문은 줄마다 지워진다.** 화면은 조각 본문을 들여쓰기로 줄마다 찍는데 `--json`
+/// 은 한 문자열로 싣는다 — 통째 치환은 안 맞아서 남의 결정 문서의 `ADR-0003` · `(#7)` · `§3`
+/// 이 `pal` 문구로 잡혔다. 음성 대조: 같은 화면에 `pal` 이 쓴 줄로 심은 패턴은 여전히 걸린다.
+#[test]
+fn d1a_여러_줄_본문은_줄마다_지워지고_pal_문구는_여전히_걸린다() {
+    let json = serde_json::json!({ "body": "첫 줄\nADR-0003 을 따른다 (#7)\n§3 현재상태표" });
+    let 화면 = "■ 이 좌표에 걸린 것 (1)\n      첫 줄\n      ADR-0003 을 따른다 (#7)\n      §3 현재상태표\n";
+    let 걸림 = 걸린_것(화면, &사용자_내용(&json));
+    assert!(걸림.is_empty(), "사용자 본문 줄이 pal 문구로 잡혔다: {걸림:?}");
+    let 심은 = format!("{화면}  ※ ADR-0023 을 보십시오\n");
+    let 걸림 = 걸린_것(&심은, &사용자_내용(&json));
+    assert_eq!(걸림.len(), 1, "pal 이 쓴 줄의 패턴을 못 잡는다: {걸림:?}");
 }

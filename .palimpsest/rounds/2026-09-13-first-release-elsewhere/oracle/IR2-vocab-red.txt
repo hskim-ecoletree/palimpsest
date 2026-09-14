@@ -1,0 +1,3 @@
+thread 'd1a_여러_줄_본문은_줄마다_지워지고_pal_문구는_여전히_걸린다' (54783587) panicked at crates/pal-cli/tests/user_vocabulary.rs:272:5:
+사용자 본문 줄이 pal 문구로 잡혔다: [("이슈 번호", "(#7", "ADR-0003 을 따른다 (#7)"), ("ADR", "ADR-0003", "ADR-0003 을 따른다 (#7)"), ("문서 절", "§", "§3 현재상태표")]
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.01s
