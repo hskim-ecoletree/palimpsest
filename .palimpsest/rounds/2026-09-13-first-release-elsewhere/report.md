@@ -27,7 +27,7 @@
 | 사전부검 | 2 | 2 |
 | 완수 조건 설계 평가 | 2 | 2 |
 | 정반합 | 판마다 2 | 판 셋(`p1-binary-nul` · `e3-effect` · `p2-caller-sites`) 모두 2 — 셋 다 상한에서 소유자에게 올랐다 |
-| 독립 리뷰 | 4 | R1 · R2 |
+| 독립 리뷰 | 4 | R1 · R2 · R3 · R4 — 상한을 다 썼다 |
 
 **해악 게이트** — 계기판 ⑨ **닫을 수 있다**: 원장의 열린 발견 0 · 금지역 0 · 실패 0. 독립 리뷰 R1 의 금지역(`IR1-13` F4 를 보고 전에 통과로 적었다)과 실패(`IR1-14` 게이트가 없는 보고로 링크)는 이 보고가 닫는다. R2 의 금지역(`IR2-06` 위 `G5` 줄의 거짓 원인)도 이 보고의 정정이 닫는다.
 
@@ -61,11 +61,11 @@
 
 **첫 수정 `1bcdc93` 은 불완전했다.** HEAD 원장 계산만 의도 저장소 앞으로 옮겼는데 `ledger::compute` 는 `--at` 을 줘도 워킹트리를 읽고(`crates/pal-cli/src/ledger.rs:92`), `pal radius` 는 base 커밋 원장을 한 번 더 계산한다. 두 번째 push(`4398134`)의 CI 가 그 자리에서 `index.redb` 잠금으로 또 빨갰다(`oracle/F2-ci-4398134.txt` · `MS3-02`). macOS 에는 이 잠금이 없어 로컬에서는 빨강도 초록도 원리상 못 본다 — 그것을 알면서 CI 로 재기 전에 main 에 올렸다.
 
-`3f69ccd` 가 원장 둘을 `.redb` 를 하나도 안 연 채로 계산하게 고쳤다. 소유자 답(`## 승격` 11) *「브랜치 PR 로 Windows CI 먼저」* 로 [#157](https://github.com/hskim-ecoletree/palimpsest/pull/157) 의 `windows-latest` 에서 먼저 재고, 초록이면 main 에 올린 마지막 push 의 SHA 가 `F2` 를 판정한다. 그 판정을 두 원장에 옮기는 커밋과 그 뒤의 회차 기록 커밋(독립 리뷰 R3 · R4 처분)은 **로컬에 있고 push 하지 않았다** — 그래서 규약 §11 ⑥ 「push 됐고 CI 초록」은 코드가 든 마지막 push `067c7c4` 까지 서고, 그 뒤 로컬 커밋은 문서·회차 기록뿐이다(`cargo xtask check` 29/29).
+`3f69ccd` 가 원장 둘을 `.redb` 를 하나도 안 연 채로 계산하게 고쳤다. 소유자 답(`## 승격` 11) *「브랜치 PR 로 Windows CI 먼저」* 로 [#157](https://github.com/hskim-ecoletree/palimpsest/pull/157) 의 `windows-latest` 에서 먼저 재고, 초록이면 main 에 올린 마지막 push 의 SHA 가 `F2` 를 판정한다. 그 판정을 두 원장에 옮긴 커밋과 그 뒤의 회차 기록 커밋(독립 리뷰 R3 · R4 처분)은 처음에 로컬에 두었다 — 소유자 답 10 은 전사 커밋만 물었는데 기록 커밋까지 넓혀 읽었고, 원격 main 의 게이트가 `F2` 미측정으로 남았다(독립 리뷰 R4). 소유자 답 13 *「전부 push 하고 CI 확인」* 으로 마지막 push 에 함께 올렸다. 그 SHA 의 런은 원장에 다시 옮기지 않는다 — 옮기면 또 새 커밋이 된다.
 
 ### 앞 회차 `G5` · `Actions`
 
-`G5` 는 앞 회차의 CI 확인 갈래다. 앞 회차의 착수 커밋 `6ee9eb3` 에 붙은 CI 런이 **0** 이다(`oracle/F4-g5.txt` · `total_count 0`). 저장소 `Actions` 는 `enabled: true · allowed_actions: all` 이고, `6ee9eb3` 은 main 에 **push 됐다**(PushEvent `2026-09-13T09:12:03Z`) · 워크플로는 `on: push: branches: [main]` 에 경로 필터가 없다. **push 는 됐는데 런이 0 이다 — 원인은 기록으로 못 댔다**(사용량 API 는 `user` 스코프가 없어 못 봤다). 소유자가 볼 자리는 계정의 **Billing · Actions 사용량**과 저장소의 Actions 탭이다. ⚠ 이 줄의 첫 판은 「push 로 올라간 적이 없어서다」라고 거짓 원인을 적었다(독립 리뷰 R2).
+`G5` 는 앞 회차의 CI 확인 갈래다. 앞 회차의 마지막 커밋이자 이 회차의 착수 커밋 `6ee9eb3` 에 붙은 CI 런이 **0** 이다(`oracle/F4-g5.txt` · `total_count 0`). 저장소 `Actions` 는 `enabled: true · allowed_actions: all` 이고, `6ee9eb3` 은 main 에 **push 됐다**(PushEvent `2026-09-13T09:12:03Z`) · 워크플로는 `on: push: branches: [main]` 에 경로 필터가 없다. **push 는 됐는데 런이 0 이다 — 원인은 기록으로 못 댔다**(사용량 API 는 `user` 스코프가 없어 못 봤다). 소유자가 볼 자리는 계정의 **Billing · Actions 사용량**과 저장소의 Actions 탭이다. ⚠ 이 줄의 첫 판은 「push 로 올라간 적이 없어서다」라고 거짓 원인을 적었다(독립 리뷰 R2).
 
 ---
 
@@ -118,3 +118,4 @@
 |---|---|
 | **`pal touch` 가 호출자 자리를 싣지 않는다** | 「여기를 바꾸면 무엇이 깨지나」의 자리를 사용자는 화면이 안내하지 않은 `symbol.callers` 로만 얻었다(`effect/04-readnote.md`) ⟨`#156`⟩ |
 | **멤버 호출 `x.foo()` 의 호출자 0** | 메서드 다섯이 호출자 0 을 찍었고 `tsc` 가 그 자리를 댔다. 화면은 「안 셉니다」로 스스로 밝힌다 |
+| **결박이 디렉터리 이름에 묶인다** | 매니페스트에 저장소 식별자가 없으면 `pal` 이 디렉터리 이름을 식별자로 쓴다(`crates/pal-cli/src/ledger.rs:125`). 같은 커밋 · 같은 결박 원장을 다른 이름으로 클론하면 `touch` 가 「걸린 것 (0) 아직 없습니다」를 찍는다 — 독립 리뷰 R4 가 `pal` · `palimpsest` 두 클론으로 재현했다. `pal install` 도 식별자를 안 적는다 ⟨[#159](https://github.com/hskim-ecoletree/palimpsest/issues/159) · `intent.md ## 승격` 14⟩ |

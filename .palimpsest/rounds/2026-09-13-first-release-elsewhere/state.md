@@ -17,12 +17,12 @@
 | 판정 | 통과 27 · 반증 1(G2) · 대조불가 1(E3) · 미측정 0 — 정본은 게이트 `## 판정` |
 | `F1` | **닫혔다** — `#135` 코멘트를 `7199/11099` 로 편집 |
 | `A6` | **닫혔다** — `cargo xtask test` 1124 통과 · Rust 파일 간 엣지 1319 = 1319(HEAD `5b4a37f`) |
-| `report.md` | **섰다** — `96bfcb7` 뒤 R2 정정 반영 |
-| 독립 리뷰 | **R1 · R2 처분** — 상한 4. R1 정정 10 · 기각 19 / R2 는 원장 `IR2-*` |
+| `report.md` | **섰다** — `96bfcb7` 뒤 R2 · R3 · R4 정정 반영 |
+| 독립 리뷰 | **R1 · R2 · R3 · R4 처분** — 상한 4 를 다 썼다. R1 정정 10 · 기각 19 / R2 정정 10 · 기각 14 / R3 정정 6 · 기각 21 / R4 는 원장 `IR4-*` |
 | push | `701acb5` · `4398134` 둘 다 CI `windows-latest` 빨강(`oracle/F2-ci-701acb5.txt` · `oracle/F2-ci-4398134.txt`). 첫 수정 `1bcdc93` 은 HEAD 원장만 옮겨 불완전했다(`MS3-02`) · `3f69ccd` 가 원장 둘을 `.redb` 없이 계산 · 소유자 답 `## 승격` 9 · 10 · 11 |
 | PR | [#157](https://github.com/hskim-ecoletree/palimpsest/pull/157) **병합됨**(`067c7c4` push 로 main 이 head `51de0e8` 을 품어 2026-09-14T03:36:40Z 자동 병합) · 브랜치 `fix/radius-windows-lock` 은 원격에 남아 있다 · CI 런 `34802282312` success |
-| `F2` | **닫혔다** — PR #157 CI 초록(`oracle/F2-pr157-51de0e8.txt`) 뒤 main 세 번째 push `067c7c4` · 런 `34803197814` success(`oracle/F2-ci-067c7c4.txt`). 이 전사 커밋은 소유자 답 10 대로 push 하지 않았다 |
-| 남은 것 | 없음 |
+| `F2` | **닫혔다** — PR #157 CI 초록(`oracle/F2-pr157-51de0e8.txt`) 뒤 main 세 번째 push `067c7c4` · 런 `34803197814` success(`oracle/F2-ci-067c7c4.txt`). 전사 커밋은 처음에 로컬에 두었다가 소유자 답 13 으로 마지막 push 에 올린다 |
+| 남은 것 | 독립 리뷰 R4 처분 커밋 · 로컬 커밋 전부 push(소유자 답 13) · 그 마지막 SHA 의 CI success 조회 |
 
 ## 착수 바이너리
 

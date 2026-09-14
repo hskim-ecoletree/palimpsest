@@ -78,7 +78,7 @@
 | `E3` | **대조 불가** — 판 `e3-effect`(`dialectic/r2-raw.md`) 상한 뒤 소유자 결정(`intent.md ## 승격` 4~6) |
 | `E4` | `oracle/E4-breakage.txt` — **⟨개정 p2⟩ 뒤** 같은 읽기 규칙으로 뽑은 C · A 워크트리(`898a479` · 변경 0)에서 선언 안 0. 음성 대조 셋: C 를 비우면 선언 안 1(`oracle/E4-negative-c-empty.txt`) · 수를 바꾸거나 목록 줄을 지우면 대조 불가(`oracle/E4-negative-count.txt` · `oracle/E4-negative-drop-line.txt`). 옛 문면대로는 반증이었다 — `oracle/E4-literal-touch-c.txt` |
 | `F1` | `oracle/F1-comment.txt` — `#135` 코멘트가 `A5` 수(`7199/11099` · `oracle/A5-touch-final.txt` — `pal 0.0.0+5b4a37f08e8b` · 새 복제본)와 게이트 경로를 싣는다. 첫 판은 NUL 규칙 전 바이너리의 `7116/11010` 과 착수 칸의 재현율 59 를 섞어 적어 독립 리뷰 R1 뒤 편집했다 |
-| `F2` | `oracle/F2-ci-067c7c4.txt` — main 에 올린 마지막 push 의 SHA `067c7c4` · 런 `34803197814` `success`. 앞의 두 push `701acb5` · `4398134` 는 `windows-latest` 빨강(`oracle/F2-ci-701acb5.txt` · `oracle/F2-ci-4398134.txt`) · 고친 커밋은 PR #157 에서 먼저 쟀다 · 소유자 답 `intent.md ## 승격` 9 · 10 · 11. 이 전사 커밋은 push 하지 않았다 |
+| `F2` | `oracle/F2-ci-067c7c4.txt` — main 에 올린 마지막 push 의 SHA `067c7c4` · 런 `34803197814` `success`. 앞의 두 push `701acb5` · `4398134` 는 `windows-latest` 빨강(`oracle/F2-ci-701acb5.txt` · `oracle/F2-ci-4398134.txt`) · 고친 커밋은 PR #157 에서 먼저 쟀다 · 소유자 답 `intent.md ## 승격` 9 · 10 · 11. 전사 커밋과 그 뒤의 회차 기록 커밋은 소유자 답 `## 승격` 13 으로 마지막 push 에 함께 올렸다 — 그 SHA 의 런은 이 표에 옮기지 않고(옮기면 또 새 커밋이다) 조회로 본다 |
 | `F4` | `oracle/F4-g5.txt` — `total_count 0` → 종료 보고에 `G5` · `Actions` 줄 |
 | `G1` | `oracle/G1-coupling.txt` — `6ee9eb3..264d967` 더한 줄 0 · 음성 대조 1(첫 측정 `oracle/G1-first-red.txt` 는 4) |
 | `G2` | **반증** — `oracle/G2-violation.txt`. `scripts/f06-verify.py` 가 원본 ditto 에 캐시 자리를 안 주고 `pal` 을 붙여, `EXTRACTOR_REV` 승급 뒤 재실행에서 원본 `.palimpsest/cache` 에 항목 2,451 개가 더해졌다. 소유자 결정으로 더해진 파일만 지웠고(`oracle/G2-deleted-cache-files.txt`) 디렉터리 시각은 되돌리지 않았다 — 목록 해시가 착수(`oracle/G2-ditto-origin-before.txt`)와 뒤(`oracle/G2-ditto-origin-after.txt`)에서 다르다. HEAD · porcelain · `node_modules` 는 같다 |
@@ -89,7 +89,7 @@
 
 ### 개정 넷 — 무엇을 왜 바꿨나
 
-`intent.md ## 개정` 이 진다. 줄은 넷이다 — `p1` **확대** · `p2` **정정** · `F2` 를 판정하는 SHA 의 **정정**(소유자 답 `## 승격` 10 이 따라 정한 읽기) · §11 ③ (가)→(나) **전환**([#158](https://github.com/hskim-ecoletree/palimpsest/issues/158) · `## 승격` 12). 뒤의 둘은 독립 리뷰 R3 이 개정 줄 없음을 잡아 적었다. `A5` ⑷ 는 **글자를 안 바꾸고 제품을 고쳤다**(`p1`). `E2` ⑵ · `E4` 는 호출자 집합을 「`touch` 가 **센** 호출자」로 **정정**했다 — ⚠ 그 읽기 규칙은 두 결과(질의 출력으로 잰 통과 · 문면대로 잰 반증)를 **다 본 뒤** 썼다. 사전 등록이 아니다.
+`intent.md ## 개정` 이 진다. 줄은 넷이다 — `p1` **확대** · `p2` **정정** · `F2` 를 판정하는 SHA 의 **축소**(소유자 답 `## 승격` 10 이 받았다 — 원리상의 제약이 아니었다) · §11 ③ (가)→(나) **전환**([#158](https://github.com/hskim-ecoletree/palimpsest/issues/158) · `## 승격` 12). 뒤의 둘은 독립 리뷰 R3 이 개정 줄 없음을 잡아 적었고, 축소의 까닭은 R4 가 바로잡았다. `A5` ⑷ 는 **글자를 안 바꾸고 제품을 고쳤다**(`p1`). `E2` ⑵ · `E4` 는 호출자 집합을 「`touch` 가 **센** 호출자」로 **정정**했다 — ⚠ 그 읽기 규칙은 두 결과(질의 출력으로 잰 통과 · 문면대로 잰 반증)를 **다 본 뒤** 썼다. 사전 등록이 아니다.
 
 ## 효과
 
