@@ -1,0 +1,386 @@
+# T2 RED — 갈래 T2(안쪽) 시험을 기준 커밋 2fe292e 의 제품 코드 위에서 돌린 산출
+# 시험 파일 둘만 더했다: crates/pal-cli/tests/clean_uninstall_palimpsest.rs · clean_uninstall_blocks.rs
+# 2026-09-16 · macOS (Darwin arm64)
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_palimpsest --test clean_uninstall_blocks -- --test-threads=4
+#
+# 조건별 판독
+#   B1  빨강 — uninstall 뒤 .palimpsest/{cache,index.redb,intent.redb,narrative-pending.json} 가 남는다(R2)
+#   B2  빨강 — 설치 전부터 있던 파생물 .palimpsest/index.redb 가 남는다
+#   B3  빨강(둘) — 「정확히 두 경로」가 아니다(파생물이 남고 .palimpsest/.gitignore 가 없다)
+#   B4  빨강(넷) — `--purge` 플래그가 없다(rc=2)
+#   B5  빨강(둘) — ① 사용 중 `?? .palimpsest/narrative-pending.json` · `?? radius-base-*.redb`(R2)
+#                  ② update 가 .gitignore 블록을 새 목록으로 갈아 끼우지 않는다
+#   B6  초록 — 착수 동작을 잠그는 조건이다(RED 가 정의되지 않았다)
+#   B7  초록(둘) — 착수 동작도 정본을 남긴다(잠그는 조건 · 음성 대조가 하중을 진다)
+#   C1  빨강(둘) — 검사 「pal 블록이 넣은 그대로인가」가 없다
+#   C2  빨강(둘) — `--force` 플래그가 없다(rc=2)
+#
+# ⚠ 한 번 앞서 돌렸을 때 시험 fixture 의 `pal intent export --out` 이 부모 디렉터리가 없어 실패했다 —
+#   fixture 를 고친 뒤(디렉터리를 먼저 만든다) 다시 돌린 산출이 아래다. 제품 코드는 그 사이 안 바뀌었다.
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.49s
+     Running tests/clean_uninstall_blocks.rs (target/debug/deps/clean_uninstall_blocks-4567d661f8749582)
+
+running 13 tests
+test c2_닫는_마커가_없거나_여는_마커가_둘이면_force_도_거부하고_한_바이트도_안_쓴다 ... FAILED
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test c2_force_는_짝이_맞는_마커_사이를_걷고_지운_줄을_출력한다 ... FAILED
+test c1_안_고친_방과_줄바꿈만_바뀐_방은_doctor_의_모든_검사가_ok_다 ... FAILED
+test c1_손으로_고친_블록은_doctor_가_빨갛고_update_가_그_파일을_말한다 ... FAILED
+
+failures:
+
+---- c2_닫는_마커가_없거나_여는_마커가_둘이면_force_도_거부하고_한_바이트도_안_쓴다 stdout ----
+
+thread 'c2_닫는_마커가_없거나_여는_마커가_둘이면_force_도_거부하고_한_바이트도_안_쓴다' (64595138) panicked at crates/pal-cli/tests/clean_uninstall_blocks.rs:182:5:
+assertion `left == right` failed: 닫는 마커가 없는데 --force 가 rc=1 이 아니다:
+error: unexpected argument '--force' found
+
+Usage: pal uninstall [OPTIONS]
+
+For more information, try '--help'.
+
+  left: Some(2)
+ right: Some(1)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- c2_force_는_짝이_맞는_마커_사이를_걷고_지운_줄을_출력한다 stdout ----
+
+thread 'c2_force_는_짝이_맞는_마커_사이를_걷고_지운_줄을_출력한다' (64595137) panicked at crates/pal-cli/tests/clean_uninstall_blocks.rs:67:9:
+pal ["uninstall", "--force"] rc=Some(2)
+stdout: 
+stderr: error: unexpected argument '--force' found
+
+Usage: pal uninstall [OPTIONS]
+
+For more information, try '--help'.
+
+
+---- c1_안_고친_방과_줄바꿈만_바뀐_방은_doctor_의_모든_검사가_ok_다 stdout ----
+
+thread 'c1_안_고친_방과_줄바꿈만_바뀐_방은_doctor_의_모든_검사가_ok_다' (64595136) panicked at crates/pal-cli/tests/clean_uninstall_blocks.rs:135:5:
+검사 「pal 블록이 넣은 그대로인가」이 없다: [
+    Object {
+        "detail": String(".claude/settings.json 를 읽었다"),
+        "name": String("설정 파일이 유효한 JSON 인가"),
+        "number": Number(1),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("적힌 18개가 실물과 sha256 까지 같다 / ★ **대조 밖**: 남의 에이전트가 함께 사는 자리라 이 검사가 안 보는 것이 1개 있다(설계대로다. 고장이 아니다): .claude/skills/pal-round/bin"),
+        "name": String("매니페스트가 실물과 맞는가"),
+        "number": Number(2),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("여기가 설치 루트다"),
+        "name": String("여기가 설치 루트인가"),
+        "number": Number(3),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/target/debug/pal"),
+        "name": String("`pal` 실행 파일을 찾을 수 있는가"),
+        "number": Number(4),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("파생 3개가 전부 등재됐다"),
+        "name": String("`.gitignore` 에 파생이 등재됐는가"),
+        "number": Number(5),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("등록된 2개가 설정과 맞고, 그 자리가 실행될 수 있고, **지금 도는 이 실행 파일과 같은 프로그램이다**(바이트 대조). 훅 규약은 그 실행 파일로 확인했다 — **적힌 문자열은 안 돌린다**"),
+        "name": String("등록된 훅이 실제로 도는가"),
+        "number": Number(6),
+        "outcome": String("ok"),
+    },
+]
+
+---- c1_손으로_고친_블록은_doctor_가_빨갛고_update_가_그_파일을_말한다 stdout ----
+
+thread 'c1_손으로_고친_블록은_doctor_가_빨갛고_update_가_그_파일을_말한다' (64595135) panicked at crates/pal-cli/tests/clean_uninstall_blocks.rs:88:32:
+검사 「pal 블록이 넣은 그대로인가」이 없다: [
+    Object {
+        "detail": String(".claude/settings.json 를 읽었다"),
+        "name": String("설정 파일이 유효한 JSON 인가"),
+        "number": Number(1),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("적힌 18개가 실물과 sha256 까지 같다 / ★ **대조 밖**: 남의 에이전트가 함께 사는 자리라 이 검사가 안 보는 것이 1개 있다(설계대로다. 고장이 아니다): .claude/skills/pal-round/bin"),
+        "name": String("매니페스트가 실물과 맞는가"),
+        "number": Number(2),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("여기가 설치 루트다"),
+        "name": String("여기가 설치 루트인가"),
+        "number": Number(3),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/target/debug/pal"),
+        "name": String("`pal` 실행 파일을 찾을 수 있는가"),
+        "number": Number(4),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("파생 3개가 전부 등재됐다"),
+        "name": String("`.gitignore` 에 파생이 등재됐는가"),
+        "number": Number(5),
+        "outcome": String("ok"),
+    },
+    Object {
+        "detail": String("등록된 2개가 설정과 맞고, 그 자리가 실행될 수 있고, **지금 도는 이 실행 파일과 같은 프로그램이다**(바이트 대조). 훅 규약은 그 실행 파일로 확인했다 — **적힌 문자열은 안 돌린다**"),
+        "name": String("등록된 훅이 실제로 도는가"),
+        "number": Number(6),
+        "outcome": String("ok"),
+    },
+]
+
+
+failures:
+    c1_손으로_고친_블록은_doctor_가_빨갛고_update_가_그_파일을_말한다
+    c1_안_고친_방과_줄바꿈만_바뀐_방은_doctor_의_모든_검사가_ok_다
+    c2_force_는_짝이_맞는_마커_사이를_걷고_지운_줄을_출력한다
+    c2_닫는_마커가_없거나_여는_마커가_둘이면_force_도_거부하고_한_바이트도_안_쓴다
+
+test result: FAILED. 9 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.26s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_blocks`
+     Running tests/clean_uninstall_palimpsest.rs (target/debug/deps/clean_uninstall_palimpsest-043e1b91388e53c4)
+
+running 22 tests
+test b1_palimpsest_가_없던_방은_사용하고_거두면_워킹트리가_설치_전과_같다 ... FAILED
+test b3_결박을_승인하고_내보내지_않은_방은_intent_redb_를_남기고_가린다 ... FAILED
+test b3_거부만_한_방도_intent_redb_를_남기고_가린다 ... FAILED
+test b2_설치_전의_정본과_남의_파일은_그대로이고_설치_전의_파생물은_지우고_말한다 ... FAILED
+test b4_4_추적_중인_정본에_줄이_더해지면_purge_가_남기고_고쳐졌다고_말한다 ... FAILED
+test b4_1_설치_뒤에_생긴_추적_안_된_정본은_purge_가_걷고_전부_출력한다 ... FAILED
+test b4_3_설치_뒤_봉인하고_커밋한_회차_기록은_purge_도_남긴다 ... FAILED
+test b4_2_설치_전부터_추적하던_정본은_purge_도_남기고_말한다 ... FAILED
+test b6_사용자가_고친_pal_파일은_지우고_경고한다 ... ok
+test b7_기본_uninstall_은_설치_뒤에_생긴_추적_안_된_정본을_남긴다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test b5_2_착수_바이너리로_설치한_방을_update_하고_uninstall_하면_설치_전과_같다 ... FAILED
+test b5_1_사용_중_git_status_에_파생물이_안_뜬다 ... FAILED
+test b7_기본_uninstall_은_설치_뒤에_생긴_추적_중인_정본을_남긴다 ... ok
+
+failures:
+
+---- b1_palimpsest_가_없던_방은_사용하고_거두면_워킹트리가_설치_전과_같다 stdout ----
+
+thread 'b1_palimpsest_가_없던_방은_사용하고_거두면_워킹트리가_설치_전과_같다' (64598606) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:188:5:
+설치 전과 갈린 경로가 있다: [
+    ".palimpsest",
+    ".palimpsest/cache",
+    ".palimpsest/cache/0f",
+    ".palimpsest/cache/0f/38a49baa5689208ae4a8ba7a9683ad72e30bef6fd38967af096b1bc89997ca.bin",
+    ".palimpsest/cache/79",
+    ".palimpsest/cache/79/1a4138a5b306a851532485ff4e82d69e8991c60762b67fa986e4794da37bf5.bin",
+    ".palimpsest/cache/8c",
+    ".palimpsest/cache/8c/9a0fda65c3cf4edd9835a815848437e921015bd96e980875b77941a702666d.bin",
+    ".palimpsest/cache/b3",
+    ".palimpsest/cache/b3/0a30fa71a1e4edce63dd077b600671eacd5e6351f6dee48886aff2183a461e.bin",
+    ".palimpsest/index.redb",
+    ".palimpsest/intent.redb",
+    ".palimpsest/narrative-pending.json",
+]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- b3_결박을_승인하고_내보내지_않은_방은_intent_redb_를_남기고_가린다 stdout ----
+
+thread 'b3_결박을_승인하고_내보내지_않은_방은_intent_redb_를_남기고_가린다' (64598609) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:266:5:
+assertion `left == right` failed: 설치 전과 정확히 두 경로만 달라야 한다:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-p-b3-승인-65907/repo
+  지웠다                   CLAUDE.md
+  블록 뺌                  .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+
+
+  left: [".palimpsest/cache", ".palimpsest/cache/0f", ".palimpsest/cache/0f/38a49baa5689208ae4a8ba7a9683ad72e30bef6fd38967af096b1bc89997ca.bin", ".palimpsest/cache/64", ".palimpsest/cache/64/abb7ca39fa656e84272b3d9e791b2164b897148e13aa13738ae86c18e2cad3.bin", ".palimpsest/cache/79", ".palimpsest/cache/79/1a4138a5b306a851532485ff4e82d69e8991c60762b67fa986e4794da37bf5.bin", ".palimpsest/cache/8c", ".palimpsest/cache/8c/9a0fda65c3cf4edd9835a815848437e921015bd96e980875b77941a702666d.bin", ".palimpsest/cache/b3", ".palimpsest/cache/b3/0a30fa71a1e4edce63dd077b600671eacd5e6351f6dee48886aff2183a461e.bin", ".palimpsest/cache/f5", ".palimpsest/cache/f5/1194a17c4bab4f8e4b47e358cc4968a0498a4035276abda8c0ae9a2700fb6b.bin", ".palimpsest/index.redb", ".palimpsest/intent.redb", ".palimpsest/narrative-pending.json"]
+ right: [".palimpsest/.gitignore", ".palimpsest/intent.redb"]
+
+---- b3_거부만_한_방도_intent_redb_를_남기고_가린다 stdout ----
+
+thread 'b3_거부만_한_방도_intent_redb_를_남기고_가린다' (64598608) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:266:5:
+assertion `left == right` failed: 설치 전과 정확히 두 경로만 달라야 한다:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-p-b3-거부-65907/repo
+  지웠다                   CLAUDE.md
+  블록 뺌                  .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+
+
+  left: [".palimpsest/cache", ".palimpsest/cache/0f", ".palimpsest/cache/0f/38a49baa5689208ae4a8ba7a9683ad72e30bef6fd38967af096b1bc89997ca.bin", ".palimpsest/cache/64", ".palimpsest/cache/64/abb7ca39fa656e84272b3d9e791b2164b897148e13aa13738ae86c18e2cad3.bin", ".palimpsest/cache/79", ".palimpsest/cache/79/1a4138a5b306a851532485ff4e82d69e8991c60762b67fa986e4794da37bf5.bin", ".palimpsest/cache/8c", ".palimpsest/cache/8c/9a0fda65c3cf4edd9835a815848437e921015bd96e980875b77941a702666d.bin", ".palimpsest/cache/b3", ".palimpsest/cache/b3/0a30fa71a1e4edce63dd077b600671eacd5e6351f6dee48886aff2183a461e.bin", ".palimpsest/cache/f5", ".palimpsest/cache/f5/1194a17c4bab4f8e4b47e358cc4968a0498a4035276abda8c0ae9a2700fb6b.bin", ".palimpsest/index.redb", ".palimpsest/intent.redb", ".palimpsest/narrative-pending.json"]
+ right: [".palimpsest/.gitignore", ".palimpsest/intent.redb"]
+
+---- b2_설치_전의_정본과_남의_파일은_그대로이고_설치_전의_파생물은_지우고_말한다 stdout ----
+
+thread 'b2_설치_전의_정본과_남의_파일은_그대로이고_설치_전의_파생물은_지우고_말한다' (64598607) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:227:9:
+파생물 .palimpsest/index.redb 가 남았다
+
+---- b4_4_추적_중인_정본에_줄이_더해지면_purge_가_남기고_고쳐졌다고_말한다 stdout ----
+
+thread 'b4_4_추적_중인_정본에_줄이_더해지면_purge_가_남기고_고쳐졌다고_말한다' (64602179) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:85:9:
+pal ["uninstall", "--purge"] rc=Some(2)
+stdout: 
+stderr: error: unexpected argument '--purge' found
+
+  tip: a similar argument exists: '--target'
+
+Usage: pal uninstall --target <TARGET>
+
+For more information, try '--help'.
+
+
+---- b4_1_설치_뒤에_생긴_추적_안_된_정본은_purge_가_걷고_전부_출력한다 stdout ----
+
+thread 'b4_1_설치_뒤에_생긴_추적_안_된_정본은_purge_가_걷고_전부_출력한다' (64601756) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:85:9:
+pal ["uninstall", "--purge"] rc=Some(2)
+stdout: 
+stderr: error: unexpected argument '--purge' found
+
+  tip: a similar argument exists: '--target'
+
+Usage: pal uninstall --target <TARGET>
+
+For more information, try '--help'.
+
+
+---- b4_3_설치_뒤_봉인하고_커밋한_회차_기록은_purge_도_남긴다 stdout ----
+
+thread 'b4_3_설치_뒤_봉인하고_커밋한_회차_기록은_purge_도_남긴다' (64601993) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:85:9:
+pal ["uninstall", "--purge"] rc=Some(2)
+stdout: 
+stderr: error: unexpected argument '--purge' found
+
+  tip: a similar argument exists: '--target'
+
+Usage: pal uninstall --target <TARGET>
+
+For more information, try '--help'.
+
+
+---- b4_2_설치_전부터_추적하던_정본은_purge_도_남기고_말한다 stdout ----
+
+thread 'b4_2_설치_전부터_추적하던_정본은_purge_도_남기고_말한다' (64601917) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:85:9:
+pal ["uninstall", "--purge"] rc=Some(2)
+stdout: 
+stderr: error: unexpected argument '--purge' found
+
+  tip: a similar argument exists: '--target'
+
+Usage: pal uninstall --target <TARGET>
+
+For more information, try '--help'.
+
+
+---- b5_2_착수_바이너리로_설치한_방을_update_하고_uninstall_하면_설치_전과_같다 stdout ----
+
+thread 'b5_2_착수_바이너리로_설치한_방을_update_하고_uninstall_하면_설치_전과_같다' (64605129) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:464:5:
+update 가 `.gitignore` 블록을 새 목록으로 갈아 끼우지 않았다
+
+---- b5_1_사용_중_git_status_에_파생물이_안_뜬다 stdout ----
+
+thread 'b5_1_사용_중_git_status_에_파생물이_안_뜬다' (64604857) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:425:5:
+사용 중 파생물이 git status 에 뜬다: [
+    "?? .palimpsest/narrative-pending.json",
+    "?? .palimpsest/radius-base-0123456789ab.redb",
+]
+
+
+failures:
+    b1_palimpsest_가_없던_방은_사용하고_거두면_워킹트리가_설치_전과_같다
+    b2_설치_전의_정본과_남의_파일은_그대로이고_설치_전의_파생물은_지우고_말한다
+    b3_거부만_한_방도_intent_redb_를_남기고_가린다
+    b3_결박을_승인하고_내보내지_않은_방은_intent_redb_를_남기고_가린다
+    b4_1_설치_뒤에_생긴_추적_안_된_정본은_purge_가_걷고_전부_출력한다
+    b4_2_설치_전부터_추적하던_정본은_purge_도_남기고_말한다
+    b4_3_설치_뒤_봉인하고_커밋한_회차_기록은_purge_도_남긴다
+    b4_4_추적_중인_정본에_줄이_더해지면_purge_가_남기고_고쳐졌다고_말한다
+    b5_1_사용_중_git_status_에_파생물이_안_뜬다
+    b5_2_착수_바이너리로_설치한_방을_update_하고_uninstall_하면_설치_전과_같다
+
+test result: FAILED. 12 passed; 10 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.74s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_palimpsest`
+error: 2 targets failed:
+    `-p pal-cli --test clean_uninstall_blocks`
+    `-p pal-cli --test clean_uninstall_palimpsest`

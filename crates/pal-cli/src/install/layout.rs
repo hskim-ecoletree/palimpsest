@@ -238,12 +238,95 @@ pub const INTENT_CANONICAL: &str = ".palimpsest/intent/bindings.jsonl";
 /// 남는다. 그 창을 이 둘로 줄인다(`[f24]` ② · 부분 설치).
 pub const MANIFEST_HOME: &[&str] = &[".claude", ".claude/pal"];
 
-/// `.gitignore` 에 등재할 파생 경로.
-///
-/// stack §7 이 가른 셋이다 — `cache/`·`index.redb`·`intent.redb` 는 파생이고
-/// `intent/*.jsonl` 은 정본이다. **디렉터리째 무시하면 정본까지 사라진다.**
-pub const DERIVED: &[&str] =
-    &[".palimpsest/cache/", ".palimpsest/index.redb", ".palimpsest/intent.redb"];
+// ─────────────────────────────────────────────────────────────────────────────
+// ★ **`.palimpsest/` 안의 분류** — `.gitignore` 블록 · uninstall · `--purge` 가 이 표 하나를 읽는다
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 회차 `2026-09-15-clean-uninstall` 계획 1. 목록이 자리마다 따로 있으면 `.gitignore` 에는 있는데 uninstall 은
+// 모르는 파생물이 생긴다 — 착수 관측 R2(`narrative-pending.json`)와 R7(`radius-base-*.redb`)이 그 모양이었다.
+//
+// | 부류 | 기본 uninstall | `--purge` |
+// |---|---|---|
+// | 파생물 | 걷는다 — 설치 전부터 있었어도(다시 만들어진다) · 지운 목록을 출력 | 걷는다 |
+// | 조건부(`intent.redb`) | 결박 또는 거부가 있으면 정본으로 남기고 가린다 · 없으면 파생물 | 걷는다 |
+// | 정본 | 바이트 그대로 남기고 출력 | git 이 추적하지 않는 것만 걷는다 · 추적 중인 것은 남기고 출력 |
+//
+// `intent/*.jsonl` 은 정본이다 — **`.palimpsest/` 를 디렉터리째 무시하면 정본까지 사라진다**(stack §7).
+
+/// `.palimpsest/` 안의 자리가 **어느 부류인가.**
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum 부류 {
+    /// 다시 만들어지는 것.
+    파생물,
+    /// 결박 또는 거부가 하나라도 있으면 정본, 둘 다 없으면 파생물 — `intent.redb` 하나다.
+    조건부,
+    /// 사람의 기록.
+    정본,
+}
+
+/// 분류 표의 한 줄.
+pub struct 안의_자리 {
+    /// 저장소 루트 기준 자리. 끝이 `/` 면 디렉터리이고, `*` 하나는 아무 글자열이다.
+    pub 패턴: &'static str,
+    pub 부류: 부류,
+}
+
+impl 안의_자리 {
+    /// `.gitignore` 블록에 넣는 줄 — 루트에 묶는다.
+    #[must_use]
+    pub fn 무시_줄(&self) -> String {
+        format!("/{}", self.패턴)
+    }
+
+    /// git 에게 등재를 물을 **구체 경로** — `*` 는 이름이 변하는 자리라 표본 하나로 묻는다.
+    #[must_use]
+    pub fn 표본(&self) -> String {
+        self.패턴.replacen('*', "000000000000", 1)
+    }
+
+    /// 루트 기준 상대 경로(끝 `/` 없음)가 이 자리인가.
+    #[must_use]
+    pub fn 맞나(&self, rel: &str) -> bool {
+        let 패턴 = self.패턴.trim_end_matches('/');
+        match 패턴.split_once('*') {
+            None => rel == 패턴,
+            Some((앞, 뒤)) => {
+                rel.len() >= 앞.len() + 뒤.len()
+                    && rel.starts_with(앞)
+                    && rel.ends_with(뒤)
+                    && !rel[앞.len()..rel.len() - 뒤.len()].contains('/')
+            }
+        }
+    }
+}
+
+/// 결박 · 거부가 쓰이는 의도 저장소.
+pub const INTENT_STORE: &str = ".palimpsest/intent.redb";
+
+/// ★ **분류 표** — 순서가 곧 `.gitignore` 블록의 줄 순서다.
+pub const 안의_분류: &[안의_자리] = &[
+    안의_자리 { 패턴: ".palimpsest/cache/", 부류: 부류::파생물 },
+    안의_자리 { 패턴: ".palimpsest/index.redb", 부류: 부류::파생물 },
+    안의_자리 { 패턴: ".palimpsest/narrative-pending.json", 부류: 부류::파생물 },
+    안의_자리 { 패턴: ".palimpsest/radius-base-*.redb", 부류: 부류::파생물 },
+    안의_자리 { 패턴: INTENT_STORE, 부류: 부류::조건부 },
+    안의_자리 { 패턴: ".palimpsest/intent/", 부류: 부류::정본 },
+    안의_자리 { 패턴: ".palimpsest/rounds/", 부류: 부류::정본 },
+];
+
+/// `.gitignore` 블록에 등재할 자리 — 정본이 아닌 것 전부. **사용 중에는 조건부도 가린다**(커밋될 파일이 아니다).
+pub fn 무시할_자리() -> impl Iterator<Item = &'static 안의_자리> {
+    안의_분류.iter().filter(|a| a.부류 != 부류::정본)
+}
+
+/// 정본으로 남긴 `intent.redb` 를 git 에서 가리는 파일 — 기본 uninstall 이 사용자 `.gitignore` 블록 대신 둔다.
+pub const 가림_파일: &str = ".palimpsest/.gitignore";
+
+/// 그 파일의 바이트 — **자기 자신과 `intent.redb` 만** 가린다. 이 바이트와 같을 때만 우리 것으로 보고 걷는다.
+pub const 가림_본문: &str = "# `pal uninstall` 이 남겼다 — 결박·거부가 든 intent.redb 를 git 에서 가린다.\n\
+# `pal intent export` 로 내보낸 뒤 `pal uninstall --purge` 를 돌리면 이 파일도 걷힌다.\n\
+/.gitignore\n\
+/intent.redb\n";
 
 /// 블록의 여는 표식과 닫는 표식 — 파일 종류마다 주석 문법이 다르다.
 pub struct Markers {
@@ -337,9 +420,37 @@ pub fn 절대_안_건드리나(rel: &str) -> bool {
     절대_금지.contains(&첫_조각(rel))
 }
 
+/// 블록을 넣는 파일의 마커 — 파일 종류마다 주석 문법이 다르다.
+#[must_use]
+pub fn 블록_마커(rel: &str) -> &'static Markers {
+    if rel == IGNORE_FILE { &IGNORE_MARKERS } else { &MD_MARKERS }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// **분류 표의 자리 맞춤** — `*` 는 한 조각 안에서만 아무 글자열이다.
+    #[test]
+    fn 분류_표의_자리를_맞춘다() {
+        let 반경 = 안의_분류.iter().find(|a| a.패턴.contains('*')).expect("이름이 변하는 자리");
+        assert!(반경.맞나(".palimpsest/radius-base-0123456789ab.redb"));
+        assert!(반경.맞나(&반경.표본()), "표본이 자기 자리에 안 맞는다");
+        assert!(!반경.맞나(".palimpsest/radius-base-x/y.redb"));
+        assert!(!반경.맞나(".palimpsest/index.redb"));
+        let 캐시 = &안의_분류[0];
+        assert!(캐시.맞나(".palimpsest/cache") && !캐시.맞나(".palimpsest/cache/x"));
+    }
+
+    /// ★ **`.gitignore` 블록은 정본을 안 가린다** — 가리면 커밋할 기록이 사라진다.
+    #[test]
+    fn 무시할_자리에_정본이_없다() {
+        assert!(무시할_자리().all(|a| a.부류 != 부류::정본));
+        assert!(무시할_자리().any(|a| a.부류 == 부류::조건부), "사용 중 intent.redb 가 git 에 뜬다");
+        for 정본 in 안의_분류.iter().filter(|a| a.부류 == 부류::정본) {
+            assert!(무시할_자리().all(|a| !정본.패턴.starts_with(a.패턴)), "{} 를 가린다", 정본.패턴);
+        }
+    }
 
     /// **놓는 목록과 되돌리는 목록은 함께 움직인다.**
     ///

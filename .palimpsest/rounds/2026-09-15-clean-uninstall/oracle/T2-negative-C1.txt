@@ -1,0 +1,40 @@
+# T2 음성 대조 C1 — 블록 검사가 줄바꿈을 맞추지 않고 바이트 완전 일치로 대는 빌드
+# 2026-09-15T22:37:00+00:00 · macOS · 변이는 임시로 넣고 되돌렸다(커밋 안 함)
+# 변이 자리: crates/pal-cli/src/install/doctor.rs
+# --- 뺀 줄
+# -         match blocks::상태(&path, markers, &b.inserted) {
+# --- 넣은 줄
+# +         let 날것 = std::fs::read(&path).unwrap_or_default();
+# +         let 날것_그대로 = 날것.windows(b.inserted.len().max(1)).any(|w| w == b.inserted.as_bytes());
+# +         match blocks::상태(&path, markers, &b.inserted).map(|s| if 날것_그대로 { s } else { blocks::상태::훼손 }) {
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_blocks -- c1_ --test-threads=4
+# rc=101
+
+
+running 2 tests
+test c1_안_고친_방과_줄바꿈만_바뀐_방은_doctor_의_모든_검사가_ok_다 ... FAILED
+test c1_손으로_고친_블록은_doctor_가_빨갛고_update_가_그_파일을_말한다 ... ok
+
+failures:
+
+---- c1_안_고친_방과_줄바꿈만_바뀐_방은_doctor_의_모든_검사가_ok_다 stdout ----
+
+thread 'c1_안_고친_방과_줄바꿈만_바뀐_방은_doctor_의_모든_검사가_ok_다' (65781176) panicked at crates/pal-cli/tests/clean_uninstall_blocks.rs:149:9:
+assertion `left == right` failed: 줄바꿈만 바뀐 방에서 검사가 ok 가 아니다: {"detail":"CLAUDE.md: 마커는 있는데 넣은 것과 다르다 — **손으로 고쳐졌다.** `pal uninstall` 이 거부한다. 마커가 한 번씩 순서대로 있으면 `pal uninstall --force` 가 그 사이를 걷고 지운 줄을 출력한다 / .gitignore: 마커는 있는데 넣은 것과 다르다 — **손으로 고쳐졌다.** `pal uninstall` 이 거부한다. 마커가 한 번씩 순서대로 있으면 `pal uninstall --force` 가 그 사이를 걷고 지운 줄을 출력한다","name":"pal 블록이 넣은 그대로인가","number":7,"outcome":"failed"}
+  left: String("failed")
+ right: "ok"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    c1_안_고친_방과_줄바꿈만_바뀐_방은_doctor_의_모든_검사가_ok_다
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 3.10s
+
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.98s
+     Running tests/clean_uninstall_blocks.rs (target/debug/deps/clean_uninstall_blocks-4567d661f8749582)
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_blocks`
+error: 1 target failed:
+    `-p pal-cli --test clean_uninstall_blocks`

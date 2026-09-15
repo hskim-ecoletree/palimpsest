@@ -302,6 +302,14 @@ enum Command {
         /// 대상 프로젝트. 기본값은 현재 디렉터리
         #[arg(long, default_value = ".")]
         target: PathBuf,
+        /// 정본까지 걷는다 — `.palimpsest/` 안에서는 **git 이 추적하지 않는 것만**, 밖에서는 이 프로젝트의
+        /// 명령 승인 · 종료 봉인까지
+        #[arg(long)]
+        purge: bool,
+        /// 손으로 고친 pal 블록을 **여는 마커와 닫는 마커가 한 번씩 순서대로 있을 때만** 그 사이째 걷고
+        /// 지운 줄을 출력한다
+        #[arg(long)]
+        force: bool,
     },
     /// 하네스의 훅이 부르는 자리 — **표준입력으로 페이로드를 받는다**
     ///
@@ -665,7 +673,9 @@ fn main() -> Result<()> {
         }
         Command::Install { target } => install::install(&target),
         Command::Update { target } => install::update(&target),
-        Command::Uninstall { target } => install::uninstall(&target),
+        Command::Uninstall { target, purge, force } => {
+            install::uninstall(&target, install::제거 { purge, force })
+        }
         // **훅은 실패를 내놓지 않는다** — 그 사실이 `hook::run` 의 타입에 적혀 있다.
         Command::Hook { event } => {
             hook::run(&event);

@@ -1,0 +1,51 @@
+# T2 음성 대조 B6 — 사용자가 고친 pal 파일을 남기는 빌드
+# 2026-09-15T22:36:51+00:00 · macOS · 변이는 임시로 넣고 되돌렸다(커밋 안 함)
+# 변이 자리: crates/pal-cli/src/install.rs
+# --- 뺀 줄
+# -     let 고쳤나 = sha256::내용(&guard::읽는다(path)?) != f.sha256;
+# -     std::fs::remove_file(path)
+# --- 넣은 줄
+# +     let 고쳤나 = sha256::내용(&guard::읽는다(path)?) != f.sha256;
+# +     if 고쳤나 {
+# +         report.say("남겼다", f.path.as_str());
+# +         return Ok(());
+# +     }
+# +     std::fs::remove_file(path)
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_palimpsest -- b6_ --test-threads=4
+# rc=101
+
+
+running 1 test
+test b6_사용자가_고친_pal_파일은_지우고_경고한다 ... FAILED
+
+failures:
+
+---- b6_사용자가_고친_pal_파일은_지우고_경고한다 stdout ----
+
+thread 'b6_사용자가_고친_pal_파일은_지우고_경고한다' (65770336) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:491:5:
+고친 pal 파일을 남겼다: [
+    ".claude",
+    ".claude/agents",
+    ".claude/agents/pal-orchestrator.md",
+    ".claude/commands",
+    ".claude/commands/pal",
+    ".claude/commands/pal/touch.md",
+    ".claude/skills",
+    ".claude/skills/pal-round",
+    ".claude/skills/pal-round/SKILL.md",
+]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    b6_사용자가_고친_pal_파일은_지우고_경고한다
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 21 filtered out; finished in 1.16s
+
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.72s
+     Running tests/clean_uninstall_palimpsest.rs (target/debug/deps/clean_uninstall_palimpsest-043e1b91388e53c4)
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_palimpsest`
+error: 1 target failed:
+    `-p pal-cli --test clean_uninstall_palimpsest`

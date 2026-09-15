@@ -1,0 +1,131 @@
+# T2 음성 대조 B7-b — 기본 uninstall 이 추적 여부와 무관하게 정본을 전부 걷는 빌드
+# 2026-09-15T22:37:41+00:00 · macOS · 변이는 임시로 넣고 되돌렸다(커밋 안 함)
+# 변이 자리: crates/pal-cli/src/install.rs
+# --- 뺀 줄
+# -         if !안.purge {
+# -             report.say(
+# -                 "남겼다(정본)",
+# --- 넣은 줄
+# +         if !안.purge {
+# +             for f in &자리.파일 {
+# +                 지운다(&f.path, false)?;
+# +             }
+# +             report.say(
+# +                 "남겼다(정본)",
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_palimpsest -- b7_ --test-threads=4
+# rc=101
+
+
+running 2 tests
+test b7_기본_uninstall_은_설치_뒤에_생긴_추적_안_된_정본을_남긴다 ... FAILED
+test b7_기본_uninstall_은_설치_뒤에_생긴_추적_중인_정본을_남긴다 ... FAILED
+
+failures:
+
+---- b7_기본_uninstall_은_설치_뒤에_생긴_추적_안_된_정본을_남긴다 stdout ----
+
+thread 'b7_기본_uninstall_은_설치_뒤에_생긴_추적_안_된_정본을_남긴다' (65845591) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:520:5:
+assertion `left == right` failed: 기본 uninstall 이 정본을 건드렸다:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-p-b7-안추적-85352/repo
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  남겼다(정본)               .palimpsest/intent/  (파일 1개 — 바이트 그대로. 추적 안 된 것까지 걷으려면 `pal install` 뒤 `pal uninstall --purge`)
+  남겼다(정본)               .palimpsest/rounds/  (파일 2개 — 바이트 그대로. 추적 안 된 것까지 걷으려면 `pal install` 뒤 `pal uninstall --purge`)
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+  남겼다                   .palimpsest/  (비어 있지 않다 — 남의 것 2개가 남아 있다: intent · rounds)
+
+
+  left: {".palimpsest/rounds/r1": 디렉터리 { 모드: 493 }, ".palimpsest/rounds/r1/notes": 디렉터리 { 모드: 493 }}
+ right: {".palimpsest/intent/bindings.jsonl": 파일 { 모드: 420, 바이트: [123, 34, 107, 105, 110, 100, 34, 58, 34, 104, 101, 97, 100, 101, 114, 34, 44, 34, 115, 99, 104, 101, 109, 97, 95, 118, 101, 114, 115, 105, 111, 110, 34, 58, 51, 125, 10] }, ".palimpsest/rounds/r1": 디렉터리 { 모드: 493 }, ".palimpsest/rounds/r1/intent.md": 파일 { 모드: 420, 바이트: [35, 32, 237, 154, 140, 236, 176, 168, 10] }, ".palimpsest/rounds/r1/notes": 디렉터리 { 모드: 493 }, ".palimpsest/rounds/r1/notes/a.md": 파일 { 모드: 420, 바이트: [235, 169, 148, 235, 170, 168, 10] }}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- b7_기본_uninstall_은_설치_뒤에_생긴_추적_중인_정본을_남긴다 stdout ----
+
+thread 'b7_기본_uninstall_은_설치_뒤에_생긴_추적_중인_정본을_남긴다' (65845592) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:520:5:
+assertion `left == right` failed: 기본 uninstall 이 정본을 건드렸다:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-p-b7-추적-85352/repo
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  남겼다(정본)               .palimpsest/intent/  (파일 1개 — 바이트 그대로. 추적 안 된 것까지 걷으려면 `pal install` 뒤 `pal uninstall --purge`)
+  남겼다(정본)               .palimpsest/rounds/  (파일 2개 — 바이트 그대로. 추적 안 된 것까지 걷으려면 `pal install` 뒤 `pal uninstall --purge`)
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+  남겼다                   .palimpsest/  (비어 있지 않다 — 남의 것 2개가 남아 있다: intent · rounds)
+
+
+  left: {".palimpsest/rounds/r1": 디렉터리 { 모드: 493 }, ".palimpsest/rounds/r1/notes": 디렉터리 { 모드: 493 }}
+ right: {".palimpsest/intent/bindings.jsonl": 파일 { 모드: 420, 바이트: [123, 34, 107, 105, 110, 100, 34, 58, 34, 104, 101, 97, 100, 101, 114, 34, 44, 34, 115, 99, 104, 101, 109, 97, 95, 118, 101, 114, 115, 105, 111, 110, 34, 58, 51, 125, 10] }, ".palimpsest/rounds/r1": 디렉터리 { 모드: 493 }, ".palimpsest/rounds/r1/intent.md": 파일 { 모드: 420, 바이트: [35, 32, 237, 154, 140, 236, 176, 168, 10] }, ".palimpsest/rounds/r1/notes": 디렉터리 { 모드: 493 }, ".palimpsest/rounds/r1/notes/a.md": 파일 { 모드: 420, 바이트: [235, 169, 148, 235, 170, 168, 10] }}
+
+
+failures:
+    b7_기본_uninstall_은_설치_뒤에_생긴_추적_안_된_정본을_남긴다
+    b7_기본_uninstall_은_설치_뒤에_생긴_추적_중인_정본을_남긴다
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 20 filtered out; finished in 1.37s
+
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.84s
+     Running tests/clean_uninstall_palimpsest.rs (target/debug/deps/clean_uninstall_palimpsest-043e1b91388e53c4)
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_palimpsest`
+error: 1 target failed:
+    `-p pal-cli --test clean_uninstall_palimpsest`

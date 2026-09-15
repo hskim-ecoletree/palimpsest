@@ -1,0 +1,37 @@
+# T2 음성 대조 B2 — 정본 자리(.palimpsest/rounds/)를 파생물 목록에 넣은 빌드
+# 2026-09-15T22:36:33+00:00 · macOS · 변이는 임시로 넣고 되돌렸다(커밋 안 함)
+# 변이 자리: crates/pal-cli/src/install/layout.rs
+# --- 뺀 줄
+# -     안의_자리 { 패턴: ".palimpsest/rounds/", 부류: 부류::정본 },
+# --- 넣은 줄
+# +     안의_자리 { 패턴: ".palimpsest/rounds/", 부류: 부류::파생물 },
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_palimpsest -- b2_ --test-threads=4
+# rc=101
+
+
+running 1 test
+test b2_설치_전의_정본과_남의_파일은_그대로이고_설치_전의_파생물은_지우고_말한다 ... FAILED
+
+failures:
+
+---- b2_설치_전의_정본과_남의_파일은_그대로이고_설치_전의_파생물은_지우고_말한다 stdout ----
+
+thread 'b2_설치_전의_정본과_남의_파일은_그대로이고_설치_전의_파생물은_지우고_말한다' (65731155) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:222:9:
+assertion `left == right` failed: .palimpsest/rounds 가 설치 전과 다르다
+  left: None
+ right: Some(디렉터리 { 모드: 493 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    b2_설치_전의_정본과_남의_파일은_그대로이고_설치_전의_파생물은_지우고_말한다
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 21 filtered out; finished in 2.37s
+
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.50s
+     Running tests/clean_uninstall_palimpsest.rs (target/debug/deps/clean_uninstall_palimpsest-043e1b91388e53c4)
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_palimpsest`
+error: 1 target failed:
+    `-p pal-cli --test clean_uninstall_palimpsest`
