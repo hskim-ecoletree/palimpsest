@@ -1,6 +1,7 @@
 //! 읽기 전용 회차 verification 상태 표면.
 
 pub mod approval;
+pub mod external;
 pub mod ledger;
 pub mod stop;
 pub mod status;

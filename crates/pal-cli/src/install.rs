@@ -1175,8 +1175,9 @@ pub fn uninstall(target: &Path) -> Result<()> {
 
     // 등록을 걷기 시작하면 다음 설치가 옛 activation을 조용히 되살리면 안 된다.
     // activation record 내용이 손상돼도 project identity 파일 이름만으로 제거한다.
-    crate::round::stop::disable_if_supported(root.path())
-        .context("Stop 정책을 비활성화하지 못해 uninstall을 시작하지 않았다")?;
+    // ★ **밖의 기록은 `round::external` 한 자리가 가르고 걷는다** — 안의 정본을 지우기 전에 부른다.
+    let 밖 = crate::round::external::걷는다(root.path(), crate::round::external::걷기::기본)
+        .context("프로젝트 밖의 기록을 정리하지 못해 uninstall을 시작하지 않았다")?;
 
     // ── 2단계 · 적용. ★ **기록이 걸음마다 앞선다 — 그러나 걸음마다 쓰지는 않는다** ──
     //
@@ -1198,6 +1199,7 @@ pub fn uninstall(target: &Path) -> Result<()> {
     // 항목 수에 선형이 된다.
     let lock = Lock::take(&root)?;
     let mut report = Report::new();
+    밖의_보고를_싣는다(&mut report, &밖);
     // **제거가 시작됐다는 사실 자체를 먼저 적는다.** 이 한 줄이 없으면 다음 회차가
     // 줄어든 목록을 「하나도 못 찾았다」로 읽는다(⑥-b 의 거짓 경보).
     m.removing = true;
@@ -1290,6 +1292,28 @@ pub fn uninstall(target: &Path) -> Result<()> {
         println!();
     }
     Ok(())
+}
+
+/// 밖에서 한 일과 안 한 일을 제거 화면에 싣는다 — 판정은 `round::external` 이 이미 했다.
+fn 밖의_보고를_싣는다(report: &mut Report, 밖: &crate::round::external::밖의_보고) {
+    if let Some(자리) = &밖.들여다본_자리 {
+        report.say("들여다본 자리(밖)", &자리.display().to_string());
+    }
+    for p in &밖.지운 {
+        report.say("지웠다(밖)", &p.display().to_string());
+    }
+    for (p, 까닭) in &밖.남긴 {
+        report.say("남겼다(밖)", &format!("{}  ({까닭})", p.display()));
+    }
+    for p in &밖.가를_수_없는 {
+        report.say("가를 수 없다(밖)", &p.display().to_string());
+    }
+    for p in &밖.worktree_거부 {
+        report.say("밖을 안 건드렸다", &format!("같은 저장소의 다른 worktree — {}", p.display()));
+    }
+    if 밖.클론_경고 {
+        report.say("⚠ 같은 원격", "다른 클론의 기록도 함께 지웠을 수 있다");
+    }
 }
 
 /// **우리가 만든 디렉터리를 걷는다** — ★ **순서에 안 기대고, 못 지우면 말한다.**

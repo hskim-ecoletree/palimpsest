@@ -21,6 +21,8 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+pub mod snapshot;
+
 pub const PAL: &str = env!("CARGO_BIN_EXE_pal");
 
 // ── 매니페스트의 sha 를 대는 자리 ─────────────────────────────────────────────
