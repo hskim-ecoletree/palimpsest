@@ -1030,7 +1030,8 @@ fn approval_record변조와_stale_projected_evidence는_fail_closed다() {
         .expect("approval dir")
         .find_map(|entry| {
             let path = entry.ok()?.path();
-            path.is_file().then_some(path)
+            // 옆의 `<digest>.project` 표시 파일이 아니라 승인 기록 자체를 변조한다.
+            (path.is_file() && path.extension().is_some_and(|ext| ext == "json")).then_some(path)
         })
         .expect("approval record");
     std::fs::write(&record, "not approval\n").expect("tamper");

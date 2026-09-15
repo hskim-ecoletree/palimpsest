@@ -116,8 +116,7 @@ pub fn finalization_digest(
 
 pub fn store_dir(repo: &Path, requested: Option<&Path>) -> Result<PathBuf, ApprovalError> {
     let path = store_location(requested)?;
-    std::fs::create_dir_all(&path)
-        .map_err(|error| ApprovalError::Store(format!("{}: {error}", path.display())))?;
+    create_store(&path)?;
     private_directory(&path)?;
     let canonical = path
         .canonicalize()
@@ -144,10 +143,80 @@ pub(super) fn store_location(requested: Option<&Path>) -> Result<PathBuf, Approv
     }
 }
 
-pub fn approve(dir: &Path, digest: &str) -> Result<(), ApprovalError> {
+/// 명령 승인 · 종료 봉인 `<digest>.json` 을 쓴다 — **형식은 v1 바이트 그대로**이고, 옆에
+/// `<digest>.project`(프로젝트 식별자)를 먼저 쓴다. 옛 바이너리는 표시 파일을 모르고 v1 을 그대로 읽는다.
+pub fn approve(dir: &Path, digest: &str, project: &str) -> Result<(), ApprovalError> {
     let target = dir.join(format!("{digest}.json"));
     reject_link(&target, true)?;
-    let temporary = dir.join(format!(".{digest}.{}.tmp", std::process::id()));
+    ensure_project_marker(&target, project)?;
+    let mut body = serde_json::to_vec(&Record {
+        version: 1,
+        digest: digest.to_owned(),
+    })
+    .map_err(|error| ApprovalError::Store(error.to_string()))?;
+    body.push(b'\n');
+    write_private_atomic(&target, &body)
+}
+
+/// 표시 파일의 확장자 — 기록 `<이름>.json` 옆의 `<이름>.project`.
+pub(super) const PROJECT_MARKER_EXTENSION: &str = "project";
+
+/// 표시 파일이 말하는 것.
+#[derive(Debug, PartialEq, Eq)]
+pub(super) enum ProjectMarker {
+    /// 표시 파일이 없다 — 이 바이너리 전에 쓴 기록이거나 표시 파일이 지워졌다.
+    Absent,
+    /// 이 프로젝트 식별자의 기록이다.
+    Project(String),
+    /// 있는데 읽을 수 없다(일반 파일이 아니거나 내용이 한 줄이 아니다) — 어느 몫인지 모른다.
+    Unreadable,
+}
+
+/// 기록 `record` 옆의 표시 파일 경로.
+pub(super) fn project_marker_path(record: &Path) -> PathBuf {
+    record.with_extension(PROJECT_MARKER_EXTENSION)
+}
+
+/// 기록 `record` 의 표시 파일을 읽는다.
+pub(super) fn read_project_marker(record: &Path) -> ProjectMarker {
+    let marker = project_marker_path(record);
+    match std::fs::symlink_metadata(&marker) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => ProjectMarker::Absent,
+        Ok(metadata) if metadata.is_file() => match std::fs::read_to_string(&marker) {
+            Ok(text) => {
+                let value = text.strip_suffix('\n').unwrap_or(&text);
+                if value.is_empty() || value.contains(['\n', '\r']) {
+                    ProjectMarker::Unreadable
+                } else {
+                    ProjectMarker::Project(value.to_owned())
+                }
+            }
+            Err(_) => ProjectMarker::Unreadable,
+        },
+        _ => ProjectMarker::Unreadable,
+    }
+}
+
+/// 기록 `record` 옆에 `project` 를 적은 표시 파일이 있게 한다 — 이미 같으면 안 쓴다.
+pub(super) fn ensure_project_marker(record: &Path, project: &str) -> Result<(), ApprovalError> {
+    if read_project_marker(record) == ProjectMarker::Project(project.to_owned()) {
+        return Ok(());
+    }
+    let marker = project_marker_path(record);
+    reject_link(&marker, true)?;
+    write_private_atomic(&marker, format!("{project}\n").as_bytes())
+}
+
+/// 같은 디렉터리의 임시 파일에 쓰고 바꿔 끼운다. 권한은 `private_file` 규율 그대로다.
+fn write_private_atomic(target: &Path, body: &[u8]) -> Result<(), ApprovalError> {
+    let dir = target
+        .parent()
+        .ok_or_else(|| ApprovalError::Store(format!("{}: 부모가 없다", target.display())))?;
+    let name = target
+        .file_name()
+        .ok_or_else(|| ApprovalError::Store(format!("{}: 파일 이름이 없다", target.display())))?
+        .to_string_lossy();
+    let temporary = dir.join(format!(".{name}.{}.tmp", std::process::id()));
     let mut options = OpenOptions::new();
     options.write(true).create_new(true);
     #[cfg(unix)]
@@ -158,27 +227,98 @@ pub fn approve(dir: &Path, digest: &str) -> Result<(), ApprovalError> {
     let mut file = options
         .open(&temporary)
         .map_err(|error| ApprovalError::Store(format!("{}: {error}", temporary.display())))?;
-    let body = serde_json::to_vec(&Record {
-        version: 1,
-        digest: digest.to_owned(),
-    })
-    .map_err(|error| ApprovalError::Store(error.to_string()))?;
-    file.write_all(&body)
-        .and_then(|()| file.write_all(b"\n"))
+    file.write_all(body)
         .and_then(|()| file.sync_all())
         .map_err(|error| ApprovalError::Store(format!("approval 기록: {error}")))?;
     drop(file);
     #[cfg(windows)]
     if target.exists() {
-        reject_link(&target, false)?;
-        std::fs::remove_file(&target).map_err(|error| {
+        reject_link(target, false)?;
+        std::fs::remove_file(target).map_err(|error| {
             ApprovalError::Store(format!("기존 approval record를 교체하지 못했다: {error}"))
         })?;
     }
-    std::fs::rename(&temporary, &target)
+    std::fs::rename(&temporary, target)
         .map_err(|error| ApprovalError::Store(format!("approval atomic rename: {error}")))?;
-    private_file(&target)?;
+    private_file(target)?;
     Ok(())
+}
+
+/// 기본 저장소 자리의 뿌리 이름 — `…/palimpsest/approvals`.
+const STORE_ROOT_NAME: &str = "palimpsest";
+const STORE_NAME: &str = "approvals";
+
+/// `palimpsest/` 안에서 **기록을 처음 쓸 때 새로 만든 조상**을 적는 파일.
+pub(super) const CREATED_ANCESTORS: &str = "created-ancestors.json";
+
+/// `palimpsest/created-ancestors.json` — `palimpsest/` 의 부모부터 위로, 새로 만든 디렉터리 이름.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CreatedAncestors {
+    version: u32,
+    created: Vec<String>,
+}
+
+/// 저장소가 `…/palimpsest/approvals` 꼴이면 그 `palimpsest/`. 아니면 조상을 적지도 걷지도 않는다.
+pub(super) fn store_root(store: &Path) -> Option<&Path> {
+    let parent = store.parent()?;
+    (store.file_name()? == STORE_NAME && parent.file_name()? == STORE_ROOT_NAME).then_some(parent)
+}
+
+/// `palimpsest/` 에 적힌 새로 만든 조상 — 가까운 것부터. 없거나 못 읽으면 비었다(안 걷는다).
+pub(super) fn created_ancestors(root: &Path) -> Vec<String> {
+    let path = root.join(CREATED_ANCESTORS);
+    match std::fs::symlink_metadata(&path) {
+        Ok(metadata) if metadata.is_file() => std::fs::read(&path)
+            .ok()
+            .and_then(|bytes| serde_json::from_slice::<CreatedAncestors>(&bytes).ok())
+            .filter(|record| record.version == 1)
+            .map(|record| record.created)
+            .unwrap_or_default(),
+        _ => Vec::new(),
+    }
+}
+
+/// 저장소 디렉터리를 만든다 — `create_dir_all` 이 **새로 만든 조상**을 `palimpsest/` 안에 적는다.
+fn create_store(path: &Path) -> Result<(), ApprovalError> {
+    let mut missing = Vec::new();
+    let mut cursor = Some(path);
+    while let Some(dir) = cursor.filter(|dir| !dir.as_os_str().is_empty()) {
+        match std::fs::symlink_metadata(dir) {
+            Ok(_) => break,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                missing.push(dir.to_path_buf());
+            }
+            Err(error) => {
+                return Err(ApprovalError::Store(format!("{}: {error}", dir.display())));
+            }
+        }
+        cursor = dir.parent();
+    }
+    std::fs::create_dir_all(path)
+        .map_err(|error| ApprovalError::Store(format!("{}: {error}", path.display())))?;
+    let Some(root) = store_root(path) else {
+        return Ok(());
+    };
+    if !missing.iter().any(|dir| dir == root) {
+        return Ok(());
+    }
+    // `missing` 은 저장소에서 위로 쌓였다 — `palimpsest/` 보다 위의 것만, 가까운 것부터.
+    let created: Vec<String> = missing
+        .iter()
+        .filter(|dir| dir.as_path() != root && root.starts_with(dir))
+        .filter_map(|dir| dir.file_name().map(|name| name.to_string_lossy().into_owned()))
+        .collect();
+    if created.is_empty() {
+        return Ok(());
+    }
+    let mut body = serde_json::to_vec(&CreatedAncestors {
+        version: 1,
+        created,
+    })
+    .map_err(|error| ApprovalError::Store(error.to_string()))?;
+    body.push(b'\n');
+    write_private_atomic(&root.join(CREATED_ANCESTORS), &body)
 }
 
 pub fn is_approved(dir: &Path, digest: &str) -> Result<bool, ApprovalError> {
