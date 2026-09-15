@@ -1,0 +1,62 @@
+# E1 셈 스크립트의 대조 — 로그: CI 런 34967676457(acd7e82) 의 세 OS 시험 잡 · 2026-09-15T22:15:36Z
+
+## 양성 대조 — 이미 초록인 시험 파일 여덟
+파일                                         OS                기대 passed failed ignored  판정
+install.rs                                 ubuntu-latest     50     50      0       0  ✓
+install.rs                                 macos-latest      50     50      0       0  ✓
+install.rs                                 windows-latest    52     52      0       0  ✓
+install_boundary.rs                        ubuntu-latest     15     15      0       0  ✓
+install_boundary.rs                        macos-latest      15     15      0       0  ✓
+install_boundary.rs                        windows-latest    19     19      0       0  ✓
+install_eol.rs                             ubuntu-latest     12     12      0       0  ✓
+install_eol.rs                             macos-latest      12     12      0       0  ✓
+install_eol.rs                             windows-latest    15     15      0       0  ✓
+install_hooks.rs                           ubuntu-latest     21     21      0       0  ✓
+install_hooks.rs                           macos-latest      21     21      0       0  ✓
+install_hooks.rs                           windows-latest    24     24      0       0  ✓
+install_hostile.rs                         ubuntu-latest     23     23      0       0  ✓
+install_hostile.rs                         macos-latest      23     23      0       0  ✓
+install_hostile.rs                         windows-latest    24     24      0       0  ✓
+install_recovery.rs                        ubuntu-latest     18     18      0       0  ✓
+install_recovery.rs                        macos-latest      18     18      0       0  ✓
+install_recovery.rs                        windows-latest    21     21      0       0  ✓
+install_stays_inside.rs                    ubuntu-latest      2      2      0       0  ✓
+install_stays_inside.rs                    macos-latest       2      2      0       0  ✓
+install_stays_inside.rs                    windows-latest     2      2      0       0  ✓
+
+파일 7 · OS 3 · 어긋남 0
+rc=0
+파일                                         OS                기대 passed failed ignored  판정
+round_stop.rs                              ubuntu-latest     23     23      0       0  ✓
+round_stop.rs                              macos-latest      23     23      0       0  ✓
+round_stop.rs                              windows-latest    26     26      0       0  ✓
+
+파일 1 · OS 3 · 어긋남 0
+rc=0
+
+## 로컬 --list 수(macOS)와 파서의 기대
+install                --list  50 · 파서 macos  50 · linux  50 · windows  52 · 같다
+install_boundary       --list  15 · 파서 macos  15 · linux  15 · windows  19 · 같다
+install_eol            --list  12 · 파서 macos  12 · linux  12 · windows  15 · 같다
+install_hooks          --list  21 · 파서 macos  21 · linux  21 · windows  24 · 같다
+install_hostile        --list  23 · 파서 macos  23 · linux  23 · windows  24 · 같다
+install_recovery       --list  18 · 파서 macos  18 · linux  18 · windows  21 · 같다
+install_stays_inside   --list   2 · 파서 macos   2 · linux   2 · windows   2 · 같다
+round_stop             --list  23 · 파서 macos  23 · linux  23 · windows  26 · 같다
+다른 파일 0
+
+## 음성 대조 — 윈도우 로그의 install_hooks passed 를 하나 줄인 사본
+install_hooks.rs windows passed 24 → 23
+파일                                         OS                기대 passed failed ignored  판정
+install_hooks.rs                           ubuntu-latest     21     21      0       0  ✓
+install_hooks.rs                           macos-latest      21     21      0       0  ✓
+install_hooks.rs                           windows-latest    24     23      0       0  ✗
+
+파일 1 · OS 3 · 어긋남 1
+rc=1
+
+## 0 개 대조 — 기본 패턴(아직 clean_uninstall_*.rs 없음)
+셀 수 없었다: `clean_uninstall_*.rs` 에 드는 시험 파일이 0 개다 — 0 을 훑고 통과하지 않는다
+rc=2
+
+## 판정 — 양성 rc 0 · 0 (0 이어야) · 음성 rc 1 (1 이어야) · 0 개 rc 2 (2 이어야)
