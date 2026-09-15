@@ -1,0 +1,67 @@
+# RED 착수 관측 — 바이너리 pal 0.1.1+b56ef097f158 · 2026-09-15T14:06:11Z
+# 격리 HOME=/private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/c7c1de0a-52f2-48d8-b5d1-8926cb99dbb6/scratchpad/red/home · TMPDIR=/private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/c7c1de0a-52f2-48d8-b5d1-8926cb99dbb6/scratchpad/red/tmp
+
+## R1 사용자 settings.json 왕복 — 바이트
+install rc=0
+--- install 뒤 git diff --stat
+ .claude/settings.json | 39 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 37 insertions(+), 2 deletions(-)
+uninstall rc=0
+R1 RED — 바이트 다르다
+ M .claude/settings.json
+
+## R2 사용 중 생긴 파생물 — uninstall 뒤
+install+touch+narrative rc=0
+--- 사용 뒤 git status (추적 안 된 파일 중 .palimpsest 아래)
+?? .palimpsest/manifest.toml
+?? .palimpsest/narrative-pending.json
+
+■ 제거 — /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/c7c1de0a-52f2-48d8-b5d1-8926cb99dbb6/scratchpad/red/p2
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  남겼다                   .palimpsest/  (비어 있지 않다 — 남의 것 4개가 남아 있다: cache · index.redb · intent.redb · narrative-pending.json)
+
+uninstall rc=0
+--- 설치 전 ↔ 제거 뒤
+1a2,8
+> DIR ./.palimpsest
+> DIR ./.palimpsest/cache
+> DIR ./.palimpsest/cache/0d
+> 7b7ce9e62ca7bbc6 ./.palimpsest/cache/0d/57ef97c69ff0d4fcc6f88eac6153a8a876dd99b37dd5c76f11e7fdb9ddeea6.bin
+> 2750dabf86746bbf ./.palimpsest/index.redb
+> 51129bfabe16677d ./.palimpsest/intent.redb
+> a79567539395167d ./.palimpsest/narrative-pending.json
+R2 RED — 위 줄이 남았다
+
+## R3 손으로 고친 블록 — update · doctor 가 잡나
+  이미 최신입니다  ·  pal 0.1.1+b56ef097f158
+
+update rc=0
+  ok   1  설정 파일이 유효한 JSON 인가
+  ok   2  매니페스트가 실물과 맞는가
+  ok   3  여기가 설치 루트인가
+  ok   4  `pal` 실행 파일을 찾을 수 있는가
+  ok   5  `.gitignore` 에 파생이 등재됐는가
+  ok   6  등록된 훅이 실제로 도는가
+doctor rc=0
+Error: 아무것도 지우지 않았다.
+
+uninstall rc=1
+
+## R4 프로젝트 밖 저장소 — stop enable 뒤 uninstall
+install rc=0
+Stop enabled: r1
+stop enable rc=0
+--- enable 뒤 HOME 에 생긴 것
+> ./Library
+> ./Library/Application Support
+> ./Library/Application Support/palimpsest
+> ./Library/Application Support/palimpsest/approvals
+> ./Library/Application Support/palimpsest/approvals/round-stop-activation-5b53d4204aad125ad25eb20ecc6962c97534829d.json
+uninstall rc=0
+--- 설치 전 ↔ 제거 뒤 HOME
+1a2,5
+> ./Library
+> ./Library/Application Support
+> ./Library/Application Support/palimpsest
+> ./Library/Application Support/palimpsest/approvals
+R4 RED — 위 줄이 HOME 에 남았다

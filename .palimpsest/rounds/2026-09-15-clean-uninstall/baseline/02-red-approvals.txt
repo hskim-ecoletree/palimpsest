@@ -1,0 +1,42 @@
+# RED 착수 관측 ② — 승인 기록 · 진행 파일 — 바이너리 pal 0.1.1+b56ef097f158 · 2026-09-15T14:07:15Z
+install rc=0
+
+## R5 approve
+approved: r1/A1
+approve rc=0
+verified: r1/A1 met=true
+verify rc=0
+--- approve·verify 뒤 HOME 에 생긴 것
+> ./Library
+> ./Library/Application Support
+> ./Library/Application Support/palimpsest
+> ./Library/Application Support/palimpsest/approvals
+> ./Library/Application Support/palimpsest/approvals/f0f2b70016ce36d02910f75b0614af5e6f7f4a3110f9c4281edc5c075a29a74b.json
+--- f0f2b70016ce36d02910f75b0614af5e6f7f4a3110f9c4281edc5c075a29a74b.json
+{"version":1,"digest":"f0f2b70016ce36d02910f75b0614af5e6f7f4a3110f9c4281edc5c075a29a74b"}
+
+
+## R6 stop enable + Stop 훅 발화(진행 파일)
+Stop enabled: r1
+enable rc=0
+pal hook Stop  ·  pal 0.1.1+b56ef097f158  ·  차단 — Stop transcript를 읽지 못했다: transcript metadata를 읽지 못했다
+{"decision":"block","reason":"Stop transcript를 읽지 못했다: transcript metadata를 읽지 못했다"}
+pal hook Stop  ·  pal 0.1.1+b56ef097f158  ·  차단 — Stop transcript를 읽지 못했다: transcript metadata를 읽지 못했다
+{"decision":"block","reason":"Stop transcript를 읽지 못했다: transcript metadata를 읽지 못했다"}
+--- enable·훅 뒤 HOME 에 새로 생긴 것
+> ./Library/Application Support/palimpsest/approvals/round-stop-activation-0ef7c36b816f1651104f18161f0c8ad4a64f28c9.json
+
+## uninstall
+
+■ 제거 — /private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/c7c1de0a-52f2-48d8-b5d1-8926cb99dbb6/scratchpad/red2/p5
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+
+uninstall rc=0
+--- 설치 전 ↔ 제거 뒤 HOME
+1a2,6
+> ./Library
+> ./Library/Application Support
+> ./Library/Application Support/palimpsest
+> ./Library/Application Support/palimpsest/approvals
+> ./Library/Application Support/palimpsest/approvals/f0f2b70016ce36d02910f75b0614af5e6f7f4a3110f9c4281edc5c075a29a74b.json
+R5·R6 RED — 위 줄이 HOME 에 남았다
