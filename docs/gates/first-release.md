@@ -1,7 +1,7 @@
 # 게이트 — 첫 릴리스
 
 **회차** `2026-09-14-first-release` · **이슈** #77 · #127 · #139 · #156 · #159 (R1) · 분할 [#160](https://github.com/hskim-ecoletree/palimpsest/issues/160)
-**착수** `ec92b89` · **판정일** 2026-09-15 · **릴리스** [`v0.1.0`](https://github.com/hskim-ecoletree/palimpsest/releases/tag/v0.1.0)(`e80ca14`)
+**착수** `ec92b89` · **판정일** 2026-09-15 · **릴리스** [`v0.1.0`](https://github.com/hskim-ecoletree/palimpsest/releases/tag/v0.1.0)(`e80ca14`) · 교정 [`v0.1.1`](https://github.com/hskim-ecoletree/palimpsest/releases/tag/v0.1.1)(`b56ef09`)
 
 > 잠긴 의도 [`intent.md`](../../.palimpsest/rounds/2026-09-14-first-release/intent.md) ·
 > 승인 [`approval.md`](../../.palimpsest/rounds/2026-09-14-first-release/approval.md) ·
@@ -84,7 +84,7 @@
 
 ### 독립 리뷰가 고치게 한 것 — README 의 사실 두 줄
 
-`C1` 은 README 의 걸음과 파일 존재를 재고 **문장의 참**은 안 잰다. 리뷰 R1 이 둘을 잡았다 — ⑴ 「그 밖의 파일은 결박 불가」가 Kotlin 에 대해 **거짓**(Kotlin 은 L1 로 좌표와 결박까지 된다 · 금지역) ⑵ 설치가 `CLAUDE.md`·`.gitignore` 블록을 쓴다는 것을 빠뜨렸다. `v0.1.0` 아카이브 넷에 ⑴ 이 실렸으므로 고친 README 를 실어 **`v0.1.1`** 로 다시 릴리스한다.
+`C1` 은 README 의 걸음과 파일 존재를 재고 **문장의 참**은 안 잰다. 리뷰 R1 이 둘을 잡았다 — ⑴ 「그 밖의 파일은 결박 불가」가 Kotlin 에 대해 **거짓**(Kotlin 은 L1 로 좌표와 결박까지 된다 · 금지역) ⑵ 설치가 `CLAUDE.md`·`.gitignore` 블록을 쓴다는 것을 빠뜨렸다. `v0.1.0` 아카이브 넷에 ⑴ 이 실렸으므로 고친 README 를 실어 **`v0.1.1`** 로 다시 릴리스했다(`oracle/v011-correction.txt`). ⚠ 독립 리뷰 R2 가 고친 Kotlin 줄도 넓다고 잡았다 — Kotlin 은 **파일 최상위 선언**에만 좌표가 있다(실측). `main` 의 README 와 `v0.1.1` 릴리스 노트가 정확한 범위를 싣고, `v0.1.1` 아카이브의 그 줄은 **거짓신호로 판정**해 재릴리스하지 않았다.
 
 ## 효과
 

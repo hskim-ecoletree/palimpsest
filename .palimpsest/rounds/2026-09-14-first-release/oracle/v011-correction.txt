@@ -1,0 +1,40 @@
+# v0.1.1 교정 릴리스 — 증거 · 2026-09-15T06:45:42Z
+## 태그 런 34937509696
+  b56ef09 push v0.1.1 conclusion success
+    success 세운다 · x86_64-unknown-linux-gnu
+    success 세운다 · x86_64-pc-windows-msvc
+    success 세운다 · x86_64-apple-darwin
+    success 세운다 · aarch64-apple-darwin
+    success 툴체인 없이 · x86_64-unknown-linux-gnu
+    success 툴체인 없이 · aarch64-apple-darwin
+    success 툴체인 없이 · x86_64-pc-windows-msvc
+    success 릴리스를 산출한다
+- 태그가 가리키는 커밋: b56ef09 · 그 커밋의 CI 런 34936295023 success
+## 자산
+  v0.1.1 draft=false pre=false https://github.com/hskim-ecoletree/palimpsest/releases/tag/v0.1.1
+    pal-aarch64-apple-darwin.tar.gz 5742413
+    pal-x86_64-apple-darwin.tar.gz 6005445
+    pal-x86_64-pc-windows-msvc.zip 5319607
+    pal-x86_64-unknown-linux-gnu.tar.gz 6359107
+    SHA256SUMS 394
+## 받은 아카이브(aarch64-apple-darwin) — 해시 · 버전 · README 교정 줄
+pal-aarch64-apple-darwin.tar.gz: OK
+pal 0.1.1+b56ef097f158
+11:  - **Kotlin** — 심볼 좌표와 결정 결박까지입니다. 호출자와 참조 해소는 아직 없어 `호출자 0` 이 「아무도 안 부른다」는 뜻이 아닙니다.
+12:  - **그 밖의 언어**(Java · JavaScript · Python 등) — 대장에 「텍스트만 · 결박 불가」로 적히고 좌표가 없습니다.
+45:`pal install` 은 그 프로젝트 안에만 씁니다 — `.claude/` 아래의 훅·스킬, `CLAUDE.md` 와 `.gitignore` 에
+- 틀린 문장이 남았나: 0 곳
+## v0.1.0 릴리스 노트 머리
+> ⚠ **교정 — `v0.1.1` 을 받으십시오.** 이 릴리스의 아카이브에 든 `README.md` 의 한 문장이 사실이 아닙니다.
+>
+> - 틀린 문장: 「지원 언어: TypeScript · Rust (첫 릴리스). 그 밖의 파일은 대장에 「결박 불가」로 적힙니다.」
+> - 실제: **Kotlin** 파일은 L1 로 파싱되어 심볼 좌표와 결정 결박이 섭니다(호출자와 참조 해소는 아직 없습니다). 결박 불가로 적히는 것은 Java · JavaScript · Python 같은 그 밖의 언어입니다.
+> - 또 `pal install` 이 `CLAUDE.md` 와 `.gitignore` 에 표시된 블록을 쓴다는 것이 빠져 있었습니다.
+>
+> 바이너리의 동작은 `v0.1.1` 과 같고, `v0.1.1` 은 이 두 줄을 고친 README 를 싣습니다.
+
+
+## ⟨독립 리뷰 R2 뒤⟩ 밖으로 나간 교정
+- v0.1.1 릴리스 노트: 변경 목록 · 정확한 언어 범위(Kotlin 은 파일 최상위 선언만) · 아카이브 README 의 Kotlin 줄이 넓다는 경고
+- #160 본문: 대상 바이너리를 최신 릴리스(v0.1.1 이상)로
+- Kotlin 범위 실측(v0.1.1 바이너리): 좌표 있음 Circle · Registry · Shape · topLevelHelper · topLevelValue / 없음 area · scale · unit · lookup · draw
