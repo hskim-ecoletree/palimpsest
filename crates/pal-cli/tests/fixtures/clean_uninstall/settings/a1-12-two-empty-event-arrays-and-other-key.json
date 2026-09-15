@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "Stop": [],
+    "SubagentStop": []
+  },
+  "model": "opus"
+}

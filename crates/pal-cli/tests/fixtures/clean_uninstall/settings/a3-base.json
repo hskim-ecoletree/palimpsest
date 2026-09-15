@@ -1,0 +1,23 @@
+{
+  "model": "opus",
+  "env": {
+    "A": "1"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "notify.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(ls)"
+    ]
+  }
+}

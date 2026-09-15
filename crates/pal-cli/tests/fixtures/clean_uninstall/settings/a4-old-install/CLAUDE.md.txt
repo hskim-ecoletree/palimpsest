@@ -1,0 +1,3 @@
+<!-- pal:begin — palimpsest. `pal uninstall` 이 이 블록을 걷어낸다 -->
+@.claude/pal/INSTRUCTIONS.md
+<!-- pal:end -->

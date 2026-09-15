@@ -1,0 +1,136 @@
+# T1 — A2 골든 JSON 과 A4 옛 설치 fixture 를 착수 커밋 acd7e82 빌드로 뜬 절차와 출력
+#
+# 착수 빌드: `git worktree add --detach <스크래치>/acd7e82 acd7e82` 뒤 `CARGO_TARGET_DIR=<스크래치>/acd7e82-target cargo build -p pal-cli`
+# 입력(A1 모집단 · A3 바탕 · A4 설치 전 파일)은 아래 파이썬이 정확한 바이트로 썼다.
+# 골든은 그 입력 위에 착수 바이너리로 install 한 뒤의 settings.json 이다.
+# A4 fixture 는 설치 전 파일을 커밋한 방에 착수 바이너리로 install 한 뒤의 settings.json · manifest.json · CLAUDE.md · .gitignore · .palimpsest/manifest.toml 이다.
+# 지금 빌드의 병합 코드는 이 절차 어디에도 안 끼었다.
+
+## 입력 생성기 (gen-inputs.py)
+
+#!/usr/bin/env python3
+"""A1 모집단 입력 · A3 바탕 · A4 설치 전 파일을 정확한 바이트로 쓴다."""
+import os, sys
+
+out = sys.argv[1]
+os.makedirs(out, exist_ok=True)
+
+def w(name, text):
+    with open(os.path.join(out, name), "wb") as f:
+        f.write(text.encode("utf-8"))
+
+indent2 = '{\n  "model": "opus",\n  "permissions": {\n    "allow": [\n      "Bash(ls)"\n    ]\n  }\n}\n'
+w("a1-01-indent2.json", indent2)
+w("a1-02-indent4.json", '{\n    "env": {\n        "A": "1"\n    },\n    "model": "opus"\n}\n')
+w("a1-03-tab.json", '{\n\t"model": "opus",\n\t"permissions": {\n\t\t"deny": [\n\t\t\t"Bash(rm)"\n\t\t]\n\t}\n}\n')
+w("a1-04-one-line.json", '{"model": "opus", "permissions": {"allow": ["Bash(ls)"]}}\n')
+w("a1-05-crlf.json", indent2.replace("\n", "\r\n"))
+w("a1-06-no-final-newline.json", indent2[:-1])
+w("a1-07-empty-object.json", "{}\n")
+w("a1-08-same-event-other-hook.json",
+  '{\n  "hooks": {\n    "Stop": [\n      {\n        "hooks": [\n          {\n            "type": "command",\n            "command": "notify.sh"\n          }\n        ]\n      }\n    ]\n  }\n}\n')
+w("a1-09-other-event-hook.json",
+  '{\n  "hooks": {\n    "PreToolUse": [\n      {\n        "matcher": "Bash",\n        "hooks": [\n          {\n            "type": "command",\n            "command": "guard.sh"\n          }\n        ]\n      }\n    ]\n  },\n  "model": "opus"\n}\n')
+w("a1-10-no-hooks.json", '{\n  "env": {\n    "DEBUG": "1"\n  },\n  "includeCoAuthoredBy": false\n}\n')
+w("a1-11-empty-event-array.json", '{"hooks":{"Stop":[]}}\n')
+w("a1-12-two-empty-event-arrays-and-other-key.json",
+  '{\n  "hooks": {\n    "Stop": [],\n    "SubagentStop": []\n  },\n  "model": "opus"\n}\n')
+w("a1-13-key-order.json",
+  '{\n  "permissions": {\n    "allow": [\n      "Read"\n    ]\n  },\n  "model": "opus",\n  "env": {\n    "Z": "1",\n    "A": "2"\n  }\n}\n')
+w("a1-14-escapes-and-numbers.json",
+  '{\n  "hooks": {\n    "PostToolUse": [\n      {\n        "hooks": [\n          {\n            "type": "command",\n            "command": "\\u0041 \\/tmp\\/x.sh",\n            "timeout": 1.0\n          }\n        ],\n        "weight": 1e3\n      }\n    ]\n  }\n}\n')
+w("a1-15-inline-pal-event-array.json",
+  '{\n  "hooks": {\n    "Stop": [{"hooks": [{"type": "command", "command": "notify.sh"}]}]\n  },\n  "model": "opus"\n}\n')
+w("a1-16-empty-hooks-object.json", '{\n  "hooks": {},\n  "model": "opus"\n}\n')
+w("a1-17-bare-empty-object.json", "{}")
+w("a1-18-crlf-indent4-no-final-newline.json",
+  '{\r\n    "hooks": {\r\n        "Stop": [\r\n            {\r\n                "hooks": [\r\n                    {\r\n                        "type": "command",\r\n                        "command": "notify.sh"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    "model": "opus"\r\n}')
+w("a1-19-compact-no-spaces.json", '{"model":"opus","hooks":{"SubagentStop":[{"hooks":[{"type":"command","command":"x.sh"}]}]}}')
+
+# A3 — 사용자가 설치 뒤에 고치는 방의 바탕.
+w("a3-base.json",
+  '{\n  "model": "opus",\n  "env": {\n    "A": "1"\n  },\n  "hooks": {\n    "Stop": [\n      {\n        "hooks": [\n          {\n            "type": "command",\n            "command": "notify.sh"\n          }\n        ]\n      }\n    ]\n  },\n  "permissions": {\n    "allow": [\n      "Bash(ls)"\n    ]\n  }\n}\n')
+
+# A4 — 옛 설치(재직렬화) 전의 사용자 파일. 재직렬화하면 바이트가 달라지는 형태.
+os.makedirs(os.path.join(out, "a4-old-install"), exist_ok=True)
+w("a4-old-install/settings.before.json",
+  '{\n    "permissions": {\n        "allow": ["Bash(ls)"]\n    },\n    "model": "opus"\n}\n')
+
+## 골든 · 옛 설치 생성기 (gen-golden.sh)
+
+#!/bin/bash
+# A2 골든 · A4 옛 설치 fixture 를 착수 커밋(acd7e82) 빌드로 뜬다.
+set -euo pipefail
+S=/private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/c7c1de0a-52f2-48d8-b5d1-8926cb99dbb6/scratchpad
+OLD=$S/acd7e82-target/debug/pal
+FX=/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-aa351aeafb4b52cbd/crates/pal-cli/tests/fixtures/clean_uninstall/settings
+echo "착수 빌드: $($OLD --version)  ($OLD)"
+echo "착수 worktree HEAD: $(git -C $S/acd7e82 rev-parse HEAD)"
+ROOMS=$S/golden-rooms
+rm -rf "$ROOMS"
+mkdir -p "$ROOMS"
+
+방() {
+  local r=$1
+  mkdir -p "$r/.claude" "$r/home"
+  git -C "$r" init -q .
+  git -C "$r" config core.autocrlf false
+  echo hi > "$r/README.md"
+}
+
+for f in "$FX"/a1-*.json; do
+  case "$f" in *.golden.json) continue;; esac
+  name=$(basename "$f" .json)
+  r=$ROOMS/$name
+  방 "$r"
+  cp "$f" "$r/.claude/settings.json"
+  (cd "$r" && HOME=$r/home XDG_DATA_HOME=$r/home/.local/share "$OLD" install >/dev/null)
+  cp "$r/.claude/settings.json" "$FX/$name.golden.json"
+  echo "골든  $name.golden.json  sha256=$(shasum -a 256 "$FX/$name.golden.json" | cut -d' ' -f1)"
+done
+
+# A4 — 설치 전 파일을 커밋한 방에 착수 빌드로 설치하고, 설정 쪽 기록을 뜬다.
+r=$ROOMS/a4
+방 "$r"
+cp "$FX/a4-old-install/settings.before.json" "$r/.claude/settings.json"
+git -C "$r" add -A
+git -C "$r" -c user.email=t@example.com -c user.name=t commit -qm before
+(cd "$r" && HOME=$r/home XDG_DATA_HOME=$r/home/.local/share "$OLD" install >/dev/null)
+D=$FX/a4-old-install
+cp "$r/.claude/settings.json" "$D/settings.installed.json"
+cp "$r/.claude/pal/manifest.json" "$D/manifest.json"
+cp "$r/CLAUDE.md" "$D/CLAUDE.md.txt"
+cp "$r/.gitignore" "$D/gitignore.txt"
+cp "$r/.palimpsest/manifest.toml" "$D/manifest.toml.txt"
+for x in settings.installed.json manifest.json CLAUDE.md.txt gitignore.txt manifest.toml.txt; do
+  echo "A4    a4-old-install/$x  sha256=$(shasum -a 256 "$D/$x" | cut -d' ' -f1)"
+done
+
+## 출력
+
+착수 빌드: pal 0.1.1+acd7e820fca3  (/private/tmp/claude-501/-Users-incognito-dev-projects-palimpsest/c7c1de0a-52f2-48d8-b5d1-8926cb99dbb6/scratchpad/acd7e82-target/debug/pal)
+착수 worktree HEAD: acd7e820fca3db32f2c14697f2d2606e02907fa9
+골든  a1-01-indent2.golden.json  sha256=54a1bf41f2553e3ebd4a373afba1c3d2a9d8c44b865498db59250eacbb9efe65
+골든  a1-02-indent4.golden.json  sha256=6c2b1a95476373aa21e5794733c23aa0ea4b3f81e4e6d64a1c9c64924a36205e
+골든  a1-03-tab.golden.json  sha256=2dbe13e336d3d4648615e477a555df9ff76ee1505e328836dd0590c808e37fed
+골든  a1-04-one-line.golden.json  sha256=54a1bf41f2553e3ebd4a373afba1c3d2a9d8c44b865498db59250eacbb9efe65
+골든  a1-05-crlf.golden.json  sha256=cd2ee2b1322109b9fe1e4f24ac8d42fc40caa0fc591891bfea220233771aba26
+골든  a1-06-no-final-newline.golden.json  sha256=54a1bf41f2553e3ebd4a373afba1c3d2a9d8c44b865498db59250eacbb9efe65
+골든  a1-07-empty-object.golden.json  sha256=68988cf0108c6356cb9721a9054bf73b055c194d993102c1042bed5f565d2c3d
+골든  a1-08-same-event-other-hook.golden.json  sha256=51af992a897a84c8d0c20d1533c05fe32487a1ab33a58d6b05aad43819704f15
+골든  a1-09-other-event-hook.golden.json  sha256=5813c53a5f8778ba78c67025dd94e0f8b895a8b59139df842955a21066a13a7d
+골든  a1-10-no-hooks.golden.json  sha256=0104b8dfb2fbdc5e3dcabbc71b0d70e595b3a1d767d73ce37220bbdf9b695726
+골든  a1-11-empty-event-array.golden.json  sha256=68988cf0108c6356cb9721a9054bf73b055c194d993102c1042bed5f565d2c3d
+골든  a1-12-two-empty-event-arrays-and-other-key.golden.json  sha256=ef312f045eba43bebbbaf0cc86bf4f14dedfb0a16ee48db32616173cb6bdeffa
+골든  a1-13-key-order.golden.json  sha256=f9aafbf12cdede8ad2331b865973ed1394a48c1603946adb3f9e4f627591833a
+골든  a1-14-escapes-and-numbers.golden.json  sha256=c1527fd756ffb80d201ba3a3384861ab419b50e13e488b452197f45a4959d29e
+골든  a1-15-inline-pal-event-array.golden.json  sha256=183ebbd5ebcb525d2e05339dbc32325aa5d38746b0d619391670c9e63c7ab6b4
+골든  a1-16-empty-hooks-object.golden.json  sha256=ef312f045eba43bebbbaf0cc86bf4f14dedfb0a16ee48db32616173cb6bdeffa
+골든  a1-17-bare-empty-object.golden.json  sha256=68988cf0108c6356cb9721a9054bf73b055c194d993102c1042bed5f565d2c3d
+골든  a1-18-crlf-indent4-no-final-newline.golden.json  sha256=a0113dd9398c8533892d98c46496bfa35bc77b440c6b1c25cd114fd107d3a24a
+골든  a1-19-compact-no-spaces.golden.json  sha256=fd344b3a66ba310e57aa04da075408d4361699b36ea57f14516a961316ed8f13
+A4    a4-old-install/settings.installed.json  sha256=54a1bf41f2553e3ebd4a373afba1c3d2a9d8c44b865498db59250eacbb9efe65
+A4    a4-old-install/manifest.json  sha256=55d334ce2ee2eb7cdc2350ba28a8686006166a4a98477a5202ecb435eafc4ca2
+A4    a4-old-install/CLAUDE.md.txt  sha256=475443565a7c8431a9b9fac394c7b4234d4b48e88c5a125e214ed2f3d9af3a73
+A4    a4-old-install/gitignore.txt  sha256=0b7fbb3aa488b9e92f719a249789e6ffa4ddeed34306ffa2f5a896979cc10868
+A4    a4-old-install/manifest.toml.txt  sha256=f6ca41f8512d6a48dcd61e3ad9cbe3001acaea9855f6a7770f220731a4d38918

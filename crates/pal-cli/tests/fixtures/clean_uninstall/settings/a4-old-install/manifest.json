@@ -1,0 +1,173 @@
+{
+  "pal_version": "0.1.1+acd7e820fca3",
+  "roots": {
+    "dirs": [
+      ".claude/pal",
+      ".claude/commands/pal"
+    ],
+    "files": [
+      ".claude/agents/pal-orchestrator.md",
+      ".claude/agents/pal-premortem-sweeper.md",
+      ".claude/agents/pal-independent-reviewer.md",
+      ".claude/agents/pal-decision-opponent.md",
+      ".claude/agents/pal-decision-synthesizer.md",
+      ".claude/agents/pal-debate-designer.md",
+      ".claude/agents/pal-decision-proposer.md",
+      ".claude/agents/pal-debate-referee.md",
+      ".claude/agents/pal-debate-reporter.md",
+      ".claude/agents/pal-condition-auditor.md",
+      ".claude/skills/pal-round/SKILL.md",
+      ".claude/skills/pal-round/bin/dashboard.py",
+      ".claude/skills/pal-round/bin/record.py"
+    ]
+  },
+  "manifest_path": ".claude/pal/manifest.json",
+  "files": [
+    {
+      "path": ".claude/pal/INSTRUCTIONS.md",
+      "sha256": "e3a66ce03f8fb9b1c712a399a2b0dfd5ca5c3fd4a219cab742b27d3cdfa0397f",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-orchestrator.md",
+      "sha256": "294a86d6c84db43fa251ce679d816645f5a720c6a5f3f994b5c222c799afa33e",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/commands/pal/touch.md",
+      "sha256": "fafa82bfd50eb873c702ea3465672a358a36b30ae2c1b9651ed02baa0b3aa778",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/commands/pal/plan.md",
+      "sha256": "63686b77148819d5b58c09f3af7f7da54d1ea6d3ee222aa2e33f3972011ab733",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/commands/pal/doctor.md",
+      "sha256": "8c9e67361b773f6307d67818d62df918e3e622688b0b1f4b076d5f994c91d71f",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/commands/pal/ledger.md",
+      "sha256": "b62a0379ab445da9d11adfb3f9e4de4fc4cb4f9b2603fb0ae141f47f7bc5c967",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/skills/pal-round/SKILL.md",
+      "sha256": "4fa4c2509349bbc51c2afe017c945c33050aae86926f66c0f6db8a8bc2e08759",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-premortem-sweeper.md",
+      "sha256": "c96b8e31f3b0cfbf4d985dd623fa56f34c81394c2bb887dd9c43845f0066c7c5",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-independent-reviewer.md",
+      "sha256": "caf79da2768daddbc063631ba4fa03dbf2f7144f1317d06117d1f0ec26972b8e",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-decision-opponent.md",
+      "sha256": "0b38978a29dca6fb482de53ffeb991f6cd3696deb1410ec699365b8b9a43fc6b",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-decision-synthesizer.md",
+      "sha256": "2e7890d444795df01802a2838790b250ecc6ff24abeffeebcead76ea1d612eb0",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-debate-designer.md",
+      "sha256": "36243647dc7b5c321591eac4496e3a44a6bba609b0a31c3e354dbcb132a63391",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-decision-proposer.md",
+      "sha256": "843900ebe4a40a195c57704ae55a0a0cffb7f8472380065610a0ae1989e3cf55",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-debate-referee.md",
+      "sha256": "f8edb1798cd2d05553c2549ab405725961f332ebd01f2ce1daef810a0943259e",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-debate-reporter.md",
+      "sha256": "65422d4548e71f7cc05771839df93c0ecc75333b2625a9ce4129cc00f6db4227",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/agents/pal-condition-auditor.md",
+      "sha256": "05db3ca76beabe035c689da0b5bc10b26efe1a1b2dfdbd6929b4bd67417a6137",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/skills/pal-round/bin/dashboard.py",
+      "sha256": "c3dcf310d2854ea55beea4c9eb38de9f6debac577963ef2df9f8caed0c66203b",
+      "origin": "ours"
+    },
+    {
+      "path": ".claude/skills/pal-round/bin/record.py",
+      "sha256": "bbca630649d20e7a33d52462ab3a895ac45ff21977750c6cedd69ed5c1bcb1b8",
+      "origin": "ours"
+    }
+  ],
+  "blocks": [
+    {
+      "path": "CLAUDE.md",
+      "inserted": "<!-- pal:begin — palimpsest. `pal uninstall` 이 이 블록을 걷어낸다 -->\n@.claude/pal/INSTRUCTIONS.md\n<!-- pal:end -->\n",
+      "created": true
+    },
+    {
+      "path": ".gitignore",
+      "inserted": "# pal:begin — palimpsest. `pal uninstall` 이 이 블록을 걷어낸다\n/.palimpsest/cache/\n/.palimpsest/index.redb\n/.palimpsest/intent.redb\n# pal:end\n",
+      "created": true
+    }
+  ],
+  "settings": {
+    "path": ".claude/settings.json",
+    "added_keys": [
+      "agent"
+    ],
+    "added_values": {
+      "agent": "pal-orchestrator"
+    },
+    "hooks": [
+      {
+        "event": "SubagentStop",
+        "command": "pal",
+        "args": [
+          "hook",
+          "SubagentStop"
+        ]
+      },
+      {
+        "event": "Stop",
+        "command": "pal",
+        "args": [
+          "hook",
+          "Stop"
+        ]
+      }
+    ],
+    "hooks_key_created": true,
+    "created": false
+  },
+  "declaration": {
+    "path": ".palimpsest/manifest.toml",
+    "sha256": "f6ca41f8512d6a48dcd61e3ad9cbe3001acaea9855f6a7770f220731a4d38918"
+  },
+  "created_dirs": [
+    ".claude/pal",
+    ".claude/agents",
+    ".claude/commands",
+    ".claude/commands/pal",
+    ".claude/skills",
+    ".claude/skills/pal-round",
+    ".claude/skills/pal-round/bin",
+    ".palimpsest"
+  ],
+  "removing": false
+}
