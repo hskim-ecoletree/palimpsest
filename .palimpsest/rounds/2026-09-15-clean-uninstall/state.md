@@ -30,6 +30,15 @@
 
 증거는 `oracle/T<n>-red.txt` · `oracle/T<n>-negative-<조건>.txt`. 병합 순서는 T1 → T2 → T3(T3 의 `--purge` 시험은 T2 병합 뒤 초록).
 
+- **접점 스텁 머리 주석의 지목된 표현(「~에 산다」)을 main 에서 고쳤다**(`a1d66ee`) — 세 갈래의 `check` 가 그 한 줄로 빨갰을 수 있다. T3 에게 같은 줄로 바꾸라고 알렸다.
+- **E1 셈 스크립트는 섰다**(`65a811a` · `95c801c`) — 이미 초록인 시험 파일 여덟으로 양성 · 음성 · 0 개 대조를 댔다(`oracle/E1-script-controls.txt`).
+- **F1 대상 — `~/dev/projects/ditto`**(TypeScript 496 · ADR 있음 · origin `https://github.com/incognito050924/ditto.git` · HEAD `aded7ce7`). 로컬 경로에서 새로 클론한 뒤
+  origin 을 GitHub 주소로 맞춘다(식별자가 실사용과 같게). `.claude/` · `CLAUDE.md` 가 이미 커밋돼 있어 사용자 파일 보존을 실물로 잰다.
+  boxwood 의 `external-client` · `automation-engine` 은 Java 라 결박 승인 걸음이 못 선다 — 고르지 않았다.
+- **게이트 합격선을 측정 전에 등록했다**(`docs/gates/clean-uninstall.md` · 조건 20 전부 미측정). 승인 요청의 「21」은 셈 착오 — `approval.md` 머리에 정정.
+- **F1 · G1 의 「결박 승인 하나」 걸음은 `pal bind --note <조각> <심볼>`** — 후보 목록에 기대지 않아 결정론적이다. 문서 조각 후보의 승인·거부는
+  `pal narrative --approve` · `--refuse`(둘 다 `intent.redb` 에 기록 — B3 의 「거부만 한 방」이 쓴다).
+
 ## 착수 바이너리
 
 릴리스 `v0.1.1` = `pal 0.1.1+b56ef097f158`. 이 저장소의 `./.palimpsest/bin/pal`(없으면 `scripts/pal-release.sh v0.1.1`).
