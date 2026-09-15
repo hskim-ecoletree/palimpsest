@@ -127,9 +127,8 @@ fn 걷는다_자리에서(repo: &Path, store: &Path, 방식: 걷기) -> Result<�
             match 표시로_가른다(&record, &project) {
                 Some(몫::이_프로젝트) => 지울.push(path),
                 Some(몫::남의) => {}
-                Some(몫::가를_수_없다) => 보고.가를_수_없는.push(path),
                 None if 이_프로젝트_진행.contains(digest) => 지울.push(path),
-                None => 보고.가를_수_없는.push(path),
+                Some(몫::가를_수_없다) | None => 보고.가를_수_없는.push(path),
             }
         } else if let Some((digest, _)) = name
             .split_once('.')

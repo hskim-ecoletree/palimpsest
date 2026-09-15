@@ -322,7 +322,7 @@ fn 봉인_digest(repo: &Path) -> String {
         .filter_map(|line| serde_json::from_str::<Value>(line).ok())
         .filter(|event| event["kind"] == "checkpoint")
         .filter_map(|event| event["finalization_seal"].as_str().map(str::to_owned))
-        .last()
+        .next_back()
         .expect("checkpoint 가 없다 — 종료 봉인이 안 됐다")
 }
 
@@ -462,18 +462,18 @@ fn d1_음성_대조_승인의_표시가_다른_프로젝트면_purge_가_안_걷
 #[test]
 fn d2_기본_uninstall_은_x_의_활성화_진행_잠금과_표시만_걷고_나머지는_바이트_그대로다() {
     let 방 = 방::new("d2-default");
-    let x = 방.프로젝트("x", "https://example.invalid/d2-x.git");
-    let y = 방.프로젝트("y", "https://example.invalid/d2-y.git");
-    let 기록x = 방.쌓는다(&x);
-    let _기록y = 방.쌓는다(&y);
+    let x_repo = 방.프로젝트("x", "https://example.invalid/d2-x.git");
+    let y_repo = 방.프로젝트("y", "https://example.invalid/d2-y.git");
+    let 기록x = 방.쌓는다(&x_repo);
+    let _기록y = 방.쌓는다(&y_repo);
     let store = 방.저장소();
 
-    let 앞 = 방.스냅샷();
-    let out = 방.pal(&x, &["uninstall"]);
+    let 걷기_전 = 방.스냅샷();
+    let out = 방.pal(&x_repo, &["uninstall"]);
     assert!(out.status.success(), "{}", 문자열(&out));
-    let 뒤 = 방.스냅샷();
+    let 걷은_뒤 = 방.스냅샷();
     assert_eq!(
-        갈린_집합(&앞, &뒤),
+        갈린_집합(&걷기_전, &걷은_뒤),
         집합(&방, &기록x.운영_상태(&store)),
         "X 기본 uninstall 이 X 의 운영 상태만 걷지 않았다\n{}",
         문자열(&out)
