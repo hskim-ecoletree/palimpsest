@@ -1,0 +1,122 @@
+═══════════════════════════════════════════════════════════════════════
+F1 — 효과 · 걸음 「default」 · 바이너리 꼬리표 「round」
+═══════════════════════════════════════════════════════════════════════
+
+바이너리   : /Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-acd450dbf4c8986fe/target/release/pal
+판              : pal 0.1.1+969d9cfb9df4
+대상 저장소     : /Users/incognito/dev/projects/ditto  →  origin https://github.com/incognito050924/ditto.git
+돌린 때         : 2026-09-15T23:35:43Z
+기계            : Darwin arm64
+
+클론 HEAD       : aded7ce7 (기대 aded7ce7)
+origin          : https://github.com/incognito050924/ditto.git
+
+설치 전 스냅샷  : 워킹트리 2913 자리 · HOME 0 자리
+
+── 흐름 ──────────────────────────────────────────────────────────────
+  install         ok
+  고른 좌표       __setRepoVisibilityForTest
+  touch           ok
+  narrative       ok · 316 · 조각 4903 · 새 개체 4903
+  bind            ok · 결박 하나
+  round approve   ok · c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3
+  round verify    met
+  종료 봉인       complete
+  stop enable     ok · a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051
+  Stop 훅         차단(진행 파일을 쓰는 자리까지)
+  밖의 기록       승인 · 봉인 · 진행 · 잠금 생겼다
+  표시 · 조상     있다   Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.project
+  표시 · 조상     있다   Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.project
+  표시 · 조상     있다   Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.project
+  표시 · 조상     있다   Library/Application Support/palimpsest/created-ancestors.json
+
+── uninstall 화면 ────────────────────────────────────────────────────
+명령: pal uninstall   rc=0
+
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-f1-59817/default/repo
+  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals/round-stop-activation-22bbf05d396d5cefe73638e0705c911830ceb92a38c2ea199eae414902e3e81e.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.lock
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.project
+  남겼다(밖)                4개 — 이 프로젝트의 정본
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.json  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.project  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.json  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-59817/default/home/Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.project  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  ⚠ Stop 정책             같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다
+  블록 뺌                  CLAUDE.md
+  블록 뺌                  .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다(파생물)              .palimpsest/cache/
+  지웠다(파생물)              .palimpsest/index.redb
+  지웠다(파생물)              .palimpsest/narrative-pending.json
+  남겼다(정본)               .palimpsest/intent.redb  (결박 1 · 거부 0 — 이 파일에만 있다. 결박은 `pal intent export --out .palimpsest/intent/bindings.jsonl` 로 내보낼 수 있고, 파일째 걷으려면 `pal install` 뒤 `pal uninstall --purge`)
+  가렸다                   .palimpsest/.gitignore  (자기 자신과 intent.redb 만 git 에서 가린다)
+  남겼다(정본)               .palimpsest/rounds/  (파일 6개 — 바이트 그대로. 추적 안 된 것까지 걷으려면 `pal install` 뒤 `pal uninstall --purge`)
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/commands/
+  남겼다                   .palimpsest/  (비어 있지 않다 — 남의 것 3개가 남아 있다: .gitignore · intent.redb · rounds)
+
+
+── 스냅샷 diff (설치 전 ↔ uninstall 뒤) ──────────────────────────────
+워킹트리 갈림 12 · HOME 갈림 9
+(목록은 한쪽에 200 줄까지 적는다 — 수는 위가 정본이다)
+
+  [워킹트리]
+    .palimpsest
+    .palimpsest/.gitignore
+    .palimpsest/intent.redb
+    .palimpsest/rounds
+    .palimpsest/rounds/open-round
+    .palimpsest/rounds/open-round/intent.md
+    .palimpsest/rounds/open-round/verification.log
+    .palimpsest/rounds/sealed-round
+    .palimpsest/rounds/sealed-round/findings.jsonl
+    .palimpsest/rounds/sealed-round/intent.md
+    .palimpsest/rounds/sealed-round/report.md
+    .palimpsest/rounds/sealed-round/verification.log
+
+  [HOME]
+    Library
+    Library/Application Support
+    Library/Application Support/palimpsest
+    Library/Application Support/palimpsest/approvals
+    Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.json
+    Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.project
+    Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.json
+    Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.project
+    Library/Application Support/palimpsest/created-ancestors.json
+
+── 판정 ──────────────────────────────────────────────────────────────
+  갈림 21 (워킹트리 12 · HOME 9) · 그 가운데 디렉터리 8
+  ① L 밖 갈림            0
+  ② 화면에 없는 갈림       0   (디렉터리 엔트리는 뺀다 — L 이 「그 자리의 부모 디렉터리」로 이미 허용한 자리다)
+  ③ 잰 정본 자리 13 · 직전 바이트와 갈린 것 0
+  ✓ 갈림이 전부 L 안이고 · 각 경로가 화면에 나오고 · L 의 정본이 직전 바이트다
+
+판정: 통과  (rc=0)
