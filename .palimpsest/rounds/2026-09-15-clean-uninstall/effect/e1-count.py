@@ -25,8 +25,8 @@ rc: 0 전부 같다 · 1 어긋났다 · 2 셀 수 없었다(짐작하지 않고
 - **`mod x;` 를 따라간다** — `#[path = "…"]` 가 있으면 선언한 파일의 디렉터리 기준, 없으면 `x.rs` · `x/mod.rs`.
   통합 시험 바이너리는 `mod common;` 으로 `tests/common/mod.rs` 를, 그것은 `#[path]` 로 제품 소스(`install/sha256.rs` 등)를
   끌어오고, 그 안의 `#[cfg(test)] mod tests` 도 그 바이너리에서 돈다(첫 판이 이것을 못 세어 9 개씩 모자랐다).
-- 아는 cfg 모양: `test` · `unix` · `windows` · `not(unix)` · `not(windows)` · `target_os = "…"` · `not(target_os = "…")`.
-  **모르는 모양을 만나면 멈춘다.** `#[ignore]` 가 붙은 시험은 E1 이 0 을 요구하므로 어긋남으로 적는다.
+- 아는 cfg 식: 원자 `test` · `unix` · `windows` · `target_os = "linux|macos|windows"` 와 그것들을 묶는 `not(…)` · `any(…)` · `all(…)`
+  (기존 시험에 `not(any(unix, windows))` 가 있다). **모르는 원자나 모양을 만나면 멈춘다.** `#[ignore]` 가 붙은 시험은 E1 이 0 을 요구하므로 어긋남으로 적는다.
 """
 import argparse
 import fnmatch
