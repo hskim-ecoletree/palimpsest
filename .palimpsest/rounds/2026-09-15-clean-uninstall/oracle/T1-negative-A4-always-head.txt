@@ -1,0 +1,71 @@
+# T1 음성 대조 — 변이 A4-always-head
+# 기준: bd9b37f (구현 커밋) 위에 아래 diff 를 임시로 넣고 돌렸다. 변이는 커밋하지 않았고 돌린 뒤 되돌렸다.
+# 기대: A4 ② · ③ 빨강 (① · ④ 는 초록)
+# 명령: cargo test -p pal-cli --test clean_uninstall_settings
+# 날짜: 2026-09-15T22:39:34Z · Darwin arm64
+
+## 변이 diff
+
+diff --git a/crates/pal-cli/src/install/settings.rs b/crates/pal-cli/src/install/settings.rs
+index c88b902..17e0e84 100644
+--- a/crates/pal-cli/src/install/settings.rs
++++ b/crates/pal-cli/src/install/settings.rs
+@@ -255,7 +255,7 @@ fn 값으로_되돌린다(path: &Path, mut map: Map<String, Value>, entry: &Sett
+     // ★ **`HEAD` 바이트로 되쓸 수 있나** — 추적 중이고, `HEAD` 의 그 파일에 우리 키·훅이 없고, 결과와 같은 값일 때만.
+     // 셋 중 하나라도 빠지면 `HEAD` 는 설치 전 원본이 아니다(설치 뒤 커밋했거나 · 사용자가 설치 뒤 고쳤다).
+     if let Some(head) = 커밋된_바이트(path) {
+-        if 설치_전_원본인가(&head, &map, entry) {
++        if true || 설치_전_원본인가(&head, &map, entry) {
+             blocks::write_in_place(path, &head)?;
+             out.되돌림 = 되돌림::커밋된_바이트;
+             return Ok(out);
+
+## 시험 출력
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.08s
+     Running tests/clean_uninstall_settings.rs (target/debug/deps/clean_uninstall_settings-14a1df4244a3ff92)
+
+running 18 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test a3_2_사용자가_agent_값을_바꾼_방 ... ok
+test a3_3_사용자가_같은_사건_배열에_묶음을_더한_방 ... ok
+test a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방 ... ok
+test a4_4_추적_안_된_설정은_값만_되돌린다 ... ok
+test a4_1_커밋된_설정은_head_바이트로_돌아온다 ... ok
+test a4_2_사용자가_키를_더했으면_값만_되돌린다 ... FAILED
+test a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다 ... FAILED
+test a2_설치_결과가_착수_빌드의_골든과_값으로_같다 ... ok
+test a1_모집단마다_설치했다_걷으면_바이트로_같다 ... ok
+
+failures:
+
+---- a4_2_사용자가_키를_더했으면_값만_되돌린다 stdout ----
+
+thread 'a4_2_사용자가_키를_더했으면_값만_되돌린다' (66042186) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:384:5:
+assertion `left == right` failed: A4 ②: 값이 「원본 + 사용자 키」가 아니다
+  left: Object {"model": String("opus"), "permissions": Object {"allow": Array [String("Bash(ls)")]}}
+ right: Object {"mine": Number(1), "model": String("opus"), "permissions": Object {"allow": Array [String("Bash(ls)")]}}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다 stdout ----
+
+thread 'a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다' (66042187) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:396:5:
+A4 ③: pal 키가 남았다: {"agent":"pal-orchestrator","hooks":{"Stop":[{"hooks":[{"args":["hook","Stop"],"command":"pal","type":"command"}]}],"SubagentStop":[{"hooks":[{"args":["hook","SubagentStop"],"command":"pal","type":"command"}]}]},"model":"opus","permissions":{"allow":["Bash(ls)"]}}
+
+
+failures:
+    a4_2_사용자가_키를_더했으면_값만_되돌린다
+    a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다
+
+test result: FAILED. 16 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.06s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_settings`
+rc=101

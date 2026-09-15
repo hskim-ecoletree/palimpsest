@@ -1,0 +1,134 @@
+# T1 음성 대조 — 변이 A1-hooks-only
+# 기준: bd9b37f (구현 커밋) 위에 아래 diff 를 임시로 넣고 돌렸다. 변이는 커밋하지 않았고 돌린 뒤 되돌렸다.
+# 기대: A1 빨강 (hooks 안의 키 순서 · 이스케이프 · 수 표기 · 인라인 형태가 바뀐다)
+# 명령: cargo test -p pal-cli --test clean_uninstall_settings
+# 날짜: 2026-09-15T22:38:28Z · Darwin arm64
+
+## 변이 diff
+
+diff --git a/crates/pal-cli/src/install/json_edit.rs b/crates/pal-cli/src/install/json_edit.rs
+index 0c9eeff..8b7b07e 100644
+--- a/crates/pal-cli/src/install/json_edit.rs
++++ b/crates/pal-cli/src/install/json_edit.rs
+@@ -237,6 +237,17 @@ impl 본문 {
+         Ok(true)
+     }
+ 
++    pub fn 변이_값을_갈아낀다(&mut self, 길: &[길목<'_>]) {
++        let 나무 = self.나무().expect("변이");
++        let Some(m) = 나무.찾는다(길) else { return };
++        let (s, e) = (m.시작(), m.끝());
++        let v: Value = serde_json::from_str(&self.text[s..e]).expect("변이");
++        let 들여 = 줄_들여쓰기(&self.text, s).to_owned();
++        let 양식 = 양식::읽는다(&self.text, &나무);
++        let 새 = 양식.그린다(&조각::값에서(&v), &들여);
++        self.text.replace_range(s..e, &새);
++    }
++
+     // ── 안쪽 ────────────────────────────────────────────────────────────────
+ 
+     fn 나무(&self) -> Result<마디> {
+diff --git a/crates/pal-cli/src/install/settings.rs b/crates/pal-cli/src/install/settings.rs
+index c88b902..d058c74 100644
+--- a/crates/pal-cli/src/install/settings.rs
++++ b/crates/pal-cli/src/install/settings.rs
+@@ -140,6 +140,7 @@ pub fn merge(
+         return Ok(Merged { added_keys: added, hooks_key_created, created, wrote: false, edits });
+     }
+ 
++    본.변이_값을_갈아낀다(&[길목::키("hooks")]);
+     if created {
+         super::guard::쓴다(path, 본.텍스트().as_bytes())?;
+     } else {
+@@ -220,6 +221,7 @@ fn 자리로_되돌린다(
+     }
+     out.남긴_키.reverse();
+ 
++    본.변이_값을_갈아낀다(&[길목::키("hooks")]);
+     if entry.created && 본.자식_수(&[]) == Some(0) {
+         std::fs::remove_file(path)
+             .with_context(|| format!("지우지 못했다: {}", path.display()))?;
+
+## 시험 출력
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.89s
+     Running tests/clean_uninstall_settings.rs (target/debug/deps/clean_uninstall_settings-14a1df4244a3ff92)
+
+running 18 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방 ... FAILED
+test a3_3_사용자가_같은_사건_배열에_묶음을_더한_방 ... FAILED
+test a3_2_사용자가_agent_값을_바꾼_방 ... FAILED
+test a4_4_추적_안_된_설정은_값만_되돌린다 ... ok
+test a4_1_커밋된_설정은_head_바이트로_돌아온다 ... ok
+test a4_2_사용자가_키를_더했으면_값만_되돌린다 ... ok
+test a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다 ... ok
+test a2_설치_결과가_착수_빌드의_골든과_값으로_같다 ... ok
+test a1_모집단마다_설치했다_걷으면_바이트로_같다 ... FAILED
+
+failures:
+
+---- a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방 stdout ----
+
+thread 'a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방' (65894802) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:250:5:
+A3 ①: uninstall 결과가 기대 바이트와 다르다
+  기대: "{\n  \"model\": \"opus\",\n  \"mine\": true,\n    \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"notify.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+  뒤:   "{\n  \"model\": \"opus\",\n  \"mine\": true,\n    \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- a3_3_사용자가_같은_사건_배열에_묶음을_더한_방 stdout ----
+
+thread 'a3_3_사용자가_같은_사건_배열에_묶음을_더한_방' (65894804) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:250:5:
+A3 ③: uninstall 결과가 기대 바이트와 다르다
+  기대: "{\n  \"model\": \"opus\",\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"notify.sh\"\n          }\n        ]\n      },\n      {\"hooks\": [{\"type\": \"command\", \"command\": \"mine.sh\"}]}\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+  뒤:   "{\n  \"model\": \"opus\",\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      },\n      {\n        \"hooks\": [\n          {\n            \"command\": \"mine.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+
+---- a3_2_사용자가_agent_값을_바꾼_방 stdout ----
+
+thread 'a3_2_사용자가_agent_값을_바꾼_방' (65894803) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:250:5:
+A3 ②: uninstall 결과가 기대 바이트와 다르다
+  기대: "{\n  \"model\": \"opus\",\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"notify.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  },\n  \"agent\": \"내 에이전트\"\n}\n"
+  뒤:   "{\n  \"model\": \"opus\",\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  },\n  \"agent\": \"내 에이전트\"\n}\n"
+
+---- a1_모집단마다_설치했다_걷으면_바이트로_같다 stdout ----
+
+thread 'a1_모집단마다_설치했다_걷으면_바이트로_같다' (65894800) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:162:5:
+왕복 뒤 바이트가 원본과 다른 형태 6/19:
+  a1-08-same-event-other-hook
+    원본: "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"notify.sh\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+    뒤:   "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+  a1-09-other-event-hook
+    원본: "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"guard.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"model\": \"opus\"\n}\n"
+    뒤:   "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"guard.sh\",\n            \"type\": \"command\"\n          }\n        ],\n        \"matcher\": \"Bash\"\n      }\n    ]\n  },\n  \"model\": \"opus\"\n}\n"
+  a1-14-escapes-and-numbers
+    원본: "{\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\u0041 \\/tmp\\/x.sh\",\n            \"timeout\": 1.0\n          }\n        ],\n        \"weight\": 1e3\n      }\n    ]\n  }\n}\n"
+    뒤:   "{\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"A /tmp/x.sh\",\n            \"timeout\": 1.0,\n            \"type\": \"command\"\n          }\n        ],\n        \"weight\": 1000.0\n      }\n    ]\n  }\n}\n"
+  a1-15-inline-pal-event-array
+    원본: "{\n  \"hooks\": {\n    \"Stop\": [{\"hooks\": [{\"type\": \"command\", \"command\": \"notify.sh\"}]}]\n  },\n  \"model\": \"opus\"\n}\n"
+    뒤:   "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"model\": \"opus\"\n}\n"
+  a1-18-crlf-indent4-no-final-newline
+    원본: "{\r\n    \"hooks\": {\r\n        \"Stop\": [\r\n            {\r\n                \"hooks\": [\r\n                    {\r\n                        \"type\": \"command\",\r\n                        \"command\": \"notify.sh\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"model\": \"opus\"\r\n}"
+    뒤:   "{\r\n    \"hooks\": {\r\n        \"Stop\": [\r\n            {\r\n                \"hooks\": [\r\n                    {\r\n                        \"command\": \"notify.sh\",\r\n                        \"type\": \"command\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"model\": \"opus\"\r\n}"
+  a1-19-compact-no-spaces
+    원본: "{\"model\":\"opus\",\"hooks\":{\"SubagentStop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"x.sh\"}]}]}}"
+    뒤:   "{\"model\":\"opus\",\"hooks\":{\"SubagentStop\":[{\"hooks\":[{\"command\":\"x.sh\",\"type\":\"command\"}]}]}}"
+
+
+failures:
+    a1_모집단마다_설치했다_걷으면_바이트로_같다
+    a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방
+    a3_2_사용자가_agent_값을_바꾼_방
+    a3_3_사용자가_같은_사건_배열에_묶음을_더한_방
+
+test result: FAILED. 14 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.78s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_settings`
+rc=101
