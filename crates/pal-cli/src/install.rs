@@ -47,9 +47,9 @@ pub use doctor::{Check, checks, print};
 
 use inside::{Rel, Root};
 use layout::{
-    AGENT_KEY, AGENT_VALUE, CLAUDE_DIR, DERIVED, DIRS, IGNORE_FILE, IGNORE_MARKERS,
-    IMPORT_LINE, INTENT_CANONICAL, LOCK, MANIFEST, MANIFEST_HOME, MD_MARKERS, OWNED_DIRS,
-    OWNED_FILES, PAYLOAD, PROJECT_MANIFEST, ROOT_INSTRUCTION_FILE, SETTINGS,
+    AGENT_KEY, AGENT_VALUE, CLAUDE_DIR, DIRS, IGNORE_FILE, IGNORE_MARKERS, IMPORT_LINE,
+    INTENT_CANONICAL, LOCK, MANIFEST, MANIFEST_HOME, MD_MARKERS, OWNED_DIRS, OWNED_FILES, PAYLOAD,
+    PROJECT_MANIFEST, ROOT_INSTRUCTION_FILE, SETTINGS,
 };
 use manifest::{
     BlockEntry, DeclarationEntry, FileEntry, Manifest, Origin, Roots, SettingsEntry, 자리들,
@@ -895,30 +895,7 @@ fn 블록_넣기(
         }
     }
 
-    let mut 등재 = Vec::new();
-    let mut 못_묻는_까닭: Option<&'static str> = None;
-    for path in DERIVED {
-        match ignore::verdict(root, path)? {
-            ignore::Verdict::Covered => report.say("이미 등재됨", path),
-            ignore::Verdict::NotAWorktree { 까닭 } => {
-                못_묻는_까닭 = Some(까닭);
-                break;
-            }
-            ignore::Verdict::Revived { pattern } => {
-                // **사용자가 일부러 되살린 것을 조용히 뒤집지 않는다.**
-                report.say("건드리지 않음", &format!("{path}  (사용자가 `{pattern}` 로 되살렸다)"));
-            }
-            ignore::Verdict::Uncovered => {
-                if ignore::tracked(root, path)? {
-                    report.say(
-                        "⚠ 추적 중",
-                        &format!("{path}  (규칙만으로는 배제되지 않는다 — `git rm --cached` 가 필요하다)"),
-                    );
-                }
-                등재.push(format!("/{}", path.trim_start_matches('/')));
-            }
-        }
-    }
+    let (등재, 못_묻는_까닭) = 무시할_줄들(root, None, report)?;
     if let Some(까닭) = 못_묻는_까닭 {
         // **rc=128 을 rc=1 과 뭉개면 저장소가 아닌 곳에 `.gitignore` 를 만든다.**
         // 그리고 그 rc 안에도 갈래가 둘이다 — 까닭은 [`ignore::왜_답이_없나`] 가 산출한다.
@@ -983,7 +960,124 @@ fn 갈아_끼운다(기록: &mut Journal, entry: BlockEntry) {
 }
 
 fn 마커(rel: &Rel) -> &'static layout::Markers {
-    if rel.as_str() == IGNORE_FILE { &IGNORE_MARKERS } else { &MD_MARKERS }
+    layout::블록_마커(rel.as_str())
+}
+
+/// `.gitignore` 블록에 넣을 줄 — **분류 표 하나에서 뜬다**([`layout::무시할_자리`]). 두째 값은 git 이 답하지 않은 까닭이다.
+///
+/// `옛_본문` 은 `update` 가 갈아 끼울 때 넘기는 **지금 우리 블록의 본문**이다. 거기 이미 든 줄은 git 에게 다시
+/// 안 묻는다 — 물으면 우리 블록이 덮고 있어 「이미 덮임」으로 읽히고, 새 블록에서 빠져 **가려지던 것이 드러난다.**
+fn 무시할_줄들(
+    root: &Root,
+    옛_본문: Option<&[u8]>,
+    report: &mut Report,
+) -> Result<(Vec<String>, Option<&'static str>)> {
+    let 옛_줄: std::collections::BTreeSet<String> = 옛_본문
+        .map(|b| String::from_utf8_lossy(b).lines().map(str::to_owned).collect())
+        .unwrap_or_default();
+    let mut 등재 = Vec::new();
+    for a in layout::무시할_자리() {
+        let 줄 = a.무시_줄();
+        if 옛_줄.contains(&줄) {
+            등재.push(줄);
+            continue;
+        }
+        match ignore::verdict(root, &a.표본())? {
+            ignore::Verdict::Covered => report.say("이미 등재됨", a.패턴),
+            // **rc=128 을 rc=1 과 뭉개면 저장소가 아닌 곳에 `.gitignore` 를 만든다.**
+            ignore::Verdict::NotAWorktree { 까닭 } => return Ok((등재, Some(까닭))),
+            ignore::Verdict::Revived { pattern } => {
+                // **사용자가 일부러 되살린 것을 조용히 뒤집지 않는다.**
+                report.say("건드리지 않음", &format!("{}  (사용자가 `{pattern}` 로 되살렸다)", a.패턴));
+            }
+            ignore::Verdict::Uncovered => {
+                if ignore::tracked(root, &a.표본())? {
+                    report.say(
+                        "⚠ 추적 중",
+                        &format!(
+                            "{}  (규칙만으로는 배제되지 않는다 — `git rm --cached` 가 필요하다)",
+                            a.패턴
+                        ),
+                    );
+                }
+                등재.push(줄);
+            }
+        }
+    }
+    Ok((등재, None))
+}
+
+/// 손으로 고친 블록의 태그 — `update` 와 `uninstall` 이 같은 낱말로 말한다.
+const 고친_블록: &str = "⚠ 손으로 고친 블록";
+
+/// 넣은 그대로가 아닌 블록의 자리 — 마커는 있는데 바이트가 다르거나, 우리가 안 넣은 마커가 하나 더 있다.
+fn 고친_블록들(root: &Root, m: &Manifest) -> Result<Vec<Rel>> {
+    let mut out = Vec::new();
+    for b in &m.blocks {
+        let path = root.join(&b.path)?;
+        let markers = 마커(&b.path);
+        let 고쳤나 = match blocks::상태(&path, markers, &b.inserted)? {
+            blocks::상태::훼손 => true,
+            blocks::상태::그대로 => blocks::걷어도_남나(&path, markers, &b.inserted)?,
+            blocks::상태::사라짐 => false,
+        };
+        if 고쳤나 {
+            out.push(b.path.clone());
+        }
+    }
+    Ok(out)
+}
+
+fn 고친_블록_문구(rel: &Rel) -> String {
+    format!(
+        "{rel}  (넣은 것과 다르다 — 건드리지 않았다. `pal uninstall` 은 거부하고, 마커가 한 번씩 순서대로 \
+         있으면 `pal uninstall --force` 가 그 사이를 걷고 지운 줄을 출력한다)"
+    )
+}
+
+/// ★ **`update` 가 넣은 블록을 지금 목록으로 갈아 끼운다 — 매니페스트의 `inserted` 도 곧바로 함께.**
+///
+/// 착수 관측 R13: `uninstall` 은 기록과 실물이 다르면 거부한다. 블록만 바꾸고 기록을 안 고치면 첫 릴리스로 설치한
+/// 방이 `update` 한 번 뒤로 영영 못 거둔다. **손으로 고친 블록은 안 건드린다** — 그 파일은 [`고친_블록들`] 이 말한다.
+fn 블록_갈아_끼우기(
+    root: &Root,
+    m: &mut Manifest,
+    manifest_path: &Path,
+    report: &mut Report,
+) -> Result<()> {
+    for i in 0..m.blocks.len() {
+        let b = m.blocks[i].clone();
+        let path = root.join(&b.path)?;
+        let markers = 마커(&b.path);
+        if blocks::상태(&path, markers, &b.inserted)? != blocks::상태::그대로
+            || blocks::걷어도_남나(&path, markers, &b.inserted)?
+        {
+            continue;
+        }
+        let 옛_본문 = blocks::본문(&b.inserted);
+        let 새_블록 = if b.path.as_str() == IGNORE_FILE {
+            let (줄들, 까닭) = 무시할_줄들(root, Some(&옛_본문), report)?;
+            if let Some(까닭) = 까닭 {
+                report.say("건너뜀", &format!("{IGNORE_FILE}  ({까닭})"));
+                continue;
+            }
+            if 줄들.is_empty() {
+                continue;
+            }
+            blocks::compose(&IGNORE_MARKERS, &줄들)
+        } else {
+            blocks::compose(&MD_MARKERS, &[IMPORT_LINE.to_owned()])
+        };
+        if 옛_본문 == 새_블록.as_bytes() {
+            continue;
+        }
+        let 새것 = blocks::갈아_끼운다(&path, &b.inserted, &새_블록)?;
+        m.blocks[i].inserted = 새것;
+        // **갈아 끼우자마자 적는다** — 사이에 죽으면 기록과 실물이 갈리는 창을 이 한 걸음으로 줄인다.
+        manifest::write(manifest_path, m)?;
+        report.say("블록 갈아 끼움", b.path.as_str());
+    }
+    Ok(())
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1027,16 +1121,25 @@ pub fn update(target: &Path) -> Result<()> {
         &hooks::desired()?,
     );
     let 낡음 = m.pal_version != now;
+    // ★ **손으로 고친 블록은 거둘 때가 아니라 지금 말한다** — 착수 관측 R3: 옛 `update` 는 여기서 「이미 최신」만 찍었고
+    // 사람은 `uninstall` 의 rc=1 에서 처음 알았다.
+    let 고친 = 고친_블록들(&root, &m)?;
     if !낡음 && 훅_계획.is_empty() {
         println!();
         println!("■ 갱신 — {root}");
         println!("  이미 최신입니다  ·  pal {now}");
+        for rel in &고친 {
+            println!("  {고친_블록:<22}{}", 고친_블록_문구(rel));
+        }
         println!();
         return Ok(());
     }
 
     // ── 2단계 · 적용 ────────────────────────────────────────────────────────
     let mut report = Report::new();
+    for rel in &고친 {
+        report.say(고친_블록, &고친_블록_문구(rel));
+    }
     if 낡음 {
         report.say("낡음", &format!("{} → {now}", m.pal_version));
     } else {
@@ -1099,6 +1202,8 @@ pub fn update(target: &Path) -> Result<()> {
     m.files = files;
     now.clone_into(&mut m.pal_version);
     manifest::write(&manifest_path, &m)?;
+    // 블록도 이 판의 목록으로 — 분류 표가 자라면(착수 관측 R2 · R7) 옛 설치의 `.gitignore` 블록이 그것을 모른다.
+    블록_갈아_끼우기(&root, &mut m, &manifest_path, &mut report)?;
     report.say("매니페스트", &format!("{MANIFEST}  ·  pal {now}"));
     report.print(&format!("갱신 — {root}"));
     Ok(())
@@ -1108,11 +1213,22 @@ pub fn update(target: &Path) -> Result<()> {
 // 제거 — **매니페스트에 적힌 것만**
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// `uninstall` 의 손잡이.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct 제거 {
+    /// 정본까지 걷는다 — 안에서는 **git 이 추적하지 않는 것만**, 밖에서는 이 프로젝트의 승인 · 종료 봉인까지.
+    pub purge: bool,
+    /// 손으로 고친 블록을 **여는 마커와 닫는 마커가 한 번씩 순서대로 있을 때만** 그 사이째 걷는다.
+    pub force: bool,
+}
+
 /// 걷어낸다.
 ///
 /// # Errors
-/// 설치를 못 찾거나, **리소스를 하나도 못 찾거나**(⑥-b), 블록이 손으로 고쳐졌으면.
-pub fn uninstall(target: &Path) -> Result<()> {
+/// 설치를 못 찾거나, **리소스를 하나도 못 찾거나**(⑥-b), 블록이 손으로 고쳐졌으면(`--force` 는 마커 짝이 맞을 때만
+/// 걷는다). 그리고 `--purge` 인데 같은 저장소의 다른 worktree 때문에 밖의 기록을 못 걷었으면 — **안은 걷은 뒤에.**
+#[allow(clippy::too_many_lines)]
+pub fn uninstall(target: &Path, 선택: 제거) -> Result<()> {
     let root = Root::세운다(target)?;
     let manifest_path = root.join(&Rel::new(MANIFEST))?;
     if !manifest_path.exists() {
@@ -1157,26 +1273,50 @@ pub fn uninstall(target: &Path) -> Result<()> {
     // 하나로 판정해서, 사용자가 **블록을 통째로 지운** 자리도 훼손으로 읽었다 —
     // 그러면 오류 문구가 시킨 그대로 해도 영영 rc=1 이다.
     let mut 막힌_자리 = Vec::new();
+    // `--force` 로 걷을 블록 — **짝이 맞는 것만** 여기 든다.
+    let mut 억지로 = std::collections::BTreeSet::new();
     for b in &m.blocks {
         let path = 자리.자리(&b.path)?;
         let markers = 마커(&b.path);
-        if blocks::상태(path, markers, &b.inserted)? == blocks::상태::훼손 {
-            막힌_자리.push(blocks::훼손_문구(path, markers));
+        let 막힘 = if blocks::상태(path, markers, &b.inserted)? == blocks::상태::훼손 {
+            Some(blocks::훼손_문구(path, markers))
         // ★ **걷어도 마커가 남을 자리도 여기서 본다.** 우리 것은 그대로 있으니
         // 「훼손」이 아니고, 그래서 옛 코드는 이 자리를 **통과시켰다** — 그리고
         // 적용 단계가 첫 일치만 지운 뒤 rc=0 으로 「블록 뺌」을 찍었다.
         } else if blocks::걷어도_남나(path, markers, &b.inserted)? {
-            막힌_자리.push(blocks::남은_마커_문구(path, markers));
+            Some(blocks::남은_마커_문구(path, markers))
+        } else {
+            None
+        };
+        let Some(문구) = 막힘 else { continue };
+        if 선택.force && blocks::짝이_맞나(path, markers)? {
+            억지로.insert(b.path.clone());
+        } else if 선택.force {
+            막힌_자리.push(format!(
+                "{문구}\n    `--force` 도 걷지 않는다 — 여는 마커와 닫는 마커가 **한 번씩 순서대로** 있지 않아 \
+                 어디까지가 블록인지 해석해야 한다"
+            ));
+        } else {
+            막힌_자리.push(format!(
+                "{문구}\n    마커가 한 번씩 순서대로 있으면 `pal uninstall --force` 가 그 사이를 걷고 지운 줄을 출력한다"
+            ));
         }
     }
     if !막힌_자리.is_empty() {
         bail!("아무것도 지우지 않았다.\n\n{}", 막힌_자리.join("\n\n"));
     }
+    // ★ **`.palimpsest/` 안을 여기서 다 잰다** — 무엇을 걷고 무엇을 남길지. git 에게 묻다 실패해도 아직 한 바이트도 안 지웠다.
+    let 안 = 안쪽을_잰다(&root, &m, 선택.purge)?;
 
     // 등록을 걷기 시작하면 다음 설치가 옛 activation을 조용히 되살리면 안 된다.
     // activation record 내용이 손상돼도 project identity 파일 이름만으로 제거한다.
     // ★ **밖의 기록은 `round::external` 한 자리가 가르고 걷는다** — 안의 정본을 지우기 전에 부른다.
-    let 밖 = crate::round::external::걷는다(root.path(), crate::round::external::걷기::기본)
+    let 방식 = if 선택.purge {
+        crate::round::external::걷기::전부
+    } else {
+        crate::round::external::걷기::기본
+    };
+    let 밖 = crate::round::external::걷는다(root.path(), 방식)
         .context("프로젝트 밖의 기록을 정리하지 못해 uninstall을 시작하지 않았다")?;
 
     // ── 2단계 · 적용. ★ **기록이 걸음마다 앞선다 — 그러나 걸음마다 쓰지는 않는다** ──
@@ -1207,7 +1347,22 @@ pub fn uninstall(target: &Path) -> Result<()> {
 
     let mut 걷은 = 0usize;
     let 결과 = m.blocks.iter().try_for_each(|b| -> Result<()> {
-        match blocks::remove(자리.자리(&b.path)?, 마커(&b.path), &b.inserted, b.created)? {
+        let path = 자리.자리(&b.path)?;
+        let 걷음 = if 억지로.contains(&b.path) {
+            // ★ 사람이 고른 탈출구 — 걷은 줄을 **전부** 말한다. 되돌릴 수 없다.
+            let (걷음, 지운) = blocks::억지로_걷는다(path, 마커(&b.path), &b.inserted, b.created)?;
+            report.say(
+                "⚠ --force",
+                &format!("{}  (손으로 고친 블록을 마커 사이째 걷었다 — 지운 줄 {}개)", b.path, 지운.len()),
+            );
+            for 줄 in &지운 {
+                report.say("    지운 줄", 줄);
+            }
+            걷음
+        } else {
+            blocks::remove(path, 마커(&b.path), &b.inserted, b.created)?
+        };
+        match 걷음 {
             blocks::Removal::Block => report.say("블록 뺌", b.path.as_str()),
             blocks::Removal::FileGone => report.say("지웠다", b.path.as_str()),
             blocks::Removal::Missing => report.say("이미 없음", b.path.as_str()),
@@ -1250,10 +1405,13 @@ pub fn uninstall(target: &Path) -> Result<()> {
 
     // **파일 다음, 디렉터리 전.** `.palimpsest/` 를 비워야 그 디렉터리를 걷을 수 있다.
     if let Some(d) = m.declaration.clone() {
-        선언_걷기(&root, &자리, &d, &mut report)?;
+        선언_걷기(&root, &자리, &d, 선택.purge, &mut report)?;
         m.declaration = None;
         manifest::write(&manifest_path, &m)?;
     }
+
+    // ★ **`.palimpsest/` 안** — 1단계에서 잰 분류대로. 매니페스트를 지우기 전이라 여기서 멈춰도 다시 돌릴 수 있다.
+    안쪽을_걷는다(&안, &mut report)?;
 
     std::fs::remove_file(&manifest_path)
         .with_context(|| format!("지우지 못했다: {}", manifest_path.display()))?;
@@ -1290,6 +1448,16 @@ pub fn uninstall(target: &Path) -> Result<()> {
              `.claude/pal/policy.toml`."
         );
         println!();
+    }
+    // ★ **요청한 것을 다 못 했으면 성공이라고 적지 않는다** — 안은 걷었고, 밖은 하나도 안 건드렸다
+    // (회차 `2026-09-15-clean-uninstall` 계획 1 worktree 문단). 기본 uninstall 은 밖을 남기는 것이 약속 안이라 rc=0 이다.
+    if 선택.purge && !밖.worktree_거부.is_empty() {
+        bail!(
+            "`--purge` 가 프로젝트 밖의 기록을 걷지 않았다 — 같은 저장소의 다른 git worktree 가 있다: {}\n    \
+             안(`.palimpsest/` 와 설치한 것)은 위 화면대로 걷었다. 밖의 기록은 그 worktree 들이 함께 쓰므로 하나도 \
+             안 건드렸다",
+            밖.worktree_거부.iter().map(|p| p.display().to_string()).collect::<Vec<_>>().join(" · ")
+        );
     }
     Ok(())
 }
@@ -1369,6 +1537,292 @@ fn 왜_못_지웠나(path: &Path, e: &std::io::Error) -> String {
     format!("비어 있지 않다 — 남의 것 {몇}개가 남아 있다: {}", 남은.join(" · "))
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// `.palimpsest/` 안 — **분류 표 하나를 읽는다**([`layout::안의_분류`])
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// `intent.redb` 를 열어 본 판정.
+enum 의도_판정 {
+    /// 결박도 거부도 없다 — 개체 이름만 들었고 다시 만들어진다.
+    파생물,
+    /// 결박 또는 거부가 있다 — **이 파일에만 있다**(`pal intent export` 는 결박만 내보낸다 · 착수 관측 R8).
+    정본 { 결박: usize, 거부: usize },
+    /// 못 열었다 — 결박 · 거부가 들었을 수 있다.
+    못_읽음(String),
+}
+
+struct 파생물_자리 {
+    rel: String,
+    path: PathBuf,
+    디렉터리: bool,
+}
+
+/// 정본 파일 하나 — `--purge` 가 가르는 단위.
+struct 정본_파일 {
+    rel: String,
+    path: PathBuf,
+    추적: bool,
+    고쳐짐: bool,
+}
+
+/// 정본 자리 하나(`intent/` · `rounds/` · 설치가 안 적은 `manifest.toml`).
+struct 정본_자리 {
+    보임: String,
+    파일: Vec<정본_파일>,
+    /// 깊은 것부터.
+    디렉터리: Vec<(String, PathBuf)>,
+}
+
+/// `.palimpsest/.gitignore` 의 지금 모습.
+struct 가림_상태 {
+    path: PathBuf,
+    있음: bool,
+    우리_것: bool,
+    추적: bool,
+}
+
+/// 안에서 걷을 것과 남길 것 — **1단계에서 다 잰다.**
+struct 안쪽 {
+    purge: bool,
+    파생물: Vec<파생물_자리>,
+    의도: Option<(PathBuf, 의도_판정)>,
+    가림: 가림_상태,
+    정본: Vec<정본_자리>,
+    /// git 이 추적 여부를 답하지 않았다 — 추적 중일 수 있는 것은 안 걷는다.
+    못_물음: bool,
+}
+
+/// `.palimpsest/` 안을 분류 표로 가른다. **읽기만 한다.**
+fn 안쪽을_잰다(root: &Root, m: &Manifest, purge: bool) -> Result<안쪽> {
+    let 가림_path = root.join(&Rel::new(layout::가림_파일))?;
+    let mut 안 = 안쪽 {
+        purge,
+        파생물: Vec::new(),
+        의도: None,
+        가림: 가림_상태 { path: 가림_path, 있음: false, 우리_것: false, 추적: false },
+        정본: Vec::new(),
+        못_물음: false,
+    };
+    let 집 = root.join(&Rel::new(layout::PROJECT_DIR))?;
+    // 심링크면 `symlink_metadata` 가 디렉터리로 안 읽는다 — 링크 너머를 훑지 않는다.
+    if !std::fs::symlink_metadata(&집).is_ok_and(|x| x.is_dir()) {
+        return Ok(안);
+    }
+    let mut 이름들: Vec<String> = std::fs::read_dir(&집)
+        .with_context(|| format!("읽지 못했다: {}", 집.display()))?
+        .map(|e| e.map(|e| e.file_name().to_string_lossy().into_owned()))
+        .collect::<std::io::Result<_>>()
+        .with_context(|| format!("읽지 못했다: {}", 집.display()))?;
+    이름들.sort();
+    for 이름 in 이름들 {
+        let rel = format!("{}/{이름}", layout::PROJECT_DIR);
+        let Some(a) = layout::안의_분류.iter().find(|a| a.맞나(&rel)) else { continue };
+        let path = root.join(&Rel::new(&rel))?;
+        let 디렉터리 = std::fs::symlink_metadata(&path).is_ok_and(|x| x.is_dir());
+        match a.부류 {
+            layout::부류::파생물 => 안.파생물.push(파생물_자리 { rel, path, 디렉터리 }),
+            layout::부류::조건부 => {
+                let 판정 = 의도를_잰다(&path);
+                안.의도 = Some((path, 판정));
+            }
+            layout::부류::정본 if 디렉터리 => 안.정본.push(정본_자리를_훑는다(&rel, &path)?),
+            layout::부류::정본 => {}
+        }
+    }
+    // 설치가 적지 않은 저장소 선언은 정본이다 — 설치가 적은 것은 [`선언_걷기`] 가 진다.
+    let 선언 = Rel::new(PROJECT_MANIFEST);
+    let 설치가_적었나 = matches!(&m.declaration, Some(d) if d.path == 선언);
+    let 선언_path = root.join(&선언)?;
+    if !설치가_적었나 && std::fs::symlink_metadata(&선언_path).is_ok_and(|x| x.is_file()) {
+        안.정본.push(정본_자리 {
+            보임: PROJECT_MANIFEST.to_owned(),
+            파일: vec![정본_파일 { rel: PROJECT_MANIFEST.to_owned(), path: 선언_path, 추적: false, 고쳐짐: false }],
+            디렉터리: Vec::new(),
+        });
+    }
+    if 안.가림.path.is_file() {
+        안.가림.있음 = true;
+        안.가림.우리_것 = guard::읽는다(&안.가림.path)? == layout::가림_본문.as_bytes();
+    }
+
+    // 추적 여부 — 정본과 우리 가림 파일에만 묻는다.
+    let mut 물을: Vec<&str> = 안.정본.iter().map(|z| z.보임.trim_end_matches('/')).collect();
+    if 안.가림.있음 {
+        물을.push(layout::가림_파일);
+    }
+    if 물을.is_empty() {
+        return Ok(안);
+    }
+    match (ignore::추적_중인_것들(root, &물을)?, ignore::고쳐진_것들(root, &물을)?) {
+        (Some(추적), Some(고쳐진)) => {
+            for 자리 in &mut 안.정본 {
+                for f in &mut 자리.파일 {
+                    f.추적 = 추적.contains(&f.rel);
+                    f.고쳐짐 = 고쳐진.contains(&f.rel);
+                }
+            }
+            안.가림.추적 = 추적.contains(layout::가림_파일);
+        }
+        // git 저장소가 아니면 추적하는 것이 없다 — 「답하지 않았다」와 가른다.
+        _ if !root.path().join(".git").exists() => {}
+        _ => 안.못_물음 = true,
+    }
+    Ok(안)
+}
+
+/// 결박 또는 거부가 하나라도 있으면 정본이다(회차 `2026-09-15-clean-uninstall` 계획 1 · 사전부검 R1 4).
+fn 의도를_잰다(path: &Path) -> 의도_판정 {
+    let s = match pal_intent::IntentStore::open_read_only(path) {
+        Ok(s) => s,
+        Err(e) => return 의도_판정::못_읽음(e.to_string()),
+    };
+    match (s.count(), s.refusals()) {
+        (Ok(0), Ok(r)) if r.is_empty() => 의도_판정::파생물,
+        (Ok(결박), Ok(r)) => 의도_판정::정본 { 결박, 거부: r.len() },
+        (Err(e), _) | (_, Err(e)) => 의도_판정::못_읽음(e.to_string()),
+    }
+}
+
+fn 정본_자리를_훑는다(rel: &str, path: &Path) -> Result<정본_자리> {
+    let mut 자리 = 정본_자리 { 보임: format!("{rel}/"), 파일: Vec::new(), 디렉터리: Vec::new() };
+    정본을_훑는다(rel, path, &mut 자리)?;
+    자리.디렉터리.push((rel.to_owned(), path.to_path_buf()));
+    자리.디렉터리.sort_by_key(|(r, _)| std::cmp::Reverse(r.matches('/').count()));
+    Ok(자리)
+}
+
+fn 정본을_훑는다(rel: &str, dir: &Path, 자리: &mut 정본_자리) -> Result<()> {
+    let mut 자식: Vec<std::fs::DirEntry> = std::fs::read_dir(dir)
+        .and_then(Iterator::collect)
+        .with_context(|| format!("읽지 못했다: {}", dir.display()))?;
+    자식.sort_by_key(std::fs::DirEntry::file_name);
+    for e in 자식 {
+        let r = format!("{rel}/{}", e.file_name().to_string_lossy());
+        let p = e.path();
+        if std::fs::symlink_metadata(&p).is_ok_and(|x| x.is_dir()) {
+            정본을_훑는다(&r, &p, 자리)?;
+            자리.디렉터리.push((r, p));
+        } else {
+            자리.파일.push(정본_파일 { rel: r, path: p, 추적: false, 고쳐짐: false });
+        }
+    }
+    Ok(())
+}
+
+/// 없으면 이미 걷힌 것이다 — 다시 돌린 uninstall 이 같은 자리에서 멈추지 않는다.
+fn 지운다(path: &Path, 디렉터리: bool) -> Result<()> {
+    let r = if 디렉터리 { std::fs::remove_dir_all(path) } else { std::fs::remove_file(path) };
+    match r {
+        Err(e) if e.kind() != std::io::ErrorKind::NotFound => {
+            Err(e).with_context(|| format!("지우지 못했다: {}", path.display()))
+        }
+        _ => Ok(()),
+    }
+}
+
+/// 1단계에서 잰 대로 걷고 **남긴 것까지 말한다.**
+fn 안쪽을_걷는다(안: &안쪽, report: &mut Report) -> Result<()> {
+    use layout::{INTENT_STORE, 가림_파일};
+
+    // ── 파생물 — 설치 전부터 있었어도 걷는다(다시 만들어진다) ──
+    for d in &안.파생물 {
+        지운다(&d.path, d.디렉터리)?;
+        report.say("지웠다(파생물)", &if d.디렉터리 { format!("{}/", d.rel) } else { d.rel.clone() });
+    }
+
+    // ── intent.redb — 결박 · 거부가 있으면 정본 ──
+    let mut 가려야 = false;
+    if let Some((path, 판정)) = &안.의도 {
+        match (판정, 안.purge) {
+            (의도_판정::파생물, _) => {
+                지운다(path, false)?;
+                report.say("지웠다(파생물)", &format!("{INTENT_STORE}  (결박·거부가 없다 — 다시 만들어진다)"));
+            }
+            (의도_판정::정본 { 결박, 거부 }, true) => {
+                지운다(path, false)?;
+                report.say("지웠다(정본)", &format!("{INTENT_STORE}  (결박 {결박} · 거부 {거부} — `--purge`)"));
+            }
+            (의도_판정::못_읽음(e), true) => {
+                지운다(path, false)?;
+                report.say("지웠다(정본)", &format!("{INTENT_STORE}  (못 열었다: {e} — `--purge`)"));
+            }
+            (의도_판정::정본 { 결박, 거부 }, false) => {
+                report.say(
+                    "남겼다(정본)",
+                    &format!(
+                        "{INTENT_STORE}  (결박 {결박} · 거부 {거부} — 이 파일에만 있다. 결박은 \
+                         `pal intent export --out .palimpsest/intent/bindings.jsonl` 로 내보낼 수 있고, \
+                         파일째 걷으려면 `pal install` 뒤 `pal uninstall --purge`)"
+                    ),
+                );
+                가려야 = true;
+            }
+            (의도_판정::못_읽음(e), false) => {
+                report.say(
+                    "남겼다",
+                    &format!(
+                        "{INTENT_STORE}  (못 열었다: {e} — 결박·거부가 들었을 수 있어 남겼다. \
+                         걷으려면 `pal install` 뒤 `pal uninstall --purge`)"
+                    ),
+                );
+                가려야 = true;
+            }
+        }
+    }
+
+    // ── `.palimpsest/.gitignore` — 남긴 intent.redb 만 가린다. 사용자 `.gitignore` 블록은 이미 걷었다 ──
+    let g = &안.가림;
+    if 가려야 {
+        if !g.있음 {
+            guard::쓴다(&g.path, layout::가림_본문.as_bytes())?;
+            report.say("가렸다", &format!("{가림_파일}  (자기 자신과 intent.redb 만 git 에서 가린다)"));
+        } else if g.우리_것 {
+            report.say("이미 있음", 가림_파일);
+        } else {
+            report.say("건드리지 않음", &format!("{가림_파일}  (사용자의 것이다 — intent.redb 가 git 에 뜨는지 보십시오)"));
+        }
+    } else if g.있음 && g.우리_것 && !g.추적 && !안.못_물음 {
+        지운다(&g.path, false)?;
+        report.say("지웠다", &format!("{가림_파일}  (가릴 intent.redb 가 안 남는다)"));
+    }
+
+    // ── 정본 — 기본은 바이트 그대로, `--purge` 는 git 이 추적하지 않는 것만 ──
+    for 자리 in &안.정본 {
+        if !안.purge {
+            report.say(
+                "남겼다(정본)",
+                &format!(
+                    "{}  (파일 {}개 — 바이트 그대로. 추적 안 된 것까지 걷으려면 `pal install` 뒤 `pal uninstall --purge`)",
+                    자리.보임,
+                    자리.파일.len()
+                ),
+            );
+            continue;
+        }
+        if 안.못_물음 {
+            report.say("남겼다(정본)", &format!("{}  (git 에게 추적 여부를 못 물었다 — 추적 중일 수 있어 남겼다)", 자리.보임));
+            continue;
+        }
+        for f in &자리.파일 {
+            if f.추적 {
+                let 까닭 = if f.고쳐짐 { "추적 중 · 고쳐짐 — 추적 중이라 남겼다" } else { "추적 중이라 남겼다" };
+                report.say("남겼다(정본)", &format!("{}  ({까닭})", f.rel));
+            } else {
+                지운다(&f.path, false)?;
+                report.say("지웠다(정본)", &f.rel);
+            }
+        }
+        for (rel, path) in &자리.디렉터리 {
+            let 비었나 = std::fs::read_dir(path).is_ok_and(|mut d| d.next().is_none());
+            if 비었나 {
+                std::fs::remove_dir(path).with_context(|| format!("지우지 못했다: {}", path.display()))?;
+                report.say("지웠다(정본)", &format!("{rel}/"));
+            }
+        }
+    }
+    Ok(())
+}
+
 /// 파일 하나를 걷는다 — **말없이 지우지 않는다.**
 ///
 /// `update` 가 「사용자 수정 — 건너뜀」으로 지킨 파일을 제거는 sha 대조 없이 지웠다.
@@ -1406,6 +1860,7 @@ fn 선언_걷기(
     root: &Root,
     자리: &manifest::Places,
     d: &DeclarationEntry,
+    purge: bool,
     report: &mut Report,
 ) -> Result<()> {
     let path = 자리.자리(&d.path)?;
@@ -1418,6 +1873,14 @@ fn 선언_걷기(
         return Ok(());
     }
     if sha256::내용(&guard::읽는다(path)?) != d.sha256 {
+        if purge {
+            std::fs::remove_file(path).with_context(|| format!("지우지 못했다: {}", path.display()))?;
+            report.say(
+                "지웠다(정본)",
+                &format!("{}  (우리가 적은 뒤 사람이 고쳤다 — 추적 안 된 정본이라 `--purge` 가 걷었다)", d.path),
+            );
+            return Ok(());
+        }
         report.say("남겼다", &format!("{}  (우리가 적은 뒤 사람이 고쳤다)", d.path));
         return Ok(());
     }

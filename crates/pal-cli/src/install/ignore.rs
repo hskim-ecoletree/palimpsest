@@ -71,6 +71,7 @@
 //! 추적 중이어도 경고가 안 뜬다. 슬래시 **없는** 형태는 디렉터리에도 맞는다. 그래서
 //! 두 명령의 질의 형태를 **갈라 쓴다.**
 
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
@@ -78,7 +79,7 @@ use anyhow::{Context, Result};
 
 use super::child;
 use super::inside::Root;
-use super::layout::{DERIVED, IGNORE_FILE};
+use super::layout::{IGNORE_FILE, 무시할_자리};
 
 /// 한 경로에 대해 git 이 답한 것.
 pub enum Verdict {
@@ -117,8 +118,8 @@ pub enum Verdict {
 /// # Errors
 /// git 이 읽는 자리 중 하나가 일반 파일이 아니거나, git 을 못 돌리면.
 pub fn 점검(root: &Root) -> Result<()> {
-    for path in DERIVED {
-        점검_하나(root, path)?;
+    for a in 무시할_자리() {
+        점검_하나(root, &a.표본())?;
     }
     Ok(())
 }
@@ -323,6 +324,48 @@ pub fn tracked(root: &Root, path: &str) -> Result<bool> {
     let bare = path.trim_end_matches('/');
     // **`--error-unmatch` 가 없으면 언제나 rc=0 이다.**
     Ok(run_code(root, &["ls-files", "--error-unmatch", "--", bare])? == Some(0))
+}
+
+/// 이 자리들 아래에서 **git 이 추적하는 파일** — 대상 기준 상대 경로(`/`).
+///
+/// `None` 은 **git 이 답하지 않았다**는 뜻이다(worktree 가 아니거나 git 이 이 경로를 못 다룬다). 부르는 쪽이
+/// 그것을 「추적 안 됨」으로 읽으면 안 된다 — `--purge` 가 추적 중인 정본을 지운다.
+///
+/// # Errors
+/// `git` 을 못 돌리면.
+pub fn 추적_중인_것들(root: &Root, 자리들: &[&str]) -> Result<Option<BTreeSet<String>>> {
+    let mut args = vec!["ls-files", "-z", "--"];
+    args.extend_from_slice(자리들);
+    let out = git(root, &args)?;
+    Ok((out.status.code() == Some(0)).then(|| z_목록(&out.stdout)))
+}
+
+/// 추적 중인 파일 가운데 **`HEAD` 와 다른 것** — 커밋이 아직 없으면 인덱스와 댄다.
+///
+/// # Errors
+/// `git` 을 못 돌리면.
+pub fn 고쳐진_것들(root: &Root, 자리들: &[&str]) -> Result<Option<BTreeSet<String>>> {
+    for 기준 in [Some("HEAD"), None] {
+        // `--relative` — 대상이 저장소의 하위 디렉터리여도 대상 기준 경로로 받는다(`ls-files` 와 같게).
+        let mut args = vec!["diff", "--relative", "--name-only", "-z"];
+        args.extend(기준);
+        args.push("--");
+        args.extend_from_slice(자리들);
+        let out = git(root, &args)?;
+        if out.status.code() == Some(0) {
+            return Ok(Some(z_목록(&out.stdout)));
+        }
+    }
+    Ok(None)
+}
+
+/// NUL 로 끊긴 경로 목록.
+fn z_목록(bytes: &[u8]) -> BTreeSet<String> {
+    bytes
+        .split(|b| *b == 0)
+        .filter(|s| !s.is_empty())
+        .map(|s| String::from_utf8_lossy(s).into_owned())
+        .collect()
 }
 
 /// **`check-ignore` 에는 후행 슬래시가 필수다** — 없으면 규칙 14종 중 둘에서 오답이

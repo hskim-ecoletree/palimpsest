@@ -28,9 +28,9 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 
 use super::inside::{Rel, Root};
-use super::layout::{DERIVED, MANIFEST, SETTINGS};
+use super::layout::{MANIFEST, SETTINGS, 무시할_자리};
 use super::manifest::Manifest;
-use super::{exe, hooks, ignore, manifest, settings, winpath};
+use super::{blocks, exe, hooks, ignore, manifest, settings, winpath};
 
 /// 검사 하나의 결말.
 #[derive(Serialize)]
@@ -79,6 +79,8 @@ pub fn checks(target: &Path) -> Vec<Check> {
         Check { number: 4, name: "`pal` 실행 파일을 찾을 수 있는가", outcome: 실행_파일() },
         Check { number: 5, name: "`.gitignore` 에 파생이 등재됐는가", outcome: 등재(target) },
         Check { number: 6, name: "등록된 훅이 실제로 도는가", outcome: 훅(root.as_deref()) },
+        // 일곱째 — 손으로 고친 블록을 거둘 때가 아니라 지금 말한다(회차 `2026-09-15-clean-uninstall` 계획 3).
+        Check { number: 7, name: "pal 블록이 넣은 그대로인가", outcome: 블록(root.as_deref()) },
     ]
 }
 
@@ -309,8 +311,10 @@ fn 등재(target: &Path) -> Outcome {
         Err(e) => return Outcome::Residual(format!("{e}")),
     };
     let mut 빠진 = Vec::new();
-    for path in DERIVED {
-        match ignore::verdict(&뿌리, path) {
+    let 자리들: Vec<_> = 무시할_자리().collect();
+    for a in &자리들 {
+        let path = a.패턴;
+        match ignore::verdict(&뿌리, &a.표본()) {
             Ok(ignore::Verdict::Covered) => {}
             Ok(ignore::Verdict::NotAWorktree { 까닭 }) => {
                 return Outcome::Residual(까닭.to_owned());
@@ -318,14 +322,68 @@ fn 등재(target: &Path) -> Outcome {
             Ok(ignore::Verdict::Revived { pattern }) => {
                 빠진.push(format!("{path} (사용자가 `{pattern}` 로 되살렸다)"));
             }
-            Ok(ignore::Verdict::Uncovered) => 빠진.push((*path).to_owned()),
+            Ok(ignore::Verdict::Uncovered) => 빠진.push(path.to_owned()),
             Err(e) => return Outcome::Residual(format!("git 에게 못 물었다 — {e}")),
         }
     }
     if 빠진.is_empty() {
-        Outcome::Ok(format!("파생 {}개가 전부 등재됐다", DERIVED.len()))
+        Outcome::Ok(format!("파생 {}개가 전부 등재됐다", 자리들.len()))
     } else {
         Outcome::Failed(format!("등재 안 됨: {}", 빠진.join(" · ")))
+    }
+}
+
+/// ★ **pal 블록이 넣은 그대로인가** — `CLAUDE.md` · `.gitignore` 에 넣은 블록을 **줄바꿈을 맞춘 공간**에서 댄다.
+///
+/// 착수 관측 R3: 블록 안의 줄을 손으로 고쳐도 `update` 는 「이미 최신」, 검사 여섯은 전부 ok 였고 `uninstall` 에서
+/// 처음 rc=1 이 났다. 거둘 때 처음 알게 되면 늦다 — 여기서 미리 말한다. 대조는 [`blocks::상태`] 를 그대로 쓴다
+/// (`uninstall` 이 거부하는 판정과 같은 자다). `core.autocrlf` 로 줄바꿈만 바뀐 블록은 ok 다.
+fn 블록(root: Option<&Path>) -> Outcome {
+    let Some(root) = root else {
+        return Outcome::Residual("설치를 찾지 못했다 — 댈 블록이 없다".to_owned());
+    };
+    let m = match 자리(root, MANIFEST).and_then(|p| manifest::read(&p).map_err(|e| format!("{e:#}"))) {
+        Ok(m) => m,
+        Err(e) => return Outcome::Failed(e),
+    };
+    let 뿌리 = match Root::세운다(root) {
+        Ok(r) => r,
+        Err(e) => return Outcome::Failed(format!("{e}")),
+    };
+    if let Err(e) = manifest::자리들(&뿌리, &m) {
+        return Outcome::Failed(format!("{e:#}"));
+    }
+    if m.blocks.is_empty() {
+        return Outcome::Residual("매니페스트에 넣은 블록이 없다".to_owned());
+    }
+    let mut 다른 = Vec::new();
+    for b in &m.blocks {
+        let rel = b.path.as_str();
+        let path = match 뿌리.join(&b.path) {
+            Ok(p) => p,
+            Err(e) => return Outcome::Failed(format!("{e:#}")),
+        };
+        let markers = super::layout::블록_마커(rel);
+        match blocks::상태(&path, markers, &b.inserted) {
+            Err(e) => 다른.push(format!("{rel} 를 못 읽었다 — {e:#}")),
+            Ok(blocks::상태::그대로) => match blocks::걷어도_남나(&path, markers, &b.inserted) {
+                Ok(false) => {}
+                Ok(true) => 다른.push(format!(
+                    "{rel}: 넣은 블록 말고 우리 마커가 하나 더 있다 — `pal uninstall` 이 거부한다"
+                )),
+                Err(e) => 다른.push(format!("{rel} 를 못 읽었다 — {e:#}")),
+            },
+            Ok(blocks::상태::훼손) => 다른.push(format!(
+                "{rel}: 마커는 있는데 넣은 것과 다르다 — **손으로 고쳐졌다.** `pal uninstall` 이 거부한다. \
+                 마커가 한 번씩 순서대로 있으면 `pal uninstall --force` 가 그 사이를 걷고 지운 줄을 출력한다"
+            )),
+            Ok(blocks::상태::사라짐) => 다른.push(format!("{rel}: 넣은 블록도 마커도 없다")),
+        }
+    }
+    if 다른.is_empty() {
+        Outcome::Ok(format!("넣은 블록 {}개가 줄바꿈을 맞춘 공간에서 넣은 그대로다", m.blocks.len()))
+    } else {
+        Outcome::Failed(다른.join(" / "))
     }
 }
 

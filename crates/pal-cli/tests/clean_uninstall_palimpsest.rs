@@ -156,7 +156,7 @@ fn 파생물_경로인가(rel: &str) -> bool {
     rel.starts_with(".palimpsest/cache")
         || rel == ".palimpsest/index.redb"
         || rel == ".palimpsest/narrative-pending.json"
-        || (rel.starts_with(".palimpsest/radius-base-") && rel.ends_with(".redb"))
+        || (rel.starts_with(".palimpsest/radius-base-") && Path::new(rel).extension().is_some_and(|e| e == "redb"))
 }
 
 fn 파생물이_생겼다(방: &방) {

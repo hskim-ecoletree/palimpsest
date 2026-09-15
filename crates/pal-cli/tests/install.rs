@@ -1066,7 +1066,8 @@ fn 긴_경로에서_라이프사이클이_전부_성립한다() {
     let c: serde_json::Value =
         serde_json::from_slice(&out.stdout).expect("긴 경로에서 진단이 JSON 을 안 산출했다");
     let 검사들 = c.as_array().expect("배열");
-    assert_eq!(검사들.len(), 6, "검사가 여섯이 아니다: {c}");
+    // 일곱째(「pal 블록이 넣은 그대로인가」)도 이 자리를 본다 — 블록 둘을 넣은 방이다.
+    assert_eq!(검사들.len(), 7, "검사가 일곱이 아니다: {c}");
     // 검사 5(`.gitignore` 등재)는 git 프로젝트가 아니라 여기서 모집단 밖이다 —
     // **그 사실이 `residual` 로 나와야 하고 `failed` 면 안 된다.**
     for 검사 in 검사들 {

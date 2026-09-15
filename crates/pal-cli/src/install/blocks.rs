@@ -272,6 +272,135 @@ pub fn 걷어도_남나(path: &Path, markers: &Markers, inserted: &str) -> Resul
     Ok(마커가_있나(&next, markers))
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ★ **`uninstall --force`** — 손으로 고친 블록에서 사람이 고른 탈출구
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 머리말의 「손으로 고쳤으면 고치려 들지 않는다」는 **기본 동작**으로 그대로다. `--force` 는 사람이 고른 것이고,
+// 그때도 **여는 마커와 닫는 마커가 각각 한 번씩 순서대로** 있을 때만 걷는다 — 짝이 안 맞으면 어디까지가 블록인지
+// 우리가 해석해야 하고, 그것이 사용자 줄을 함께 지우는 형태다(사전부검 R1 13). 걷은 줄은 **전부 출력한다.**
+
+/// 여는 마커와 닫는 마커가 **각각 한 번씩 순서대로** 있을 때 그 블록의 원본 구간 — 닫는 마커 뒤의 줄바꿈 하나까지.
+fn 마커_짝(existing: &[u8], markers: &Markers) -> Option<(usize, usize)> {
+    let 여는 = 모든_자리(existing, markers.begin.as_bytes());
+    let 닫는 = 모든_자리(existing, markers.end.as_bytes());
+    let ([at], [닫는_자리]) = (여는.as_slice(), 닫는.as_slice()) else { return None };
+    if *닫는_자리 < at + markers.begin.len() {
+        return None;
+    }
+    let mut 끝 = 닫는_자리 + markers.end.len();
+    if existing[끝..].starts_with(b"\r\n") {
+        끝 += 2;
+    } else if existing[끝..].starts_with(b"\n") {
+        끝 += 1;
+    }
+    Some((*at, 끝))
+}
+
+fn 모든_자리(hay: &[u8], needle: &[u8]) -> Vec<usize> {
+    let mut out = Vec::new();
+    let mut from = 0;
+    while let Some(i) = find(&hay[from..], needle) {
+        out.push(from + i);
+        from += i + needle.len();
+    }
+    out
+}
+
+/// `--force` 로 걷을 수 있는가 — **아무것도 안 건드린 1단계**에서 묻는다.
+///
+/// # Errors
+/// 읽지 못하면.
+pub fn 짝이_맞나(path: &Path, markers: &Markers) -> Result<bool> {
+    if !path.exists() {
+        return Ok(false);
+    }
+    Ok(마커_짝(&super::guard::읽는다(path)?, markers).is_some())
+}
+
+/// 여는 마커부터 닫는 마커의 줄 끝까지 걷고 **지운 줄**을 돌려준다.
+///
+/// 기록(`inserted`)이 개행으로 시작하면 설치가 그 파일 끝에 개행을 먼저 넣은 것이라 그 개행도 걷는다 —
+/// 안 걷으면 설치 전 바이트로 안 돌아간다.
+///
+/// # Errors
+/// 짝이 안 맞거나, 읽거나 쓰지 못하면.
+pub fn 억지로_걷는다(
+    path: &Path,
+    markers: &Markers,
+    inserted: &str,
+    created: bool,
+) -> Result<(Removal, Vec<String>)> {
+    if !path.exists() {
+        return Ok((Removal::Missing, Vec::new()));
+    }
+    let existing = super::guard::읽는다(path)?;
+    let Some((mut at, 끝)) = 마커_짝(&existing, markers) else {
+        bail!(
+            "{} 의 마커가 한 번씩 순서대로 있지 않다 — `--force` 도 걷지 않는다. {}",
+            path.display(),
+            빠져나오는_길(markers, "pal uninstall")
+        );
+    };
+    if super::eol::정규화(inserted.as_bytes()).starts_with(b"\n") {
+        if at >= 2 && &existing[at - 2..at] == b"\r\n" {
+            at -= 2;
+        } else if at >= 1 && existing[at - 1] == b'\n' {
+            at -= 1;
+        }
+    }
+    let 지운 = String::from_utf8_lossy(&existing[at..끝])
+        .lines()
+        .map(|l| l.trim_end_matches('\r').to_owned())
+        .filter(|l| !l.is_empty())
+        .collect();
+    let mut next = existing;
+    next.drain(at..끝);
+    if created && next.is_empty() {
+        std::fs::remove_file(path).with_context(|| format!("지우지 못했다: {}", path.display()))?;
+        return Ok((Removal::FileGone, 지운));
+    }
+    write_in_place(path, &next)?;
+    Ok((Removal::Block, 지운))
+}
+
+/// 넣은 바이트열의 **본문** — 줄바꿈을 맞추고 앞에 붙인 개행 하나를 뗀다. 새 블록과 댈 때 쓴다.
+#[must_use]
+pub fn 본문(inserted: &str) -> Vec<u8> {
+    let mut v = super::eol::정규화(inserted.as_bytes());
+    if v.first() == Some(&b'\n') {
+        v.remove(0);
+    }
+    v
+}
+
+/// ★ **`update` 가 블록을 새 목록으로 갈아 끼운다** — 제자리에서, 그 파일의 줄바꿈으로.
+///
+/// 새로 넣은 바이트열을 돌려준다. **부르는 쪽이 그것을 매니페스트의 `inserted` 에 곧바로 적는다** — 안 적으면
+/// 그 뒤 `uninstall` 이 실물과 기록이 다르다고 거부한다(착수 관측 R13).
+///
+/// # Errors
+/// 넣은 블록이 그대로 안 보이거나, 읽거나 쓰지 못하면.
+pub fn 갈아_끼운다(path: &Path, inserted: &str, block: &str) -> Result<String> {
+    let existing = super::guard::읽는다(path)?;
+    let Some((at, 끝)) = 자리(&existing, inserted.as_bytes()) else {
+        bail!("{} 에서 넣은 블록을 그대로 못 찾았다 — 갈아 끼우지 않는다", path.display());
+    };
+    let crlf = super::eol::crlf_인가(&existing);
+    let mut 새것 = Vec::new();
+    if super::eol::정규화(inserted.as_bytes()).starts_with(b"\n") {
+        새것.extend_from_slice(if crlf { b"\r\n" } else { b"\n" });
+    }
+    새것.extend_from_slice(&super::eol::맞춘다(block.as_bytes(), crlf));
+    let 새것 = String::from_utf8(새것)
+        .with_context(|| format!("블록이 UTF-8 이 아니게 됐다: {}", path.display()))?;
+    let mut next = existing[..at].to_vec();
+    next.extend_from_slice(새것.as_bytes());
+    next.extend_from_slice(&existing[끝..]);
+    write_in_place(path, &next)?;
+    Ok(새것)
+}
+
 /// 우리 바이트열을 뺀 **결과.** 우리 것이 안 보이면 `None`.
 fn 걷은_뒤(existing: &[u8], inserted: &str) -> Option<Vec<u8>> {
     let (at, 끝) = 자리(existing, inserted.as_bytes())?;
@@ -533,6 +662,62 @@ mod tests {
                 전,
                 "거부했는데 파일이 바뀌었다"
             );
+        }
+    }
+
+    /// ★ **`--force` 는 짝이 맞는 마커 사이를 걷고, 설치가 먼저 넣은 개행까지 걷어 설치 전 바이트로 돌린다.**
+    #[test]
+    fn 억지로_걷으면_설치_전_바이트다() {
+        for 원본 in [&b"a\nb\n"[..], &b"a\nb"[..], &b"a\r\nb\r\n"[..], &b"a\r\nb"[..]] {
+            let dir = 방("억지로");
+            let path = dir.join("f");
+            std::fs::write(&path, 원본).expect("원본");
+            let Added::Inserted { bytes, created } = add(&path, &IGNORE_MARKERS, &블록()).expect("더하기")
+            else {
+                panic!("이미 있다고 나왔다");
+            };
+            let 고침 = std::fs::read(&path).expect("읽기");
+            let 고침 = String::from_utf8_lossy(&고침).replace("/x/", "/x/\n사람의 줄");
+            std::fs::write(&path, 고침).expect("고치기");
+            assert!(super::짝이_맞나(&path, &IGNORE_MARKERS).expect("짝"));
+            let (_, 지운) = super::억지로_걷는다(&path, &IGNORE_MARKERS, &bytes, created).expect("걷기");
+            assert!(지운.iter().any(|l| l == "사람의 줄"), "지운 줄을 안 돌려줬다: {지운:?}");
+            assert_eq!(std::fs::read(&path).expect("읽기"), 원본, "설치 전 바이트가 아니다");
+        }
+    }
+
+    /// 짝이 안 맞으면 `--force` 도 **안 쓴다.**
+    #[test]
+    fn 짝이_안_맞으면_억지로도_안_걷는다() {
+        let dir = 방("짝");
+        let path = dir.join("f");
+        for 내용 in [
+            format!("a\n{}\n/x/\n", IGNORE_MARKERS.begin),
+            format!("{}\n{}\n/x/\n{}\n", IGNORE_MARKERS.begin, IGNORE_MARKERS.begin, IGNORE_MARKERS.end),
+            format!("{}\n{}\n", IGNORE_MARKERS.end, IGNORE_MARKERS.begin),
+        ] {
+            std::fs::write(&path, &내용).expect("쓰기");
+            assert!(!super::짝이_맞나(&path, &IGNORE_MARKERS).expect("짝"), "{내용:?}");
+            assert!(super::억지로_걷는다(&path, &IGNORE_MARKERS, &블록(), false).is_err());
+            assert_eq!(std::fs::read_to_string(&path).expect("읽기"), 내용, "거부했는데 파일이 바뀌었다");
+        }
+    }
+
+    /// ★ **갈아 끼운 바이트열로 다시 걷으면 원본이다** — `update` 뒤 `uninstall` 의 왕복(착수 관측 R13).
+    #[test]
+    fn 갈아_끼운_기록으로_걷으면_원본이다() {
+        for 원본 in [&b"a\nb"[..], &b"a\r\nb\r\n"[..]] {
+            let dir = 방("갈아");
+            let path = dir.join("f");
+            std::fs::write(&path, 원본).expect("원본");
+            let Added::Inserted { bytes, .. } = add(&path, &IGNORE_MARKERS, &블록()).expect("더하기") else {
+                panic!("이미 있다고 나왔다");
+            };
+            let 새 = compose(&IGNORE_MARKERS, &["/x/".to_owned(), "/y/".to_owned()]);
+            let 새것 = super::갈아_끼운다(&path, &bytes, &새).expect("갈아 끼우기");
+            assert_eq!(super::본문(&새것), 새.as_bytes());
+            remove(&path, &IGNORE_MARKERS, &새것, false).expect("빼기");
+            assert_eq!(std::fs::read(&path).expect("읽기"), 원본);
         }
     }
 

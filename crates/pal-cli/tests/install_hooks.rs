@@ -560,9 +560,14 @@ fn 검사들(exe: &Path, cwd: &Path) -> serde_json::Value {
 fn 훅_검사(exe: &Path, cwd: &Path) -> serde_json::Value {
     let c = 검사들(exe, cwd);
     let 배열 = c.as_array().expect("배열").clone();
-    let 마지막 = 배열.last().expect("검사가 하나도 없다").clone();
-    assert_eq!(마지막["number"], 6, "훅 검사가 여섯째가 아니다: {c}");
-    마지막
+    // 검사 7(「pal 블록이 넣은 그대로인가」)이 뒤에 붙었다 — 마지막이 아니라 **번호와 이름으로** 집는다.
+    let 훅 = 배열
+        .iter()
+        .find(|x| x["number"] == 6)
+        .unwrap_or_else(|| panic!("여섯째 검사가 없다: {c}"))
+        .clone();
+    assert_eq!(훅["name"], "등록된 훅이 실제로 도는가", "여섯째 검사가 훅 검사가 아니다: {c}");
+    훅
 }
 
 /// ★ **등록된 명령을 실제로 실행해서 응답을 확인한다.**
