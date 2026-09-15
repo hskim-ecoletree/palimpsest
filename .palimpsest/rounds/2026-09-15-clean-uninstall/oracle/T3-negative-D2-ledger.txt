@@ -1,0 +1,92 @@
+# T3 음성 대조 — D2-ledger
+# 변이(임시 · 커밋하지 않음 · 기록 뒤 git checkout 으로 되돌림): 봉인을 원장에서 안 모은다
+# 바탕: 구현 커밋 42d57e7 + 커밋하지 않은 임시 --purge 심(T2 대역)
+# 변이 diff:
+#   diff --git a/crates/pal-cli/src/round/external.rs b/crates/pal-cli/src/round/external.rs
+#   index 9d563af..f8cd474 100644
+#   --- a/crates/pal-cli/src/round/external.rs
+#   +++ b/crates/pal-cli/src/round/external.rs
+#   @@ -229,7 +229,7 @@ fn 체크아웃의_회차(repo: &Path, git: &GixRepo) -> Result<(Vec<String>, 
+#                    if event["kind"] != "checkpoint" {
+#                        continue;
+#                    }
+#   -                if let Some(seal) = event["finalization_seal"].as_str() {
+#   +                if let Some(seal) = event["finalization_seal"].as_str().filter(|_| false) {
+#                        let 자리 = 봉인들.entry(seal.to_owned()).or_insert((slug.clone(), false));
+#                        자리.1 |= 추적;
+#                    }
+# 시험 필터: d2_봉인의_표시_파일
+# 판독: 이 시험들이 빨개져야 음성 대조가 걸린 것이다
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.43s
+     Running tests/clean_uninstall_external.rs (target/debug/deps/clean_uninstall_external-538e64a87ab88768)
+
+running 1 test
+test d2_봉인의_표시_파일을_미리_지운_방에서도_purge_가_원장으로_봉인을_걷는다 ... FAILED
+
+failures:
+
+---- d2_봉인의_표시_파일을_미리_지운_방에서도_purge_가_원장으로_봉인을_걷는다 stdout ----
+
+thread 'd2_봉인의_표시_파일을_미리_지운_방에서도_purge_가_원장으로_봉인을_걷는다' (64995988) panicked at crates/pal-cli/tests/clean_uninstall_external.rs:559:5:
+표시 파일이 사라진 봉인을 원장으로 가르지 못했다
+rc=Some(0)
+stdout:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/x
+  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/home/Library/Application Support/palimpsest/approvals/10824864e8af21f5e50218a433c7d77cd7f66f56a18b7ccbc0e8ce64e8fad416.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/home/Library/Application Support/palimpsest/approvals/round-stop-activation-29649761ec0c75bdb111ed31cae4645009529e5c8c5c0e42be7ac6889664dd09.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/home/Library/Application Support/palimpsest/approvals/round-stop-progress-c7334acddcce96ea1995bf6f68a98deba4881820995b5679e76f94b1e7d761e3.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/home/Library/Application Support/palimpsest/approvals/round-stop-progress-c7334acddcce96ea1995bf6f68a98deba4881820995b5679e76f94b1e7d761e3.lock
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/home/Library/Application Support/palimpsest/approvals/10824864e8af21f5e50218a433c7d77cd7f66f56a18b7ccbc0e8ce64e8fad416.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/home/Library/Application Support/palimpsest/approvals/round-stop-progress-c7334acddcce96ea1995bf6f68a98deba4881820995b5679e76f94b1e7d761e3.project
+  가를 수 없다(밖)            1개 — 표시 파일도 이 체크아웃의 원장 · 회차도 어느 프로젝트 몫인지 말하지 않아 안 지웠다
+  가를 수 없다(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-seal-ledger-80786/home/Library/Application Support/palimpsest/approvals/924c399da76612b0a3d042450f38ac39eac48d1e728f54de96cb02b57fd7a338.json
+  ⚠ Stop 정책             같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다
+  ⚠ 같은 원격               같은 원격의 다른 클론의 기록도 함께 지웠다 — 같은 origin 의 클론은 식별자가 같아 가를 수 없다
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+
+
+stderr:
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    d2_봉인의_표시_파일을_미리_지운_방에서도_purge_가_원장으로_봉인을_걷는다
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 22 filtered out; finished in 1.13s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_external`

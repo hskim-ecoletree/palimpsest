@@ -331,6 +331,67 @@ impl GixRepo {
             .ok_or_else(|| GitError::Resolve("repository root commit이 없다".to_owned()))
     }
 
+    /// 식별자가 origin URL 에서 왔나 — 같은 origin 의 클론끼리는 식별자가 같다.
+    #[must_use]
+    pub fn has_origin(&self) -> bool {
+        self.inner
+            .config_snapshot()
+            .string("remote.origin.url")
+            .is_some_and(|origin| !origin.is_empty())
+    }
+
+    /// 같은 저장소의 **다른** 워킹트리 — 연결된 worktree 와, 연결된 쪽에서 열었으면 주 워킹트리.
+    ///
+    /// 지금 연 워킹트리는 뺀다. 디렉터리가 사라진(아직 prune 안 된) worktree 는 체크아웃이 아니라 뺀다.
+    ///
+    /// # Errors
+    /// 워킹트리가 없거나(bare) worktree 목록을 읽지 못하면.
+    pub fn other_worktrees(&self) -> Result<Vec<std::path::PathBuf>, GitError> {
+        let here = self
+            .work_dir()?
+            .canonicalize()
+            .map_err(|e| GitError::Worktree(format!("워킹트리 루트: {e}")))?;
+        let mut 후보 = Vec::new();
+        for proxy in self
+            .inner
+            .worktrees()
+            .map_err(|e| GitError::Worktree(format!("worktree 목록을 읽지 못했다: {e}")))?
+        {
+            if let Ok(base) = proxy.base() {
+                후보.push(base);
+            }
+        }
+        if let Ok(main) = self.inner.main_repo() {
+            if let Some(dir) = main.workdir() {
+                후보.push(dir.to_path_buf());
+            }
+        }
+        let mut seen = Vec::new();
+        let mut out = Vec::new();
+        for path in 후보 {
+            let Ok(canonical) = path.canonicalize() else { continue };
+            if canonical != here && !seen.contains(&canonical) {
+                seen.push(canonical);
+                out.push(path);
+            }
+        }
+        out.sort();
+        Ok(out)
+    }
+
+    /// 인덱스에 이 저장소 상대 경로가 있는가 — git 이 추적 중인가.
+    ///
+    /// # Errors
+    /// 인덱스를 읽지 못하면. 인덱스 파일이 없으면 추적 중인 것이 없다.
+    pub fn is_tracked(&self, path: &str) -> Result<bool, GitError> {
+        use gix::bstr::ByteSlice;
+        let index = self
+            .inner
+            .index_or_empty()
+            .map_err(|e| GitError::Worktree(format!("인덱스를 읽지 못했다: {e}")))?;
+        Ok(index.entry_by_path(path.as_bytes().as_bstr()).is_some())
+    }
+
     /// 사람이 쓴 것을 커밋 이름으로 푼다 — 짧은 SHA · 브랜치 · 태그 전부.
     ///
     /// **S1 의 코퍼스는 12자 축약 SHA 로 고정돼 있다**(`a29cad0bf6a8`). 그것이 브랜치

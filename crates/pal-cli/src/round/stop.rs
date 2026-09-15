@@ -163,25 +163,6 @@ pub(crate) fn disable(repo: &Path, requested: Option<&Path>) -> Result<()> {
     }
 }
 
-pub(crate) fn disable_if_supported(repo: &Path) -> Result<()> {
-    let repo = repo
-        .canonicalize()
-        .with_context(|| format!("repo `{}`", repo.display()))?;
-    let project = match approval::repository_root_identity(&repo) {
-        Ok(project) => project,
-        Err(_) => return Ok(()),
-    };
-    let store = approval::store_location(None).map_err(anyhow::Error::from)?;
-    let path = activation_path(&store, &project);
-    match std::fs::remove_file(&path) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => {
-            Err(error).with_context(|| format!("Stop activation 제거: {}", path.display()))
-        }
-    }
-}
-
 pub fn command_status(repo: &Path, requested: Option<&Path>, json: bool) -> Result<()> {
     let repo = canonical_repo(repo)?;
     match activation_state(&repo, requested) {
@@ -365,19 +346,24 @@ fn activation_state(repo: &Path, requested: Option<&Path>) -> ActivationState {
     ActivationState::Active(activation, path)
 }
 
-fn activation_digest(project: &str, slug: &str) -> String {
+pub(super) fn activation_digest(project: &str, slug: &str) -> String {
     digest_values(
         ACTIVATION_DOMAIN,
         &[project, slug, POLICY, &NO_PROGRESS_LIMIT.to_string()],
     )
 }
 
-fn activation_path(store: &Path, project: &str) -> PathBuf {
-    store.join(format!("round-stop-activation-{project}.json"))
+/// 활성화 파일 이름의 앞머리 — 뒤에 프로젝트 식별자와 `.json`.
+pub(super) const ACTIVATION_PREFIX: &str = "round-stop-activation-";
+/// 진행 파일 · 잠금 · 표시 파일 이름의 앞머리 — 뒤에 활성화 digest 와 `.json` · `.lock` · `.project`.
+pub(super) const PROGRESS_PREFIX: &str = "round-stop-progress-";
+
+pub(super) fn activation_path(store: &Path, project: &str) -> PathBuf {
+    store.join(format!("{ACTIVATION_PREFIX}{project}.json"))
 }
 
-fn progress_path(store: &Path, activation_digest: &str) -> PathBuf {
-    store.join(format!("round-stop-progress-{activation_digest}.json"))
+pub(super) fn progress_path(store: &Path, activation_digest: &str) -> PathBuf {
+    store.join(format!("{PROGRESS_PREFIX}{activation_digest}.json"))
 }
 
 fn stable_status(repo: &Path, slug: &str) -> Result<StatusView> {
@@ -462,6 +448,8 @@ fn record_attempt(
     event_hash: &str,
 ) -> Result<Progress> {
     let _lease = Lease::acquire(&path.with_extension("lock"))?;
+    // 진행 파일 · 잠금이 어느 프로젝트 몫인지 옆에 적는다 — 잠금 안이라 세션끼리 겹쳐 쓰지 않는다.
+    approval::ensure_project_marker(path, &activation.project).map_err(anyhow::Error::from)?;
     let existing = read_progress(path)?;
     let mut progress = match existing {
         None => Progress {

@@ -99,7 +99,8 @@ pub fn approve(config: &Config<'_>) -> Result<ApproveView, VerifyError> {
         config.output_limit,
     )?;
     let dir = approval::store_dir(config.repo, config.approval_dir)?;
-    approval::approve(&dir, &binding.digest)?;
+    let project = approval::repository_root_identity(config.repo)?;
+    approval::approve(&dir, &binding.digest, &project)?;
     Ok(ApproveView {
         outcome: "approved",
         round: config.slug.to_owned(),
@@ -298,7 +299,8 @@ pub fn finalize(config: &Config<'_>) -> Result<FinalizeView, VerifyError> {
     });
     append_line(&append_guard, &event.to_string())?;
     let approval_dir = approval::store_dir(config.repo, None)?;
-    approval::approve(&approval_dir, &finalization_seal)?;
+    let project = approval::repository_root_identity(config.repo)?;
+    approval::approve(&approval_dir, &finalization_seal, &project)?;
     let complete = match super::status::read(config.repo, Some(config.slug))
         .map_err(|error| VerifyError::Invalid(error.to_string()))?
     {

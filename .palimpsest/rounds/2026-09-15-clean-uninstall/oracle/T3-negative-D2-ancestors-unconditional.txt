@@ -1,0 +1,106 @@
+# T3 음성 대조 — D2-ancestors-unconditional
+# 변이(임시 · 커밋하지 않음 · 기록 뒤 git checkout 으로 되돌림): 기록 없이 가까운 조상 둘을 비었으면 무조건 걷는다 — 미리 있던 빈 조상도 지운다
+# 바탕: 구현 커밋 42d57e7 + 커밋하지 않은 임시 --purge 심(T2 대역)
+# 변이 diff:
+#   diff --git a/crates/pal-cli/src/round/external.rs b/crates/pal-cli/src/round/external.rs
+#   index 9d563af..14aa811 100644
+#   --- a/crates/pal-cli/src/round/external.rs
+#   +++ b/crates/pal-cli/src/round/external.rs
+#   @@ -272,7 +272,7 @@ fn 빈_자리를_걷는다(store: &Path, 보고: &mut 밖의_보고) -> Result<(
+#        if 남은.iter().any(|name| name != approval::CREATED_ANCESTORS) {
+#            return Ok(());
+#        }
+#   -    let 조상 = approval::created_ancestors(root);
+#   +    let 조상: Vec<String> = root.ancestors().skip(1).take(2).filter_map(|p| p.file_name().map(|n| n.to_string_lossy().into_owned())).collect();
+#        if !남은.is_empty() {
+#            let record = root.join(approval::CREATED_ANCESTORS);
+#            std::fs::remove_file(&record).with_context(|| format!("{}", record.display()))?;
+# 시험 필터: d2_purge
+# 판독: 이 시험들이 빨개져야 음성 대조가 걸린 것이다
+
+warning: function `created_ancestors` is never used
+   --> crates/pal-cli/src/round/approval.rs:269:15
+    |
+269 | pub(super) fn created_ancestors(root: &Path) -> Vec<String> {
+    |               ^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `pal-cli` (bin "pal") generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.79s
+     Running tests/clean_uninstall_external.rs (target/debug/deps/clean_uninstall_external-538e64a87ab88768)
+
+running 2 tests
+test d2_purge_둘_다_걷으면_home_이_설치_전과_같다_빈_조상을_미리_만든_home ... FAILED
+test d2_purge_둘_다_걷으면_home_이_설치_전과_같다_조상을_안_만든_home ... ok
+
+failures:
+
+---- d2_purge_둘_다_걷으면_home_이_설치_전과_같다_빈_조상을_미리_만든_home stdout ----
+
+thread 'd2_purge_둘_다_걷으면_home_이_설치_전과_같다_빈_조상을_미리_만든_home' (65002947) panicked at crates/pal-cli/tests/clean_uninstall_external.rs:530:5:
+둘 다 --purge 한 뒤 HOME 스냅샷이 설치 전과 다르다: {"Library", "Library/Application Support"}
+rc=Some(0)
+stdout:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/y
+  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals/1f43825cc226e71af8be185621bd5fe23ad9bae582d8bf26b6aa7b499524af64.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals/e62f8497cd935d4ba87edf2846caa5934f244ff715d07b7442ddb4ed764711b4.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals/round-stop-activation-a74f1e05fd22787f4c19d2009cb00d5fbf2cd3bcf30de0f8da3fc3091f0eb9b3.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals/round-stop-progress-27a820d735e569421bb8adb0bff739ec7929729c59d4fda8144b47fedac34522.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals/round-stop-progress-27a820d735e569421bb8adb0bff739ec7929729c59d4fda8144b47fedac34522.lock
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals/1f43825cc226e71af8be185621bd5fe23ad9bae582d8bf26b6aa7b499524af64.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals/e62f8497cd935d4ba87edf2846caa5934f244ff715d07b7442ddb4ed764711b4.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals/round-stop-progress-27a820d735e569421bb8adb0bff739ec7929729c59d4fda8144b47fedac34522.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support/palimpsest
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library/Application Support
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d2-purge-ancestors-85597/home/Library
+  ⚠ Stop 정책             같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다
+  ⚠ 같은 원격               같은 원격의 다른 클론의 기록도 함께 지웠다 — 같은 origin 의 클론은 식별자가 같아 가를 수 없다
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+
+
+stderr:
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    d2_purge_둘_다_걷으면_home_이_설치_전과_같다_빈_조상을_미리_만든_home
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 21 filtered out; finished in 2.60s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_external`

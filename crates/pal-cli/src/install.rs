@@ -1299,20 +1299,48 @@ fn 밖의_보고를_싣는다(report: &mut Report, 밖: &crate::round::external:
     if let Some(자리) = &밖.들여다본_자리 {
         report.say("들여다본 자리(밖)", &자리.display().to_string());
     }
+    if !밖.worktree_거부.is_empty() {
+        report.say(
+            "밖을 안 건드렸다",
+            "같은 저장소의 다른 git worktree 가 밖의 기록(Stop 활성화 · 진행 파일 · 승인 · 봉인)을 \
+             이 체크아웃과 나눠 쓴다 — 가를 수 없어 하나도 건드리지 않았다",
+        );
+        for p in &밖.worktree_거부 {
+            report.say("다른 worktree", &p.display().to_string());
+        }
+    }
     for p in &밖.지운 {
         report.say("지웠다(밖)", &p.display().to_string());
+    }
+    if !밖.남긴.is_empty() {
+        report.say("남겼다(밖)", &format!("{}개 — 이 프로젝트의 정본", 밖.남긴.len()));
     }
     for (p, 까닭) in &밖.남긴 {
         report.say("남겼다(밖)", &format!("{}  ({까닭})", p.display()));
     }
+    if !밖.가를_수_없는.is_empty() {
+        report.say(
+            "가를 수 없다(밖)",
+            &format!(
+                "{}개 — 표시 파일도 이 체크아웃의 원장 · 회차도 어느 프로젝트 몫인지 말하지 않아 안 지웠다",
+                밖.가를_수_없는.len()
+            ),
+        );
+    }
     for p in &밖.가를_수_없는 {
         report.say("가를 수 없다(밖)", &p.display().to_string());
     }
-    for p in &밖.worktree_거부 {
-        report.say("밖을 안 건드렸다", &format!("같은 저장소의 다른 worktree — {}", p.display()));
+    if 밖.다른_체크아웃_stop_비활성화 {
+        report.say(
+            "⚠ Stop 정책",
+            "같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다",
+        );
     }
     if 밖.클론_경고 {
-        report.say("⚠ 같은 원격", "다른 클론의 기록도 함께 지웠을 수 있다");
+        report.say(
+            "⚠ 같은 원격",
+            "같은 원격의 다른 클론의 기록도 함께 지웠다 — 같은 origin 의 클론은 식별자가 같아 가를 수 없다",
+        );
     }
 }
 

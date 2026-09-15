@@ -1,0 +1,122 @@
+# T3 음성 대조 — D1
+# 변이(임시 · 커밋하지 않음 · 기록 뒤 git checkout 으로 되돌림): 표시 파일의 식별자를 안 대 본다 — 표시 파일이 있으면 무조건 이 프로젝트 몫
+# 바탕: 구현 커밋 42d57e7 + 커밋하지 않은 임시 --purge 심(T2 대역)
+# 변이 diff:
+#   diff --git a/crates/pal-cli/src/round/external.rs b/crates/pal-cli/src/round/external.rs
+#   index 9d563af..ff42233 100644
+#   --- a/crates/pal-cli/src/round/external.rs
+#   +++ b/crates/pal-cli/src/round/external.rs
+#   @@ -193,7 +193,7 @@ fn 걷는다_자리에서(repo: &Path, store: &Path, 방식: 걷기) -> Result<
+#    fn 표시로_가른다(record: &Path, project: &str) -> Option<몫> {
+#        match approval::read_project_marker(record) {
+#            ProjectMarker::Absent => None,
+#   -        ProjectMarker::Project(owner) if owner == project => Some(몫::이_프로젝트),
+#   +        ProjectMarker::Project(_owner) => Some(몫::이_프로젝트),
+#            ProjectMarker::Project(_) => Some(몫::남의),
+#            ProjectMarker::Unreadable => Some(몫::가를_수_없다),
+#        }
+# 시험 필터: d1_음성_대조
+# 판독: 이 시험들이 빨개져야 음성 대조가 걸린 것이다
+
+warning: unreachable pattern
+   --> crates/pal-cli/src/round/external.rs:197:9
+    |
+196 |         ProjectMarker::Project(_owner) => Some(몫::이_프로젝트),
+    |         ------------------------------ matches all the relevant values
+197 |         ProjectMarker::Project(_) => Some(몫::남의),
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^ no value can reach this
+    |
+    = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `project`
+   --> crates/pal-cli/src/round/external.rs:193:27
+    |
+193 | fn 표시로_가른다(record: &Path, project: &str) -> Option<몫> {
+    |                                 ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_project`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `pal-cli` (bin "pal") generated 2 warnings (run `cargo fix --bin "pal" -p pal-cli` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.39s
+     Running tests/clean_uninstall_external.rs (target/debug/deps/clean_uninstall_external-538e64a87ab88768)
+
+running 2 tests
+test d1_음성_대조_진행_파일의_표시가_다른_프로젝트면_기본_uninstall_이_안_걷는다 ... FAILED
+test d1_음성_대조_승인의_표시가_다른_프로젝트면_purge_가_안_걷는다 ... FAILED
+
+failures:
+
+---- d1_음성_대조_진행_파일의_표시가_다른_프로젝트면_기본_uninstall_이_안_걷는다 stdout ----
+
+thread 'd1_음성_대조_진행_파일의_표시가_다른_프로젝트면_기본_uninstall_이_안_걷는다' (64993801) panicked at crates/pal-cli/tests/clean_uninstall_external.rs:428:5:
+assertion `left == right` failed: 다른 프로젝트 표시가 붙은 진행 파일 · 잠금이 이 프로젝트 몫으로 걷혔다(또는 활성화가 안 걷혔다)
+rc=Some(0)
+stdout:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/x
+  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals/round-stop-activation-195c47b27e060ce64b8ef64a25a606fe1787e177aaa136e19ae148f8183f8397.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals/round-stop-progress-f0a286bc407abaf91fd8fa91099da79da5ef49dc27a416cad20ab54c5a356e1f.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals/round-stop-progress-f0a286bc407abaf91fd8fa91099da79da5ef49dc27a416cad20ab54c5a356e1f.lock
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals/round-stop-progress-f0a286bc407abaf91fd8fa91099da79da5ef49dc27a416cad20ab54c5a356e1f.project
+  남겼다(밖)                4개 — 이 프로젝트의 정본
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals/1ced660ab5d2355ea4b1f4b4e4b9722bc1201b2a8ce1fc07627f4b649769f995.json  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals/1ced660ab5d2355ea4b1f4b4e4b9722bc1201b2a8ce1fc07627f4b649769f995.project  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals/6667c7ca449956e73a7a1c53d720ef999ed83892db66e3473eba0c457263e6be.json  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d1-neg-progress-79329/home/Library/Application Support/palimpsest/approvals/6667c7ca449956e73a7a1c53d720ef999ed83892db66e3473eba0c457263e6be.project  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  ⚠ Stop 정책             같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+
+
+stderr:
+
+  left: {"Library/Application Support/palimpsest/approvals/round-stop-activation-195c47b27e060ce64b8ef64a25a606fe1787e177aaa136e19ae148f8183f8397.json", "Library/Application Support/palimpsest/approvals/round-stop-progress-f0a286bc407abaf91fd8fa91099da79da5ef49dc27a416cad20ab54c5a356e1f.json", "Library/Application Support/palimpsest/approvals/round-stop-progress-f0a286bc407abaf91fd8fa91099da79da5ef49dc27a416cad20ab54c5a356e1f.lock", "Library/Application Support/palimpsest/approvals/round-stop-progress-f0a286bc407abaf91fd8fa91099da79da5ef49dc27a416cad20ab54c5a356e1f.project"}
+ right: {"Library/Application Support/palimpsest/approvals/round-stop-activation-195c47b27e060ce64b8ef64a25a606fe1787e177aaa136e19ae148f8183f8397.json"}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- d1_음성_대조_승인의_표시가_다른_프로젝트면_purge_가_안_걷는다 stdout ----
+
+thread 'd1_음성_대조_승인의_표시가_다른_프로젝트면_purge_가_안_걷는다' (64993800) panicked at crates/pal-cli/tests/clean_uninstall_external.rs:453:5:
+assertion `left == right` failed: 다른 프로젝트 표시가 붙은 승인을 걷었다
+  left: None
+ right: Some([123, 34, 118, 101, 114, 115, 105, 111, 110, 34, 58, 49, 44, 34, 100, 105, 103, 101, 115, 116, 34, 58, 34, 54, 54, 97, 51, 54, 54, 54, 102, 52, 55, 100, 51, 99, 51, 54, 48, 56, 49, 56, 100, 50, 50, 49, 97, 54, 51, 48, 51, 98, 50, 54, 57, 48, 99, 56, 101, 99, 97, 49, 51, 100, 48, 56, 99, 52, 53, 51, 54, 55, 99, 51, 52, 50, 55, 50, 98, 98, 101, 49, 101, 56, 48, 99, 52, 34, 125, 10])
+
+
+failures:
+    d1_음성_대조_승인의_표시가_다른_프로젝트면_purge_가_안_걷는다
+    d1_음성_대조_진행_파일의_표시가_다른_프로젝트면_기본_uninstall_이_안_걷는다
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 21 filtered out; finished in 1.06s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_external`
