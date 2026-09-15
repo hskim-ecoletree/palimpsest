@@ -1,0 +1,37 @@
+# T2 음성 대조 B1 — 파생물 목록에서 하나(narrative-pending.json)를 뺀 빌드
+# 2026-09-15T22:36:29+00:00 · macOS · 변이는 임시로 넣고 되돌렸다(커밋 안 함)
+# 변이 자리: crates/pal-cli/src/install/layout.rs
+# --- 뺀 줄
+# -     안의_자리 { 패턴: ".palimpsest/narrative-pending.json", 부류: 부류::파생물 },
+# --- 넣은 줄
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_palimpsest -- b1_ --test-threads=4
+# rc=101
+
+
+running 1 test
+test b1_palimpsest_가_없던_방은_사용하고_거두면_워킹트리가_설치_전과_같다 ... FAILED
+
+failures:
+
+---- b1_palimpsest_가_없던_방은_사용하고_거두면_워킹트리가_설치_전과_같다 stdout ----
+
+thread 'b1_palimpsest_가_없던_방은_사용하고_거두면_워킹트리가_설치_전과_같다' (65726540) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:188:5:
+설치 전과 갈린 경로가 있다: [
+    ".palimpsest",
+    ".palimpsest/narrative-pending.json",
+]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    b1_palimpsest_가_없던_방은_사용하고_거두면_워킹트리가_설치_전과_같다
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 21 filtered out; finished in 1.51s
+
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.48s
+     Running tests/clean_uninstall_palimpsest.rs (target/debug/deps/clean_uninstall_palimpsest-043e1b91388e53c4)
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_palimpsest`
+error: 1 target failed:
+    `-p pal-cli --test clean_uninstall_palimpsest`

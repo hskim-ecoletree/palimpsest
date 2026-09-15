@@ -1,0 +1,57 @@
+# T2 음성 대조 B3 — intent.redb 를 무조건 파생물로 두는 빌드
+# 2026-09-15T22:37:38+00:00 · macOS · 변이는 임시로 넣고 되돌렸다(커밋 안 함)
+# 변이 자리: crates/pal-cli/src/install.rs
+# --- 뺀 줄
+# -         (Ok(0), Ok(r)) if r.is_empty() => 의도_판정::파생물,
+# --- 넣은 줄
+# +         (Ok(_), Ok(_)) => 의도_판정::파생물,
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_palimpsest -- b3_ --test-threads=4
+# rc=101
+
+
+running 2 tests
+test b3_거부만_한_방도_intent_redb_를_남기고_가린다 ... FAILED
+test b3_결박을_승인하고_내보내지_않은_방은_intent_redb_를_남기고_가린다 ... FAILED
+
+failures:
+
+---- b3_거부만_한_방도_intent_redb_를_남기고_가린다 stdout ----
+
+thread 'b3_거부만_한_방도_intent_redb_를_남기고_가린다' (65838863) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:265:5:
+assertion `left == right` failed: 다시 열어 읽은 결박·거부 수가 uninstall 직전과 다르다
+  left: (0, 0)
+ right: (0, 1)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- b3_결박을_승인하고_내보내지_않은_방은_intent_redb_를_남기고_가린다 stdout ----
+
+thread 'b3_결박을_승인하고_내보내지_않은_방은_intent_redb_를_남기고_가린다' (65838864) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:265:5:
+assertion `left == right` failed: 다시 열어 읽은 결박·거부 수가 uninstall 직전과 다르다
+  left: (0, 0)
+ right: (1, 0)
+
+
+failures:
+    b3_거부만_한_방도_intent_redb_를_남기고_가린다
+    b3_결박을_승인하고_내보내지_않은_방은_intent_redb_를_남기고_가린다
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 20 filtered out; finished in 2.17s
+
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+warning: unreachable pattern
+    --> crates/pal-cli/src/install.rs:1681:9
+     |
+1680 |         (Ok(_), Ok(_)) => 의도_판정::파생물,
+     |         -------------- matches all the relevant values
+1681 |         (Ok(결박), Ok(r)) => 의도_판정::정본 { 결박, 거부: r.len() },
+     |         ^^^^^^^^^^^^^^^^^ no value can reach this
+     |
+     = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: `pal-cli` (bin "pal") generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.44s
+     Running tests/clean_uninstall_palimpsest.rs (target/debug/deps/clean_uninstall_palimpsest-043e1b91388e53c4)
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_palimpsest`
+error: 1 target failed:
+    `-p pal-cli --test clean_uninstall_palimpsest`

@@ -260,7 +260,7 @@ fn b3(tag: &str, 승인: bool) {
 
     let 화면 = 방.성공(&["uninstall"]);
 
-    assert!(방.자리(".palimpsest/intent.redb").exists(), "결박·거부가 든 intent.redb 를 지웠다:\n{화면}");
+    // 첫 단언이 「다시 열어 읽은 수」다 — 파일이 없으면 저장소는 비어 열리고(결박 0 · 거부 0) 여기서 빨개진다.
     let 뒤 = 방.의도_수();
     assert_eq!((뒤.0, 뒤.1), (직전.0, 직전.1), "다시 열어 읽은 결박·거부 수가 uninstall 직전과 다르다");
     assert_eq!(

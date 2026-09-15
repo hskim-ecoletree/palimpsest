@@ -1,0 +1,45 @@
+# T2 음성 대조 B5 — update 가 블록은 갈아 끼우되 매니페스트의 inserted 를 안 고치는 빌드
+# 2026-09-15T22:36:49+00:00 · macOS · 변이는 임시로 넣고 되돌렸다(커밋 안 함)
+# 변이 자리: crates/pal-cli/src/install.rs
+# --- 뺀 줄
+# -         m.blocks[i].inserted = 새것;
+# --- 넣은 줄
+# +         let _ = 새것;
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_palimpsest -- b5_ --test-threads=4
+# rc=101
+
+
+running 2 tests
+test b5_2_착수_바이너리로_설치한_방을_update_하고_uninstall_하면_설치_전과_같다 ... FAILED
+test b5_1_사용_중_git_status_에_파생물이_안_뜬다 ... ok
+
+failures:
+
+---- b5_2_착수_바이너리로_설치한_방을_update_하고_uninstall_하면_설치_전과_같다 stdout ----
+
+thread 'b5_2_착수_바이너리로_설치한_방을_update_하고_uninstall_하면_설치_전과_같다' (65763738) panicked at crates/pal-cli/tests/clean_uninstall_palimpsest.rs:85:9:
+pal ["uninstall"] rc=Some(1)
+stdout: 
+stderr: Error: 아무것도 지우지 않았다.
+
+/private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-p-b5-2-22856/repo/.gitignore 의 palimpsest 블록이 우리가 넣은 것과 다르다 — **손으로 고쳐졌다.** 고치려 들지 않는다(안에 사람이 쓴 줄이 있을 수 있다).
+    빠져나오는 길: 아래 **두 줄과 그 사이 전부**를 **나오는 자리마다** 손으로 지운 뒤 `pal uninstall` 을 다시 돌리십시오. **마커까지 지워야 한다** — 마커만 남으면 같은 자리에 또 걸린다.
+      # pal:begin — palimpsest. `pal uninstall` 이 이 블록을 걷어낸다
+      # pal:end
+    마커가 한 번씩 순서대로 있으면 `pal uninstall --force` 가 그 사이를 걷고 지운 줄을 출력한다
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    b5_2_착수_바이너리로_설치한_방을_update_하고_uninstall_하면_설치_전과_같다
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 20 filtered out; finished in 1.73s
+
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.90s
+     Running tests/clean_uninstall_palimpsest.rs (target/debug/deps/clean_uninstall_palimpsest-043e1b91388e53c4)
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_palimpsest`
+error: 1 target failed:
+    `-p pal-cli --test clean_uninstall_palimpsest`

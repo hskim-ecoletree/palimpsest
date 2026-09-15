@@ -1,0 +1,80 @@
+# T2 음성 대조 C2 — --force 가 마커 수를 안 세고 첫 여는 마커부터 마지막 닫는 마커까지 걷는 빌드
+# 2026-09-15T22:37:04+00:00 · macOS · 변이는 임시로 넣고 되돌렸다(커밋 안 함)
+# 변이 자리: crates/pal-cli/src/install/blocks.rs
+# --- 뺀 줄
+# -     let ([at], [닫는_자리]) = (여는.as_slice(), 닫는.as_slice()) else { return None };
+# --- 넣은 줄
+# +     let (Some(at), Some(닫는_자리)) = (여는.first(), 닫는.last()) else { return None };
+# 명령: cargo test --no-fail-fast -p pal-cli --test clean_uninstall_blocks -- c2_ --test-threads=4
+# rc=101
+
+
+running 2 tests
+test c2_force_는_짝이_맞는_마커_사이를_걷고_지운_줄을_출력한다 ... ok
+test c2_닫는_마커가_없거나_여는_마커가_둘이면_force_도_거부하고_한_바이트도_안_쓴다 ... FAILED
+
+failures:
+
+---- c2_닫는_마커가_없거나_여는_마커가_둘이면_force_도_거부하고_한_바이트도_안_쓴다 stdout ----
+
+thread 'c2_닫는_마커가_없거나_여는_마커가_둘이면_force_도_거부하고_한_바이트도_안_쓴다' (65792265) panicked at crates/pal-cli/tests/clean_uninstall_blocks.rs:189:5:
+assertion `left == right` failed: 여는 마커가 둘인데 --force 가 rc=1 이 아니다:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-b-c2-여는둘-46600/repo
+  ⚠ --force             CLAUDE.md  (손으로 고친 블록을 마커 사이째 걷었다 — 지운 줄 4개)
+      지운 줄              <!-- pal:begin — palimpsest. `pal uninstall` 이 이 블록을 걷어낸다 -->
+      지운 줄              @.claude/pal/INSTRUCTIONS.md
+      지운 줄              <!-- pal:begin — palimpsest. `pal uninstall` 이 이 블록을 걷어낸다 -->
+      지운 줄              <!-- pal:end -->
+  블록 뺌                  CLAUDE.md
+  블록 뺌                  .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+  지웠다                   .palimpsest/
+
+
+  left: Some(0)
+ right: Some(1)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    c2_닫는_마커가_없거나_여는_마커가_둘이면_force_도_거부하고_한_바이트도_안_쓴다
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 11 filtered out; finished in 2.30s
+
+
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-ace0692787b89a376/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.66s
+     Running tests/clean_uninstall_blocks.rs (target/debug/deps/clean_uninstall_blocks-4567d661f8749582)
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_blocks`
+error: 1 target failed:
+    `-p pal-cli --test clean_uninstall_blocks`
