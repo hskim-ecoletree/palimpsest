@@ -44,12 +44,12 @@
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A1-a A2 A2-a A2-b A3 A3-a B1 B1-a B2 C1 C2 D1 D1-a E1 E2 |
+| 통과 | A1 A1-a A2 A2-a A2-b A3 A3-a B1 B1-a B2 C1 C2 D1 D1-a E1 E2 F1 |
 | 반증 | — |
 | 대조불가 | — |
-| 미측정 | F1 |
+| 미측정 | — |
 
-**검산** — 통과 16 · 반증 0 · 대조불가 0 · 미측정 1 = 17
+**검산** — 통과 17 · 반증 0 · 대조불가 0 · 미측정 0 = 17
 
 ### 근거 표
 
@@ -72,7 +72,7 @@
 | `D1-a` | ⑴ `effect/negative-start-binary.txt` — 착수 바이너리 · 결박 1 을 들이고도 `(0)` · README `git add` 한 줄 어긋남(개정 1) ⑵ `effect/origin-before.txt` = `effect/origin-after.txt`(HEAD · porcelain · `.palimpsest/` 목록 해시) |
 | `E1` | `oracle/E1-issues.txt` — R1 5 닫힘(completed)·코멘트 · R2 20 열림 · R3 39 닫힘(not planned)·코멘트 · #127 코멘트가 `baseline/06-doctor-full.txt` · ADR-0007 을 싣는다 |
 | `E2` | `oracle/E2-docs.txt` — #160 본문에 대상 · 세 칸 · 판정 문장(9/9) · `frontier.sh` 첫 줄 `#160 ← 순서표의 1 번` · 최단 경로 §4.3 의 끝의 정의와 언어 확장 순서 |
-| `F1` | **다시 잰다** — 독립 리뷰 R1 이 HEAD `75e9ca4` 에서 **반증**으로 쟀다: 판정을 전사한 그 커밋의 게이트·보고 문구 네 곳이 「어색한 표현 부재」에 걸려 로컬 `cargo xtask check` rc 1 · CI 런 34864067820 세 OS 실패. 앞의 근거(`b0e8bb2` 의 CI 런 34862470231 success · 로컬 check 29/29 · test 1184)는 참이었고, **판정을 적는 커밋이 판정을 깼다.** 문구를 고친 커밋의 push 에서 다시 잰다 |
+| `F1` | `oracle/F1-ci.txt` — **다시 쟀다.** 코드를 바꾼 마지막 커밋 `ed4516a`(버전 0.1.1)를 담은 push `b56ef09` 의 CI 런 34936295023 attempt 1 success(세 OS · 상호운용 넷) · 로컬 `cargo xtask check` 29/29(깨끗한 클론 `b56ef09`) · CI 의 `doctor --full` 걸음 통과 · 로컬 `cargo xtask test` rc 0 · 통과 1184(깨끗한 클론 `a088dc7` — `b56ef09` 와 코드가 같다). ⚠ 독립 리뷰 R1 이 `75e9ca4` 에서 **반증**으로 쟀다 — 판정을 전사한 그 커밋의 문구가 「어색한 표현 부재」에 걸렸고, 고친 커밋(`ed4516a` · `b56ef09`)에서 다시 걸린 둘까지 고친 뒤 섰다 |
 
 ### 차선책 — 등록된 셋 중 쓴 것
 

@@ -21,3 +21,10 @@ b0e8bb2 fix(test): 로컬 경로 git clone 에 --no-hardlinks — 하드링크 �
 - 34854953489 · 34855698372 — doctor --full 위반 3,586(스키마 Symbol.decor ↔ 검사 뷰) · 고침 06f6b96
 - 34859001054 — ubuntu 어휘 시험 거짓 양성(결박 ID [f48…) · attempt 2 success · 고침 53ec056(개정 2)
 - 34861122337 — macos 하드링크 클론 흔들림 · 고침 b0e8bb2(개정 3)
+
+## ⟨2026-09-15⟩ 독립 리뷰 R1 의 반증 뒤 다시 잰다
+- R1: HEAD 75e9ca4 에서 로컬 cargo xtask check rc 1(「어색한 표현 부재」 4 곳) · CI 런 34864067820 세 OS 실패 → 반증
+- 고침: ed4516a(문구 네 곳 · README · 버전 0.1.1) · b56ef09(게이트 87 행에 다시 걸린 둘)
+- 코드(crates/ · xtask/ · .github/ · Cargo.*)를 바꾼 마지막 커밋: ed4516a
+- 그것을 담은 push b56ef09 의 CI 런 34936295023 attempt 1 success — ubuntu · macos · windows · 놓는다 둘 · 받는다 둘
+- 로컬: 깨끗한 클론 b56ef09 cargo xtask check rc 0 · ok 29 / 깨끗한 클론 a088dc7 cargo xtask test rc 0 · 통과 1184 · doctor --full | check-round-doctor → MERGE_BLOCKER_DOCTOR_OK (a088dc7 과 b56ef09 는 코드가 같다 — 사이 커밋은 게이트 문서 한 줄)
