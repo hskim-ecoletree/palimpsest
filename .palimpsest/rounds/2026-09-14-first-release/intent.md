@@ -210,7 +210,7 @@
 
 ### F — 회귀
 
-- [x] **F1** ⟨결정론적⟩ `cargo xtask check` · `cargo xtask test` 가 로컬에서 통과하고, **코드(`crates/` · `xtask/` · `.github/` · `Cargo.*`)를 바꾼 마지막 커밋을 담은 push** 의 SHA 에 CI 런 `success`(세 OS).  · 통과 ⟨전사 2026-09-15⟩
+- [ ] **F1** ⟨결정론적⟩ `cargo xtask check` · `cargo xtask test` 가 로컬에서 통과하고, **코드(`crates/` · `xtask/` · `.github/` · `Cargo.*`)를 바꾼 마지막 커밋을 담은 push** 의 SHA 에 CI 런 `success`(세 OS).
 
 ## 개정
 
@@ -219,5 +219,16 @@
 | 1 | `D1-a` ⑴ 의 「같은 절차」 — 착수 바이너리에서는 README 의 `git add .palimpsest/manifest.toml .palimpsest/intent/bindings.jsonl` 줄이 매니페스트가 없어 rc≠0 이라, **있는 파일만 더하고** 그 어긋남을 `effect/negative-start-binary/deviation.txt` 에 적는다 | 정정 | 글자 그대로 밟으면 결박이 안 넘어가 「결박을 안 넘겨서 0」이 되고 대조가 **항등식**이다. 있는 파일만 더하면 결박이 넘어간 채로 식별자 차이만 남는다 — 대조가 재는 양이 늘었다 |
 | 2 | 앞 회차 장치 `crates/pal-cli/tests/user_vocabulary.rs` 의 「기능 절」 패턴 `\[f[0-9]{2}` → `\[f[0-9]{2}(?:[^0-9a-f]|$)` | 정정 | 승인 화면의 결박 ID(16진수)가 `[f48…` 로 시작하면 걸려 CI 가 한 번씩만 빨갰다(런 34859001054 ubuntu · `F1` 을 막는다). `[f11 는` · `[f24]` · `[f05.3.pass]` 는 그대로 걸린다 — 재는 대상은 줄지 않고 거짓 양성만 빠진다. 대가 `[f11a]` 는 시험 주석에 적었다 |
 | 3 | 시험 `install_eol.rs` · `repo_identity.rs` 와 `scripts/interop-receive.sh` 의 로컬 경로 `git clone` 에 `--no-hardlinks` | 정정 | 하드링크 클론이 한 번씩 `fatal: hardlink different from source` 로 죽어 CI 가 흔들렸다(런 34861122337 macos · `F1` 을 막는다 · 같은 오류가 효과 걸음 스크립트에서도 났다). 재는 것(줄바꿈 왕복 · 식별자)은 그대로다 |
+| 4 | 금지역 절의 「이 저장소의 `.palimpsest/intent/bindings.jsonl` 은 덧붙이기만 한다」 — 결박 JSONL 판 2 → 3 이관으로 머리 줄과 옛 결박 42 줄이 **한 번 다시 쓰였다** | **축소(완화) · 소유자 승인** | 독립 리뷰 R1 의도 축 3. 옛 결박 ID 42 가 전부 남고 `decor` 한 칸 외 차이 0(결박 커밋 `e7423e2` 메시지). 판 2 로 덧붙이면 새 결박의 `decor` 축이 원장에서 사라진다. 데이터_손실의 뜻(결박을 잃지 않는다)은 지켰고 글자(줄을 안 고친다)는 완화했다 — `## 승격` 1 |
 
 ## 승격
+
+### 1 — 원장 「덧붙이기만」 규칙과 판 이관 ⟨독립 리뷰 R1 · 2026-09-15⟩
+
+> 독립 리뷰가 잡은 규칙 위반입니다. 잠긴 의도의 금지역에 「이 저장소 .palimpsest/intent/bindings.jsonl 은 덧붙이기만 한다」고 등록했는데, 결박 커밋이 판 2→3 이관(#77의 decor 칸)으로 머리 줄과 옛 결박 42줄을 다시 썼습니다. 결박 ID 42개가 모두 남았고 decor 한 칸 외에 달라진 것은 0으로 검증했습니다. 이 규칙은 등록된 금지역을 느슨하게 하는 개정이라 제가 혼자 닫을 수 없습니다. 어떻게 할까요?
+>
+> 갈래 — 개정으로 받는다 · 되돌린다
+
+**소유자의 답** ⟨2026-09-15⟩
+
+> **개정으로 받는다**

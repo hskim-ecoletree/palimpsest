@@ -6,7 +6,10 @@
 그 좌표에 걸린 결정 · 신선도(`fresh` / `stale`) · 호출자 자리 · 못 푼 참조 · 답의 근거를 받습니다.
 모르는 것은 모른다고 적습니다 — 「이상 없음」이라고 말하지 않습니다.
 
-- **지원 언어**: TypeScript · Rust (첫 릴리스). 그 밖의 파일은 대장에 「결박 불가」로 적힙니다.
+- **지원 언어** — 언어마다 되는 것이 다릅니다. `pal ledger` 가 언어별 등급을 보여 줍니다.
+  - **TypeScript · Rust** — 결정 결박 · 호출자 자리 · 파일 경계를 넘는 참조 해소까지.
+  - **Kotlin** — 심볼 좌표와 결정 결박까지입니다. 호출자와 참조 해소는 아직 없어 `호출자 0` 이 「아무도 안 부른다」는 뜻이 아닙니다.
+  - **그 밖의 언어**(Java · JavaScript · Python 등) — 대장에 「텍스트만 · 결박 불가」로 적히고 좌표가 없습니다.
 - **지원 플랫폼**: Linux x86_64 · macOS (Apple Silicon · Intel) · Windows x86_64
 - **필요한 것**: `git` 이 `PATH` 에 있어야 합니다. 대상 프로젝트를 빌드하지 않습니다.
 
@@ -39,8 +42,8 @@ pal install
 pal doctor --install
 ```
 
-`pal install` 은 그 프로젝트 안에만 씁니다 — `.claude/` 아래의 훅·스킬과 `.palimpsest/manifest.toml`
-(저장소 식별자 선언)입니다. **`.palimpsest/manifest.toml` 은 커밋하십시오** — 팀원이 다른 디렉터리 이름으로
+`pal install` 은 그 프로젝트 안에만 씁니다 — `.claude/` 아래의 훅·스킬, `CLAUDE.md` 와 `.gitignore` 에
+표시된 블록 하나씩, 그리고 `.palimpsest/manifest.toml`(저장소 식별자 선언)입니다. **`.palimpsest/manifest.toml` 은 커밋하십시오** — 팀원이 다른 디렉터리 이름으로
 클론해도 같은 결박을 받게 하는 선언입니다. 걷어낼 때는 `pal uninstall` 입니다.
 
 ## 3. 문서를 코드에 걸기

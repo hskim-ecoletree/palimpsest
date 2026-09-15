@@ -1,4 +1,4 @@
-# 게이트 — 첫 릴리스를 낸다
+# 게이트 — 첫 릴리스
 
 **회차** `2026-09-14-first-release` · **이슈** #77 · #127 · #139 · #156 · #159 (R1) · 분할 [#160](https://github.com/hskim-ecoletree/palimpsest/issues/160)
 **착수** `ec92b89` · **판정일** 2026-09-15 · **릴리스** [`v0.1.0`](https://github.com/hskim-ecoletree/palimpsest/releases/tag/v0.1.0)(`e80ca14`)
@@ -44,12 +44,12 @@
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A1-a A2 A2-a A2-b A3 A3-a B1 B1-a B2 C1 C2 D1 D1-a E1 E2 F1 |
+| 통과 | A1 A1-a A2 A2-a A2-b A3 A3-a B1 B1-a B2 C1 C2 D1 D1-a E1 E2 |
 | 반증 | — |
 | 대조불가 | — |
-| 미측정 | — |
+| 미측정 | F1 |
 
-**검산** — 통과 17 · 반증 0 · 대조불가 0 · 미측정 0 = 17
+**검산** — 통과 16 · 반증 0 · 대조불가 0 · 미측정 1 = 17
 
 ### 근거 표
 
@@ -60,6 +60,7 @@
 | `A2` | 시험 `crates/pal-cli/tests/rust_decor_stale.rs` `a2_1`~`a2_5` — 다섯 갈래 각각 `stale` · RED `oracle/A2-red.txt`(다섯 다 `fresh`) |
 | `A2-a` | ⑴ 시험 `a2a_1_속성_안의_주석과_공백만_바꾸면_fresh` ⑵ `oracle/A2a-ts-digest.txt` — TS 픽스처 요약값 다른 것 0/14(ditto 0/4,656) |
 | `A2-b` | `oracle/A2b-verdicts.txt` — 42 = 42 · 모집단 20 · 판정 이동 0 · `stale`→`fresh` 0. ⚠ **이동 0 은 ㉡ 의 구조에서 거의 자동으로 나온다** — 옛 결박 42 는 `decor` 축이 「기록 안 됨」이라 그 축을 비교하지 않고 화면이 「속성·수신자 변경은 감시 안 함」을 드러낸다. 조건이 금한 「코드 변화 없이 뒤집힘」은 없지만, 옛 결박이 속성 변경을 잡게 된 것도 아니다 |
+| ⚠ | **오라클이 쓴 바이너리** — `A2-a` ⑵ · `A2-b` · `A3-a` ⑵ 는 병합 전 워크트리 바이너리(`pal 0.0.0+fe70606…` 등)로 쟀다. 독립 리뷰 R1 이 HEAD 바이너리(`0.1.0+75e9ca4`)로 셋 다 같은 값을 재현했다(`review/r1-raw.md` 합격선 축) |
 | `A3` | 시험 `cross_file_references.rs` `a3_크레이트_경계를_넘는_use_가_사적_mod_선언에_엣지를_안_잇는다` — 엣지 0 · 못 푼 참조 `no_symbol_at_crate_root` · RED `oracle/A3-red.txt`(엣지 1) |
 | `A3-a` | ⑴ 시험 `a3a_크레이트_안에서_traverse_모듈을_부르는_엣지는_남는다` ⑵ `oracle/A3-repo-diff.txt` — 파일 간 엣지 1338 → 1336 · 사라진 것 = 고정 목록 둘 · 새로 생긴 것 0 |
 | `B1` | 시험 `crates/pal-cli/tests/repo_identity.rs` `b1_…` · RED `oracle/B1-red.txt` |
@@ -71,15 +72,19 @@
 | `D1-a` | ⑴ `effect/negative-start-binary.txt` — 착수 바이너리 · 결박 1 을 들이고도 `(0)` · README `git add` 한 줄 어긋남(개정 1) ⑵ `effect/origin-before.txt` = `effect/origin-after.txt`(HEAD · porcelain · `.palimpsest/` 목록 해시) |
 | `E1` | `oracle/E1-issues.txt` — R1 5 닫힘(completed)·코멘트 · R2 20 열림 · R3 39 닫힘(not planned)·코멘트 · #127 코멘트가 `baseline/06-doctor-full.txt` · ADR-0007 을 싣는다 |
 | `E2` | `oracle/E2-docs.txt` — #160 본문에 대상 · 세 칸 · 판정 문장(9/9) · `frontier.sh` 첫 줄 `#160 ← 순서표의 1 번` · 최단 경로 §4.3 의 끝의 정의와 언어 확장 순서 |
-| `F1` | `oracle/F1-ci.txt` — 코드를 바꾼 마지막 커밋 `b0e8bb2` 를 담은 push 의 CI 런 34862470231 attempt 1 success(세 OS · 상호운용 넷) · 로컬 `cargo xtask check` 29/29(깨끗한 클론 `b0e8bb2`) · 로컬 `cargo xtask test` rc 0 · 통과 1184(깨끗한 클론 `e7423e2`). 앞선 빨강 넷은 전부 처리했다: 34854953489 · 34855698372 `doctor --full` 회귀(고침 `06f6b96`) · 34859001054 ubuntu 어휘 시험 거짓 양성(개정 2) · 34861122337 macos 하드링크 클론(개정 3) |
+| `F1` | **다시 잰다** — 독립 리뷰 R1 이 HEAD `75e9ca4` 에서 **반증**으로 쟀다: 판정을 전사한 그 커밋의 게이트·보고 문구 네 곳이 「어색한 표현 부재」에 걸려 로컬 `cargo xtask check` rc 1 · CI 런 34864067820 세 OS 실패. 앞의 근거(`b0e8bb2` 의 CI 런 34862470231 success · 로컬 check 29/29 · test 1184)는 참이었고, **판정을 적는 커밋이 판정을 깼다.** 문구를 고친 커밋의 push 에서 다시 잰다 |
 
 ### 차선책 — 등록된 셋 중 쓴 것
 
 없다. #139 는 본선(스키마 무변경)으로 섰고, #77 은 계획 2 의 갈래 ㉡ 로 섰으며, 릴리스 워크플로의 타깃 넷이 전부 초록이다.
 
-### 개정 셋
+### 개정 넷
 
-`intent.md ## 개정` 이 진다 — ① `D1-a` ⑴ 절차(착수 바이너리에서 README `git add` 줄) ② 앞 회차 장치 `user_vocabulary` 「기능 절」 패턴 ③ 시험 로컬 클론 `--no-hardlinks`. 셋 다 **정정**이고 재는 대상은 줄지 않았다.
+`intent.md ## 개정` 이 진다 — ① `D1-a` ⑴ 절차(착수 바이너리에서 README `git add` 줄) ② 앞 회차 장치 `user_vocabulary` 「기능 절」 패턴 ③ 시험 로컬 클론 `--no-hardlinks` — 셋은 **정정**이고 재는 대상은 줄지 않았다. ④ 금지역의 원장 「덧붙이기만」 규칙 — **축소(완화) · 소유자 승인**(`## 승격` 1).
+
+### 독립 리뷰가 고치게 한 것 — README 의 사실 두 줄
+
+`C1` 은 README 의 걸음과 파일 존재를 재고 **문장의 참**은 안 잰다. 리뷰 R1 이 둘을 잡았다 — ⑴ 「그 밖의 파일은 결박 불가」가 Kotlin 에 대해 **거짓**(Kotlin 은 L1 로 좌표와 결박이 선다 · 금지역) ⑵ 설치가 `CLAUDE.md`·`.gitignore` 블록을 쓴다는 것을 빠뜨렸다. `v0.1.0` 아카이브 넷에 ⑴ 이 실렸으므로 고친 README 를 싣는 **`v0.1.1`** 을 낸다.
 
 ## 효과
 
@@ -99,5 +104,5 @@
 - **언어 확장** — Kotlin · Java · JavaScript · Python. 소유자 `U25` 가 첫 릴리스 뒤 품질 단계로 뒀다(최단 경로 §4.3).
 - **R2 20 건** — 열린 채 둔다(`U26`).
 - **사용 기록의 판정** — 이슈 [#160](https://github.com/hskim-ecoletree/palimpsest/issues/160) 이 진다(`U26` 분할).
-- **서명·공증 · 패키지 관리자 배포** — `SHA256SUMS` 만 낸다.
+- **서명·공증 · 패키지 관리자 배포** — `SHA256SUMS` 만 싣는다.
 - **`coverage_of` 의 질의별 범위 설계** — `[f05.3.pass]` ⑤ 가 정했고 결함이 아니다.
