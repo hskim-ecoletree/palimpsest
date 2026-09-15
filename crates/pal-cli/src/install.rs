@@ -31,6 +31,7 @@ mod guard;
 mod hooks;
 mod ignore;
 mod inside;
+mod json_edit;
 mod layout;
 mod manifest;
 mod settings;
@@ -830,6 +831,10 @@ fn 설정_병합(
             old.added_values.extend(더한_값);
             old.hooks = 바라는_훅;
             old.hooks_key_created |= merged.hooks_key_created;
+            // 편집 자리 기록은 **있던 기록에만** 잇는다 — 기록 없는 옛 설치는 제거가 값으로 걷는 방이다.
+            if let Some(기록) = old.edits.as_mut() {
+                기록.잇는다(merged.edits);
+            }
             Some(old)
         }
         None if merged.added_keys.is_empty() && 바라는_훅.is_empty() => None,
@@ -840,6 +845,7 @@ fn 설정_병합(
             hooks: 바라는_훅,
             hooks_key_created: merged.hooks_key_created,
             created: merged.created,
+            edits: Some(merged.edits),
         }),
     };
 
@@ -1468,21 +1474,30 @@ fn 설정_되돌리기(
     let 뺀것 = s
         .added_keys
         .iter()
+        .filter(|k| !결과.남긴_키.contains(k))
         .cloned()
         .chain(s.hooks.iter().map(|h| format!("훅 {}", h.event)))
         .collect::<Vec<_>>();
     report.say("키 뺌", &format!("{}  ({})", s.path, 뺀것.join(" · ")));
-    // ★ **설정 키의 「사용자 수정」도 말한다.** 파일 쪽에만 붙어 있던 대칭을 여기에도
-    // 세운다 — 사용자가 자기 값으로 바꿔 둔 키를 조용히 지우면 화면은 `키 뺌` 한 줄뿐이다.
-    if !결과.사용자가_바꾼_키.is_empty() {
+    // ★ **사용자가 자기 값으로 바꿔 둔 키는 남기고 그렇게 말한다** — 설치 뒤 사용자가 스스로 고친 것이다.
+    if !결과.남긴_키.is_empty() {
         report.say(
-            지운_사용자_수정,
-            &format!(
-                "{}  (우리가 넣은 값이 아니었다: {})",
-                s.path,
-                결과.사용자가_바꾼_키.join(" · ")
-            ),
+            "남겼다 · 사용자 값",
+            &format!("{}  (우리가 넣은 값이 아니었다: {})", s.path, 결과.남긴_키.join(" · ")),
         );
+    }
+    match 결과.되돌림 {
+        settings::되돌림::자리 => {}
+        settings::되돌림::커밋된_바이트 => {
+            report.say("커밋된 바이트로", &format!("{}  (옛 설치 — HEAD 의 그 파일로 되썼다)", s.path));
+        }
+        settings::되돌림::값만 => report.say(
+            "⚠ 값만 되돌렸다",
+            &format!(
+                "{}  (옛 설치가 파일을 다시 써서 원래 바이트를 모른다 — 우리 몫만 값으로 뺐다)",
+                s.path
+            ),
+        ),
     }
     // 그리고 **파일까지 지웠으면** 그것도 말한다 — 키만 뺐다고 읽히면 안 된다.
     if 결과.파일째_지웠다 {

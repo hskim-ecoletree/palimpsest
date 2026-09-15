@@ -1,0 +1,240 @@
+# T1 RED — 기준 커밋 2fe292e 의 제품 코드에 시험만 더해 돌린 출력
+# 명령: cargo test -p pal-cli --test clean_uninstall_settings
+# 날짜: 2026-09-15T22:19:46Z · Darwin arm64
+# 기대: A1 · A3 ②(① · ③ 도) · A4 ①(② · ③ · ④ 도) 빨강 · A2 초록(골든이 착수 빌드이고 제품 코드가 착수 동작이다)
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 21.00s
+     Running tests/clean_uninstall_settings.rs (target/debug/deps/clean_uninstall_settings-14a1df4244a3ff92)
+
+running 18 tests
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test a3_2_사용자가_agent_값을_바꾼_방 ... FAILED
+test a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방 ... FAILED
+test a3_3_사용자가_같은_사건_배열에_묶음을_더한_방 ... FAILED
+test a4_4_추적_안_된_설정은_값만_되돌린다 ... FAILED
+test a4_2_사용자가_키를_더했으면_값만_되돌린다 ... FAILED
+test a4_1_커밋된_설정은_head_바이트로_돌아온다 ... FAILED
+test a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다 ... FAILED
+test a2_설치_결과가_착수_빌드의_골든과_값으로_같다 ... ok
+test a1_모집단마다_설치했다_걷으면_바이트로_같다 ... FAILED
+
+failures:
+
+---- a3_2_사용자가_agent_값을_바꾼_방 stdout ----
+
+thread 'a3_2_사용자가_agent_값을_바꾼_방' (64633377) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:250:5:
+A3 ②: uninstall 결과가 기대 바이트와 다르다
+  기대: "{\n  \"model\": \"opus\",\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"notify.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  },\n  \"agent\": \"내 에이전트\"\n}\n"
+  뒤:   "{\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방 stdout ----
+
+thread 'a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방' (64633376) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:250:5:
+A3 ①: uninstall 결과가 기대 바이트와 다르다
+  기대: "{\n  \"model\": \"opus\",\n  \"mine\": true,\n    \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"notify.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+  뒤:   "{\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"mine\": true,\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+
+---- a3_3_사용자가_같은_사건_배열에_묶음을_더한_방 stdout ----
+
+thread 'a3_3_사용자가_같은_사건_배열에_묶음을_더한_방' (64633378) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:250:5:
+A3 ③: uninstall 결과가 기대 바이트와 다르다
+  기대: "{\n  \"model\": \"opus\",\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"notify.sh\"\n          }\n        ]\n      },\n      {\"hooks\": [{\"type\": \"command\", \"command\": \"mine.sh\"}]}\n    ]\n  },\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+  뒤:   "{\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      },\n      {\n        \"hooks\": [\n          {\n            \"command\": \"mine.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+
+---- a4_4_추적_안_된_설정은_값만_되돌린다 stdout ----
+
+thread 'a4_4_추적_안_된_설정은_값만_되돌린다' (64633382) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:407:5:
+A4 ④: 「값만 되돌렸다」을 출력하지 않았다:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-settings-a4-4-90253/repo
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .palimpsest/
+
+
+
+---- a4_2_사용자가_키를_더했으면_값만_되돌린다 stdout ----
+
+thread 'a4_2_사용자가_키를_더했으면_값만_되돌린다' (64633380) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:385:5:
+A4 ②: 「값만 되돌렸다」을 출력하지 않았다:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-settings-a4-2-90253/repo
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .palimpsest/
+
+
+
+---- a4_1_커밋된_설정은_head_바이트로_돌아온다 stdout ----
+
+thread 'a4_1_커밋된_설정은_head_바이트로_돌아온다' (64633379) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:363:5:
+A4 ①: HEAD 바이트가 아니다
+  HEAD: "{\n    \"permissions\": {\n        \"allow\": [\"Bash(ls)\"]\n    },\n    \"model\": \"opus\"\n}\n"
+  뒤:   "{\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+
+---- a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다 stdout ----
+
+thread 'a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다' (64633381) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:398:5:
+A4 ③: 「값만 되돌렸다」을 출력하지 않았다:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-settings-a4-3-90253/repo
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .palimpsest/
+
+
+
+---- a1_모집단마다_설치했다_걷으면_바이트로_같다 stdout ----
+
+thread 'a1_모집단마다_설치했다_걷으면_바이트로_같다' (64633374) panicked at crates/pal-cli/tests/clean_uninstall_settings.rs:162:5:
+왕복 뒤 바이트가 원본과 다른 형태 14/19:
+  a1-02-indent4
+    원본: "{\n    \"env\": {\n        \"A\": \"1\"\n    },\n    \"model\": \"opus\"\n}\n"
+    뒤:   "{\n  \"env\": {\n    \"A\": \"1\"\n  },\n  \"model\": \"opus\"\n}\n"
+  a1-03-tab
+    원본: "{\n\t\"model\": \"opus\",\n\t\"permissions\": {\n\t\t\"deny\": [\n\t\t\t\"Bash(rm)\"\n\t\t]\n\t}\n}\n"
+    뒤:   "{\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"deny\": [\n      \"Bash(rm)\"\n    ]\n  }\n}\n"
+  a1-04-one-line
+    원본: "{\"model\": \"opus\", \"permissions\": {\"allow\": [\"Bash(ls)\"]}}\n"
+    뒤:   "{\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+  a1-06-no-final-newline
+    원본: "{\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}"
+    뒤:   "{\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(ls)\"\n    ]\n  }\n}\n"
+  a1-08-same-event-other-hook
+    원본: "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"notify.sh\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+    뒤:   "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  }\n}\n"
+  a1-09-other-event-hook
+    원본: "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"matcher\": \"Bash\",\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"guard.sh\"\n          }\n        ]\n      }\n    ]\n  },\n  \"model\": \"opus\"\n}\n"
+    뒤:   "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"guard.sh\",\n            \"type\": \"command\"\n          }\n        ],\n        \"matcher\": \"Bash\"\n      }\n    ]\n  },\n  \"model\": \"opus\"\n}\n"
+  a1-11-empty-event-array
+    원본: "{\"hooks\":{\"Stop\":[]}}\n"
+    뒤:   "{\n  \"hooks\": {}\n}\n"
+  a1-12-two-empty-event-arrays-and-other-key
+    원본: "{\n  \"hooks\": {\n    \"Stop\": [],\n    \"SubagentStop\": []\n  },\n  \"model\": \"opus\"\n}\n"
+    뒤:   "{\n  \"hooks\": {},\n  \"model\": \"opus\"\n}\n"
+  a1-13-key-order
+    원본: "{\n  \"permissions\": {\n    \"allow\": [\n      \"Read\"\n    ]\n  },\n  \"model\": \"opus\",\n  \"env\": {\n    \"Z\": \"1\",\n    \"A\": \"2\"\n  }\n}\n"
+    뒤:   "{\n  \"env\": {\n    \"A\": \"2\",\n    \"Z\": \"1\"\n  },\n  \"model\": \"opus\",\n  \"permissions\": {\n    \"allow\": [\n      \"Read\"\n    ]\n  }\n}\n"
+  a1-14-escapes-and-numbers
+    원본: "{\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"type\": \"command\",\n            \"command\": \"\\u0041 \\/tmp\\/x.sh\",\n            \"timeout\": 1.0\n          }\n        ],\n        \"weight\": 1e3\n      }\n    ]\n  }\n}\n"
+    뒤:   "{\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"A /tmp/x.sh\",\n            \"timeout\": 1.0,\n            \"type\": \"command\"\n          }\n        ],\n        \"weight\": 1000.0\n      }\n    ]\n  }\n}\n"
+  a1-15-inline-pal-event-array
+    원본: "{\n  \"hooks\": {\n    \"Stop\": [{\"hooks\": [{\"type\": \"command\", \"command\": \"notify.sh\"}]}]\n  },\n  \"model\": \"opus\"\n}\n"
+    뒤:   "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"notify.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"model\": \"opus\"\n}\n"
+  a1-17-bare-empty-object
+    원본: "{}"
+    뒤:   "{}\n"
+  a1-18-crlf-indent4-no-final-newline
+    원본: "{\r\n    \"hooks\": {\r\n        \"Stop\": [\r\n            {\r\n                \"hooks\": [\r\n                    {\r\n                        \"type\": \"command\",\r\n                        \"command\": \"notify.sh\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"model\": \"opus\"\r\n}"
+    뒤:   "{\r\n  \"hooks\": {\r\n    \"Stop\": [\r\n      {\r\n        \"hooks\": [\r\n          {\r\n            \"command\": \"notify.sh\",\r\n            \"type\": \"command\"\r\n          }\r\n        ]\r\n      }\r\n    ]\r\n  },\r\n  \"model\": \"opus\"\r\n}\r\n"
+  a1-19-compact-no-spaces
+    원본: "{\"model\":\"opus\",\"hooks\":{\"SubagentStop\":[{\"hooks\":[{\"type\":\"command\",\"command\":\"x.sh\"}]}]}}"
+    뒤:   "{\n  \"hooks\": {\n    \"SubagentStop\": [\n      {\n        \"hooks\": [\n          {\n            \"command\": \"x.sh\",\n            \"type\": \"command\"\n          }\n        ]\n      }\n    ]\n  },\n  \"model\": \"opus\"\n}\n"
+
+
+failures:
+    a1_모집단마다_설치했다_걷으면_바이트로_같다
+    a3_1_사용자가_줄을_더하고_들여쓰기를_바꾼_방
+    a3_2_사용자가_agent_값을_바꾼_방
+    a3_3_사용자가_같은_사건_배열에_묶음을_더한_방
+    a4_1_커밋된_설정은_head_바이트로_돌아온다
+    a4_2_사용자가_키를_더했으면_값만_되돌린다
+    a4_3_pal_키가_든_채로_커밋됐으면_값만_되돌린다
+    a4_4_추적_안_된_설정은_값만_되돌린다
+
+test result: FAILED. 10 passed; 8 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.75s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_settings`

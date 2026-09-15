@@ -1,0 +1,42 @@
+{
+  "agent": "pal-orchestrator",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "args": [
+              "hook",
+              "Stop"
+            ],
+            "command": "pal",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "command": "x.sh",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "args": [
+              "hook",
+              "SubagentStop"
+            ],
+            "command": "pal",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  },
+  "model": "opus"
+}

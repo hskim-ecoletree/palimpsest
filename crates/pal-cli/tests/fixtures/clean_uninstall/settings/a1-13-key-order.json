@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read"
+    ]
+  },
+  "model": "opus",
+  "env": {
+    "Z": "1",
+    "A": "2"
+  }
+}

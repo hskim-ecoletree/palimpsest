@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\u0041 \/tmp\/x.sh",
+            "timeout": 1.0
+          }
+        ],
+        "weight": 1e3
+      }
+    ]
+  }
+}

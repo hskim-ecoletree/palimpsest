@@ -1,0 +1,45 @@
+{
+  "agent": "pal-orchestrator",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "A /tmp/x.sh",
+            "timeout": 1.0,
+            "type": "command"
+          }
+        ],
+        "weight": 1000.0
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "args": [
+              "hook",
+              "Stop"
+            ],
+            "command": "pal",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "args": [
+              "hook",
+              "SubagentStop"
+            ],
+            "command": "pal",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  }
+}

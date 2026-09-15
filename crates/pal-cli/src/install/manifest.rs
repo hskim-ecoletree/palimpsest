@@ -165,6 +165,74 @@ pub struct SettingsEntry {
     #[serde(default)]
     pub hooks_key_created: bool,
     pub created: bool,
+    /// ★ **위치 보존 편집의 기록**(회차 `2026-09-15-clean-uninstall` 계획 2).
+    ///
+    /// **없음이 값이다** — 착수 커밋 `acd7e82` 이하가 설치한 방(파일을 재직렬화했다)은 이 칸이 없고,
+    /// 제거는 그 방을 값으로 되돌린 뒤 `HEAD` 바이트로 되쓸 수 있는지 본다. 있으면 제거가 **텍스트 자리**로
+    /// 우리 몫만 걷는다. `update` 는 없던 칸을 만들지 않는다 — 옛 설치는 끝까지 옛 설치로 걷힌다.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub edits: Option<SettingsEdits>,
+}
+
+/// 위치 보존 편집이 **되돌릴 때 알아야 하는 것** — 바이트 자리(오프셋)는 안 적는다.
+///
+/// 설치 뒤 사용자가 파일을 고치면 오프셋은 곧 틀린다. 그래서 자리는 제거 때 구조로 다시 찾고,
+/// 여기에는 구조로 알 수 없는 두 가지만 적는다.
+#[derive(Serialize, Deserialize, Clone, Default, PartialEq, Eq, Debug)]
+pub struct SettingsEdits {
+    /// **우리가 만든** `hooks.<사건>` 키. 비었을 때 이 목록에 든 키만 지운다 —
+    /// 사용자가 미리 둔 빈 배열 `[]` 은 남는다(사전부검 R1 7).
+    #[serde(default)]
+    pub created_events: Vec<String>,
+    /// 비어 있던 컨테이너에 처음 넣을 때 그 **원래 안쪽 바이트** — JSON 포인터(`""` · `"/hooks"` ·
+    /// `"/hooks/Stop"`) → 안쪽. 마지막 원소를 뺄 때 이 바이트로 되돌린다(`{ }` 과 `{}` 을 가른다).
+    ///
+    /// ⚠ **LF 로 적는다** — 매니페스트는 커밋되어 다른 기계로 가므로 그 기계의 줄바꿈을 안 싣는다.
+    /// 되돌릴 때 그 파일의 줄바꿈으로 맞춘다.
+    #[serde(default)]
+    pub empty_inner: BTreeMap<String, String>,
+}
+
+impl SettingsEdits {
+    /// JSON 포인터(RFC 6901) — `~` 은 `~0`, `/` 은 `~1`.
+    #[must_use]
+    pub fn 포인터(길: &[&str]) -> String {
+        let mut out = String::new();
+        for k in 길 {
+            out.push('/');
+            out.push_str(&k.replace('~', "~0").replace('/', "~1"));
+        }
+        out
+    }
+
+    /// 그 자리가 처음 비어 있었을 때의 안쪽을 적는다. **먼저 적힌 것이 이긴다** — 두 번째 설치가
+    /// 첫 번째의 기록을 덮으면 원래 바이트를 잃는다.
+    pub fn 빈_안쪽을_적는다(&mut self, 포인터: String, 안쪽: &str) {
+        let lf = String::from_utf8(super::eol::정규화(안쪽.as_bytes())).unwrap_or_else(|_| 안쪽.to_owned());
+        self.empty_inner.entry(포인터).or_insert(lf);
+    }
+
+    #[must_use]
+    pub fn 빈_안쪽(&self, 포인터: &str) -> Option<&str> {
+        self.empty_inner.get(포인터).map(String::as_str)
+    }
+
+    /// 우리가 만든 사건 키를 적는다(중복 없이).
+    pub fn 사건을_적는다(&mut self, 사건: &str) {
+        if !self.created_events.iter().any(|e| e == 사건) {
+            self.created_events.push(사건.to_owned());
+        }
+    }
+
+    /// 다음 설치의 기록을 잇는다 — 사건은 합치고 안쪽은 먼저 적힌 것을 둔다.
+    pub fn 잇는다(&mut self, 새: Self) {
+        for 사건 in 새.created_events {
+            self.사건을_적는다(&사건);
+        }
+        for (k, v) in 새.empty_inner {
+            self.empty_inner.entry(k).or_insert(v);
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -539,6 +607,7 @@ mod tests {
                 hooks: Vec::new(),
                 hooks_key_created: false,
                 created: false,
+                edits: None,
             }),
             declaration: Some(super::DeclarationEntry {
                 path: Rel::new(&format!("{표식}선언")),
