@@ -15,20 +15,36 @@
 //!
 //! 최상위 키는 **없는 것만** 더한다. 훅 구역은 모양이 달라서 [`super::hooks`] 가
 //! 따로 진다 — 거기는 **남의 등록이 함께 사는 배열**이고, 더하고 빼는 규칙이 키와 다르다.
+//!
+//! # ★ 재직렬화하지 않는다 (회차 `2026-09-15-clean-uninstall` 계획 2)
+//!
+//! 착수 동작은 값을 고친 뒤 `to_string_pretty` 로 되썼다. 그러면 사용자 파일의 들여쓰기 · 키 순서 ·
+//! 이스케이프 · 수 표기가 우리 것이 되고, **값을 되돌려도 바이트는 안 돌아온다**(착수 관측 R1).
+//! 지금은 [`super::json_edit`] 가 **텍스트 자리**로 더하고 제거가 그 자리만 뺀다. `serde_json` 은 검증과
+//! 값 대조에만 쓴다.
+//!
+//! | 제거가 만나는 방 | 되돌림 |
+//! |---|---|
+//! | 매니페스트에 편집 기록이 있다 | 우리 멤버 · 훅 묶음만 텍스트 자리로 뺀다. 사용자가 바꾼 `agent` 는 **남긴다** |
+//! | 기록이 없다(착수 커밋 `acd7e82` 이하가 재직렬화한 방) | 값으로 뺀 뒤, 추적 중이고 `HEAD` 의 그 파일이 우리 흔적 없이 결과와 같은 값이면 **`HEAD` 바이트로 되쓴다**. 아니면 값만 되돌리고 그렇게 말한다 |
 
 use std::collections::BTreeMap;
 use std::path::Path;
+use std::process::{Command, Stdio};
 
 use anyhow::{Context, Result, bail};
 use serde_json::{Map, Value};
 
-use super::manifest::SettingsEntry;
+use super::json_edit::{길목, 본문, 조각};
+use super::manifest::{SettingsEdits, SettingsEntry};
 use super::{blocks, hooks};
 
 /// 병합하기 **전에** 읽어 둔 것. 이것을 만드는 데 실패하면 아무것도 안 쓴다.
 pub struct Read {
     /// 지금 파일에 있는 것. 파일이 없으면 `None`.
     pub current: Option<Map<String, Value>>,
+    /// 그 값을 읽은 **본문 그대로** — 위치 보존 편집이 이 텍스트 위에서 일한다.
+    pub 본문: Option<String>,
 }
 
 /// 파일을 읽고 파싱한다. **여기가 ② 의 문이다.**
@@ -37,7 +53,7 @@ pub struct Read {
 /// 파일이 있는데 JSON 이 아니거나 최상위가 객체가 아니면.
 pub fn read(path: &Path) -> Result<Read> {
     if !path.exists() {
-        return Ok(Read { current: None });
+        return Ok(Read { current: None, 본문: None });
     }
     let bytes = super::guard::읽는다(path)?;
     let text = String::from_utf8(bytes).map_err(|e| {
@@ -56,7 +72,7 @@ pub fn read(path: &Path) -> Result<Read> {
     })?;
 
     match value {
-        Value::Object(map) => Ok(Read { current: Some(map) }),
+        Value::Object(map) => Ok(Read { current: Some(map), 본문: Some(text) }),
         other => bail!(
             "{}: 최상위가 객체가 아니다 — {} 이다. 병합할 자리가 없다",
             path.display(),
@@ -86,10 +102,12 @@ pub struct Merged {
     pub created: bool,
     /// 실제로 쓰기가 일어났는가. 안 일어나면 바이트가 그대로다(**멱등**).
     pub wrote: bool,
+    /// 이번 편집의 자리 기록 — 매니페스트의 [`SettingsEntry::edits`] 로 간다.
+    pub edits: SettingsEdits,
 }
 
 /// 없는 키만 더하고 훅 계획을 적용한다. **있던 키·값은 하나도 안 건드린다**
-/// (`[f24]` ① 의 부분집합 검사).
+/// (`[f24]` ① 의 부분집합 검사) — 그리고 **있던 바이트도 안 건드린다.**
 ///
 /// # Errors
 /// 훅 구역의 모양이 다르거나 쓰지 못하면.
@@ -99,34 +117,48 @@ pub fn merge(
     want: &BTreeMap<String, Value>,
     plan: &hooks::Plan,
 ) -> Result<Merged> {
-    let mut map = read.current.clone().unwrap_or_default();
+    let created = read.current.is_none();
+    // 파일이 없으면 빈 객체에서 시작한다 — 새로 만드는 것은 우리 것이라 LF · 두 칸이다.
+    let 원문 = read.본문.clone().unwrap_or_else(|| "{}\n".to_owned());
+    let mut 본 = 본문::읽는다(원문).with_context(|| format!("{}: 편집할 본문을 못 읽었다", path.display()))?;
+    let mut edits = SettingsEdits::default();
+
     let mut added = Vec::new();
     for (key, value) in want {
-        if !map.contains_key(key) {
-            map.insert(key.clone(), value.clone());
+        if 본.종류(&[길목::키(key)]).is_none() {
+            if let Some(안쪽) = 본.멤버를_더한다(&[], key, &조각::값에서(value))? {
+                edits.빈_안쪽을_적는다(SettingsEdits::포인터(&[]), &안쪽);
+            }
             added.push(key.clone());
         }
     }
-    let hooks_key_created = hooks::apply(&mut map, plan)?;
+    let hooks_key_created = hooks::본문에_적용한다(&mut 본, plan, &mut edits)?;
 
     // **더할 것도 뺄 것도 없으면 한 바이트도 안 쓴다** — 두 번째 설치가 첫 번째와 같은
-    // 상태를 내야 한다(`[f24]` ① 의 멱등).
-    if added.is_empty() && plan.is_empty() && read.current.is_some() {
-        return Ok(Merged { added_keys: added, hooks_key_created, created: false, wrote: false });
+    // 상태를 산출해야 한다(`[f24]` ① 의 멱등).
+    if added.is_empty() && plan.is_empty() && !created {
+        return Ok(Merged { added_keys: added, hooks_key_created, created, wrote: false, edits });
     }
 
-    let mut text = serde_json::to_string_pretty(&Value::Object(map))
-        .context("설정을 직렬화하지 못했다")?;
-    text.push('\n');
-
-    let created = read.current.is_none();
     if created {
-        super::guard::쓴다(path, &그_파일의_줄바꿈으로(path, &text))?;
+        super::guard::쓴다(path, 본.텍스트().as_bytes())?;
     } else {
         // **제자리로 쓴다** — 모드·심링크·하드링크를 살린다.
-        blocks::write_in_place(path, &그_파일의_줄바꿈으로(path, &text))?;
+        blocks::write_in_place(path, 본.텍스트().as_bytes())?;
     }
-    Ok(Merged { added_keys: added, hooks_key_created, created, wrote: true })
+    Ok(Merged { added_keys: added, hooks_key_created, created, wrote: true, edits })
+}
+
+/// 되돌리기가 **어떤 바이트를 썼는가.**
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug)]
+pub enum 되돌림 {
+    /// 우리 몫만 텍스트 자리로 뺐다 — 나머지 바이트는 그대로다.
+    #[default]
+    자리,
+    /// 옛 설치 — `HEAD` 의 그 파일 바이트로 되썼다.
+    커밋된_바이트,
+    /// 옛 설치 — 값만 되돌렸다. 원래 바이트는 모른다.
+    값만,
 }
 
 /// 되돌리기가 **무엇을 했는지.** `bool` 하나로는 화면에 적을 것이 없다.
@@ -134,11 +166,13 @@ pub fn merge(
 pub struct Unmerged {
     /// 실제로 뺀 것이 있는가.
     pub 뺐다: bool,
-    /// ★ **우리가 넣은 값이 아니었던 키.** 사용자가 자기 값으로 바꿔 둔 자리다 —
-    /// 지우는 것은 그대로이고(⑥ 이 `S2 == S0` 을 요구한다) 여기서 더하는 것은 **말**이다.
-    pub 사용자가_바꾼_키: Vec<String>,
+    /// ★ **우리가 넣은 값이 아니었던 키 — 남겼다.** 설치 뒤 사용자가 자기 값으로 바꿔 둔 자리이고,
+    /// 그것은 사용자가 스스로 고친 것이다(계획 2 · 착수 동작은 지웠다).
+    pub 남긴_키: Vec<String>,
     /// 파일을 통째로 지웠는가 — 우리가 만들었고 나머지가 비었을 때.
     pub 파일째_지웠다: bool,
+    /// 어떤 바이트로 되돌렸는가.
+    pub 되돌림: 되돌림,
 }
 
 /// 우리가 더한 키와 우리가 등록한 훅만 뺀다.
@@ -153,15 +187,59 @@ pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<Unmerged> {
         return Ok(Unmerged::default());
     }
     let read = read(path)?;
-    let Some(mut map) = read.current else { return Ok(Unmerged::default()) };
+    let (Some(map), Some(원문)) = (read.current, read.본문) else { return Ok(Unmerged::default()) };
+    match &entry.edits {
+        Some(기록) => 자리로_되돌린다(path, &원문, entry, 기록),
+        None => 값으로_되돌린다(path, map, entry),
+    }
+}
+
+/// 사용자가 **우리가 넣은 값을 바꿨나.** 값이 안 실린 옛 매니페스트면 「모른다」이고 바꿨다고 안 읽는다.
+fn 사용자가_바꿨나(entry: &SettingsEntry, key: &str, 지금: &Value) -> bool {
+    entry.added_values.get(key).is_some_and(|넣은| 넣은 != 지금)
+}
+
+/// 편집 기록이 있는 방 — **넣은 순서의 역순**으로 우리 자리만 뺀다(훅 먼저, 그다음 키).
+fn 자리로_되돌린다(
+    path: &Path,
+    원문: &str,
+    entry: &SettingsEntry,
+    기록: &SettingsEdits,
+) -> Result<Unmerged> {
+    let mut 본 = 본문::읽는다(원문.to_owned()).with_context(|| format!("{}: 본문을 못 읽었다", path.display()))?;
     let mut out = Unmerged { 뺐다: true, ..Unmerged::default() };
+
+    hooks::본문에서_뺀다(&mut 본, &entry.hooks, entry.hooks_key_created, 기록)?;
+    for key in entry.added_keys.iter().rev() {
+        let Some(지금) = 본.값(&[길목::키(key)]) else { continue };
+        if 사용자가_바꿨나(entry, key, &지금) {
+            out.남긴_키.push(key.clone());
+            continue;
+        }
+        본.멤버를_뺀다(&[], key, 기록.빈_안쪽(&SettingsEdits::포인터(&[])))?;
+    }
+    out.남긴_키.reverse();
+
+    if entry.created && 본.자식_수(&[]) == Some(0) {
+        std::fs::remove_file(path)
+            .with_context(|| format!("지우지 못했다: {}", path.display()))?;
+        out.파일째_지웠다 = true;
+        return Ok(out);
+    }
+    if 본.텍스트() != 원문 {
+        blocks::write_in_place(path, 본.텍스트().as_bytes())?;
+    }
+    Ok(out)
+}
+
+/// 편집 기록이 없는 방(착수 커밋 `acd7e82` 이하가 재직렬화한 방) — 값으로 뺀 뒤 되쓸 바이트를 고른다.
+fn 값으로_되돌린다(path: &Path, mut map: Map<String, Value>, entry: &SettingsEntry) -> Result<Unmerged> {
+    let mut out = Unmerged { 뺐다: true, 되돌림: 되돌림::값만, ..Unmerged::default() };
     for key in &entry.added_keys {
-        // ★ **우리가 넣은 값과 다른가.** 옛 매니페스트에는 값이 안 실려 있어서
-        // (`added_values` 가 비어 있어서) 그때는 「모른다」이고 말하지 않는다.
-        if let (Some(넣은), Some(지금)) = (entry.added_values.get(key), map.get(key)) {
-            if 넣은 != 지금 {
-                out.사용자가_바꾼_키.push(key.clone());
-            }
+        let Some(지금) = map.get(key) else { continue };
+        if 사용자가_바꿨나(entry, key, 지금) {
+            out.남긴_키.push(key.clone());
+            continue;
         }
         map.remove(key);
     }
@@ -173,6 +251,17 @@ pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<Unmerged> {
         out.파일째_지웠다 = true;
         return Ok(out);
     }
+
+    // ★ **`HEAD` 바이트로 되쓸 수 있나** — 추적 중이고, `HEAD` 의 그 파일에 우리 키·훅이 없고, 결과와 같은 값일 때만.
+    // 셋 중 하나라도 빠지면 `HEAD` 는 설치 전 원본이 아니다(설치 뒤 커밋했거나 · 사용자가 설치 뒤 고쳤다).
+    if let Some(head) = 커밋된_바이트(path) {
+        if 설치_전_원본인가(&head, &map, entry) {
+            blocks::write_in_place(path, &head)?;
+            out.되돌림 = 되돌림::커밋된_바이트;
+            return Ok(out);
+        }
+    }
+
     let mut text = serde_json::to_string_pretty(&Value::Object(map))
         .context("설정을 직렬화하지 못했다")?;
     text.push('\n');
@@ -180,23 +269,45 @@ pub fn unmerge(path: &Path, entry: &SettingsEntry) -> Result<Unmerged> {
     Ok(out)
 }
 
-/// 직렬화한 본문을 **그 파일이 쓰던 줄바꿈에 맞춘다.**
+/// `HEAD` 의 바이트가 **우리 흔적이 없고 되돌린 결과와 같은 값**인가.
+fn 설치_전_원본인가(head: &[u8], 결과: &Map<String, Value>, entry: &SettingsEntry) -> bool {
+    let Ok(Value::Object(h)) = serde_json::from_slice::<Value>(head) else { return false };
+    let 우리_키 = entry.added_keys.iter().any(|k| h.contains_key(k));
+    let 우리_훅 = entry.hooks.iter().any(|e| hooks::registered(Some(&h), e));
+    !우리_키 && !우리_훅 && &h == 결과
+}
+
+/// 그 파일이 git 에 **추적 중이면** `HEAD` 의 그 파일을 체크아웃이 쓸 바이트로(`cat-file --filters`).
 ///
-/// # 왜 여기에도 [`super::eol`] 이 필요한가
+/// 추적 중이 아니거나 · `HEAD` 에 없거나 · git 이 없으면 `None` — 그때는 값만 되돌린다.
+/// ⚠ `--filters` 를 쓴다 — 줄바꿈 변환이 걸린 워킹트리에서 blob 바이트는 체크아웃 바이트가 아니다.
+fn 커밋된_바이트(path: &Path) -> Option<Vec<u8>> {
+    let dir = path.parent()?;
+    let 이름 = path.file_name()?.to_str()?;
+    git_묻는다(dir, &["ls-files", "--error-unmatch", "--", 이름])?;
+    git_묻는다(dir, &["cat-file", "--filters", &format!("HEAD:./{이름}")])
+}
+
+/// `git -C <dir> …` 을 **시간 상한 안에서** 돌리고 성공했을 때만 표준출력을 돌려준다.
+fn git_묻는다(dir: &Path, args: &[&str]) -> Option<Vec<u8>> {
+    let child = Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .ok()?;
+    let 대답 = super::child::기다린다(child, super::child::기본_상한, &format!("git {args:?}")).ok()?;
+    대답.status.success().then_some(대답.stdout)
+}
+
+/// 직렬화한 본문을 **그 파일이 쓰던 줄바꿈에 맞춘다** — 옛 설치를 값만 되돌릴 때만 쓴다.
 ///
 /// `serde_json::to_string_pretty` 는 언제나 LF 를 산출한다. `core.autocrlf=true` 로 클론한
 /// 워킹트리에서 `settings.json` 은 CRLF 인데, 우리가 LF 로 되쓰면 **파일 전체의 모든
-/// 줄이 바뀐다** — 사용자의 `git status` 에 우리 파일이 매번 뜨고, git 이 되쓰기마다
-/// *"LF will be replaced by CRLF"* 를 산출한다.
-///
-/// 블록(`CLAUDE.md`·`.gitignore`)에는 이 규율이 이미 서 있었다(소유자 결정 2026-08-16:
-/// **판정은 정규화해서, 되쓰기는 있던 대로**). `settings.json` 만 그 문 밖에 있었고,
-/// 그것이 **플랫폼 때문에 결과가 갈리는 자리**였다 — 유닉스 워킹트리에서는 아무 일도
-/// 안 일어나고 Windows 에서만 매번 파일이 통째로 더러워진다.
-///
-/// ⚠ **직렬화 「형태」는 여기서 안 고친다.** 들여쓰기·키 순서가 우리 것이 되는 것은
-/// 플랫폼과 무관한 기존 결정이고(`tests/install.rs` 의 ⑥ 이 `settings.json` 을 값
-/// 단위로 재는 이유가 그것이다), 이 회차의 범위가 아니다.
+/// 줄이 바뀐다** — 사용자의 `git status` 에 우리 파일이 매번 뜬다.
 fn 그_파일의_줄바꿈으로(path: &Path, text: &str) -> Vec<u8> {
     let 기존 = std::fs::read(path).ok();
     let crlf = super::eol::그_파일의_줄바꿈(기존.as_deref());
@@ -205,7 +316,7 @@ fn 그_파일의_줄바꿈으로(path: &Path, text: &str) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Merged, Read, SettingsEntry, hooks, merge, read, unmerge};
+    use super::{Merged, Read, SettingsEntry, hooks, merge, read, unmerge, 되돌림};
     use crate::install::inside::Rel;
     use crate::install::manifest::HookEntry;
     use serde_json::{Value, json};
@@ -244,6 +355,7 @@ mod tests {
             hooks: 훅.to_vec(),
             hooks_key_created: m.hooks_key_created,
             created: m.created,
+            edits: Some(m.edits.clone()),
         }
     }
 
@@ -287,13 +399,13 @@ mod tests {
         assert_eq!(뒤, 원본, "사용자 키·값이 달라졌다");
     }
 
-    /// **키도 훅도 왕복하면 사용자 값이 그대로 돌아온다.**
+    /// **키도 훅도 왕복하면 사용자 바이트가 그대로 돌아온다.**
     #[test]
-    fn 없던_키만_더하고_왕복하면_값이_돌아온다() {
+    fn 없던_키만_더하고_왕복하면_바이트가_돌아온다() {
         let dir = 방("왕복");
         let path = dir.join("settings.json");
-        let 원본 = json!({"env": {"A": "1"}});
-        std::fs::write(&path, serde_json::to_string_pretty(&원본).expect("직렬화")).expect("쓰기");
+        let 원본 = "{\n    \"env\": {\"A\": \"1\"}\n}";
+        std::fs::write(&path, 원본).expect("쓰기");
 
         let r = read(&path).expect("읽기");
         let m = merge(&path, &r, &바람(), &계획(&r, &훅())).expect("병합");
@@ -303,9 +415,25 @@ mod tests {
         let 중간: Value = serde_json::from_slice(&std::fs::read(&path).expect("읽기")).expect("JSON");
         assert!(중간["hooks"]["SubagentStop"].is_array(), "훅이 안 걸렸다: {중간}");
 
-        unmerge(&path, &항목(&m, &훅())).expect("되돌리기");
-        let 뒤: Value = serde_json::from_slice(&std::fs::read(&path).expect("읽기")).expect("JSON");
-        assert_eq!(뒤, 원본);
+        let 결과 = unmerge(&path, &항목(&m, &훅())).expect("되돌리기");
+        assert_eq!(결과.되돌림, 되돌림::자리);
+        assert_eq!(std::fs::read_to_string(&path).expect("읽기"), 원본);
+    }
+
+    /// ★ **사용자가 바꾼 `agent` 는 남는다** — 설치 뒤 사용자가 스스로 고친 것이다.
+    #[test]
+    fn 사용자가_바꾼_키는_남긴다() {
+        let dir = 방("바꾼키");
+        let path = dir.join("settings.json");
+        std::fs::write(&path, "{\"env\": 1}").expect("쓰기");
+        let r = read(&path).expect("읽기");
+        let m = merge(&path, &r, &바람(), &계획(&r, &훅())).expect("병합");
+        let 바꾼 = std::fs::read_to_string(&path).expect("읽기").replace("\"pal-orchestrator\"", "\"내 것\"");
+        std::fs::write(&path, 바꾼).expect("쓰기");
+
+        let 결과 = unmerge(&path, &항목(&m, &훅())).expect("되돌리기");
+        assert_eq!(결과.남긴_키, vec!["agent".to_owned()]);
+        assert_eq!(std::fs::read_to_string(&path).expect("읽기"), "{\"env\": 1, \"agent\": \"내 것\"}");
     }
 
     #[test]
@@ -317,5 +445,30 @@ mod tests {
         assert!(m.created);
         unmerge(&path, &항목(&m, &훅())).expect("되돌리기");
         assert!(!path.exists());
+    }
+
+    /// **편집 기록이 없는 옛 항목은 값으로 되돌린다** — git 밖이라 「값만」이다.
+    #[test]
+    fn 편집_기록이_없으면_값만_되돌린다() {
+        let dir = 방("옛항목");
+        let path = dir.join("settings.json");
+        std::fs::write(
+            &path,
+            "{\n  \"agent\": \"pal-orchestrator\",\n  \"hooks\": {\"SubagentStop\": [{\"hooks\": [{\"type\": \"command\", \"command\": \"pal\", \"args\": [\"hook\", \"SubagentStop\"]}]}]},\n  \"env\": 1\n}\n",
+        )
+        .expect("쓰기");
+        let 옛 = SettingsEntry {
+            path: Rel::new("settings.json"),
+            added_keys: vec!["agent".to_owned()],
+            added_values: 바람(),
+            hooks: 훅(),
+            hooks_key_created: true,
+            created: false,
+            edits: None,
+        };
+        let 결과 = unmerge(&path, &옛).expect("되돌리기");
+        assert_eq!(결과.되돌림, 되돌림::값만);
+        let 뒤: Value = serde_json::from_slice(&std::fs::read(&path).expect("읽기")).expect("JSON");
+        assert_eq!(뒤, json!({"env": 1}));
     }
 }

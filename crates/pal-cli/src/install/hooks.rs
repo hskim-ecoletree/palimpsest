@@ -110,7 +110,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use serde_json::{Map, Value, json};
 
-use super::manifest::HookEntry;
+use super::json_edit::{길목, 본문, 조각, 종류};
+use super::manifest::{HookEntry, SettingsEdits};
 
 /// 설정 안의 최상위 훅 구역.
 const HOOKS: &str = "hooks";
@@ -579,24 +580,57 @@ fn 인자_값(entry: &HookEntry) -> Option<Value> {
     entry.args.as_ref().map(|a| json!(a))
 }
 
-/// 계획을 설정 지도에 적용한다. **더한 것이 있으면 `hooks` 키를 우리가 만들었는지**를
-/// 함께 싣는다 — 제거가 그것만 되돌린다.
+/// 계획을 설정 **본문**에 적용한다 — **위치 보존**([`super::json_edit`]). `hooks` 키를 우리가
+/// 만들었는지를 산출하고, 제거가 알아야 할 자리 기록을 `기록` 에 적는다.
+///
+/// 빼기(`plan.remove`)는 우리 명령과 **그것만 든 묶음**을 걷되 사건 키는 안 지운다 — 그 키를 누가
+/// 만들었는지는 설치 때 적힌 기록이 알고, 제거([`본문에서_뺀다`])가 그 기록으로 가른다.
 ///
 /// # Errors
 /// `hooks` 가 객체가 아니거나 사건 자리가 배열이 아니면. **고치려 들지 않는다.**
-pub fn apply(map: &mut Map<String, Value>, plan: &Plan) -> Result<bool> {
+pub fn 본문에_적용한다(본: &mut 본문, plan: &Plan, 기록: &mut SettingsEdits) -> Result<bool> {
     for entry in &plan.remove {
-        뺀다(map, entry);
+        하나를_뺀다(본, entry, None)?;
     }
     let mut 우리가_만들었나 = false;
     for entry in &plan.add {
-        우리가_만들었나 |= 더한다(map, entry)?;
+        우리가_만들었나 |= 더한다(본, entry, 기록)?;
     }
-    치운다(map, false);
     Ok(우리가_만들었나)
 }
 
-/// 우리가 적어 둔 것을 전부 뺀다 — **제거의 자리.**
+/// 우리가 적어 둔 것을 본문에서 전부 뺀다 — **제거의 자리**(위치 보존).
+///
+/// - 우리 명령만 든 묶음은 통째로, 남의 명령이 함께 든 묶음은 우리 명령만 뺀다.
+/// - 사건 배열이 비면 **우리가 만든 사건 키일 때만** 지운다 — 사용자가 둔 `[]` 은 남는다.
+/// - `hooks` 키는 `hooks_key_created` 가 참이고 비었을 때만 지운다.
+///
+/// # Errors
+/// 본문이 편집 도중 모양을 잃으면(일어나면 안 되는 자리다).
+pub fn 본문에서_뺀다(
+    본: &mut 본문,
+    recorded: &[HookEntry],
+    hooks_key_created: bool,
+    기록: &SettingsEdits,
+) -> Result<bool> {
+    let mut 뺐다 = false;
+    for entry in recorded {
+        let event = entry.event.as_str();
+        let 사건_길 = [길목::키(HOOKS), 길목::키(event)];
+        뺐다 |= 하나를_뺀다(본, entry, 기록.빈_안쪽(&SettingsEdits::포인터(&[HOOKS, event])))?;
+        let 비었다 = 본.종류(&사건_길) == Some(종류::배열) && 본.자식_수(&사건_길) == Some(0);
+        if 비었다 && 기록.created_events.iter().any(|e| e == event) {
+            본.멤버를_뺀다(&[길목::키(HOOKS)], event, 기록.빈_안쪽(&SettingsEdits::포인터(&[HOOKS])))?;
+        }
+    }
+    let 훅_길 = [길목::키(HOOKS)];
+    if hooks_key_created && 본.종류(&훅_길) == Some(종류::객체) && 본.자식_수(&훅_길) == Some(0) {
+        본.멤버를_뺀다(&[], HOOKS, 기록.빈_안쪽(&SettingsEdits::포인터(&[])))?;
+    }
+    Ok(뺐다)
+}
+
+/// 우리가 적어 둔 것을 **값에서** 전부 뺀다 — 편집 기록이 없는 옛 설치(재직렬화한 방)의 제거 자리.
 ///
 /// `hooks_key_created` 가 참일 때만 빈 `hooks` 키를 지운다. 사용자가 원래 `"hooks": {}`
 /// 를 두었으면 그것은 사용자의 것이다.
@@ -609,21 +643,22 @@ pub fn strip(map: &mut Map<String, Value>, recorded: &[HookEntry], hooks_key_cre
     뺐다
 }
 
-/// 설정에 넣을 항목 하나의 JSON.
+/// 설정에 넣을 묶음 하나 — `{"hooks": [{"type", "command", "args"}]}`.
 ///
 /// ⚠ **`shell` 키를 안 쓴다.** 실측: enum(`bash`/`powershell`) 밖 값을 넣으면 그 훅
 /// 배열 **전체**가 조용히 사라진다. 안 쓰는 키는 안 쓴다.
-fn 항목(entry: &HookEntry) -> Value {
-    let mut o = Map::new();
-    o.insert(KIND.to_owned(), json!(KIND_COMMAND));
-    o.insert(COMMAND.to_owned(), json!(entry.command));
-    if let Some(args) = 인자_값(entry) {
-        o.insert(ARGS.to_owned(), args);
+fn 묶음(entry: &HookEntry) -> 조각 {
+    let mut 명령 = vec![
+        (KIND.to_owned(), 조각::문자열(KIND_COMMAND)),
+        (COMMAND.to_owned(), 조각::문자열(&entry.command)),
+    ];
+    if let Some(args) = &entry.args {
+        명령.push((ARGS.to_owned(), 조각::배열(args.iter().map(|a| 조각::문자열(a)).collect())));
     }
-    Value::Object(o)
+    조각::객체(vec![(GROUP.to_owned(), 조각::배열(vec![조각::객체(명령)]))])
 }
 
-fn 더한다(map: &mut Map<String, Value>, entry: &HookEntry) -> Result<bool> {
+fn 더한다(본: &mut 본문, entry: &HookEntry, 기록: &mut SettingsEdits) -> Result<bool> {
     // ⚠ **`args: []` 는 exec form 이고 반드시 죽는다** — 빈 배열이면 `command` 문자열
     // **전체**가 실행 파일 경로가 되어 ENOENT 다. 그리고 그 실패는 기본 채널에서
     // 침묵한다. 우리 코드가 그것을 만들 길은 지금 없지만, **생기면 여기서 멈춘다.**
@@ -635,19 +670,67 @@ fn 더한다(map: &mut Map<String, Value>, entry: &HookEntry) -> Result<bool> {
             entry.event
         );
     }
-    let 없었다 = !map.contains_key(HOOKS);
-    let hooks = map.entry(HOOKS).or_insert_with(|| json!({}));
-    let Value::Object(hooks) = hooks else {
-        bail!("`{HOOKS}` 가 객체가 아니다 — 남의 구조를 고치려 들지 않는다");
-    };
-    let event = &entry.event;
-    let groups = hooks.entry(event).or_insert_with(|| json!([]));
-    let Value::Array(groups) = groups else {
-        bail!("`{HOOKS}.{event}` 이 배열이 아니다 — 남의 구조를 고치려 들지 않는다");
-    };
+    let event = entry.event.as_str();
     // **우리 묶음 하나를 따로 넣는다.** 남의 묶음에 끼워 넣으면 제거가 남의 것을 건드린다.
-    groups.push(json!({ GROUP: [항목(entry)] }));
-    Ok(없었다)
+    let 우리_묶음 = 묶음(entry);
+    match 본.종류(&[길목::키(HOOKS)]) {
+        None => {
+            let 구역 = 조각::객체(vec![(event.to_owned(), 조각::배열(vec![우리_묶음]))]);
+            if let Some(안쪽) = 본.멤버를_더한다(&[], HOOKS, &구역)? {
+                기록.빈_안쪽을_적는다(SettingsEdits::포인터(&[]), &안쪽);
+            }
+            기록.사건을_적는다(event);
+            return Ok(true);
+        }
+        Some(종류::객체) => {}
+        Some(_) => bail!("`{HOOKS}` 가 객체가 아니다 — 남의 구조를 고치려 들지 않는다"),
+    }
+    let 사건_길 = [길목::키(HOOKS), 길목::키(event)];
+    match 본.종류(&사건_길) {
+        None => {
+            if let Some(안쪽) = 본.멤버를_더한다(&[길목::키(HOOKS)], event, &조각::배열(vec![우리_묶음]))? {
+                기록.빈_안쪽을_적는다(SettingsEdits::포인터(&[HOOKS]), &안쪽);
+            }
+            기록.사건을_적는다(event);
+        }
+        Some(종류::배열) => {
+            if let Some(안쪽) = 본.원소를_더한다(&사건_길, &우리_묶음)? {
+                기록.빈_안쪽을_적는다(SettingsEdits::포인터(&[HOOKS, event]), &안쪽);
+            }
+        }
+        Some(_) => bail!("`{HOOKS}.{event}` 이 배열이 아니다 — 남의 구조를 고치려 들지 않는다"),
+    }
+    Ok(false)
+}
+
+/// 그 사건 배열에서 우리 등록을 뺀다. **우리가 비운 묶음만 지운다** — 남의 명령이 함께 든 묶음은 남는다.
+fn 하나를_뺀다(본: &mut 본문, entry: &HookEntry, 빈_안쪽: Option<&str>) -> Result<bool> {
+    let event = entry.event.as_str();
+    let 사건_길 = [길목::키(HOOKS), 길목::키(event)];
+    if 본.종류(&사건_길) != Some(종류::배열) {
+        return Ok(false);
+    }
+    let n = 본.자식_수(&사건_길).unwrap_or(0);
+    let mut 뺐다 = false;
+    for j in (0..n).rev() {
+        let Some(묶음_값) = 본.값(&[길목::키(HOOKS), 길목::키(event), 길목::번호(j)]) else { continue };
+        let Some(cmds) = 묶음_값.get(GROUP).and_then(Value::as_array) else { continue };
+        let 맞는: Vec<usize> =
+            cmds.iter().enumerate().filter(|(_, c)| 같은_등록인가(c, entry)).map(|(i, _)| i).collect();
+        if 맞는.is_empty() {
+            continue;
+        }
+        뺐다 = true;
+        if 맞는.len() == cmds.len() {
+            본.원소를_뺀다(&사건_길, j, 빈_안쪽)?;
+        } else {
+            let 명령_길 = [길목::키(HOOKS), 길목::키(event), 길목::번호(j), 길목::키(GROUP)];
+            for i in 맞는.into_iter().rev() {
+                본.원소를_뺀다(&명령_길, i, None)?;
+            }
+        }
+    }
+    Ok(뺐다)
 }
 
 fn 뺀다(map: &mut Map<String, Value>, entry: &HookEntry) -> bool {
@@ -684,12 +767,24 @@ fn 치운다(map: &mut Map<String, Value>, 우리가_만들었나: bool) {
 
 #[cfg(test)]
 mod tests {
-    use super::{HookEntry, apply, entry, plan, registered, strip, 되읽는다, 옛_형태인가};
+    use super::{HookEntry, entry, plan, registered, strip, 되읽는다, 본문에_적용한다, 본문에서_뺀다, 옛_형태인가};
+    use crate::install::json_edit::본문;
+    use crate::install::manifest::SettingsEdits;
     use serde_json::{Map, Value, json};
     use std::path::Path;
 
     fn 지도(v: &Value) -> Map<String, Value> {
         v.as_object().expect("객체").clone()
+    }
+
+    /// 값을 **사람이 쓴 것처럼** 두 칸으로 적은 본문.
+    fn 본(v: &Value) -> 본문 {
+        본문::읽는다(serde_json::to_string_pretty(v).expect("직렬화")).expect("본문")
+    }
+
+    fn 값(본: &본문) -> Map<String, Value> {
+        let v: Value = serde_json::from_str(본.텍스트()).expect("편집 뒤에도 JSON 이어야 한다");
+        지도(&v)
     }
 
     /// 새 형태 하나 — **경로를 안 받는다.** `command` 는 이제 기계 고유의 값이 아니다.
@@ -718,10 +813,12 @@ mod tests {
         vec![하나()]
     }
 
-    /// 적어 둔 것 없이 새로 건다 — 시험마다 두 줄이 되는 자리를 하나로 묶는다.
-    fn 건다(map: &mut Map<String, Value>, 바람: &[HookEntry]) -> bool {
-        let p = plan(Some(&*map), &[], 바람);
-        apply(map, &p).expect("적용")
+    /// 적어 둔 것 없이 새로 건다 — `hooks` 키를 만들었는지와 자리 기록을 함께 산출한다.
+    fn 건다(본: &mut 본문, 바람: &[HookEntry]) -> (bool, SettingsEdits) {
+        let p = plan(Some(&값(본)), &[], 바람);
+        let mut 기록 = SettingsEdits::default();
+        let 만들었나 = 본문에_적용한다(본, &p, &mut 기록).expect("적용");
+        (만들었나, 기록)
     }
 
     /// 그 사건에 걸린 항목 전부.
@@ -782,15 +879,15 @@ mod tests {
         }
     }
 
-    /// ★ **설정에 실제로 실리는 모양** — `args` 가 있고 `shell` 키가 없다.
+    /// ★ **설정에 실리는 모양** — `args` 가 있고 `shell` 키가 없다.
     ///
     /// ⚠ `args: []` 는 exec form 이고 그때는 명령 문자열 **전체**가 실행 파일 경로가
     /// 되어 죽는다. 그래서 **비어 있지 않다**를 여기서 못박는다.
     #[test]
     fn 설정에_실리는_모양이_exec_form_이다() {
-        let mut map = Map::new();
-        건다(&mut map, &바람());
-        let 항목들 = 걸린(&map, "SubagentStop");
+        let mut 본 = 본(&json!({}));
+        건다(&mut 본, &바람());
+        let 항목들 = 걸린(&값(&본), "SubagentStop");
         assert_eq!(항목들.len(), 1);
         assert_eq!(
             항목들[0],
@@ -806,14 +903,14 @@ mod tests {
     /// **인자가 빈 배열이면 멈춘다** — 그 항목은 반드시 죽고, 그 실패는 침묵한다.
     #[test]
     fn 빈_인자_배열은_거절한다() {
-        let mut map = Map::new();
+        let mut 본 = 본(&json!({}));
         let 빈것 = vec![HookEntry {
             event: "SubagentStop".to_owned(),
             command: "/bin/pal hook SubagentStop".to_owned(),
             args: Some(Vec::new()),
         }];
-        let p = plan(Some(&map), &[], &빈것);
-        assert!(apply(&mut map, &p).is_err(), "빈 인자 배열을 그대로 걸었다");
+        let p = plan(Some(&값(&본)), &[], &빈것);
+        assert!(본문에_적용한다(&mut 본, &p, &mut SettingsEdits::default()).is_err(), "빈 인자 배열을 그대로 걸었다");
     }
 
     /// ★ **우리가 만든 항목이 되읽힌다** — 되읽히지 않는 것은 우리 것이 아니다.
@@ -873,8 +970,9 @@ mod tests {
     /// 걷어내면 그것이 곧 남의 등록을 지우는 일이다.
     #[test]
     fn 인자가_다르면_다른_등록이다() {
-        let mut map = Map::new();
-        건다(&mut map, &바람());
+        let mut 본 = 본(&json!({}));
+        건다(&mut 본, &바람());
+        let map = 값(&본);
 
         let 이름 = super::super::layout::COMMAND_NAME;
         assert!(registered(Some(&map), &하나()));
@@ -888,42 +986,48 @@ mod tests {
     /// 옛 것은 셸을 거친다.
     #[test]
     fn 갱신이_옛_형태를_빼고_새_형태를_건다() {
-        let mut map = Map::new();
+        let mut 본 = 본(&json!({}));
         let 옛 = vec![옛것("'/bin/pal' hook SubagentStop")];
-        건다(&mut map, &옛);
+        건다(&mut 본, &옛);
 
         let 새 = 바람();
-        let p = plan(Some(&map), &옛, &새);
+        let p = plan(Some(&값(&본)), &옛, &새);
         assert_eq!(p.add.len(), 1, "새 형태를 안 걸려 한다");
         assert_eq!(p.remove.len(), 1, "옛 형태를 안 빼려 한다");
-        apply(&mut map, &p).expect("적용");
+        본문에_적용한다(&mut 본, &p, &mut SettingsEdits::default()).expect("적용");
 
-        let 항목들 = 걸린(&map, "SubagentStop");
+        let 항목들 = 걸린(&값(&본), "SubagentStop");
         assert_eq!(항목들.len(), 1, "옛 등록이 남았다: {항목들:?}");
         assert_eq!(항목들[0]["args"], json!(["hook", "SubagentStop"]));
     }
 
-    /// ★ **`uninstall` 이 옛 형태도 걷어낸다.** 매니페스트가 적은 그대로 뺀다.
+    /// ★ **`uninstall` 이 옛 형태도 걷어낸다.** 매니페스트가 적은 그대로 뺀다 — 위치 보존 쪽도 값 쪽도.
     #[test]
     fn 제거가_옛_형태도_걷어낸다() {
-        let mut map = Map::new();
         let 옛 = vec![옛것("'/bin/pal' hook SubagentStop")];
-        let 만들었나 = 건다(&mut map, &옛);
+
+        let mut 본 = 본(&json!({}));
+        let (만들었나, 기록) = 건다(&mut 본, &옛);
+        let 설치된 = 값(&본);
+        본문에서_뺀다(&mut 본, &옛, 만들었나, &기록).expect("빼기");
+        assert_eq!(본.텍스트(), "{}", "옛 형태가 남았다: {}", 본.텍스트());
+
+        let mut map = 설치된;
         strip(&mut map, &옛, 만들었나);
-        assert!(map.is_empty(), "옛 형태가 남았다: {map:?}");
+        assert!(map.is_empty(), "값으로 뺀 쪽에 옛 형태가 남았다: {map:?}");
     }
 
     /// ★ **같은 설치에서 두 번 등록하면 두 번 돈다** — 중복 제거가 완전 일치 기준이므로
     /// 두 번째 계획은 비어야 한다.
     #[test]
     fn 두_번째_계획은_비어_있다() {
-        let mut map = Map::new();
+        let mut 본 = 본(&json!({}));
         let 바람 = 바람();
-        let p = plan(Some(&map), &[], &바람);
+        let p = plan(Some(&값(&본)), &[], &바람);
         assert_eq!(p.add.len(), 1);
-        apply(&mut map, &p).expect("적용");
+        본문에_적용한다(&mut 본, &p, &mut SettingsEdits::default()).expect("적용");
 
-        let p2 = plan(Some(&map), &바람, &바람);
+        let p2 = plan(Some(&값(&본)), &바람, &바람);
         assert!(p2.is_empty(), "두 번째가 또 등록하려 한다");
     }
 
@@ -934,22 +1038,23 @@ mod tests {
     /// 이 줄이 없으면 다른 기계에서 온 등록이 **그대로 남아 계속 침묵한다.**
     #[test]
     fn 옮겨_가면_옛_등록을_뺀다() {
-        let mut map = Map::new();
+        let mut 본 = 본(&json!({}));
         // 남의 기계에서 온 절대 경로 등록.
         let 옛 = vec![경로로("/옛/pal")];
-        건다(&mut map, &옛);
+        건다(&mut 본, &옛);
 
         let 새 = 바람();
-        let p = plan(Some(&map), &옛, &새);
+        let p = plan(Some(&값(&본)), &옛, &새);
         assert_eq!(p.add.len(), 1);
         assert_eq!(p.remove.len(), 1);
-        apply(&mut map, &p).expect("적용");
+        본문에_적용한다(&mut 본, &p, &mut SettingsEdits::default()).expect("적용");
 
+        let map = 값(&본);
         assert!(!registered(Some(&map), &옛[0]));
         assert!(registered(Some(&map), &새[0]));
     }
 
-    /// ★ **남이 같은 사건에 걸어 둔 것을 하나도 안 건드린다.**
+    /// ★ **남이 같은 사건에 걸어 둔 것을 하나도 안 건드린다** — 값으로도 바이트로도.
     #[test]
     fn 남의_등록은_왕복해도_그대로다() {
         let 남의것 = json!({
@@ -958,13 +1063,15 @@ mod tests {
                 "SessionStart": [{"hooks": [{"type": "command", "command": "남의 시작.sh"}]}]
             }
         });
-        let mut map = 지도(&남의것);
+        let mut 본 = 본(&남의것);
+        let 원문 = 본.텍스트().to_owned();
         let 바람 = 바람();
-        건다(&mut map, &바람);
-        assert_eq!(map["hooks"]["SubagentStop"].as_array().expect("배열").len(), 2);
+        let (만들었나, 기록) = 건다(&mut 본, &바람);
+        assert_eq!(값(&본)["hooks"]["SubagentStop"].as_array().expect("배열").len(), 2);
 
-        strip(&mut map, &바람, false);
-        assert_eq!(Value::Object(map), 남의것, "왕복이 남의 것을 바꿨다");
+        본문에서_뺀다(&mut 본, &바람, 만들었나, &기록).expect("빼기");
+        assert_eq!(Value::Object(값(&본)), 남의것, "왕복이 남의 것을 바꿨다");
+        assert_eq!(본.텍스트(), 원문, "왕복이 남의 바이트를 바꿨다");
     }
 
     /// **우리가 만든 `hooks` 키는 비면 사라진다.** 사용자가 만든 것은 안 사라진다.
@@ -972,37 +1079,50 @@ mod tests {
     fn 우리가_만든_훅_키만_사라진다() {
         let 바람 = 바람();
 
-        let mut 우리것 = Map::new();
-        let 만들었나 = 건다(&mut 우리것, &바람);
+        let mut 우리것 = 본(&json!({}));
+        let (만들었나, 기록) = 건다(&mut 우리것, &바람);
         assert!(만들었나);
-        strip(&mut 우리것, &바람, 만들었나);
-        assert!(우리것.is_empty(), "우리가 만든 키가 남았다: {우리것:?}");
+        본문에서_뺀다(&mut 우리것, &바람, 만들었나, &기록).expect("빼기");
+        assert!(값(&우리것).is_empty(), "우리가 만든 키가 남았다: {}", 우리것.텍스트());
 
-        let mut 남의것 = 지도(&json!({"hooks": {}}));
-        let 만들었나 = 건다(&mut 남의것, &바람);
+        let mut 남의것 = 본(&json!({"hooks": {}}));
+        let 원문 = 남의것.텍스트().to_owned();
+        let (만들었나, 기록) = 건다(&mut 남의것, &바람);
         assert!(!만들었나, "남이 만든 키를 우리가 만들었다고 적었다");
-        strip(&mut 남의것, &바람, 만들었나);
-        assert_eq!(Value::Object(남의것), json!({"hooks": {}}));
+        본문에서_뺀다(&mut 남의것, &바람, 만들었나, &기록).expect("빼기");
+        assert_eq!(남의것.텍스트(), 원문);
+    }
+
+    /// ★ **사용자가 미리 둔 빈 사건 배열은 남는다** — 우리가 만든 사건 키만 지운다(사전부검 R1 7).
+    #[test]
+    fn 사용자가_둔_빈_사건_배열은_남는다() {
+        let 원문 = "{\"hooks\":{\"SubagentStop\":[]}}";
+        let mut 본 = 본문::읽는다(원문.to_owned()).expect("본문");
+        let 바람 = 바람();
+        let (만들었나, 기록) = 건다(&mut 본, &바람);
+        assert!(기록.created_events.is_empty(), "사용자가 둔 사건 키를 우리가 만들었다고 적었다");
+        본문에서_뺀다(&mut 본, &바람, 만들었나, &기록).expect("빼기");
+        assert_eq!(본.텍스트(), 원문);
     }
 
     /// **남의 구조를 고치려 들지 않는다** — 모양이 다르면 멈춘다.
     #[test]
     fn 모양이_다르면_멈춘다() {
         for 이상한 in [json!({"hooks": "문자열"}), json!({"hooks": {"SubagentStop": 1}})] {
-            let mut map = 지도(&이상한);
+            let mut 본 = 본(&이상한);
             let 바람 = 바람();
-            let p = plan(Some(&map), &[], &바람);
-            assert!(apply(&mut map, &p).is_err(), "{이상한} 에서 안 멈췄다");
+            let p = plan(Some(&값(&본)), &[], &바람);
+            assert!(본문에_적용한다(&mut 본, &p, &mut SettingsEdits::default()).is_err(), "{이상한} 에서 안 멈췄다");
         }
     }
 
     /// 사건 자리가 비면 그 열쇠도 사라진다 — 빈 배열이 남으면 그것이 곧 잔해다.
     #[test]
     fn 우리만_있던_사건_자리는_통째로_사라진다() {
-        let mut map = Map::new();
+        let mut 본 = 본(&json!({}));
         let 바람 = 바람();
-        let 만들었나 = 건다(&mut map, &바람);
-        strip(&mut map, &바람, 만들었나);
-        assert!(map.is_empty());
+        let (만들었나, 기록) = 건다(&mut 본, &바람);
+        본문에서_뺀다(&mut 본, &바람, 만들었나, &기록).expect("빼기");
+        assert!(값(&본).is_empty());
     }
 }

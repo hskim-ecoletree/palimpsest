@@ -626,34 +626,36 @@ fn 제거가_잃은_것을_블록으로_말한다() {
     );
 }
 
-/// ★ **설정 키의 「사용자 수정」도 말한다.**
+/// ★ **설정 키의 「사용자 수정」은 남기고 말한다.**
 ///
-/// 파일에는 `사용자 수정 — 지웠다` 를 붙였는데 `settings.json` 의 키에는 그 대칭이
-/// 없었다. 사용자가 `agent` 값을 자기 것으로 바꿔도 키를 통째로 지우고, 우리가 만든
-/// 파일이면 **파일까지 지우면서** 화면은 `키 뺌` 한 줄이었다.
-///
-/// ⚠ **지우는 것 자체는 그대로다** — ⑥ 이 `S2 == S0` 을 요구한다. 더하는 것은 **말**이다.
+/// 앞 판은 사용자가 `agent` 값을 자기 것으로 바꿔도 키를 통째로 지우고, 우리가 만든 파일이면
+/// **파일까지 지웠다**(말만 더했다). 회차 `2026-09-15-clean-uninstall` 계획 2 가 그것을 뒤집었다 —
+/// 설치 뒤 사용자가 스스로 고친 값은 사용자의 것이다. 그래서 이 시험은 **남는 것**을 잰다:
+/// 파일이 남고 · 그 키가 사용자 값 그대로이고 · 우리 훅은 사라지고 · 화면이 그 키를 말한다.
 #[test]
-fn 제거가_설정_키의_사용자_수정도_말한다() {
+fn 제거가_설정_키의_사용자_수정은_남기고_말한다() {
     let root = 빈_프로젝트("f-설정수정");
     성공(&root, &["install"]);
 
     // 사용자가 **우리가 더한 키의 값**을 자기 것으로 바꿨다.
     let path = root.join(".claude/settings.json");
     let mut v = 값(&path);
+    assert!(v["hooks"].is_object(), "설치가 훅을 안 더했다 — 그러면 아래 「훅이 사라졌다」가 공짜로 선다: {v}");
     v["agent"] = serde_json::json!("내 오케스트레이터");
     std::fs::write(&path, serde_json::to_string_pretty(&v).expect("직렬화")).expect("쓰기");
 
     let report = 성공(&root, &["uninstall"]);
-    assert!(!path.exists(), "우리가 만든 파일이 안 지워졌다");
-    assert!(
-        report.contains("사용자 수정") && report.contains("agent"),
-        "사용자가 바꾼 값을 지우면서 말하지 않았다:\n{report}"
+    assert!(path.exists(), "사용자 값이 남은 파일을 통째로 지웠다");
+    assert_eq!(
+        값(&path),
+        serde_json::json!({"agent": "내 오케스트레이터"}),
+        "사용자 값만 남고 우리 몫은 사라져야 한다"
     );
     assert!(
-        report.contains(".claude/settings.json") && report.contains("파일째"),
-        "파일까지 지운 것을 말하지 않았다:\n{report}"
+        report.contains("남겼다") && report.contains("agent"),
+        "사용자가 바꾼 값을 남기면서 말하지 않았다:\n{report}"
     );
+    assert!(!report.contains("파일째"), "파일을 지우지 않았는데 지웠다고 말했다:\n{report}");
 }
 
 /// 블록이 **손으로 고쳐졌으면** 아무것도 안 지우고 거부한다.
