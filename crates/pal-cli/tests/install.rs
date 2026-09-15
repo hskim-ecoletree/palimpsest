@@ -640,7 +640,7 @@ fn 제거가_설정_키의_사용자_수정은_남기고_말한다() {
     // 사용자가 **우리가 더한 키의 값**을 자기 것으로 바꿨다.
     let path = root.join(".claude/settings.json");
     let mut v = 값(&path);
-    assert!(v["hooks"].is_object(), "설치가 훅을 안 더했다 — 그러면 아래 「훅이 사라졌다」가 공짜로 선다: {v}");
+    assert!(v["hooks"].is_object(), "설치가 훅을 안 더했다 — 그러면 아래 「훅이 사라졌다」가 공짜로 통과한다: {v}");
     v["agent"] = serde_json::json!("내 오케스트레이터");
     std::fs::write(&path, serde_json::to_string_pretty(&v).expect("직렬화")).expect("쓰기");
 
