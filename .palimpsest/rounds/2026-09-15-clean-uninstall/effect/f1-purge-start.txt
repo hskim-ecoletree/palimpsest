@@ -1,0 +1,266 @@
+═══════════════════════════════════════════════════════════════════════
+F1 — 효과 · 걸음 「purge」 · 바이너리 꼬리표 「start」
+═══════════════════════════════════════════════════════════════════════
+
+바이너리   : /Users/incognito/dev/projects/palimpsest/.palimpsest/bin/pal
+판              : pal 0.1.1+b56ef097f158
+대상 저장소     : /Users/incognito/dev/projects/ditto  →  origin https://github.com/incognito050924/ditto.git
+돌린 때         : 2026-09-15T23:38:12Z
+기계            : Darwin arm64
+
+클론 HEAD       : aded7ce7 (기대 aded7ce7)
+origin          : https://github.com/incognito050924/ditto.git
+
+설치 전 스냅샷  : 워킹트리 2913 자리 · HOME 0 자리
+
+── 흐름 ──────────────────────────────────────────────────────────────
+  install         ok
+  고른 좌표       __setRepoVisibilityForTest
+  touch           ok
+  narrative       ok · 316 · 조각 4903 · 새 개체 4903
+  bind            ok · 결박 하나
+  round approve   ok · cd65967dfb69c476914e5f2fbda3bde412667b6e4595cd636f410a612495b8b4
+  round verify    met
+  종료 봉인       complete
+  stop enable     ok · a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051
+  Stop 훅         차단(진행 파일을 쓰는 자리까지)
+  밖의 기록       승인 · 봉인 · 진행 · 잠금 생겼다
+  표시 · 조상     없다   Library/Application Support/palimpsest/approvals/cd65967dfb69c476914e5f2fbda3bde412667b6e4595cd636f410a612495b8b4.project   (옛 판은 안 쓴다)
+  표시 · 조상     없다   Library/Application Support/palimpsest/approvals/9977686572021150ed8f8b9110f32ba716dc90944eb8af0042727a2eb622a529.project   (옛 판은 안 쓴다)
+  표시 · 조상     없다   Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.project   (옛 판은 안 쓴다)
+  표시 · 조상     없다   Library/Application Support/palimpsest/created-ancestors.json   (옛 판은 안 쓴다)
+
+── uninstall 화면 ────────────────────────────────────────────────────
+명령: pal uninstall --purge   rc=2
+
+error: unexpected argument '--purge' found
+
+  tip: a similar argument exists: '--target'
+
+Usage: pal uninstall --target <TARGET>
+
+For more information, try '--help'.
+
+── 스냅샷 diff (설치 전 ↔ uninstall 뒤) ──────────────────────────────
+워킹트리 갈림 2749 · HOME 갈림 9
+(목록은 한쪽에 200 줄까지 적는다 — 수는 위가 정본이다)
+
+  [워킹트리]
+    .claude/agents/pal-condition-auditor.md
+    .claude/agents/pal-debate-designer.md
+    .claude/agents/pal-debate-referee.md
+    .claude/agents/pal-debate-reporter.md
+    .claude/agents/pal-decision-opponent.md
+    .claude/agents/pal-decision-proposer.md
+    .claude/agents/pal-decision-synthesizer.md
+    .claude/agents/pal-independent-reviewer.md
+    .claude/agents/pal-orchestrator.md
+    .claude/agents/pal-premortem-sweeper.md
+    .claude/commands
+    .claude/commands/pal
+    .claude/commands/pal/doctor.md
+    .claude/commands/pal/ledger.md
+    .claude/commands/pal/plan.md
+    .claude/commands/pal/touch.md
+    .claude/pal
+    .claude/pal/INSTRUCTIONS.md
+    .claude/pal/manifest.json
+    .claude/settings.json
+    .claude/skills/pal-round
+    .claude/skills/pal-round/SKILL.md
+    .claude/skills/pal-round/bin
+    .claude/skills/pal-round/bin/dashboard.py
+    .claude/skills/pal-round/bin/record.py
+    .gitignore
+    .palimpsest
+    .palimpsest/cache
+    .palimpsest/cache/00
+    .palimpsest/cache/00/04c9828af9669f153c0167beb0b83b4e07a966739bca8d3d26fc3b93a8881b.bin
+    .palimpsest/cache/00/1ca25fbdedb1c503925d01f9c15a00c43ee4d210f06123cfd4666c8c88161b.bin
+    .palimpsest/cache/00/3152a4aa3fde6306514fd1950ee5bdb9b7602483cbc1e209538cdad3be72f8.bin
+    .palimpsest/cache/00/3a599d493e0f4acf6689c2b2fef05858e3fa962a0bae046cf7ce95f6126cf8.bin
+    .palimpsest/cache/00/511392f878d7c194ec6ae80eed8d5288917d9d3fe44f5f38b3046a1d8278fc.bin
+    .palimpsest/cache/00/6c2e9f6f3461ef4ff5681537468ca4df51b34b7ed8be1f112e43639d3f7410.bin
+    .palimpsest/cache/00/b9183e72b7cbfc7039e5c267e3f297489fb0be7f2f9c9e764d4191fdd09523.bin
+    .palimpsest/cache/00/ce2c4aab4f3e5765cd4e28e8c3da7fd53649972e0fc9774aa4e3a05db483fd.bin
+    .palimpsest/cache/00/df97771fd136af4941122509b9ea8270aa1fde2dac2d0215b098a5366fffb9.bin
+    .palimpsest/cache/00/df998f02afcbfb42dc56cecc06cbba004dc3084d1766c6ec6af737939ac8b6.bin
+    .palimpsest/cache/00/f260455fc80ea499869df3f21674401fd9d1df0ee653fea14cfba2db5b8084.bin
+    .palimpsest/cache/00/ff15f8eef574c66918003f7382b73bdb62935268dc9bb3de01a564ef77f05c.bin
+    .palimpsest/cache/01
+    .palimpsest/cache/01/2183eb3f5b561882670c26338280cd69d01c1f97d007c73d9b6c4ce8bc13b8.bin
+    .palimpsest/cache/01/9cf27bb0966d1a51658c905e5b03fb588cb837df212cb4797d1041e235a9c7.bin
+    .palimpsest/cache/01/a13ba03e4ad07bbf10b4fb69b9e2f97b1c92822cb34a7a111c4938f696b24a.bin
+    .palimpsest/cache/01/a89b2cc4a341c00831cb9e01df73012081047533ce18af81c64295d35cedf8.bin
+    .palimpsest/cache/01/b1be7fc9011737b6a9ebef91b847380d6d3c286271d6738bfd8db9e3c6fc09.bin
+    .palimpsest/cache/01/de30f72f0e4c3d8b7d033fc13716561db69c45e0afcbe97bc69dd483638031.bin
+    .palimpsest/cache/01/fdea659f2586e88f190ad59e5f58591cd6905bc569c1aa0808577c70f390ed.bin
+    .palimpsest/cache/02
+    .palimpsest/cache/02/09c580c8162236d2baed696658b0ccd8743e92be5f0802d974fb92215a5122.bin
+    .palimpsest/cache/02/1961f8c8e93e506cc2bbd27b269e3c9c944ac02fff806937d1d11703485ea5.bin
+    .palimpsest/cache/02/204c24e8239a6a163072f2e3ede907fd6fd198fa862cb389336e07fc69ee5e.bin
+    .palimpsest/cache/02/354706fcb7548f0e3fd1bc9dd13392af36e3e6ae532997db2109a581a46496.bin
+    .palimpsest/cache/02/36fb3a0c4369a53422fd8a8cf5e392e2d5f07b1bb366c0d0e7766ce81930e3.bin
+    .palimpsest/cache/02/42aa50faaf04c3c0d1e7d8da4defa05231fa647e1088b3d35972604009c2f8.bin
+    .palimpsest/cache/02/43e734a30e03667604fb58ccdba0afc17fa59daf83284c0da4328b354c3f1c.bin
+    .palimpsest/cache/02/c67a4dad71c47b5f2e17a47f472a182c32cc37f48d4156ecef44d30a31a4cf.bin
+    .palimpsest/cache/02/eb9dca7ad87373b4ff1b80b670d554aeeda51a0052b6b8c9b954f9f9c63f58.bin
+    .palimpsest/cache/02/f9d843a2bc2a84349bd9314dc5e24bcb11bbab6b60def61f2fd044d1ffa33d.bin
+    .palimpsest/cache/03
+    .palimpsest/cache/03/0686458928989ae1d5155bd7d96e97d117ceeb343622c5ff875b871cf14d65.bin
+    .palimpsest/cache/03/10b61043713538f8b8de50b35a0bf79b6e4ff6e62faa5953da07e150dfad26.bin
+    .palimpsest/cache/03/762b040862b53791bd6b7b4b8c79813c5d80bae91e0a235ca5fa2556bb9e5e.bin
+    .palimpsest/cache/03/7db812f9bd0718b1114fd85129d465e97177b50e13d5a36a14338ff6fd5fa2.bin
+    .palimpsest/cache/03/9e9ef340668d74a76ebc1626c15e449af5b1743699d3e0cf59c9ed57d8f7fe.bin
+    .palimpsest/cache/03/af0bc902a6d7b6341a3032f4e24b7ead3228d35d5e559fcfe35469507f8439.bin
+    .palimpsest/cache/03/b4b021b686b8651e7969db589788177fd128667a4cd4787eb0a73fc7d23d40.bin
+    .palimpsest/cache/03/c43c017b6b0ccb6fa988ca9064c374fd54186aef784c6a111d7041d0d67294.bin
+    .palimpsest/cache/03/d1a30e86c8edd53e4e3f7b069ad067fe7f5e2cd258fe468774b8c5f6ab2f80.bin
+    .palimpsest/cache/04
+    .palimpsest/cache/04/121b734e8e04124841f5adcca9aa53e9ea85d58782196261051fd7588c9252.bin
+    .palimpsest/cache/04/121d25553926ad0d6750d49bfe89e452f1bdbfd2f350f65b16fce77fe14221.bin
+    .palimpsest/cache/04/2f6a3d56ced5f5dd56f9f1db2690c8bcfb953da9004e133e2a0dde19df2695.bin
+    .palimpsest/cache/04/476e3e0e36b16ab14c46ad6a9cbe5dcf56c69cd5b3c5c706c643104b3b97e9.bin
+    .palimpsest/cache/04/88f2b0a4289638e641ea6935dc5e863b4cc17120c6600ef1ffccf9bb655ca4.bin
+    .palimpsest/cache/04/8ebf156d821def6f4ef76bbcb4101d161996f018c349a643e972a884908e58.bin
+    .palimpsest/cache/04/994b0c9b98156fccd38fed6e9462916e23320577fdc2576a328b67731fd70f.bin
+    .palimpsest/cache/04/a5398fca68f074b5b05be40c31bbbd50af4bbc1bfa128cbb460ffdb324bb22.bin
+    .palimpsest/cache/04/c069cc5a1889c6cf2add407f7993f245f26f8b9d7fb4ab310e452be63d7fde.bin
+    .palimpsest/cache/04/c79ee3e48e9fc78ce30f4d964953d20fb0a2ad6cd10da334aa508a5b19f062.bin
+    .palimpsest/cache/04/cd55b33bd30ed4290dff8b4db028bebdd216fed32b87ccfd89e992c887de06.bin
+    .palimpsest/cache/04/d560a5fe202edd4ce8fe4909969cef7cd605bd4059b6ac4f995c496353a585.bin
+    .palimpsest/cache/04/dd0ce25e09a39dec878e7ce09486859051b0458ef5b4781d52491b4b63fba3.bin
+    .palimpsest/cache/04/f251030c7e577250bf78dd79d3d2253e39e3c3ab2434824d82bbd0d7b6a86a.bin
+    .palimpsest/cache/05
+    .palimpsest/cache/05/26f59b4d1a4c929275a2381791530579e7feaa4c7771ae2eca83b2d857be4d.bin
+    .palimpsest/cache/05/506abea33ad242a753dc3a4481a36b11adb3e7dd675b7cab37b1185c3b9b73.bin
+    .palimpsest/cache/05/50d3b3ad2b9749d8a807c86cb8d8f769e034fc5bc533933c976951534e6708.bin
+    .palimpsest/cache/05/693e7f8e03dd20ff39ed5b2ca7f627e2806d4df2d16c8d3ea3cdcbd9a8f807.bin
+    .palimpsest/cache/05/71ef7665fe0db4cdd6c298f9dd2d647bb88ee2ef2c64d01fb756988786fdac.bin
+    .palimpsest/cache/05/72bf10f7ef104139779e6ca208a102945fff6417d40a992508cf95b73fbbe0.bin
+    .palimpsest/cache/05/73f36fe06ba2a92565ec29360fac501e1ce477be56948e1706222ac04feae6.bin
+    .palimpsest/cache/05/73ff5c5cb665ba0ab25a3763a6d1d24eeba2c5161e100d4055a6c9278f4082.bin
+    .palimpsest/cache/05/774726a460ba70d2767d56aaeedb292aac6fc9b7cea17abe0cf70094ddd1da.bin
+    .palimpsest/cache/05/c1e2c7c0cdd87bfeeddbe4f1b3c715c1544a51d74d58d9ff98dd7c8555078d.bin
+    .palimpsest/cache/05/f527a4a29e8d3a8c5df52567d513e587f59f3a8e50d665abb9549eba6a4143.bin
+    .palimpsest/cache/06
+    .palimpsest/cache/06/0a6f4974a786dec8520147ef8fc2236fafc999913766ce339390dfa311e3fd.bin
+    .palimpsest/cache/06/14448b00b753774980223a6fa0f699dd82d1abf77680dba582f614abe0ad1b.bin
+    .palimpsest/cache/06/18fd7ceb798bc14de5906832288c8b1ca60dc9f8a5da91548ef50b1004fa0c.bin
+    .palimpsest/cache/06/1b96ff4cfb3d3ff816c11f51c45eb974f27913921be0d6aa1742181855a421.bin
+    .palimpsest/cache/06/359efea01e799d81de124470ccba6ab486ec5ad5835ffb9c1cbcced178c25c.bin
+    .palimpsest/cache/06/4b0eff1a4aba0b73558652bfbfd676ad7f938f47449882d45662d751d56599.bin
+    .palimpsest/cache/06/a62c3e391107237b6e4c56f97f633b230c60b7415db45a5bd043b5697478e4.bin
+    .palimpsest/cache/06/be2c033f391274927bb3eb021312c25bba16ddb5195cfcb0099e7c75f274f7.bin
+    .palimpsest/cache/06/f9aeb910f189e9e40d4baf3b2efd7486d94fc3d0823bcc27136d247c99633f.bin
+    .palimpsest/cache/07
+    .palimpsest/cache/07/21a070ecb8a4ecdab16b6cedfa4f8ff0bbf78133700d2ea6a3c7fef480ed3f.bin
+    .palimpsest/cache/07/3fc0193855f392bb55c679bf9a57403c2e744cf324548872ceb5f1d48940fc.bin
+    .palimpsest/cache/07/6b5ef4b16bae440d8d89252103d8ddf6d8fa775f0f864fc4f4adc13b44ffb6.bin
+    .palimpsest/cache/07/7b8adc40f44b6387dd13d6500e870faac834a3258ac458443d3ac5a6206812.bin
+    .palimpsest/cache/07/967f615f441bae51845785dcac45b396e599ff4f5e0efb50442ca2facaa3b3.bin
+    .palimpsest/cache/07/b13c85b55a5a271238f6e447aa6c8506aaab17e17823d7803d7bd3cf89f62b.bin
+    .palimpsest/cache/07/b7fb3738014e9332a5b78c21f8570a9907a116a44e68e8bf6e6e3226f647d0.bin
+    .palimpsest/cache/07/bdfefb80363db8feaf3a840988e57b2730753879ddd1fe753937da01392be2.bin
+    .palimpsest/cache/07/c37fa4e4090a6e765ff1b8418ddcc9fd772c34d4e194e093d68e6c6681c509.bin
+    .palimpsest/cache/07/d5c72807c1d6c5d0960a55cde2674e691bd027fc789abd2e1865b746121cdd.bin
+    .palimpsest/cache/08
+    .palimpsest/cache/08/3bc93e59ab4dfab6baa044423bae687c7527562ff7db4502dac4df9ee30a27.bin
+    .palimpsest/cache/08/52a9941b7eea20fab30f8a81e4202467a1bbacb19414fcf452f230fbb14163.bin
+    .palimpsest/cache/08/84ba831e81c2d6f693c9fa8c143568cb61a23ad21f9465fe6ac38431837fe6.bin
+    .palimpsest/cache/08/aa2f8a9a135298d01a6b30b094e6110c6a7dd27126140244a647c522b11af6.bin
+    .palimpsest/cache/08/aa3f0baa240207859139807fe283dee961446b8ec326c1590b7bfaec7b10d7.bin
+    .palimpsest/cache/08/cb4d47ef11a726c8ee4c1a09d39e332a53e5e06dc5fc9a5f2b6af6ffd4052a.bin
+    .palimpsest/cache/08/d9640d4a22a8ceb0bdb6fca0b454a1eeebdb2bf3d1e09870ae06705906631f.bin
+    .palimpsest/cache/09
+    .palimpsest/cache/09/130f699006ea3e9c3bfcbda207ef89fc5249b8d1705614192dfcb19e4e2174.bin
+    .palimpsest/cache/09/40557fee67c8e4662c4d4795baadd77183214799e7eb6cf278fa763020a2cc.bin
+    .palimpsest/cache/09/7162ed45c51ea1304cff1d7762eb5981534eaf1492cc7d8ca74a95388a2305.bin
+    .palimpsest/cache/09/7cef24b1ee98ab8f0bad300da5f6d0f4f080997f201fa44734e7457c18152b.bin
+    .palimpsest/cache/09/ccb3242552b92165acfbbc6765356f4dda2343240920bc5f1aff3b88a89db7.bin
+    .palimpsest/cache/09/d2ba630cb905dcfe24494571717af3f4536093a314a7ddf824f2b15c0659bb.bin
+    .palimpsest/cache/09/d2d5529f115e7398f0325dad68fe5fa29a9a1aa4ea7702183d152ab9996a7b.bin
+    .palimpsest/cache/09/e7661625388726dac85fb849cb36b653e276fa365b21489425286ff669611c.bin
+    .palimpsest/cache/0a
+    .palimpsest/cache/0a/2fc3272fbf46ad4746bff3fcacc9ddc73bd55db7b87643133542d97e4ef780.bin
+    .palimpsest/cache/0a/7b75ff2033a699c906b329f16b50545808367a7f8e330b92de6a5910215bd4.bin
+    .palimpsest/cache/0a/966f56bee5261ae960236c38781b7cbc92f5d0df02a7fd7007deb82849649b.bin
+    .palimpsest/cache/0a/bddc4601cf9efff7121c0fe47aad41901dbb143ebe7797582668dafdfc79d5.bin
+    .palimpsest/cache/0b
+    .palimpsest/cache/0b/101c1977afce63c1b59e7f26315a38b2cd71190cf9e3318ac208efc0bcd603.bin
+    .palimpsest/cache/0b/20064d88e7c854691f64472c66134451e2547c7bc1ceb301a515f1a16149f5.bin
+    .palimpsest/cache/0b/2ffd0b9ba77fc752dd604f59a7ba8d09b55c46a16a554863aa89c2e5ef619c.bin
+    .palimpsest/cache/0b/30ae5f6e615e629c063f06dd32d9a50bf72794d53af799a79218550104c82f.bin
+    .palimpsest/cache/0b/32d87356fdf137f4703c3a8dc6637a8654cdd67908f53c3e1bfef62325bb3c.bin
+    .palimpsest/cache/0b/38adb8d7569cb769891fb87bf6da58ed666651f78b8d83d7eab2409c3a900c.bin
+    .palimpsest/cache/0b/52ede3d0a72d5508c27a461b94e2494d34646db4310550e10354abbc7c8e69.bin
+    .palimpsest/cache/0b/c8c2ebe7d37ab1c8222ae7ef2858cf1afea0a50eaa6889dfb2b4126ba2fac9.bin
+    .palimpsest/cache/0b/c96306d137b2279ce96c8c0b9807fe76bb5b8f57a24321e5b26a5383ac5ed7.bin
+    .palimpsest/cache/0b/cb67872a90b4c069b6b38723bf90a0e527be046cc6f774826072c9c75a36e6.bin
+    .palimpsest/cache/0b/d3c9e7320f3e25915917c70b937116001f143f7cd41f11c1b68915f66681d6.bin
+    .palimpsest/cache/0b/f3fd94fd21c0cdaf882651c2a31e3e34da49576e51dd1d8dbf7a4a97c9369e.bin
+    .palimpsest/cache/0c
+    .palimpsest/cache/0c/0deb125250b6d4ec4b8123c21e95163cb50089fa79370858bd2701e0d2be35.bin
+    .palimpsest/cache/0c/4760351b6941cdd171628cc8a6ae0f12e2d502ee52a204665719eba9b6879f.bin
+    .palimpsest/cache/0c/6abf4e83317d4410db77928bf7447e77a4752ef21438b8214c0b77ad718bda.bin
+    .palimpsest/cache/0c/77346bf66fdf0147f8086e1a8c5941605076ef2477573a149b4764ebe86194.bin
+    .palimpsest/cache/0c/920cd3a57a8bed9bd53244ad9a586d75408577cb6de5be26ad2e2e7cb4c384.bin
+    .palimpsest/cache/0c/d850a58bdc5e8e08c2c94a0577d1f4ef3d3507697d8e953c7c2e409455787e.bin
+    .palimpsest/cache/0c/fbe92fd2fafdba051b1f484afe2f309e1344b59793b7c959128b65e9258084.bin
+    .palimpsest/cache/0d
+    .palimpsest/cache/0d/06816e823a6400c0808a9dd5b6011d4a27085122fc3251278250cacfb1bbe2.bin
+    .palimpsest/cache/0d/15761340d2b38cefc898f83d158c115692560b01e264674ac615691b7d69f5.bin
+    .palimpsest/cache/0d/3a52328729e316a542c1f5c2ad674280451f5283080fea72a997e5526c1875.bin
+    .palimpsest/cache/0d/4d1a3bbab829593334d50f3bcb1d5e5ae96f7f3e0b80d38c56dc3d3d3d2fed.bin
+    .palimpsest/cache/0d/74bca9104b926b5f515b832ea6a7800a987bda7776cf2cd4136500938ff790.bin
+    .palimpsest/cache/0d/77bde177d72a8541917a64b6d356d1effc5e877af2dbcbe2a327e72366819a.bin
+    .palimpsest/cache/0d/7a62b11377fbfb880d59b213b3816dc13c840ba1033090654ebca6e153566a.bin
+    .palimpsest/cache/0d/a52b89fed822ccdbd851788e288ac7edc46169d87c8b8975c497f044bd96a3.bin
+    .palimpsest/cache/0d/a8c3562f6aa609a7a73dd23894afab78e66f93ccce6c3c519fb79c642b014d.bin
+    .palimpsest/cache/0d/c42e83af7c2aa5d36737ba9408472352af5997b282ae3322c4f4e408d3069e.bin
+    .palimpsest/cache/0e
+    .palimpsest/cache/0e/055d92950afb743cc6f98bf956e7c138e6a8075ab48a67af8bdb5544188149.bin
+    .palimpsest/cache/0e/073e5a5e6629a6617599e5f988b0672c7188f8578b5a36961226e428704521.bin
+    .palimpsest/cache/0e/55c035019a8950a26a9e6bff747080570e0dfc928b70007aa3c47edd1a0c95.bin
+    .palimpsest/cache/0e/5bc9fcd2fb750c1e24f711d28dfb2094efc87eabfaac81cd439c3c70a54327.bin
+    .palimpsest/cache/0e/a5ba198f63c645ba01461173de0117b260b58c2e6eba14f0126e9b02c140be.bin
+    .palimpsest/cache/0e/bd64d8451064a187283f4c67c88a4e036f170f265e5f70484e4cb0a5b4f39a.bin
+    .palimpsest/cache/0e/c2880fcf3fb2050a9e26c0e7b995c69ada00e2bab496a3bcee970ccbbbebdb.bin
+    .palimpsest/cache/0f
+    .palimpsest/cache/0f/03fa3d9866dceb63d259141188c2a453b9a315fc99a80a394b5ed3fbdaa1b5.bin
+    .palimpsest/cache/0f/2e6614c89a4f9e7f064efb38011299fe173d0e7454a74f7a91bdaa78d8c3d4.bin
+    .palimpsest/cache/0f/a36af6bebe1f23168290d9b240c6a8f79618a8c79021a1a44528e8e26fbf55.bin
+    .palimpsest/cache/0f/e45865b67b688d24d326141958d73f3794c05c77796d556df19b6015d9e151.bin
+    .palimpsest/cache/0f/efcd6995eae1cc61baf931e964b37e18899fa83b7c4edd7b9615450e2d8046.bin
+    .palimpsest/cache/0f/f384099ac65ce7555e5e5160f8eeede33e948a8e86173f904ba99f3f9ea92b.bin
+    .palimpsest/cache/0f/f8c3ea6af564e0fd1db825e4128a30b82bbd1aedc516bf5e520e62a5a78793.bin
+    .palimpsest/cache/10
+    .palimpsest/cache/10/7f1b13e0677b2ac1506a8f8d73cc4fe9541ce8806b9e6bdc89d0df48314c67.bin
+    .palimpsest/cache/10/a367d2e36013c7781bc4ee13f3cfa2a0289949dee531b7df8c8c5c18974fbf.bin
+    .palimpsest/cache/10/b30900587dae8f404c5e5974121b0762e9592bd4b41bf46e16ed6717c5675e.bin
+    .palimpsest/cache/10/b34beeab4d79bfa0b6e3f64d652f017f42791bf11bb9bea03119dd59c43af8.bin
+    .palimpsest/cache/10/be030614054ee194dad233474b7fef98a7431d71203bd54b0d46a1dbd989b9.bin
+    .palimpsest/cache/10/dff6edd8d2c660771c71925cd417d0eb37897c46c8dc207c905c47f45dea19.bin
+    .palimpsest/cache/11
+    .palimpsest/cache/11/144d6278031d4b443adfe3dc6147354e041ae7dbd43e66f8ddc479401097d2.bin
+    .palimpsest/cache/11/21fb1d365d1e750cf1912467bd95f29b4a0ce9be5d11f00e265a1be404901d.bin
+    .palimpsest/cache/11/50477e40fe411d590c1387ff4aa51a018bd37e3fecf86d3c181db9865d46a9.bin
+    .palimpsest/cache/11/56563f0d326c7b73e1c5b48e5ee167221d420b31a9ef777b5549e2447360b1.bin
+    …2549 줄 더
+
+  [HOME]
+    Library
+    Library/Application Support
+    Library/Application Support/palimpsest
+    Library/Application Support/palimpsest/approvals
+    Library/Application Support/palimpsest/approvals/9977686572021150ed8f8b9110f32ba716dc90944eb8af0042727a2eb622a529.json
+    Library/Application Support/palimpsest/approvals/cd65967dfb69c476914e5f2fbda3bde412667b6e4595cd636f410a612495b8b4.json
+    Library/Application Support/palimpsest/approvals/round-stop-activation-22bbf05d396d5cefe73638e0705c911830ceb92a38c2ea199eae414902e3e81e.json
+    Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.json
+    Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.lock
+
+── 판정 ──────────────────────────────────────────────────────────────
+  ✗ --purge 뒤에도 갈림이 있다 — 워킹트리 2749 · HOME 9 (그 가운데 L 밖 2739)
+  ⚠ uninstall rc=2
+
+판정: 어긋남  (rc=1)

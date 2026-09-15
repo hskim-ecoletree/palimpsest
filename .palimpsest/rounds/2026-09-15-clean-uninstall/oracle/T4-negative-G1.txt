@@ -1,0 +1,96 @@
+# G1 음성 대조 — 흐름 가운데 걸음 하나의 흔적을 안 걷는 빌드에서 빨개지는가
+
+회차 2026-09-15-clean-uninstall · 갈래 T4 · 2026-09-15T23:22:07Z
+시험: cargo test -p pal-cli --test clean_uninstall_flow
+정상 빌드의 산출은 oracle/T4-green.txt 가 진다.
+
+───────────────────────────────────────────────────────────────────────
+■ 변이 — narrative 걸음의 흔적 — .palimpsest/narrative-pending.json 을 파생물로 안 헤아린다
+  diff:
+    --- /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/tmp.TAuXizoK9v/layout.rs	2026-09-16 08:22:07
+    +++ /Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-acd450dbf4c8986fe/crates/pal-cli/src/install/layout.rs	2026-09-16 08:22:07
+    @@ -307,7 +307,6 @@
+     pub const 안의_분류: &[안의_자리] = &[
+         안의_자리 { 패턴: ".palimpsest/cache/", 부류: 부류::파생물 },
+         안의_자리 { 패턴: ".palimpsest/index.redb", 부류: 부류::파생물 },
+    -    안의_자리 { 패턴: ".palimpsest/narrative-pending.json", 부류: 부류::파생물 },
+         안의_자리 { 패턴: ".palimpsest/radius-base-*.redb", 부류: 부류::파생물 },
+         안의_자리 { 패턴: INTENT_STORE, 부류: 부류::조건부 },
+         안의_자리 { 패턴: ".palimpsest/intent/", 부류: 부류::정본 },
+  cargo test rc=101
+  산출(끝 24 줄):
+      지웠다(정본)               .palimpsest/rounds/
+      지웠다                   .claude/pal/manifest.json
+      지웠다                   .claude/skills/pal-round/bin/
+      지웠다                   .claude/commands/pal/
+      지웠다                   .claude/skills/pal-round/
+      지웠다                   .claude/pal/
+      지웠다                   .claude/agents/
+      지웠다                   .claude/commands/
+      지웠다                   .claude/skills/
+      지웠다                   .claude/
+      남겼다                   .palimpsest/  (비어 있지 않다 — 남의 것 1개가 남아 있다: narrative-pending.json)
+    
+    
+    stderr:
+    
+    
+    
+    failures:
+        g1_같은_흐름의_기본_uninstall_은_갈림이_l_안에만_있고_정본이_직전_바이트다
+        g1_한_흐름을_밟고_purge_하면_워킹트리와_home_이_설치_전과_같다
+    
+    test result: FAILED. 9 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.22s
+    
+    error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_flow`
+  ✓ 시험이 잡았다
+───────────────────────────────────────────────────────────────────────
+■ 변이 — Stop 훅 걸음의 흔적 — 진행 파일 · 잠금 · 표시를 안 걷는다
+  diff:
+    --- /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/tmp.TAuXizoK9v/external.rs	2026-09-16 08:22:07
+    +++ /Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-acd450dbf4c8986fe/crates/pal-cli/src/round/external.rs	2026-09-16 08:22:11
+    @@ -123,9 +123,9 @@
+             {
+                 let record = stop::progress_path(store, digest);
+                 match 표시로_가른다(&record, &project) {
+    -                Some(몫::이_프로젝트) => 지울.push(path),
+    +                Some(몫::이_프로젝트) => {}
+                     Some(몫::남의) => {}
+    -                None if 이_프로젝트_진행.contains(digest) => 지울.push(path),
+    +                None if 이_프로젝트_진행.contains(digest) => {}
+                     Some(몫::가를_수_없다) | None => 보고.가를_수_없는.push(path),
+                 }
+             } else if let Some((digest, _)) = name
+  cargo test rc=101
+  산출(끝 24 줄):
+      지웠다(정본)               .palimpsest/rounds/
+      지웠다                   .claude/pal/manifest.json
+      지웠다                   .claude/skills/pal-round/bin/
+      지웠다                   .claude/commands/pal/
+      지웠다                   .claude/skills/pal-round/
+      지웠다                   .claude/pal/
+      지웠다                   .claude/agents/
+      지웠다                   .claude/commands/
+      지웠다                   .claude/skills/
+      지웠다                   .claude/
+      지웠다                   .palimpsest/
+    
+    
+    stderr:
+    
+    
+    
+    failures:
+        g1_같은_흐름의_기본_uninstall_은_갈림이_l_안에만_있고_정본이_직전_바이트다
+        g1_한_흐름을_밟고_purge_하면_워킹트리와_home_이_설치_전과_같다
+    
+    test result: FAILED. 9 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.36s
+    
+    error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_flow`
+  ✓ 시험이 잡았다
+───────────────────────────────────────────────────────────────────────
+잡았다 2 · 놓쳤다 0
+
+되돌림 확인:
+  layout.rs 그대로
+  external.rs 그대로
