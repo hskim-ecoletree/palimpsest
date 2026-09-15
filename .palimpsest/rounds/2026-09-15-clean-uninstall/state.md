@@ -5,7 +5,7 @@
 ★ **새 컨텍스트가 받는 것은 「`intent.md` 전문 + 이 파일의 요약」이다.** 직전 산출물을
 시드로 받지 마라.
 
-## 지금 단계 — **루프 · 구현** (2026-09-16 승인)
+## 지금 단계 — **루프 · G1 흐름 시험과 F1 효과** (세 갈래 병합 끝)
 
 | 단계 | 상태 |
 |---|---|
@@ -38,6 +38,26 @@
 - **게이트 합격선을 측정 전에 등록했다**(`docs/gates/clean-uninstall.md` · 조건 20 전부 미측정). 승인 요청의 「21」은 셈 착오 — `approval.md` 머리에 정정.
 - **F1 · G1 의 「결박 승인 하나」 걸음은 `pal bind --note <조각> <심볼>`** — 후보 목록에 기대지 않아 결정론적이다. 문서 조각 후보의 승인·거부는
   `pal narrative --approve` · `--refuse`(둘 다 `intent.redb` 에 기록 — B3 의 「거부만 한 방」이 쓴다).
+
+## 병합 — 2026-09-16
+
+세 갈래가 충돌 없이 main 에 들어왔다. `install.rs` 는 셋이 다 만졌는데 자리가 갈려 자동 병합됐다.
+
+| 갈래 | 병합 커밋 | 시험 |
+|---|---|---|
+| T3 바깥 | `9f5bb52` | `clean_uninstall_external` 23(합치기 전에는 `--purge` 9 가 빨갛다) |
+| T1 설정 | `a35ab51` | `clean_uninstall_settings` 18 · 모집단 19 · 골든과 옛 매니페스트 fixture 는 착수 빌드에서 떴다 |
+| T2 안쪽 | `3efec44` | `clean_uninstall_palimpsest` · `clean_uninstall_blocks` · `cargo test -p pal-cli` 전량 초록 |
+
+바뀐 표면 — `pal uninstall --purge` · `--force` · `install::uninstall(target, 제거{purge,force})` · `layout::안의_분류`(옛 `DERIVED` 를 대신한다) ·
+`.gitignore` 블록 다섯 줄 · doctor 검사 7 「pal 블록이 넣은 그대로인가」 · `SettingsEntry.edits`(없으면 옛 설치) ·
+밖의 표시 파일(`<digest>.project` · 진행 파일 옆) · 조상 기록 `palimpsest/created-ancestors.json` · `밖의_보고.다른_체크아웃_stop_비활성화`.
+
+기존 시험을 고친 곳 셋(전부 강화 방향) — `install.rs` 의 사용자 수정 설정 키 시험(이제 남긴다) · 검사 수 여섯 → 일곱 ·
+`install_hooks.rs` 의 훅 검사를 번호와 이름으로 집기. `round_approve_verify.rs` 의 변조 시험은 `.json` 만 고르도록 좁혔다(표시 파일이 생겨서).
+
+**다음 회차 거리로 남길 것** — 기본 uninstall 뒤에는 매니페스트가 사라져 `--purge` 를 바로 못 돌린다(재설치가 필요하다). 조건 문면은 서지만
+사용자 경로가 한 걸음 길다(T2 보고 2).
 
 ## 착수 바이너리
 
