@@ -17,6 +17,19 @@
 | 착수 전 기준선 | **확보** — `baseline/00-baseline-start.md` · 항목 24 · 어긋남 15 · 대조불가 14 · ⚠ f06 ① 여섯이 새로 「망가뜨렸는데 통과」(코드 변경 0 · 앞 기준선이 그 자리까지 못 가 가를 수 없다 · 미해명) — 종료 기준선에서 댄다 |
 | 승인 | **받았다** — `approval.md` · 승격 4(B6 지우고 경고) · 승격 5(D4 기본도 밖을 안 건드림) |
 
+## 구현 배분 — 2026-09-16
+
+접점 커밋 `2fe292e`(`round::external::걷는다` 스텁 · `tests/common/snapshot.rs` 스냅샷의 정의) 위에서 세 갈래가 격리 worktree 로 갈라졌다.
+
+| 갈래 | 조건 | 파일 소유 | 시험 파일 |
+|---|---|---|---|
+| T1 설정 편집기 | A1~A4 | `install/settings.rs` · `install/hooks.rs` · 새 편집 모듈 · `manifest.rs` 의 `SettingsEntry` | `clean_uninstall_settings.rs` |
+| T2 안쪽 | B1~B7 · C1 · C2 | `install.rs`(`밖의_보고를_싣는다` 밖) · `layout.rs` · `blocks.rs` · `doctor.rs` · `ignore.rs` · `main.rs` · `manifest.rs`(`SettingsEntry` 밖) | `clean_uninstall_palimpsest.rs` · `clean_uninstall_blocks.rs` |
+| T3 바깥 | D1~D4 · B4 ③ 봉인 | `round/external.rs` · `approval.rs` · `stop.rs` · `verify.rs` · `install.rs` 의 `밖의_보고를_싣는다` | `clean_uninstall_external.rs` |
+| T4 흐름·효과 | G1 · E1 · F1 | 병합 뒤 | `clean_uninstall_flow.rs` · `effect/e1-count.py` · `effect/f1-run.sh` |
+
+증거는 `oracle/T<n>-red.txt` · `oracle/T<n>-negative-<조건>.txt`. 병합 순서는 T1 → T2 → T3(T3 의 `--purge` 시험은 T2 병합 뒤 초록).
+
 ## 착수 바이너리
 
 릴리스 `v0.1.1` = `pal 0.1.1+b56ef097f158`. 이 저장소의 `./.palimpsest/bin/pal`(없으면 `scripts/pal-release.sh v0.1.1`).
