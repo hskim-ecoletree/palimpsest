@@ -620,13 +620,13 @@ fn d3_판정(d3: &D3방, args: &[&str]) {
 }
 
 #[test]
-fn d3_기본_uninstall_은_표시_없는_승인과_slug_에_안_맞는_진행_파일만_가를_수_없다로_센다() {
+fn d3_기본_uninstall_은_표시_없는_승인과_slug_에_안_맞는_진행_파일만_가를_수_없다로_헤아린다() {
     let d3 = d3_방("d3-default");
     d3_판정(&d3, &["uninstall"]);
 }
 
 #[test]
-fn d3_purge_도_표시_없는_승인과_slug_에_안_맞는_진행_파일만_가를_수_없다로_센다() {
+fn d3_purge_도_표시_없는_승인과_slug_에_안_맞는_진행_파일만_가를_수_없다로_헤아린다() {
     let d3 = d3_방("d3-purge");
     d3_판정(&d3, &["uninstall", "--purge"]);
 }
