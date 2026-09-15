@@ -1,0 +1,19 @@
+   Compiling pal-cli v0.1.1 (/Users/incognito/dev/projects/palimpsest/.claude/worktrees/agent-acd450dbf4c8986fe/crates/pal-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.28s
+     Running tests/clean_uninstall_flow.rs (target/debug/deps/clean_uninstall_flow-1dfb72764872e0c8)
+
+running 11 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test g1_한_흐름을_밟고_purge_하면_워킹트리와_home_이_설치_전과_같다 ... ok
+test g1_같은_흐름의_기본_uninstall_은_갈림이_l_안에만_있고_정본이_직전_바이트다 ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.29s
+
