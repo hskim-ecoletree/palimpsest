@@ -1,0 +1,35 @@
+# T3 초록 — 구현 커밋 42d57e7 + 커밋하지 않은 임시 심(main.rs `uninstall --purge` 플래그 → external::걷기::전부 · worktree 거부면 rc=1)
+# 명령: cargo test -p pal-cli --test clean_uninstall_external
+# 판독: 23 passed. 심 없이(커밋 그대로)는 --purge 를 치는 9 개가 rc=2 로 빨갛다 — T2 의 --purge 가 병합되면 초록이 되는 시험.
+#   심은 T2 의 안쪽 정본 걷기를 하지 않는다 — b4_3 의 「재설치 뒤 Complete」는 밖의 봉인을 남기는 부분만 여기서 잰다.
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.10s
+     Running tests/clean_uninstall_external.rs (target/debug/deps/clean_uninstall_external-538e64a87ab88768)
+
+running 23 tests
+test common::eol::tests::첫_줄바꿈이_정한다 ... ok
+test common::eol::tests::맞추면_왕복한다 ... ok
+test common::winpath::tests::평범한_경로는_그대로다 ... ok
+test common::eol::tests::crlf_만_lf_로_맞춘다 ... ok
+test common::eol::tests::개행부터_빼도_잔해가_없다 ... ok
+test common::sha256::tests::공개_시험_벡터 ... ok
+test common::eol::tests::사상이_구간을_그대로_옮긴다 ... ok
+test common::sha256::tests::널_바이트가_있어도_전부_잰다 ... ok
+test common::sha256::tests::패딩_경계 ... ok
+test d1_기록은_v1_바이트_그대로이고_옆에_표시_파일이_있으며_표시_파일_없이도_verify_met_status_complete ... ok
+test d2_봉인의_표시_파일을_미리_지운_방에서도_purge_가_원장으로_봉인을_걷는다 ... ok
+test d1_음성_대조_승인의_표시가_다른_프로젝트면_purge_가_안_걷는다 ... ok
+test d1_음성_대조_진행_파일의_표시가_다른_프로젝트면_기본_uninstall_이_안_걷는다 ... ok
+test b4_3_추적_중인_회차_원장에_적힌_봉인은_purge_도_남기고_재설치_뒤_complete ... ok
+test d2_기본_uninstall_은_x_의_활성화_진행_잠금과_표시만_걷고_나머지는_바이트_그대로다 ... ok
+test d3_기본_uninstall_은_표시_없는_승인과_slug_에_안_맞는_진행_파일만_가를_수_없다로_센다 ... ok
+test d3_purge_도_표시_없는_승인과_slug_에_안_맞는_진행_파일만_가를_수_없다로_센다 ... ok
+test d4_1_연결된_worktree_가_있으면_주_체크아웃의_기본_uninstall_도_밖을_안_건드리고_rc_0 ... ok
+test d4_2_연결된_worktree_가_있으면_주_체크아웃의_purge_는_밖을_안_건드리고_rc_1 ... ok
+test d2_purge_둘_다_걷으면_home_이_설치_전과_같다_조상을_안_만든_home ... ok
+test d2_purge_둘_다_걷으면_home_이_설치_전과_같다_빈_조상을_미리_만든_home ... ok
+test d4_3_연결된_worktree_쪽의_purge_도_밖을_안_건드리고_rc_1 ... ok
+test d4_4_같은_origin_의_별도_클론_둘은_가를_수_없어_밖을_걷고_경고한다 ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.06s
+

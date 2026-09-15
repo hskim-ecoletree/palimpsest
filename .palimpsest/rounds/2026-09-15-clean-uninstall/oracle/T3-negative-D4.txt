@@ -1,0 +1,220 @@
+# T3 음성 대조 — D4
+# 변이(임시 · 커밋하지 않음 · 기록 뒤 git checkout 으로 되돌림): worktree 판별을 끈다
+# 바탕: 구현 커밋 42d57e7 + 커밋하지 않은 임시 --purge 심(T2 대역)
+# 변이 diff:
+#   diff --git a/crates/pal-cli/src/round/external.rs b/crates/pal-cli/src/round/external.rs
+#   index 9d563af..b8f4865 100644
+#   --- a/crates/pal-cli/src/round/external.rs
+#   +++ b/crates/pal-cli/src/round/external.rs
+#   @@ -101,6 +101,7 @@ fn 걷는다_자리에서(repo: &Path, store: &Path, 방식: 걷기) -> Result<
+#            .other_worktrees()
+#            .map_err(anyhow::Error::from)
+#            .context("같은 저장소의 다른 git worktree 를 확인하지 못했다")?;
+#   +    보고.worktree_거부.clear();
+#        if !보고.worktree_거부.is_empty() || !store.is_dir() {
+#            return Ok(보고);
+#        }
+# 시험 필터: d4_1 d4_2 d4_3
+# 판독: 이 시험들이 빨개져야 음성 대조가 걸린 것이다
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.45s
+     Running tests/clean_uninstall_external.rs (target/debug/deps/clean_uninstall_external-538e64a87ab88768)
+
+running 3 tests
+test d4_1_연결된_worktree_가_있으면_주_체크아웃의_기본_uninstall_도_밖을_안_건드리고_rc_0 ... FAILED
+test d4_2_연결된_worktree_가_있으면_주_체크아웃의_purge_는_밖을_안_건드리고_rc_1 ... FAILED
+test d4_3_연결된_worktree_쪽의_purge_도_밖을_안_건드리고_rc_1 ... FAILED
+
+failures:
+
+---- d4_1_연결된_worktree_가_있으면_주_체크아웃의_기본_uninstall_도_밖을_안_건드리고_rc_0 stdout ----
+
+thread 'd4_1_연결된_worktree_가_있으면_주_체크아웃의_기본_uninstall_도_밖을_안_건드리고_rc_0' (65040227) panicked at crates/pal-cli/tests/clean_uninstall_external.rs:656:5:
+worktree 가 있는데 밖을 건드렸다: {"Library/Application Support/palimpsest/approvals/round-stop-activation-31adb0ff46fa1b43895597e35e77c0990748dd27cbaa4d33d62d13f79dc04c45.json", "Library/Application Support/palimpsest/approvals/round-stop-progress-50b926b33ccc60d988fc8e1757b34bbf0bf624e6c7f808d09e60ff1365a62114.json", "Library/Application Support/palimpsest/approvals/round-stop-progress-50b926b33ccc60d988fc8e1757b34bbf0bf624e6c7f808d09e60ff1365a62114.lock", "Library/Application Support/palimpsest/approvals/round-stop-progress-50b926b33ccc60d988fc8e1757b34bbf0bf624e6c7f808d09e60ff1365a62114.project"}
+rc=Some(0)
+stdout:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/main-checkout
+  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals/round-stop-activation-31adb0ff46fa1b43895597e35e77c0990748dd27cbaa4d33d62d13f79dc04c45.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-50b926b33ccc60d988fc8e1757b34bbf0bf624e6c7f808d09e60ff1365a62114.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-50b926b33ccc60d988fc8e1757b34bbf0bf624e6c7f808d09e60ff1365a62114.lock
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-50b926b33ccc60d988fc8e1757b34bbf0bf624e6c7f808d09e60ff1365a62114.project
+  남겼다(밖)                4개 — 이 프로젝트의 정본
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals/0d4a00fbea646f13f62afb9f813e18843f9b46998afc19b7bacaa077f69d8dbf.json  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals/0d4a00fbea646f13f62afb9f813e18843f9b46998afc19b7bacaa077f69d8dbf.project  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals/eb90d832d2382362c34e48eb153fd4b0cd342a93a7b2b2126eb2cc49ea88ef5b.json  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-1-16466/home/Library/Application Support/palimpsest/approvals/eb90d832d2382362c34e48eb153fd4b0cd342a93a7b2b2126eb2cc49ea88ef5b.project  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  ⚠ Stop 정책             같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+
+
+stderr:
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- d4_2_연결된_worktree_가_있으면_주_체크아웃의_purge_는_밖을_안_건드리고_rc_1 stdout ----
+
+thread 'd4_2_연결된_worktree_가_있으면_주_체크아웃의_purge_는_밖을_안_건드리고_rc_1' (65040228) panicked at crates/pal-cli/tests/clean_uninstall_external.rs:655:5:
+assertion `left == right` failed: rc=Some(0)
+stdout:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/main-checkout
+  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals/3e1ad273732c44b315102219a47d58c63a140cbe2b1402b61889752c6f132a6d.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals/b11a939bc15324ed3422b2b89318aa21676b6575df475b1bf2871bdda646137a.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals/round-stop-activation-1dd40e91ec105cee6a6b1691385768af273587a59730f8752b5e592e9367c03a.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-932de9ef43ec8638b4c8363c24f806165587b8743664b293d36a7a4ccfb7e8ad.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-932de9ef43ec8638b4c8363c24f806165587b8743664b293d36a7a4ccfb7e8ad.lock
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals/3e1ad273732c44b315102219a47d58c63a140cbe2b1402b61889752c6f132a6d.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals/b11a939bc15324ed3422b2b89318aa21676b6575df475b1bf2871bdda646137a.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-932de9ef43ec8638b4c8363c24f806165587b8743664b293d36a7a4ccfb7e8ad.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest/created-ancestors.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support/palimpsest
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library/Application Support
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-2-16466/home/Library
+  ⚠ Stop 정책             같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다
+  ⚠ 같은 원격               같은 원격의 다른 클론의 기록도 함께 지웠다 — 같은 origin 의 클론은 식별자가 같아 가를 수 없다
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+
+
+stderr:
+
+  left: Some(0)
+ right: Some(1)
+
+---- d4_3_연결된_worktree_쪽의_purge_도_밖을_안_건드리고_rc_1 stdout ----
+
+thread 'd4_3_연결된_worktree_쪽의_purge_도_밖을_안_건드리고_rc_1' (65040229) panicked at crates/pal-cli/tests/clean_uninstall_external.rs:655:5:
+assertion `left == right` failed: rc=Some(0)
+stdout:
+
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/linked-wt
+  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals/a6398241e9d9db7987781989915f21aef1dbe8856ce0d892d0cd109875ce8c1f.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals/fa2296f4ac15f29574f70f8c340f5b7384be715b428d2d537e1df02d27a6a14c.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals/round-stop-activation-b0a2606eacda39e98a7b6c00fb64c7d7437e04a287f7bc7f466629697385835d.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-197d64f008f25f8769767d131f5f34b2ea452f3fafebe9709f9142b41897eec0.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-197d64f008f25f8769767d131f5f34b2ea452f3fafebe9709f9142b41897eec0.lock
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals/a6398241e9d9db7987781989915f21aef1dbe8856ce0d892d0cd109875ce8c1f.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals/fa2296f4ac15f29574f70f8c340f5b7384be715b428d2d537e1df02d27a6a14c.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals/round-stop-progress-197d64f008f25f8769767d131f5f34b2ea452f3fafebe9709f9142b41897eec0.project
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest/created-ancestors.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support/palimpsest
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library/Application Support
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-ext-d4-3-16466/home/Library
+  ⚠ Stop 정책             같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다
+  ⚠ 같은 원격               같은 원격의 다른 클론의 기록도 함께 지웠다 — 같은 origin 의 클론은 식별자가 같아 가를 수 없다
+  지웠다                   CLAUDE.md
+  지웠다                   .gitignore
+  키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
+  파일째 지웠다               .claude/settings.json  (우리가 만들었고 나머지가 비었다)
+  지웠다                   .claude/pal/INSTRUCTIONS.md
+  지웠다                   .claude/agents/pal-orchestrator.md
+  지웠다                   .claude/commands/pal/touch.md
+  지웠다                   .claude/commands/pal/plan.md
+  지웠다                   .claude/commands/pal/doctor.md
+  지웠다                   .claude/commands/pal/ledger.md
+  지웠다                   .claude/skills/pal-round/SKILL.md
+  지웠다                   .claude/agents/pal-premortem-sweeper.md
+  지웠다                   .claude/agents/pal-independent-reviewer.md
+  지웠다                   .claude/agents/pal-decision-opponent.md
+  지웠다                   .claude/agents/pal-decision-synthesizer.md
+  지웠다                   .claude/agents/pal-debate-designer.md
+  지웠다                   .claude/agents/pal-decision-proposer.md
+  지웠다                   .claude/agents/pal-debate-referee.md
+  지웠다                   .claude/agents/pal-debate-reporter.md
+  지웠다                   .claude/agents/pal-condition-auditor.md
+  지웠다                   .claude/skills/pal-round/bin/dashboard.py
+  지웠다                   .claude/skills/pal-round/bin/record.py
+  지웠다                   .palimpsest/manifest.toml
+  지웠다                   .claude/pal/manifest.json
+  지웠다                   .claude/skills/pal-round/bin/
+  지웠다                   .claude/commands/pal/
+  지웠다                   .claude/skills/pal-round/
+  지웠다                   .claude/pal/
+  지웠다                   .claude/agents/
+  지웠다                   .claude/commands/
+  지웠다                   .claude/skills/
+  지웠다                   .claude/
+  지웠다                   .palimpsest/
+
+
+stderr:
+
+  left: Some(0)
+ right: Some(1)
+
+
+failures:
+    d4_1_연결된_worktree_가_있으면_주_체크아웃의_기본_uninstall_도_밖을_안_건드리고_rc_0
+    d4_2_연결된_worktree_가_있으면_주_체크아웃의_purge_는_밖을_안_건드리고_rc_1
+    d4_3_연결된_worktree_쪽의_purge_도_밖을_안_건드리고_rc_1
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 20 filtered out; finished in 2.36s
+
+error: test failed, to rerun pass `-p pal-cli --test clean_uninstall_external`
