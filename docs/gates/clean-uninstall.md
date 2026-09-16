@@ -65,14 +65,14 @@ E1 셈 스크립트 자신의 양성 · 음성 · 0 개 대조는 `oracle/E1-scr
 | 조건 | 무엇이 판정했나 | 자리 |
 |---|---|---|
 | A1~A4 | `clean_uninstall_settings` 18 — 형태 19 의 왕복 바이트 · 착수 빌드 골든 · 사용자 편집 방 셋 · 옛 설치 방 넷 | 시험 · `oracle/T1-*.txt` |
-| B1~B7 · C1 · C2 | `clean_uninstall_palimpsest` 25 · `clean_uninstall_blocks` 13 | 시험 · `oracle/T2-*.txt` |
+| B1~B7 · C1 · C2 | `clean_uninstall_palimpsest` 25 · `clean_uninstall_blocks` 13. ⚠ **B5 의 두 방을 갈라 적는다** — 문면의 「착수 커밋 바이너리로 설치한 방」을 실물로 밟은 것은 `oracle/T2-b5-start-binary.txt` **한 판**이고, 상주 시험(`clean_uninstall_palimpsest.rs:435` `착수_바이너리의_방으로`)은 이 회차 바이너리로 install 한 뒤 **매니페스트만 착수 형식으로 되돌린 모사**다(독립 리뷰 R2 #4). 모사는 `update` 의 `inserted` 갱신을 재지만 착수 바이너리가 실제로 놓은 바이트를 재지 않는다 | 시험 · `oracle/T2-*.txt` |
 | B8 · B9 | `clean_uninstall_palimpsest` 의 세 시험(곧바로 `--purge` · 설치한 적 없는 방 · 왕복) | 시험 · `oracle/U29-red.txt` · `oracle/U29-negative.txt` |
 | D1~D4 | `clean_uninstall_external` 23 — 표시 파일 · 조상 기록 · 두 프로젝트 방 · worktree 넷 | 시험 · `oracle/T3-*.txt` |
 | F1 | `effect/f1-run.sh` 두 걸음 — 이번 빌드 통과(기본: 갈림 21 · `L` 밖 0 · 화면에 없는 갈림 0 · 정본 13 자리 직전 바이트 / `--purge`: 갈림 0) · 착수 바이너리 두 걸음 어긋남(`L` 밖 2711 · 2739) | `effect/f1-*.txt` |
 | G1 | **세 OS CI 런 `35120132604`(`46d4e03`)** — `clean_uninstall_flow` 가 ubuntu 11 · macos 11 · **windows 14** 전부 초록. 한 흐름을 밟고 `--purge` 뒤 워킹트리·저장소 자리가 설치 전과 같고, 기본 변형은 갈림이 `L` 안에만. ⚠ 앞 런에서는 이 시험 둘이 windows 에서 빨갰다 — 시험이 「조상 기록이 안 생기는 방」을 안 가렸다(독립 리뷰 R1 #1·#4). 고친 자리와 그 모양을 macOS 에서 모사한 양성·음성 대조는 `oracle/G1-windows-shape.txt` | CI 런 · 시험 · `oracle/T4-*.txt` |
-| E1 | **통과** — 런 `35120132604`(`46d4e03`) 세 OS `success` · `effect/e1-count.py --run 35120132604` → 파일 5 · OS 3 · **어긋남 0**. 문면은 R1 뒤 「push 한 마지막 SHA 의 런」으로 정정한 것이다 | CI 런 · `intent.md` 의 `## 개정` |
+| E1 | **통과** — **push 한 마지막 SHA `65d6c02` 의 런 `35121871836`** 이 세 OS `success` 이고 `effect/e1-count.py --run 35121871836` 이 파일 5 · OS 3 · **어긋남 0** 을 산출한다. ⚠ 앞 전사는 그 **부모**(`46d4e03`)의 런 `35120132604` 를 근거로 적었다 — 조건이 지목한 커밋이 아니다(독립 리뷰 R2 #1·#5). 문면은 R1 뒤 「push 한 마지막 SHA 의 런」으로 정정한 것이다 | CI 런 `35121871836` · `intent.md` 의 `## 개정` |
 
-전량(**CI 런 `35120132604` · `46d4e03`**): 잡 일곱 전부 `success` — `ubuntu-latest` · `macos-latest` · `windows-latest` 의
+전량(**CI 런 `35121871836` · `65d6c02` — push 한 마지막 SHA**; 그 부모 `46d4e03` 의 런 `35120132604` 도 같다): 잡 일곱 전부 `success` — `ubuntu-latest` · `macos-latest` · `windows-latest` 의
 `cargo xtask check` **29/29** · `cargo xtask test` · `pal doctor --full` 구조 판정 `MERGE_BLOCKER_DOCTOR_OK`,
 그리고 설치·상호운용 잡 넷(`놓는다` 둘 · `받는다` 둘). 로컬(macOS)은 `cargo test -p pal-cli` **44 묶음 초록**
 (다시 빌드한 뒤 — `oracle/version-test-stale-build.txt`).

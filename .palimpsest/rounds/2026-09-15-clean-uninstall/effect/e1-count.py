@@ -187,14 +187,28 @@ def 로그_짝(text):
     return out
 
 
+def _gh(args):
+    """`gh` 가 비0 으로 죽으면 **셀 수 없다(rc=2)** 로 멈춘다 — 짐작하지 않는다.
+
+    끝나지 않은 런의 잡은 `gh run view --log` 가 로그를 안 준다. 앞 판은 그것을 안 받아
+    `CalledProcessError` 가 그대로 튀어 **rc=1(어긋났다)** 로 보였다 — 계약과 다르다
+    (독립 리뷰 R2 #6). 어긋남과 「못 쟀다」는 다른 값이다.
+    """
+    p = subprocess.run(args, capture_output=True, text=True, errors="replace")
+    if p.returncode != 0:
+        raise 셀수없다(f"`{' '.join(args[:4])} …` 가 rc={p.returncode} 로 죽었다: {p.stderr.strip()[:200]}")
+    return p.stdout
+
+
 def 잡_로그(run):
-    jobs = json.loads(subprocess.check_output(
-        ["gh", "run", "view", str(run), "-R", REPO, "--json", "jobs"], text=True))["jobs"]
+    run_json = json.loads(_gh(["gh", "run", "view", str(run), "-R", REPO, "--json", "jobs,status,conclusion"]))
+    if run_json.get("status") != "completed":
+        raise 셀수없다(f"런 {run} 이 아직 안 끝났다(status={run_json.get('status')}) — 끝난 런에서만 센다")
+    jobs = run_json["jobs"]
     out = {}
     for j in jobs:
         if j["name"] in OS_JOBS:
-            out[j["name"]] = subprocess.check_output(
-                ["gh", "run", "view", "-R", REPO, "--job", str(j["databaseId"]), "--log"], text=True, errors="replace")
+            out[j["name"]] = _gh(["gh", "run", "view", "-R", REPO, "--job", str(j["databaseId"]), "--log"])
     missing = set(OS_JOBS) - set(out)
     if missing:
         raise 셀수없다(f"런에 시험 잡이 없다: {sorted(missing)}")
