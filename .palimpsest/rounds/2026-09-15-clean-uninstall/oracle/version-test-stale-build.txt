@@ -1,0 +1,29 @@
+# `version_is_in_the_binary` 가 로컬에서 간헐로 빨간 까닭 — 낡은 빌드다 (이 회차의 결함이 아니다)
+# 2026-09-16
+
+## 무엇이 일어나나
+
+그 시험은 `pal --version` 에 박힌 커밋과 `git rev-parse --short=12 HEAD` 를 댄다.
+회차 문서만 고친 커밋을 하면 소스가 안 바뀌어 cargo 가 `pal` 을 다시 빌드하지 않는다 —
+바이너리에는 **직전 HEAD** 가 남아 있고 시험은 그것을 어긋남으로 읽는다.
+CI 는 언제나 새로 빌드하므로 이 자리는 로컬에서만 난다.
+
+## 실측 (HEAD = 22fef119575b)
+
+### 다시 빌드하기 전
+  pal --version : pal 0.1.1+3105fa9c8311      ← 직전 커밋
+  HEAD          : 22fef119575b
+  test result   : FAILED. 0 passed; 1 failed
+
+### `crates/pal-cli/build.rs` 를 건드려 다시 빌드한 뒤
+  pal --version : pal 0.1.1+22fef119575b      ← HEAD 와 같다
+  HEAD          : 22fef119575b
+  test result   : ok. 1 passed; 0 failed
+
+### 그 뒤 전량
+  cargo test -p pal-cli : 시험 바이너리 44 묶음 전부 ok · FAILED 0
+
+## 이 회차에서 두 번 났다
+
+한 번은 T4 병합 뒤(HEAD 853e324 · 바이너리 969d9cf), 한 번은 U29 커밋 뒤(HEAD 22fef11 · 바이너리 3105fa9).
+둘 다 회차 문서만 바뀐 커밋 뒤였다. **판정에 쓰는 시험 결과는 반드시 다시 빌드한 뒤에 읽는다.**

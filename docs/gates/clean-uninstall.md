@@ -1,6 +1,6 @@
 # 게이트 — 제거하면 설치한 적 없던 것처럼
 
-**회차** `2026-09-15-clean-uninstall` · **소유자 지시** `U28` · **착수** `acd7e82` · **판정일** 미정
+**회차** `2026-09-15-clean-uninstall` · **소유자 지시** `U28`·`U29` · **착수** `acd7e82` · **판정일** 2026-09-16(E1 은 push 뒤)
 
 > 잠긴 의도 [`intent.md`](../../.palimpsest/rounds/2026-09-15-clean-uninstall/intent.md) ·
 > 승인 [`approval.md`](../../.palimpsest/rounds/2026-09-15-clean-uninstall/approval.md) ·
@@ -47,16 +47,42 @@ E1 셈 스크립트 자신의 양성 · 음성 · 0 개 대조는 `oracle/E1-scr
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | — |
+| 통과 | A1 A2 A3 A4 B1 B2 B3 B4 B5 B6 B7 B8 B9 C1 C2 D1 D2 D3 D4 F1 G1 |
 | 반증 | — |
 | 대조불가 | — |
-| 미측정 | A1 A2 A3 A4 B1 B2 B3 B4 B5 B6 B7 B8 B9 C1 C2 D1 D2 D3 D4 E1 F1 G1 |
+| 미측정 | E1 |
 
-**검산** — 통과 0 · 반증 0 · 대조불가 0 · 미측정 22 = 22 (`pal round conditions --file intent.md --json` 의 열림 22)
+**검산** — 통과 21 · 반증 0 · 대조불가 0 · 미측정 1 = 22 (`pal round conditions --file intent.md --json` 의 열림 22)
+
+### 근거 표
+
+| 조건 | 무엇이 판정했나 | 자리 |
+|---|---|---|
+| A1~A4 | `clean_uninstall_settings` 18 — 형태 19 의 왕복 바이트 · 착수 빌드 골든 · 사용자 편집 방 셋 · 옛 설치 방 넷 | 시험 · `oracle/T1-*.txt` |
+| B1~B7 · C1 · C2 | `clean_uninstall_palimpsest` 25 · `clean_uninstall_blocks` 13 | 시험 · `oracle/T2-*.txt` |
+| B8 · B9 | `clean_uninstall_palimpsest` 의 세 시험(곧바로 `--purge` · 설치한 적 없는 방 · 왕복) | 시험 · `oracle/U29-red.txt` · `oracle/U29-negative.txt` |
+| D1~D4 | `clean_uninstall_external` 23 — 표시 파일 · 조상 기록 · 두 프로젝트 방 · worktree 넷 | 시험 · `oracle/T3-*.txt` |
+| F1 | `effect/f1-run.sh` 두 걸음 — 이번 빌드 통과(기본: 갈림 21 · `L` 밖 0 · 화면에 없는 갈림 0 · 정본 13 자리 직전 바이트 / `--purge`: 갈림 0) · 착수 바이너리 두 걸음 어긋남(`L` 밖 2711 · 2739) | `effect/f1-*.txt` |
+| G1 | `clean_uninstall_flow` 11 — 한 흐름을 밟고 `--purge` 뒤 워킹트리·저장소 자리가 설치 전과 같다 · 기본 변형은 갈림이 `L` 안에만 | 시험 · `oracle/T4-*.txt` |
+| E1 | **미측정** — push 뒤 CI 런과 `effect/e1-count.py` 가 판정한다 | — |
+
+전량: `cargo test -p pal-cli` 시험 바이너리 **44 묶음 초록**(다시 빌드한 뒤 — `oracle/version-test-stale-build.txt`) ·
+깨끗한 클론 `cargo xtask check` **29/29** · CI 전용 걸음 `pal doctor --full` 구조 판정 `MERGE_BLOCKER_DOCTOR_OK`.
 
 ## 효과
 
-미측정 — F1 이 `effect/` 에 붙인다.
+**대상** — `ditto`(TypeScript · ADR 있음 · HEAD `aded7ce7` · origin `https://github.com/incognito050924/ditto.git`)의 **새 클론**. 격리 `HOME` · macOS.
+절차는 커밋된 `effect/f1-run.sh` 가 진다(설치 → `touch` → `narrative` → 결박 승인 → `round approve` → `round verify` → 종료 봉인 → `stop enable` → Stop 훅 → uninstall).
+
+| 걸음 | 바이너리 | 산출 | 판정 |
+|---|---|---|---|
+| 기본 uninstall | 이 회차 | `effect/f1-default-round.txt` | **통과** — 갈림 21(디렉터리 8) · `L` 밖 **0** · 화면에 없는 갈림 **0** · 정본 13 자리가 직전 바이트 |
+| `--purge` | 이 회차 | `effect/f1-purge-round.txt` | **통과** — 갈림 **0**(워킹트리 · HOME 둘 다 설치 전과 같다) |
+| 기본 uninstall | 착수 `v0.1.1` | `effect/f1-default-start.txt` | 어긋남 — 갈림 2729 · `L` 밖 **2711** |
+| `--purge` | 착수 `v0.1.1` | `effect/f1-purge-start.txt` | 어긋남 — 갈림 2758 · `L` 밖 **2739** · `--purge` 손잡이가 없어 uninstall rc=2 |
+
+**틀린 답도 적는다** — 첫 판의 F1 은 화면 대조를 부모 디렉터리 경로로 덮어 통과를 산출했다. 그 고리를 걷고 다시 재니 기본 걸음이 어긋났고,
+조건을 약하게 고치는 대신 **제품이 남은 것을 경로로 말하게** 고쳐 통과했다(`ecdb96b`).
 
 ## 범위 밖
 
