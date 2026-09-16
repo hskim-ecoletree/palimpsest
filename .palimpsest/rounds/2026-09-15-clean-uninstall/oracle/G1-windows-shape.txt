@@ -1,0 +1,44 @@
+# G1 — Windows 에서 빨갰던 자리를 고치고, 그 모양을 macOS 에서 모사해 쟀다
+# 2026-09-16 · HEAD 9f768d6 위의 작업본
+
+## 무엇이 빨갰나
+CI 35104425250 windows-latest: clean_uninstall_flow 의 G1 시험 둘이
+  「생겼어야 할 조상 기록이 없다: C:\Users\runneradmin\AppData\Local\palimpsest\created-ancestors.json」
+로 터졌다. 까닭은 제품이 옳고 시험이 틀린 것이다 — 조상 기록은
+  round/approval.rs:312  if created.is_empty() { return Ok(()); }
+처럼 **palimpsest/ 위쪽에 조상을 새로 만든 방에서만** 쓴다.
+Windows 는 %LOCALAPPDATA% 가 이미 있어 적을 조상이 없고, 그래서 그 파일이 안 생기는 것이 옳다.
+
+## 어떻게 고쳤나 (시험 쪽)
+방에 「조상_미리_있었나」를 pal 을 한 번도 안 돌린 자리에서 붙잡고,
+  · 미리 없던 방 → 조상 기록이 **있어야** 한다
+  · 미리 있던 방 → 조상 기록이 **없어야** 한다(양방향으로 건다)
+  · L(밖의 허용 목록)에도 같은 갈림을 건다
+
+## ① macOS 본 모양 — 조상(~/Library/Application Support)이 없다
+test g1_같은_흐름의_기본_uninstall_은_갈림이_l_안에만_있고_정본이_직전_바이트다 ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.29s
+
+
+## ② Windows 모양 모사 — 조상을 미리 만들어 두고 같은 시험
+임시로 new() 에 create_dir_all(방.조상()) 을 넣어 「미리 있는 방」으로 만들고 돌린 뒤 뗐다.
+test g1_같은_흐름의_기본_uninstall_은_갈림이_l_안에만_있고_정본이_직전_바이트다 ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.23s
+
+
+## ③ 음성 대조 — 옛 단언(무조건) + Windows 모양
+임시로 단언을 옛 모양으로 되돌리고 조상을 미리 만든 방에서 돌렸다. **CI 와 같은 자리에서 빨개진다.**
+
+test g1_같은_흐름의_기본_uninstall_은_갈림이_l_안에만_있고_정본이_직전_바이트다 ... FAILED
+test g1_한_흐름을_밟고_purge_하면_워킹트리와_home_이_설치_전과_같다 ... FAILED
+생겼어야 할 조상 기록이 없다: /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-flow-default-43611/home/Library/Application Support/palimpsest/created-ancestors.json
+생겼어야 할 조상 기록이 없다: /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-cu-flow-purge-43611/home/Library/Application Support/palimpsest/created-ancestors.json
+test result: FAILED. 9 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.24s
+
+그러므로 ② 의 초록은 「모사가 무르다」가 아니라 **고침이 그 자리를 고쳤다**는 뜻이다.
+
+## ⚠ 이 대조를 돌리다 낸 사고
+되돌리는 줄에 `git checkout -- clean_uninstall_flow.rs` 를 넣어 **그 파일의 수정을 통째로 날렸다**.
+다시 얹었고, 되돌림은 그 뒤로 python 치환으로만 한다 — 작업본이 있는 파일에 git checkout 을 쓰지 않는다.

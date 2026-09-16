@@ -47,12 +47,16 @@ E1 셈 스크립트 자신의 양성 · 음성 · 0 개 대조는 `oracle/E1-scr
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A2 A3 A4 B1 B2 B3 B4 B5 B6 B7 B8 B9 C1 C2 D1 D2 D3 D4 F1 G1 |
-| 반증 | — |
+| 통과 | A1 A2 A3 A4 B1 B2 B3 B4 B5 B6 B7 B8 B9 C1 C2 D1 D2 D3 D4 F1 |
+| 반증 | E1 G1 |
 | 대조불가 | — |
-| 미측정 | E1 |
+| 미측정 | — |
 
-**검산** — 통과 21 · 반증 0 · 대조불가 0 · 미측정 1 = 22 (`pal round conditions --file intent.md --json` 의 열림 22)
+**검산** — 통과 20 · 반증 2 · 대조불가 0 · 미측정 0 = 22 (`pal round conditions --file intent.md --json` 의 열림 22)
+
+⚠ **첫 전사는 「통과 21 · 미측정 1」이었고 그것이 틀렸다.** 독립 리뷰 R1 이 실물로 잡았다 —
+**G1** 은 세 OS 를 요구하는데 나는 macOS 한 판으로 통과를 적었고, Windows CI 에서 그 시험 둘이 빨갛다.
+**E1** 은 구현 마지막 커밋(전사 커밋의 부모)에 런이 원리상 안 붙는 문면이고, push 한 런도 `failure` 다.
 
 ### 근거 표
 
@@ -63,11 +67,16 @@ E1 셈 스크립트 자신의 양성 · 음성 · 0 개 대조는 `oracle/E1-scr
 | B8 · B9 | `clean_uninstall_palimpsest` 의 세 시험(곧바로 `--purge` · 설치한 적 없는 방 · 왕복) | 시험 · `oracle/U29-red.txt` · `oracle/U29-negative.txt` |
 | D1~D4 | `clean_uninstall_external` 23 — 표시 파일 · 조상 기록 · 두 프로젝트 방 · worktree 넷 | 시험 · `oracle/T3-*.txt` |
 | F1 | `effect/f1-run.sh` 두 걸음 — 이번 빌드 통과(기본: 갈림 21 · `L` 밖 0 · 화면에 없는 갈림 0 · 정본 13 자리 직전 바이트 / `--purge`: 갈림 0) · 착수 바이너리 두 걸음 어긋남(`L` 밖 2711 · 2739) | `effect/f1-*.txt` |
-| G1 | `clean_uninstall_flow` 11 — 한 흐름을 밟고 `--purge` 뒤 워킹트리·저장소 자리가 설치 전과 같다 · 기본 변형은 갈림이 `L` 안에만 | 시험 · `oracle/T4-*.txt` |
-| E1 | **미측정** — push 뒤 CI 런과 `effect/e1-count.py` 가 판정한다 | — |
+| G1 | `clean_uninstall_flow` 11 — 한 흐름을 밟고 `--purge` 뒤 워킹트리·저장소 자리가 설치 전과 같다 · 기본 변형은 갈림이 `L` 안에만. ⚠ **이 줄의 11 은 macOS 한 판이다** — G1 문면은 **세 OS CI** 를 요구하므로 이 근거만으로는 판정이 안 선다(독립 리뷰 R1 #4). 판정은 push 한 SHA 의 세 OS 런이 한다 | 시험 · `oracle/T4-*.txt` · `oracle/G1-windows-shape.txt` |
+| E1 | **반증** — 옛 문면은 구현 마지막 커밋(전사 커밋의 부모)에 런을 요구하는데 한 번의 push 로는 거기 런이 **원리상 안 붙는다**(`check-runs total_count=0` 실측). 문면을 「push 한 마지막 SHA 의 런」으로 정정했고, 재측정은 다음 push 의 런이 한다 | `intent.md` 의 `## 개정`(독립 리뷰 R1) |
 
-전량: `cargo test -p pal-cli` 시험 바이너리 **44 묶음 초록**(다시 빌드한 뒤 — `oracle/version-test-stale-build.txt`) ·
-깨끗한 클론 `cargo xtask check` **29/29** · CI 전용 걸음 `pal doctor --full` 구조 판정 `MERGE_BLOCKER_DOCTOR_OK`.
+전량(**macOS 로컬**): `cargo test -p pal-cli` 시험 바이너리 **44 묶음 초록**(다시 빌드한 뒤 — `oracle/version-test-stale-build.txt`) ·
+`cargo xtask check` **29/29**.
+
+⚠ **로컬 초록을 CI 초록으로 적지 않는다.** push 한 런 `35104425250` 은 `conclusion=failure` 였다 —
+windows-latest 의 `cargo xtask test` 가 G1 흐름 시험 둘에서 빨갰고, 그 뒤 걸음인 `pal doctor --full`(`MERGE_BLOCKER_DOCTOR_OK`)은
+**windows 에서 아예 안 돌았다**(skipped · ubuntu·macos 에서만 산출). `cargo xtask check` 29/29 만 세 OS 전부 success 였다.
+고친 뒤의 CI 판정은 다음 push 의 런이 진다.
 
 ## 효과
 

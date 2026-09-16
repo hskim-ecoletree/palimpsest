@@ -183,6 +183,12 @@ is_canon_home() {
 #
 # ⚠ 부모 디렉터리 경로로 덮어 주지 않는다 — 그러면 저장소 자리 한 줄이 그 아래 파일 전부를 가린다.
 # 디렉터리 자리는 부르는 쪽이 종류로 걸러 ② 에서 뺀다(조건 F1 의 문면).
+# 디렉터리 자리는 **그 안에 남은 파일이 화면에 있으면** 갈음한다(개정 2026-09-16).
+# 안이 빈 디렉터리가 남았는데 화면이 아무 말도 안 하면 그것은 안 갈음된 자리다.
+dir_covered() {  # $1=화면에 적힐 경로 $2=화면 파일
+  grep -qF -- "$1/" "$2"
+}
+
 covered() {
   local p="$1" screen="$2"
   grep -qF -- "$p" "$screen"
@@ -459,6 +465,10 @@ step() {
       t="$(type_of "$rel" "$work/s2" "$work/s1")"
       if [ "$t" = D ]; then
         dirs=$((dirs+1))
+        if ! dir_covered "$rel" "$screen"; then
+          echo "  ✗ [화면에 없다·빈 디렉터리] 워킹트리 $rel/" >> "$out"
+          uncovered=$((uncovered+1))
+        fi
       elif ! covered "$rel" "$screen"; then
         echo "  ✗ [화면에 없다] 워킹트리 $rel" >> "$out"
         uncovered=$((uncovered+1))
@@ -473,6 +483,10 @@ step() {
       t="$(type_of "$rel" "$work/h2" "$work/h1")"
       if [ "$t" = D ]; then
         dirs=$((dirs+1))
+        if ! dir_covered "$home/$rel" "$screen"; then
+          echo "  ✗ [화면에 없다·빈 디렉터리] HOME $rel/" >> "$out"
+          uncovered=$((uncovered+1))
+        fi
       elif ! covered "$home/$rel" "$screen"; then
         echo "  ✗ [화면에 없다] HOME $rel" >> "$out"
         uncovered=$((uncovered+1))
@@ -510,7 +524,7 @@ step() {
     {
       echo "  갈림 $changed (워킹트리 $nw · HOME $nh) · 그 가운데 디렉터리 $dirs"
       echo "  ① L 밖 갈림            $outside"
-      echo "  ② 화면에 없는 갈림       $uncovered   (디렉터리 엔트리는 뺀다 — L 이 「그 자리의 부모 디렉터리」로 이미 허용한 자리다)"
+      echo "  ② 화면에 없는 갈림       $uncovered   (디렉터리 자리는 그 안에 남은 파일이 화면에 있으면 갈음한다 — 그 디렉터리는 남은 파일 때문에 있다)"
       echo "  ③ 잰 정본 자리 $canon · 직전 바이트와 갈린 것 $drifted"
     } >> "$out"
     if [ "$canon" = 0 ]; then

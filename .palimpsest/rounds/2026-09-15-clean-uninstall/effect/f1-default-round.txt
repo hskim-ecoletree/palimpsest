@@ -3,9 +3,9 @@ F1 — 효과 · 걸음 「default」 · 바이너리 꼬리표 「round」
 ═══════════════════════════════════════════════════════════════════════
 
 바이너리   : /Users/incognito/dev/projects/palimpsest/target/release/pal
-판              : pal 0.1.1+ecdb96bc3160
+판              : pal 0.1.1+9f768d6c6dd6
 대상 저장소     : /Users/incognito/dev/projects/ditto  →  origin https://github.com/incognito050924/ditto.git
-돌린 때         : 2026-09-16T13:07:58Z
+돌린 때         : 2026-09-16T14:30:42Z
 기계            : Darwin arm64
 
 클론 HEAD       : aded7ce7 (기대 aded7ce7)
@@ -34,18 +34,18 @@ origin          : https://github.com/incognito050924/ditto.git
 명령: pal uninstall   rc=0
 
 
-■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-f1-4136/default/repo
-  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals
-  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals/round-stop-activation-22bbf05d396d5cefe73638e0705c911830ceb92a38c2ea199eae414902e3e81e.json
-  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.json
-  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.lock
-  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.project
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-f1-69087/default/repo
+  들여다본 자리(밖)            /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals/round-stop-activation-22bbf05d396d5cefe73638e0705c911830ceb92a38c2ea199eae414902e3e81e.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.json
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.lock
+  지웠다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.project
   남겼다(밖)                5개 — 이 프로젝트의 정본
-  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.json  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
-  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.project  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
-  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.json  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
-  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.project  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
-  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-4136/default/home/Library/Application Support/palimpsest/created-ancestors.json  (조상 기록 — 밖의 자리를 뒤에 걷을 때 쓴다 · 그 자리가 비면 함께 사라진다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.json  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals/c34a7303363869490b324cc93c875b51e1eaec316fac302f620a2479cc4cc5b3.project  (명령 승인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.json  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/approvals/f725c90b7b850a073a356195a29fc68d609f77e80fb5b4dfa27ba2df485abce5.project  (종료 봉인 — 정본이라 기본 uninstall 은 남긴다 · `pal uninstall --purge` 가 걷는다)
+  남겼다(밖)                /var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T//pal-f1-69087/default/home/Library/Application Support/palimpsest/created-ancestors.json  (조상 기록 — 밖의 자리를 뒤에 걷을 때 쓴다 · 그 자리가 비면 함께 사라진다)
   ⚠ Stop 정책             같은 원격의 다른 체크아웃도 Stop 정책이 비활성화된다 — 활성화 기록은 프로젝트 식별자로만 갈린다
   블록 뺌                  CLAUDE.md
   블록 뺌                  .gitignore
@@ -122,7 +122,7 @@ origin          : https://github.com/incognito050924/ditto.git
 ── 판정 ──────────────────────────────────────────────────────────────
   갈림 21 (워킹트리 12 · HOME 9) · 그 가운데 디렉터리 8
   ① L 밖 갈림            0
-  ② 화면에 없는 갈림       0   (디렉터리 엔트리는 뺀다 — L 이 「그 자리의 부모 디렉터리」로 이미 허용한 자리다)
+  ② 화면에 없는 갈림       0   (디렉터리 자리는 그 안에 남은 파일이 화면에 있으면 갈음한다 — 그 디렉터리는 남은 파일 때문에 있다)
   ③ 잰 정본 자리 13 · 직전 바이트와 갈린 것 0
   ✓ 갈림이 전부 L 안이고 · 각 경로가 화면에 나오고 · L 의 정본이 직전 바이트다
 

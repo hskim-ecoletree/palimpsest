@@ -5,7 +5,7 @@ F1 — 효과 · 걸음 「default」 · 바이너리 꼬리표 「start」
 바이너리   : /Users/incognito/dev/projects/palimpsest/.palimpsest/bin/pal
 판              : pal 0.1.1+b56ef097f158
 대상 저장소     : /Users/incognito/dev/projects/ditto  →  origin https://github.com/incognito050924/ditto.git
-돌린 때         : 2026-09-16T12:46:28Z
+돌린 때         : 2026-09-16T14:31:53Z
 기계            : Darwin arm64
 
 클론 HEAD       : aded7ce7 (기대 aded7ce7)
@@ -34,7 +34,7 @@ origin          : https://github.com/incognito050924/ditto.git
 명령: pal uninstall   rc=0
 
 
-■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-f1-43465/default/repo
+■ 제거 — /private/var/folders/p2/1g3xmv1j7jx0n7x3y1mtc2y80000gn/T/pal-f1-72697/default/repo
   블록 뺌                  CLAUDE.md
   블록 뺌                  .gitignore
   키 뺌                   .claude/settings.json  (agent · 훅 SubagentStop · 훅 Stop)
@@ -285,7 +285,9 @@ origin          : https://github.com/incognito050924/ditto.git
 
 ── 판정 ──────────────────────────────────────────────────────────────
   ✗ [L 밖] 워킹트리 .palimpsest/cache
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/00
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/00/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/00/04c9828af9669f153c0167beb0b83b4e07a966739bca8d3d26fc3b93a8881b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/00/04c9828af9669f153c0167beb0b83b4e07a966739bca8d3d26fc3b93a8881b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/00/1ca25fbdedb1c503925d01f9c15a00c43ee4d210f06123cfd4666c8c88161b.bin
@@ -311,6 +313,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/00/ff15f8eef574c66918003f7382b73bdb62935268dc9bb3de01a564ef77f05c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/00/ff15f8eef574c66918003f7382b73bdb62935268dc9bb3de01a564ef77f05c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/01
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/01/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/01/2183eb3f5b561882670c26338280cd69d01c1f97d007c73d9b6c4ce8bc13b8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/01/2183eb3f5b561882670c26338280cd69d01c1f97d007c73d9b6c4ce8bc13b8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/01/9cf27bb0966d1a51658c905e5b03fb588cb837df212cb4797d1041e235a9c7.bin
@@ -326,6 +329,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/01/fdea659f2586e88f190ad59e5f58591cd6905bc569c1aa0808577c70f390ed.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/01/fdea659f2586e88f190ad59e5f58591cd6905bc569c1aa0808577c70f390ed.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/02
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/02/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/02/09c580c8162236d2baed696658b0ccd8743e92be5f0802d974fb92215a5122.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/02/09c580c8162236d2baed696658b0ccd8743e92be5f0802d974fb92215a5122.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/02/1961f8c8e93e506cc2bbd27b269e3c9c944ac02fff806937d1d11703485ea5.bin
@@ -347,6 +351,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/02/f9d843a2bc2a84349bd9314dc5e24bcb11bbab6b60def61f2fd044d1ffa33d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/02/f9d843a2bc2a84349bd9314dc5e24bcb11bbab6b60def61f2fd044d1ffa33d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/03
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/03/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/03/0686458928989ae1d5155bd7d96e97d117ceeb343622c5ff875b871cf14d65.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/03/0686458928989ae1d5155bd7d96e97d117ceeb343622c5ff875b871cf14d65.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/03/10b61043713538f8b8de50b35a0bf79b6e4ff6e62faa5953da07e150dfad26.bin
@@ -366,6 +371,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/03/d1a30e86c8edd53e4e3f7b069ad067fe7f5e2cd258fe468774b8c5f6ab2f80.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/03/d1a30e86c8edd53e4e3f7b069ad067fe7f5e2cd258fe468774b8c5f6ab2f80.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/04
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/04/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/04/121b734e8e04124841f5adcca9aa53e9ea85d58782196261051fd7588c9252.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/04/121b734e8e04124841f5adcca9aa53e9ea85d58782196261051fd7588c9252.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/04/121d25553926ad0d6750d49bfe89e452f1bdbfd2f350f65b16fce77fe14221.bin
@@ -395,6 +401,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/04/f251030c7e577250bf78dd79d3d2253e39e3c3ab2434824d82bbd0d7b6a86a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/04/f251030c7e577250bf78dd79d3d2253e39e3c3ab2434824d82bbd0d7b6a86a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/05
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/05/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/05/26f59b4d1a4c929275a2381791530579e7feaa4c7771ae2eca83b2d857be4d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/05/26f59b4d1a4c929275a2381791530579e7feaa4c7771ae2eca83b2d857be4d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/05/506abea33ad242a753dc3a4481a36b11adb3e7dd675b7cab37b1185c3b9b73.bin
@@ -418,6 +425,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/05/f527a4a29e8d3a8c5df52567d513e587f59f3a8e50d665abb9549eba6a4143.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/05/f527a4a29e8d3a8c5df52567d513e587f59f3a8e50d665abb9549eba6a4143.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/06
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/06/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/06/0a6f4974a786dec8520147ef8fc2236fafc999913766ce339390dfa311e3fd.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/06/0a6f4974a786dec8520147ef8fc2236fafc999913766ce339390dfa311e3fd.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/06/14448b00b753774980223a6fa0f699dd82d1abf77680dba582f614abe0ad1b.bin
@@ -437,6 +445,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/06/f9aeb910f189e9e40d4baf3b2efd7486d94fc3d0823bcc27136d247c99633f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/06/f9aeb910f189e9e40d4baf3b2efd7486d94fc3d0823bcc27136d247c99633f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/07
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/07/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/07/21a070ecb8a4ecdab16b6cedfa4f8ff0bbf78133700d2ea6a3c7fef480ed3f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/07/21a070ecb8a4ecdab16b6cedfa4f8ff0bbf78133700d2ea6a3c7fef480ed3f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/07/3fc0193855f392bb55c679bf9a57403c2e744cf324548872ceb5f1d48940fc.bin
@@ -458,6 +467,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/07/d5c72807c1d6c5d0960a55cde2674e691bd027fc789abd2e1865b746121cdd.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/07/d5c72807c1d6c5d0960a55cde2674e691bd027fc789abd2e1865b746121cdd.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/08
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/08/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/08/3bc93e59ab4dfab6baa044423bae687c7527562ff7db4502dac4df9ee30a27.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/08/3bc93e59ab4dfab6baa044423bae687c7527562ff7db4502dac4df9ee30a27.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/08/52a9941b7eea20fab30f8a81e4202467a1bbacb19414fcf452f230fbb14163.bin
@@ -473,6 +483,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/08/d9640d4a22a8ceb0bdb6fca0b454a1eeebdb2bf3d1e09870ae06705906631f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/08/d9640d4a22a8ceb0bdb6fca0b454a1eeebdb2bf3d1e09870ae06705906631f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/09
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/09/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/09/130f699006ea3e9c3bfcbda207ef89fc5249b8d1705614192dfcb19e4e2174.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/09/130f699006ea3e9c3bfcbda207ef89fc5249b8d1705614192dfcb19e4e2174.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/09/40557fee67c8e4662c4d4795baadd77183214799e7eb6cf278fa763020a2cc.bin
@@ -490,6 +501,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/09/e7661625388726dac85fb849cb36b653e276fa365b21489425286ff669611c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/09/e7661625388726dac85fb849cb36b653e276fa365b21489425286ff669611c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/0a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0a/2fc3272fbf46ad4746bff3fcacc9ddc73bd55db7b87643133542d97e4ef780.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0a/2fc3272fbf46ad4746bff3fcacc9ddc73bd55db7b87643133542d97e4ef780.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0a/7b75ff2033a699c906b329f16b50545808367a7f8e330b92de6a5910215bd4.bin
@@ -499,6 +511,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0a/bddc4601cf9efff7121c0fe47aad41901dbb143ebe7797582668dafdfc79d5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0a/bddc4601cf9efff7121c0fe47aad41901dbb143ebe7797582668dafdfc79d5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/0b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0b/101c1977afce63c1b59e7f26315a38b2cd71190cf9e3318ac208efc0bcd603.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0b/101c1977afce63c1b59e7f26315a38b2cd71190cf9e3318ac208efc0bcd603.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0b/20064d88e7c854691f64472c66134451e2547c7bc1ceb301a515f1a16149f5.bin
@@ -524,6 +537,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0b/f3fd94fd21c0cdaf882651c2a31e3e34da49576e51dd1d8dbf7a4a97c9369e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0b/f3fd94fd21c0cdaf882651c2a31e3e34da49576e51dd1d8dbf7a4a97c9369e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/0c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0c/0deb125250b6d4ec4b8123c21e95163cb50089fa79370858bd2701e0d2be35.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0c/0deb125250b6d4ec4b8123c21e95163cb50089fa79370858bd2701e0d2be35.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0c/4760351b6941cdd171628cc8a6ae0f12e2d502ee52a204665719eba9b6879f.bin
@@ -539,6 +553,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0c/fbe92fd2fafdba051b1f484afe2f309e1344b59793b7c959128b65e9258084.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0c/fbe92fd2fafdba051b1f484afe2f309e1344b59793b7c959128b65e9258084.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/0d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0d/06816e823a6400c0808a9dd5b6011d4a27085122fc3251278250cacfb1bbe2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0d/06816e823a6400c0808a9dd5b6011d4a27085122fc3251278250cacfb1bbe2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0d/15761340d2b38cefc898f83d158c115692560b01e264674ac615691b7d69f5.bin
@@ -560,6 +575,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0d/c42e83af7c2aa5d36737ba9408472352af5997b282ae3322c4f4e408d3069e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0d/c42e83af7c2aa5d36737ba9408472352af5997b282ae3322c4f4e408d3069e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/0e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0e/055d92950afb743cc6f98bf956e7c138e6a8075ab48a67af8bdb5544188149.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0e/055d92950afb743cc6f98bf956e7c138e6a8075ab48a67af8bdb5544188149.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0e/073e5a5e6629a6617599e5f988b0672c7188f8578b5a36961226e428704521.bin
@@ -575,6 +591,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0e/c2880fcf3fb2050a9e26c0e7b995c69ada00e2bab496a3bcee970ccbbbebdb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0e/c2880fcf3fb2050a9e26c0e7b995c69ada00e2bab496a3bcee970ccbbbebdb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/0f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0f/03fa3d9866dceb63d259141188c2a453b9a315fc99a80a394b5ed3fbdaa1b5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0f/03fa3d9866dceb63d259141188c2a453b9a315fc99a80a394b5ed3fbdaa1b5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0f/2e6614c89a4f9e7f064efb38011299fe173d0e7454a74f7a91bdaa78d8c3d4.bin
@@ -590,6 +607,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/0f/f8c3ea6af564e0fd1db825e4128a30b82bbd1aedc516bf5e520e62a5a78793.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/0f/f8c3ea6af564e0fd1db825e4128a30b82bbd1aedc516bf5e520e62a5a78793.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/10
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/10/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/10/7f1b13e0677b2ac1506a8f8d73cc4fe9541ce8806b9e6bdc89d0df48314c67.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/10/7f1b13e0677b2ac1506a8f8d73cc4fe9541ce8806b9e6bdc89d0df48314c67.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/10/a367d2e36013c7781bc4ee13f3cfa2a0289949dee531b7df8c8c5c18974fbf.bin
@@ -603,6 +621,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/10/dff6edd8d2c660771c71925cd417d0eb37897c46c8dc207c905c47f45dea19.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/10/dff6edd8d2c660771c71925cd417d0eb37897c46c8dc207c905c47f45dea19.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/11
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/11/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/11/144d6278031d4b443adfe3dc6147354e041ae7dbd43e66f8ddc479401097d2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/11/144d6278031d4b443adfe3dc6147354e041ae7dbd43e66f8ddc479401097d2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/11/21fb1d365d1e750cf1912467bd95f29b4a0ce9be5d11f00e265a1be404901d.bin
@@ -620,6 +639,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/11/fa91a3047a02141d1cd86a6ec4c8fcbecab7785036e0eb4101573b05083033.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/11/fa91a3047a02141d1cd86a6ec4c8fcbecab7785036e0eb4101573b05083033.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/12
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/12/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/12/2be896e65daaba104b3346fe037192891bc09a094e45a36571629af9386a37.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/12/2be896e65daaba104b3346fe037192891bc09a094e45a36571629af9386a37.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/12/32d29d301fe51763defa85ca38c60b8afea9dfe82602128feea30150993526.bin
@@ -631,6 +651,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/12/a5365886ccb665e966bd58639bab85631d8e6b5a276ea360e8873c2631cb0f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/12/a5365886ccb665e966bd58639bab85631d8e6b5a276ea360e8873c2631cb0f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/13
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/13/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/13/026a6bbc89eb89068817f23905b32d632395c49117b2cf20dd305583cd2f4b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/13/026a6bbc89eb89068817f23905b32d632395c49117b2cf20dd305583cd2f4b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/13/40ac4993b9d9b53b27de9d3fe4fc1295eff02094ddfd3593bd26dc891c92cf.bin
@@ -648,6 +669,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/13/d7dded39df4ede12adfe86acf414438c54c1f9697d334d7aa271315f20304d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/13/d7dded39df4ede12adfe86acf414438c54c1f9697d334d7aa271315f20304d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/14
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/14/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/14/0949662fd3322f81072e02ae8bfb9ea91030ab7ecf661c9ff9aede599dd4fc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/14/0949662fd3322f81072e02ae8bfb9ea91030ab7ecf661c9ff9aede599dd4fc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/14/2286e3ab5f4d669d9b2cf04677a5645af3eb283c90bb58dd506ba93e2c72e8.bin
@@ -661,6 +683,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/14/bdc3f727527cd9dc15fc6184376a4ee8f660ae305f09b665226927627c9800.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/14/bdc3f727527cd9dc15fc6184376a4ee8f660ae305f09b665226927627c9800.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/15
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/15/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/15/0f1bf4391bd8a50a02d9b57a1c217538354f5b609421bfa4b559698a165bb6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/15/0f1bf4391bd8a50a02d9b57a1c217538354f5b609421bfa4b559698a165bb6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/15/17a269381d8ef3dc995d0a403d80c7950db73f2bfc3a0b64b27a4ddc61e286.bin
@@ -680,6 +703,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/15/f7a639e498f6d7ff1cd9b7ffa9e912cc69c63611c23317babf81dc6fd46e2c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/15/f7a639e498f6d7ff1cd9b7ffa9e912cc69c63611c23317babf81dc6fd46e2c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/16
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/16/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/16/011bc27fd8eb5de31c56129215efe85a89a9207c6b34f0e1c6758f1009ff6e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/16/011bc27fd8eb5de31c56129215efe85a89a9207c6b34f0e1c6758f1009ff6e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/16/05e07769dfd4c2bbd6d57ae5c6f5bbfe5d7dadb8f1da78c1da5c40f77edf63.bin
@@ -701,6 +725,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/16/f2a11f2f56d94994021fa1d387e8f12f8406528f44d6183d5bc43187609dc4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/16/f2a11f2f56d94994021fa1d387e8f12f8406528f44d6183d5bc43187609dc4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/17
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/17/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/17/0064073755a30602bc9ff17aebc30b21ab15c04a4703d2d04b61cb11bbc376.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/17/0064073755a30602bc9ff17aebc30b21ab15c04a4703d2d04b61cb11bbc376.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/17/069da86a65107fc620cdc4896f8cbb227c509f8b9a77886fd12d70ab6f39e6.bin
@@ -722,6 +747,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/17/f5e414302b7597cb4f41fb679a14e366e7c84de68d49f272bf39bb6ea7a360.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/17/f5e414302b7597cb4f41fb679a14e366e7c84de68d49f272bf39bb6ea7a360.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/18
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/18/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/18/117f22ad2bf59b587d66975cabc7ccb14b7822f04878fa2f5c4425d7e4f42d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/18/117f22ad2bf59b587d66975cabc7ccb14b7822f04878fa2f5c4425d7e4f42d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/18/44c24ea2506dd2ab9393607fdff7f040bd856637046acf1d25b2e3bf4c3bc0.bin
@@ -743,6 +769,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/18/efa5fc348c19650c5e1fab506661360d62c74b35f639d32e5ca7b4a5800015.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/18/efa5fc348c19650c5e1fab506661360d62c74b35f639d32e5ca7b4a5800015.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/19
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/19/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/19/2f510fcba158cd12351287f8c458e3ef331116ea30148e8cf94e0de61226b5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/19/2f510fcba158cd12351287f8c458e3ef331116ea30148e8cf94e0de61226b5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/19/9fe9e92cc7a8dabb1fe727af4c16735430f318aced8d642e909a6763f97f23.bin
@@ -750,6 +777,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/19/d40f32de5cc54c94f098f2b45b099d2d9d8df2d3e4cfc46980549455c790bb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/19/d40f32de5cc54c94f098f2b45b099d2d9d8df2d3e4cfc46980549455c790bb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/1a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1a/05a927e90991c1f8ed844161561a8ebba30bc202c74ec55d596a2a745ae0c5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1a/05a927e90991c1f8ed844161561a8ebba30bc202c74ec55d596a2a745ae0c5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1a/0d731f8a396c6412ab67dfff3776ea9ed96681c56f495a7af516feb4fd846f.bin
@@ -771,6 +799,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1a/fb3e8664921893dfffd8c01d3b860653551373edc743a250cabfe699a27f79.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1a/fb3e8664921893dfffd8c01d3b860653551373edc743a250cabfe699a27f79.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/1b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1b/2fc4e898bb5598ef4197086df6edf982212fbe3ca2a84d82cfd64475b67026.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1b/2fc4e898bb5598ef4197086df6edf982212fbe3ca2a84d82cfd64475b67026.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1b/4850b38ac735fbe2f88b6a73f3820003325de45d66db742eada25fb586bb15.bin
@@ -794,6 +823,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1b/efa8cecc3ec0def7514008873275d04bdb77adaab2ed9df6183c96ba128c2a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1b/efa8cecc3ec0def7514008873275d04bdb77adaab2ed9df6183c96ba128c2a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/1c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1c/03c4d3080b1eccf9ece208521bf51d34470148f1a3cb23e80e0249729f594a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1c/03c4d3080b1eccf9ece208521bf51d34470148f1a3cb23e80e0249729f594a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1c/0ae7961b16dd99fd40582c6610ed15fcfd4e6c4a074259a2c5b81362db1dca.bin
@@ -821,6 +851,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1c/fdb2030188bf90c126ca0634063f2d090948196ed4ae126520b577f1160a34.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1c/fdb2030188bf90c126ca0634063f2d090948196ed4ae126520b577f1160a34.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/1d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1d/03b810876191bcb98f981663ec0a40698f244fa069a68ab2cfe9314eb410da.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1d/03b810876191bcb98f981663ec0a40698f244fa069a68ab2cfe9314eb410da.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1d/2cb644a21ed2e42aa4ee0ef8c0a16493509038ee8fd5c880ca81454babadb0.bin
@@ -834,6 +865,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1d/e8e7c407330cf8a0ae77915dba4cbbcd120acdbd39ce823fe423a80c3ba117.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1d/e8e7c407330cf8a0ae77915dba4cbbcd120acdbd39ce823fe423a80c3ba117.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/1e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1e/165650fc19c128be3fd4659af564f10fe9912d8f3fb506fb3f408e4cc6dd39.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1e/165650fc19c128be3fd4659af564f10fe9912d8f3fb506fb3f408e4cc6dd39.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1e/1e2d5adc1e5f7b9263fb4674ea9feb9ab8d78406e96f7440fd1ae563b512df.bin
@@ -861,6 +893,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1e/f6ade58a2554c831ac4499a634c2731fcd5020a3d0a04f31c94a7d8b3c1439.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1e/f6ade58a2554c831ac4499a634c2731fcd5020a3d0a04f31c94a7d8b3c1439.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/1f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1f/15988ae4559f66e756c962221a3982c49b238b42bee279d7311d491e454c62.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1f/15988ae4559f66e756c962221a3982c49b238b42bee279d7311d491e454c62.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1f/1ddddc7ea62ceac6564c2a35d4ec961423014437408e99590dd5dff475cc62.bin
@@ -888,6 +921,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/1f/f264837b2ab5e163c5a5c4007b3d32a31330a9870737f1069bffc2a0d7fcc9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/1f/f264837b2ab5e163c5a5c4007b3d32a31330a9870737f1069bffc2a0d7fcc9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/20
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/20/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/20/112de016c37f61b3ed5effeb152294ec543d803e2c7b852aa0c71dce747519.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/20/112de016c37f61b3ed5effeb152294ec543d803e2c7b852aa0c71dce747519.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/20/1408c51a011a8cb1f3fafa0b9521c2d8c232b9ebe91a504358bcbdb5e72fdf.bin
@@ -913,6 +947,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/20/df18af80d6abf2485dc35d94276391a2c06594c84caef761396340d5898e33.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/20/df18af80d6abf2485dc35d94276391a2c06594c84caef761396340d5898e33.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/21
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/21/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/21/2871aa89477ab6c122b56db6718bdf24616893de24b77bdc24409dc2e4b453.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/21/2871aa89477ab6c122b56db6718bdf24616893de24b77bdc24409dc2e4b453.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/21/3a9516fe5f28f91eeca36648d155913dd9b4dd70184e9b73fb8f54c16aabc1.bin
@@ -930,6 +965,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/21/fbf8d1e7f64c66c8d55e21c78c3c3475674961d915bdeff66387ba3dfea3cd.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/21/fbf8d1e7f64c66c8d55e21c78c3c3475674961d915bdeff66387ba3dfea3cd.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/22
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/22/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/22/0728c697ca93390d96ac289e36082406fc6a76019535c02dae8d415b62f11b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/22/0728c697ca93390d96ac289e36082406fc6a76019535c02dae8d415b62f11b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/22/0a11ac25f41beeb67e15f16eb57d31b28b4feaa38c96a8207eccb0425266cb.bin
@@ -959,6 +995,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/22/e638059ba7f946e120dbef98186cf526869c15fa939aaca4a9d73a1d725f78.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/22/e638059ba7f946e120dbef98186cf526869c15fa939aaca4a9d73a1d725f78.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/23
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/23/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/23/02a945d6fbdb2e66a57762baff09100e25344454958eac7a446f218ab0c723.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/23/02a945d6fbdb2e66a57762baff09100e25344454958eac7a446f218ab0c723.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/23/0f75713b571660cbdb0b86fa70507f798c9ddedad21538f7e93cf5a5a7685b.bin
@@ -972,6 +1009,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/23/aa42b2787a1cfebc6634e6c633cfe66e4ab5e287f5cdf0c995dc784c56875b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/23/aa42b2787a1cfebc6634e6c633cfe66e4ab5e287f5cdf0c995dc784c56875b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/24
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/24/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/24/0257cc8e55f5a4fa76a2f9caa7a4907c0ad3e121ba7e67225de3fecbc1e6f9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/24/0257cc8e55f5a4fa76a2f9caa7a4907c0ad3e121ba7e67225de3fecbc1e6f9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/24/0bdd5fdb474aebdddaba2de0f6ec18e00c46a58660b00f97b054a40cbebf5d.bin
@@ -991,6 +1029,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/24/f2af096a932c9e11f90071a2dcb8e139f1f11bfbfd1ddec273e0414b872a51.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/24/f2af096a932c9e11f90071a2dcb8e139f1f11bfbfd1ddec273e0414b872a51.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/25
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/25/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/25/07ce6338e69042c0b636f945db23356f76aa52a6622c059432e0d33db65f4b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/25/07ce6338e69042c0b636f945db23356f76aa52a6622c059432e0d33db65f4b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/25/25898308e0b2ba81026e37d354a13b81475bef009c32f9e2ed2b300c15a769.bin
@@ -1010,6 +1049,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/25/e7b9c26cb65192dd03d3fb266b74a6a500b4360cf2dac41a6b842aa75c9d5e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/25/e7b9c26cb65192dd03d3fb266b74a6a500b4360cf2dac41a6b842aa75c9d5e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/26
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/26/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/26/31ff536f1e978f6b4510db8f13991a934fe6baaf6be78754545e7d4bbd54b1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/26/31ff536f1e978f6b4510db8f13991a934fe6baaf6be78754545e7d4bbd54b1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/26/44a480b9b11d30d8a687587bca3f0bbc5ef2f092348f470e6e5ead02e32a55.bin
@@ -1025,6 +1065,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/26/fe273445a6b2bd6b7c7691d1f31c76369c60b1b96dc090ec319619bd408a48.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/26/fe273445a6b2bd6b7c7691d1f31c76369c60b1b96dc090ec319619bd408a48.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/27
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/27/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/27/1ce0803a814b3dfb20251271b8bdf5a222cb526259a73a94ae09f653057449.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/27/1ce0803a814b3dfb20251271b8bdf5a222cb526259a73a94ae09f653057449.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/27/21efbcf98a49e01d7b014bf27ebf1eff45b6196b26655b6a0f815fcb801be7.bin
@@ -1052,6 +1093,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/27/fed79c6a14fa8b1626fb5e52f29d71b3cbc44fe04937dd5f69d4bf4e92a6f0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/27/fed79c6a14fa8b1626fb5e52f29d71b3cbc44fe04937dd5f69d4bf4e92a6f0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/28
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/28/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/28/026b90d5f4ac0fc3a0e00cd98aa871d99b3f0d545803166483dfad4bae0a13.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/28/026b90d5f4ac0fc3a0e00cd98aa871d99b3f0d545803166483dfad4bae0a13.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/28/27705fbd15eb20e6103de602886a9811ff7534849ce86344bc714e9f34fa6f.bin
@@ -1075,6 +1117,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/28/ec2b33597d56a6d110aa7909633524529a78cc32b369e84d1763bf482bf610.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/28/ec2b33597d56a6d110aa7909633524529a78cc32b369e84d1763bf482bf610.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/29
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/29/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/29/0307e0674cc50137d388bc5dddd2309868d30c0f03dd88cadff65b0441a0f4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/29/0307e0674cc50137d388bc5dddd2309868d30c0f03dd88cadff65b0441a0f4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/29/0c09840fe34093517834846e10fc7d1d3800ce71830b33e4d7dd75e9b1fb04.bin
@@ -1096,6 +1139,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/29/cf19f04977ab088cb518c2b054ca360122a98308d1b22158b1c83c978e4fae.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/29/cf19f04977ab088cb518c2b054ca360122a98308d1b22158b1c83c978e4fae.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/2a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2a/1838805fe451cb0008747b36e92bfd785afed0614b7943d6dfac5fa873e190.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2a/1838805fe451cb0008747b36e92bfd785afed0614b7943d6dfac5fa873e190.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2a/192eebdad4a55440a5a20864e45b291746aaa73ccd74a3845df6d23d4a1bd6.bin
@@ -1109,6 +1153,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2a/ffa45dd61266d32f819069110efdd9aa2d76c479f6c94630a8ab905be27b99.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2a/ffa45dd61266d32f819069110efdd9aa2d76c479f6c94630a8ab905be27b99.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/2b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2b/2fa52899c5ff36995731242fa3e327181b4df52f96f516929c23bd2d4b946c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2b/2fa52899c5ff36995731242fa3e327181b4df52f96f516929c23bd2d4b946c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2b/518fec19dbe780b5d87c4da0bf2f863bd97f8c8a8ed0042c4cc24a66ba4034.bin
@@ -1128,6 +1173,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2b/fb27023426a6d6ca77db7cb26950ef41bdf13b771780b25a521659e7772f63.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2b/fb27023426a6d6ca77db7cb26950ef41bdf13b771780b25a521659e7772f63.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/2c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2c/039ac901e84bcc1edd1b76bbda9cc977e97519227f3c3eaba36e5739699929.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2c/039ac901e84bcc1edd1b76bbda9cc977e97519227f3c3eaba36e5739699929.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2c/40e5b3a10a012e122c1cadc7bb0ae9fa74fb7db90c4bd0f2f145d38d8d7927.bin
@@ -1153,6 +1199,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2c/fd47bfd633162b8d905fcf5474ef86bbe414cc3f33a5900c356216d116ab1d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2c/fd47bfd633162b8d905fcf5474ef86bbe414cc3f33a5900c356216d116ab1d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/2d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2d/2836b11f183e6a26d0ba38bcc14ffd074a8d9a0063252f9d93b51cd00555d5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2d/2836b11f183e6a26d0ba38bcc14ffd074a8d9a0063252f9d93b51cd00555d5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2d/62f252b2162cc932c483caf455cef1e673a7b3f3711ff42f72fb9b1c93bc50.bin
@@ -1164,6 +1211,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2d/c83ef83d73512727da671a9c741f07b719edbd5fedd85a2a20784bcee5a7a2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2d/c83ef83d73512727da671a9c741f07b719edbd5fedd85a2a20784bcee5a7a2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/2e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2e/2441f7965d34b8d1302442771efcecba7a22f3884c06eeaeef7c317254b17a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2e/2441f7965d34b8d1302442771efcecba7a22f3884c06eeaeef7c317254b17a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2e/2ca0b8d72134a01ac19aec6656be7c59d6a69750b573f0634e776e39d3a0bc.bin
@@ -1193,6 +1241,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2e/f7f6a0b3b44e4bff61f4d9cc254efac42a063b3b14854c1287ec3eb99a9e79.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2e/f7f6a0b3b44e4bff61f4d9cc254efac42a063b3b14854c1287ec3eb99a9e79.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/2f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2f/39dad76efa4335999ff1794b82b5e1f38188c4d2baa6c32af58f243a943eec.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2f/39dad76efa4335999ff1794b82b5e1f38188c4d2baa6c32af58f243a943eec.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2f/4fc08bf04469cc650c1a90b820a26d8a8499277887dce8aa117574ca386420.bin
@@ -1206,6 +1255,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/2f/f798848ffa49d97e2d4442a94a2a3ef2cae5b59120e8987e6661dd33f39efa.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/2f/f798848ffa49d97e2d4442a94a2a3ef2cae5b59120e8987e6661dd33f39efa.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/30
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/30/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/30/046e3cbd23eb8f829f490cf8180cfcc3f2ebc9174d5b84a83635336e650129.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/30/046e3cbd23eb8f829f490cf8180cfcc3f2ebc9174d5b84a83635336e650129.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/30/07a85858c851e6225fd665a7f29d3d6324da09557b04a078fe80a710e0acd2.bin
@@ -1237,6 +1287,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/30/f62deab6249e78cbe1734e13b26bef9d733b417cad5290638d53029fd246b4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/30/f62deab6249e78cbe1734e13b26bef9d733b417cad5290638d53029fd246b4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/31
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/31/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/31/0316634aa12a1549eafa56dba43f943d8de1d1e4c3d93fc3ecd57d7905a602.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/31/0316634aa12a1549eafa56dba43f943d8de1d1e4c3d93fc3ecd57d7905a602.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/31/1028e2debdc707341935749bd612291b8c120ef8e462e288265357f6c37917.bin
@@ -1258,6 +1309,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/31/f784ff89704370fe650fe735a40d5472f73dc0c2925c46c3ab2c7821d7f1f9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/31/f784ff89704370fe650fe735a40d5472f73dc0c2925c46c3ab2c7821d7f1f9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/32
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/32/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/32/2a46fe6b7cb88e801261e084e0be849fb0f44cf3fcead47e679e591b3372d8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/32/2a46fe6b7cb88e801261e084e0be849fb0f44cf3fcead47e679e591b3372d8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/32/36f13581128b11606e838f053220ab54104e63d8db67966fc9752b1fb1ce48.bin
@@ -1283,6 +1335,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/32/ee6845fdee1bb9b1e423cd859d9d93d233027841ffc3f0efe382ee7bb9ef27.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/32/ee6845fdee1bb9b1e423cd859d9d93d233027841ffc3f0efe382ee7bb9ef27.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/33
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/33/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/33/4cbca9b8a1e9fc984028c28a7b0ce056ab9a89342d4adc4ad011ce8b6141f6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/33/4cbca9b8a1e9fc984028c28a7b0ce056ab9a89342d4adc4ad011ce8b6141f6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/33/6931e82b9d757a4e9df0de6e962aafe1a812c24859439bd26b074f63aaa3ab.bin
@@ -1298,6 +1351,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/33/f92eb6edebec0b64e20c3cb1b4b789ec54758b538d10629c3c0712627c84f0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/33/f92eb6edebec0b64e20c3cb1b4b789ec54758b538d10629c3c0712627c84f0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/34
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/34/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/34/4d3abdc6a80061cdb32b59f0230919e9c83459d4b35cfec845b2648a3bd005.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/34/4d3abdc6a80061cdb32b59f0230919e9c83459d4b35cfec845b2648a3bd005.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/34/57ccf8bff989f99b52d7f63fd3834ae97734a86b498d8710c1f4c37707d482.bin
@@ -1315,6 +1369,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/34/e91658c5d752513aec17de819428ab07c0da934a18d216d8b6dac68b152334.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/34/e91658c5d752513aec17de819428ab07c0da934a18d216d8b6dac68b152334.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/35
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/35/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/35/002411f472233e32e932cfedf7621be20d849ff2733b52dd98f3a01190f5e8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/35/002411f472233e32e932cfedf7621be20d849ff2733b52dd98f3a01190f5e8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/35/1057c87d1c77dee13baa92ad2203e1eaa8c114722cacae39a9a96b9f27cf40.bin
@@ -1338,6 +1393,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/35/fcdf1fe43b6b720eb47e44c98ed89ea9c63545f6c3db7e756b70de41ed84bb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/35/fcdf1fe43b6b720eb47e44c98ed89ea9c63545f6c3db7e756b70de41ed84bb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/36
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/36/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/36/149f0c00189fe87f094e96ad1e17bdad2f0792bc2a59f7106af1fe262ea756.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/36/149f0c00189fe87f094e96ad1e17bdad2f0792bc2a59f7106af1fe262ea756.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/36/1dcf27f3abe8864210232c8ee8bbc92493b5f74a6cfddb00f8c14aced2a96b.bin
@@ -1355,6 +1411,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/36/b89f3d98a728a9b4f2661fb6c9f938c9ca686734ff1bfa228991dafe51adeb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/36/b89f3d98a728a9b4f2661fb6c9f938c9ca686734ff1bfa228991dafe51adeb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/37
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/37/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/37/0d6ac369f1fa8a2fdb7d4e99836920d0da1c8548dbc793872bee8489ada206.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/37/0d6ac369f1fa8a2fdb7d4e99836920d0da1c8548dbc793872bee8489ada206.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/37/1911bed153f80af743f7f5ff5537cf1035c837e8f8d3a8c58bb9fb49fd0c3c.bin
@@ -1380,6 +1437,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/37/f1dcde71207aee6c99dcbbf6f263197861a99799535a411e92aaa25c864798.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/37/f1dcde71207aee6c99dcbbf6f263197861a99799535a411e92aaa25c864798.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/38
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/38/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/38/0754cb0dc2c5950ad6ef6d0a177124cb6b845370ddb8a1aa4675c6265c0998.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/38/0754cb0dc2c5950ad6ef6d0a177124cb6b845370ddb8a1aa4675c6265c0998.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/38/09236d6674edd711084d81258824448247425159de3fe063d1bfa0772ed3a1.bin
@@ -1409,6 +1467,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/38/e6dcc870304ae0b4598e04e1a582384e44ee7075ad8bd6f391b284299dd622.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/38/e6dcc870304ae0b4598e04e1a582384e44ee7075ad8bd6f391b284299dd622.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/39
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/39/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/39/1db8f51e90021ca5ab72c8d2aed5eea0a355ecf1e86711dfa3a7f408f1b018.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/39/1db8f51e90021ca5ab72c8d2aed5eea0a355ecf1e86711dfa3a7f408f1b018.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/39/30644047747c2651bfb1bcb1c6d861f44c3b2e96472a7199df087f5fc5b42b.bin
@@ -1430,6 +1489,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/39/dcf623ef2a78650b127f810527103b3d788de46b70e02720981b323535d5a9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/39/dcf623ef2a78650b127f810527103b3d788de46b70e02720981b323535d5a9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/3a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3a/36a49a72d8d4cf32544e61c172799444ebd76445b2f0e09c3672a9a1d4be5d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3a/36a49a72d8d4cf32544e61c172799444ebd76445b2f0e09c3672a9a1d4be5d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3a/5162b0da84553b02f04663f7b0258e9145b570cbe10ddf83b54fc400c82476.bin
@@ -1455,6 +1515,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3a/fa0de43311d82da50a3ae013ef2d68785e97af555b58829984b6ec210d816e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3a/fa0de43311d82da50a3ae013ef2d68785e97af555b58829984b6ec210d816e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/3b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3b/2a0d1a1a8341747a543b6abfbd16339402c8c77847fa5605dcba08b9e833df.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3b/2a0d1a1a8341747a543b6abfbd16339402c8c77847fa5605dcba08b9e833df.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3b/2f9a195e74dab4bda5583fbbac36970cc004a9cd42ca87a94bf992486ececf.bin
@@ -1472,6 +1533,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3b/a6aae9bbdb00c3cb249b4b8b780f0d2b4b10c22c474c5878cc1a41e9d48488.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3b/a6aae9bbdb00c3cb249b4b8b780f0d2b4b10c22c474c5878cc1a41e9d48488.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/3c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3c/0444dcf84edb6b588b7b5cd141120668fdc2bba5455dd94cbfc4e2695829f0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3c/0444dcf84edb6b588b7b5cd141120668fdc2bba5455dd94cbfc4e2695829f0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3c/28134042625058f924ded513f29419c342f1a06a2e3c5280310d8ffff06b0a.bin
@@ -1487,6 +1549,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3c/cc098ca8c73001eb40de79490a010dbd7b68b84403764187dac25d65ff1ac2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3c/cc098ca8c73001eb40de79490a010dbd7b68b84403764187dac25d65ff1ac2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/3d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3d/0d689de8c35bfbee90789fbd91ac93b8746d19f0eac471afd1a6cc9496ad9f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3d/0d689de8c35bfbee90789fbd91ac93b8746d19f0eac471afd1a6cc9496ad9f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3d/18d96983294b574b1233dbfddeb0747d166a1338373c3a496d8976c06e40e9.bin
@@ -1510,6 +1573,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3d/ffa96aef397eeed3a190735c2ab274cc7dfcceb99c8eee9a85f1fd1ad8a41a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3d/ffa96aef397eeed3a190735c2ab274cc7dfcceb99c8eee9a85f1fd1ad8a41a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/3e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3e/0e48802669eeb366eeaafbcf81fb5f949163b8c45dd66f85f23a97109c83b8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3e/0e48802669eeb366eeaafbcf81fb5f949163b8c45dd66f85f23a97109c83b8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3e/1de8d8ef1e8fec0ea619d06c1463f938bdebef834e33b13dfa75f4f178774d.bin
@@ -1525,6 +1589,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3e/e3d153606e097b8ea523d9c79e97c4f291bdf5dfacc83ba345b486d9bedd65.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3e/e3d153606e097b8ea523d9c79e97c4f291bdf5dfacc83ba345b486d9bedd65.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/3f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3f/0869288a88966b23bce5eafde1bd20e059f30a967088aacc6d25616e756b6e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3f/0869288a88966b23bce5eafde1bd20e059f30a967088aacc6d25616e756b6e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3f/29870035b1ba3c585252ce7c967ce79cba2c02c22d76e6782977bd9b3a072b.bin
@@ -1546,6 +1611,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/3f/f38a79e9304e105de4f75a572acde8bf54c3573a839a410b8b58b614fcad8a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/3f/f38a79e9304e105de4f75a572acde8bf54c3573a839a410b8b58b614fcad8a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/40
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/40/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/40/15b06db556cf366b4bee9661797f8f258cbc85766224a2dfede170bd1dc6b5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/40/15b06db556cf366b4bee9661797f8f258cbc85766224a2dfede170bd1dc6b5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/40/283b0b27b9745819eee5cc0de3203bd9e0fa6092f6efb994bb821615219c17.bin
@@ -1565,6 +1631,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/40/fb2280abbb8bb8dc80be94cf440e299934d82da98ea9f08a9062faab8323bf.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/40/fb2280abbb8bb8dc80be94cf440e299934d82da98ea9f08a9062faab8323bf.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/41
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/41/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/41/17d87136fae26a19b6f3bcbf4f7cf6c265b4c72d0638c623bfadb4a1973753.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/41/17d87136fae26a19b6f3bcbf4f7cf6c265b4c72d0638c623bfadb4a1973753.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/41/6a411c446acba41386f9cc754cf0b1701052fc222553c36a92d1898009f903.bin
@@ -1580,6 +1647,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/41/ea0732acce28963bb497f527581a0ade6a711110842771a03e4d8102ad110d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/41/ea0732acce28963bb497f527581a0ade6a711110842771a03e4d8102ad110d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/42
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/42/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/42/03f8b7916c840ac457c5434d46839646904ef0a5d06e467f5605e24c524319.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/42/03f8b7916c840ac457c5434d46839646904ef0a5d06e467f5605e24c524319.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/42/24b721f3a7995188ca43eabf4505aa883f5a17899c421f7fc66e6c1ba97aba.bin
@@ -1601,6 +1669,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/42/f87d59ab1354f0d05f2a7fcbfd483545402686b54f94ce7fd8df5251937ad2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/42/f87d59ab1354f0d05f2a7fcbfd483545402686b54f94ce7fd8df5251937ad2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/43
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/43/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/43/1489cbfebe1dc8846fb2a6a4baa8a83fcfc26d37a359867bdaed39d174a0c9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/43/1489cbfebe1dc8846fb2a6a4baa8a83fcfc26d37a359867bdaed39d174a0c9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/43/70e9a5f96456b19abb748ccbd04a332bce852cd768f91f9749399b660e2265.bin
@@ -1614,6 +1683,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/43/fb1e888ea7e96ddbdb436ddc6fce8063ef5e812d84638f66fa929e1890fd6d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/43/fb1e888ea7e96ddbdb436ddc6fce8063ef5e812d84638f66fa929e1890fd6d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/44
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/44/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/44/06318d39d7443d798c6b306dc9eef1d9d159c0aff80cfe03ef2f9b3c274547.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/44/06318d39d7443d798c6b306dc9eef1d9d159c0aff80cfe03ef2f9b3c274547.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/44/10eb53ebbb111513d0138ccd3cf764118ea74877150faafbf42d5f979ca531.bin
@@ -1635,6 +1705,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/44/f08c2df727c89212c1b9f192908b901944322e3a465440eb33d185ede23f3c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/44/f08c2df727c89212c1b9f192908b901944322e3a465440eb33d185ede23f3c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/45
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/45/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/45/1feb36a04c90f93b73f1e91205e15a439b7b36a9300e63a133b4859d813abd.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/45/1feb36a04c90f93b73f1e91205e15a439b7b36a9300e63a133b4859d813abd.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/45/5c05694d73e683108b4804f777f0119079aba37d67e94e457972f71159536a.bin
@@ -1648,6 +1719,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/45/b3bd5b8272a6fe26fc00471a53ca70b86779b19c68f04b6995a39881ab912a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/45/b3bd5b8272a6fe26fc00471a53ca70b86779b19c68f04b6995a39881ab912a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/46
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/46/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/46/152031935c2cc8a6d875b442b3fa8d46ee1e68a6ef52cfff9cd02230a33726.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/46/152031935c2cc8a6d875b442b3fa8d46ee1e68a6ef52cfff9cd02230a33726.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/46/1f70adb4507d90a46afda75140c8ff69cb66d8f203d40f609ec20e6d757620.bin
@@ -1659,6 +1731,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/46/f5ff5cde075cab8340cdbf291a4a824162da6d9f7202eacef9fc631baadd36.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/46/f5ff5cde075cab8340cdbf291a4a824162da6d9f7202eacef9fc631baadd36.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/47
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/47/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/47/07767a018291522fc3cee672495cdd46db313f70b36a648733cbc588459a88.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/47/07767a018291522fc3cee672495cdd46db313f70b36a648733cbc588459a88.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/47/2afffd9d08e7eb0ee9b8c57ade64ab0d3b9b6d2421adbadffd882999c755da.bin
@@ -1684,6 +1757,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/47/fa812a5a8488336596839f35a9337c3c3a90b9068459846fa4414e43567d6d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/47/fa812a5a8488336596839f35a9337c3c3a90b9068459846fa4414e43567d6d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/48
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/48/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/48/109eb0b71383436b6304b05d50611d4afab882a1c1330bb9bea591b555b4a9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/48/109eb0b71383436b6304b05d50611d4afab882a1c1330bb9bea591b555b4a9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/48/1f9efdc79a5299ece2aee240263728d279fe8c0e845bb28f6f0f0b3251ffcc.bin
@@ -1707,6 +1781,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/48/db80122a59176df6372beac42b18d3911dc8b72d14202e929d9afdfa5bf661.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/48/db80122a59176df6372beac42b18d3911dc8b72d14202e929d9afdfa5bf661.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/49
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/49/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/49/1e9481987e2edd3a8fab1c90ffe4b1a85332f09bf477c7d8ea5748ca025429.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/49/1e9481987e2edd3a8fab1c90ffe4b1a85332f09bf477c7d8ea5748ca025429.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/49/215e4a015941b3636f38c4b56a2f5dde540d933044847821204d36bbebdc5a.bin
@@ -1738,6 +1813,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/49/ebcfde9686c2ddd42cabaf7de95723524b8fb36022881f2d56649cc0d54356.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/49/ebcfde9686c2ddd42cabaf7de95723524b8fb36022881f2d56649cc0d54356.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/4a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4a/0006fe6122c38a079dd56f7a5d6a77c7256812cb7c79296fa540b4cf156626.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4a/0006fe6122c38a079dd56f7a5d6a77c7256812cb7c79296fa540b4cf156626.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4a/3cd22497dbe09620562be457b7576f54b192cd6306ae22ae7df24af5dbb5d7.bin
@@ -1759,6 +1835,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4a/da284560a0ad225d048717e9d1386345fa50a78a8e78321799543fc1a6b616.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4a/da284560a0ad225d048717e9d1386345fa50a78a8e78321799543fc1a6b616.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/4b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4b/0d831ebbb8200f3c7901cf588c16b35bd1c59a9c53855a7d2b5469459beb99.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4b/0d831ebbb8200f3c7901cf588c16b35bd1c59a9c53855a7d2b5469459beb99.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4b/11573f8dfd2ced8f85c36c2d6d74d715ae0a46dfa7e2f9b7299eec849fdf5e.bin
@@ -1778,6 +1855,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4b/f923f64b80f5bbf0d055195b6792b0ca12ae5b29fa85b8b411f5b8ac86fef7.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4b/f923f64b80f5bbf0d055195b6792b0ca12ae5b29fa85b8b411f5b8ac86fef7.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/4c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4c/09b84cc71105ed08b57dd5195133e746ccc501ddcd04e3850598fe4d842a9b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4c/09b84cc71105ed08b57dd5195133e746ccc501ddcd04e3850598fe4d842a9b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4c/4685b7237828eb0105a5ca023838ed3f47c07b1e3391b5618896ba818e7536.bin
@@ -1795,6 +1873,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4c/d711d78c845170e691fa52be22a645ca47621abc9491320f958f6111e0c57a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4c/d711d78c845170e691fa52be22a645ca47621abc9491320f958f6111e0c57a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/4d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4d/15c7a38d2e8a250fee716dcff1aae62ca7e1755d0e48d9b85b69eca4cabf48.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4d/15c7a38d2e8a250fee716dcff1aae62ca7e1755d0e48d9b85b69eca4cabf48.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4d/26162d1240554beadee617e90ac6d1bd82ec35a276a2204bc20b92314b3b21.bin
@@ -1810,6 +1889,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4d/e4706664e2443fba9c7313bfc1d6754d3c8b5f7b5f180ecbba13a0fdff9775.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4d/e4706664e2443fba9c7313bfc1d6754d3c8b5f7b5f180ecbba13a0fdff9775.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/4e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4e/268074cc2d9c58399437e149f7ae0174a26eb22745d881b4c843de7a0c1d8b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4e/268074cc2d9c58399437e149f7ae0174a26eb22745d881b4c843de7a0c1d8b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4e/4a13980790e091d565e6ca8bad9fee0df3ce94306be6b754c6fa93a03a1e65.bin
@@ -1827,6 +1907,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4e/bbc91ee50f43b501804ad6ea02890707465662ababc6b2158ec997b601f294.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4e/bbc91ee50f43b501804ad6ea02890707465662ababc6b2158ec997b601f294.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/4f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4f/24790f81c1b527c221b03f9c89b2d9ad2bfdd9e69e7607e1f94c44e8abeb66.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4f/24790f81c1b527c221b03f9c89b2d9ad2bfdd9e69e7607e1f94c44e8abeb66.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4f/371f646336f2dee25ef2093334313a87258395fdcba050accc9d5c1fedbd19.bin
@@ -1856,6 +1937,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/4f/f3f30d6012b2549326ad15a50662ee5569dbc85c997d036207485be90efff7.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/4f/f3f30d6012b2549326ad15a50662ee5569dbc85c997d036207485be90efff7.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/50
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/50/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/50/02c0ec661cf4bc78665ea92b4788c017ba2eb898e1bda146988f54535bed0f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/50/02c0ec661cf4bc78665ea92b4788c017ba2eb898e1bda146988f54535bed0f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/50/0b8c4b557af3b21f78d1cbe40b2eb705f78466ae6bcb9ecc83e067da5cd44b.bin
@@ -1873,6 +1955,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/50/fb83c957b441d93bf1c0c245b097872ce674714bcce70ea4485f4214731ea0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/50/fb83c957b441d93bf1c0c245b097872ce674714bcce70ea4485f4214731ea0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/51
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/51/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/51/160fcfeba616d766d6297c5049d5741718fc94d958f95004b9543802293683.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/51/160fcfeba616d766d6297c5049d5741718fc94d958f95004b9543802293683.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/51/48286501db1be64ef751d967435036106d9158d22eb335a6380c997bb596f6.bin
@@ -1890,6 +1973,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/51/f5883c84409ea0a0ec1b0bbfce729cd8b9e6dcd270865ddb68c19148801aef.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/51/f5883c84409ea0a0ec1b0bbfce729cd8b9e6dcd270865ddb68c19148801aef.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/52
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/52/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/52/039c6ac0d6be943819a2d758bd6573124ccbaf73151cc9ecee3be33166d0b0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/52/039c6ac0d6be943819a2d758bd6573124ccbaf73151cc9ecee3be33166d0b0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/52/5ae6201242261afc5c174a7c32c2fe28f29ddccd9a64de629cad6318e2b276.bin
@@ -1909,6 +1993,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/52/e1d452ddef749deefa5065925a791bc777f361ed845574c55a3f81039a82af.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/52/e1d452ddef749deefa5065925a791bc777f361ed845574c55a3f81039a82af.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/53
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/53/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/53/234dde6f6206bc07c61646fba04f89c22ec779c4a97873c7cca65527438280.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/53/234dde6f6206bc07c61646fba04f89c22ec779c4a97873c7cca65527438280.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/53/57a6a84224e989059477109dc63686f32cfcf89b06e17455e04d43b076d223.bin
@@ -1932,6 +2017,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/53/f7ab6c1b07f201785bb530d41eabe5a970ec8e1abbb500cf2cd7723e05ae58.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/53/f7ab6c1b07f201785bb530d41eabe5a970ec8e1abbb500cf2cd7723e05ae58.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/54
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/54/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/54/0b0625386bdc55817f101d624c66fc2bb99ef5c1c058383d3410897bb56455.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/54/0b0625386bdc55817f101d624c66fc2bb99ef5c1c058383d3410897bb56455.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/54/14268dd09559f8a3a0a202376f741b64da05b42a2ddc3513b6e7fbaf59798b.bin
@@ -1961,6 +2047,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/54/fc75c454a3bd5e59a6dffd46100370a6a491e16833d71797f10909b375c266.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/54/fc75c454a3bd5e59a6dffd46100370a6a491e16833d71797f10909b375c266.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/55
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/55/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/55/219b2a5d772602d0d80dbfe92ca76549673858aab00b1cc1244e12cd7f76ef.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/55/219b2a5d772602d0d80dbfe92ca76549673858aab00b1cc1244e12cd7f76ef.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/55/2767d40f6261253d78849f36b14435016be13f39d88450fb9ad928b2e51887.bin
@@ -1980,6 +2067,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/55/f25b358f6e3731af73d97105fc180a230b4128d9358cb13ce51db9caf23550.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/55/f25b358f6e3731af73d97105fc180a230b4128d9358cb13ce51db9caf23550.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/56
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/56/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/56/3e175390a360a79cc679ff91155728c8bdc6a02a5708d3794912267a831c28.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/56/3e175390a360a79cc679ff91155728c8bdc6a02a5708d3794912267a831c28.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/56/4dac12595eb5c9883fbaf4e1ec204ecd92f3f03725311238174e1a823752df.bin
@@ -1989,6 +2077,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/56/af21dd06843501600338177450335477a4146b10cb114adf6b91ff231283c3.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/56/af21dd06843501600338177450335477a4146b10cb114adf6b91ff231283c3.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/57
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/57/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/57/1c91e72ef262f3927b96fda6c33686921cee3b43f9fc4ffe8e12da309987e0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/57/1c91e72ef262f3927b96fda6c33686921cee3b43f9fc4ffe8e12da309987e0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/57/26ec1930f94eba20b5d91d02cc34953ddd6109e37bc64c14cf878f7d6c13a4.bin
@@ -2014,6 +2103,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/57/f4e3cbb0a5d75d39f676ad35d308715d72e697cff448226ef5b38f6855f2eb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/57/f4e3cbb0a5d75d39f676ad35d308715d72e697cff448226ef5b38f6855f2eb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/58
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/58/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/58/08820e90965248dc891ca585f6f188fae54c11782aac63dd323d7edd8675f7.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/58/08820e90965248dc891ca585f6f188fae54c11782aac63dd323d7edd8675f7.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/58/14c460a730612200e900614f15a351a466d5ca11cff0058485854b969a4d14.bin
@@ -2035,6 +2125,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/58/cc28043588f9fc880d93246c3bc51085cf0c583ba3e4027b7a92f19f6dfd8d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/58/cc28043588f9fc880d93246c3bc51085cf0c583ba3e4027b7a92f19f6dfd8d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/59
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/59/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/59/116eb0195f1973130a6467ac64994c2890dbc061892ce1f5f75c5d2d111295.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/59/116eb0195f1973130a6467ac64994c2890dbc061892ce1f5f75c5d2d111295.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/59/11a2e1462a8b92cfcfd07f9b6c171eaa27a9c52dc6b6da686553cb1736eaf8.bin
@@ -2060,6 +2151,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/59/f660011e54cf8515221068d5397624b14e7793da84318b838b1b3aee0d12c5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/59/f660011e54cf8515221068d5397624b14e7793da84318b838b1b3aee0d12c5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/5a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5a/1c00d603ea987481e97c879a45ae4bbae5a0699ff726527baeafc4599145c0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5a/1c00d603ea987481e97c879a45ae4bbae5a0699ff726527baeafc4599145c0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5a/29f0f5eebf76710d8fbd32683b50ebdb5f366458564ba3fb84655e66fc331a.bin
@@ -2079,6 +2171,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5a/e9912d85ce6b658cbeaa3837565e4459516e70c53e062cef414caade33aafd.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5a/e9912d85ce6b658cbeaa3837565e4459516e70c53e062cef414caade33aafd.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/5b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5b/0a98fee186a4eec06a8199a29a3435e63f4193c9d48f7077ced4fd3a7508e8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5b/0a98fee186a4eec06a8199a29a3435e63f4193c9d48f7077ced4fd3a7508e8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5b/2d3f743cdd8e9998ddfb1d061cb47f51c5a7e0501b8d19d6baf762c60cbc71.bin
@@ -2104,6 +2197,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5b/eb5d570fb0daba47661f07b4be1fa79aa9330ba2c16043343f7d2aadac4c84.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5b/eb5d570fb0daba47661f07b4be1fa79aa9330ba2c16043343f7d2aadac4c84.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/5c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5c/10136febbf54b7b4389f5c896f046a94bc31775d181bff876d42ee2dd138a9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5c/10136febbf54b7b4389f5c896f046a94bc31775d181bff876d42ee2dd138a9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5c/1410b1712dd87bb64fa6000a05df13613d40ca19583c8e3e5da5d3e3167bfe.bin
@@ -2137,6 +2231,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5c/f9c3d8ccdded7c3d9acafe3898e5927ad3212d3a0f311b279c4bbe71ce045c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5c/f9c3d8ccdded7c3d9acafe3898e5927ad3212d3a0f311b279c4bbe71ce045c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/5d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5d/2f3d62f34b4cff4b59194c89d0c9e4490ff6e646012c4d57958020b78d8393.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5d/2f3d62f34b4cff4b59194c89d0c9e4490ff6e646012c4d57958020b78d8393.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5d/43f516a8795dda22b7d344359164bc99541b8a27452082defbf28541997742.bin
@@ -2162,6 +2257,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5d/efcdb8cfe3ee3fd8fee85dff2af3dc8637b4a9cbb3ead5d737d5b04d2b21f3.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5d/efcdb8cfe3ee3fd8fee85dff2af3dc8637b4a9cbb3ead5d737d5b04d2b21f3.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/5e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5e/067413c303d0f0ae1c532c318b92085cf4e8f784160d81178a5f6fc6512915.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5e/067413c303d0f0ae1c532c318b92085cf4e8f784160d81178a5f6fc6512915.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5e/38c4a8016940389caeeb1f8bf4c6e163849460299047aece149b4ffd419e1a.bin
@@ -2179,6 +2275,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5e/e462150b161030f247392ae8a1ed3c2b02d034dac936b4b07375b8f97376fc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5e/e462150b161030f247392ae8a1ed3c2b02d034dac936b4b07375b8f97376fc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/5f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5f/0b9cdc041c6b10b41c0ce3c2f2cbddc6b9016b32cdeb8c57a9599c78cf1791.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5f/0b9cdc041c6b10b41c0ce3c2f2cbddc6b9016b32cdeb8c57a9599c78cf1791.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5f/2563e406245f6efd57b3b082c861037738b9401bf39bb36d3a7e9f0ff50f61.bin
@@ -2198,6 +2295,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/5f/f183e27b905471e67e2ea12d54824c69d21e1b19b25b323e4ded0441a7c8ae.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/5f/f183e27b905471e67e2ea12d54824c69d21e1b19b25b323e4ded0441a7c8ae.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/60
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/60/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/60/0f9cccb0f6a61b67026784031dbe84ae96bfefccb34981656e752f60a72f3c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/60/0f9cccb0f6a61b67026784031dbe84ae96bfefccb34981656e752f60a72f3c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/60/43d6a57030ac551f48cf1cb07b8b4428f87e21572749766e9a9e2b72788634.bin
@@ -2215,6 +2313,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/60/b4cf9f7ee9a55d374911306687e5261db994f50672ecd8eb4ab1460b1e64c3.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/60/b4cf9f7ee9a55d374911306687e5261db994f50672ecd8eb4ab1460b1e64c3.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/61
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/61/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/61/1e4a1be1eabca6639632e6369823a835b37a30f32198e23578c1f67ea3fc8a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/61/1e4a1be1eabca6639632e6369823a835b37a30f32198e23578c1f67ea3fc8a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/61/abd130262225d7eff805d2b68f36357ca4f08de0a2498d1528936fc33f9097.bin
@@ -2234,6 +2333,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/61/f20f4c57dda2bc9d55f408ec78c3fe3efc3019aa041c43cd3308f49b6ebafc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/61/f20f4c57dda2bc9d55f408ec78c3fe3efc3019aa041c43cd3308f49b6ebafc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/62
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/62/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/62/28346c77d161831c80e8c2e35a419b606c11d72f397f91a186b5d1f1be12a4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/62/28346c77d161831c80e8c2e35a419b606c11d72f397f91a186b5d1f1be12a4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/62/4dfbf927c4ba16aab0f57ab2967f1dc7a703db7a53faeb6ef067fcbbab2cca.bin
@@ -2265,6 +2365,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/62/fc211017910a7a7fed6d02c03acc88af8d53c206cee40b1f17875bef9fd7eb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/62/fc211017910a7a7fed6d02c03acc88af8d53c206cee40b1f17875bef9fd7eb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/63
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/63/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/63/18d5fc6250c66394c5b13d6e36366b3994de492419ef664defdef7d71d1f0c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/63/18d5fc6250c66394c5b13d6e36366b3994de492419ef664defdef7d71d1f0c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/63/28fdeb600a78a04f6c659953a0589b63f17798f78e3c7468070b0ab7934ebc.bin
@@ -2290,6 +2391,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/63/f305afeacf8c0bdc4f8432ffdef3aeb060acbd8718ae6027489abd7c41db99.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/63/f305afeacf8c0bdc4f8432ffdef3aeb060acbd8718ae6027489abd7c41db99.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/64
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/64/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/64/04a6f88cbf352117ee04a50dd7738a7f5f842efdfa4d1471d133d43a9dc519.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/64/04a6f88cbf352117ee04a50dd7738a7f5f842efdfa4d1471d133d43a9dc519.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/64/407791ff2c00fe47a73867fb6a262c6aac582d0120d1977521882ae94bb54d.bin
@@ -2319,6 +2421,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/64/f9d5f6b31acdde59ccc04b023f9f61945997549d9ab0d694e189e660850241.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/64/f9d5f6b31acdde59ccc04b023f9f61945997549d9ab0d694e189e660850241.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/65
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/65/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/65/02c0117308a01ada167c1ba2693018789c36261c1b6db6b42644cef1330879.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/65/02c0117308a01ada167c1ba2693018789c36261c1b6db6b42644cef1330879.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/65/296001b8e8399977fa0a94428b16ee99ca06d9d7f513a5c7f43d3c73a2e0be.bin
@@ -2344,6 +2447,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/65/8cc7321b3e4d012b7d9a6608e69b381f2dc02e44d18ea9da6421a71c3719f3.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/65/8cc7321b3e4d012b7d9a6608e69b381f2dc02e44d18ea9da6421a71c3719f3.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/66
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/66/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/66/234e82baaedc94913a8b225ed300caa1fa373a3fcf6eb811026ccace14271e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/66/234e82baaedc94913a8b225ed300caa1fa373a3fcf6eb811026ccace14271e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/66/56a0d5e892d2335d86ed1cf1c6725b5bc986164c04b9e6d72ec25fe5e9d5c0.bin
@@ -2365,6 +2469,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/66/de172f703516b0af07486cb65e7300fbab6606117b8eff04a8ab5551b8db71.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/66/de172f703516b0af07486cb65e7300fbab6606117b8eff04a8ab5551b8db71.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/67
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/67/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/67/40dada423221b305af8098e9f248d2139efe6de42d206816505572ba7959b6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/67/40dada423221b305af8098e9f248d2139efe6de42d206816505572ba7959b6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/67/42a38862ccac63e89d4e38a46d739100dacaa374100e9729f568a8b04994e7.bin
@@ -2386,6 +2491,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/67/d6445ec02cc5c5f8bb5645787cb6dee06683e80bfe2655ecd68e6c895432d9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/67/d6445ec02cc5c5f8bb5645787cb6dee06683e80bfe2655ecd68e6c895432d9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/68
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/68/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/68/087051ede542b7ae7b3f612bca644760d0d8d3938ff7fba6bd21ae9cad625d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/68/087051ede542b7ae7b3f612bca644760d0d8d3938ff7fba6bd21ae9cad625d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/68/300f52fb5781c9727cf0b791654bd6942ef778fc0ec3c91152ad2ed651c77a.bin
@@ -2405,6 +2511,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/68/e7b97839dba8f56c76006ca8cbc7f132871794ebe5bd4312c9bcedd9935d48.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/68/e7b97839dba8f56c76006ca8cbc7f132871794ebe5bd4312c9bcedd9935d48.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/69
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/69/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/69/0a2feb28bf35cd20f091326788ecbf05f938d575d5375322f9f5a3f0e67787.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/69/0a2feb28bf35cd20f091326788ecbf05f938d575d5375322f9f5a3f0e67787.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/69/196fff4a6fa861d15726bc3f7a8bb33650f4f4fb0c8b12b75f0a826cfe0c57.bin
@@ -2426,6 +2533,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/69/cf2aefc1467013c28eeb2a373fd2f27f94348c84d754363bd0c3fdc76f85c0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/69/cf2aefc1467013c28eeb2a373fd2f27f94348c84d754363bd0c3fdc76f85c0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/6a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6a/022264467fe11ca96fc0207220b21600797b37116fda915540948f1f7b9eca.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6a/022264467fe11ca96fc0207220b21600797b37116fda915540948f1f7b9eca.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6a/080b60b5d9292a8e63160532c81ca265b7063d725d14776ca63803293db321.bin
@@ -2457,6 +2565,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6a/f6b31a9c46ba1af0f0a02478a8e0445c73a76fcb3342e0e87978cd286389b3.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6a/f6b31a9c46ba1af0f0a02478a8e0445c73a76fcb3342e0e87978cd286389b3.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/6b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6b/262597b0947f14c8af4622752b12612dafeb5f2147814338c000e5145dbcee.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6b/262597b0947f14c8af4622752b12612dafeb5f2147814338c000e5145dbcee.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6b/37d2543f20a124c742db2a1af1e5ba48ed9d635b078dff838ededabacc9fe5.bin
@@ -2482,6 +2591,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6b/cbbe7cc5fdbffdf56d04e6ff851f84cd150c488e1d0b1dedf74156e60a8adc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6b/cbbe7cc5fdbffdf56d04e6ff851f84cd150c488e1d0b1dedf74156e60a8adc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/6c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6c/1109990577ef75b2af0a57b433b4ff4c7580781543ed9e6e13f1eee840acc0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6c/1109990577ef75b2af0a57b433b4ff4c7580781543ed9e6e13f1eee840acc0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6c/14abfa5c607f4157c52a36994546ae5a4191410e7b22128ad24d824b1bd70d.bin
@@ -2495,6 +2605,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6c/ce3e027b8752814c840c601be6cd2ec1796f8facf277de33a629255c95829b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6c/ce3e027b8752814c840c601be6cd2ec1796f8facf277de33a629255c95829b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/6d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6d/2d9535209a87da8f5e3063318df3325bcf436bb1aa9dd81bdd535731c16445.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6d/2d9535209a87da8f5e3063318df3325bcf436bb1aa9dd81bdd535731c16445.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6d/30a6fee1191fb54fa4f014b29bcdccf13bdf35ff3c9a4d72599b7823fdc1c1.bin
@@ -2514,6 +2625,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6d/e4c50cfe3ca74c87a12bbb240c9aa4ee77ee44263181769463b5ca8e8398cf.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6d/e4c50cfe3ca74c87a12bbb240c9aa4ee77ee44263181769463b5ca8e8398cf.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/6e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6e/294b76cc6a66030afb707a626ff88afebea56598963507f9239f7cfe3f63ab.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6e/294b76cc6a66030afb707a626ff88afebea56598963507f9239f7cfe3f63ab.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6e/365c16c0abe9c2ab5033780f2610fdecc4699efdf12031813133c671d91fa7.bin
@@ -2535,6 +2647,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6e/e82a3954cb4a624698c308e5a97dce4b5cf2c86b2a8cf68b4dc10d004ec272.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6e/e82a3954cb4a624698c308e5a97dce4b5cf2c86b2a8cf68b4dc10d004ec272.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/6f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6f/1395c3bbc58d02cd0651b6a32b34952a8319911a8f7718cf86843e9ea49817.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6f/1395c3bbc58d02cd0651b6a32b34952a8319911a8f7718cf86843e9ea49817.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6f/3f089dab1339a416db1bad02a2794e0733510af234f769f64dce499f05ce5d.bin
@@ -2552,6 +2665,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/6f/da9ce02fe95c712723965cdf2a602f04a00565fa8a7b341d637347d1e17858.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/6f/da9ce02fe95c712723965cdf2a602f04a00565fa8a7b341d637347d1e17858.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/70
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/70/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/70/5b35801be57cb817735237b1a5d7d3e59b5c333a3bcfa5f393a0c72f5ea65e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/70/5b35801be57cb817735237b1a5d7d3e59b5c333a3bcfa5f393a0c72f5ea65e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/70/6363effd0fd71f48348aeb823dfd9c4d683e8ec3f149b4a7d78f23322adb1a.bin
@@ -2559,6 +2673,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/70/65b3979ebbe600bc0df1590143ed37507dd32da5047f9ec8d1e696051abe19.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/70/65b3979ebbe600bc0df1590143ed37507dd32da5047f9ec8d1e696051abe19.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/71
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/71/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/71/46fc1468737e94d1226feb8fb782dffddb8e45e3bb2dad5d1d4ce3143f948a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/71/46fc1468737e94d1226feb8fb782dffddb8e45e3bb2dad5d1d4ce3143f948a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/71/5625b15d68b0807308080b6bfd0a0c886d9b0859129230d84961b596fd5ea5.bin
@@ -2570,6 +2685,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/71/fb280fa5265e52c6e8990939887c6805a1e508319a39d9f77f22f35e301fc9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/71/fb280fa5265e52c6e8990939887c6805a1e508319a39d9f77f22f35e301fc9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/72
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/72/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/72/0019313293f623d3444b7f83d040fc4a7e503e442f37c30372ba20033c0d74.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/72/0019313293f623d3444b7f83d040fc4a7e503e442f37c30372ba20033c0d74.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/72/009318993cf62566a0d6bd977b675308d335f2a7acc41ab2b7a9b544dbc61c.bin
@@ -2603,6 +2719,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/72/f30d9944d887f538054b4a2a331b917eb1a3843abfade4d90aebd7b53a39c6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/72/f30d9944d887f538054b4a2a331b917eb1a3843abfade4d90aebd7b53a39c6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/73
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/73/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/73/159e58e132160d437181788e40e71f49f5ac6221cbf852ddf9847d44606328.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/73/159e58e132160d437181788e40e71f49f5ac6221cbf852ddf9847d44606328.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/73/3814f3524635933738b60bc7e7f01c62f2ef9f0e3225a954d39176857ec4ec.bin
@@ -2626,6 +2743,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/73/fb73fcda55eb9e04fbbd835a6fb4d889ffd931c18b32f346e3b99f1ebd0aee.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/73/fb73fcda55eb9e04fbbd835a6fb4d889ffd931c18b32f346e3b99f1ebd0aee.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/74
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/74/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/74/11f900b93cb0ec752537ec705d7caca7b9c9beebb36660aa4fd6431658a0c8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/74/11f900b93cb0ec752537ec705d7caca7b9c9beebb36660aa4fd6431658a0c8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/74/21cd4289aa97d80a2c73d688f3f2ae75c8b32cd5fa3bdc21b9ae581b3612fb.bin
@@ -2637,6 +2755,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/74/e046e6468bd66e9fdf377efbd67eb4b594f445c6e557ffbfec097c01a4b483.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/74/e046e6468bd66e9fdf377efbd67eb4b594f445c6e557ffbfec097c01a4b483.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/75
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/75/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/75/015b67aa0dd2c311c276f67e5bd55bf1b6bc6dfa30a8a82c49051c52bde8b6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/75/015b67aa0dd2c311c276f67e5bd55bf1b6bc6dfa30a8a82c49051c52bde8b6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/75/0307fc1fe24bfae299260339ac134a17e72de040e970d4b5928d16e5712b7f.bin
@@ -2666,6 +2785,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/75/f705233872f04b1f3c164a083588de41238c4b33a2d44759c79badd558a4c9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/75/f705233872f04b1f3c164a083588de41238c4b33a2d44759c79badd558a4c9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/76
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/76/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/76/1dbe0f47bbe20cf0f24ab338a2e1df3b237582a994afd37c87613ada27571a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/76/1dbe0f47bbe20cf0f24ab338a2e1df3b237582a994afd37c87613ada27571a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/76/4941e41a5fed78b6b9d5a3b62710c208dcb67a82177ee90305980777096d7d.bin
@@ -2687,6 +2807,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/76/f6b51f5dd3a0050df4a37d0976759efb8eb7009241c7aaad94a9397fdd6cc6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/76/f6b51f5dd3a0050df4a37d0976759efb8eb7009241c7aaad94a9397fdd6cc6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/77
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/77/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/77/150c51cdecc03675770e2cdb6bd4de91925e39fc53a17b0e2fdc9d62e917fa.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/77/150c51cdecc03675770e2cdb6bd4de91925e39fc53a17b0e2fdc9d62e917fa.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/77/1f49ba338e88b2996c3adcb6fdb00a6946780e2e395805e1d42fed410a5c91.bin
@@ -2712,6 +2833,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/77/e39a4ebf37e9571088b8610f44b776006e8dade853165d625ea4d2015255dc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/77/e39a4ebf37e9571088b8610f44b776006e8dade853165d625ea4d2015255dc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/78
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/78/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/78/0e6bbd6b283f3c8009e225ad085c0751f808cf0ec288ac057da8b5134b7049.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/78/0e6bbd6b283f3c8009e225ad085c0751f808cf0ec288ac057da8b5134b7049.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/78/3dd7bc7cc61df5cad1b59992aedbb5d4b660daacdf29174b304bb48c96cc48.bin
@@ -2733,6 +2855,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/78/ef7628cd86a7c95a1164b5eb1b0ea45dccc1c257248f6956eab4bd31290829.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/78/ef7628cd86a7c95a1164b5eb1b0ea45dccc1c257248f6956eab4bd31290829.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/79
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/79/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/79/07dad2a8d3967851772be398fd79cd40ad88a834398fd5bc683ab9d6c097d7.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/79/07dad2a8d3967851772be398fd79cd40ad88a834398fd5bc683ab9d6c097d7.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/79/1d09cadacc1bb3b951a65b1920269ba6383986f9750c81ac7116288a4b3979.bin
@@ -2746,6 +2869,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/79/f747398d42b8d24c09d59fbade9e54b75563d711402b581ca5223ddcca7298.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/79/f747398d42b8d24c09d59fbade9e54b75563d711402b581ca5223ddcca7298.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/7a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7a/00b4ca3666f38930014f6342787a05c00ce1bc6f660c630ab2673c6844fea7.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7a/00b4ca3666f38930014f6342787a05c00ce1bc6f660c630ab2673c6844fea7.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7a/34465e45fa46a8ffcd7488721dc7225ebae1859303794ca2236b265b14580c.bin
@@ -2769,6 +2893,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7a/fe22f3bb720ab4d604a91e86b3335e1ec2b78ecedc2f8067b1674442d13bce.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7a/fe22f3bb720ab4d604a91e86b3335e1ec2b78ecedc2f8067b1674442d13bce.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/7b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7b/04523b401a8ede7cdc8ff4c0b7b16899f7160669f459494949ca8cee2875c0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7b/04523b401a8ede7cdc8ff4c0b7b16899f7160669f459494949ca8cee2875c0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7b/0d406fce431dc2b8c47338c897ae8bac2b666412de943afbd87ea9cd03d030.bin
@@ -2792,6 +2917,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7b/d1eaac08b462b9e33c433f43636120640c7915a7d6744bc4440fdc7067ef3e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7b/d1eaac08b462b9e33c433f43636120640c7915a7d6744bc4440fdc7067ef3e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/7c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7c/099fc6d811f449862d7a434f53f636148b81f4e9d9d72077b19019c80697fa.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7c/099fc6d811f449862d7a434f53f636148b81f4e9d9d72077b19019c80697fa.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7c/0a4829b282c7ebb481f262ae45fa761f197e7b3fcec2d34cfaefb5d4ebc42c.bin
@@ -2817,6 +2943,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7c/fc30941b7d7b023596eb0839eac2cf9bdf45d8bceb69ef9c7289639005dfe1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7c/fc30941b7d7b023596eb0839eac2cf9bdf45d8bceb69ef9c7289639005dfe1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/7d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7d/0c5470032f353f732e06794a20680bab2844e2b5f54f34fb204ca4f3d3d423.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7d/0c5470032f353f732e06794a20680bab2844e2b5f54f34fb204ca4f3d3d423.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7d/3cfdcb8b067db446541ee7d14ffcc055deeb77f72e3589ba23892e1a622eca.bin
@@ -2836,6 +2963,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7d/f75ef5525f04aa648fed3c25a205a84f36c34ce92e5ee2b3d2049d5e133321.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7d/f75ef5525f04aa648fed3c25a205a84f36c34ce92e5ee2b3d2049d5e133321.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/7e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7e/3637e266c2e38729698bb40fec9406ee42e4791521fc5e12b05fec0ede2ec8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7e/3637e266c2e38729698bb40fec9406ee42e4791521fc5e12b05fec0ede2ec8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7e/4e19af74201553afecc7aebf722e2ecc5661e7727db357600ac10330f7c3d5.bin
@@ -2851,6 +2979,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7e/ffb1bf0aad4028bd8ab301d7a09ae51f9ad67905a057dd894dac582cc519b9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7e/ffb1bf0aad4028bd8ab301d7a09ae51f9ad67905a057dd894dac582cc519b9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/7f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7f/09918a01918369d8cba812aa74d54024853f50c4c4368f12b051b9df8fb1cb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7f/09918a01918369d8cba812aa74d54024853f50c4c4368f12b051b9df8fb1cb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7f/329426fa600a52e6c0c0577d78da489c55e39291d0a6b48baa89418cf016e3.bin
@@ -2870,6 +2999,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/7f/f5dbdc743da520e9c761a5e4228319ed48db0524dcb2fbfa872913316d9041.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/7f/f5dbdc743da520e9c761a5e4228319ed48db0524dcb2fbfa872913316d9041.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/80
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/80/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/80/0b882718b422b064c7967800f396bcf33b0e89d5c051da8b5d00a6092b60da.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/80/0b882718b422b064c7967800f396bcf33b0e89d5c051da8b5d00a6092b60da.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/80/354b82676bafc97344913c2046fd5c7acb9665f8e096a06ddf584b7700ee58.bin
@@ -2889,6 +3019,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/80/a16b65ce0ccf61d4ec8d55337e056d1dca36e3fb1e72e454247e785455d20d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/80/a16b65ce0ccf61d4ec8d55337e056d1dca36e3fb1e72e454247e785455d20d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/81
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/81/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/81/20c95e6a4599617e3967910bc2015d4cc1abb3bec4d6ede9ea1d2033a1238b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/81/20c95e6a4599617e3967910bc2015d4cc1abb3bec4d6ede9ea1d2033a1238b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/81/478d5e50495a7f086df0e27e543a271628582ad56ddc4285b08eeac061d7e3.bin
@@ -2902,6 +3033,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/81/f5809d0de4380de00483809c064bc56ff4917400e630cf4111a8fb012b4bdb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/81/f5809d0de4380de00483809c064bc56ff4917400e630cf4111a8fb012b4bdb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/82
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/82/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/82/0db604e8feb404a12f5eede38144392f76c47bbf3b1c582a6bdbeb6ead2f85.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/82/0db604e8feb404a12f5eede38144392f76c47bbf3b1c582a6bdbeb6ead2f85.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/82/5c8a235a20aa1d8223d4cf100d2703edee4727f68d2bd6388ae61e3ce0c0bb.bin
@@ -2921,6 +3053,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/82/ea1d33a30a64b46d83230a5fde304baff40c53285f804474317f6137360ac0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/82/ea1d33a30a64b46d83230a5fde304baff40c53285f804474317f6137360ac0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/83
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/83/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/83/009df4d9cb3b2400b082c7495ddb7f23de532c2f4dbfb885cdd9e701b6c152.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/83/009df4d9cb3b2400b082c7495ddb7f23de532c2f4dbfb885cdd9e701b6c152.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/83/09625c3a7b3b086cf9d815eb13d7d18ef166f9a09550e2bdaf9bb7c4a3ec0c.bin
@@ -2946,6 +3079,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/83/d4a78459be9d10f03a9541caf0063684e9ebcc53162a1cce64a6d83b427e65.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/83/d4a78459be9d10f03a9541caf0063684e9ebcc53162a1cce64a6d83b427e65.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/84
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/84/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/84/0443a81883df41a8736c7761f109cb3e4d3304c25cdfe9ea23c53df42b9bcc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/84/0443a81883df41a8736c7761f109cb3e4d3304c25cdfe9ea23c53df42b9bcc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/84/20e680d67520e8236fc5b7f73b4841221d92f4a28c926b194f3271f6427a13.bin
@@ -2957,6 +3091,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/84/ec95d7b07ee3c03cb33b0e77cd296a2ed8aff7a70ffb53de57d81f84456d19.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/84/ec95d7b07ee3c03cb33b0e77cd296a2ed8aff7a70ffb53de57d81f84456d19.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/85
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/85/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/85/0df1994d310fa748162e647dfe3d1ed2ebc90a0c863506af4a6006044b39d5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/85/0df1994d310fa748162e647dfe3d1ed2ebc90a0c863506af4a6006044b39d5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/85/1119da6d965ea167729acf3d349dc0e15de7344b0b91176afdae73e50a7700.bin
@@ -2974,6 +3109,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/85/da594c165d849e6c5f4a34d568857c0d058dc1ec21a9e95e8254c4dbb1d62a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/85/da594c165d849e6c5f4a34d568857c0d058dc1ec21a9e95e8254c4dbb1d62a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/86
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/86/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/86/12f48d5bfd09b87a0d9c45f76f5db0025426741d6d34342e69dc4ca08c47e3.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/86/12f48d5bfd09b87a0d9c45f76f5db0025426741d6d34342e69dc4ca08c47e3.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/86/1a7ed2bf40ecdca04a5b417b48c78707465ba7c97a0086bedf187ceeb240d1.bin
@@ -2995,6 +3131,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/86/ffaa41217a34e929ee191b979b6ccffb16dd05d0015b78085b406d9ad63e66.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/86/ffaa41217a34e929ee191b979b6ccffb16dd05d0015b78085b406d9ad63e66.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/87
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/87/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/87/26e67dc01447e1da19b1c9a417a6fb1109f5f2270b94c5a29927e9c9c52692.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/87/26e67dc01447e1da19b1c9a417a6fb1109f5f2270b94c5a29927e9c9c52692.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/87/3b573d6b7444df695e3f78bdb600c6cdc0570c9d1689e44f631ab579975e89.bin
@@ -3018,6 +3155,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/87/f1ed03e7d3e3def210975e8600003d7e466d5a0c46ffce48ed927603f7c0bc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/87/f1ed03e7d3e3def210975e8600003d7e466d5a0c46ffce48ed927603f7c0bc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/88
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/88/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/88/60ca6788785c456586684320f74e13a24386ca971ef3feee402b052b2a2067.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/88/60ca6788785c456586684320f74e13a24386ca971ef3feee402b052b2a2067.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/88/83081e3b87f135b47e5a607c7ef93245c261a77dddaf5e017810e43b65a2b8.bin
@@ -3031,6 +3169,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/88/cbb4d1f891e962f6ca79a53c0bf7f2b2497e3f075ba828ecb931d431f3ba46.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/88/cbb4d1f891e962f6ca79a53c0bf7f2b2497e3f075ba828ecb931d431f3ba46.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/89
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/89/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/89/117180a9449d3c8bc74e15f645749c56e5e3b89c2e3ff71c04090b4cd7a2d0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/89/117180a9449d3c8bc74e15f645749c56e5e3b89c2e3ff71c04090b4cd7a2d0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/89/4b5a192b7a7deb8aa2116fdc3dd7e08507a793696b3eb8e5b0cd8821e56a2f.bin
@@ -3050,6 +3189,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/89/ee05d7cd03a176a6e2e04d47c56fbeb4f348c59874cb0934db7bb870552fe4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/89/ee05d7cd03a176a6e2e04d47c56fbeb4f348c59874cb0934db7bb870552fe4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/8a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8a/3f77a6f90838255e43970d0bba3c5e79aefe85ba1378b011c35cf52f285e74.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8a/3f77a6f90838255e43970d0bba3c5e79aefe85ba1378b011c35cf52f285e74.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8a/5ff5728cb55f660d674c9cb1b2040112d790dc0224b8238e95e215b3925163.bin
@@ -3073,6 +3213,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8a/ddfec8d1d8baabe255eefbfd59743f346726a81f53927818cc71e2f1b5df8e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8a/ddfec8d1d8baabe255eefbfd59743f346726a81f53927818cc71e2f1b5df8e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/8b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8b/398d4e3122f4ca26eb59a674f39cbdf206c52ded4cba110461efcb64c97f04.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8b/398d4e3122f4ca26eb59a674f39cbdf206c52ded4cba110461efcb64c97f04.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8b/7a00329fb06a1f9dd3c3a7b013801181cf50b3ec6b0952c267d9427f722ae7.bin
@@ -3096,6 +3237,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8b/fe3a0637a3873637a26f1dd86229f49dccd6385e2e81854c6e8021be95f07f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8b/fe3a0637a3873637a26f1dd86229f49dccd6385e2e81854c6e8021be95f07f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/8c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8c/17fccb3903d14638b3f6bb64229e22a0af3b36a04296fbcab6d347fd5ee222.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8c/17fccb3903d14638b3f6bb64229e22a0af3b36a04296fbcab6d347fd5ee222.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8c/367b2a17ea6e7119b7ec48de53ddd50a809e22637ee5778d5a7be6cd91bd61.bin
@@ -3119,6 +3261,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8c/f9d126f354217c8ed210f7ce16b88f3f7700f8ecffe498aa05a6b2a69a5e36.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8c/f9d126f354217c8ed210f7ce16b88f3f7700f8ecffe498aa05a6b2a69a5e36.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/8d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8d/0dbecf275930df356d59f37fa50bc24e20185deb8ea364119ac6105648e645.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8d/0dbecf275930df356d59f37fa50bc24e20185deb8ea364119ac6105648e645.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8d/4d37c04a5fb92d6d20fcda8c2888f5e0911c73434a495ea34608434812fcdb.bin
@@ -3138,6 +3281,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8d/f9c94fe0d5545f94b49d70df7db03a00e41f399ab3b98781e161e355aca0f4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8d/f9c94fe0d5545f94b49d70df7db03a00e41f399ab3b98781e161e355aca0f4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/8e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8e/019a9975d6a7c27fa72383143ff57a7ced3b8687bd89dc22d775e4844db74b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8e/019a9975d6a7c27fa72383143ff57a7ced3b8687bd89dc22d775e4844db74b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8e/3a84d35e442a8cbd0ec4621b18a8dc6c9b243ab6a1a183ed906b1925bde2ba.bin
@@ -3155,6 +3299,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8e/ee9b74a955a7af9903eccdae1bd4eb88c4d54f5dc00fe188ee41e4c155922e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8e/ee9b74a955a7af9903eccdae1bd4eb88c4d54f5dc00fe188ee41e4c155922e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/8f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8f/4d32d15526bd8d81faf16a7862c5281fa141d3f51793d6479108d96a301000.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8f/4d32d15526bd8d81faf16a7862c5281fa141d3f51793d6479108d96a301000.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8f/5b524966a305a5027339223936535395921a2074eb05491d58fc8a81e3e040.bin
@@ -3174,6 +3319,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/8f/f0254136c8bbb805308ed1b7f68510c86f0c62eadbd7e0be910725b11cbc3a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/8f/f0254136c8bbb805308ed1b7f68510c86f0c62eadbd7e0be910725b11cbc3a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/90
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/90/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/90/5f3c2ab20a39f33a93020ddc9761e821f0e293ec63aaf224143d6e4961ae2c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/90/5f3c2ab20a39f33a93020ddc9761e821f0e293ec63aaf224143d6e4961ae2c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/90/7f1c7d30fc7292b6927cba7045e6f7132f3c97cded4e788e4456afb45208a3.bin
@@ -3187,6 +3333,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/90/fe68707728e516dc39a66646d2619d77b42f82ecb69d0df2df8dd32a223ab9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/90/fe68707728e516dc39a66646d2619d77b42f82ecb69d0df2df8dd32a223ab9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/91
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/91/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/91/104a21c9c6198c2ab25ea88b1be98f680dd4fb988095c4f8f80921c775d65d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/91/104a21c9c6198c2ab25ea88b1be98f680dd4fb988095c4f8f80921c775d65d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/91/1690eb662e002e75a586cc5eba22072fd5c6551123517e3511f3f72b82a6fc.bin
@@ -3212,6 +3359,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/91/f196a794229d7832820d27d3328bab2c985b1dd17ed95163a850be21704ada.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/91/f196a794229d7832820d27d3328bab2c985b1dd17ed95163a850be21704ada.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/92
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/92/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/92/2ca67cc72829f6e06dcccce5b2cc09eb0b7284fa55cee868b900cf4172bbce.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/92/2ca67cc72829f6e06dcccce5b2cc09eb0b7284fa55cee868b900cf4172bbce.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/92/605c196142ef29a4ae38831300e1567ce8b7aae628f39e478bf8acf7fc8103.bin
@@ -3227,6 +3375,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/92/fe21d27b3e5960fe705ee0ab32710df9cd5cf088131e11c3d3fd8fc2d4cd1a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/92/fe21d27b3e5960fe705ee0ab32710df9cd5cf088131e11c3d3fd8fc2d4cd1a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/93
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/93/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/93/2af03d89efbf149279837564fd6f32a543e7d8a5752665f5ac41dee7a8ac0c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/93/2af03d89efbf149279837564fd6f32a543e7d8a5752665f5ac41dee7a8ac0c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/93/631e5c2fb700b48096e80e99ae471b1144a0e7a42b2c5c1904d1a5189a89b2.bin
@@ -3236,6 +3385,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/93/f882060c94468803ec325c0ac5230964c7a88c5869fce124a547f4247db16f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/93/f882060c94468803ec325c0ac5230964c7a88c5869fce124a547f4247db16f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/94
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/94/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/94/0356d01dbc58630d68a09643b6484043b66c1ab6b07f8c687eeda9820a35e1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/94/0356d01dbc58630d68a09643b6484043b66c1ab6b07f8c687eeda9820a35e1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/94/1a07b485c5079b2c75b49fac75f54914c18e0082e5b1e99f2383e352fad9ad.bin
@@ -3259,6 +3409,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/94/fe6df081d61c5b57591861f832f2942e4142541077eb94d7d4c988390a703d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/94/fe6df081d61c5b57591861f832f2942e4142541077eb94d7d4c988390a703d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/95
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/95/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/95/1e6ba5af5a141283509df20453ca5c0128094558f58fb3ebe73aa46bd10b1a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/95/1e6ba5af5a141283509df20453ca5c0128094558f58fb3ebe73aa46bd10b1a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/95/22d07451f38e758e24f3f6812aaa195ce619ed19e7d7ea64d71a8cb243abd6.bin
@@ -3292,6 +3443,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/95/e893392a48255c0c4e2beb31adc5494c222429e8ed8b8e61ca6e018b3a6ee9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/95/e893392a48255c0c4e2beb31adc5494c222429e8ed8b8e61ca6e018b3a6ee9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/96
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/96/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/96/3840c5c4dfc918b368db10732ec8ef3d7caf9a9928afd80543f9fd9a958e77.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/96/3840c5c4dfc918b368db10732ec8ef3d7caf9a9928afd80543f9fd9a958e77.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/96/4023c1b3d7223b4c6d7f2330217c03fa3ce3064ad7fa72abb721bd5b31e7a3.bin
@@ -3309,6 +3461,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/96/eff7e3777f9c49df9ab2ec610ff1554aeb10865f41f628f4939d0103eb449b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/96/eff7e3777f9c49df9ab2ec610ff1554aeb10865f41f628f4939d0103eb449b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/97
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/97/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/97/1f62268602b2411afed188925c0533d48d6debf31802116d9054df02cee7e7.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/97/1f62268602b2411afed188925c0533d48d6debf31802116d9054df02cee7e7.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/97/4352ae23f32dffd8c7573cf6018828a58778c9939e37fe492998f940fc3837.bin
@@ -3330,6 +3483,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/97/e76b3e2a21c054d55cec07662dfc7b34b1fdf45bd557e3d5dc8f4726a9468f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/97/e76b3e2a21c054d55cec07662dfc7b34b1fdf45bd557e3d5dc8f4726a9468f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/98
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/98/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/98/0d4410aab3b98763a159cef3c35a39cd1aae0c5d34342a798c847ab499527c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/98/0d4410aab3b98763a159cef3c35a39cd1aae0c5d34342a798c847ab499527c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/98/1d6ff2db0cf0131b3765dd07df0f0e122a7a0da19de0e8b3eb6e25f19a4b57.bin
@@ -3351,6 +3505,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/98/cd7042b39fb09a122cbb2974cf9fd4fbd332530e87c88931b00f28dc85bfa4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/98/cd7042b39fb09a122cbb2974cf9fd4fbd332530e87c88931b00f28dc85bfa4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/99
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/99/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/99/1312e5dc298d353cd08bc3e172281baf09c984627deb4b5ae94d7fabf615c1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/99/1312e5dc298d353cd08bc3e172281baf09c984627deb4b5ae94d7fabf615c1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/99/249e03fa48797c571a009d8ca5a4203767afa99ca10ef36dc92181be04b430.bin
@@ -3366,6 +3521,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/99/ef642c2895dbc4ad8c46f1f949d34f001fdf07191c156750c7b7c9f2f10c39.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/99/ef642c2895dbc4ad8c46f1f949d34f001fdf07191c156750c7b7c9f2f10c39.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9a
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/9a/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9a/35aee192753898ea860cd39480b68d54450016024b3726ae7772ecc9673cde.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9a/35aee192753898ea860cd39480b68d54450016024b3726ae7772ecc9673cde.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9a/528bb70d9c6b73f3fcf1b375a8f773c0a1b71b590c8c490213e5858f36c0e0.bin
@@ -3379,6 +3535,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9a/f7c3bbda2952a050dd19049e05633dff05f4a0038e08cceb878d990b125691.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9a/f7c3bbda2952a050dd19049e05633dff05f4a0038e08cceb878d990b125691.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9b
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/9b/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9b/0000a8b314a5eb5117d961ce95d8a882369eac62f8b5d3bc928622a6bf6a20.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9b/0000a8b314a5eb5117d961ce95d8a882369eac62f8b5d3bc928622a6bf6a20.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9b/52962a124cf87f73f30eb1ae6c056fa436076f335ced52d101555065fb247d.bin
@@ -3392,6 +3549,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9b/bb95b86caf571c700fbbf3b846dbfad4227fd45b5ad16343797f0693e09c5b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9b/bb95b86caf571c700fbbf3b846dbfad4227fd45b5ad16343797f0693e09c5b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9c
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/9c/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9c/061dc0009fe846d6fd04f56825b2fd5018d217b6003a5c7353da0005a5cf85.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9c/061dc0009fe846d6fd04f56825b2fd5018d217b6003a5c7353da0005a5cf85.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9c/0892719d4ac9ecbdbcee00f7ffa329aeda944e94d1f9162df708fc7fd8b661.bin
@@ -3425,6 +3583,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9c/fdceb370dddcc9fdbaccbece0ae8493411b4973c0536b089df2128cfe5bfce.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9c/fdceb370dddcc9fdbaccbece0ae8493411b4973c0536b089df2128cfe5bfce.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9d
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/9d/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9d/75546c8976351e149412fb6c8990e6bbc964bb2dfb0860f4af707ddc332908.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9d/75546c8976351e149412fb6c8990e6bbc964bb2dfb0860f4af707ddc332908.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9d/a887b8253c359bc62b7fce051b3732da9482e326b0701c07298dc013076f31.bin
@@ -3438,6 +3597,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9d/ea8568b3e042c1776a4be2ebbccbe3249e6ae08f5e51b31147419545e7a314.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9d/ea8568b3e042c1776a4be2ebbccbe3249e6ae08f5e51b31147419545e7a314.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9e
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/9e/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9e/0f2b8ffc3a5ccc01259134e52f093c98057ee7feaf56378bc318cf4e86bf71.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9e/0f2b8ffc3a5ccc01259134e52f093c98057ee7feaf56378bc318cf4e86bf71.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9e/321153a3b0c2baf8430fdbe5ccc74512fc1a1f6586c89d330efc5ae567e472.bin
@@ -3463,6 +3623,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9e/e9e2ed8a538ecc192956d799aa9a7e8da525867e1d38bdc3db7a0af6550442.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9e/e9e2ed8a538ecc192956d799aa9a7e8da525867e1d38bdc3db7a0af6550442.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9f
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/9f/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9f/146f272118fffec8c1baa8c0bb56224cdd442b780dbad98ca250fc8abbb2f8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9f/146f272118fffec8c1baa8c0bb56224cdd442b780dbad98ca250fc8abbb2f8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9f/2525fd4c4d5b707f774b0508f647d0c8966ac6ac688115229ab918952da3d5.bin
@@ -3486,6 +3647,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/9f/fb227bbaad434d4b017c3c9c362e6ff094e950f9cd35dfd691c857ad2113c0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/9f/fb227bbaad434d4b017c3c9c362e6ff094e950f9cd35dfd691c857ad2113c0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a0
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a0/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a0/0428d72548ed88a5a0a8c6e7a36cdb79e53ecc550f00bbd2e37a79598b1489.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a0/0428d72548ed88a5a0a8c6e7a36cdb79e53ecc550f00bbd2e37a79598b1489.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a0/1fc9f730a1027156b86c91b499f07fa58853fbbdefb8493d4d6b651d950c62.bin
@@ -3507,6 +3669,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a0/c7b34d4ee29ea55da08709ae94d5c64ce5b98dae4e6655040d5e64850262e0.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a0/c7b34d4ee29ea55da08709ae94d5c64ce5b98dae4e6655040d5e64850262e0.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a1
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a1/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a1/5bba12e3daf41ecc97de7784326156e3359b3f80f94d8d6ca4a1861808a53b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a1/5bba12e3daf41ecc97de7784326156e3359b3f80f94d8d6ca4a1861808a53b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a1/637a3b777154ea3ad205a4a44323f7979c7b962a5e0b27ef80603e7465ecc1.bin
@@ -3530,6 +3693,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a1/e870c6ed8b7420839a590a172abb79e591bbab668537c5606d391da3d3c206.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a1/e870c6ed8b7420839a590a172abb79e591bbab668537c5606d391da3d3c206.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a2
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a2/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a2/114f380aec55a43b266212a8e186b55a37ef4572d26570aca3f19b456b70a1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a2/114f380aec55a43b266212a8e186b55a37ef4572d26570aca3f19b456b70a1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a2/3da2be5f1a7e6e81f82f88af51b16ec4e8e2648dcf2659f451fa05f1d2a530.bin
@@ -3557,6 +3721,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a2/f54dd31eee964117251cb08d9396dbe7c93549026f19cef57233b6038bf94b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a2/f54dd31eee964117251cb08d9396dbe7c93549026f19cef57233b6038bf94b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a3
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a3/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a3/1cd200b408aeedd19ac58028275a4becb5cd7bd1393e392b21f89b68169de8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a3/1cd200b408aeedd19ac58028275a4becb5cd7bd1393e392b21f89b68169de8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a3/3e04ad4fbd71589b958c2d04fb4e129679986341533517841b00e3371bcd8f.bin
@@ -3584,6 +3749,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a3/fc2b6bfd6fd2e15ed475d0a8e54bbf469242dceafbe836517b579145a63c66.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a3/fc2b6bfd6fd2e15ed475d0a8e54bbf469242dceafbe836517b579145a63c66.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a4
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a4/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a4/37d0074826076ca9ef42afa4e324836a647d6650cf3e6c99d22d51c09f21fc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a4/37d0074826076ca9ef42afa4e324836a647d6650cf3e6c99d22d51c09f21fc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a4/40ab21b205d82dceaef505798ff90ead930974b199d819b229c1536ae58b40.bin
@@ -3603,6 +3769,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a4/fd07784eecc8cd851cce27ad582535e9bb7a011fba4f4d6c99aad248f014b1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a4/fd07784eecc8cd851cce27ad582535e9bb7a011fba4f4d6c99aad248f014b1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a5
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a5/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a5/0398ad0ddbf7a03713f479c02012376feb8f0eaf07f3fef6762f4406839ea6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a5/0398ad0ddbf7a03713f479c02012376feb8f0eaf07f3fef6762f4406839ea6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a5/342860cf7db9c959525e5e26effcd1643250ef700ca164c8ce5af39906af2a.bin
@@ -3638,6 +3805,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a5/f370a295d0022c23dd745e2d0a82951b1249d7b89da248a804e7eb9536b094.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a5/f370a295d0022c23dd745e2d0a82951b1249d7b89da248a804e7eb9536b094.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a6
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a6/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a6/048e5b6013ec8fc60ca3ce13ebda13e371bdf648866c874f81f2ecad47dd37.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a6/048e5b6013ec8fc60ca3ce13ebda13e371bdf648866c874f81f2ecad47dd37.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a6/1ff40eb4a46044a29b0460e9c2fb30b700b1ee6754d527253a0b786e5518bb.bin
@@ -3673,6 +3841,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a6/fa9621d20d904e4dc98b42c1634b24440291b4e2ab6c3fa11f3dbbc2a45028.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a6/fa9621d20d904e4dc98b42c1634b24440291b4e2ab6c3fa11f3dbbc2a45028.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a7
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a7/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a7/0c5f9c57e87ef09178bf937f9f9f6fc5beae60ff3bc38be042641c883cd56f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a7/0c5f9c57e87ef09178bf937f9f9f6fc5beae60ff3bc38be042641c883cd56f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a7/2358dcdcc1a4d8f1d4e0528591874fecd746ef9b8b44a56c54df874cedabcf.bin
@@ -3692,6 +3861,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a7/e95b55ff53ffba117278acf6eb96d07aa8df7aca1fa6365ef6b31fafcaf2f3.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a7/e95b55ff53ffba117278acf6eb96d07aa8df7aca1fa6365ef6b31fafcaf2f3.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a8
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a8/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a8/0d8e26d40a8601a04ae2ed3ead009395f45d8eb483b9b9c491eb2aea936e3b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a8/0d8e26d40a8601a04ae2ed3ead009395f45d8eb483b9b9c491eb2aea936e3b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a8/18496907fa7a8cdecaabcdff556df4c2484f673e94bc26b8cba316abb9a54f.bin
@@ -3705,6 +3875,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a8/c1c02f37b4bff90b6dfab33cf4780b976e1298fa2f7145cfcaf65963721828.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a8/c1c02f37b4bff90b6dfab33cf4780b976e1298fa2f7145cfcaf65963721828.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a9
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/a9/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a9/4ad8a3c2d4533dc752252c99fb37a9ea8eab27dd4b91cc06978b2eb577439c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a9/4ad8a3c2d4533dc752252c99fb37a9ea8eab27dd4b91cc06978b2eb577439c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a9/777b9b49502c96175efa0c206c31e74ec78d5913aa6d1e833f4781285f653e.bin
@@ -3712,6 +3883,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/a9/c0fb835c41ee709c9bdac3462261a9333efe509840ab659a612f1a493d5bdf.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/a9/c0fb835c41ee709c9bdac3462261a9333efe509840ab659a612f1a493d5bdf.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/aa
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/aa/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/aa/097360fafb1adc001ff1c916f4ffc567c1f30ec53bf344d1aa7c1fe1b3f168.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/aa/097360fafb1adc001ff1c916f4ffc567c1f30ec53bf344d1aa7c1fe1b3f168.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/aa/1198a7b9243b4a2158cdeec9682dab4c181d474cf088ead765012e908ec721.bin
@@ -3729,6 +3901,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/aa/e71b9301622baca1c7a49cc56e5e320e0db75f98edbf148c0604ca3951fcb1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/aa/e71b9301622baca1c7a49cc56e5e320e0db75f98edbf148c0604ca3951fcb1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ab
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ab/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ab/0cd0b0992329efb1c44fe55dc014c11e7568a80fd960aff8caba9a6cc8dbb7.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ab/0cd0b0992329efb1c44fe55dc014c11e7568a80fd960aff8caba9a6cc8dbb7.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ab/35d0ac7884ce16af5c048828c214bdaf3e3067b5c9e669902084fbea1bf8c9.bin
@@ -3744,6 +3917,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ab/cec35b07fab191e0fa891031e3410dafff0956b4ba6b019a54ace50393aca6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ab/cec35b07fab191e0fa891031e3410dafff0956b4ba6b019a54ace50393aca6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ac
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ac/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ac/8d3fcedf64791060bfbbd5784a5ed212b41b173f4e1088b04eb2e174fd346c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ac/8d3fcedf64791060bfbbd5784a5ed212b41b173f4e1088b04eb2e174fd346c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ac/943fc4fdbea9dca34a225d47e5fd8ee615dc9f43def502b697590cd53b56db.bin
@@ -3751,6 +3925,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ac/d4438c4254604b7bc738b669cc091129a98e17b8ff41db8dbeaf41b94f5ad5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ac/d4438c4254604b7bc738b669cc091129a98e17b8ff41db8dbeaf41b94f5ad5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ad
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ad/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ad/1188a70bd06a7bdadd32a894a7267fcedb49af61c82e7fbcc308831faae787.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ad/1188a70bd06a7bdadd32a894a7267fcedb49af61c82e7fbcc308831faae787.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ad/17c18a20ca1182ea82e1f8cdd1128a74bf4e00e70801379ca0ee4ebf055d13.bin
@@ -3772,6 +3947,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ad/e9a8930a067ab0c21c92d12e31da817d86392da8277c8a1db3352ae502a803.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ad/e9a8930a067ab0c21c92d12e31da817d86392da8277c8a1db3352ae502a803.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ae
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ae/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ae/14f8a48a1d8a07dd9c8a9cb54fa22602328010c0916dfde3be28c419a7b641.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ae/14f8a48a1d8a07dd9c8a9cb54fa22602328010c0916dfde3be28c419a7b641.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ae/197902e89ce40cdb88bd9af6f16e913de2330b57f43f9b4f50cacf38fea512.bin
@@ -3799,6 +3975,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ae/de6830ed8bb2d7e85726310ce38651ea624859726a9c5f3f0c162b31dfe19e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ae/de6830ed8bb2d7e85726310ce38651ea624859726a9c5f3f0c162b31dfe19e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/af
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/af/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/af/088d1bfcb858fec5ebdc34071d2cd316965bc26fbd930c408419939b840c07.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/af/088d1bfcb858fec5ebdc34071d2cd316965bc26fbd930c408419939b840c07.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/af/183cc5558db4e6a4049f408bae31189ea1be8e5a318c873cb241d22e28f2a6.bin
@@ -3818,6 +3995,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/af/f99a4d993e45bb80edd44964e9b9b7dc01070661276742f6b76e896d6f00ba.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/af/f99a4d993e45bb80edd44964e9b9b7dc01070661276742f6b76e896d6f00ba.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b0
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b0/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b0/03c5892a8951bd49e5058b51200c60d890d08daa1c4676ce5f345497c7506a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b0/03c5892a8951bd49e5058b51200c60d890d08daa1c4676ce5f345497c7506a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b0/186d1577123b025af631b3e2221d5968af8c3f410d5beab7357c53757fd418.bin
@@ -3837,6 +4015,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b0/fd5867458ff77aedf0b02072e6c6610105e2252686d9cde1b3be7482c00ee5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b0/fd5867458ff77aedf0b02072e6c6610105e2252686d9cde1b3be7482c00ee5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b1
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b1/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b1/09e2cb1379374835a4a00afda9e9fa9a9a285005ad44f1b85e1314b7ef107c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b1/09e2cb1379374835a4a00afda9e9fa9a9a285005ad44f1b85e1314b7ef107c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b1/5956f6ddcb70992748eb96e9b7774a95479d67bce8bf8f59d411d7684b944d.bin
@@ -3858,6 +4037,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b1/e241b2e8dcac8de7e5d07d7e77ed4eaba9daad26242ddaa73b12bc98cba14c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b1/e241b2e8dcac8de7e5d07d7e77ed4eaba9daad26242ddaa73b12bc98cba14c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b2
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b2/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b2/22b3e56f8f8ad4a305c7f57ebf47d40b557e9602d45997d11389df6f739f89.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b2/22b3e56f8f8ad4a305c7f57ebf47d40b557e9602d45997d11389df6f739f89.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b2/288bb182cd97efb0bcb1b38b804d0dde3e62dc5335b03a986ed30447ab9d80.bin
@@ -3875,6 +4055,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b2/fe09cea98d1d61a5c10d6b10374aff4ad4f0184bfc9bee2349216b39a0370e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b2/fe09cea98d1d61a5c10d6b10374aff4ad4f0184bfc9bee2349216b39a0370e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b3
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b3/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b3/9f233fbb2eba245e5b619e0a21d712acd8e585c921c4eed38557b3c346cf0b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b3/9f233fbb2eba245e5b619e0a21d712acd8e585c921c4eed38557b3c346cf0b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b3/a59f315c8dc04b0f58a3a6761920678098fb6b2c2cf5172da00af092e1ee2a.bin
@@ -3886,6 +4067,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b3/dd044822692d0e191d356e2daf171c5006cef8101728ca8fc9aaf0a1dfad15.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b3/dd044822692d0e191d356e2daf171c5006cef8101728ca8fc9aaf0a1dfad15.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b4
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b4/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b4/22c0f1d3b1404c48dda1de9bfe39407ea8544789766dd7f9ef805cfa3a91cf.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b4/22c0f1d3b1404c48dda1de9bfe39407ea8544789766dd7f9ef805cfa3a91cf.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b4/8050859dbfbe9a083e2ae55644a16fc9365d7ebf54f2a6e6a25532e85b4a57.bin
@@ -3901,6 +4083,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b4/f0cde07d5d6a549ac4143b8ef32805c6b8d7196eaa1f78f8cbe781b2f68ae9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b4/f0cde07d5d6a549ac4143b8ef32805c6b8d7196eaa1f78f8cbe781b2f68ae9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b5
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b5/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b5/1a8405754e0a0cc22fe527895e4ddf2b0f9e2e515241535ae38c447dd3d136.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b5/1a8405754e0a0cc22fe527895e4ddf2b0f9e2e515241535ae38c447dd3d136.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b5/4149337fba458123e8d4d835561d7defe83d7d86639f7b9191af09c19b2c5b.bin
@@ -3924,6 +4107,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b5/b4bc29cc896141d3cfb14d3ad5507305dc502074ab0f6741d105feae309855.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b5/b4bc29cc896141d3cfb14d3ad5507305dc502074ab0f6741d105feae309855.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b6
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b6/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b6/1cb5c54aafb148e6888f1ade402d293f78f2508d71ebc65fa7e002899f7570.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b6/1cb5c54aafb148e6888f1ade402d293f78f2508d71ebc65fa7e002899f7570.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b6/83af2bc98ad135102a5ce0f931d4c15433051a6c42e36cfb691c5ffd34e033.bin
@@ -3945,6 +4129,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b6/f66e55911bfeb9261fb2b22cc12b9c0e2c5fa134781022c5abc249fb9cae2f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b6/f66e55911bfeb9261fb2b22cc12b9c0e2c5fa134781022c5abc249fb9cae2f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b7
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b7/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b7/0c25bd532985072df553d9a7fbbbe3400c1294e680cb260e46af57a14a312c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b7/0c25bd532985072df553d9a7fbbbe3400c1294e680cb260e46af57a14a312c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b7/5612fa9e29535e081941c9c174a8158686c16c028772c79ea1dbc5afe6f660.bin
@@ -3962,6 +4147,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b7/ade9188e40867f0acdfbe25123f5be68064cbb3a9eb51e720f80c7febade78.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b7/ade9188e40867f0acdfbe25123f5be68064cbb3a9eb51e720f80c7febade78.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b8
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b8/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b8/15514d68944ca63870efdfb77765169df6b839ac13e61c6a9ecaa63e1dd071.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b8/15514d68944ca63870efdfb77765169df6b839ac13e61c6a9ecaa63e1dd071.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b8/26132732dfaf2e08ba1781e217b971de3fc1db4d1480405cec23b662ec3b98.bin
@@ -3983,6 +4169,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b8/ea9796a503460fd7bc711e7c0a58b96aac036deffd019b290b18a445ba0e6b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b8/ea9796a503460fd7bc711e7c0a58b96aac036deffd019b290b18a445ba0e6b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b9
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/b9/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b9/094af43af7a177d034f0128ad69e0b8aaefd3074cca51123ebec545df0f9f2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b9/094af43af7a177d034f0128ad69e0b8aaefd3074cca51123ebec545df0f9f2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b9/09d1ecc127a128379d61b2febf34ff78b9b7cff983fe1d633ba2c1badba634.bin
@@ -4002,6 +4189,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/b9/f99d80aa381973a1969addbc35d3fad86a1a4c63c3157bd99ed464f6ce3305.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/b9/f99d80aa381973a1969addbc35d3fad86a1a4c63c3157bd99ed464f6ce3305.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ba
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ba/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ba/3f0571587eb55f0974500c704675c795c5ea35a182203135af02f9f7f61adf.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ba/3f0571587eb55f0974500c704675c795c5ea35a182203135af02f9f7f61adf.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ba/5d4b38539db3152eac1bad09d08e2882bf91aba856066a51fdccf0670d8001.bin
@@ -4027,6 +4215,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ba/f65e1b36eaabe8b4fe7e050e704c44cd680fcc8071fb5dc6b5acaf54f8bc7a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ba/f65e1b36eaabe8b4fe7e050e704c44cd680fcc8071fb5dc6b5acaf54f8bc7a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bb
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/bb/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bb/0ade2b3eacb6ea2e30c8cfb867da592119c1993d6e871257d37aa55239efad.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/bb/0ade2b3eacb6ea2e30c8cfb867da592119c1993d6e871257d37aa55239efad.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bb/5e3a688186243ff955fe0c5fd61689ea5c9735befb65b31b6827a599f72166.bin
@@ -4048,6 +4237,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bb/f4dd569cfcfa6f5e9d5bf3e86f9a6b0a145d1ff4c75f4ab79528f1c5cf30c5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/bb/f4dd569cfcfa6f5e9d5bf3e86f9a6b0a145d1ff4c75f4ab79528f1c5cf30c5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bc
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/bc/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bc/2255455568b5b875442edbd52e4ac2b048b3106c8acf56addb32391fd2f820.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/bc/2255455568b5b875442edbd52e4ac2b048b3106c8acf56addb32391fd2f820.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bc/271d41d39a1345385e516f19cc7419c10b9ee5842c435f7b07de137a5fb40e.bin
@@ -4073,6 +4263,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bc/e1f79f4a7db8f2cf08cd874b6228f4abf7187dce5ea398a62b58efe072de4c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/bc/e1f79f4a7db8f2cf08cd874b6228f4abf7187dce5ea398a62b58efe072de4c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bd
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/bd/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bd/14252a47bc84b53e95f4dba5e80b45ee5f4a5a95f22b9f9958ff3e36752c76.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/bd/14252a47bc84b53e95f4dba5e80b45ee5f4a5a95f22b9f9958ff3e36752c76.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bd/1a64a550ab1a03ac318004f40163fe95ecf7849250876246a9b0c190ef7532.bin
@@ -4088,6 +4279,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bd/c96277245c575ef8eee3a4029bb0d1722290eea9bce02a0ab6799d395b87ba.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/bd/c96277245c575ef8eee3a4029bb0d1722290eea9bce02a0ab6799d395b87ba.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/be
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/be/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/be/0b99e303d894034fbc738bed221c3c2eea5a2bd988606fd074526df438d57c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/be/0b99e303d894034fbc738bed221c3c2eea5a2bd988606fd074526df438d57c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/be/2c3622f26729c2600d78d9dd85e1fa53af77d36bd5faa7ae8077d3598f3d20.bin
@@ -4113,6 +4305,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/be/e46d78cc7490f3c853e26bcaa83924f22190de440b79e40307178010f815ad.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/be/e46d78cc7490f3c853e26bcaa83924f22190de440b79e40307178010f815ad.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bf
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/bf/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bf/056a2354d94773f9182a20a00eebe7e927b529b01c2890fea32ecb9f762c97.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/bf/056a2354d94773f9182a20a00eebe7e927b529b01c2890fea32ecb9f762c97.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bf/1adae969faf9b5dc19357d0b08ca1184ee6bf2d92f4424e8ae5256bb59a85e.bin
@@ -4140,6 +4333,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/bf/f2dc2e7f5db5a1ebdc447ac65fef1c787f26cfc8489de9304920e65d1c8df6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/bf/f2dc2e7f5db5a1ebdc447ac65fef1c787f26cfc8489de9304920e65d1c8df6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c0
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c0/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c0/2d31633b507e409b1b0add744dc92caa63d04aee02dd40de3a5fe9ebe505b4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c0/2d31633b507e409b1b0add744dc92caa63d04aee02dd40de3a5fe9ebe505b4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c0/6cdcd543c51fac5d3b2ab6fa4b9a9a31fbc6b2074c36df30eba9f23a79bf7e.bin
@@ -4151,6 +4345,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c0/add20bea4c4ac89aaf72103b8b08c125f6e96fed0aa82d92d3049b3f2ebcba.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c0/add20bea4c4ac89aaf72103b8b08c125f6e96fed0aa82d92d3049b3f2ebcba.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c1
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c1/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c1/0373aae6323d74ba1acabbb845aac1ca8e0ae7a96c22c93296280b0b96a6ed.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c1/0373aae6323d74ba1acabbb845aac1ca8e0ae7a96c22c93296280b0b96a6ed.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c1/3b4c5949fc7ef97d4878f4868ee7758cb91e21377032b35c54fa9731decc47.bin
@@ -4170,6 +4365,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c1/ca73da384f2447cdc5d8b3b1c522ea505e133ebbaeb0ab033a2a3a802eb836.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c1/ca73da384f2447cdc5d8b3b1c522ea505e133ebbaeb0ab033a2a3a802eb836.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c2
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c2/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c2/7b0a024fc826f6647cc9f38a70154e882c6080ed43fc0fdbd7c0a7c7837e64.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c2/7b0a024fc826f6647cc9f38a70154e882c6080ed43fc0fdbd7c0a7c7837e64.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c2/989be123a845e9d875414b9eab7db15fa8da5402ba2c610dfbdb105bd068cf.bin
@@ -4183,6 +4379,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c2/dee9a44ed916301762e2e24f465f796538ca62662743af1341b42894183d68.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c2/dee9a44ed916301762e2e24f465f796538ca62662743af1341b42894183d68.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c3
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c3/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c3/0ff3e08bfa30bc145b2441fcc08ccfcaed94ea8b4f05e060400645da3469a5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c3/0ff3e08bfa30bc145b2441fcc08ccfcaed94ea8b4f05e060400645da3469a5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c3/458223e13afb124ef58300474cfce246ad33b7b887fd2cc4ff84b60cd9df8a.bin
@@ -4200,6 +4397,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c3/d3a3b2295d23807103d742fb188c8f02cb565af42fae80dbf7e821cf241d83.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c3/d3a3b2295d23807103d742fb188c8f02cb565af42fae80dbf7e821cf241d83.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c4
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c4/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c4/16e56bdc225138204dff0fdd2b3e378d89a90b412865c67da02ccffbd37f10.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c4/16e56bdc225138204dff0fdd2b3e378d89a90b412865c67da02ccffbd37f10.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c4/200e0f3d3f53c32ba8995258bb31f1db52b0b5f64c7fe4bee35abd71bb6103.bin
@@ -4217,6 +4415,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c4/e9a5fa1ef90c98f0f788c28f274178a7b2780ed7014548aef09587fec5def5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c4/e9a5fa1ef90c98f0f788c28f274178a7b2780ed7014548aef09587fec5def5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c5
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c5/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c5/06a2852be1f48284b2797eb77cf446cb810a5b279f3ff13a5398a67529b358.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c5/06a2852be1f48284b2797eb77cf446cb810a5b279f3ff13a5398a67529b358.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c5/37f5b312953e672f8af1b84acbf717e4e0a4908100b155e64e0787aabd6b83.bin
@@ -4240,6 +4439,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c5/db831ce11a4a018f322109a957ee6f8f642fed8fab313da5d28ec91ad34b62.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c5/db831ce11a4a018f322109a957ee6f8f642fed8fab313da5d28ec91ad34b62.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c6
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c6/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c6/16b92dd02a68e425b50de371b5c9cdfc10efe9a6b94011287f2062f449a6dc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c6/16b92dd02a68e425b50de371b5c9cdfc10efe9a6b94011287f2062f449a6dc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c6/45eabe367d74dbc34287cd94b2dae45658ffc01ffef33ee128efe1f68ec13d.bin
@@ -4253,6 +4453,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c6/f593c7816acc4ba115b861fc6bd1b839f6c4a557664a1be48ecccfe5a8eadd.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c6/f593c7816acc4ba115b861fc6bd1b839f6c4a557664a1be48ecccfe5a8eadd.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c7
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c7/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c7/0259cc235931026f6767aec0e6ba7ab43b5d92cb505b4ccfe46824978219c3.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c7/0259cc235931026f6767aec0e6ba7ab43b5d92cb505b4ccfe46824978219c3.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c7/15acb9cae7b8d086c8a7c417e9e9bf02ba7cb1d990fec33c80a7fbb15d84da.bin
@@ -4280,6 +4481,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c7/fececc0834793c2ddc7027bc88ff543436af34132f3f9352271a7f1101937c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c7/fececc0834793c2ddc7027bc88ff543436af34132f3f9352271a7f1101937c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c8
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c8/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c8/076e84788e4477ba553ce3ade99e4b026df05c2eab1cd16202962691ae1367.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c8/076e84788e4477ba553ce3ade99e4b026df05c2eab1cd16202962691ae1367.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c8/08b0c6a4bf6e48479396e6cb626f3a6f29d27f94d413da184cf956bbd1ed09.bin
@@ -4309,6 +4511,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c8/e858e523f2702834550537425aed4e4bfa9bb52a6a241c404f6cd4b2c9d777.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c8/e858e523f2702834550537425aed4e4bfa9bb52a6a241c404f6cd4b2c9d777.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c9
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/c9/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c9/19686df52bc2b91bbf31d1174e2faceeeb95de87c24a4ded3801c1ef87e1cf.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c9/19686df52bc2b91bbf31d1174e2faceeeb95de87c24a4ded3801c1ef87e1cf.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c9/213f2dc8afcf791d7d936854d9bcfe8eed7c2774c195220f653364f40e4aab.bin
@@ -4342,6 +4545,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/c9/ffcd90863953fb014d28b892bc1e115147c73d732ab62e5e3a04358ba2c85a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/c9/ffcd90863953fb014d28b892bc1e115147c73d732ab62e5e3a04358ba2c85a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ca
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ca/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ca/17eb6f8f33cb7bdcbdfd62a584feb2fb1206404e907f06209f6c3b23507211.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ca/17eb6f8f33cb7bdcbdfd62a584feb2fb1206404e907f06209f6c3b23507211.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ca/1db49723915ee2988b835ee13693ee34fd1abbea412fda290c2fd22846359d.bin
@@ -4369,6 +4573,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ca/e184fc7f576337b5cdb5bd3e008b15b4644895604e2c49aa238234b406e2d9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ca/e184fc7f576337b5cdb5bd3e008b15b4644895604e2c49aa238234b406e2d9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cb
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/cb/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cb/04984a4ae7dc685d0b904db7e5856642816434f48b0e8082a604992bec948d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/cb/04984a4ae7dc685d0b904db7e5856642816434f48b0e8082a604992bec948d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cb/14cbfb94265cc8e024b52562a2e577f43a52fd70bbad5c26ab60eda2deab85.bin
@@ -4398,6 +4603,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cb/fa1aac6ed1909cb96233c402074ca77ec4257d43dd1a106b854f2388ceb182.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/cb/fa1aac6ed1909cb96233c402074ca77ec4257d43dd1a106b854f2388ceb182.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cc
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/cc/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cc/0af60112bec2167c0d6df66f45080a6f5a686666ba39b58016b2e7625842a2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/cc/0af60112bec2167c0d6df66f45080a6f5a686666ba39b58016b2e7625842a2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cc/1c28a6dc9b1f2aab97cb904b2088575306c589ca17d2d83e4f20691b80827a.bin
@@ -4421,6 +4627,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cc/db80ee271740b296d36a725c905d39f7d70ea3a4130d0371e71e5463e078e2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/cc/db80ee271740b296d36a725c905d39f7d70ea3a4130d0371e71e5463e078e2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cd
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/cd/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cd/1157d364c26aa5216e9cab06b3e54686da8c861fe7b20d3919e711a319ddce.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/cd/1157d364c26aa5216e9cab06b3e54686da8c861fe7b20d3919e711a319ddce.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cd/148591b154f1892ff2092cc7856ddb610786e1d9b0825b9b88746c269ed90f.bin
@@ -4440,6 +4647,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cd/dd815738291055a4b794ca3bf141fb1a2ee5f486a032b7831584589c4e08a9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/cd/dd815738291055a4b794ca3bf141fb1a2ee5f486a032b7831584589c4e08a9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ce
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ce/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ce/452e600366e0d9d064827061e451358e786853e98db82c12cd8f4783714c9d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ce/452e600366e0d9d064827061e451358e786853e98db82c12cd8f4783714c9d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ce/51dd63daa0a9092b10c7c78eac2039bc36d930790e63af9bb368088d84dd4b.bin
@@ -4451,6 +4659,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ce/b1308271fed159c1a96d1f8081fcd867f08e6e84bc8c085b62f3ee325ac1b4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ce/b1308271fed159c1a96d1f8081fcd867f08e6e84bc8c085b62f3ee325ac1b4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cf
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/cf/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cf/09b6fb143b0d595ea3d80703107d5ef3cb636f4572cfcd6d5497b3f665634a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/cf/09b6fb143b0d595ea3d80703107d5ef3cb636f4572cfcd6d5497b3f665634a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cf/11a93b4261285bc41d607753571a78d9de0714439f08fd34b27158496a0f7b.bin
@@ -4474,6 +4683,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/cf/e3d030ea8e6364419af1dfa8a37fc126e2371e5cad2fe213d3a7cdbd879649.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/cf/e3d030ea8e6364419af1dfa8a37fc126e2371e5cad2fe213d3a7cdbd879649.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d0
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d0/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d0/4f4aef17a2207112ef6609daf473e4f2d2ce930200a6e6770f0c062c46b5bc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d0/4f4aef17a2207112ef6609daf473e4f2d2ce930200a6e6770f0c062c46b5bc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d0/5b18c8e2e3fe0e4506b3361fb7a4e26eabdd921e4cb4f81b05e978e412a1b6.bin
@@ -4491,6 +4701,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d0/fe2f092116b09069a02433b669fe1aa893fbfb7e04f9e38008bb0654d12112.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d0/fe2f092116b09069a02433b669fe1aa893fbfb7e04f9e38008bb0654d12112.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d1
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d1/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d1/038dabd7b0992f701f646d330e70a4370e526da351a2701c6d5c6b63e57280.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d1/038dabd7b0992f701f646d330e70a4370e526da351a2701c6d5c6b63e57280.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d1/173e115572b4d415ec9116fd32c816c7b63e299fe1f16d882b48d9f7246603.bin
@@ -4506,6 +4717,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d1/fdc84e2e0fc15353b223f2046f6d6e2ad2184efb484e0bad3cf829129bccc4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d1/fdc84e2e0fc15353b223f2046f6d6e2ad2184efb484e0bad3cf829129bccc4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d2
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d2/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d2/0d930b0aacf53af970e9cebcc4dd2f5f4462788694744d5d0f61be3af0a624.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d2/0d930b0aacf53af970e9cebcc4dd2f5f4462788694744d5d0f61be3af0a624.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d2/10bab51c951c56bb5701d3e6634962965826fe9ac7b2bd1546a3e5f4dcb36b.bin
@@ -4527,6 +4739,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d2/ea2e849a518148ba691eed21891e9a613bc275b3184e910b3bb7d460919648.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d2/ea2e849a518148ba691eed21891e9a613bc275b3184e910b3bb7d460919648.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d3
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d3/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d3/1e7ba3ab9612130c22d3d1e9dc6b93669b16ace4f40f71d895befc5f2f7481.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d3/1e7ba3ab9612130c22d3d1e9dc6b93669b16ace4f40f71d895befc5f2f7481.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d3/2d8ba925c0165fcb9b2dfef48caf4abbe0046bbde37a8686d6ea33c2472335.bin
@@ -4544,6 +4757,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d3/e66810356bbe431c36217b54710216fb29e6485e8551f8e9eb73713232ce4a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d3/e66810356bbe431c36217b54710216fb29e6485e8551f8e9eb73713232ce4a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d4
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d4/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d4/472074746056f09169060dc7954ed510a47ded033e8e6bd13c384494252371.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d4/472074746056f09169060dc7954ed510a47ded033e8e6bd13c384494252371.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d4/aa3db568b5ce53650e72496f6c4803763723a138cc33ce1db649c5daf16f1e.bin
@@ -4555,6 +4769,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d4/f1926283f39a6701938eee59038d5199d42301900db3691f0ca8fc28ed9707.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d4/f1926283f39a6701938eee59038d5199d42301900db3691f0ca8fc28ed9707.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d5
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d5/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d5/1a2d29860ce70c4e003ab9c8a5d9e735258740d77e7776720936a54c42ffef.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d5/1a2d29860ce70c4e003ab9c8a5d9e735258740d77e7776720936a54c42ffef.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d5/2a3941ac7110fabd6010432a309daa817924c92704a1644d3964762d0db405.bin
@@ -4570,6 +4785,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d5/f7461d2e12fc90817752b35296b6a22b818fadf42cf322c0a9790b38346496.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d5/f7461d2e12fc90817752b35296b6a22b818fadf42cf322c0a9790b38346496.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d6
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d6/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d6/26a996025fd73839f1a6c4f0f507afa408c3140892bd83b0d80d95a906a9ed.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d6/26a996025fd73839f1a6c4f0f507afa408c3140892bd83b0d80d95a906a9ed.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d6/4472ec67f5e4a1d0bc9da585660a77fcfbfff7450c08a48f3fdc53dcf99e88.bin
@@ -4589,6 +4805,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d6/f25549b1b01b52ddc33425ce96322fa87918b5636547b58b8b3285e397357d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d6/f25549b1b01b52ddc33425ce96322fa87918b5636547b58b8b3285e397357d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d7
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d7/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d7/01b36a88b02f1cc5a39d5a39614df88143615b5c9eed5cacd3b72533017eea.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d7/01b36a88b02f1cc5a39d5a39614df88143615b5c9eed5cacd3b72533017eea.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d7/4ccc76e368701eca19a525c18d8be48fcde3479712bfb7aa15e10cb9b1f688.bin
@@ -4608,6 +4825,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d7/cdd7f7c3085b5242b0c93292dda871847747f6398e12440c84500673a7bcd9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d7/cdd7f7c3085b5242b0c93292dda871847747f6398e12440c84500673a7bcd9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d8
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d8/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d8/1118ae1ad2f0a674c8658c7598ac2cfe350ca24a25c6259bcb335e99d74824.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d8/1118ae1ad2f0a674c8658c7598ac2cfe350ca24a25c6259bcb335e99d74824.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d8/4c3c9e7ed4ddb05953cdfe381cf9242843a00119b4c1deeb8ee2ddf1c8ffb4.bin
@@ -4619,6 +4837,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d8/d56de28fb5a504b1937b764003e41331fc5c718c7a43bd44f3d042e4c3fb9d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d8/d56de28fb5a504b1937b764003e41331fc5c718c7a43bd44f3d042e4c3fb9d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d9
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/d9/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d9/067ed3143dad7387e21716537eb0f48ccb74e491a717722d670c28c81cbea9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d9/067ed3143dad7387e21716537eb0f48ccb74e491a717722d670c28c81cbea9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d9/1f379cd0b2768fe256e2c456627377cce65ff4573f995ff023aaaf4f045717.bin
@@ -4640,6 +4859,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/d9/e3366390115ace8af7593a92ab20802752b595b60837cd71efe8a15509af68.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/d9/e3366390115ace8af7593a92ab20802752b595b60837cd71efe8a15509af68.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/da
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/da/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/da/00ec310ffdfc36f265d95e1c896437525dce7010fc2e12e5b313774b5c4c49.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/da/00ec310ffdfc36f265d95e1c896437525dce7010fc2e12e5b313774b5c4c49.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/da/076a5398ecf4996e6775645b544ea8a276116e7d804ffc16ebbc664982a4a9.bin
@@ -4665,6 +4885,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/da/e4c9011b1f4d09de320f01ed87eb470735a98da08f47206e0f624bfcbe005f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/da/e4c9011b1f4d09de320f01ed87eb470735a98da08f47206e0f624bfcbe005f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/db
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/db/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/db/09c4c995fdb353954143010e7608e2efc4ad69f0feaaec2bf2e7cbe0c41526.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/db/09c4c995fdb353954143010e7608e2efc4ad69f0feaaec2bf2e7cbe0c41526.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/db/1b529a40e66c2d7e08ab7417ff0871bf34dfda7c4a267ed80ec3f190350ccb.bin
@@ -4684,6 +4905,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/db/f4e16063f5ffb7456d61bfd2cbb57562d27d77f16e746f6fe88890bf01baff.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/db/f4e16063f5ffb7456d61bfd2cbb57562d27d77f16e746f6fe88890bf01baff.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/dc
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/dc/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/dc/0d96497928ae10af1ab00eaaf65d65b12c04d3c946dcac4075dacc571cffa8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/dc/0d96497928ae10af1ab00eaaf65d65b12c04d3c946dcac4075dacc571cffa8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/dc/31ad72f75c8e27d4d4a3332eac7096513363d04352fff1e143471c22e7d606.bin
@@ -4701,6 +4923,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/dc/b37704e1b52bec8f159d02d0ad0b5b62327ae16c91ed649f1b54a48332c426.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/dc/b37704e1b52bec8f159d02d0ad0b5b62327ae16c91ed649f1b54a48332c426.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/dd
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/dd/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/dd/0b2d9f4474358b4893dfde78e46472e3d3f12cc02d4233848f6318e0bc65fc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/dd/0b2d9f4474358b4893dfde78e46472e3d3f12cc02d4233848f6318e0bc65fc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/dd/10263e0b84de69b813647218ab271eb5c07c9699d88f76a693be3a29c762ae.bin
@@ -4724,6 +4947,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/dd/deb8896351560aff05bccdc1a1323ba710a169170b9759a69b2a52a1ba71af.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/dd/deb8896351560aff05bccdc1a1323ba710a169170b9759a69b2a52a1ba71af.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/de
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/de/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/de/03cb3c2526d4f0fc0a960622cb35a961fefc480d7c43fbe16fc4bfc16fcf0f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/de/03cb3c2526d4f0fc0a960622cb35a961fefc480d7c43fbe16fc4bfc16fcf0f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/de/3a83ad16d16d5c0095790e83f9a0a61a0d06c06d05723cac5c46e38e2439c2.bin
@@ -4739,6 +4963,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/de/acb2b1f5ec29484252f8690b3d3259a3951c92d444142edd87e2e3cbf19300.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/de/acb2b1f5ec29484252f8690b3d3259a3951c92d444142edd87e2e3cbf19300.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/df
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/df/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/df/2789de6ed6ca0229b22ec6de53aab8db73f554954856067668901d4bce00b1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/df/2789de6ed6ca0229b22ec6de53aab8db73f554954856067668901d4bce00b1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/df/7e6a5ebd11821cc5c043e33b5b4d40546c72a8ebd78a3350b0097b2dd44b0f.bin
@@ -4752,6 +4977,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/df/c00e659d9d6020c2086a672a566301c4c71c56f36b93f380daa233e3c0b6f5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/df/c00e659d9d6020c2086a672a566301c4c71c56f36b93f380daa233e3c0b6f5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e0
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e0/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e0/11f59b24383be4e5cc1a70a5223fb789fa62568f00fee034c1a09afa16da53.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e0/11f59b24383be4e5cc1a70a5223fb789fa62568f00fee034c1a09afa16da53.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e0/18eb42f46c931050be118e226f24af87d1aeb1415d34d67b24696957f5a84e.bin
@@ -4777,6 +5003,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e0/fbd159b306ea0cf3cf68aa1d123cd746b1c90aa61690e5e33657837624f8f9.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e0/fbd159b306ea0cf3cf68aa1d123cd746b1c90aa61690e5e33657837624f8f9.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e1
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e1/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e1/00e2551d67afacaf2294827e244751c6431874b33da6bd2c044db6f3d4a629.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e1/00e2551d67afacaf2294827e244751c6431874b33da6bd2c044db6f3d4a629.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e1/121e7429203211c85d74e47842b44625bfdb9ba8a13be8e4b31bdac102266d.bin
@@ -4814,6 +5041,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e1/faaab4a59b4859bd96ee942ebe991c608a71153aae365eb91491845dd73f49.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e1/faaab4a59b4859bd96ee942ebe991c608a71153aae365eb91491845dd73f49.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e2
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e2/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e2/51469bf0279be218211bf6a1f478cdedf33a02d09faf4268f551d90b09c00a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e2/51469bf0279be218211bf6a1f478cdedf33a02d09faf4268f551d90b09c00a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e2/59081b9bef89885ef892e8385efa92aed8fd4f303ab89066bc3302e7099569.bin
@@ -4831,6 +5059,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e2/ee25c7dd86a9bd1c30a7c2746550bf7c3432fc095c646d0c2586deeb70b2b4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e2/ee25c7dd86a9bd1c30a7c2746550bf7c3432fc095c646d0c2586deeb70b2b4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e3
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e3/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e3/16cfd81475483cfc991577a180eafaa2661a347bc645a662ae16535b85b55d.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e3/16cfd81475483cfc991577a180eafaa2661a347bc645a662ae16535b85b55d.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e3/25af0f651700c761377a58e0b958197d6eb31b58396d1702dc68ab3077b427.bin
@@ -4852,6 +5081,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e3/ea5b56254ffc3bff79c57cd8cc5e703ffd9d7a12ce568c141699effb8e6857.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e3/ea5b56254ffc3bff79c57cd8cc5e703ffd9d7a12ce568c141699effb8e6857.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e4
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e4/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e4/085e56f49c8a9ad2ae43bf9477c600ce950831fdb73a83641869d881fc5a1e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e4/085e56f49c8a9ad2ae43bf9477c600ce950831fdb73a83641869d881fc5a1e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e4/11f82cd4fc18f3c69a0aef34af55fba6c0b3c6597cade31a2fb4c2ad736278.bin
@@ -4879,6 +5109,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e4/ec629ad822b6121e5212d4484029094c1be759eb1b9cf9540cef2ea72ac04f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e4/ec629ad822b6121e5212d4484029094c1be759eb1b9cf9540cef2ea72ac04f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e5
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e5/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e5/1ba194b7e4b776e51d630eb9e17a5f0d3d35d9af5e08dffe7fd43e9270e4f4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e5/1ba194b7e4b776e51d630eb9e17a5f0d3d35d9af5e08dffe7fd43e9270e4f4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e5/2b89011fd2f62258e434f3818cc6bd8bbd4c5f71775647afbc124e750d2bab.bin
@@ -4904,6 +5135,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e5/f8ef9c4165ef3a143a2954240ae19e771659df2b1db2b90deba7ec6f22dd23.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e5/f8ef9c4165ef3a143a2954240ae19e771659df2b1db2b90deba7ec6f22dd23.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e6
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e6/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e6/1831c9b0af278026256930aa09a428833d1e8937fe231eb8c32d1e46fd86d5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e6/1831c9b0af278026256930aa09a428833d1e8937fe231eb8c32d1e46fd86d5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e6/306b7daf08073d7e93df3a0e527c97b2be914ab0e6456584d94be1426b92c9.bin
@@ -4933,6 +5165,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e6/f33cda64d97c00bc8089becbd45a56e9bff271e25eebe1f7098d12dca944d4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e6/f33cda64d97c00bc8089becbd45a56e9bff271e25eebe1f7098d12dca944d4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e7
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e7/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e7/30933ed2d7ccbf5d3f1c63930cc891ba33fb8149096dbf20c4d175f3b8ff3c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e7/30933ed2d7ccbf5d3f1c63930cc891ba33fb8149096dbf20c4d175f3b8ff3c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e7/7f05cb0cdd7a36892898b32d57c5e5c02ff23cd35cf42f8b01a33bea19036b.bin
@@ -4946,6 +5179,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e7/eebf58963b00552a657a21293fd94008734aabbb99691ae8715d15e0d214d1.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e7/eebf58963b00552a657a21293fd94008734aabbb99691ae8715d15e0d214d1.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e8
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e8/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e8/0ea46be5bbaf8b668b016b991e844f877e761913b715dd36c51a64cd1e49af.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e8/0ea46be5bbaf8b668b016b991e844f877e761913b715dd36c51a64cd1e49af.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e8/76c2fc6a4efff734c7dced3c37f7869d758334a67e09bb37041c8c3a4a5dbf.bin
@@ -4957,6 +5191,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e8/ff10deda73a6485e8369dd32b546a8b1c4b995719ffb73d3ceeb70c1e9eea8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e8/ff10deda73a6485e8369dd32b546a8b1c4b995719ffb73d3ceeb70c1e9eea8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e9
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/e9/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e9/009fba217b33e7f9e0d67d7201beea2d03360ea1c580f86d7992c952d1c379.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e9/009fba217b33e7f9e0d67d7201beea2d03360ea1c580f86d7992c952d1c379.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e9/30b3a6448f460611bac8e7ddfaa2db70b867449fee61345320ac7df763f630.bin
@@ -4980,6 +5215,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/e9/fe58b3a79ca044b3495784702c0b2a79f144d473424a47b02076ccd8faa6cc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/e9/fe58b3a79ca044b3495784702c0b2a79f144d473424a47b02076ccd8faa6cc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ea
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ea/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ea/21f4fc454fcc7b310f205d8bc81dbd6a52824c392815930e7e7547847fc166.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ea/21f4fc454fcc7b310f205d8bc81dbd6a52824c392815930e7e7547847fc166.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ea/315b4bac3b6e76a9071795267a8db22c0636e7dc48c173ec26f4c2c1792709.bin
@@ -4997,6 +5233,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ea/ff2a379b5bca835f41b8478a2821769df069804621583c0ee13fae49869b3c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ea/ff2a379b5bca835f41b8478a2821769df069804621583c0ee13fae49869b3c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/eb
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/eb/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/eb/18b24fc986f1a3896c6cfa96d15cc0093e7bbc6072fd9483bd60a6a9254222.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/eb/18b24fc986f1a3896c6cfa96d15cc0093e7bbc6072fd9483bd60a6a9254222.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/eb/2af905421a1462a622118af9a7a54239c1642ae8d70271c223fc9b7446202a.bin
@@ -5022,6 +5259,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/eb/f58c3d03a5c0577ba05c702f6ee3f5c665ad9b3b30f4f0edf4a1360485a280.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/eb/f58c3d03a5c0577ba05c702f6ee3f5c665ad9b3b30f4f0edf4a1360485a280.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ec
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ec/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ec/29961730b8bbdcf25eaf87470bafae7746f1cb62c0b55bb16128429d0630ab.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ec/29961730b8bbdcf25eaf87470bafae7746f1cb62c0b55bb16128429d0630ab.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ec/a4fd5ed003d6195fbe2aafe9be5f1b1ebe7341fbb2611b1ccb92d9aa81e671.bin
@@ -5035,6 +5273,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ec/fbc76901599ece22bb0b0f6385f8ccfffb719e0b25f10e7a46fa3a74907384.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ec/fbc76901599ece22bb0b0f6385f8ccfffb719e0b25f10e7a46fa3a74907384.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ed
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ed/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ed/15fa37fe3271eecdc3165019c48de893d372ecd9e303d4eae3c5d5659b1ea8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ed/15fa37fe3271eecdc3165019c48de893d372ecd9e303d4eae3c5d5659b1ea8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ed/266c3f5e018792483ae3876159ee78a424aae8f0bb63f1650866777a87e71a.bin
@@ -5054,6 +5293,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ed/f062405748f353f297df471ef1f35189f3c4da6764f4aeb0ba84ab726ad13f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ed/f062405748f353f297df471ef1f35189f3c4da6764f4aeb0ba84ab726ad13f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ee
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ee/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ee/002fe6ec7b6a65a2d33725ab81614fea1e198780b5b2a707e383b423efe78b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ee/002fe6ec7b6a65a2d33725ab81614fea1e198780b5b2a707e383b423efe78b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ee/0803a96cb50ff8500a5064efbce9e1f1e5dcc721e2cf64e7cf1b9719c5396a.bin
@@ -5085,6 +5325,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ee/f2c3b3f2a77e7526c965101a6256cdda53fd4d2a5c536d548285cb0bf48338.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ee/f2c3b3f2a77e7526c965101a6256cdda53fd4d2a5c536d548285cb0bf48338.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ef
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ef/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ef/079ecb168cce54bd202aa35783f2dfe6272fa8e90ea152ce8c7e0907e2250f.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ef/079ecb168cce54bd202aa35783f2dfe6272fa8e90ea152ce8c7e0907e2250f.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ef/0d236a5d3006cf29dcbffd69793318749f198971b5dac169d37a5823ab79dc.bin
@@ -5112,6 +5353,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ef/ffe91da66a0d458cca4ec8f50299b4faeeb6df54457708df19e4db601b6643.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ef/ffe91da66a0d458cca4ec8f50299b4faeeb6df54457708df19e4db601b6643.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f0
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f0/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f0/194cad10e9b13d295cef8c32c4de8e99ab6c9c35a493a88ce230f4969bb454.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f0/194cad10e9b13d295cef8c32c4de8e99ab6c9c35a493a88ce230f4969bb454.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f0/1e9eaef2202cc02dfa9d00c18681215e34b3fd09c254eff43f160bb770b352.bin
@@ -5137,6 +5379,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f0/c91d157cc80c6329e95c6d007f9fa536730d4cadd04e600ab3249ba4902641.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f0/c91d157cc80c6329e95c6d007f9fa536730d4cadd04e600ab3249ba4902641.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f1
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f1/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f1/411e11be8a16fa3e543d7ca9ba8016fd6d598d668110675974390bbcb94a98.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f1/411e11be8a16fa3e543d7ca9ba8016fd6d598d668110675974390bbcb94a98.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f1/527609ec41377fc0020df6d1d87cdc378717939d6c439edc6328384352f641.bin
@@ -5158,6 +5401,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f1/fb3351ae8c82f95d76a85303a33be07a1e2be23a1fbb18bb648747c3466c71.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f1/fb3351ae8c82f95d76a85303a33be07a1e2be23a1fbb18bb648747c3466c71.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f2
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f2/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f2/00f0236507dd3b2ec8fccb529122b794fa119efd564b0362a600856b70c28e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f2/00f0236507dd3b2ec8fccb529122b794fa119efd564b0362a600856b70c28e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f2/102b7af160518565f927f3d707f8dfd359c12a2d98747e5a4d71a4887da7a7.bin
@@ -5179,6 +5423,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f2/a7dcd1b5e7d3517d9eb8dbcab1183748a45ff13db2efab57c5b4c454371ca2.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f2/a7dcd1b5e7d3517d9eb8dbcab1183748a45ff13db2efab57c5b4c454371ca2.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f3
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f3/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f3/0dda79ce8c578615d7d46fd97f2c80dde8e2e793843ba3a4da38614d7c1cac.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f3/0dda79ce8c578615d7d46fd97f2c80dde8e2e793843ba3a4da38614d7c1cac.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f3/3930d3b87b85df1b8896725c54522273480ed14b91e97b53b8c0022a897000.bin
@@ -5206,6 +5451,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f3/f73961211dca9bff39ba2162a9f1da987a43fe59ed84292c68055fffbc919a.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f3/f73961211dca9bff39ba2162a9f1da987a43fe59ed84292c68055fffbc919a.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f4
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f4/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f4/021969308b2575041cce057a7c6d845609009358ac66960d0d3373beb8e8bb.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f4/021969308b2575041cce057a7c6d845609009358ac66960d0d3373beb8e8bb.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f4/087d4562d1e6b63a6f3daa26a29e606087ac6320cdc3308325478dc3ee21d4.bin
@@ -5231,6 +5477,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f4/c767c16f7a663c056999378d46bc7931e06371f32b1d6faa6f47477c68f968.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f4/c767c16f7a663c056999378d46bc7931e06371f32b1d6faa6f47477c68f968.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f5
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f5/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f5/25d5d32f4822444b76f54d0dc2b736d64ba7108db2c9e5607b1ea9bcdd093b.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f5/25d5d32f4822444b76f54d0dc2b736d64ba7108db2c9e5607b1ea9bcdd093b.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f5/82e0f4a20f7c94d067cbce4b7044106a7064ddd5eb7b9e56d648d5b0675e98.bin
@@ -5242,6 +5489,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f5/e00638abd9e9de7a30950e0db0b071cd79400aaeba358cfef5ad9713593aaf.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f5/e00638abd9e9de7a30950e0db0b071cd79400aaeba358cfef5ad9713593aaf.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f6
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f6/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f6/1a5f77cbd272af5f49d2af219dfd470b37279537e13cf3899a1baf217fdb74.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f6/1a5f77cbd272af5f49d2af219dfd470b37279537e13cf3899a1baf217fdb74.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f6/40fad7931152928e8dc6c45538be75a2d8e1073c95e6da8efee845e973b882.bin
@@ -5261,6 +5509,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f6/e68b269ac764af239176b6c2df0e36f5394773e5743908a14deb4b50b601cc.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f6/e68b269ac764af239176b6c2df0e36f5394773e5743908a14deb4b50b601cc.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f7
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f7/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f7/105fd1a56e88bab49204dd5f423d25689952723429cc5de42ab3572bbf4b6e.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f7/105fd1a56e88bab49204dd5f423d25689952723429cc5de42ab3572bbf4b6e.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f7/550351fbc90eb22147e9d2d2769cdcccfe701d85a71fbb4165cb37b767169f.bin
@@ -5282,6 +5531,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f7/dc97648571bdda0c40d8e14c2eb7609320088ae13275ca7fc8b542a94ded78.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f7/dc97648571bdda0c40d8e14c2eb7609320088ae13275ca7fc8b542a94ded78.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f8
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f8/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f8/04f906bb48de3c511b4dfa5396e1bd2ae86a90d7e2763de85161a215c34807.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f8/04f906bb48de3c511b4dfa5396e1bd2ae86a90d7e2763de85161a215c34807.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f8/0cc2b04429d074466e0669882b0e19487c9635b1e9315c5eca79612a349862.bin
@@ -5309,6 +5559,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f8/f36aac107ce3ee6719eac5dbe1b925f123d41efa2ad1b52486b5551150c2b8.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f8/f36aac107ce3ee6719eac5dbe1b925f123d41efa2ad1b52486b5551150c2b8.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f9
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/f9/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f9/05d1c9202c84da265be51c08db952b9b3ce061c5d066b416a1cbf72f214d49.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f9/05d1c9202c84da265be51c08db952b9b3ce061c5d066b416a1cbf72f214d49.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f9/0929aece8165837d363b5d59da71dfc52e8b6fd5452f705621d0738edd87c0.bin
@@ -5328,6 +5579,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/f9/f217211f9356e068cccd8e4fcab27fe107ea402a327b0f331c2ae39392e925.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/f9/f217211f9356e068cccd8e4fcab27fe107ea402a327b0f331c2ae39392e925.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fa
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/fa/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fa/1fd9588b34b1b2387db602353bd5c6b5ccd472661210c2dd61c06dfc56a6a4.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fa/1fd9588b34b1b2387db602353bd5c6b5ccd472661210c2dd61c06dfc56a6a4.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fa/3761f0783f1a3610f601ea1023a0babc620f016d102048355ac50076dcc78d.bin
@@ -5347,6 +5599,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fa/bfb719a664f0e8b758fa1250782d331c496db1a0c1cbd70bece067a9263017.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fa/bfb719a664f0e8b758fa1250782d331c496db1a0c1cbd70bece067a9263017.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fb
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/fb/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fb/6d5a29fa1043f02bf2ee7d56be0462f8b8f85aa3788212c51b536b513828f5.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fb/6d5a29fa1043f02bf2ee7d56be0462f8b8f85aa3788212c51b536b513828f5.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fb/9756c8670dabe3def9d6979fa408a47220e9a9ba011bf73ff7940cdd407f56.bin
@@ -5368,6 +5621,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fb/f526a870b7ad1a3aa38bdac70846ef50d92c6ab3c9f678063919c6c9582381.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fb/f526a870b7ad1a3aa38bdac70846ef50d92c6ab3c9f678063919c6c9582381.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fc
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/fc/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fc/21174a01d0eca85212f942e6b4769537b4b62bcb3450d168f64bf260689d15.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fc/21174a01d0eca85212f942e6b4769537b4b62bcb3450d168f64bf260689d15.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fc/5d6de77ea2a8e69b7833e6bf1f08abcc611359d752e1c2aee29360a80a35e5.bin
@@ -5389,6 +5643,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fc/f082738667dcc67a886a0d14bbf89349efde7a0daf7cf2a0cc1d57d6685bb6.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fc/f082738667dcc67a886a0d14bbf89349efde7a0daf7cf2a0cc1d57d6685bb6.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fd
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/fd/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fd/0a018cd0a820c9abd0ad6eb0c5a030f0e8c52dba9639306cf775df76b771c7.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fd/0a018cd0a820c9abd0ad6eb0c5a030f0e8c52dba9639306cf775df76b771c7.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fd/38be139dcfb79c5235735aebdf2d026dfffc2019af8983c1aa12051bec765f.bin
@@ -5402,6 +5657,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fd/ca313b3f253c939ff7d2dd6b6f30311533892e8c3dcd54abaf6dd587584dcd.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fd/ca313b3f253c939ff7d2dd6b6f30311533892e8c3dcd54abaf6dd587584dcd.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fe
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/fe/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fe/045c384766bb3492e79d441ff65b510edbbef4b6cbb212665d42d07c30aa07.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fe/045c384766bb3492e79d441ff65b510edbbef4b6cbb212665d42d07c30aa07.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fe/5e1442bcd4d38f21e1aeb67cba86594d49e0632b6108cac7fc494a5b6813a8.bin
@@ -5419,6 +5675,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [L 밖] 워킹트리 .palimpsest/cache/fe/f1078022af63a2792c5f8e3cad3afd81281fc741c4025dc0f631132a7b7e9c.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/fe/f1078022af63a2792c5f8e3cad3afd81281fc741c4025dc0f631132a7b7e9c.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ff
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/cache/ff/
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ff/125d1b82f1aba75597a0700c9e99e323887464a33795c60cdad023b72f02ba.bin
   ✗ [화면에 없다] 워킹트리 .palimpsest/cache/ff/125d1b82f1aba75597a0700c9e99e323887464a33795c60cdad023b72f02ba.bin
   ✗ [L 밖] 워킹트리 .palimpsest/cache/ff/457507905b028b5d1de1ba627953c7eac30c597d8248f76ad4850c57eb41f5.bin
@@ -5448,12 +5705,19 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [화면에 없다] 워킹트리 .palimpsest/intent.redb
   ✗ [L 밖] 워킹트리 .palimpsest/narrative-pending.json
   ✗ [화면에 없다] 워킹트리 .palimpsest/narrative-pending.json
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/rounds/
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/rounds/open-round/
   ✗ [화면에 없다] 워킹트리 .palimpsest/rounds/open-round/intent.md
   ✗ [화면에 없다] 워킹트리 .palimpsest/rounds/open-round/verification.log
+  ✗ [화면에 없다·빈 디렉터리] 워킹트리 .palimpsest/rounds/sealed-round/
   ✗ [화면에 없다] 워킹트리 .palimpsest/rounds/sealed-round/findings.jsonl
   ✗ [화면에 없다] 워킹트리 .palimpsest/rounds/sealed-round/intent.md
   ✗ [화면에 없다] 워킹트리 .palimpsest/rounds/sealed-round/report.md
   ✗ [화면에 없다] 워킹트리 .palimpsest/rounds/sealed-round/verification.log
+  ✗ [화면에 없다·빈 디렉터리] HOME Library/
+  ✗ [화면에 없다·빈 디렉터리] HOME Library/Application Support/
+  ✗ [화면에 없다·빈 디렉터리] HOME Library/Application Support/palimpsest/
+  ✗ [화면에 없다·빈 디렉터리] HOME Library/Application Support/palimpsest/approvals/
   ✗ [화면에 없다] HOME Library/Application Support/palimpsest/approvals/9977686572021150ed8f8b9110f32ba716dc90944eb8af0042727a2eb622a529.json
   ✗ [화면에 없다] HOME Library/Application Support/palimpsest/approvals/cd65967dfb69c476914e5f2fbda3bde412667b6e4595cd636f410a612495b8b4.json
   ✗ [화면에 없다] HOME Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.json
@@ -5461,7 +5725,7 @@ origin          : https://github.com/incognito050924/ditto.git
   ✗ [화면에 없다] HOME Library/Application Support/palimpsest/approvals/round-stop-progress-a7b997d75d2ae27a04683b99ddea4e1c20ad592d17f16ed2fce84d7ed8cb8051.lock
   갈림 2729 (워킹트리 2721 · HOME 8) · 그 가운데 디렉터리 265
   ① L 밖 갈림            2711
-  ② 화면에 없는 갈림       2464   (디렉터리 엔트리는 뺀다 — L 이 「그 자리의 부모 디렉터리」로 이미 허용한 자리다)
+  ② 화면에 없는 갈림       2728   (디렉터리 자리는 그 안에 남은 파일이 화면에 있으면 갈음한다 — 그 디렉터리는 남은 파일 때문에 있다)
   ③ 잰 정본 자리 11 · 직전 바이트와 갈린 것 0
 
 판정: 어긋남  (rc=1)

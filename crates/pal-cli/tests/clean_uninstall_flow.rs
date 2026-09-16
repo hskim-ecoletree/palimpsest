@@ -53,6 +53,8 @@ struct 방 {
     base: PathBuf,
     repo: PathBuf,
     home: PathBuf,
+    /// `palimpsest/` 의 부모가 **설치 전에 이미 있었나** — 조상 기록이 생길 방인지를 가른다.
+    조상_미리_있었나: bool,
     _잠금: Option<MutexGuard<'static, ()>>,
 }
 
@@ -83,7 +85,9 @@ impl 방 {
         let repo = base.join("repo");
         std::fs::create_dir_all(repo.join("src")).expect("src");
         std::fs::create_dir_all(repo.join("docs")).expect("docs");
-        let 방 = Self { base, repo, home, _잠금: 잠금 };
+        let mut 방 = Self { base, repo, home, 조상_미리_있었나: false, _잠금: 잠금 };
+        // pal 을 아직 한 번도 안 돌린 자리에서 붙잡는다.
+        방.조상_미리_있었나 = 방.조상().is_dir();
         방.쓴다("tsconfig.json", r#"{"compilerOptions":{"moduleResolution":"bundler"}}"#);
         방.쓴다(
             "src/core.ts",
@@ -359,7 +363,17 @@ fn 흐름(방: &방) -> 흔적 {
     for path in 흔적.밖의_정본(&store).into_iter().chain(흔적.운영_상태(&store)) {
         assert!(path.is_file(), "생겼어야 할 밖의 기록이 없다: {}", path.display());
     }
-    assert!(방.조상_기록().is_file(), "생겼어야 할 조상 기록이 없다: {}", 방.조상_기록().display());
+    // 조상 기록은 `palimpsest/` **위쪽에 조상을 새로 만든 방에서만** 쓴다(`round/approval.rs` 의 `created.is_empty()`).
+    // Windows 는 `%LOCALAPPDATA%` 가 이미 있어 적을 조상이 없다 — 그 방에서는 기록이 **없는 것이 옳다**. 양쪽을 다 건다.
+    if 방.조상_미리_있었나 {
+        assert!(
+            !방.조상_기록().exists(),
+            "적을 조상이 없는데 조상 기록이 생겼다: {}",
+            방.조상_기록().display()
+        );
+    } else {
+        assert!(방.조상_기록().is_file(), "생겼어야 할 조상 기록이 없다: {}", 방.조상_기록().display());
+    }
     흔적
 }
 
@@ -435,7 +449,10 @@ fn l_밖(방: &방, 흔적: &흔적) -> BTreeSet<String> {
     let store = 방.저장소();
     let mut out: BTreeSet<String> =
         흔적.밖의_정본(&store).iter().map(|p| 방.밖_상대(p)).collect();
-    out.insert(방.밖_상대(&방.조상_기록()));
+    // 조상 기록은 **조상을 새로 만든 방에서만** 생긴다 — 미리 있던 방(Windows 의 `%LOCALAPPDATA%`)에서는 `L` 에도 안 든다.
+    if !방.조상_미리_있었나 {
+        out.insert(방.밖_상대(&방.조상_기록()));
+    }
     let 뿌리 = 방.뿌리();
     let mut 부모 = Some(store.as_path());
     while let Some(p) = 부모 {

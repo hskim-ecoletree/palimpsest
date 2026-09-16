@@ -538,6 +538,15 @@ fn b7_기본_uninstall_은_설치_뒤에_생긴_추적_안_된_정본을_남긴�
 #[test]
 fn b8_기본_uninstall_뒤에_곧바로_purge_가_남은_정본을_걷는다() {
     let 방 = 방::문서("b8-곧바로");
+    // `.claude/` 아래 **사용자의 것**을 미리 놓는다 — B8 문면의 「건드리지 않는다」가 재는 모집단이다.
+    for (rel, body) in [
+        (".claude/agents/mine.md", "# 내 에이전트\n"),
+        (".claude/commands/mine/cmd.md", "# 내 명령\n"),
+    ] {
+        let path = 방.자리(rel);
+        std::fs::create_dir_all(path.parent().expect("부모")).expect("사용자 디렉터리");
+        std::fs::write(&path, body).expect("사용자 파일");
+    }
     let 전 = 워킹트리(&방.repo);
     방.성공(&["install"]);
     방.성공(&["touch", "target"]);
@@ -560,10 +569,22 @@ fn b8_기본_uninstall_뒤에_곧바로_purge_가_남은_정본을_걷는다() {
 #[test]
 fn b8_설치한_적_없는_저장소의_purge_는_한_바이트도_안_쓴다() {
     let 방 = 방::문서("b8-없음");
+    // `.claude/` 아래 **사용자의 것**을 미리 놓는다 — B8 문면의 「건드리지 않는다」가 재는 모집단이다.
+    for (rel, body) in [
+        (".claude/agents/mine.md", "# 내 에이전트\n"),
+        (".claude/commands/mine/cmd.md", "# 내 명령\n"),
+    ] {
+        let path = 방.자리(rel);
+        std::fs::create_dir_all(path.parent().expect("부모")).expect("사용자 디렉터리");
+        std::fs::write(&path, body).expect("사용자 파일");
+    }
+    let path = 방.자리(".claude/settings.json");
+    std::fs::write(&path, "{\n  \"hooks\": {}\n}\n").expect("사용자 settings.json");
     let 전 = 워킹트리(&방.repo);
     let 화면 = 방.성공(&["uninstall", "--purge"]);
     assert!(화면.contains("매니페스트 없음"), "매니페스트가 없다는 사실을 말하지 않았다:\n{화면}");
     assert_eq!(갈린_경로(&전, &워킹트리(&방.repo)), Vec::<String>::new(), "한 바이트라도 썼다");
+    assert!(!화면.contains(".claude/agents/mine.md"), "사용자의 `.claude/` 파일을 화면에 올렸다:\n{화면}");
 }
 
 /// **B9** — 설치 → 사용 → 기본 uninstall → 재설치 → `--purge` 왕복 뒤 빈 `.palimpsest/` 도 안 남는다.
