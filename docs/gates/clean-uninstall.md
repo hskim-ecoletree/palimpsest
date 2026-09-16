@@ -70,9 +70,9 @@ E1 셈 스크립트 자신의 양성 · 음성 · 0 개 대조는 `oracle/E1-scr
 | D1~D4 | `clean_uninstall_external` 23 — 표시 파일 · 조상 기록 · 두 프로젝트 방 · worktree 넷 | 시험 · `oracle/T3-*.txt` |
 | F1 | `effect/f1-run.sh` 두 걸음 — 이번 빌드 통과(기본: 갈림 21 · `L` 밖 0 · 화면에 없는 갈림 0 · 정본 13 자리 직전 바이트 / `--purge`: 갈림 0) · 착수 바이너리 두 걸음 어긋남(`L` 밖 2711 · 2739) | `effect/f1-*.txt` |
 | G1 | **세 OS CI 런 `35120132604`(`46d4e03`)** — `clean_uninstall_flow` 가 ubuntu 11 · macos 11 · **windows 14** 전부 초록. 한 흐름을 밟고 `--purge` 뒤 워킹트리·저장소 자리가 설치 전과 같고, 기본 변형은 갈림이 `L` 안에만. ⚠ 앞 런에서는 이 시험 둘이 windows 에서 빨갰다 — 시험이 「조상 기록이 안 생기는 방」을 안 가렸다(독립 리뷰 R1 #1·#4). 고친 자리와 그 모양을 macOS 에서 모사한 양성·음성 대조는 `oracle/G1-windows-shape.txt` | CI 런 · 시험 · `oracle/T4-*.txt` |
-| E1 | **통과** — **push 한 마지막 SHA `65d6c02` 의 런 `35121871836`** 이 세 OS `success` 이고 `effect/e1-count.py --run 35121871836` 이 파일 5 · OS 3 · **어긋남 0** 을 산출한다. ⚠ 앞 전사는 그 **부모**(`46d4e03`)의 런 `35120132604` 를 근거로 적었다 — 조건이 지목한 커밋이 아니다(독립 리뷰 R2 #1·#5). 문면은 R1 뒤 「push 한 마지막 SHA 의 런」으로 정정한 것이다 | CI 런 `35121871836` · `intent.md` 의 `## 개정` |
+| E1 | **통과** — 재 본 런 셋이 모두 세 OS `success` 이고 `effect/e1-count.py` 가 **파일 5 · OS 3 · 어긋남 0** 을 산출한다: `46d4e03`/`35120132604` · `65d6c02`/`35121871836` · **`aa6e137`/`35133536368`**(이 회차의 마지막 push). ★ **판정을 지는 것은 「마지막 push 의 런」이라는 규율이지 특정 런 번호가 아니다** — 번호를 본문에 못 박으면 그 뒤의 어떤 커밋도 전사를 거짓으로 만든다(R1·R2 가 그 자리를 두 번 잡았다). **이 회차 뒤에 push 가 더 있으면 그 런으로 다시 대고, 그 런이 빨가면 회차가 다시 열린다.** ⚠ 앞 전사 둘은 각각 macOS 한 판과 **부모 커밋의 런**을 근거로 적었다 | CI 런 · `intent.md` 의 `## 개정` |
 
-전량(**CI 런 `35121871836` · `65d6c02` — push 한 마지막 SHA**; 그 부모 `46d4e03` 의 런 `35120132604` 도 같다): 잡 일곱 전부 `success` — `ubuntu-latest` · `macos-latest` · `windows-latest` 의
+전량(**이 회차의 마지막 push `aa6e137` 의 런 `35133536368`**; 앞선 `65d6c02`·`46d4e03` 의 런도 같다): 잡 일곱 전부 `success` — `ubuntu-latest` · `macos-latest` · `windows-latest` 의
 `cargo xtask check` **29/29** · `cargo xtask test` · `pal doctor --full` 구조 판정 `MERGE_BLOCKER_DOCTOR_OK`,
 그리고 설치·상호운용 잡 넷(`놓는다` 둘 · `받는다` 둘). 로컬(macOS)은 `cargo test -p pal-cli` **44 묶음 초록**
 (다시 빌드한 뒤 — `oracle/version-test-stale-build.txt`).
