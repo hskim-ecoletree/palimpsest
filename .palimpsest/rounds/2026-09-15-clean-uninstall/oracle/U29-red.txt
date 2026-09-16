@@ -1,0 +1,18 @@
+# U29 확대 — 뒷정리 둘의 RED (착수가 아니라 ecdb96b 시점의 제품)
+# 바이너리 pal 0.1.1+853e3240b72d · 격리 HOME · 2026-09-16T13:04:11Z
+
+## ① 기본 uninstall 뒤 곧바로 --purge 를 치면 선다
+  기본 uninstall rc=0 · 화면: 「남겼다  .palimpsest/  (비어 있지 않다 — 남의 것 2개가 남아 있다: .gitignore · intent.redb)」
+  이어서 pal uninstall --purge → rc=1
+    Error: 설치를 찾지 못했다: <저장소>/.claude/pal/manifest.json 가 없다 — **지울 게 없었으니 성공**은 거짓말이다
+  남은 것(설치 전과의 갈림):
+    ./.palimpsest
+    ./.palimpsest/.gitignore
+    ./.palimpsest/intent.redb        ← 결박이 든 정본
+
+## ② 기본 uninstall → 재설치 → --purge 는 빈 .palimpsest/ 를 남긴다
+  --purge rc=0 · 남은 것(설치 전과의 갈림):
+    ./.palimpsest                    ← 빈 디렉터리
+
+## HOME
+  남은 것 없음(스크립트가 만든 ~/.gitconfig 뿐)

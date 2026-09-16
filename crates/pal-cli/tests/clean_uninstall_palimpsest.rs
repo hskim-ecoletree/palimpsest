@@ -1,4 +1,4 @@
-//! **`.palimpsest/` 안의 분류** — 회차 `2026-09-15-clean-uninstall` 완수 조건 B1 · B2 · B3 · B4 · B5 · B6 · B7.
+//! **`.palimpsest/` 안의 분류** — 회차 `2026-09-15-clean-uninstall` 완수 조건 B1 · B2 · B3 · B4 · B5 · B6 · B7 · B8 · B9.
 //!
 //! 스냅샷은 [`common::snapshot`] 한 자리의 자를 쓴다(조건 머리말 「스냅샷의 정의」).
 //! **모든 스냅샷 시험은 대상이 실제로 생겼음을 uninstall 전에 단언한다** — 안 생긴 것을 안 남았다고 세지 않는다.
@@ -529,3 +529,65 @@ fn b7_기본_uninstall_은_설치_뒤에_생긴_추적_중인_정본을_남긴�
 fn b7_기본_uninstall_은_설치_뒤에_생긴_추적_안_된_정본을_남긴다() {
     b7("b7-안추적", false);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// B8 · B9 — 소유자 `U29` 「uninstall 해서 깔끔하게 정리까지해」
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// **B8** — 기본 uninstall 이 정본을 남긴 뒤, 곧바로 `--purge` 를 치면 선다(매니페스트가 없어도).
+#[test]
+fn b8_기본_uninstall_뒤에_곧바로_purge_가_남은_정본을_걷는다() {
+    let 방 = 방::문서("b8-곧바로");
+    let 전 = 워킹트리(&방.repo);
+    방.성공(&["install"]);
+    방.성공(&["touch", "target"]);
+    방.성공(&["narrative"]);
+    let (id, picks) = 방.후보();
+    방.성공(&["narrative", "--approve", &id, "--pick", &picks[0]]);
+    assert!(방.의도_수().0 > 0, "결박이 안 생겼다 — 이 방이 재려는 것이 없다");
+
+    방.성공(&["uninstall"]);
+    assert!(방.자리(".palimpsest/intent.redb").is_file(), "기본 uninstall 이 결박이 든 정본을 지웠다");
+    assert!(!방.자리(".claude/pal/manifest.json").exists(), "매니페스트가 남았다 — 이 방의 전제가 깨졌다");
+
+    let 화면 = 방.성공(&["uninstall", "--purge"]);
+    assert!(화면.contains("매니페스트 없음"), "매니페스트가 없다는 사실을 말하지 않았다:\n{화면}");
+    assert!(화면.contains(".palimpsest/intent.redb"), "걷은 정본을 경로로 말하지 않았다:\n{화면}");
+    assert_eq!(갈린_경로(&전, &워킹트리(&방.repo)), Vec::<String>::new(), "설치 전과 갈렸다");
+}
+
+/// **B8** — 설치한 적 없는 저장소에서 `--purge` 는 걷을 것이 없다고 말하고 한 바이트도 안 쓴다.
+#[test]
+fn b8_설치한_적_없는_저장소의_purge_는_한_바이트도_안_쓴다() {
+    let 방 = 방::문서("b8-없음");
+    let 전 = 워킹트리(&방.repo);
+    let 화면 = 방.성공(&["uninstall", "--purge"]);
+    assert!(화면.contains("매니페스트 없음"), "매니페스트가 없다는 사실을 말하지 않았다:\n{화면}");
+    assert_eq!(갈린_경로(&전, &워킹트리(&방.repo)), Vec::<String>::new(), "한 바이트라도 썼다");
+}
+
+/// **B9** — 설치 → 사용 → 기본 uninstall → 재설치 → `--purge` 왕복 뒤 빈 `.palimpsest/` 도 안 남는다.
+///
+/// ★ **결박을 걸어야 이 방이 선다.** 결박이 없으면 기본 uninstall 이 `.palimpsest/` 를 이미 지우고, 재설치가 그 자리를
+/// 「우리가 만들었다」고 적어 옛 코드도 지운다 — 결함이 안 드러난다. 결박이 남으면 그 자리가 살아남고, 재설치의
+/// `created_dirs` 에 `.palimpsest` 가 없어 옛 코드는 **빈 자리를 남겼다**(음성 대조가 그것을 잡는다).
+#[test]
+fn b9_설치_제거_재설치_purge_왕복_뒤_빈_palimpsest_도_안_남는다() {
+    let 방 = 방::문서("b9-왕복");
+    let 전 = 워킹트리(&방.repo);
+    방.성공(&["install"]);
+    방.성공(&["touch", "target"]);
+    방.성공(&["narrative"]);
+    let (id, picks) = 방.후보();
+    방.성공(&["narrative", "--approve", &id, "--pick", &picks[0]]);
+    assert!(방.의도_수().0 > 0, "결박이 안 생겼다 — 이 방이 재려는 것이 없다");
+    assert!(방.자리(".palimpsest/narrative-pending.json").is_file(), "사용 흔적이 안 생겼다");
+
+    방.성공(&["uninstall"]);
+    assert!(방.자리(".palimpsest/intent.redb").is_file(), "기본 uninstall 뒤 정본이 안 남았다 — 이 방의 전제가 깨졌다");
+    방.성공(&["install"]);
+    방.성공(&["uninstall", "--purge"]);
+    assert!(!방.자리(".palimpsest").exists(), "빈 .palimpsest/ 가 남았다");
+    assert_eq!(갈린_경로(&전, &워킹트리(&방.repo)), Vec::<String>::new(), "설치 전과 갈렸다");
+}
+

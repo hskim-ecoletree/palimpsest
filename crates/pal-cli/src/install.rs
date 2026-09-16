@@ -1238,8 +1238,15 @@ pub fn uninstall(target: &Path, 선택: 제거) -> Result<()> {
     let root = Root::세운다(target)?;
     let manifest_path = root.join(&Rel::new(MANIFEST))?;
     if !manifest_path.exists() {
+        // ★ **`--purge` 는 매니페스트 없이도 선다** (소유자 `U29` · 조건 B8).
+        //   기본 uninstall 이 정본을 남기고 매니페스트를 지우므로, 그 뒤 남은 것을 걷으려면
+        //   다시 설치해야 했다 — 「깔끔하게」가 한 걸음 길어지는 자리였다.
+        if 선택.purge {
+            return 매니페스트_없이_걷는다(&root);
+        }
         bail!(
-            "설치를 찾지 못했다: {} 가 없다 — **지울 게 없었으니 성공**은 거짓말이다",
+            "설치를 찾지 못했다: {} 가 없다 — **지울 게 없었으니 성공**은 거짓말이다\n    \
+             남은 정본만 걷으려면 `pal uninstall --purge`",
             manifest_path.display()
         );
     }
@@ -1426,6 +1433,11 @@ pub fn uninstall(target: &Path, 선택: 제거) -> Result<()> {
     // 잠금을 먼저 놓는다 — 안 놓으면 `.claude` 가 비어 있지 않아 안 지워진다.
     drop(lock);
     디렉터리_걷기(&m, &자리, &mut report)?;
+    // ★ **걷고 나서 비면 `.palimpsest/` 도 지운다** (조건 B9) — 재설치가 그 자리를 「우리가 만든 것」으로
+    //   안 적어 빈 자리가 남던 자리다.
+    if let Ok(집) = root.join(&Rel::new(layout::PROJECT_DIR)) {
+        빈_집을_걷는다(&집, true, &mut report);
+    }
     report.print(&format!("제거 — {root}"));
 
     // ★ **잃은 것을 한 줄이 아니라 블록으로 말한다.** (2026-08-19 · 독립 리뷰 3 라운드)
@@ -1552,6 +1564,63 @@ fn 디렉터리_걷기(m: &Manifest, 자리: &manifest::Places, report: &mut Rep
         }
     }
     Ok(())
+}
+
+/// **매니페스트가 없는 `--purge`** — 설치가 놓은 것은 이미 걷혔다. 남은 정본(안)과 이 프로젝트의 밖의 기록만 걷는다.
+///
+/// `.claude/` 와 블록 · 설정은 **건드리지 않는다** — 걷을 것이 매니페스트에 적혀 있었고 그것이 이미 없다.
+///
+/// # Errors
+/// 밖의 기록을 못 걷거나, 파일을 못 지우면.
+fn 매니페스트_없이_걷는다(root: &Root) -> Result<()> {
+    let 빈_기록 = Manifest {
+        pal_version: crate::version::describe().to_owned(),
+        roots: Roots { dirs: Vec::new(), files: Vec::new() },
+        own_path: Rel::new(MANIFEST),
+        files: Vec::new(),
+        blocks: Vec::new(),
+        settings: None,
+        declaration: None,
+        created_dirs: Vec::new(),
+        removing: true,
+    };
+    let 안 = 안쪽을_잰다(root, &빈_기록, true)?;
+    let 집 = root.join(&Rel::new(layout::PROJECT_DIR))?;
+    let 집_있나 = std::fs::symlink_metadata(&집).is_ok_and(|x| x.is_dir());
+    let mut report = Report::new();
+    report.say("매니페스트 없음", "설치가 놓은 것은 이미 걷혔다 — 남은 정본과 밖의 기록만 본다");
+
+    let 밖 = crate::round::external::걷는다(root.path(), crate::round::external::걷기::전부)
+        .context("프로젝트 밖의 기록을 정리하지 못했다")?;
+    밖의_보고를_싣는다(&mut report, &밖);
+    안쪽을_걷는다(&안, &mut report)?;
+    빈_집을_걷는다(&집, 집_있나, &mut report);
+
+    report.print(&format!("제거 · --purge — {root}"));
+    if !밖.worktree_거부.is_empty() {
+        bail!(
+            "`--purge` 가 프로젝트 밖의 기록을 걷지 않았다 — 같은 저장소의 다른 git worktree 가 있다: {}",
+            밖.worktree_거부
+                .iter()
+                .map(|p| p.display().to_string())
+                .collect::<Vec<_>>()
+                .join(" · ")
+        );
+    }
+    Ok(())
+}
+
+/// **걷고 나서 `.palimpsest/` 가 비면 지운다** — 우리가 만든 자리인지 안 묻는다(조건 B9).
+///
+/// 설치 · 제거 · 재설치를 거치면 두 번째 설치가 **이미 있던** 그 디렉터리를 「우리가 만든 것」으로 안 적어서
+/// 빈 자리가 남았다. 비어 있으면 남길 까닭이 없다 — 설치 전에 없었거나, 있었다면 그 안에 무언가가 있었다.
+fn 빈_집을_걷는다(집: &Path, 있었나: bool, report: &mut Report) {
+    if !있었나 {
+        return;
+    }
+    if std::fs::read_dir(집).is_ok_and(|mut d| d.next().is_none()) && std::fs::remove_dir(집).is_ok() {
+        report.say("지웠다", &format!("{}/  (비었다)", layout::PROJECT_DIR));
+    }
 }
 
 /// 왜 못 지웠는지 — **비어 있지 않으면 무엇이 남았는지까지.**

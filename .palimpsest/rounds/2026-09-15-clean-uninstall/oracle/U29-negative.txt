@@ -1,0 +1,24 @@
+# U29 확대의 음성 대조 (다시) — 첫 판의 B9 방은 결함을 안 잡았다
+# 2026-09-16T13:12:50Z
+
+## 왜 첫 판이 안 잡았나 — 실측
+  결박 있음: 기본 uninstall 뒤 .palimpsest/{intent.redb,.gitignore} 가 남는다 → 재설치의 created_dirs 에 .palimpsest 가 없다 → 옛 코드는 빈 자리를 남긴다
+  결박 없음: 기본 uninstall 이 .palimpsest/ 를 이미 지운다 → 재설치가 그 자리를 자기 것으로 적는다 → 옛 코드도 지운다(결함이 안 드러난다)
+  그래서 B9 시험에 결박 승인 걸음을 넣었다.
+
+## 변이 ① — 매니페스트 없는 --purge 를 옛 동작(rc=1)으로
+변이 넣음
+    b8_기본_uninstall_뒤에_곧바로_purge_가_남은_정본을_걷는다
+    b8_설치한_적_없는_저장소의_purge_는_한_바이트도_안_쓴다
+test result: FAILED. 23 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.20s
+되돌림
+
+## 변이 ② — 빈 .palimpsest/ 정리를 뺀다
+변이 넣음
+    b8_기본_uninstall_뒤에_곧바로_purge_가_남은_정본을_걷는다
+    b9_설치_제거_재설치_purge_왕복_뒤_빈_palimpsest_도_안_남는다
+test result: FAILED. 23 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.49s
+되돌림
+
+## 되돌린 뒤 초록
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.42s
