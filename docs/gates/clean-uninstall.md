@@ -47,16 +47,18 @@ E1 셈 스크립트 자신의 양성 · 음성 · 0 개 대조는 `oracle/E1-scr
 
 | 판정 | 조건 |
 |---|---|
-| 통과 | A1 A2 A3 A4 B1 B2 B3 B4 B5 B6 B7 B8 B9 C1 C2 D1 D2 D3 D4 F1 |
-| 반증 | E1 G1 |
+| 통과 | A1 A2 A3 A4 B1 B2 B3 B4 B5 B6 B7 B8 B9 C1 C2 D1 D2 D3 D4 E1 F1 G1 |
+| 반증 | — |
 | 대조불가 | — |
 | 미측정 | — |
 
-**검산** — 통과 20 · 반증 2 · 대조불가 0 · 미측정 0 = 22 (`pal round conditions --file intent.md --json` 의 열림 22)
+**검산** — 통과 22 · 반증 0 · 대조불가 0 · 미측정 0 = 22 (`pal round conditions --file intent.md --json` 의 열림 22)
 
-⚠ **첫 전사는 「통과 21 · 미측정 1」이었고 그것이 틀렸다.** 독립 리뷰 R1 이 실물로 잡았다 —
-**G1** 은 세 OS 를 요구하는데 나는 macOS 한 판으로 통과를 적었고, Windows CI 에서 그 시험 둘이 빨갛다.
-**E1** 은 구현 마지막 커밋(전사 커밋의 부모)에 런이 원리상 안 붙는 문면이고, push 한 런도 `failure` 다.
+⚠ **전사가 두 번 틀렸고 두 번 다 고쳤다.** ① 첫 전사 「통과 21 · 미측정 1」 — 독립 리뷰 R1 이 뒤집었다:
+**G1** 은 세 OS 를 요구하는데 macOS 한 판으로 통과를 적었고 Windows CI 에서 그 시험 둘이 빨갰다,
+**E1** 은 구현 마지막 커밋에 런이 원리상 안 붙는 문면이었다. ② 그래서 「통과 20 · 반증 2」로 고쳤다.
+지금 표는 **고친 뒤 다시 잰 것**이다 — 런 `35120132604`(`46d4e03`) 이 **세 OS 전부 `success`** 이고
+`effect/e1-count.py` 가 그 런에 대해 **파일 5 · OS 3 · 어긋남 0** 을 산출했다(`ubuntu·macos 11 / windows 14` 등 열다섯 칸).
 
 ### 근거 표
 
@@ -67,16 +69,18 @@ E1 셈 스크립트 자신의 양성 · 음성 · 0 개 대조는 `oracle/E1-scr
 | B8 · B9 | `clean_uninstall_palimpsest` 의 세 시험(곧바로 `--purge` · 설치한 적 없는 방 · 왕복) | 시험 · `oracle/U29-red.txt` · `oracle/U29-negative.txt` |
 | D1~D4 | `clean_uninstall_external` 23 — 표시 파일 · 조상 기록 · 두 프로젝트 방 · worktree 넷 | 시험 · `oracle/T3-*.txt` |
 | F1 | `effect/f1-run.sh` 두 걸음 — 이번 빌드 통과(기본: 갈림 21 · `L` 밖 0 · 화면에 없는 갈림 0 · 정본 13 자리 직전 바이트 / `--purge`: 갈림 0) · 착수 바이너리 두 걸음 어긋남(`L` 밖 2711 · 2739) | `effect/f1-*.txt` |
-| G1 | `clean_uninstall_flow` 11 — 한 흐름을 밟고 `--purge` 뒤 워킹트리·저장소 자리가 설치 전과 같다 · 기본 변형은 갈림이 `L` 안에만. ⚠ **이 줄의 11 은 macOS 한 판이다** — G1 문면은 **세 OS CI** 를 요구하므로 이 근거만으로는 판정이 안 선다(독립 리뷰 R1 #4). 판정은 push 한 SHA 의 세 OS 런이 한다 | 시험 · `oracle/T4-*.txt` · `oracle/G1-windows-shape.txt` |
-| E1 | **반증** — 옛 문면은 구현 마지막 커밋(전사 커밋의 부모)에 런을 요구하는데 한 번의 push 로는 거기 런이 **원리상 안 붙는다**(`check-runs total_count=0` 실측). 문면을 「push 한 마지막 SHA 의 런」으로 정정했고, 재측정은 다음 push 의 런이 한다 | `intent.md` 의 `## 개정`(독립 리뷰 R1) |
+| G1 | **세 OS CI 런 `35120132604`(`46d4e03`)** — `clean_uninstall_flow` 가 ubuntu 11 · macos 11 · **windows 14** 전부 초록. 한 흐름을 밟고 `--purge` 뒤 워킹트리·저장소 자리가 설치 전과 같고, 기본 변형은 갈림이 `L` 안에만. ⚠ 앞 런에서는 이 시험 둘이 windows 에서 빨갰다 — 시험이 「조상 기록이 안 생기는 방」을 안 가렸다(독립 리뷰 R1 #1·#4). 고친 자리와 그 모양을 macOS 에서 모사한 양성·음성 대조는 `oracle/G1-windows-shape.txt` | CI 런 · 시험 · `oracle/T4-*.txt` |
+| E1 | **통과** — 런 `35120132604`(`46d4e03`) 세 OS `success` · `effect/e1-count.py --run 35120132604` → 파일 5 · OS 3 · **어긋남 0**. 문면은 R1 뒤 「push 한 마지막 SHA 의 런」으로 정정한 것이다 | CI 런 · `intent.md` 의 `## 개정` |
 
-전량(**macOS 로컬**): `cargo test -p pal-cli` 시험 바이너리 **44 묶음 초록**(다시 빌드한 뒤 — `oracle/version-test-stale-build.txt`) ·
-`cargo xtask check` **29/29**.
+전량(**CI 런 `35120132604` · `46d4e03`**): 잡 일곱 전부 `success` — `ubuntu-latest` · `macos-latest` · `windows-latest` 의
+`cargo xtask check` **29/29** · `cargo xtask test` · `pal doctor --full` 구조 판정 `MERGE_BLOCKER_DOCTOR_OK`,
+그리고 설치·상호운용 잡 넷(`놓는다` 둘 · `받는다` 둘). 로컬(macOS)은 `cargo test -p pal-cli` **44 묶음 초록**
+(다시 빌드한 뒤 — `oracle/version-test-stale-build.txt`).
 
-⚠ **로컬 초록을 CI 초록으로 적지 않는다.** push 한 런 `35104425250` 은 `conclusion=failure` 였다 —
-windows-latest 의 `cargo xtask test` 가 G1 흐름 시험 둘에서 빨갰고, 그 뒤 걸음인 `pal doctor --full`(`MERGE_BLOCKER_DOCTOR_OK`)은
-**windows 에서 아예 안 돌았다**(skipped · ubuntu·macos 에서만 산출). `cargo xtask check` 29/29 만 세 OS 전부 success 였다.
-고친 뒤의 CI 판정은 다음 push 의 런이 진다.
+⚠ **로컬 초록을 CI 초록으로 적지 않는다.** 이 회차에서 그 갈림이 두 번 실물로 났다 —
+① 런 `35104425250` 은 로컬 44 묶음 초록인데 windows 의 G1 시험 둘이 빨갰고(그 뒤 걸음 `doctor --full` 은 skipped),
+② 런 `35117979526` 은 워킹트리 `check` 가 29/29 인데 **커밋된 상태**에서 「발견이 닫혔나」가 빨갰다
+(닫은커밋이 그 발견의 좌표를 안 만졌다). **판정은 커밋된 상태에서, 세 OS 에서 잰다.**
 
 ## 효과
 
