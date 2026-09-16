@@ -156,6 +156,7 @@
 - **pal 이 놓은 파일의 사용자 편집** — 그 파일은 pal 몫이라 uninstall 이 지우고 경고한다(착수 동작 · B6). 프로젝트 고유의 규율 자리는 pal 이 안 놓고 안 지우는 `.claude/pal/policy.toml` 이다. 「사용자가 스스로 고친 것은 남긴다」는 **사용자 파일**(`settings.json` · `CLAUDE.md` · `.gitignore`)과 사용자가 바꾼 설정 값에 건다 — 소유자가 「지우고 경고」로 판정했다(`## 승격` 4)
 - **git 이 추적 중인 정본** — `--purge` 도 지우지 않는다. 팀이 커밋한 기록을 워킹트리에서 날리는 일은 사용자의 `git rm` 이다(B4)
 - **Windows 의 HOME 전체 스냅샷** — 실제 사용자 자리라 격리할 수 없어 `%LOCALAPPDATA%\palimpsest` 하위만 잰다(스냅샷의 정의)
+- **`cargo xtask check` 가 `schema/graph.toml` · `surface/queries.toml` 의 변형에 안 빨개지는 것** — 종료 기준선이 `f22-1` 의 음성 대조 일곱에서 「망가뜨렸는데 통과」를 재현했고, 착수 기준선이 못 갈랐던 `f06` ① 여섯과 **같은 뿌리**다(`xtask/src/main.rs:681` 의 `repo_root()` 가 `env!("CARGO_MANIFEST_DIR")` 로 뿌리를 컴파일 시점에 박는다 — 문자열 대조로만 확인했고 재현은 안 했다). **착수 이전부터 있던 빚이고**(`xtask/` 는 이 회차에 0 파일 변경) 이 의도는 제거를 답한다 — 여기서 답하지 않는다
 
 ## 상한
 
