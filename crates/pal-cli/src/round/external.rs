@@ -184,7 +184,23 @@ fn 걷는다_자리에서(repo: &Path, store: &Path, 방식: 걷기) -> Result<�
     }
     보고.클론_경고 = 방식 == 걷기::전부 && git.has_origin() && !보고.지운.is_empty();
     빈_자리를_걷는다(store, &mut 보고)?;
+    조상_기록이_남았으면_말한다(store, &mut 보고);
     Ok(보고)
+}
+
+/// **남은 조상 기록을 화면에 이름으로 싣는다.**
+///
+/// 기본 uninstall 이 승인 · 봉인을 남기면 그 자리도 남고, 그 자리를 뒤에 걷으려면 이 기록이 있어야 한다.
+/// 이름이 화면에 안 나오면 사용자는 무엇이 남았는지 경로로 알 수 없다(회차 `2026-09-15-clean-uninstall` F1 ②).
+fn 조상_기록이_남았으면_말한다(store: &Path, 보고: &mut 밖의_보고) {
+    let Some(root) = approval::store_root(store) else { return };
+    let record = root.join(approval::CREATED_ANCESTORS);
+    if std::fs::symlink_metadata(&record).is_ok_and(|meta| meta.is_file()) {
+        보고.남긴.push((
+            record,
+            "조상 기록 — 밖의 자리를 뒤에 걷을 때 쓴다 · 그 자리가 비면 함께 사라진다".to_owned(),
+        ));
+    }
 }
 
 /// 표시 파일이 있으면 그것으로 가른다. 없으면 `None` — 부르는 쪽이 원장 · slug 로 가른다.

@@ -5,7 +5,7 @@ F1 — 효과 · 걸음 「purge」 · 바이너리 꼬리표 「start」
 바이너리   : /Users/incognito/dev/projects/palimpsest/.palimpsest/bin/pal
 판              : pal 0.1.1+b56ef097f158
 대상 저장소     : /Users/incognito/dev/projects/ditto  →  origin https://github.com/incognito050924/ditto.git
-돌린 때         : 2026-09-15T23:38:12Z
+돌린 때         : 2026-09-16T12:47:44Z
 기계            : Darwin arm64
 
 클론 HEAD       : aded7ce7 (기대 aded7ce7)
