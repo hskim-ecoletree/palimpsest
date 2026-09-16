@@ -1238,7 +1238,7 @@ pub fn uninstall(target: &Path, 선택: 제거) -> Result<()> {
     let root = Root::세운다(target)?;
     let manifest_path = root.join(&Rel::new(MANIFEST))?;
     if !manifest_path.exists() {
-        // ★ **`--purge` 는 매니페스트 없이도 선다** (소유자 `U29` · 조건 B8).
+        // ★ **`--purge` 는 매니페스트 없이도 동작한다** (소유자 `U29` · 조건 B8).
         //   기본 uninstall 이 정본을 남기고 매니페스트를 지우므로, 그 뒤 남은 것을 걷으려면
         //   다시 설치해야 했다 — 「깔끔하게」가 한 걸음 길어지는 자리였다.
         if 선택.purge {
